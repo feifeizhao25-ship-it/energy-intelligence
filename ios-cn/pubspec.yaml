@@ -1,0 +1,29 @@
+name: energy_app
+description: "新能源智库 - 新能源行业智能决策与运维SaaS平台（国内版）"
+
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  http: ^1.6.0
+  shared_preferences: ^2.2.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+  energy_core:
+    path: ../packages/energy_core
+
+flutter:
+  uses-material-design: true

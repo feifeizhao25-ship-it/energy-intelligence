@@ -1,0 +1,1259 @@
+openapi: 3.1.0
+info:
+  title: Energy Intelligence Platform API
+  version: "1.0.0"
+  description: |
+    Production REST API for the Energy Intelligence Platform (International Edition).
+
+    ## Authentication
+    All protected endpoints require a Bearer JWT token in the `Authorization` header.
+    Tokens are obtained via `/auth/login`, `/auth/google`, or `/auth/magic-link`.
+
+    ## Rate Limiting
+    - General API: 60 requests/minute
+    - Auth endpoints: 10 requests/minute
+    - AI endpoints: 20 requests/minute
+
+    ## GDPR
+    This API is GDPR-compliant. See `/privacy/*` endpoints for data export and deletion.
+
+  contact:
+    name: Energy Intelligence Support
+    email: support@energy-global.com
+    url: https://energy-global.com/support
+  license:
+    name: Proprietary
+    url: https://energy-global.com/terms
+
+servers:
+  - url: https://energy-global.com/api/v1
+    description: Production
+  - url: https://staging.energy-global.com/api/v1
+    description: Staging
+  - url: http://localhost:8000/api/v1
+    description: Local development
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Auth
+    description: Authentication and session management
+  - name: Users
+    description: User profile management
+  - name: Projects
+    description: Renewable energy project CRUD
+  - name: Resource
+    description: Solar and wind resource assessment
+  - name: Finance
+    description: Financial modeling — IRR, NPV, LCOE
+  - name: Operations
+    description: Asset health monitoring and alerts
+  - name: AI
+    description: GPT-4o powered energy intelligence assistant
+  - name: Research
+    description: Academic paper search and trend analysis
+  - name: Billing
+    description: Stripe subscription management
+  - name: Privacy
+    description: GDPR data export and deletion
+
+paths:
+  # ── Health ────────────────────────────────────────────────────────────────
+  /health:
+    get:
+      tags: [Auth]
+      summary: Health check
+      security: []
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: ok }
+                  version: { type: string, example: "1.0.0" }
+                  timestamp: { type: string, format: date-time }
+
+  # ── Auth ──────────────────────────────────────────────────────────────────
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register new user
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenResponse"
+        "409":
+          description: Email already registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Email/password login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/magic-link:
+    post:
+      tags: [Auth]
+      summary: Send magic link email
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        "200":
+          description: Magic link sent (always returns 200 to prevent email enumeration)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+
+  /auth/google:
+    post:
+      tags: [Auth]
+      summary: Google OAuth login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id_token]
+              properties:
+                id_token:
+                  type: string
+                  description: Google ID token from frontend
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenResponse"
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Refresh access token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refresh_token]
+              properties:
+                refresh_token: { type: string }
+      responses:
+        "200":
+          description: New token pair
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenResponse"
+
+  # ── Users ─────────────────────────────────────────────────────────────────
+  /users/me:
+    get:
+      tags: [Users]
+      summary: Get current user profile
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+    patch:
+      tags: [Users]
+      summary: Update current user profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProfileRequest"
+      responses:
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+
+  /users/me/avatar:
+    post:
+      tags: [Users]
+      summary: Upload avatar image
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: Avatar URL
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  avatar_url: { type: string, format: uri }
+
+  # ── Projects ──────────────────────────────────────────────────────────────
+  /projects:
+    get:
+      tags: [Projects]
+      summary: List user projects
+      parameters:
+        - in: query
+          name: type
+          schema:
+            type: string
+            enum: [solar, wind, storage, hybrid]
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [development, construction, operating, decommissioned]
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: page_size
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+      responses:
+        "200":
+          description: Paginated project list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectListResponse"
+
+    post:
+      tags: [Projects]
+      summary: Create new project
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProjectRequest"
+      responses:
+        "201":
+          description: Project created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+
+  /projects/{project_id}:
+    parameters:
+      - in: path
+        name: project_id
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [Projects]
+      summary: Get project by ID
+      responses:
+        "200":
+          description: Project details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+        "404":
+          description: Project not found
+    patch:
+      tags: [Projects]
+      summary: Update project
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProjectRequest"
+      responses:
+        "200":
+          description: Updated project
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+    delete:
+      tags: [Projects]
+      summary: Delete project
+      responses:
+        "204":
+          description: Project deleted
+
+  # ── Resource ──────────────────────────────────────────────────────────────
+  /resource/solar:
+    post:
+      tags: [Resource]
+      summary: Get solar resource data
+      description: |
+        Fetches solar irradiance data from NASA POWER API.
+        Returns GHI, DNI, DHI, peak sun hours, optimal tilt, and resource classification (Class I-IV).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResourceRequest"
+      responses:
+        "200":
+          description: Solar resource assessment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SolarResourceResponse"
+
+  /resource/wind:
+    post:
+      tags: [Resource]
+      summary: Get wind resource data
+      description: |
+        Fetches wind speed data. Returns Weibull parameters, wind power density,
+        wind rose data, and resource classification (Class I-IV).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResourceRequest"
+      responses:
+        "200":
+          description: Wind resource assessment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WindResourceResponse"
+
+  # ── Finance ───────────────────────────────────────────────────────────────
+  /finance/solar:
+    post:
+      tags: [Finance]
+      summary: Solar financial model
+      description: |
+        Computes full 25-year financial model with:
+        - IRR using Newton-Raphson algorithm (tolerance 1e-7, max 1000 iterations)
+        - NPV at given discount rate
+        - LCOE ($/MWh)
+        - ITC (30% default), MACRS depreciation, debt service
+        - Sensitivity analysis (±10% on capex, opex, energy yield)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SolarFinanceRequest"
+      responses:
+        "200":
+          description: Financial model results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FinancialModelResponse"
+
+  /finance/wind:
+    post:
+      tags: [Finance]
+      summary: Wind financial model
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WindFinanceRequest"
+      responses:
+        "200":
+          description: Financial model results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FinancialModelResponse"
+
+  /finance/storage:
+    post:
+      tags: [Finance]
+      summary: BESS/storage financial model
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StorageFinanceRequest"
+      responses:
+        "200":
+          description: Financial model results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FinancialModelResponse"
+
+  # ── Operations ────────────────────────────────────────────────────────────
+  /operations/health/{project_id}:
+    get:
+      tags: [Operations]
+      summary: Get project health score and diagnostic report
+      parameters:
+        - in: path
+          name: project_id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Diagnostic report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiagnosticReport"
+
+  /operations/alerts:
+    get:
+      tags: [Operations]
+      summary: List alerts
+      parameters:
+        - in: query
+          name: unread_only
+          schema:
+            type: boolean
+            default: false
+        - in: query
+          name: severity
+          schema:
+            type: string
+            enum: [info, warning, critical]
+      responses:
+        "200":
+          description: Alert list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Alert"
+
+  /operations/alerts/{alert_id}/read:
+    patch:
+      tags: [Operations]
+      summary: Mark alert as read
+      parameters:
+        - in: path
+          name: alert_id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Alert updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Alert"
+
+  /operations/cleaning/{project_id}:
+    get:
+      tags: [Operations]
+      summary: Get optimal cleaning schedule
+      description: |
+        Calculates optimal cleaning interval using: N* = sqrt(2C / (Rs * PR_loss_per_day))
+        where C = cleaning cost, Rs = revenue per MWh, PR_loss_per_day = soiling rate.
+      parameters:
+        - in: path
+          name: project_id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Cleaning schedule recommendation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CleaningScheduleResponse"
+
+  # ── AI ────────────────────────────────────────────────────────────────────
+  /ai/chat:
+    post:
+      tags: [AI]
+      summary: Chat with AI energy assistant (streaming)
+      description: |
+        Server-Sent Events (SSE) streaming response from GPT-4o.
+        Set `Accept: text/event-stream` for streaming.
+        Each event is `data: {"content": "token", "done": false}`.
+        Final event: `data: {"content": "", "done": true}`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message]
+              properties:
+                message:
+                  type: string
+                  maxLength: 4000
+                session_id:
+                  type: string
+                  format: uuid
+                  description: Optional — continue existing conversation
+      responses:
+        "200":
+          description: SSE stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                description: Stream of SSE events
+
+  /ai/sessions:
+    get:
+      tags: [AI]
+      summary: List AI chat sessions
+      responses:
+        "200":
+          description: Chat sessions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AIChatSession"
+
+  /ai/sessions/{session_id}:
+    get:
+      tags: [AI]
+      summary: Get chat session history
+      parameters:
+        - in: path
+          name: session_id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Session with messages
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AIChatSession"
+    delete:
+      tags: [AI]
+      summary: Delete chat session
+      responses:
+        "204":
+          description: Session deleted
+
+  # ── Research ──────────────────────────────────────────────────────────────
+  /research/papers:
+    get:
+      tags: [Research]
+      summary: Search academic papers
+      parameters:
+        - in: query
+          name: q
+          required: true
+          schema:
+            type: string
+          description: Search query
+        - in: query
+          name: year_from
+          schema:
+            type: integer
+        - in: query
+          name: year_to
+          schema:
+            type: integer
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+      responses:
+        "200":
+          description: Paper results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaperListResponse"
+
+  /research/trends:
+    get:
+      tags: [Research]
+      summary: Get industry trend data
+      parameters:
+        - in: query
+          name: metric
+          schema:
+            type: string
+            enum: [lcoe_solar, lcoe_wind, capacity_gw, investment_usd]
+        - in: query
+          name: period
+          schema:
+            type: string
+            enum: [1y, 3y, 5y, 10y]
+            default: 5y
+      responses:
+        "200":
+          description: Trend data series
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrendDataResponse"
+
+  # ── Billing ───────────────────────────────────────────────────────────────
+  /billing/plans:
+    get:
+      tags: [Billing]
+      summary: List subscription plans
+      security: []
+      responses:
+        "200":
+          description: Available plans
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SubscriptionPlan"
+
+  /billing/checkout:
+    post:
+      tags: [Billing]
+      summary: Create Stripe checkout session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [price_id]
+              properties:
+                price_id:
+                  type: string
+                  description: Stripe price ID
+                success_url:
+                  type: string
+                  format: uri
+                cancel_url:
+                  type: string
+                  format: uri
+      responses:
+        "200":
+          description: Checkout URL
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  checkout_url: { type: string, format: uri }
+                  session_id: { type: string }
+
+  /billing/portal:
+    post:
+      tags: [Billing]
+      summary: Create Stripe customer portal session
+      responses:
+        "200":
+          description: Portal URL
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  portal_url: { type: string, format: uri }
+
+  /billing/subscription:
+    get:
+      tags: [Billing]
+      summary: Get current subscription
+      responses:
+        "200":
+          description: Subscription details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subscription"
+
+  /billing/webhook:
+    post:
+      tags: [Billing]
+      summary: Stripe webhook endpoint
+      description: Stripe sends events here. Signature verified with STRIPE_WEBHOOK_SECRET.
+      security: []
+      parameters:
+        - in: header
+          name: Stripe-Signature
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Event received
+
+  # ── Privacy (GDPR) ────────────────────────────────────────────────────────
+  /privacy/consent:
+    get:
+      tags: [Privacy]
+      summary: Get GDPR consent settings
+      responses:
+        "200":
+          description: Consent record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConsentRecord"
+    put:
+      tags: [Privacy]
+      summary: Update GDPR consent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConsentUpdateRequest"
+      responses:
+        "200":
+          description: Updated consent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConsentRecord"
+
+  /privacy/export-data:
+    post:
+      tags: [Privacy]
+      summary: Export all user data (GDPR Article 20)
+      description: |
+        Exports all user data as a JSON archive.
+        Includes: profile, projects, assessments, financial models, AI sessions, alerts, consent records.
+        Download link is valid for 24 hours.
+      responses:
+        "202":
+          description: Export queued — download link sent to email
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  export_id: { type: string, format: uuid }
+
+  /privacy/delete-account:
+    delete:
+      tags: [Privacy]
+      summary: Delete account and all data (GDPR Article 17)
+      description: |
+        Permanently deletes the user's account and all associated data.
+        Stripe subscription is cancelled. This action is irreversible.
+        User receives confirmation email.
+      responses:
+        "204":
+          description: Account deleted
+
+# ── Components ────────────────────────────────────────────────────────────────
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Auth
+    RegisterRequest:
+      type: object
+      required: [email, password, name]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, minLength: 8 }
+        name: { type: string }
+        company: { type: string }
+        country: { type: string, minLength: 2, maxLength: 2 }
+        role: { type: string }
+        gdpr_consent: { type: boolean }
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string }
+
+    TokenResponse:
+      type: object
+      properties:
+        access_token: { type: string }
+        refresh_token: { type: string }
+        token_type: { type: string, example: bearer }
+        expires_in: { type: integer, example: 3600 }
+        user:
+          $ref: "#/components/schemas/UserProfile"
+
+    # User
+    UserProfile:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string, format: email }
+        name: { type: string }
+        company: { type: string }
+        country: { type: string }
+        role: { type: string }
+        plan: { type: string, enum: [free, pro, enterprise] }
+        currency: { type: string }
+        timezone: { type: string }
+        locale: { type: string }
+        is_verified: { type: boolean }
+        created_at: { type: string, format: date-time }
+
+    UpdateProfileRequest:
+      type: object
+      properties:
+        name: { type: string }
+        company: { type: string }
+        country: { type: string }
+        currency: { type: string }
+        timezone: { type: string }
+        locale: { type: string }
+
+    # Projects
+    Project:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        type: { type: string, enum: [solar, wind, storage, hybrid] }
+        status: { type: string, enum: [development, construction, operating, decommissioned] }
+        location_address: { type: string }
+        location_country: { type: string }
+        capacity: { type: number, description: MW }
+        lat: { type: number }
+        lng: { type: number }
+        start_date: { type: string, format: date }
+        budget: { type: number }
+        currency: { type: string }
+        tags: { type: array, items: { type: string } }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    CreateProjectRequest:
+      type: object
+      required: [name, type]
+      properties:
+        name: { type: string }
+        type: { type: string, enum: [solar, wind, storage, hybrid] }
+        status: { type: string, enum: [development, construction, operating, decommissioned] }
+        location_address: { type: string }
+        location_country: { type: string }
+        capacity: { type: number }
+        lat: { type: number, minimum: -90, maximum: 90 }
+        lng: { type: number, minimum: -180, maximum: 180 }
+        start_date: { type: string, format: date }
+        budget: { type: number }
+        currency: { type: string, default: USD }
+        tags: { type: array, items: { type: string } }
+
+    UpdateProjectRequest:
+      type: object
+      properties:
+        name: { type: string }
+        status: { type: string }
+        location_address: { type: string }
+        capacity: { type: number }
+        budget: { type: number }
+        tags: { type: array, items: { type: string } }
+
+    ProjectListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Project"
+        total: { type: integer }
+        page: { type: integer }
+        page_size: { type: integer }
+        pages: { type: integer }
+
+    # Resource
+    ResourceRequest:
+      type: object
+      required: [lat, lng]
+      properties:
+        lat:
+          type: number
+          minimum: -90
+          maximum: 90
+          description: WGS84 latitude
+        lng:
+          type: number
+          minimum: -180
+          maximum: 180
+          description: WGS84 longitude
+        data_source:
+          type: string
+          enum: [NASA_POWER, ERA5, NSRDB]
+          default: NASA_POWER
+        project_id:
+          type: string
+          format: uuid
+          description: Optional — save result to project
+
+    SolarResourceResponse:
+      type: object
+      properties:
+        ghi: { type: number, description: "Global Horizontal Irradiance (kWh/m²/yr)" }
+        dni: { type: number, description: "Direct Normal Irradiance (kWh/m²/yr)" }
+        dhi: { type: number, description: "Diffuse Horizontal Irradiance (kWh/m²/yr)" }
+        peak_sun_hours: { type: number, description: "Average peak sun hours per day" }
+        optimal_tilt: { type: number, description: "Optimal panel tilt angle (degrees)" }
+        avg_temperature: { type: number, description: "Average ambient temperature (°C)" }
+        resource_class:
+          type: string
+          enum: [I, II, III, IV]
+          description: "Class I: >2000 kWh/m²/yr, II: 1600-2000, III: 1200-1600, IV: <1200"
+        score: { type: number, minimum: 0, maximum: 100 }
+        data_source: { type: string }
+        monthly_ghi:
+          type: array
+          items: { type: number }
+          minItems: 12
+          maxItems: 12
+          description: Monthly GHI values (Jan-Dec)
+
+    WindResourceResponse:
+      type: object
+      properties:
+        mean_speed: { type: number, description: "Mean wind speed at hub height (m/s)" }
+        weibull_k: { type: number, description: "Weibull shape parameter" }
+        weibull_c: { type: number, description: "Weibull scale parameter (m/s)" }
+        wpd: { type: number, description: "Wind Power Density (W/m²)" }
+        turbulence_intensity: { type: number }
+        resource_class:
+          type: string
+          enum: [I, II, III, IV]
+        score: { type: number, minimum: 0, maximum: 100 }
+        monthly_speed:
+          type: array
+          items: { type: number }
+          minItems: 12
+          maxItems: 12
+        rose_directions:
+          type: array
+          items:
+            type: object
+            properties:
+              dir: { type: string }
+              freq: { type: number }
+              speed: { type: number }
+
+    # Finance
+    SolarFinanceRequest:
+      type: object
+      required: [capacity_mw, capex_per_mw, energy_yield_mwh]
+      properties:
+        capacity_mw: { type: number, minimum: 0.1 }
+        capex_per_mw: { type: number, description: "USD per MW" }
+        energy_yield_mwh: { type: number, description: "Annual MWh yield per MW" }
+        opex_per_mw_yr: { type: number, default: 15000 }
+        ppa_price: { type: number, description: "USD per MWh" }
+        discount_rate: { type: number, default: 0.08 }
+        itc_rate: { type: number, default: 0.30, description: "Investment Tax Credit rate" }
+        debt_ratio: { type: number, default: 0.70 }
+        interest_rate: { type: number, default: 0.05 }
+        loan_term: { type: number, default: 15 }
+        tax_rate: { type: number, default: 0.21 }
+        degradation_rate: { type: number, default: 0.005 }
+        project_life: { type: number, default: 25 }
+        inflation_rate: { type: number, default: 0.025 }
+        currency: { type: string, default: USD }
+
+    WindFinanceRequest:
+      type: object
+      required: [capacity_mw, capex_per_mw, capacity_factor]
+      properties:
+        capacity_mw: { type: number }
+        capex_per_mw: { type: number }
+        capacity_factor: { type: number, minimum: 0, maximum: 1 }
+        opex_per_mw_yr: { type: number, default: 40000 }
+        ppa_price: { type: number }
+        discount_rate: { type: number, default: 0.09 }
+        debt_ratio: { type: number, default: 0.65 }
+        interest_rate: { type: number, default: 0.055 }
+        tax_rate: { type: number, default: 0.21 }
+        project_life: { type: number, default: 25 }
+
+    StorageFinanceRequest:
+      type: object
+      required: [capacity_mwh, capex_per_mwh]
+      properties:
+        capacity_mwh: { type: number }
+        capex_per_mwh: { type: number }
+        cycles_per_day: { type: number, default: 1.0 }
+        arbitrage_spread: { type: number, description: "USD/MWh price spread" }
+        roundtrip_efficiency: { type: number, default: 0.90 }
+        project_life: { type: number, default: 15 }
+        discount_rate: { type: number, default: 0.10 }
+
+    FinancialModelResponse:
+      type: object
+      properties:
+        irr: { type: number, description: "Internal Rate of Return (%)" }
+        npv: { type: number, description: "Net Present Value (USD)" }
+        lcoe: { type: number, description: "Levelized Cost of Energy (USD/MWh)" }
+        payback: { type: number, description: "Payback period (years)" }
+        total_capex: { type: number }
+        equity_irr: { type: number }
+        cashflows:
+          type: array
+          items:
+            type: object
+            properties:
+              year: { type: integer }
+              revenue: { type: number }
+              opex: { type: number }
+              debt_service: { type: number }
+              tax: { type: number }
+              net_cash_flow: { type: number }
+              cumulative_cash_flow: { type: number }
+        sensitivity:
+          type: object
+          description: "Sensitivity analysis results (±10%)"
+          properties:
+            capex_plus10: { type: number }
+            capex_minus10: { type: number }
+            revenue_plus10: { type: number }
+            revenue_minus10: { type: number }
+
+    # Operations
+    DiagnosticReport:
+      type: object
+      properties:
+        overall_score: { type: number, minimum: 0, maximum: 100 }
+        status: { type: string, enum: [excellent, good, fair, poor] }
+        dimensions:
+          type: object
+          properties:
+            generation: { type: number }
+            equipment: { type: number }
+            availability: { type: number }
+            pr_ratio: { type: number }
+        findings:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: string }
+              category: { type: string }
+              description: { type: string }
+              severity: { type: string, enum: [low, medium, high, critical] }
+              estimated_loss: { type: number, description: "USD/year" }
+        recommendations:
+          type: array
+          items:
+            type: object
+            properties:
+              title: { type: string }
+              description: { type: string }
+              priority: { type: string, enum: [low, medium, high] }
+              benefit: { type: string }
+              estimated_roi: { type: string }
+              timeframe: { type: string }
+
+    Alert:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        message: { type: string }
+        severity: { type: string, enum: [info, warning, critical] }
+        is_read: { type: boolean }
+        project_id: { type: string, format: uuid, nullable: true }
+        created_at: { type: string, format: date-time }
+
+    CleaningScheduleResponse:
+      type: object
+      properties:
+        optimal_interval_days: { type: number }
+        annual_cleanings: { type: number }
+        cleaning_cost_annual: { type: number }
+        revenue_protected: { type: number }
+        net_benefit: { type: number }
+        formula_used: { type: string, example: "N* = sqrt(2C / (Rs * soiling_rate))" }
+
+    # AI
+    AIChatSession:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        token_count: { type: integer }
+        messages:
+          type: array
+          items:
+            type: object
+            properties:
+              role: { type: string, enum: [user, assistant] }
+              content: { type: string }
+              timestamp: { type: string, format: date-time }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    # Research
+    PaperListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: string }
+              title: { type: string }
+              authors: { type: string }
+              year: { type: integer }
+              citations: { type: integer }
+              abstract: { type: string }
+              doi: { type: string }
+              url: { type: string, format: uri }
+        total: { type: integer }
+        page: { type: integer }
+
+    TrendDataResponse:
+      type: object
+      properties:
+        metric: { type: string }
+        unit: { type: string }
+        series:
+          type: array
+          items:
+            type: object
+            properties:
+              year: { type: integer }
+              value: { type: number }
+              yoy_change: { type: number }
+
+    # Billing
+    SubscriptionPlan:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        price_usd: { type: number }
+        price_eur: { type: number }
+        stripe_price_id: { type: string }
+        features:
+          type: array
+          items: { type: string }
+        limits:
+          type: object
+          properties:
+            projects: { type: integer }
+            api_calls_day: { type: integer }
+            ai_queries_day: { type: integer }
+            team_members: { type: integer }
+
+    Subscription:
+      type: object
+      properties:
+        plan: { type: string }
+        status: { type: string }
+        current_period_end: { type: string, format: date-time }
+        cancel_at_period_end: { type: boolean }
+
+    # Privacy
+    ConsentRecord:
+      type: object
+      properties:
+        analytics: { type: boolean }
+        marketing: { type: boolean }
+        updated_at: { type: string, format: date-time }
+
+    ConsentUpdateRequest:
+      type: object
+      properties:
+        analytics: { type: boolean }
+        marketing: { type: boolean }
+
+    # Common
+    ErrorResponse:
+      type: object
+      properties:
+        detail: { type: string }
+        code: { type: string }
+        field: { type: string, description: "Field name for validation errors" }
