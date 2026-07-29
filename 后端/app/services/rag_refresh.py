@@ -40,12 +40,14 @@ def fetch_snapshot(
     """
     source_id = str(source.get("source_id", "")).strip()
     url = str(source.get("source_url", "")).strip()
-    if not source_id or not url.startswith(("https://", "http://")):
-        raise ValueError("source_id 与合法 http(s) source_url 为必填项")
+    if not source_id:
+        raise ValueError("source_id 为必填项")
     if source.get("ingestion_policy") != "snapshot_allowed":
         raise PermissionError("%s 未获授权进行原文快照抓取" % source_id)
     if not str(source.get("license_note", "")).strip():
         raise PermissionError("%s 缺少版权/license 说明" % source_id)
+    if not url.startswith(("https://", "http://")):
+        raise ValueError("合法 http(s) source_url 为必填项")
 
     parsed = urlparse(url)
     robots_url = "%s://%s/robots.txt" % (parsed.scheme, parsed.netloc)
