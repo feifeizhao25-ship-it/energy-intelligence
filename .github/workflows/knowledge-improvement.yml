@@ -2,6 +2,16 @@ name: Knowledge improvement audit
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/knowledge-improvement.yml"
+      - "后端/app/services/continuous_improvement.py"
+      - "后端/app/services/openrouter_client.py"
+      - "后端/app/services/rag_refresh.py"
+      - "后端/data/improvement_sources.json"
+      - "后端/scripts/knowledge_improvement_audit.py"
+      - "后端/tests/test_continuous_improvement.py"
+      - "后端/tests/test_rag_sources.py"
   schedule:
     - cron: "17 2 * * 1"
 
