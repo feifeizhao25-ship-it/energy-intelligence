@@ -1,0 +1,127 @@
+name: Quality Gate
+
+on:
+  pull_request:
+    branches: [main, develop]
+    types: [opened, synchronize, reopened]
+
+jobs:
+  # 代码覆盖率门禁
+  coverage-gate:
+    name: Coverage Gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      
+      - name: Run tests with coverage
+        run: pnpm test:coverage
+      
+      - name: Check coverage thresholds
+        run: |
+          # 解析覆盖率报告
+          COVERAGE=$(cat coverage/coverage-summary.json | jq '.total.lines.pct')
+          echo "Total coverage: $COVERAGE%"
+          
+          if (( $(echo "$COVERAGE < 80" | bc -l) )); then
+            echo "❌ Coverage $COVERAGE% is below threshold of 80%"
+            exit 1
+          fi
+          
+          echo "✅ Coverage check passed!"
+      
+      - name: Post coverage comment
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const coverage = JSON.parse(fs.readFileSync('coverage/coverage-summary.json', 'utf8'));
+            
+            const body = `## 📊 Code Coverage Report
+            
+| Metric | Coverage | Threshold | Status |
+|--------|----------|-----------|--------|
+| Lines | ${coverage.total.lines.pct}% | 80% | ${coverage.total.lines.pct >= 80 ? '✅' : '❌'} |
+| Statements | ${coverage.total.statements.pct}% | 80% | ${coverage.total.statements.pct >= 80 ? '✅' : '❌'} |
+| Functions | ${coverage.total.functions.pct}% | 80% | ${coverage.total.functions.pct >= 80 ? '✅' : '❌'} |
+| Branches | ${coverage.total.branches.pct}% | 80% | ${coverage.total.branches.pct >= 80 ? '✅' : '❌'} |
+            
+            ${coverage.total.lines.pct < 80 ? '⚠️ **Coverage is below threshold. Please add more tests.**' : '✅ **All coverage thresholds met!**'}
+            `;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+
+  # 代码复杂度检查
+  complexity-gate:
+    name: Complexity Gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install complexity-check
+        run: npm install -g complexity-report
+      
+      - name: Check code complexity
+        run: |
+          # 检查函数复杂度
+          find apps/api/src -name "*.ts" -not -path "*/node_modules/*" -not -path "*/__tests__/*" | \
+          while read file; do
+            complexity=$(npx ts-complexity "$file" 2>/dev/null | jq '.average.complexity' || echo "0")
+            if (( $(echo "$complexity > 10" | bc -l) )); then
+              echo "⚠️ High complexity in $file: $complexity"
+            fi
+          done
+
+  # 重复代码检查
+  duplication-gate:
+    name: Duplication Gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install jscpd
+        run: npm install -g jscpd
+      
+      - name: Check for code duplication
+        run: |
+          jscpd --threshold 3 --reporters console,json --output reports/jscpd \
+            apps/api/src packages/*/src
+          
+          # 检查重复率
+          if [ -f reports/jscpd/jscpd-report.json ]; then
+            duplication=$(cat reports/jscpd/jscpd-report.json | jq '.statistics.total.percentage')
+            echo "Code duplication: ${duplication}%"
+            
+            if (( $(echo "$duplication > 3" | bc -l) )); then
+              echo "❌ Code duplication ${duplication}% exceeds threshold of 3%"
+              exit 1
+            fi
+          fi

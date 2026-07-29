@@ -1,0 +1,15 @@
+{
+  "name": "@energy-intelligence/ui-web",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Shared web UI primitives for 新能源智库 / EnergyIQ frontends",
+  "main": "./src/index.tsx",
+  "types": "./src/index.tsx",
+  "exports": {
+    ".": "./src/index.tsx"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
+  }
+}
