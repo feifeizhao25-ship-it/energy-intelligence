@@ -160,6 +160,10 @@ class Settings(BaseSettings):
     # 国际版
     ANTHROPIC_API_KEY: Optional[str] = None
     OPENAI_API_KEY: Optional[str] = None
+    OPENROUTER_API_KEY: Optional[str] = None
+    OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
+    OPENROUTER_MODELS: str = "x-ai/grok-4.5"
+    OPENROUTER_ZDR: bool = True
     
     # 嵌入模型
     EMBEDDING_PROVIDER: str = "auto"

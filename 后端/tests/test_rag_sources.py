@@ -1,8 +1,10 @@
 """RAG 来源注册表、时效分档与刷新报告测试。"""
 
 import re
+import json
 from datetime import date, timedelta
 
+import httpx
 import pytest
 
 from app.services.rag_refresh import fetch_snapshot, refresh_report, snapshot_sha256
@@ -169,9 +171,36 @@ def test_refresh_report_overdue_days():
         assert entry["needs_refetch"]
 
 
-def test_fetch_snapshot_is_a_stub():
-    with pytest.raises(NotImplementedError):
+def test_fetch_snapshot_rejects_unapproved_source():
+    with pytest.raises(PermissionError):
         fetch_snapshot({"source_id": "std-gb50797"})
+
+
+def test_fetch_snapshot_writes_only_to_quarantine(tmp_path):
+    def handler(request):
+        if request.url.path == "/robots.txt":
+            return httpx.Response(200, text="User-agent: *\nAllow: /source")
+        return httpx.Response(
+            200,
+            content=b"verified-source",
+            headers={"content-type": "text/plain; charset=utf-8"},
+        )
+
+    source = {
+        "source_id": "official-test",
+        "source_url": "https://example.test/source",
+        "license_note": "Test fixture; redistribution allowed",
+        "ingestion_policy": "snapshot_allowed",
+    }
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        result = fetch_snapshot(source, quarantine_dir=tmp_path, client=client)
+    assert result["state"] == "quarantined"
+    assert result["promotion_allowed"] is False
+    assert result["sha256"] == snapshot_sha256(b"verified-source")
+    # Timestamp path is implementation detail; locate the sole audit record.
+    records = list(tmp_path.glob("official-test/*/metadata.json"))
+    assert len(records) == 1
+    assert json.loads(records[0].read_text())["sha256"] == result["sha256"]
 
 
 def test_snapshot_sha256_stable():

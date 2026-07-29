@@ -1,19 +1,23 @@
-"""
-RAG 时效自动化 — 来源刷新报告与抓取存根。
+"""RAG 时效自动化 — 来源刷新报告与受控快照抓取。
 
 ``refresh_report()`` 扫描来源注册表，给出每条语料的时效档位、逾期天数
 与需要重新抓取的清单，供定时任务（cron / CI）驱动语料再核验。
 
-真实抓取未实现：``fetch_snapshot`` 仅为接口存根。实现时必须遵守目标站
-robots.txt 与版权/license 条款，快照落盘并计算 sha256 以便变更检测与审计。
+抓取仅允许注册表中明确标记可抓取的来源；先检查 robots.txt，再限制响应类型
+与体积。新快照只能进入隔离区，不会自动覆盖生产知识库。
 """
 
 from __future__ import annotations
 
 import hashlib
-from datetime import date
+import json
+from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional
+from urllib.parse import urlparse
+from urllib.robotparser import RobotFileParser
+
+import httpx
 
 from app.services.rag_sources import REGISTRY_PATH, SourceRegistry
 
@@ -23,21 +27,83 @@ def snapshot_sha256(content: bytes) -> str:
     return hashlib.sha256(content).hexdigest()
 
 
-def fetch_snapshot(source: Dict) -> Dict:
-    """抓取来源快照（接口存根，未实现）。
+def fetch_snapshot(
+    source: Dict,
+    quarantine_dir: Optional[Path] = None,
+    client: Optional[httpx.Client] = None,
+    max_bytes: int = 5_000_000,
+) -> Dict:
+    """受控抓取并写入隔离区；返回可审计元数据。
 
-    实现要求：
-    - 遵守目标站 robots.txt 与 ``source["license_note"]`` 的版权条款；
-    - 限速抓取，携带可识别的 User-Agent；
-    - 快照原文落盘（按 source_id 归档），并用 :func:`snapshot_sha256`
-      计算 sha256 写入元数据，用于变更检测与审计；
-    - 记录抓取时间、HTTP 状态与最终 URL（跟随重定向后）。
+    来源必须显式设置 ``ingestion_policy`` 为 ``snapshot_allowed``，且
+    ``license_note`` 非空。robots.txt 不允许或无法确认时一律拒绝抓取。
     """
-    raise NotImplementedError(
-        "fetch_snapshot 未实现：抓取须遵守 robots.txt 与版权条款，"
-        "并保存快照 + sha256（见 docstring 实现要求）。source=%s"
-        % source.get("source_id", "<unknown>")
+    source_id = str(source.get("source_id", "")).strip()
+    url = str(source.get("source_url", "")).strip()
+    if not source_id or not url.startswith(("https://", "http://")):
+        raise ValueError("source_id 与合法 http(s) source_url 为必填项")
+    if source.get("ingestion_policy") != "snapshot_allowed":
+        raise PermissionError("%s 未获授权进行原文快照抓取" % source_id)
+    if not str(source.get("license_note", "")).strip():
+        raise PermissionError("%s 缺少版权/license 说明" % source_id)
+
+    parsed = urlparse(url)
+    robots_url = "%s://%s/robots.txt" % (parsed.scheme, parsed.netloc)
+    user_agent = "EnergyIntelligence-RAG-Auditor/1.0"
+    owns_client = client is None
+    http = client or httpx.Client(
+        timeout=20.0,
+        follow_redirects=True,
+        headers={"User-Agent": user_agent},
     )
+    try:
+        robots_response = http.get(robots_url)
+        if robots_response.status_code != 200:
+            raise PermissionError("无法确认 robots.txt，按默认拒绝策略停止抓取")
+        parser = RobotFileParser()
+        parser.set_url(robots_url)
+        parser.parse(robots_response.text.splitlines())
+        if not parser.can_fetch(user_agent, url):
+            raise PermissionError("robots.txt 禁止抓取 %s" % url)
+
+        response = http.get(url)
+        response.raise_for_status()
+        content_type = response.headers.get("content-type", "").lower()
+        allowed_types = ("text/", "application/json", "application/pdf")
+        if not content_type.startswith(allowed_types):
+            raise ValueError("不支持的响应类型: %s" % content_type)
+        content = response.content
+        if len(content) > max_bytes:
+            raise ValueError("响应超过最大允许体积 %s bytes" % max_bytes)
+
+        fetched_at = datetime.now(timezone.utc)
+        digest = snapshot_sha256(content)
+        root = Path(quarantine_dir or Path("data/rag_quarantine"))
+        target_dir = root / source_id / fetched_at.strftime("%Y%m%dT%H%M%SZ")
+        target_dir.mkdir(parents=True, exist_ok=False)
+        extension = ".pdf" if "application/pdf" in content_type else ".bin"
+        snapshot_path = target_dir / ("snapshot" + extension)
+        snapshot_path.write_bytes(content)
+        metadata = {
+            "source_id": source_id,
+            "state": "quarantined",
+            "fetched_at": fetched_at.isoformat(),
+            "http_status": response.status_code,
+            "final_url": str(response.url),
+            "content_type": content_type,
+            "bytes": len(content),
+            "sha256": digest,
+            "snapshot_path": str(snapshot_path),
+            "promotion_allowed": False,
+        }
+        (target_dir / "metadata.json").write_text(
+            json.dumps(metadata, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+        return metadata
+    finally:
+        if owns_client:
+            http.close()
 
 
 def refresh_report(
