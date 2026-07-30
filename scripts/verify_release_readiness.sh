@@ -7,9 +7,9 @@ PASS=(); FAIL=()
 step() { echo; echo "════ $1 ════"; }
 mark() { if [ "$2" -eq 0 ]; then PASS+=("$1"); else FAIL+=("$1"); fi }
 
-step "1/5 pnpm install + Prisma Client"
-pnpm install && pnpm --dir 后端API db:generate
-mark "pnpm install + prisma generate" $?
+step "1/5 pnpm frozen-lockfile install"
+pnpm install --frozen-lockfile
+mark "pnpm frozen-lockfile install" $?
 
 step "2/5 国内版生产构建 (typecheck 强制)"
 ( cd frontend-cn-web && npx next build ); mark "cn-web build" $?

@@ -7,6 +7,7 @@ RAG source registry — JSON 驱动的语料来源注册表。
 - 政策（policy）90 天
 - 标准（standard）365 天
 - 价格数据（price）7 天
+- 研究与统计（research）按条目设置，通常 90 天
 
 时效分档按各条目自己的核验周期计算：逾期未核验 → ``stale``，
 已用掉超过 80% 周期 → ``review_recommended``，其余 → ``current``。
@@ -37,7 +38,7 @@ REQUIRED_FIELDS = (
     "verify_interval_days",
 )
 
-VALID_TYPES = ("policy", "standard", "price")
+VALID_TYPES = ("policy", "standard", "price", "research")
 
 # 接近截止的阈值：已用掉超过 80% 核验周期即建议复核
 REVIEW_THRESHOLD_RATIO = 0.8

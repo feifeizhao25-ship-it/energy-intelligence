@@ -1,15 +1,7 @@
 packages:
-  # ── Applications ──
-  - "apps/*"
-  - "后端API"
-  - "后端API"
-  - "后端API"
-  - "后端API"
-
   # ── Shared packages ──
   - "packages/*"
 
-  # ── Web frontends (legacy path support until migration) ──
-  - "web-cn"
+  # ── Web frontends ──
   - "web-global"
   - "frontend-cn-web"
