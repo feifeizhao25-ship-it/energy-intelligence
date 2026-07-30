@@ -16,10 +16,7 @@ class ResourceScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              '新能源资源潜力评估',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
+            Text('新能源资源潜力评估', style: Theme.of(context).textTheme.headlineSmall),
             SizedBox(height: 8),
             Text(
               '通过精准的资源评估为项目开发提供科学依据',
@@ -46,9 +43,9 @@ class ResourceScreen extends StatelessWidget {
               icon: Icons.cloud,
               gradient: AppTheme.windGradient(),
               onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => WindResourceScreen()),
-                );
+                Navigator.of(
+                  context,
+                ).push(MaterialPageRoute(builder: (_) => WindResourceScreen()));
               },
             ),
             SizedBox(height: 16),
@@ -57,11 +54,15 @@ class ResourceScreen extends StatelessWidget {
               title: '多站址对比',
               subtitle: '最多10个站址横向评估',
               icon: Icons.compare_arrows,
-              gradient: LinearGradient(colors: [Color(0xFF7C3AED), Color(0xFF5B21B6)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+              gradient: LinearGradient(
+                colors: [Color(0xFF7C3AED), Color(0xFF5B21B6)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
               onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => CompareScreen()),
-                );
+                Navigator.of(
+                  context,
+                ).push(MaterialPageRoute(builder: (_) => CompareScreen()));
               },
             ),
             SizedBox(height: 24),
@@ -85,8 +86,20 @@ class ResourceScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('山东德州100MW光伏', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                          Text('GHI: 1456.8 kWh/m²/year', style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                          Text(
+                            '山东德州100MW光伏',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
+                          Text(
+                            'GHI: 1456.8 kWh/m²/year',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFF64748B),
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -128,7 +141,7 @@ class ResourceScreen extends StatelessWidget {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: Colors.white, size: 32),
@@ -147,7 +160,7 @@ class ResourceScreen extends StatelessWidget {
                 subtitle,
                 style: TextStyle(
                   fontSize: 14,
-                  color: Colors.white.withOpacity(0.8),
+                  color: Colors.white.withValues(alpha: 0.8),
                 ),
               ),
               SizedBox(height: 16),

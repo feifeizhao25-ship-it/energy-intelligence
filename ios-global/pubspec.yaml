@@ -1,4 +1,4 @@
-name: energy_global
+name: energy_global_ios
 description: Energy Intelligence Platform — Global Version
 publish_to: 'none'
 
@@ -28,6 +28,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  energy_global:
+    path: ../android-global
   flutter_localizations:
     sdk: flutter
   cupertino_icons: ^1.0.8

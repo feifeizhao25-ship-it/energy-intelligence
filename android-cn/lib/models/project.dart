@@ -40,7 +40,9 @@ class Project {
       province: json['province'] ?? '',
       capacityMw: (json['capacityMw'] ?? 0.0).toDouble(),
       tags: List<String>.from(json['tags'] ?? []),
-      createdAt: DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
+      createdAt: DateTime.parse(
+        json['createdAt'] ?? DateTime.now().toIso8601String(),
+      ),
     );
   }
 

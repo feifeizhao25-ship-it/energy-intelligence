@@ -11,7 +11,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   String _selectedType = 'Solar';
   final _capacityController = TextEditingController();
   final _locationController = TextEditingController();
-  
+
   String _result = '';
 
   @override
@@ -23,7 +23,10 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Project Type', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const Text(
+              'Project Type',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 8),
             SegmentedButton<String>(
               segments: const [
@@ -32,7 +35,8 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                 ButtonSegment(value: 'Storage', label: Text('Storage')),
               ],
               selected: {_selectedType},
-              onSelectionChanged: (value) => setState(() => _selectedType = value.first),
+              onSelectionChanged: (value) =>
+                  setState(() => _selectedType = value.first),
             ),
             const SizedBox(height: 16),
             TextField(
@@ -58,7 +62,10 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: _calculate,
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.blue[700], foregroundColor: Colors.white),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue[700],
+                  foregroundColor: Colors.white,
+                ),
                 child: const Text('Calculate ROI'),
               ),
             ),
@@ -71,7 +78,13 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Results', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                      const Text(
+                        'Results',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                       const SizedBox(height: 8),
                       Text(_result, style: const TextStyle(fontSize: 16)),
                     ],
@@ -91,16 +104,17 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       setState(() => _result = 'Please enter a valid capacity');
       return;
     }
-    
+
     // Simple calculation
     final capex = capacity * 3.5; // $3.5/W
     final annualGeneration = capacity * 1400; // kWh
     final annualRevenue = annualGeneration * 0.12; // $0.12/kWh
     final annualProfit = annualRevenue * 0.7;
     final irr = (annualProfit / capex) * 100;
-    
+
     setState(() {
-      _result = '''
+      _result =
+          '''
 Capacity: ${capacity}kW
 Investment: \$${capex.toStringAsFixed(0)}
 Annual Generation: ${annualGeneration}kWh

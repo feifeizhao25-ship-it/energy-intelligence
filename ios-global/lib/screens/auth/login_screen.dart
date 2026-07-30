@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../../services/api_service.dart';
-import '../dashboard/dashboard_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -10,7 +9,8 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStateMixin {
+class _LoginScreenState extends State<LoginScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -47,9 +47,9 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         Navigator.of(context).pushReplacementNamed('/dashboard');
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('登录失败：${e.toString()}')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('登录失败：${e.toString()}')));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -110,10 +110,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                   SizedBox(height: 8),
                   Text(
                     '智慧新能源运营平台',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFFCBD5E1),
-                    ),
+                    style: TextStyle(fontSize: 14, color: Color(0xFFCBD5E1)),
                   ),
                   SizedBox(height: 48),
                   Card(
@@ -138,10 +135,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                             height: 280,
                             child: TabBarView(
                               controller: _tabController,
-                              children: [
-                                _buildEmailTab(),
-                                _buildPhoneTab(),
-                              ],
+                              children: [_buildEmailTab(), _buildPhoneTab()],
                             ),
                           ),
                         ],
@@ -195,9 +189,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           decoration: InputDecoration(
             hintText: '输入邮箱地址',
             prefixIcon: Icon(Icons.email_outlined),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
           ),
           keyboardType: TextInputType.emailAddress,
         ),
@@ -208,12 +200,12 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
             hintText: '输入密码',
             prefixIcon: Icon(Icons.lock_outline),
             suffixIcon: IconButton(
-              icon: Icon(_showPassword ? Icons.visibility : Icons.visibility_off),
+              icon: Icon(
+                _showPassword ? Icons.visibility : Icons.visibility_off,
+              ),
               onPressed: () => setState(() => _showPassword = !_showPassword),
             ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
           ),
           obscureText: !_showPassword,
         ),
@@ -244,9 +236,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
             hintText: '手机号',
             prefixText: '+86 ',
             prefixIcon: Icon(Icons.phone_outlined),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
           ),
           keyboardType: TextInputType.phone,
         ),
@@ -278,10 +268,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         SizedBox(height: 20),
         SizedBox(
           width: double.infinity,
-          child: ElevatedButton(
-            onPressed: _handleLogin,
-            child: Text('登录'),
-          ),
+          child: ElevatedButton(onPressed: _handleLogin, child: Text('登录')),
         ),
       ],
     );
@@ -290,9 +277,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   Widget _buildSocialButton(IconData icon, Color color) {
     return OutlinedButton(
       onPressed: () {},
-      style: OutlinedButton.styleFrom(
-        side: BorderSide(color: Colors.white30),
-      ),
+      style: OutlinedButton.styleFrom(side: BorderSide(color: Colors.white30)),
       child: Icon(icon, color: color, size: 20),
     );
   }

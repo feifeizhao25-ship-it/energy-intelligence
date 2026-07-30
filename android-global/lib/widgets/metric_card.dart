@@ -18,7 +18,7 @@ class MetricCard extends StatelessWidget {
   final VoidCallback? onTap;
 
   const MetricCard({
-    Key? key,
+    super.key,
     this.title,
     this.value,
     this.subtitle,
@@ -30,7 +30,7 @@ class MetricCard extends StatelessWidget {
     this.changePercent,
     this.accentColor,
     this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -60,7 +60,7 @@ class MetricCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: displayAccent.withOpacity(0.1),
+                      color: displayAccent.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(displayIcon, color: displayAccent, size: 20),
@@ -70,7 +70,9 @@ class MetricCard extends StatelessWidget {
                       children: [
                         Icon(
                           isPositive ? Icons.trending_up : Icons.trending_down,
-                          color: isPositive ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+                          color: isPositive
+                              ? const Color(0xFF10B981)
+                              : const Color(0xFFEF4444),
                           size: 16,
                         ),
                         const SizedBox(width: 4),
@@ -79,7 +81,9 @@ class MetricCard extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: isPositive ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+                            color: isPositive
+                                ? const Color(0xFF10B981)
+                                : const Color(0xFFEF4444),
                           ),
                         ),
                       ],

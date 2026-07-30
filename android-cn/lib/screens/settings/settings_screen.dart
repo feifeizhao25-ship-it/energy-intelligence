@@ -64,7 +64,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   onPressed: () => _showLogoutDialog(),
                   icon: Icon(Icons.logout),
                   label: Text('退出登录'),
-                  style: OutlinedButton.styleFrom(foregroundColor: Color(0xFFEF4444)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Color(0xFFEF4444),
+                  ),
                 ),
               ),
             ),
@@ -103,7 +105,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Container(
             padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withOpacity(0.1),
+              color: AppTheme.primaryColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
@@ -174,7 +176,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         title: Text('退出登录'),
         content: Text('确定要退出登录吗？'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: Text('取消')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('取消'),
+          ),
           TextButton(
             onPressed: () {
               Navigator.pop(context);

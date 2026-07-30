@@ -29,9 +29,12 @@ class OperationsScreen extends StatelessWidget {
             _OpsCard(
               icon: Icons.warning_outlined,
               title: 'Anomaly Detection',
-              description: 'AI-powered generation anomaly detection and fault diagnosis',
+              description:
+                  'AI-powered generation anomaly detection and fault diagnosis',
               color: const Color(0xFFFCD34D),
-              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AnomalyScreen())),
+              onTap: () => Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const AnomalyScreen())),
             ),
             const SizedBox(height: 12),
             _OpsCard(
@@ -39,15 +42,20 @@ class OperationsScreen extends StatelessWidget {
               title: 'Equipment',
               description: 'Asset management and maintenance tracking',
               color: const Color(0xFF60A5FA),
-              onTap: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Coming soon'))),
+              onTap: () => ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('Coming soon'))),
             ),
             const SizedBox(height: 12),
             _OpsCard(
               icon: Icons.cleaning_services_outlined,
               title: 'Cleaning Optimizer',
-              description: 'Optimal N* cleaning interval based on soiling rate and cost-benefit analysis',
+              description:
+                  'Optimal N* cleaning interval based on soiling rate and cost-benefit analysis',
               color: const Color(0xFF34D399),
-              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const CleaningScreen())),
+              onTap: () => Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const CleaningScreen())),
             ),
           ],
         ),
@@ -80,7 +88,12 @@ class _OpsCard extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: const Color(0xFFE2E8F0)),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 6)],
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 6,
+            ),
+          ],
         ),
         padding: const EdgeInsets.all(16),
         child: Row(
@@ -88,7 +101,10 @@ class _OpsCard extends StatelessWidget {
             Container(
               width: 48,
               height: 48,
-              decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
               child: Icon(icon, color: color, size: 24),
             ),
             const SizedBox(width: 16),
@@ -96,13 +112,30 @@ class _OpsCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF1E293B))),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF1E293B),
+                    ),
+                  ),
                   const SizedBox(height: 4),
-                  Text(description, style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                  Text(
+                    description,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF64748B),
+                    ),
+                  ),
                 ],
               ),
             ),
-            const Icon(Icons.arrow_forward_ios, size: 16, color: Color(0xFFC7D2E0)),
+            const Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: Color(0xFFC7D2E0),
+            ),
           ],
         ),
       ),

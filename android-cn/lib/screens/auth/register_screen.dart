@@ -41,10 +41,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('创建账号'),
-        elevation: 0,
-      ),
+      appBar: AppBar(title: Text('创建账号'), elevation: 0),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(20),
         child: Column(
@@ -216,11 +213,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
               child: Container(
                 decoration: BoxDecoration(
                   border: Border.all(
-                    color: isSelected ? AppTheme.primaryColor : Color(0xFFE2E8F0),
+                    color: isSelected
+                        ? AppTheme.primaryColor
+                        : Color(0xFFE2E8F0),
                     width: isSelected ? 2 : 1,
                   ),
                   borderRadius: BorderRadius.circular(12),
-                  color: isSelected ? AppTheme.primaryColor.withOpacity(0.1) : Colors.white,
+                  color: isSelected
+                      ? AppTheme.primaryColor.withValues(alpha: 0.1)
+                      : Colors.white,
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -232,7 +233,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: isSelected ? AppTheme.primaryColor : Color(0xFF475569),
+                        color: isSelected
+                            ? AppTheme.primaryColor
+                            : Color(0xFF475569),
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -248,7 +251,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
           children: [
             Checkbox(
               value: _agreedToTerms,
-              onChanged: (value) => setState(() => _agreedToTerms = value ?? false),
+              onChanged: (value) =>
+                  setState(() => _agreedToTerms = value ?? false),
             ),
             Expanded(
               child: Text.rich(
@@ -288,28 +292,30 @@ class _RegisterScreenState extends State<RegisterScreen> {
           _phoneController.text.isEmpty ||
           _passwordController.text.isEmpty ||
           _confirmPasswordController.text.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('请填写所有字段')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('请填写所有字段')));
         return;
       }
       if (_passwordController.text != _confirmPasswordController.text) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('两次输入的密码不一致')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('两次输入的密码不一致')));
         return;
       }
       setState(() => _currentStep = 1);
     } else {
-      if (_companyController.text.isEmpty || _selectedRole.isEmpty || !_agreedToTerms) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('请填写所有信息并同意协议')),
-        );
+      if (_companyController.text.isEmpty ||
+          _selectedRole.isEmpty ||
+          !_agreedToTerms) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('请填写所有信息并同意协议')));
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('注册成功！')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('注册成功！')));
       Navigator.of(context).pop();
     }
   }

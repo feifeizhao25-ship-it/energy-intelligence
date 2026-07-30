@@ -61,8 +61,13 @@ class _ResearchScreenState extends State<ResearchScreen> {
               decoration: InputDecoration(
                 hintText: 'Search papers...',
                 prefixIcon: const Icon(Icons.search, size: 20),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 12,
+                ),
               ),
             ),
             const SizedBox(height: 20),
@@ -74,7 +79,12 @@ class _ResearchScreenState extends State<ResearchScreen> {
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: const Color(0xFFE2E8F0)),
-                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 6)],
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.04),
+                        blurRadius: 6,
+                      ),
+                    ],
                   ),
                   padding: const EdgeInsets.all(16),
                   child: Column(
@@ -82,19 +92,36 @@ class _ResearchScreenState extends State<ResearchScreen> {
                     children: [
                       Text(
                         paper['title'] as String,
-                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF1E293B)),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF1E293B),
+                        ),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         '${paper['authors']} • ${paper['journal']} (${paper['year']})',
-                        style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF64748B),
+                        ),
                       ),
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          Icon(Icons.trending_up, size: 14, color: const Color(0xFF94A3B8)),
+                          Icon(
+                            Icons.trending_up,
+                            size: 14,
+                            color: const Color(0xFF94A3B8),
+                          ),
                           const SizedBox(width: 4),
-                          Text('${paper['citations']} citations', style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                          Text(
+                            '${paper['citations']} citations',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFF64748B),
+                            ),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 12),
@@ -103,9 +130,21 @@ class _ResearchScreenState extends State<ResearchScreen> {
                         runSpacing: 6,
                         children: (paper['tags'] as List<String>).map((tag) {
                           return Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(color: const Color(0xFFF0F9FF), borderRadius: BorderRadius.circular(4)),
-                            child: Text(tag, style: const TextStyle(fontSize: 10, color: Color(0xFF0369A1))),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF0F9FF),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              tag,
+                              style: const TextStyle(
+                                fontSize: 10,
+                                color: Color(0xFF0369A1),
+                              ),
+                            ),
                           );
                         }).toList(),
                       ),
@@ -114,7 +153,9 @@ class _ResearchScreenState extends State<ResearchScreen> {
                         width: double.infinity,
                         child: OutlinedButton(
                           onPressed: () {},
-                          style: OutlinedButton.styleFrom(side: const BorderSide(color: Color(0xFF1D4ED8))),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Color(0xFF1D4ED8)),
+                          ),
                           child: const Text('AI Summarize'),
                         ),
                       ),
@@ -122,7 +163,7 @@ class _ResearchScreenState extends State<ResearchScreen> {
                   ),
                 ),
               );
-            }).toList(),
+            }),
           ],
         ),
       ),

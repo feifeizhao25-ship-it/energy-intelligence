@@ -38,9 +38,13 @@ class Project {
       lng: (json['longitude'] ?? json['lng'] ?? 0.0).toDouble(),
       address: json['location'] ?? json['address'] ?? '',
       province: json['province'] ?? '',
-      capacityMw: (json['capacity_mw'] ?? json['capacityMw'] ?? json['capacity'] ?? 0.0).toDouble(),
+      capacityMw:
+          (json['capacity_mw'] ?? json['capacityMw'] ?? json['capacity'] ?? 0.0)
+              .toDouble(),
       tags: List<String>.from(json['tags'] ?? []),
-      createdAt: DateTime.tryParse(json['created_at'] ?? json['createdAt'] ?? '') ?? DateTime.now(),
+      createdAt:
+          DateTime.tryParse(json['created_at'] ?? json['createdAt'] ?? '') ??
+          DateTime.now(),
     );
   }
 

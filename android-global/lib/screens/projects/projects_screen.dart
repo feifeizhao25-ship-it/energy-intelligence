@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../models/models.dart';
 import '../../services/mock_data.dart';
 
 class ProjectsScreen extends StatelessWidget {
@@ -13,9 +12,7 @@ class ProjectsScreen extends StatelessWidget {
         elevation: 0,
         backgroundColor: Colors.white,
         foregroundColor: const Color(0xFF1E293B),
-        actions: [
-          IconButton(icon: const Icon(Icons.search), onPressed: () {}),
-        ],
+        actions: [IconButton(icon: const Icon(Icons.search), onPressed: () {})],
       ),
       body: ListView.builder(
         padding: const EdgeInsets.all(16),
@@ -31,7 +28,12 @@ class ProjectsScreen extends StatelessWidget {
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: const Color(0xFFE2E8F0)),
-                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 6)],
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 6,
+                    ),
+                  ],
                 ),
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -40,7 +42,11 @@ class ProjectsScreen extends StatelessWidget {
                     Row(
                       children: [
                         Text(
-                          project.type == 'solar' ? '☀️' : project.type == 'wind' ? '💨' : '🔋',
+                          project.type == 'solar'
+                              ? '☀️'
+                              : project.type == 'wind'
+                              ? '💨'
+                              : '🔋',
                           style: const TextStyle(fontSize: 24),
                         ),
                         const SizedBox(width: 12),
@@ -50,19 +56,31 @@ class ProjectsScreen extends StatelessWidget {
                             children: [
                               Text(
                                 project.name,
-                                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF1E293B)),
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF1E293B),
+                                ),
                               ),
                               Text(
                                 project.locationAddress,
-                                style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF64748B),
+                                ),
                               ),
                             ],
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
-                            color: _getStatusColor(project.status).withOpacity(0.1),
+                            color: _getStatusColor(
+                              project.status,
+                            ).withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
@@ -79,7 +97,11 @@ class ProjectsScreen extends StatelessWidget {
                     const SizedBox(height: 12),
                     Text(
                       '${project.capacity} MW',
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1E293B),
+                      ),
                     ),
                   ],
                 ),

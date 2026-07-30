@@ -8,7 +8,6 @@ import '../../widgets/bar_chart.dart';
 import '../../widgets/project_card.dart';
 import '../resource/resource_screen.dart';
 import '../finance/finance_screen.dart';
-import '../operations/operations_screen.dart';
 import '../ai_assistant/ai_assistant_screen.dart';
 import '../projects/projects_screen.dart';
 
@@ -20,9 +19,11 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   int _selectedIndex = 0;
+  // ignore: unused_field
   User? _user;
   Map<String, dynamic> _metrics = {};
   List<Map<String, dynamic>> _alerts = [];
+  // ignore: unused_field
   bool _isLoading = true;
 
   @override
@@ -42,9 +43,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       });
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('加载数据失败')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('加载数据失败')));
       }
       setState(() => _isLoading = false);
     }
@@ -60,8 +61,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       AiAssistantScreen(),
     ];
 
-    return WillPopScope(
-      onWillPop: () async => false,
+    return PopScope(
+      canPop: false,
       child: Scaffold(
         body: screens[_selectedIndex],
         bottomNavigationBar: BottomNavigationBar(
@@ -91,9 +92,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             pinned: true,
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
-                decoration: BoxDecoration(
-                  gradient: AppTheme.primaryGradient(),
-                ),
+                decoration: BoxDecoration(gradient: AppTheme.primaryGradient()),
                 child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: 16),
                   child: Column(
@@ -114,7 +113,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           Stack(
                             children: [
                               IconButton(
-                                icon: Icon(Icons.notifications_outlined, color: Colors.white),
+                                icon: Icon(
+                                  Icons.notifications_outlined,
+                                  color: Colors.white,
+                                ),
                                 onPressed: () {},
                               ),
                               if (_alerts.isNotEmpty)
@@ -233,7 +235,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.2),
+        color: Colors.white.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
@@ -298,8 +300,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildWeeklyChart() {
     final weeklyData = (_metrics['weeklyData'] ?? []) as List;
-    final labels = weeklyData.map((d) => d['day'].toString().substring(2)).toList().cast<String>();
-    final values = weeklyData.map((d) => (d['generation'] ?? 0.0) / 1000.0).toList().cast<double>();
+    final labels = weeklyData
+        .map((d) => d['day'].toString().substring(2))
+        .toList()
+        .cast<String>();
+    final values = weeklyData
+        .map((d) => (d['generation'] ?? 0.0) / 1000.0)
+        .toList()
+        .cast<double>();
 
     return BarChart(
       values: values,
@@ -348,13 +356,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Color severityColor = alert['severity'] == 'critical'
                 ? Color(0xFFEF4444)
                 : alert['severity'] == 'warning'
-                    ? Color(0xFFF59E0B)
-                    : Color(0xFF3B82F6);
+                ? Color(0xFFF59E0B)
+                : Color(0xFF3B82F6);
 
             return Container(
               margin: EdgeInsets.only(bottom: 12),
               decoration: BoxDecoration(
-                border: Border(left: BorderSide(color: severityColor, width: 4)),
+                border: Border(
+                  left: BorderSide(color: severityColor, width: 4),
+                ),
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -378,9 +388,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                       ),
                       Container(
-                        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
-                          color: severityColor.withOpacity(0.1),
+                          color: severityColor.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
@@ -397,17 +410,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   SizedBox(height: 6),
                   Text(
                     alert['message'] ?? '',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF475569),
-                    ),
+                    style: TextStyle(fontSize: 12, color: Color(0xFF475569)),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
             );
-          }).toList(),
+          }),
       ],
     );
   }
@@ -417,7 +427,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
       future: ApiService.getProjects(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return SizedBox(height: 200, child: Center(child: CircularProgressIndicator()));
+          return SizedBox(
+            height: 200,
+            child: Center(child: CircularProgressIndicator()),
+          );
         }
 
         final projects = snapshot.data ?? [];
@@ -449,7 +462,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   return Container(
                     width: 280,
                     margin: EdgeInsets.only(right: 12),
-                    child: ProjectCard(project: Project.fromJson(project as Map<String, dynamic>)),
+                    child: ProjectCard(project: Project.fromJson(project)),
                   );
                 }).toList(),
               ),

@@ -52,7 +52,9 @@ class _SolarFinanceScreenState extends State<SolarFinanceScreen> {
         _isCalculating = false;
       });
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('计算失败')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('计算失败')));
       setState(() => _isCalculating = false);
     }
   }
@@ -108,7 +110,9 @@ class _SolarFinanceScreenState extends State<SolarFinanceScreen> {
                 Expanded(
                   child: Container(
                     height: 2,
-                    color: _currentStep > i ? AppTheme.primaryColor : Color(0xFFE2E8F0),
+                    color: _currentStep > i
+                        ? AppTheme.primaryColor
+                        : Color(0xFFE2E8F0),
                     margin: EdgeInsets.only(top: 8),
                   ),
                 ),
@@ -160,8 +164,14 @@ class _SolarFinanceScreenState extends State<SolarFinanceScreen> {
               keyboardType: TextInputType.numberWithOptions(decimal: true),
             ),
             SizedBox(height: 12),
-            Text('衰减率: 0.5%/年', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
-            Text('DC/AC比: 1.2', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+            Text(
+              '衰减率: 0.5%/年',
+              style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+            ),
+            Text(
+              'DC/AC比: 1.2',
+              style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+            ),
           ],
         ),
       ),
@@ -212,10 +222,26 @@ class _SolarFinanceScreenState extends State<SolarFinanceScreen> {
           mainAxisSpacing: 12,
           crossAxisSpacing: 12,
           children: [
-            _buildResultCard('IRR', '${_result!.irrEquity.toStringAsFixed(2)}%', Color(0xFF10B981)),
-            _buildResultCard('NPV', '¥${_result!.npv.toStringAsFixed(1)}M', Color(0xFF3B82F6)),
-            _buildResultCard('LCOE', '¥${_result!.lcoe.toStringAsFixed(4)}/kWh', Color(0xFFF59E0B)),
-            _buildResultCard('投资回收', '${_result!.paybackStatic.toStringAsFixed(1)}年', Color(0xFF06B6D4)),
+            _buildResultCard(
+              'IRR',
+              '${_result!.irrEquity.toStringAsFixed(2)}%',
+              Color(0xFF10B981),
+            ),
+            _buildResultCard(
+              'NPV',
+              '¥${_result!.npv.toStringAsFixed(1)}M',
+              Color(0xFF3B82F6),
+            ),
+            _buildResultCard(
+              'LCOE',
+              '¥${_result!.lcoe.toStringAsFixed(4)}/kWh',
+              Color(0xFFF59E0B),
+            ),
+            _buildResultCard(
+              '投资回收',
+              '${_result!.paybackStatic.toStringAsFixed(1)}年',
+              Color(0xFF06B6D4),
+            ),
           ],
         ),
         SizedBox(height: 24),
@@ -260,11 +286,18 @@ class _SolarFinanceScreenState extends State<SolarFinanceScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(label, style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+            Text(
+              label,
+              style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+            ),
             SizedBox(height: 8),
             Text(
               value,
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: color),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
               textAlign: TextAlign.center,
             ),
           ],
@@ -288,7 +321,11 @@ class _SolarFinanceScreenState extends State<SolarFinanceScreen> {
                 }
               },
               child: _isCalculating
-                  ? SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                  ? SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
                   : Text(_currentStep == 2 ? '计算结果' : '下一步'),
             ),
           ),

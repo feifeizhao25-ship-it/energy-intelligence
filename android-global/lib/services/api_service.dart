@@ -1,6 +1,7 @@
 /// ApiService — real HTTP client for Energy backend v2
 /// All methods call http://116.62.32.43/api/v1/*
 /// Import http: ^1.6.0 (already in pubspec.yaml)
+library;
 
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -10,7 +11,8 @@ class ApiException implements Exception {
   final int statusCode;
   final String message;
   ApiException(this.statusCode, this.message);
-  @override String toString() => 'ApiException($statusCode): $message';
+  @override
+  String toString() => 'ApiException($statusCode): $message';
 }
 
 class ApiService {
@@ -48,11 +50,16 @@ class ApiService {
     String? company,
     String? role,
   }) async {
-    final resp = await _post('/api/v1/auth/register', body: {
-      'name': name, 'email': email, 'password': password,
-      if (company != null) 'company': company,
-      if (role != null) 'role': role,
-    });
+    final resp = await _post(
+      '/api/v1/auth/register',
+      body: {
+        'name': name,
+        'email': email,
+        'password': password,
+        'company': ?company,
+        'role': ?role,
+      },
+    );
     final token = resp['access_token'] as String;
     _token = token;
     final prefs = await SharedPreferences.getInstance();
@@ -60,10 +67,14 @@ class ApiService {
     return token;
   }
 
-  static Future<String> login({required String email, required String password}) async {
-    final resp = await _post('/api/v1/auth/login', body: {
-      'email': email, 'password': password,
-    });
+  static Future<String> login({
+    required String email,
+    required String password,
+  }) async {
+    final resp = await _post(
+      '/api/v1/auth/login',
+      body: {'email': email, 'password': password},
+    );
     final token = resp['access_token'] as String;
     _token = token;
     final prefs = await SharedPreferences.getInstance();
@@ -87,8 +98,16 @@ class ApiService {
 
   static Future<List<Map<String, dynamic>>> getProjects() async {
     final resp = await _get('/api/v1/projects');
-    if (resp is List) return (resp as List).map((e) => Map<String, dynamic>.from(e as Map)).toList();
-    if (resp['data'] is List) return (resp['data'] as List).map((e) => Map<String, dynamic>.from(e as Map)).toList();
+    if (resp is List) {
+      return (resp as List)
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList();
+    }
+    if (resp['data'] is List) {
+      return (resp['data'] as List)
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList();
+    }
     return [];
   }
 
@@ -105,15 +124,18 @@ class ApiService {
     double? capacityMw,
     String? location,
   }) async {
-    return await _post('/api/v1/projects', body: {
-      'name': name,
-      if (description != null) 'description': description,
-      if (technology != null) 'technology': technology,
-      if (latitude != null) 'latitude': latitude,
-      if (longitude != null) 'longitude': longitude,
-      if (capacityMw != null) 'capacity_mw': capacityMw,
-      if (location != null) 'location': location,
-    });
+    return await _post(
+      '/api/v1/projects',
+      body: {
+        'name': name,
+        'description': ?description,
+        'technology': ?technology,
+        'latitude': ?latitude,
+        'longitude': ?longitude,
+        'capacity_mw': ?capacityMw,
+        'location': ?location,
+      },
+    );
   }
 
   static Future<void> deleteProject(String id) async {
@@ -122,11 +144,20 @@ class ApiService {
 
   // ── Resource ──────────────────────────────────────────────────────────────
 
-  static Future<Map<String, dynamic>> getSolarResource(double lat, double lng) async {
-    return await _post('/api/v1/resource/solar', body: {'lat': lat, 'lng': lng});
+  static Future<Map<String, dynamic>> getSolarResource(
+    double lat,
+    double lng,
+  ) async {
+    return await _post(
+      '/api/v1/resource/solar',
+      body: {'lat': lat, 'lng': lng},
+    );
   }
 
-  static Future<Map<String, dynamic>> getWindResource(double lat, double lng) async {
+  static Future<Map<String, dynamic>> getWindResource(
+    double lat,
+    double lng,
+  ) async {
     return await _post('/api/v1/resource/wind', body: {'lat': lat, 'lng': lng});
   }
 
@@ -152,43 +183,56 @@ class ApiService {
   }) async {
     if (legacyParams != null) {
       // Transform legacy screen params to real API format
-      final capMw = legacyParams['capacityMwp'] ?? legacyParams['capacityMw'] ?? 0.0;
+      final capMw =
+          legacyParams['capacityMwp'] ?? legacyParams['capacityMw'] ?? 0.0;
       final capexTotal = legacyParams['capexTotal'] ?? 0.0;
       final pr = legacyParams['pr'] ?? 0.78;
       final opexAnnual = legacyParams['opexAnnual'] ?? 0.0;
       final elecPrice = legacyParams['electricityPrice'] ?? 0.35;
       final ghi = legacyParams['ghiAnnual'] ?? 1456.0;
       // Convert: capexTotal (yuan) -> capex_per_w (yuan/W) = capexTotal / (capMw*1e6)
-      final cpW = capexTotal > 0 && capMw > 0 ? capexTotal / (capMw * 1e6) : 4.85;
+      final cpW = capexTotal > 0 && capMw > 0
+          ? capexTotal / (capMw * 1e6)
+          : 4.85;
       // pr (0-1) -> capacity_factor (0-100%)
       final cf = (pr * 100).clamp(0.0, 100.0);
       // opexAnnual (yuan/yr) -> opex_per_kw_yr = opexAnnual / (capMw*1000)
       final opKw = capMw > 0 ? opexAnnual / (capMw * 1000) : 287.5;
       try {
-        final resp = await _post('/api/v1/finance/solar', body: {
-          'capacity_mw': capMw,
-          'capex_per_w': cpW,
-          'opex_per_kw_yr': opKw,
-          'electricity_price': elecPrice,
-          'ghi_annual': ghi,
-          'capacity_factor': cf,
-          'degradation_rate': 0.005,
-          'project_life': 25,
-        });
+        final resp = await _post(
+          '/api/v1/finance/solar',
+          body: {
+            'capacity_mw': capMw,
+            'capex_per_w': cpW,
+            'opex_per_kw_yr': opKw,
+            'electricity_price': elecPrice,
+            'ghi_annual': ghi,
+            'capacity_factor': cf,
+            'degradation_rate': 0.005,
+            'project_life': 25,
+          },
+        );
         // Transform backend response to FinancialModel format
         return {
           'id': '',
           'modelType': 'solar',
-          'modelName': '光伏财务模型',
+          'modelName': 'Solar financial model',
           'capacityMwp': resp['capacity_mw'] ?? capMw,
-          'capexTotal': resp['capex_per_w'] != null ? (resp['capex_per_w'] * capMw * 1e6) : capexTotal,
-          'opexAnnual': resp['opex_per_kw_yr'] != null ? (resp['opex_per_kw_yr'] * capMw * 1000) : opexAnnual,
+          'capexTotal': resp['capex_per_w'] != null
+              ? (resp['capex_per_w'] * capMw * 1e6)
+              : capexTotal,
+          'opexAnnual': resp['opex_per_kw_yr'] != null
+              ? (resp['opex_per_kw_yr'] * capMw * 1000)
+              : opexAnnual,
           'electricityPrice': resp['electricity_price'] ?? elecPrice,
           'irrEquity': (resp['irr'] ?? resp['irr_equity'] ?? 0.0).toDouble(),
           'npv': (resp['npv'] ?? 0.0).toDouble(),
           'lcoe': (resp['lcoe'] ?? 0.0).toDouble(),
-          'paybackStatic': (resp['payback_years'] ?? resp['payback'] ?? 0.0).toDouble(),
-          'annualCashflow': _toDoubleList(resp['cashflows'] ?? resp['annual_cashflows'] ?? []),
+          'paybackStatic': (resp['payback_years'] ?? resp['payback'] ?? 0.0)
+              .toDouble(),
+          'annualCashflow': _toDoubleList(
+            resp['cashflows'] ?? resp['annual_cashflows'] ?? [],
+          ),
         };
       } catch (_) {
         // Fallback: compute locally
@@ -197,13 +241,17 @@ class ApiService {
         final annualOp = opexAnnual;
         final netAnnual = annualRevenue - annualOp;
         final totalCapex = capexTotal;
-        final lcoe = totalCapex > 0 && annualGen > 0 ? totalCapex / annualGen / 25 : 0.0;
-        final irr = netAnnual > 0 && totalCapex > 0 ? netAnnual / totalCapex * 100 : 0.0;
+        final lcoe = totalCapex > 0 && annualGen > 0
+            ? totalCapex / annualGen / 25
+            : 0.0;
+        final irr = netAnnual > 0 && totalCapex > 0
+            ? netAnnual / totalCapex * 100
+            : 0.0;
         final payback = netAnnual > 0 ? totalCapex / netAnnual : 0.0;
         return {
           'id': '',
           'modelType': 'solar',
-          'modelName': '光伏财务模型',
+          'modelName': 'Solar financial model',
           'capacityMwp': capMw,
           'capexTotal': capexTotal,
           'opexAnnual': opexAnnual,
@@ -216,20 +264,23 @@ class ApiService {
         };
       }
     }
-    return await _post('/api/v1/finance/solar', body: {
-      'capacity_mw': capacityMw,
-      'capex_per_w': capexPerW,
-      'opex_per_kw_yr': opexPerKwYr,
-      'electricity_price': electricityPrice,
-      if (ghiAnnual != null) 'ghi_annual': ghiAnnual,
-      if (capacityFactor != null) 'capacity_factor': capacityFactor,
-      'degradation_rate': degradationRate,
-      if (itcRate != null) 'itc_rate': itcRate,
-      if (debtRatio != null) 'debt_ratio': debtRatio,
-      if (interestRate != null) 'interest_rate': interestRate,
-      if (taxRate != null) 'tax_rate': taxRate,
-      'project_life': projectLife,
-    });
+    return await _post(
+      '/api/v1/finance/solar',
+      body: {
+        'capacity_mw': capacityMw,
+        'capex_per_w': capexPerW,
+        'opex_per_kw_yr': opexPerKwYr,
+        'electricity_price': electricityPrice,
+        'ghi_annual': ?ghiAnnual,
+        'capacity_factor': ?capacityFactor,
+        'degradation_rate': degradationRate,
+        'itc_rate': ?itcRate,
+        'debt_ratio': ?debtRatio,
+        'interest_rate': ?interestRate,
+        'tax_rate': ?taxRate,
+        'project_life': projectLife,
+      },
+    );
   }
 
   static List<double> _toDoubleList(dynamic list) {
@@ -245,26 +296,34 @@ class ApiService {
     required double windSpeedAnnual,
     int projectLifespan = 25,
   }) async {
-    return await _post('/api/v1/finance/wind', body: {
-      'capacityMw': capacityMw,
-      'capexPerKw': capexPerKw,
-      'opexPerKwYr': opexPerKwYr,
-      'electricityPrice': electricityPrice,
-      'windSpeedAnnual': windSpeedAnnual,
-      'projectLifespan': projectLifespan,
-    });
+    return await _post(
+      '/api/v1/finance/wind',
+      body: {
+        'capacityMw': capacityMw,
+        'capexPerKw': capexPerKw,
+        'opexPerKwYr': opexPerKwYr,
+        'electricityPrice': electricityPrice,
+        'windSpeedAnnual': windSpeedAnnual,
+        'projectLifespan': projectLifespan,
+      },
+    );
   }
 
   // ── Operations ─────────────────────────────────────────────────────────────
 
-  static Future<Map<String, dynamic>> getOperationsHealth(String projectId) async {
+  static Future<Map<String, dynamic>> getOperationsHealth(
+    String projectId,
+  ) async {
     return await _get('/api/v1/operations/health', {'projectId': projectId});
   }
 
   // ── AI Chat ───────────────────────────────────────────────────────────────
 
   static Future<String> aiChat(List<Map<String, String>> messages) async {
-    final resp = await _post('/api/v1/ai_assistant/chat', body: {'messages': messages});
+    final resp = await _post(
+      '/api/v1/ai_assistant/chat',
+      body: {'messages': messages},
+    );
     return resp['reply'] ?? resp['content'] ?? resp['message'] ?? '';
   }
 
@@ -276,7 +335,10 @@ class ApiService {
       final resp = await _post('/api/v1/ai/chat', body: {'message': message});
       return resp;
     } catch (_) {
-      return {'success': false, 'error': 'AI服务暂时不可用'};
+      return {
+        'success': false,
+        'error': 'The AI service is temporarily unavailable.',
+      };
     }
   }
 
@@ -312,8 +374,16 @@ class ApiService {
   static Future<List<Map<String, dynamic>>> getAlerts() async {
     try {
       final resp = await _get('/api/v1/alerts');
-      if (resp is List) return (resp as List).map((e) => Map<String, dynamic>.from(e as Map)).toList();
-      if (resp['alerts'] is List) return (resp['alerts'] as List).map((e) => Map<String, dynamic>.from(e as Map)).toList();
+      if (resp is List) {
+        return (resp as List)
+            .map((e) => Map<String, dynamic>.from(e as Map))
+            .toList();
+      }
+      if (resp['alerts'] is List) {
+        return (resp['alerts'] as List)
+            .map((e) => Map<String, dynamic>.from(e as Map))
+            .toList();
+      }
       return [];
     } catch (_) {
       return [];
@@ -342,12 +412,20 @@ class ApiService {
   }) async {
     try {
       final resp = await _get('/api/v1/research/papers', {
-        if (query != null) 'query': query,
+        'query': ?query,
         'page': page.toString(),
         'pageSize': pageSize.toString(),
       });
-      if (resp['data'] is List) return (resp['data'] as List).map((e) => Map<String, dynamic>.from(e as Map)).toList();
-      if (resp['papers'] is List) return (resp['papers'] as List).map((e) => Map<String, dynamic>.from(e as Map)).toList();
+      if (resp['data'] is List) {
+        return (resp['data'] as List)
+            .map((e) => Map<String, dynamic>.from(e as Map))
+            .toList();
+      }
+      if (resp['papers'] is List) {
+        return (resp['papers'] as List)
+            .map((e) => Map<String, dynamic>.from(e as Map))
+            .toList();
+      }
       return [];
     } catch (_) {
       return [];
@@ -361,14 +439,20 @@ class ApiService {
 
   // ── HTTP helpers ──────────────────────────────────────────────────────────
 
-  static Future<Map<String, dynamic>> _get(String path, [Map<String, String>? query]) async {
+  static Future<Map<String, dynamic>> _get(
+    String path, [
+    Map<String, String>? query,
+  ]) async {
     final resp = await _client
         .get(_uri(path, query), headers: _headers)
         .timeout(const Duration(seconds: 15));
     return _parse(resp);
   }
 
-  static Future<Map<String, dynamic>> _post(String path, {required Map<String, dynamic> body}) async {
+  static Future<Map<String, dynamic>> _post(
+    String path, {
+    required Map<String, dynamic> body,
+  }) async {
     final resp = await _client
         .post(_uri(path), headers: _headers, body: jsonEncode(body))
         .timeout(const Duration(seconds: 15));
@@ -390,7 +474,9 @@ class ApiService {
       return {'data': decoded};
     }
     String msg = resp.body;
-    try { msg = jsonDecode(resp.body)['detail'] ?? msg; } catch (_) {}
+    try {
+      msg = jsonDecode(resp.body)['detail'] ?? msg;
+    } catch (_) {}
     throw ApiException(resp.statusCode, msg);
   }
 }

@@ -9,7 +9,10 @@ class AssistantScreen extends StatefulWidget {
 
 class _AssistantScreenState extends State<AssistantScreen> {
   final _messages = <Map<String, String>>[
-    {'role': 'assistant', 'message': 'Hello! How can I help with your energy projects today?'},
+    {
+      'role': 'assistant',
+      'message': 'Hello! How can I help with your energy projects today?',
+    },
   ];
   final _controller = TextEditingController();
 
@@ -27,7 +30,9 @@ class _AssistantScreenState extends State<AssistantScreen> {
                 final msg = _messages[index];
                 final isUser = msg['role'] == 'user';
                 return Align(
-                  alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+                  alignment: isUser
+                      ? Alignment.centerRight
+                      : Alignment.centerLeft,
                   child: Container(
                     margin: const EdgeInsets.symmetric(vertical: 4),
                     padding: const EdgeInsets.all(12),
@@ -37,7 +42,9 @@ class _AssistantScreenState extends State<AssistantScreen> {
                     ),
                     child: Text(
                       msg['message']!,
-                      style: TextStyle(color: isUser ? Colors.white : Colors.black),
+                      style: TextStyle(
+                        color: isUser ? Colors.white : Colors.black,
+                      ),
                     ),
                   ),
                 );
@@ -57,10 +64,7 @@ class _AssistantScreenState extends State<AssistantScreen> {
                     ),
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.send),
-                  onPressed: _send,
-                ),
+                IconButton(icon: const Icon(Icons.send), onPressed: _send),
               ],
             ),
           ),
@@ -73,7 +77,11 @@ class _AssistantScreenState extends State<AssistantScreen> {
     if (_controller.text.isEmpty) return;
     setState(() {
       _messages.add({'role': 'user', 'message': _controller.text});
-      _messages.add({'role': 'assistant', 'message': 'I can help you with that. Would you like me to run an analysis?'});
+      _messages.add({
+        'role': 'assistant',
+        'message':
+            'I can help you with that. Would you like me to run an analysis?',
+      });
       _controller.clear();
     });
   }

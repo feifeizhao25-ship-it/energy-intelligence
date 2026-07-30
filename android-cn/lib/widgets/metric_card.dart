@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../theme/app_theme.dart';
 
 class MetricCard extends StatelessWidget {
   final String label;
@@ -12,7 +11,7 @@ class MetricCard extends StatelessWidget {
   final VoidCallback? onTap;
 
   const MetricCard({
-    Key? key,
+    super.key,
     required this.label,
     required this.value,
     required this.unit,
@@ -21,12 +20,12 @@ class MetricCard extends StatelessWidget {
     required this.accentColor,
     required this.icon,
     this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     bool isPositive = trend == 'up';
-    
+
     return Card(
       elevation: 1,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -44,7 +43,7 @@ class MetricCard extends StatelessWidget {
                   Container(
                     padding: EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: accentColor.withOpacity(0.1),
+                      color: accentColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(icon, color: accentColor, size: 20),
@@ -53,7 +52,9 @@ class MetricCard extends StatelessWidget {
                     children: [
                       Icon(
                         isPositive ? Icons.trending_up : Icons.trending_down,
-                        color: isPositive ? Color(0xFF10B981) : Color(0xFFEF4444),
+                        color: isPositive
+                            ? Color(0xFF10B981)
+                            : Color(0xFFEF4444),
                         size: 16,
                       ),
                       SizedBox(width: 4),
@@ -62,7 +63,9 @@ class MetricCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: isPositive ? Color(0xFF10B981) : Color(0xFFEF4444),
+                          color: isPositive
+                              ? Color(0xFF10B981)
+                              : Color(0xFFEF4444),
                         ),
                       ),
                     ],

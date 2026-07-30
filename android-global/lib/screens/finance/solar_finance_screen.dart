@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
-import '../../theme/app_theme.dart';
 import '../../widgets/bar_chart.dart';
 
 class SolarFinanceScreen extends StatefulWidget {
@@ -91,7 +90,10 @@ class _SolarFinanceScreenState extends State<SolarFinanceScreen> {
     }
 
     final irr = _calculateIRR(cashflows);
-    final lcoe = (initialCost + (annualOpex * 25)) / (annualGeneration * 1000 * 25) * 1e6;
+    final lcoe =
+        (initialCost + (annualOpex * 25)) /
+        (annualGeneration * 1000 * 25) *
+        1e6;
     final payback = initialCost * equityRatio / (annualRevenue * 0.6);
 
     setState(() {
@@ -122,17 +124,29 @@ class _SolarFinanceScreenState extends State<SolarFinanceScreen> {
           children: [
             Stepper(
               currentStep: _currentStep,
-              onStepContinue: _currentStep < 3 ? () => setState(() => _currentStep++) : _calculate,
-              onStepCancel: _currentStep > 0 ? () => setState(() => _currentStep--) : null,
+              onStepContinue: _currentStep < 3
+                  ? () => setState(() => _currentStep++)
+                  : _calculate,
+              onStepCancel: _currentStep > 0
+                  ? () => setState(() => _currentStep--)
+                  : null,
               controlsBuilder: (context, details) {
                 return Padding(
                   padding: const EdgeInsets.only(top: 16),
                   child: Row(
                     children: [
-                      ElevatedButton(onPressed: details.onStepContinue, child: Text(_currentStep == 3 ? 'Calculate' : 'Continue')),
+                      ElevatedButton(
+                        onPressed: details.onStepContinue,
+                        child: Text(
+                          _currentStep == 3 ? 'Calculate' : 'Continue',
+                        ),
+                      ),
                       if (details.onStepCancel != null) ...[
                         const SizedBox(width: 8),
-                        OutlinedButton(onPressed: details.onStepCancel, child: const Text('Back')),
+                        OutlinedButton(
+                          onPressed: details.onStepCancel,
+                          child: const Text('Back'),
+                        ),
                       ],
                     ],
                   ),
@@ -145,11 +159,32 @@ class _SolarFinanceScreenState extends State<SolarFinanceScreen> {
                   content: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      TextField(controller: _capacityCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Capacity (MW)', hintText: '100')),
+                      TextField(
+                        controller: _capacityCtrl,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: 'Capacity (MW)',
+                          hintText: '100',
+                        ),
+                      ),
                       const SizedBox(height: 12),
-                      TextField(controller: _capexCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: r'CapEx ($/W)', hintText: '1.2')),
+                      TextField(
+                        controller: _capexCtrl,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: r'CapEx ($/W)',
+                          hintText: '1.2',
+                        ),
+                      ),
                       const SizedBox(height: 12),
-                      TextField(controller: _opexCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: r'OpEx ($/kW/yr)', hintText: '15')),
+                      TextField(
+                        controller: _opexCtrl,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: r'OpEx ($/kW/yr)',
+                          hintText: '15',
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -159,11 +194,32 @@ class _SolarFinanceScreenState extends State<SolarFinanceScreen> {
                   content: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      TextField(controller: _priceCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Electricity Price (\$/MWh)', hintText: '80')),
+                      TextField(
+                        controller: _priceCtrl,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: 'Electricity Price (\$/MWh)',
+                          hintText: '80',
+                        ),
+                      ),
                       const SizedBox(height: 12),
-                      TextField(controller: _itcCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'ITC Rate (%)', hintText: '30')),
+                      TextField(
+                        controller: _itcCtrl,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: 'ITC Rate (%)',
+                          hintText: '30',
+                        ),
+                      ),
                       const SizedBox(height: 12),
-                      TextField(controller: _pricingCtrl, readOnly: true, decoration: const InputDecoration(labelText: 'Pricing Structure', hintText: 'Fixed')),
+                      TextField(
+                        controller: _pricingCtrl,
+                        readOnly: true,
+                        decoration: const InputDecoration(
+                          labelText: 'Pricing Structure',
+                          hintText: 'Fixed',
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -173,11 +229,32 @@ class _SolarFinanceScreenState extends State<SolarFinanceScreen> {
                   content: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      TextField(controller: _debtCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Debt Ratio (%)', hintText: '60')),
+                      TextField(
+                        controller: _debtCtrl,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: 'Debt Ratio (%)',
+                          hintText: '60',
+                        ),
+                      ),
                       const SizedBox(height: 12),
-                      TextField(controller: _interestCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Interest Rate (%)', hintText: '5')),
+                      TextField(
+                        controller: _interestCtrl,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: 'Interest Rate (%)',
+                          hintText: '5',
+                        ),
+                      ),
                       const SizedBox(height: 12),
-                      TextField(controller: _taxCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Tax Rate (%)', hintText: '25')),
+                      TextField(
+                        controller: _taxCtrl,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: 'Tax Rate (%)',
+                          hintText: '25',
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -191,11 +268,19 @@ class _SolarFinanceScreenState extends State<SolarFinanceScreen> {
                             Row(
                               children: [
                                 Expanded(
-                                  child: _ResultCard(label: 'IRR', value: '${_results['irr']}%', color: const Color(0xFF34D399)),
+                                  child: _ResultCard(
+                                    label: 'IRR',
+                                    value: '${_results['irr']}%',
+                                    color: const Color(0xFF34D399),
+                                  ),
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
-                                  child: _ResultCard(label: 'NPV', value: '\$${_results['npv']}M', color: const Color(0xFF60A5FA)),
+                                  child: _ResultCard(
+                                    label: 'NPV',
+                                    value: '\$${_results['npv']}M',
+                                    color: const Color(0xFF60A5FA),
+                                  ),
                                 ),
                               ],
                             ),
@@ -203,24 +288,45 @@ class _SolarFinanceScreenState extends State<SolarFinanceScreen> {
                             Row(
                               children: [
                                 Expanded(
-                                  child: _ResultCard(label: 'LCOE', value: '\$${_results['lcoe']}/kWh', color: const Color(0xFFFCD34D)),
+                                  child: _ResultCard(
+                                    label: 'LCOE',
+                                    value: '\$${_results['lcoe']}/kWh',
+                                    color: const Color(0xFFFCD34D),
+                                  ),
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
-                                  child: _ResultCard(label: 'Payback', value: '${_results['payback']} yr', color: const Color(0xFFF87171)),
+                                  child: _ResultCard(
+                                    label: 'Payback',
+                                    value: '${_results['payback']} yr',
+                                    color: const Color(0xFFF87171),
+                                  ),
                                 ),
                               ],
                             ),
                             const SizedBox(height: 20),
-                            const Text('25-Year Cashflow', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                            const Text(
+                              '25-Year Cashflow',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                             const SizedBox(height: 12),
                             Container(
-                              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFE2E8F0))),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: const Color(0xFFE2E8F0),
+                                ),
+                              ),
                               padding: const EdgeInsets.all(16),
                               child: BarChart(
                                 data: List.generate(
                                   _results['cashflows'].length,
-                                  (i) => (_results['cashflows'][i] as num).toDouble(),
+                                  (i) => (_results['cashflows'][i] as num)
+                                      .toDouble(),
                                 ),
                                 title: '25-Year Cashflow (Equity, \$M)',
                               ),
@@ -243,19 +349,41 @@ class _ResultCard extends StatelessWidget {
   final String value;
   final Color color;
 
-  const _ResultCard({required this.label, required this.value, required this.color});
+  const _ResultCard({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(10), border: Border.all(color: color.withOpacity(0.3))),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
       padding: const EdgeInsets.all(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF64748B))),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF64748B),
+            ),
+          ),
           const SizedBox(height: 4),
-          Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1E293B),
+            ),
+          ),
         ],
       ),
     );

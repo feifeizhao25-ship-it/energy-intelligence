@@ -6,8 +6,18 @@ class MaintenanceScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final issues = [
-      {'plant': 'Solar Farm TX', 'issue': 'Inverter E001', 'status': 'Open', 'priority': 'High'},
-      {'plant': 'Wind Park CA', 'issue': 'Blade inspection', 'status': 'Scheduled', 'priority': 'Medium'},
+      {
+        'plant': 'Solar Farm TX',
+        'issue': 'Inverter E001',
+        'status': 'Open',
+        'priority': 'High',
+      },
+      {
+        'plant': 'Wind Park CA',
+        'issue': 'Blade inspection',
+        'status': 'Scheduled',
+        'priority': 'Medium',
+      },
     ];
 
     return Scaffold(
@@ -18,7 +28,9 @@ class MaintenanceScreen extends StatelessWidget {
           final issue = issues[index];
           return ListTile(
             leading: CircleAvatar(
-              backgroundColor: issue['priority'] == 'High' ? Colors.red : Colors.orange,
+              backgroundColor: issue['priority'] == 'High'
+                  ? Colors.red
+                  : Colors.orange,
               child: const Icon(Icons.build, color: Colors.white),
             ),
             title: Text(issue['plant']!),
