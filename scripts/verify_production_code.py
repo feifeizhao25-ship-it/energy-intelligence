@@ -29,6 +29,17 @@ def forbid_tree(path: str, patterns: tuple[str, ...]) -> None:
                 errors.append(f"{file.relative_to(ROOT)}: forbidden production UI text {pattern!r}")
 
 
+def forbid(path: str, patterns: tuple[str, ...]) -> None:
+    target = ROOT / path
+    if not target.is_file():
+        errors.append(f"{path}: required production source file is missing")
+        return
+    content = target.read_text(encoding="utf-8")
+    for pattern in patterns:
+        if pattern in content:
+            errors.append(f"{path}: forbidden production value {pattern!r}")
+
+
 require(
     "services/knowledge-service/app/skills/knowledge_management.py",
     "synthetic fallback is disabled in production",
@@ -51,6 +62,24 @@ forbid_tree(
         "mock-user-id",
     ),
 )
+
+mobile_api_files = (
+    "android-cn/lib/services/api_service.dart",
+    "android-global/lib/services/api_service.dart",
+    "ios-cn/lib/services/api_service.dart",
+    "ios-global/lib/services/api_service.dart",
+)
+for mobile_api in mobile_api_files:
+    require(mobile_api, "String.fromEnvironment('API_BASE_URL')")
+    require(mobile_api, "API_BASE_URL must use HTTPS in release builds")
+    forbid(mobile_api, ("http://116.62.32.43", "_baseUrl = 'http://localhost"))
+
+for gradle_file in (
+    "android-cn/android/app/build.gradle.kts",
+    "android-global/android/app/build.gradle.kts",
+):
+    require(gradle_file, "Release keystore is required")
+    require(gradle_file, 'System.getenv("ALLOW_DEBUG_RELEASE_SIGNING") == "true"')
 
 service_dockerfiles = sorted((ROOT / "services").glob("*/Dockerfile"))
 if len(service_dockerfiles) != 15:

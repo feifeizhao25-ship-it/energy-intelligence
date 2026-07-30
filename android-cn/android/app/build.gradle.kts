@@ -26,7 +26,6 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.energy.cn"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
@@ -43,8 +42,15 @@ android {
     //   keyPassword=...
     val keystoreProperties = Properties()
     val keystorePropertiesFile = rootProject.file("key.properties")
+    val allowDebugReleaseSigning =
+        System.getenv("ALLOW_DEBUG_RELEASE_SIGNING") == "true"
     if (keystorePropertiesFile.exists()) {
         keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+    } else if (!allowDebugReleaseSigning) {
+        throw GradleException(
+            "Release keystore is required. Add android/key.properties or set " +
+                "ALLOW_DEBUG_RELEASE_SIGNING=true for CI smoke builds only."
+        )
     }
 
     signingConfigs {
@@ -60,9 +66,11 @@ android {
 
     buildTypes {
         release {
-            // Real keystore when key.properties exists; debug fallback for local smoke builds only.
-            signingConfig = if (keystorePropertiesFile.exists())
-                signingConfigs.getByName("release") else signingConfigs.getByName("debug")
+            signingConfig = if (keystorePropertiesFile.exists()) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
         }
     }
 }

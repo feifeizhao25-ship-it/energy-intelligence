@@ -1,9 +1,10 @@
 /// ApiService — real HTTP client for Energy backend v2
-/// All methods call http://116.62.32.43/api/v1/*
+/// Configure with --dart-define=API_BASE_URL=https://api.example.com
 /// Import http: ^1.6.0 (already in pubspec.yaml)
 library;
 
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -18,12 +19,24 @@ class ApiException implements Exception {
 class ApiService {
   static final _client = http.Client();
   static String? _token;
-  static String _baseUrl = 'http://116.62.32.43';
+  static String _baseUrl = '';
 
   /// Initialize with region — call from main() before runApp
   static Future<void> init({String region = 'CN'}) async {
-    // Use real backend on port 4002
-    _baseUrl = 'http://116.62.32.43';
+    const configuredUrl = String.fromEnvironment('API_BASE_URL');
+    if (configuredUrl.isEmpty && kReleaseMode) {
+      throw StateError(
+        'API_BASE_URL is required for release builds. '
+        'Pass --dart-define=API_BASE_URL=https://api.example.com',
+      );
+    }
+    _baseUrl = (configuredUrl.isEmpty
+            ? 'http://localhost:4001'
+            : configuredUrl)
+        .replaceFirst(RegExp(r'/$'), '');
+    if (kReleaseMode && !Uri.parse(_baseUrl).isScheme('https')) {
+      throw StateError('API_BASE_URL must use HTTPS in release builds');
+    }
     final prefs = await SharedPreferences.getInstance();
     _token = prefs.getString('energy_token');
   }

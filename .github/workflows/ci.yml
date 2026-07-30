@@ -70,6 +70,8 @@ jobs:
       - run: flutter test
       - if: startsWith(matrix.app, 'android-')
         run: flutter build apk --release
+        env:
+          ALLOW_DEBUG_RELEASE_SIGNING: "true"
 
   mobile-ios-build:
     strategy:
