@@ -30,9 +30,7 @@ class ApiService {
         'Pass --dart-define=API_BASE_URL=https://api.example.com',
       );
     }
-    _baseUrl = (configuredUrl.isEmpty
-            ? 'http://localhost:4001'
-            : configuredUrl)
+    _baseUrl = (configuredUrl.isEmpty ? 'http://localhost:4001' : configuredUrl)
         .replaceFirst(RegExp(r'/$'), '');
     if (kReleaseMode && !Uri.parse(_baseUrl).isScheme('https')) {
       throw StateError('API_BASE_URL must use HTTPS in release builds');
