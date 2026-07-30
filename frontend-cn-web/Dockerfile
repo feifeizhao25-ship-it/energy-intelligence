@@ -21,6 +21,6 @@ COPY --from=builder --chown=app:app /workspace/frontend-cn-web/.next/static ./fr
 USER app
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
-  CMD wget -qO- http://127.0.0.1:3000/ai/AIChatPage >/dev/null || exit 1
+  CMD wget -qO- http://127.0.0.1:3000/ai >/dev/null || exit 1
 ENTRYPOINT ["dumb-init", "--"]
 CMD ["node", "frontend-cn-web/server.js"]

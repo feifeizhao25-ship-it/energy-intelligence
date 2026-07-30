@@ -41,6 +41,15 @@ for required in ("ENVIRONMENT=production", "STORAGE_PROVIDER=oss", "VECTOR_STORE
     if required not in environment_text:
         errors.append(f"backend: missing production environment contract {required}")
 
+backend_probe = str(services["backend"].get("healthcheck", {}).get("test", []))
+if "/ready" not in backend_probe:
+    errors.append("backend: healthcheck must use dependency-aware /ready")
+
+for service_name in ("frontend-cn", "frontend-int"):
+    backend_dependency = services[service_name].get("depends_on", {}).get("backend", {})
+    if backend_dependency.get("condition") != "service_healthy":
+        errors.append(f"{service_name}: must wait for healthy backend")
+
 compose = shutil.which("docker-compose")
 command = [compose, "-p", "energy", "-f", str(COMPOSE_FILE), "config"] if compose else None
 if command:

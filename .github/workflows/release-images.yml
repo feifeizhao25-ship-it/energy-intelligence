@@ -4,9 +4,8 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: Image tag
+        description: Immutable image tag (release version or commit SHA; latest is rejected)
         required: true
-        default: latest
 
 permissions:
   contents: read
@@ -34,6 +33,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+      - name: Validate immutable image tag
+        env:
+          IMAGE_TAG: ${{ inputs.tag }}
+        run: |
+          case "$IMAGE_TAG" in
+            latest|*[!A-Za-z0-9._-]*|'')
+              echo "Use an immutable release version or commit SHA, not '$IMAGE_TAG'." >&2
+              exit 1
+              ;;
+          esac
       - uses: docker/setup-buildx-action@v3
       - uses: docker/login-action@v3
         with:
