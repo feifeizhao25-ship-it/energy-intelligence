@@ -6,7 +6,7 @@
  */
 
 import React, { useCallback, useRef, useState } from 'react';
-import MarkdownRenderer from '../../components/MarkdownRenderer';
+import MarkdownRenderer from './MarkdownRenderer';
 
 interface Citation {
   title: string;
