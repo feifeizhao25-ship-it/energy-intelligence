@@ -114,7 +114,17 @@ def test_search_metadata_uses_per_entry_interval():
 
 
 def test_verification_flag_verified_when_corroborated():
-    assert verification_status({"corroborated_by": ["other"]}) == "verified"
+    registry = SourceRegistry([
+        {
+            "source_id": "primary", "lang": "en", "type": "policy",
+            "source_org": "Publisher A", "corroborated_by": ["other"],
+        },
+        {
+            "source_id": "other", "lang": "en", "type": "policy",
+            "source_org": "Publisher B",
+        },
+    ])
+    assert verification_status(registry.get("primary"), registry) == "verified"
 
 
 def test_verification_flag_single_source_without_corroboration():
@@ -127,6 +137,35 @@ def test_search_metadata_exposes_verification():
     assert hits
     for hit in hits:
         assert hit.metadata["verification"] in {"verified", "single_source"}
+
+
+def test_stale_sources_are_excluded_by_default():
+    corpus = [{
+        "source_id": "stale-price",
+        "lang": "en",
+        "type": "price",
+        "title": "Old price",
+        "content": "electricity price",
+        "year": 2024,
+        "last_verified_at": "2024-01-01",
+        "verify_interval_days": 7,
+    }]
+    service = RAGService(corpus=corpus)
+    assert service.search("electricity price", market="global").hits == []
+    hits = service.search(
+        "electricity price", market="global", include_stale=True,
+    ).hits
+    assert len(hits) == 1
+    assert hits[0].metadata["freshness_status"] == "stale"
+
+
+def test_hits_expose_clickable_provenance_metadata():
+    hits = RAGService().search("solar interconnection", market="global").hits
+    assert hits
+    for hit in hits:
+        assert hit.metadata["source_url"].startswith("http")
+        assert hit.metadata["source_org"]
+        assert hit.metadata["license_note"]
 
 
 def test_registry_corroborated_by_references_known_sources():

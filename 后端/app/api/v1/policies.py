@@ -62,7 +62,7 @@ def _policy_entry(source: dict, registry: SourceRegistry) -> dict:
         "source_org": source["source_org"],
         "last_verified_at": source["last_verified_at"],
         "freshness_status": registry.freshness_of(source),
-        "verification": verification_status(source),
+        "verification": verification_status(source, registry),
     }
 
 

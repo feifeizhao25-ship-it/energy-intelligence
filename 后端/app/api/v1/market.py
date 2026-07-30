@@ -40,7 +40,7 @@ async def market_data(user_id: str = Depends(get_current_user_id)):
                 "last_verified_at": source["last_verified_at"],
                 "verify_interval_days": int(source.get("verify_interval_days", 7)),
                 "freshness_status": freshness,
-                "verification": verification_status(source),
+                "verification": verification_status(source, registry),
                 "stale": stale,
                 # fail-closed：过期条目不出数值/内容，只给元数据
                 "content": None if stale else source.get("content"),

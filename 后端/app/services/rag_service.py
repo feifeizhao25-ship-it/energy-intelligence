@@ -71,7 +71,13 @@ class RAGService:
             self._registry = registry or SourceRegistry.from_file()
             self._corpus = self._registry.sources
 
-    def search(self, query: str, top_k: int = 5, market: str = "cn") -> RAGResult:
+    def search(
+        self,
+        query: str,
+        top_k: int = 5,
+        market: str = "cn",
+        include_stale: bool = False,
+    ) -> RAGResult:
         lang = "cn" if market == "cn" else "en"
         countries = _detect_countries(query, market)
         query_tokens = set(re.findall(r"[a-z0-9\u4e00-\u9fff]+", query.lower()))
@@ -80,6 +86,9 @@ class RAGService:
         for doc in self._corpus:
             if doc["lang"] != lang:
                 continue  # 语言隔离：global 不返回未翻译中文
+            freshness = self._freshness_of(doc)
+            if freshness == "stale" and not include_stale:
+                continue  # 生产默认 fail closed：过期资料不能进入模型上下文
             doc_tokens = set(
                 re.findall(r"[a-z0-9\u4e00-\u9fff]+", (doc["title"] + " " + doc["content"]).lower())
             )
@@ -93,10 +102,13 @@ class RAGService:
                 metadata={
                     "year": int(doc["year"]),
                     "last_verified_at": doc["last_verified_at"],
-                    "freshness_status": self._freshness_of(doc),
-                    "verification": verification_status(doc),
+                    "freshness_status": freshness,
+                    "verification": verification_status(doc, self._registry),
                     "market": market,
                     "countries": sorted(countries),
+                    "source_url": doc.get("source_url"),
+                    "source_org": doc.get("source_org"),
+                    "license_note": doc.get("license_note"),
                 },
             )
             scored.append(hit)
