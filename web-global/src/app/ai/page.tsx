@@ -1,4 +1,4 @@
-import AIAnalystPage from '../../pages/AIAnalystPage';
+import AIAnalystPage from '../../components/pages/AIAnalystPage';
 
 export default function Route() {
   return <AIAnalystPage />;

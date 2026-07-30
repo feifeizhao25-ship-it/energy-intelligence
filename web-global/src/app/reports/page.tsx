@@ -1,4 +1,4 @@
-import ReportsPage from '../../pages/ReportsPage';
+import ReportsPage from '../../components/pages/ReportsPage';
 
 export default function Route() {
   return <ReportsPage />;

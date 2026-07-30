@@ -1,4 +1,4 @@
-import InterconnectionPage from '../../pages/InterconnectionPage';
+import InterconnectionPage from '../../components/pages/InterconnectionPage';
 
 export default function Route() {
   return <InterconnectionPage />;
