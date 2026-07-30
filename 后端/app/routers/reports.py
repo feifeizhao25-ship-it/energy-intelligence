@@ -22,6 +22,7 @@ from __future__ import annotations
 import io
 import os
 import math
+import re
 import asyncio
 import logging
 from datetime import datetime, date
@@ -80,8 +81,11 @@ try:
 except ImportError:
     HAS_REPORTLAB = False
 
-FONT_TITLE_CN = "SimHei"
-FONT_BODY_CN = "SimSun"
+# Use a modern CJK font instead of legacy Windows-only SimHei/SimSun names.
+# Word performs font substitution on platforms without PingFang, while macOS
+# and LibreOffice can render the exported report without missing-glyph boxes.
+FONT_TITLE_CN = "PingFang SC"
+FONT_BODY_CN = "PingFang SC"
 FONT_EN = "Arial"
 
 # ── 合规常量 (运营资料硬要求, 全部报告强制携带) ──────────────────
@@ -526,10 +530,8 @@ def fmt_pct(v: float, decimals: int = 1) -> str:
 
 def _global_section_body(section: str, data: Dict[str, Any], metrics: Dict[str, Any]) -> str:
     """English body copy for one report section (global market)."""
-    name = data.get("name", "the project")
+    name, city, region = _global_project_identity(data)
     capacity = data.get("capacity_mw", "-")
-    city = data.get("city", "")
-    region = data.get("province_or_region", "")
     irr = metrics.get("irr")
     npv = metrics.get("npv")
     lcoe = metrics.get("lcoe")
@@ -567,6 +569,29 @@ def _global_section_body(section: str, data: Dict[str, Any], metrics: Dict[str, 
     return bodies.get(section, f"{section}: see project documentation for {name}.")
 
 
+def _english_value(value: Any, fallback: str) -> str:
+    """Return a value only when it is suitable for an English-only report."""
+    text = str(value or "").strip()
+    if not text or re.search(r"[\u3400-\u9fff]", text):
+        return fallback
+    return text
+
+
+def _global_project_identity(data: Dict[str, Any]) -> tuple[str, str, str]:
+    """Resolve international display fields without leaking untranslated CJK."""
+    is_demo = data.get("data_source") == "demo"
+    name = _english_value(
+        data.get("name_en") or data.get("name"),
+        "Demo Renewable Energy Project" if is_demo else "Renewable Energy Project",
+    )
+    city = _english_value(data.get("city_en") or data.get("city"), "City not available")
+    region = _english_value(
+        data.get("region_en") or data.get("province_or_region_en") or data.get("province_or_region"),
+        "Region not available",
+    )
+    return name, city, region
+
+
 def _generate_docx_global(
     data: Dict[str, Any],
     report_type: str,
@@ -591,11 +616,12 @@ def _generate_docx_global(
         f"generator={GENERATOR_ID}; generated_at={datetime.now().isoformat(timespec='seconds')}"
     )
 
+    name, city, region = _global_project_identity(data)
     doc.add_heading(title, level=0)
     doc.add_paragraph(f"Confidentiality: {confidential}")
     doc.add_paragraph(
-        f"Project: {data.get('name', '-')} | Capacity: {data.get('capacity_mw', '-')} MW | "
-        f"Location: {data.get('city', '-')}, {data.get('province_or_region', '-')}, "
+        f"Project: {name} | Capacity: {data.get('capacity_mw', '-')} MW | "
+        f"Location: {city}, {region}, "
         f"{data.get('country_code', '-')} | Currency: {data.get('currency', 'USD')}"
     )
 
@@ -658,13 +684,14 @@ def _generate_pdf_global(
         subject=f"generator={GENERATOR_ID}; generated_at={datetime.now().isoformat(timespec='seconds')}",
     )
     styles = getSampleStyleSheet()
+    name, city, region = _global_project_identity(data)
     story = [
         Paragraph(title, styles["Title"]),
         Spacer(1, 6 * mm),
         Paragraph(f"Confidentiality: {confidential}", styles["Normal"]),
         Paragraph(
-            f"Project: {data.get('name', '-')} | Capacity: {data.get('capacity_mw', '-')} MW | "
-            f"Location: {data.get('city', '-')}, {data.get('province_or_region', '-')}, "
+            f"Project: {name} | Capacity: {data.get('capacity_mw', '-')} MW | "
+            f"Location: {city}, {region}, "
             f"{data.get('country_code', '-')} | Currency: {data.get('currency', 'USD')}",
             styles["Normal"],
         ),
@@ -724,7 +751,7 @@ def generate_docx(
     from docx.enum.text import WD_ALIGN_PARAGRAPH
     from docx.enum.table import WD_TABLE_ALIGNMENT
     from docx.oxml.ns import qn, nsdecls
-    from docx.oxml import parse_xml
+    from docx.oxml import OxmlElement, parse_xml
 
     doc = Document()
 
@@ -767,8 +794,6 @@ def generate_docx(
     _add_toc_page(doc, template_info)
 
     # ════ 正文 ════
-    doc.add_page_break()
-
     if report_type == "feasibility":
         _add_feasibility_content(doc, data, metrics)
     elif report_type == "investment":
@@ -900,7 +925,7 @@ def _add_cover_page(doc, title: str, report_type: str, confidential: str, data: 
     fs = LAYOUT["font_size"]
 
     # 空行留白
-    for _ in range(4):
+    for _ in range(2):
         doc.add_paragraph()
 
     # 顶部装饰线
@@ -935,7 +960,7 @@ def _add_cover_page(doc, title: str, report_type: str, confidential: str, data: 
     _set_run_fonts(run, FONT_BODY_CN)
 
     # 空行
-    for _ in range(6):
+    for _ in range(3):
         doc.add_paragraph()
 
     # 信息块
@@ -957,7 +982,7 @@ def _add_cover_page(doc, title: str, report_type: str, confidential: str, data: 
         _set_run_fonts(run, FONT_BODY_CN)
 
     # 底部装饰线
-    for _ in range(3):
+    for _ in range(1):
         doc.add_paragraph()
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -1131,7 +1156,7 @@ def _add_styled_table(
     from docx.shared import Pt, Cm, RGBColor
     from docx.enum.table import WD_TABLE_ALIGNMENT
     from docx.oxml.ns import qn, nsdecls
-    from docx.oxml import parse_xml
+    from docx.oxml import OxmlElement, parse_xml
 
     fs = LAYOUT["font_size"]
     if caption:
@@ -1139,6 +1164,8 @@ def _add_styled_table(
 
     table = doc.add_table(rows=1 + len(rows), cols=len(headers))
     table.alignment = WD_TABLE_ALIGNMENT.CENTER
+    header_props = table.rows[0]._tr.get_or_add_trPr()
+    header_props.append(OxmlElement("w:tblHeader"))
 
     # 设置列宽
     if col_widths:

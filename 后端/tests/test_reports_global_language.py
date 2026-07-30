@@ -61,3 +61,36 @@ def test_global_pdf_contains_no_chinese_text():
     text = "\n".join(page.extract_text() or "" for page in PdfReader(io.BytesIO(payload)).pages)
     assert not re.search(r"[\u4e00-\u9fff]", text)
     assert "Required validation before decision" in text
+
+
+@pytest.mark.parametrize("kind", ["docx", "pdf"])
+def test_global_demo_export_sanitizes_untranslated_project_fields(kind):
+    """A global export must remain English even when source records are CN-only."""
+    data = _demo_data()
+    args = (
+        data,
+        "investment",
+        TEMPLATES["investment"],
+        calc_financial_metrics(data["financial"]),
+        "Investment Analysis Report",
+        "confidential",
+        "global",
+    )
+    if kind == "docx":
+        from docx import Document
+        document = Document(io.BytesIO(generate_docx(*args)))
+        text = "\n".join(p.text for p in document.paragraphs)
+    else:
+        pytest.importorskip("reportlab")
+        from pypdf import PdfReader
+        text = "\n".join(
+            page.extract_text() or ""
+            for page in PdfReader(io.BytesIO(generate_pdf(*args))).pages
+        )
+
+    assert not re.search(r"[\u4e00-\u9fff]", text)
+    assert "Demo Renewable Energy Project" in text
+    assert re.search(
+        r"City not available,\s+Region not available",
+        text,
+    )

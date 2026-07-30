@@ -89,6 +89,9 @@ def test_docx_table_captions_and_heading_styles(report_type):
     assert len(h1_paragraphs) >= len(TEMPLATES[report_type].sections_zh), (
         "章节标题未使用统一 Heading 1 样式"
     )
+    for table in document.tables:
+        first_row_xml = table.rows[0]._tr.xml
+        assert "tblHeader" in first_row_xml, "表格首行未标记为无障碍表头"
 
 
 # ── PDF ──────────────────────────────────────────────────────
