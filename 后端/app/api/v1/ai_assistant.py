@@ -199,6 +199,9 @@ _LLM_KEYS = (
 )
 
 NO_LLM_NOTICE = "未接入生成模型，以下为检索原文"
+# 来源注册表是只读快照。进程内复用检索器，避免每个请求重复读取和解析
+# rag_sources.json，同时减少短生命周期列表带来的内存抖动。
+_RAG_SERVICE = RAGService()
 
 
 class AskRequest(BaseModel):
@@ -225,8 +228,7 @@ async def ask(
     user = await assert_ai_quota(user_id, db)
     market = user.market or "cn"
 
-    service = RAGService()
-    result = service.search(req.question, top_k=req.top_k, market=market)
+    result = _RAG_SERVICE.search(req.question, top_k=req.top_k, market=market)
     hits = [hit for hit in result.hits if hit.score > 0]
 
     sources = [
