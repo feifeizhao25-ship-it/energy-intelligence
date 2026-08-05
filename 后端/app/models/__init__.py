@@ -8,6 +8,7 @@ from .database import (
     ConsentRecord,
 )
 from .alert import AlertRule
+from .product_event import ProductEvent
 
 __all__ = [
     "Base",
@@ -17,4 +18,5 @@ __all__ = [
     "FinancialModel",
     "ConsentRecord",
     "AlertRule",
+    "ProductEvent",
 ]

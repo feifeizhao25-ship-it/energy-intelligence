@@ -188,6 +188,7 @@ async def metrics(request: Request):
 # ── 路由挂载（仅挂载仓库中真实存在的模块）──────────────────────────────────────
 from app.api.v1 import ai_assistant as v1_ai  # noqa: E402
 from app.api.v1 import alerts as v1_alerts  # noqa: E402
+from app.api.v1 import analytics as v1_analytics  # noqa: E402
 from app.api.v1 import auth as v1_auth  # noqa: E402
 from app.api.v1 import billing as v1_billing  # noqa: E402
 from app.api.v1 import finance as v1_finance  # noqa: E402
@@ -228,6 +229,7 @@ app.include_router(v1_privacy.router, prefix="/api/v1", tags=["privacy"])
 app.include_router(v1_policies.router, prefix="/api/v1", tags=["policies"])
 app.include_router(v1_market.router, prefix="/api/v1", tags=["market"])
 app.include_router(v1_alerts.router, prefix="/api/v1", tags=["alerts"])
+app.include_router(v1_analytics.router, prefix="/api/v1", tags=["analytics"])
 app.include_router(v1_billing.router, prefix="/api/v1", tags=["billing"])
 app.include_router(projects.router, prefix="/api/v1", tags=["projects"])
 app.include_router(misc.router, prefix="/api/v1", tags=["misc"])
