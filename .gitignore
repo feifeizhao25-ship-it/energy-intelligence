@@ -8,6 +8,7 @@ __pycache__/
 *.db
 *.sqlite
 node_modules/
+web-global/out/
 .next/
 android-cn/build/
 android-cn/.dart_tool/
