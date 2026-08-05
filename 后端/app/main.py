@@ -199,7 +199,7 @@ from app.api.v1 import research as v1_research  # noqa: E402
 from app.api.v1 import resource as v1_resource  # noqa: E402
 from app.api.v1 import users as v1_users  # noqa: E402
 from app.core.subscription import QuotaExceeded  # noqa: E402
-from app.routers import misc, personalization, projects  # noqa: E402
+from app.routers import misc, personalization, projects, skills_executor  # noqa: E402
 
 
 @app.exception_handler(QuotaExceeded)
@@ -234,6 +234,7 @@ app.include_router(v1_billing.router, prefix="/api/v1", tags=["billing"])
 app.include_router(projects.router, prefix="/api/v1", tags=["projects"])
 app.include_router(misc.router, prefix="/api/v1", tags=["misc"])
 app.include_router(personalization.router, prefix="/api/v1", tags=["personalization"])
+app.include_router(skills_executor.router, prefix="/api/v1")
 
 try:  # 定制报告申请，独立防护：导入失败不影响核心 API
     from app.routers import custom_reports as custom_reports_router

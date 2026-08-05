@@ -33,6 +33,19 @@ class SkillMeta:
     output_schema_class: Optional[str] = None
     tags: list = field(default_factory=list)
 
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "skill_id": self.skill_id,
+            "name": self.name,
+            "description": self.description,
+            "category": self.category,
+            "service": self.service,
+            "source_file": self.source_file,
+            "input_schema": self.input_schema_class,
+            "output_schema": self.output_schema_class,
+            "tags": list(self.tags),
+        }
+
 
 @dataclass
 class SkillExecutionResult:
@@ -87,6 +100,21 @@ class SkillWrapper:
 
     def set_meta_fields(self, **fields: Any) -> None:
         self._meta_fields.update(fields)
+
+    def get_schema(self) -> Dict[str, Any]:
+        """Return JSON schemas when a Skill declares Pydantic input/output types."""
+        result: Dict[str, Any] = {}
+        if self._instance is None:
+            return result
+        for key, attribute in (("input", "input_schema"), ("output", "output_schema")):
+            schema_type = getattr(self._instance, attribute, None)
+            if schema_type is None:
+                continue
+            if hasattr(schema_type, "model_json_schema"):
+                result[key] = schema_type.model_json_schema()
+            elif hasattr(schema_type, "schema"):
+                result[key] = schema_type.schema()
+        return result
 
     # ── 校验与执行 ─────────────────────────────────────────────────────────
     def validate(self, params: Dict[str, Any]) -> bool:
