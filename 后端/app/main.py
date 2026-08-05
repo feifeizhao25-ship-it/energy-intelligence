@@ -19,7 +19,11 @@ from sqlalchemy import text
 
 from app.config import settings
 from app.database import AsyncSessionLocal, close_db, init_db
-from app.middleware import RateLimitMiddleware, SecurityHeadersMiddleware
+from app.middleware import (
+    GlobalLanguageBoundaryMiddleware,
+    RateLimitMiddleware,
+    SecurityHeadersMiddleware,
+)
 from app.redis_client import redis_client
 
 logger = logging.getLogger(__name__)
@@ -98,6 +102,7 @@ app.add_middleware(
 )
 # Starlette 中间件按添加顺序逆序执行：限流在最外层先跑，安全头最后写响应。
 app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(GlobalLanguageBoundaryMiddleware)
 app.add_middleware(RateLimitMiddleware)
 
 

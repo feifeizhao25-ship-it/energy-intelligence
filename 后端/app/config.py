@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     
     # 基础配置
     ENVIRONMENT: str = Field(default="development")
+    MARKET_REGION: str = Field(default="cn", pattern="^(cn|global)$")
     DEBUG: bool = Field(default=False)
     VERSION: str = "2.0.0"
     APP_NAME: str = "新能源智库"
@@ -115,6 +116,11 @@ class Settings(BaseSettings):
             if self.VECTOR_STORE_BACKEND.lower() in {"sqlite", "memory", "mock"}:
                 raise ValueError(
                     "SECURITY ERROR: production VECTOR_STORE_BACKEND must be a durable vector store."
+                )
+            market_is_set = "MARKET_REGION" in os.environ or "MARKET_REGION" in kwargs
+            if not market_is_set:
+                raise ValueError(
+                    "SECURITY ERROR: production requires an explicit MARKET_REGION (cn or global)."
                 )
         if not env_is_set:
             warnings.warn(

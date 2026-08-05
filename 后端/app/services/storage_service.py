@@ -1,7 +1,4 @@
-"""
-文件存储服务 — 骨架实现
-支持: 阿里云 OSS / 本地存储
-"""
+"""Region-isolated object storage: OSS for CN and S3 for Global."""
 import os, uuid, logging
 from pathlib import Path
 from typing import Optional
@@ -22,15 +19,25 @@ class StorageService:
         self.oss_endpoint = os.getenv("OSS_ENDPOINT", "")
         self.oss_access_key = os.getenv("OSS_ACCESS_KEY_ID", "")
         self.oss_access_secret = os.getenv("OSS_ACCESS_KEY_SECRET", "")
+        self.s3_bucket = os.getenv("S3_BUCKET", "")
+        self.s3_region = os.getenv("AWS_REGION", "")
         if settings.ENVIRONMENT == "production":
-            if self.provider != "oss":
-                raise RuntimeError("Production STORAGE_PROVIDER must be oss; local storage is not durable")
-            required = {
-                "OSS_BUCKET": self.oss_bucket,
-                "OSS_ENDPOINT": self.oss_endpoint,
-                "OSS_ACCESS_KEY_ID": self.oss_access_key,
-                "OSS_ACCESS_KEY_SECRET": self.oss_access_secret,
-            }
+            expected_provider = "s3" if settings.MARKET_REGION == "global" else "oss"
+            if self.provider != expected_provider:
+                raise RuntimeError(
+                    f"Production STORAGE_PROVIDER must be {expected_provider} "
+                    f"for MARKET_REGION={settings.MARKET_REGION}"
+                )
+            required = (
+                {"S3_BUCKET": self.s3_bucket, "AWS_REGION": self.s3_region}
+                if expected_provider == "s3"
+                else {
+                    "OSS_BUCKET": self.oss_bucket,
+                    "OSS_ENDPOINT": self.oss_endpoint,
+                    "OSS_ACCESS_KEY_ID": self.oss_access_key,
+                    "OSS_ACCESS_KEY_SECRET": self.oss_access_secret,
+                }
+            )
             missing = [key for key, value in required.items() if not value]
             if missing:
                 raise RuntimeError(
@@ -57,6 +64,19 @@ class StorageService:
                 if settings.ENVIRONMENT == "production":
                     raise RuntimeError("Production object storage upload failed") from e
                 logger.error(f"OSS upload failed: {e}, falling back to local")
+
+        if self.provider == "s3" and self.s3_bucket:
+            try:
+                import boto3
+
+                client = boto3.client("s3", region_name=self.s3_region)
+                extra = {"ContentType": content_type} if content_type else {}
+                client.put_object(Bucket=self.s3_bucket, Key=key, Body=file_data, **extra)
+                return f"s3://{self.s3_bucket}/{key}"
+            except Exception as exc:
+                if settings.ENVIRONMENT == "production":
+                    raise RuntimeError("Production S3 upload failed") from exc
+                logger.error("S3 upload failed: %s; falling back to local", exc)
 
         if settings.ENVIRONMENT == "production":
             raise RuntimeError("Local storage fallback is disabled in production")

@@ -8,6 +8,8 @@
 from __future__ import annotations
 
 import logging
+import json
+import re
 import time
 from typing import Optional
 
@@ -23,6 +25,57 @@ logger = logging.getLogger(__name__)
 
 # 存活探针与监控端点不参与限流
 RATE_LIMIT_EXEMPT_PATHS = frozenset({"/health", "/ready", "/metrics"})
+_CJK_RE = re.compile(r"[\u3400-\u9fff]")
+
+
+def _sanitize_global_payload(value):
+    """Fail closed when CN content reaches a Global JSON response.
+
+    Translation belongs at the source. This last-resort boundary prevents mixed-
+    market content from leaking while retaining a machine-readable indication.
+    """
+    if isinstance(value, str):
+        return "Content is unavailable for the Global market." if _CJK_RE.search(value) else value
+    if isinstance(value, list):
+        return [_sanitize_global_payload(item) for item in value]
+    if isinstance(value, dict):
+        return {
+            (key if not isinstance(key, str) or not _CJK_RE.search(key) else "localized_field"):
+            _sanitize_global_payload(item)
+            for key, item in value.items()
+        }
+    return value
+
+
+class GlobalLanguageBoundaryMiddleware(BaseHTTPMiddleware):
+    """Guarantee that Global JSON API responses contain no CJK text."""
+
+    async def dispatch(self, request: Request, call_next) -> Response:
+        response = await call_next(request)
+        if getattr(settings, "MARKET_REGION", "cn") != "global":
+            return response
+        content_type = response.headers.get("content-type", "").lower()
+        if "application/json" not in content_type:
+            return response
+
+        raw = b"".join([chunk async for chunk in response.body_iterator])
+        try:
+            payload = json.loads(raw)
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            logger.error("Global JSON response could not be decoded; failing closed")
+            return JSONResponse(
+                status_code=500,
+                content={"code": 500, "message": "Invalid API response"},
+            )
+        sanitized = _sanitize_global_payload(payload)
+        headers = dict(response.headers)
+        headers.pop("content-length", None)
+        return JSONResponse(
+            status_code=response.status_code,
+            content=sanitized,
+            headers=headers,
+            background=response.background,
+        )
 
 
 def _client_ip(request: Request) -> str:

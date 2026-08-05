@@ -25,6 +25,7 @@ def test_production_accepts_explicit_high_diversity_secret():
         REDIS_URL="redis://redis.internal:6379/0",
         CORS_ORIGINS=["https://global.energy.example"],
         VECTOR_STORE_BACKEND="milvus",
+        MARKET_REGION="global",
     )
     assert settings.ENVIRONMENT == "production"
 
@@ -46,7 +47,20 @@ def test_production_rejects_non_durable_or_unsafe_infrastructure(field, value, m
         "REDIS_URL": "redis://redis.internal:6379/0",
         "CORS_ORIGINS": ["https://global.energy.example"],
         "VECTOR_STORE_BACKEND": "milvus",
+        "MARKET_REGION": "global",
     }
     config[field] = value
     with pytest.raises(ValueError, match=message):
         Settings(**config)
+
+
+def test_production_requires_explicit_market_region():
+    with pytest.raises(ValueError, match="explicit MARKET_REGION"):
+        Settings(
+            ENVIRONMENT="production",
+            SECRET_KEY="G7k!tR2p#9Vz_L4n@8Qa-X5m$3Ws+6Ju",
+            DATABASE_URL="postgresql+asyncpg://app:secret@postgres.internal/energy",
+            REDIS_URL="redis://redis.internal:6379/0",
+            CORS_ORIGINS=["https://global.energy.example"],
+            VECTOR_STORE_BACKEND="milvus",
+        )
