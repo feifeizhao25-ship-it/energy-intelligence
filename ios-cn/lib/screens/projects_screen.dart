@@ -32,9 +32,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
       appBar: AppBar(
         title: const Text('项目管理'),
         backgroundColor: Colors.blue[700],
-        actions: [
-          IconButton(icon: const Icon(Icons.add), onPressed: () {}),
-        ],
+        actions: [IconButton(icon: const Icon(Icons.add), onPressed: () {})],
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -65,22 +63,40 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
               Row(
                 children: [
                   CircleAvatar(
-                    backgroundColor: project['type'] == 'pv' ? Colors.orange[100] : (project['type'] == 'wind' ? Colors.blue[100] : Colors.green[100]),
-                    child: Text(project['type'] == 'pv' ? '☀️' : (project['type'] == 'wind' ? '🌀' : '🔋')),
+                    backgroundColor: project['type'] == 'pv'
+                        ? Colors.orange[100]
+                        : (project['type'] == 'wind'
+                              ? Colors.blue[100]
+                              : Colors.green[100]),
+                    child: Text(
+                      project['type'] == 'pv'
+                          ? '☀️'
+                          : (project['type'] == 'wind' ? '🌀' : '🔋'),
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(project['name'], style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                        Text('${project['type'] == 'pv' ? '光伏' : (project['type'] == 'wind' ? '风电' : '储能')} | ${project['capacity']}MW'),
+                        Text(
+                          project['name'],
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          '${project['type'] == 'pv' ? '光伏' : (project['type'] == 'wind' ? '风电' : '储能')} | ${project['capacity']}MW',
+                        ),
                       ],
                     ),
                   ),
                   Chip(
                     label: Text(project['status']),
-                    backgroundColor: project['status'] == '运行中' ? Colors.green[100] : Colors.orange[100],
+                    backgroundColor: project['status'] == '运行中'
+                        ? Colors.green[100]
+                        : Colors.orange[100],
                   ),
                 ],
               ),
@@ -103,7 +119,14 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
   Widget _buildStat(String label, String value, Color color) {
     return Column(
       children: [
-        Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: color)),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
         Text(label, style: TextStyle(color: Colors.grey[600])),
       ],
     );

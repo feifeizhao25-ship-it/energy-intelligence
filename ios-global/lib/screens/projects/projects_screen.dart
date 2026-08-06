@@ -37,8 +37,11 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
 
           final projects = snapshot.data ?? [];
           final filtered = projects.where((p) {
-            bool typeMatch = _filterType == '全部' || p.projectType == _filterType;
-            bool searchMatch = p.name.toLowerCase().contains(_searchQuery.toLowerCase());
+            bool typeMatch =
+                _filterType == '全部' || p.projectType == _filterType;
+            bool searchMatch = p.name.toLowerCase().contains(
+              _searchQuery.toLowerCase(),
+            );
             return typeMatch && searchMatch;
           }).toList();
 
@@ -52,9 +55,12 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                       decoration: InputDecoration(
                         hintText: '搜索项目...',
                         prefixIcon: Icon(Icons.search),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
-                      onChanged: (value) => setState(() => _searchQuery = value),
+                      onChanged: (value) =>
+                          setState(() => _searchQuery = value),
                     ),
                     SizedBox(height: 12),
                     SingleChildScrollView(
@@ -86,7 +92,9 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                               onTap: () {
                                 Navigator.of(context).push(
                                   MaterialPageRoute(
-                                    builder: (_) => ProjectDetailScreen(project: project.toJson()),
+                                    builder: (_) => ProjectDetailScreen(
+                                      project: project.toJson(),
+                                    ),
                                   ),
                                 );
                               },
@@ -134,11 +142,16 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: Text('取消')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('取消'),
+          ),
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('项目已创建')));
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text('项目已创建')));
             },
             child: Text('创建'),
           ),

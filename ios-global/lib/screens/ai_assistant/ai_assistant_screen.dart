@@ -26,19 +26,26 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
     setState(() {});
 
     setState(() => _isStreaming = true);
-    final response = 'Based on your query about solar resource assessment at 36°N 115°W, the location shows excellent solar potential with GHI of 5.8 kWh/m²/d. I recommend installing a 100MW solar facility with estimated IRR of 14.7% and LCOE of \$0.031/kWh.';
+    final response =
+        'Based on your query about solar resource assessment at 36°N 115°W, the location shows excellent solar potential with GHI of 5.8 kWh/m²/d. I recommend installing a 100MW solar facility with estimated IRR of 14.7% and LCOE of \$0.031/kWh.';
 
     String displayText = '';
     for (final char in response.characters) {
       await Future.delayed(const Duration(milliseconds: 20));
       if (!mounted) return;
       displayText += char;
-      _messages.add(_Message(text: displayText, isUser: false, isStreaming: true));
+      _messages.add(
+        _Message(text: displayText, isUser: false, isStreaming: true),
+      );
       setState(() {});
     }
 
     if (mounted) {
-      _messages[_messages.length - 1] = _Message(text: displayText, isUser: false, isStreaming: false);
+      _messages[_messages.length - 1] = _Message(
+        text: displayText,
+        isUser: false,
+        isStreaming: false,
+      );
       setState(() => _isStreaming = false);
     }
   }
@@ -64,23 +71,57 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                           Container(
                             width: 80,
                             height: 80,
-                            decoration: BoxDecoration(color: const Color(0xFFF0F9FF), borderRadius: BorderRadius.circular(16)),
-                            child: const Icon(Icons.auto_awesome, size: 40, color: Color(0xFF1D4ED8)),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF0F9FF),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: const Icon(
+                              Icons.auto_awesome,
+                              size: 40,
+                              color: Color(0xFF1D4ED8),
+                            ),
                           ),
                           const SizedBox(height: 16),
-                          const Text('Energy Intelligence AI', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
+                          const Text(
+                            'Energy Intelligence AI',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1E293B),
+                            ),
+                          ),
                           const SizedBox(height: 8),
-                          const Text('Ask me about solar assessments, financial models, or plant health', textAlign: TextAlign.center, style: TextStyle(fontSize: 14, color: Color(0xFF64748B))),
+                          const Text(
+                            'Ask me about solar assessments, financial models, or plant health',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Color(0xFF64748B),
+                            ),
+                          ),
                           const SizedBox(height: 24),
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                             child: Column(
                               children: [
-                                _PromptChip(text: 'Solar assessment at 36°N 115°W', onTap: () => _sendMessage('Solar assessment at 36°N 115°W')),
+                                _PromptChip(
+                                  text: 'Solar assessment at 36°N 115°W',
+                                  onTap: () => _sendMessage(
+                                    'Solar assessment at 36°N 115°W',
+                                  ),
+                                ),
                                 const SizedBox(height: 8),
-                                _PromptChip(text: 'Calculate IRR for 100MW', onTap: () => _sendMessage('Calculate IRR for 100MW')),
+                                _PromptChip(
+                                  text: 'Calculate IRR for 100MW',
+                                  onTap: () =>
+                                      _sendMessage('Calculate IRR for 100MW'),
+                                ),
                                 const SizedBox(height: 8),
-                                _PromptChip(text: 'Diagnose gearbox fault', onTap: () => _sendMessage('Diagnose gearbox fault')),
+                                _PromptChip(
+                                  text: 'Diagnose gearbox fault',
+                                  onTap: () =>
+                                      _sendMessage('Diagnose gearbox fault'),
+                                ),
                               ],
                             ),
                           ),
@@ -96,30 +137,56 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 12),
                         child: Row(
-                          mainAxisAlignment: msg.isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+                          mainAxisAlignment: msg.isUser
+                              ? MainAxisAlignment.end
+                              : MainAxisAlignment.start,
                           children: [
                             if (!msg.isUser)
                               Container(
                                 width: 32,
                                 height: 32,
-                                decoration: BoxDecoration(color: const Color(0xFFF0F9FF), borderRadius: BorderRadius.circular(8)),
-                                child: const Icon(Icons.auto_awesome, size: 18, color: Color(0xFF1D4ED8)),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF0F9FF),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(
+                                  Icons.auto_awesome,
+                                  size: 18,
+                                  color: Color(0xFF1D4ED8),
+                                ),
                               ),
                             const SizedBox(width: 8),
                             Flexible(
                               child: Container(
                                 decoration: BoxDecoration(
-                                  color: msg.isUser ? const Color(0xFF1D4ED8) : Colors.white,
+                                  color: msg.isUser
+                                      ? const Color(0xFF1D4ED8)
+                                      : Colors.white,
                                   borderRadius: BorderRadius.circular(12),
-                                  border: msg.isUser ? null : Border.all(color: const Color(0xFFE2E8F0)),
-                                  boxShadow: msg.isUser ? null : [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 4)],
+                                  border: msg.isUser
+                                      ? null
+                                      : Border.all(
+                                          color: const Color(0xFFE2E8F0),
+                                        ),
+                                  boxShadow: msg.isUser
+                                      ? null
+                                      : [
+                                          BoxShadow(
+                                            color: Colors.black.withOpacity(
+                                              0.04,
+                                            ),
+                                            blurRadius: 4,
+                                          ),
+                                        ],
                                 ),
                                 padding: const EdgeInsets.all(12),
                                 child: Text(
                                   msg.text,
                                   style: TextStyle(
                                     fontSize: 13,
-                                    color: msg.isUser ? Colors.white : const Color(0xFF1E293B),
+                                    color: msg.isUser
+                                        ? Colors.white
+                                        : const Color(0xFF1E293B),
                                   ),
                                 ),
                               ),
@@ -141,8 +208,13 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                     enabled: !_isStreaming,
                     decoration: InputDecoration(
                       hintText: 'Ask about energy projects...',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 12,
+                      ),
                     ),
                   ),
                 ),
@@ -153,7 +225,9 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: IconButton(
-                    onPressed: _isStreaming ? null : () => _sendMessage(_controller.text),
+                    onPressed: _isStreaming
+                        ? null
+                        : () => _sendMessage(_controller.text),
                     icon: const Icon(Icons.send, color: Colors.white, size: 20),
                   ),
                 ),
@@ -171,7 +245,11 @@ class _Message {
   final bool isUser;
   final bool isStreaming;
 
-  _Message({required this.text, required this.isUser, this.isStreaming = false});
+  _Message({
+    required this.text,
+    required this.isUser,
+    this.isStreaming = false,
+  });
 }
 
 class _PromptChip extends StatelessWidget {
@@ -191,7 +269,10 @@ class _PromptChip extends StatelessWidget {
           border: Border.all(color: const Color(0xFFE2E8F0)),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        child: Text(text, style: const TextStyle(fontSize: 13, color: Color(0xFF1E293B))),
+        child: Text(
+          text,
+          style: const TextStyle(fontSize: 13, color: Color(0xFF1E293B)),
+        ),
       ),
     );
   }

@@ -14,13 +14,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Account'),
-        content: const Text('Are you sure you want to permanently delete your account? This action cannot be undone.'),
+        content: const Text(
+          'Are you sure you want to permanently delete your account? This action cannot be undone.',
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Account deleted')));
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('Account deleted')));
             },
             child: const Text('Delete', style: TextStyle(color: Colors.red)),
           ),
@@ -53,7 +60,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Center(
-                      child: Text('JD', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                      child: Text(
+                        'JD',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -61,11 +75,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: const [
-                        Text('John Doe', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
+                        Text(
+                          'John Doe',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1E293B),
+                          ),
+                        ),
                         SizedBox(height: 4),
-                        Text('john@company.com', style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
+                        Text(
+                          'john@company.com',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF64748B),
+                          ),
+                        ),
                         SizedBox(height: 2),
-                        Text('Energy Corp India', style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8))),
+                        Text(
+                          'Energy Corp India',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF94A3B8),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -100,11 +133,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
               title: 'Notifications',
               children: [
                 ListTile(
-                  leading: const Icon(Icons.notifications_active, color: Color(0xFF1D4ED8)),
+                  leading: const Icon(
+                    Icons.notifications_active,
+                    color: Color(0xFF1D4ED8),
+                  ),
                   title: const Text('Enable Notifications'),
                   trailing: Switch(
                     value: _notificationsEnabled,
-                    onChanged: (val) => setState(() => _notificationsEnabled = val),
+                    onChanged: (val) =>
+                        setState(() => _notificationsEnabled = val),
                   ),
                 ),
               ],
@@ -118,7 +155,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   subtitle: 'Download your account data',
                   onTap: () {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Data export started. Check your email.')),
+                      const SnackBar(
+                        content: Text('Data export started. Check your email.'),
+                      ),
                     );
                   },
                 ),
@@ -138,7 +177,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   onPressed: () {
-                    Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      '/login',
+                      (route) => false,
+                    );
                   },
                   icon: const Icon(Icons.logout, size: 20),
                   label: const Text('Sign Out'),
@@ -152,7 +195,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             Padding(
               padding: const EdgeInsets.all(16),
-              child: Text('App Version 1.0.0 • GDPR Compliant', textAlign: TextAlign.center, style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8))),
+              child: Text(
+                'App Version 1.0.0 • GDPR Compliant',
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+              ),
             ),
           ],
         ),
@@ -174,7 +221,15 @@ class _SettingSection extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-          child: Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF64748B), letterSpacing: 0.5)),
+          child: Text(
+            title,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF64748B),
+              letterSpacing: 0.5,
+            ),
+          ),
         ),
         ...children,
       ],
@@ -201,9 +256,16 @@ class _SettingTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       leading: Icon(icon, color: const Color(0xFF1D4ED8)),
-      title: Text(title, style: TextStyle(color: titleColor ?? const Color(0xFF1E293B))),
+      title: Text(
+        title,
+        style: TextStyle(color: titleColor ?? const Color(0xFF1E293B)),
+      ),
       subtitle: Text(subtitle),
-      trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: Color(0xFFC7D2E0)),
+      trailing: const Icon(
+        Icons.arrow_forward_ios,
+        size: 14,
+        color: Color(0xFFC7D2E0),
+      ),
       onTap: onTap,
     );
   }

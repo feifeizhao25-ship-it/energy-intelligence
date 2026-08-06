@@ -29,21 +29,21 @@ class _CleaningScreenState extends State<CleaningScreen> {
 
     final s = double.tryParse(_soilingRateController.text) ?? 0.003; // 日积灰率
     final C = double.tryParse(_cleaningCostController.text) ?? 8000; // 单次清洗成本 元
-    final Rs = double.tryParse(_revenueController.text) ?? 120000; // 日发电收益 元
+    final rs = double.tryParse(_revenueController.text) ?? 120000; // 日发电收益 元
 
     // Optimal cleaning interval: N* = sqrt(2C / (Rs × s))
-    final nStar = math.sqrt(2 * C / (Rs * s));
+    final nStar = math.sqrt(2 * C / (rs * s));
     final nOptimal = nStar.round().clamp(1, 365);
 
     // Annual loss with optimal schedule
-    final dailyLoss = Rs * s;
+    final dailyLoss = rs * s;
     final lossBetweenCleans = dailyLoss * nOptimal * (nOptimal + 1) / 2;
     final cleaningsPerYear = (365 / nOptimal).floor();
     final annualCleaningCost = cleaningsPerYear * C;
     final annualLoss = cleaningsPerYear * lossBetweenCleans;
 
     // Compare with fixed schedules
-    final scenarios = [7, 14, 30, nOptimal].toSet().toList()..sort();
+    final scenarios = {7, 14, 30, nOptimal}.toList()..sort();
     final scenarioResults = scenarios.map((n) {
       final lossN = (365 / n).floor() * dailyLoss * n * (n + 1) / 2;
       final costN = (365 / n).floor() * C.toDouble();
@@ -88,48 +88,83 @@ class _CleaningScreenState extends State<CleaningScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('最优清洗周期算法', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0369A1))),
+                  Text(
+                    '最优清洗周期算法',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF0369A1),
+                    ),
+                  ),
                   SizedBox(height: 4),
                   Text(
                     'N* = √(2C / (Rs × s))\n\nC=单次清洗成本, Rs=日发电收益, s=日积灰率',
-                    style: TextStyle(fontSize: 12, color: Color(0xFF0C4A6E), fontFamily: 'monospace'),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF0C4A6E),
+                      fontFamily: 'monospace',
+                    ),
                   ),
                 ],
               ),
             ),
             SizedBox(height: 24),
 
-            Text('日积灰率', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+            Text(
+              '日积灰率',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF0F172A),
+              ),
+            ),
             SizedBox(height: 8),
             TextField(
               controller: _soilingRateController,
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
                 contentPadding: EdgeInsets.all(12),
                 hintText: '如 0.003 表示每天损失0.3%发电量',
               ),
             ),
             SizedBox(height: 16),
-            Text('单次清洗成本 (元)', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+            Text(
+              '单次清洗成本 (元)',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF0F172A),
+              ),
+            ),
             SizedBox(height: 8),
             TextField(
               controller: _cleaningCostController,
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
                 contentPadding: EdgeInsets.all(12),
                 suffixText: '元',
               ),
             ),
             SizedBox(height: 16),
-            Text('日均发电收益 (元)', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+            Text(
+              '日均发电收益 (元)',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF0F172A),
+              ),
+            ),
             SizedBox(height: 8),
             TextField(
               controller: _revenueController,
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
                 contentPadding: EdgeInsets.all(12),
                 suffixText: '元/天',
               ),
@@ -144,11 +179,22 @@ class _CleaningScreenState extends State<CleaningScreen> {
                   backgroundColor: Color(0xFF1D4ED8),
                   foregroundColor: Colors.white,
                   padding: EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
                 child: _isCalculating
-                    ? CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
-                    : Text('计算最优清洗周期', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    ? CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      )
+                    : Text(
+                        '计算最优清洗周期',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
               ),
             ),
 
@@ -168,11 +214,18 @@ class _CleaningScreenState extends State<CleaningScreen> {
                 ),
                 child: Column(
                   children: [
-                    Text('最优清洗周期', style: TextStyle(color: Colors.white70, fontSize: 13)),
+                    Text(
+                      '最优清洗周期',
+                      style: TextStyle(color: Colors.white70, fontSize: 13),
+                    ),
                     SizedBox(height: 8),
                     Text(
                       '${_result!['nOptimal']} 天',
-                      style: TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 36,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     Text(
                       'N* = ${(_result!['nStar'] as double).toStringAsFixed(2)} 天 (理论值)',
@@ -192,16 +245,39 @@ class _CleaningScreenState extends State<CleaningScreen> {
                 crossAxisSpacing: 12,
                 childAspectRatio: 1.8,
                 children: [
-                  _buildStatCard('年清洗次数', '${_result!['cleaningsPerYear']} 次', Color(0xFF059669)),
-                  _buildStatCard('年清洗成本', '${((_result!['annualCleaningCost'] as double) / 10000).toStringAsFixed(1)} 万元', Color(0xFFEA580C)),
-                  _buildStatCard('年积灰损失', '${((_result!['annualLoss'] as double) / 10000).toStringAsFixed(1)} 万元', Color(0xFFDC2626)),
-                  _buildStatCard('年综合成本', '${((_result!['totalAnnualCost'] as double) / 10000).toStringAsFixed(1)} 万元', Color(0xFF7C3AED)),
+                  _buildStatCard(
+                    '年清洗次数',
+                    '${_result!['cleaningsPerYear']} 次',
+                    Color(0xFF059669),
+                  ),
+                  _buildStatCard(
+                    '年清洗成本',
+                    '${((_result!['annualCleaningCost'] as double) / 10000).toStringAsFixed(1)} 万元',
+                    Color(0xFFEA580C),
+                  ),
+                  _buildStatCard(
+                    '年积灰损失',
+                    '${((_result!['annualLoss'] as double) / 10000).toStringAsFixed(1)} 万元',
+                    Color(0xFFDC2626),
+                  ),
+                  _buildStatCard(
+                    '年综合成本',
+                    '${((_result!['totalAnnualCost'] as double) / 10000).toStringAsFixed(1)} 万元',
+                    Color(0xFF7C3AED),
+                  ),
                 ],
               ),
               SizedBox(height: 24),
 
               // Scenario comparison
-              Text('不同策略对比', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF0F172A))),
+              Text(
+                '不同策略对比',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
               SizedBox(height: 12),
               ...(_result!['scenarios'] as List<dynamic>).map((s) {
                 final days = s['days'] as int;
@@ -223,13 +299,45 @@ class _CleaningScreenState extends State<CleaningScreen> {
                     children: [
                       Row(
                         children: [
-                          Text('每 $days 天清洗', style: TextStyle(fontWeight: isOptimal ? FontWeight.bold : FontWeight.normal)),
-                          if (isOptimal) ...[SizedBox(width: 8), Container(padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: Color(0xFF1D4ED8), borderRadius: BorderRadius.circular(4)), child: Text('最优', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)))],
+                          Text(
+                            '每 $days 天清洗',
+                            style: TextStyle(
+                              fontWeight: isOptimal
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                            ),
+                          ),
+                          if (isOptimal) ...[
+                            SizedBox(width: 8),
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Color(0xFF1D4ED8),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                '最优',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                       Text(
                         '${(total / 10000).toStringAsFixed(1)} 万元/年',
-                        style: TextStyle(fontWeight: FontWeight.bold, color: isOptimal ? Color(0xFF1D4ED8) : Color(0xFF0F172A)),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: isOptimal
+                              ? Color(0xFF1D4ED8)
+                              : Color(0xFF0F172A),
+                        ),
                       ),
                     ],
                   ),
@@ -246,8 +354,8 @@ class _CleaningScreenState extends State<CleaningScreen> {
     return Container(
       padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
-        border: Border.all(color: color.withOpacity(0.3)),
+        color: color.withValues(alpha: 0.08),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -256,7 +364,14 @@ class _CleaningScreenState extends State<CleaningScreen> {
         children: [
           Text(label, style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
           SizedBox(height: 6),
-          Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: color)),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
         ],
       ),
     );

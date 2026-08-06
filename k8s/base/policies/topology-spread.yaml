@@ -1,0 +1,28 @@
+# Kyverno policy: enforce zone-spread scheduling on all Deployments.
+# Workloads already carry topologySpreadConstraints; this policy defaults
+# them for any future Deployment that forgets.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: enforce-topology-spread
+spec:
+  background: true
+  rules:
+    - name: default-topology-spread
+      match:
+        any:
+          - resources:
+              kinds:
+                - Deployment
+      mutate:
+        patchStrategicMerge:
+          spec:
+            template:
+              spec:
+                topologySpreadConstraints:
+                  - maxSkew: 1
+                    topologyKey: topology.kubernetes.io/zone
+                    whenUnsatisfiable: ScheduleAnyway
+                    labelSelector:
+                      matchLabels:
+                        environment: production

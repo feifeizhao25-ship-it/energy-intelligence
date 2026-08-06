@@ -1,0 +1,44 @@
+name: mobile_ui
+description: 新能源智库移动端UI组件库
+version: 1.0.0
+publish_to: 'none'
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+  flutter: '>=3.10.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  
+  # 图表
+  fl_chart: ^0.70.0
+  syncfusion_flutter_charts: ^28.1.33
+  
+  # 地图
+  # amap_flutter_map 已移除：全库无任何 import（energy_map.dart 只有注释占位），
+  # 且其 Android 实现仍用 Flutter v1 embedding（io.flutter.view.FlutterMain），无法编译
+  amap_flutter_location: ^3.0.0
+  google_maps_flutter: ^2.6.0
+  
+  # UI增强
+  shimmer: ^3.0.0
+  flutter_spinkit: ^5.2.0
+  flutter_animate: ^4.5.0
+  flutter_slidable: ^3.1.0
+  pull_to_refresh_flutter3: ^2.0.2
+  
+  # 工具
+  intl: ^0.20.2
+  cached_network_image: ^3.3.1
+  flutter_svg: ^2.0.9
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true

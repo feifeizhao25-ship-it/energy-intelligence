@@ -1,0 +1,63 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: energy-intelligence
+
+resources:
+  - ../../base
+  - ../../services
+  - ../../databases
+  - ../../messaging
+  - ../../monitoring
+  - ../../ingress
+
+labels:
+  - pairs:
+      environment: production
+
+images:
+  - name: energy-intelligence/gateway
+    newName: ghcr.io/energy-intelligence/gateway
+    newTag: v2.0.0
+  - name: energy-intelligence/auth-service
+    newName: ghcr.io/energy-intelligence/auth-service
+    newTag: v2.0.0
+  - name: energy-intelligence/user-service
+    newName: ghcr.io/energy-intelligence/user-service
+    newTag: v2.0.0
+  - name: energy-intelligence/project-service
+    newName: ghcr.io/energy-intelligence/project-service
+    newTag: v2.0.0
+  - name: energy-intelligence/resource-service
+    newName: ghcr.io/energy-intelligence/resource-service
+    newTag: v2.0.0
+  - name: energy-intelligence/financial-service
+    newName: ghcr.io/energy-intelligence/financial-service
+    newTag: v2.0.0
+  - name: energy-intelligence/simulation-service
+    newName: ghcr.io/energy-intelligence/simulation-service
+    newTag: v2.0.0
+  - name: energy-intelligence/diagnostic-service
+    newName: ghcr.io/energy-intelligence/diagnostic-service
+    newTag: v2.0.0
+  - name: energy-intelligence/ai-engine-service
+    newName: ghcr.io/energy-intelligence/ai-engine-service
+    newTag: v2.0.0
+  - name: energy-intelligence/knowledge-service
+    newName: ghcr.io/energy-intelligence/knowledge-service
+    newTag: v2.0.0
+  - name: energy-intelligence/report-service
+    newName: ghcr.io/energy-intelligence/report-service
+    newTag: v2.0.0
+  - name: energy-intelligence/analytics-service
+    newName: ghcr.io/energy-intelligence/analytics-service
+    newTag: v2.0.0
+  - name: energy-intelligence/notification-service
+    newName: ghcr.io/energy-intelligence/notification-service
+    newTag: v2.0.0
+  - name: energy-intelligence/billing-service
+    newName: ghcr.io/energy-intelligence/billing-service
+    newTag: v2.0.0
+  - name: energy-intelligence/monetization-service
+    newName: ghcr.io/energy-intelligence/monetization-service
+    newTag: v2.0.0

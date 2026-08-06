@@ -8,12 +8,12 @@ class SiteScoreCard extends StatelessWidget {
   final String recommendation;
 
   const SiteScoreCard({
-    Key? key,
+    super.key,
     required this.score,
     required this.grade,
     required this.gradeColor,
     required this.recommendation,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -40,10 +40,7 @@ class SiteScoreCard extends StatelessWidget {
                   width: 160,
                   height: 160,
                   child: CustomPaint(
-                    painter: _ScoreArcPainter(
-                      score: score,
-                      color: gradeColor,
-                    ),
+                    painter: _ScoreArcPainter(score: score, color: gradeColor),
                   ),
                 ),
                 Column(
@@ -96,10 +93,7 @@ class _ScoreArcPainter extends CustomPainter {
   final double score;
   final Color color;
 
-  _ScoreArcPainter({
-    required this.score,
-    required this.color,
-  });
+  _ScoreArcPainter({required this.score, required this.color});
 
   @override
   void paint(Canvas canvas, Size size) {

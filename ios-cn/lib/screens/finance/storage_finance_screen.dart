@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../theme/app_theme.dart';
 import '../../widgets/bar_chart.dart';
 
 class StorageFinanceScreen extends StatefulWidget {
@@ -64,7 +63,10 @@ class _StorageFinanceScreenState extends State<StorageFinanceScreen> {
       }
       if (dnpv.abs() < 1e-10) break;
       final newIrr = irr - npv / dnpv;
-      if ((newIrr - irr).abs() < 1e-7) { irr = newIrr; break; }
+      if ((newIrr - irr).abs() < 1e-7) {
+        irr = newIrr;
+        break;
+      }
       irr = newIrr;
     }
 
@@ -76,6 +78,7 @@ class _StorageFinanceScreenState extends State<StorageFinanceScreen> {
         'irr': irr * 100,
         'annualRevenue': annualRevenue / 10000,
         'annualArbitrage': annualArbitrage,
+        'storageDurationHours': capacityMwh / powerMw,
         'payback': payback,
         'totalCapex': totalCapex / 10000,
         'cashflows': cashflows.sublist(1).map((c) => c / 10000).toList(),
@@ -86,7 +89,9 @@ class _StorageFinanceScreenState extends State<StorageFinanceScreen> {
 
   double _pow(double base, int exp) {
     double result = 1;
-    for (int i = 0; i < exp; i++) result *= base;
+    for (int i = 0; i < exp; i++) {
+      result *= base;
+    }
     return result;
   }
 
@@ -131,15 +136,33 @@ class _StorageFinanceScreenState extends State<StorageFinanceScreen> {
                   backgroundColor: Color(0xFF8B5CF6),
                   foregroundColor: Colors.white,
                   padding: EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
                 child: _isCalculating
-                    ? Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                        SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)),
-                        SizedBox(width: 12),
-                        Text('计算中...'),
-                      ])
-                    : Text('计算储能收益', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    ? Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          ),
+                          SizedBox(width: 12),
+                          Text('计算中...'),
+                        ],
+                      )
+                    : Text(
+                        '计算储能收益',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
               ),
             ),
 
@@ -149,12 +172,20 @@ class _StorageFinanceScreenState extends State<StorageFinanceScreen> {
               SizedBox(height: 16),
               _buildResultCards(),
               SizedBox(height: 24),
-              Text('10年现金流 (万元)', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+              Text(
+                '10年现金流 (万元)',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
               SizedBox(height: 12),
               SizedBox(
                 height: 200,
                 child: BarChart(
-                  values: (_result!['cashflows'] as List<dynamic>).map((e) => (e as double)).toList(),
+                  values: (_result!['cashflows'] as List<dynamic>)
+                      .map((e) => (e as double))
+                      .toList(),
                   labels: List.generate(10, (i) => 'Y${i + 1}'),
                   barColor: Color(0xFF8B5CF6),
                 ),
@@ -169,15 +200,30 @@ class _StorageFinanceScreenState extends State<StorageFinanceScreen> {
   Widget _buildSectionTitle(String title) {
     return Text(
       title,
-      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+      style: TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.bold,
+        color: Color(0xFF0F172A),
+      ),
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, String suffix) {
+  Widget _buildTextField(
+    String label,
+    TextEditingController controller,
+    String suffix,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(fontSize: 13, color: Color(0xFF64748B), fontWeight: FontWeight.w500)),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            color: Color(0xFF64748B),
+            fontWeight: FontWeight.w500,
+          ),
+        ),
         SizedBox(height: 6),
         TextField(
           controller: controller,
@@ -194,11 +240,33 @@ class _StorageFinanceScreenState extends State<StorageFinanceScreen> {
 
   Widget _buildResultCards() {
     final items = [
-      {'label': '项目IRR', 'value': '${(_result!['irr'] as double).toStringAsFixed(2)}%', 'color': Color(0xFF059669)},
-      {'label': '年套利收益', 'value': '${(_result!['annualRevenue'] as double).toStringAsFixed(0)} 万元', 'color': Color(0xFF8B5CF6)},
-      {'label': '峰谷套利量', 'value': '${(_result!['annualArbitrage'] as double).toStringAsFixed(0)} MWh/年', 'color': Color(0xFF0891B2)},
-      {'label': '投资回收期', 'value': '${(_result!['payback'] as double).toStringAsFixed(1)} 年', 'color': Color(0xFFEA580C)},
-      {'label': '总投资额', 'value': '${(_result!['totalCapex'] as double).toStringAsFixed(0)} 万元', 'color': Color(0xFF64748B)},
+      {
+        'label': '项目IRR',
+        'value': '${(_result!['irr'] as double).toStringAsFixed(2)}%',
+        'color': Color(0xFF059669),
+      },
+      {
+        'label': '年套利收益',
+        'value':
+            '${(_result!['annualRevenue'] as double).toStringAsFixed(0)} 万元',
+        'color': Color(0xFF8B5CF6),
+      },
+      {
+        'label': '峰谷套利量',
+        'value':
+            '${(_result!['annualArbitrage'] as double).toStringAsFixed(0)} MWh/年',
+        'color': Color(0xFF0891B2),
+      },
+      {
+        'label': '投资回收期',
+        'value': '${(_result!['payback'] as double).toStringAsFixed(1)} 年',
+        'color': Color(0xFFEA580C),
+      },
+      {
+        'label': '总投资额',
+        'value': '${(_result!['totalCapex'] as double).toStringAsFixed(0)} 万元',
+        'color': Color(0xFF64748B),
+      },
     ];
 
     return GridView.count(
@@ -208,23 +276,39 @@ class _StorageFinanceScreenState extends State<StorageFinanceScreen> {
       mainAxisSpacing: 12,
       crossAxisSpacing: 12,
       childAspectRatio: 1.8,
-      children: items.map((item) => Container(
-        padding: EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: (item['color'] as Color).withOpacity(0.08),
-          border: Border.all(color: (item['color'] as Color).withOpacity(0.3)),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(item['label'] as String, style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
-            SizedBox(height: 6),
-            Text(item['value'] as String, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: item['color'] as Color)),
-          ],
-        ),
-      )).toList(),
+      children: items
+          .map(
+            (item) => Container(
+              padding: EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: (item['color'] as Color).withValues(alpha: 0.08),
+                border: Border.all(
+                  color: (item['color'] as Color).withValues(alpha: 0.3),
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    item['label'] as String,
+                    style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                  ),
+                  SizedBox(height: 6),
+                  Text(
+                    item['value'] as String,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: item['color'] as Color,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          )
+          .toList(),
     );
   }
 }

@@ -38,9 +38,13 @@ class Project {
       lng: (json['longitude'] ?? json['lng'] ?? 0.0).toDouble(),
       address: json['location'] ?? json['address'] ?? '',
       province: json['province'] ?? '',
-      capacityMw: (json['capacity_mw'] ?? json['capacityMw'] ?? json['capacity'] ?? 0.0).toDouble(),
+      capacityMw:
+          (json['capacity_mw'] ?? json['capacityMw'] ?? json['capacity'] ?? 0.0)
+              .toDouble(),
       tags: List<String>.from(json['tags'] ?? []),
-      createdAt: DateTime.tryParse(json['created_at'] ?? json['createdAt'] ?? '') ?? DateTime.now(),
+      createdAt:
+          DateTime.tryParse(json['created_at'] ?? json['createdAt'] ?? '') ??
+          DateTime.now(),
     );
   }
 
@@ -64,13 +68,13 @@ class Project {
   String get projectTypeLabel {
     switch (projectType) {
       case 'solar_pv':
-        return '光伏';
+        return 'Solar PV';
       case 'wind':
-        return '风电';
+        return 'Wind';
       case 'storage':
-        return '储能';
+        return 'Storage';
       case 'hybrid':
-        return '混合';
+        return 'Hybrid';
       default:
         return projectType;
     }
@@ -79,13 +83,13 @@ class Project {
   String get statusLabel {
     switch (status) {
       case 'planning':
-        return '规划中';
+        return 'Planning';
       case 'construction':
-        return '建设中';
+        return 'Under construction';
       case 'operating':
-        return '运营中';
+        return 'Operating';
       case 'retired':
-        return '已退役';
+        return 'Retired';
       default:
         return status;
     }

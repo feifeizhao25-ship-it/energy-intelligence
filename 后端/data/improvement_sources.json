@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "policy": {
+    "default_ingestion": "metadata_only",
+    "production_auto_promotion": false,
+    "minimum_evidence_score": 0.85,
+    "minimum_safety_score": 0.85,
+    "independent_support_required": 2
+  },
+  "sources": [
+    {
+      "id": "nasa-power",
+      "scope": "energy",
+      "kind": "official_api",
+      "url": "https://power.larc.nasa.gov/docs/tutorials/service-data-request/api/",
+      "trust_tier": 1,
+      "ingestion_policy": "api_terms_only",
+      "refresh_days": 7,
+      "use": "solar and meteorological resource data"
+    },
+    {
+      "id": "pvgis-6",
+      "scope": "energy",
+      "kind": "official_api",
+      "url": "https://joint-research-centre.ec.europa.eu/photovoltaic-geographical-information-system-pvgis/using-pvgis-6/using-pvgis_en",
+      "trust_tier": 1,
+      "ingestion_policy": "api_terms_only",
+      "refresh_days": 30,
+      "use": "PV yield and solar-resource cross-check"
+    },
+    {
+      "id": "iea-renewables-information",
+      "scope": "energy",
+      "kind": "official_dataset",
+      "url": "https://www.iea.org/data-and-statistics/data-product/renewables-information",
+      "trust_tier": 1,
+      "ingestion_policy": "metadata_only",
+      "refresh_days": 180,
+      "use": "market and generation statistics"
+    },
+    {
+      "id": "pvlib-python",
+      "scope": "skills",
+      "kind": "github",
+      "url": "https://github.com/pvlib/pvlib-python",
+      "license": "BSD-3-Clause",
+      "trust_tier": 2,
+      "ingestion_policy": "code_review_only",
+      "refresh_days": 30,
+      "use": "PV calculation oracle and regression tests"
+    },
+    {
+      "id": "pysam",
+      "scope": "skills",
+      "kind": "github",
+      "url": "https://github.com/NREL/pysam",
+      "license": "BSD-3-Clause",
+      "trust_tier": 2,
+      "ingestion_policy": "code_review_only",
+      "refresh_days": 30,
+      "use": "energy and finance model oracle"
+    },
+    {
+      "id": "pypsa",
+      "scope": "skills",
+      "kind": "github",
+      "url": "https://github.com/PyPSA/PyPSA",
+      "license": "MIT",
+      "trust_tier": 2,
+      "ingestion_policy": "code_review_only",
+      "refresh_days": 30,
+      "use": "power-system optimization oracle"
+    },
+    {
+      "id": "ragas",
+      "scope": "rag_evaluation",
+      "kind": "paper",
+      "url": "https://arxiv.org/abs/2309.15217",
+      "trust_tier": 2,
+      "ingestion_policy": "citation_and_method_only",
+      "refresh_days": 90,
+      "use": "faithfulness, context relevance and answer relevance evaluation"
+    },
+    {
+      "id": "nist-ai-rmf-tevv",
+      "scope": "governance",
+      "kind": "official_guidance",
+      "url": "https://www.nist.gov/ai-test-evaluation-validation-and-verification-tevv",
+      "trust_tier": 1,
+      "ingestion_policy": "citation_and_method_only",
+      "refresh_days": 90,
+      "use": "evaluation governance and evidence collection"
+    },
+    {
+      "id": "cac-generative-ai",
+      "scope": "cn_compliance",
+      "kind": "official_regulation",
+      "url": "https://www.cac.gov.cn/2023-07/13/c_1690898327029107.htm",
+      "trust_tier": 1,
+      "ingestion_policy": "citation_only",
+      "refresh_days": 30,
+      "use": "China generative AI compliance"
+    },
+    {
+      "id": "eu-ai-transparency",
+      "scope": "global_compliance",
+      "kind": "official_guidance",
+      "url": "https://digital-strategy.ec.europa.eu/en/library/guidelines-transparency-obligations-providers-and-deployers-ai-systems",
+      "trust_tier": 1,
+      "ingestion_policy": "citation_only",
+      "refresh_days": 30,
+      "use": "EU transparency requirements"
+    }
+  ]
+}

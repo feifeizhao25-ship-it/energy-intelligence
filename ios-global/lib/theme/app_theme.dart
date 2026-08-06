@@ -37,9 +37,7 @@ class AppTheme {
       cardTheme: CardThemeData(
         color: cardColor,
         elevation: 2,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -84,10 +82,7 @@ class AppTheme {
         ),
         filled: true,
         fillColor: Colors.white,
-        hintStyle: TextStyle(
-          color: Color(0xFF94A3B8),
-          fontSize: 14,
-        ),
+        hintStyle: TextStyle(color: Color(0xFF94A3B8), fontSize: 14),
       ),
       textTheme: TextTheme(
         displayLarge: TextStyle(

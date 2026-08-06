@@ -1,0 +1,4 @@
+-r requirements.txt
+
+# Production images remove test-only packages after resolving the shared,
+# fully pinned dependency graph.

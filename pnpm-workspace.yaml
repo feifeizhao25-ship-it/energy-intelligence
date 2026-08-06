@@ -1,0 +1,7 @@
+packages:
+  # ── Shared packages ──
+  - "packages/*"
+
+  # ── Web frontends ──
+  - "web-global"
+  - "frontend-cn-web"

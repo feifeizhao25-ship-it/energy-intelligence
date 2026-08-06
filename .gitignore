@@ -2,10 +2,15 @@ __pycache__/
 *.pyc
 .venv/
 .env
+.env.*
+!.env.example
+!.env.production.example
 *.db
 *.sqlite
 node_modules/
+web-global/out/
 .next/
+*.tsbuildinfo
 android-cn/build/
 android-cn/.dart_tool/
 android-cn/.gradle/
@@ -18,3 +23,4 @@ android-global/.dart_tool/
 ios-global/build/
 ios-global/Pods/
 .DS_Store
+._*

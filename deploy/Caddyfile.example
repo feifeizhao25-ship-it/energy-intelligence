@@ -1,0 +1,37 @@
+# 新能源智库 — Caddy 反向代理示例（自动 HTTPS）
+#
+# 部署:
+#   1. 把 energyiq.example.com 替换为真实域名（energyiq.<主域>）
+#   2. 按 Caddy 运行位置调整上游地址（见下方注释）
+#   3. cp deploy/Caddyfile.example /etc/caddy/Caddyfile && systemctl reload caddy
+#
+# 上游约定（runtime/docker-compose.production.yml）:
+#   - 前端 web 容器内端口 3000（compose 服务 web-cn / web-int，宿主默认映射 3300 / 3400）
+#   - 后端 api 容器内端口 8000（compose 服务 backend，不映射宿主端口）
+#
+# 若 Caddy 与 compose 在同一 docker 网络：用服务名 web:3000 / api:8000。
+# 若 Caddy 跑在宿主机：改用 127.0.0.1:3300（web-cn）和宿主映射的后端端口，
+# 或在 compose 中给 backend 增加 "127.0.0.1:8000:8000" 端口映射后用 127.0.0.1:8000。
+
+energyiq.example.com {
+	encode zstd gzip
+
+	# 后端 API：/api/ 前缀原样转发（FastAPI 路由自带 /api/v1 前缀，不要 strip）
+	handle /api/* {
+		reverse_proxy api:8000
+	}
+
+	# 前端（Next.js）
+	handle {
+		reverse_proxy web:3000
+	}
+
+	# 安全响应头
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+}

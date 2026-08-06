@@ -5,11 +5,7 @@ class ProjectCard extends StatelessWidget {
   final Project project;
   final VoidCallback? onTap;
 
-  const ProjectCard({
-    Key? key,
-    required this.project,
-    this.onTap,
-  }) : super(key: key);
+  const ProjectCard({super.key, required this.project, this.onTap});
 
   IconData _getTypeIcon() {
     switch (project.projectType) {
@@ -78,7 +74,7 @@ class ProjectCard extends StatelessWidget {
                   Container(
                     padding: EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: typeColor.withOpacity(0.1),
+                      color: typeColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(_getTypeIcon(), color: typeColor, size: 20),
@@ -86,7 +82,7 @@ class ProjectCard extends StatelessWidget {
                   Container(
                     padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: statusColor.withOpacity(0.1),
+                      color: statusColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
@@ -114,15 +110,16 @@ class ProjectCard extends StatelessWidget {
               SizedBox(height: 8),
               Row(
                 children: [
-                  Icon(Icons.location_on_outlined, size: 14, color: Color(0xFF64748B)),
+                  Icon(
+                    Icons.location_on_outlined,
+                    size: 14,
+                    color: Color(0xFF64748B),
+                  ),
                   SizedBox(width: 4),
                   Expanded(
                     child: Text(
                       '${project.province} · ${project.capacityMw.toStringAsFixed(0)}MW',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF64748B),
-                      ),
+                      style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),

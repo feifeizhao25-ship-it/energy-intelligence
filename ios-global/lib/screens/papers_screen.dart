@@ -6,9 +6,21 @@ class PapersScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final papers = [
-      {'title': 'Perovskite Efficiency 25%', 'year': '2024', 'author': 'Zhang et al.'},
-      {'title': 'TOPCon Mass Production 25%', 'year': '2024', 'author': 'Li et al.'},
-      {'title': 'HJT Breakthrough 26%', 'year': '2024', 'author': 'Wang et al.'},
+      {
+        'title': 'Perovskite Efficiency 25%',
+        'year': '2024',
+        'author': 'Zhang et al.',
+      },
+      {
+        'title': 'TOPCon Mass Production 25%',
+        'year': '2024',
+        'author': 'Li et al.',
+      },
+      {
+        'title': 'HJT Breakthrough 26%',
+        'year': '2024',
+        'author': 'Wang et al.',
+      },
     ];
 
     return Scaffold(

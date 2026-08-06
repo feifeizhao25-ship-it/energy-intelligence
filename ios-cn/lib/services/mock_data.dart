@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import '../models/user.dart';
 import '../models/project.dart';
 import '../models/resource_assessment.dart';
@@ -119,9 +118,48 @@ class MockData {
     siteScore: 72.5,
     siteGrade: 'B',
     recommendation: '该地区属于二类资源区，光照条件良好，建议采用固定式安装方案，预期年发电小时数约1350-1400小时。',
-    ghiMonthly: [87.4, 104.3, 142.8, 156.9, 168.2, 155.6, 145.3, 138.7, 118.4, 102.6, 78.9, 72.3],
-    temperatureMonthly: [-2.5, 0.8, 8.6, 18.3, 26.7, 31.2, 32.1, 30.8, 25.4, 16.8, 6.3, -1.4],
-    windSpeedMonthly: [3.1, 3.2, 3.4, 3.2, 3.0, 2.9, 2.8, 2.9, 3.1, 3.3, 3.5, 3.4],
+    ghiMonthly: [
+      87.4,
+      104.3,
+      142.8,
+      156.9,
+      168.2,
+      155.6,
+      145.3,
+      138.7,
+      118.4,
+      102.6,
+      78.9,
+      72.3,
+    ],
+    temperatureMonthly: [
+      -2.5,
+      0.8,
+      8.6,
+      18.3,
+      26.7,
+      31.2,
+      32.1,
+      30.8,
+      25.4,
+      16.8,
+      6.3,
+      -1.4,
+    ],
+    windSpeedMonthly: [
+      3.1,
+      3.2,
+      3.4,
+      3.2,
+      3.0,
+      2.9,
+      2.8,
+      2.9,
+      3.1,
+      3.3,
+      3.5,
+      3.4,
+    ],
   );
 
   static final ResourceAssessment mockWindAssessment = ResourceAssessment(
@@ -137,10 +175,37 @@ class MockData {
     turbulenceIntensity: 0.16,
     siteScore: 78.3,
     siteGrade: 'B',
-    recommendation: '该地区属于Ⅱ类风区，年平均风速7.4m/s，风能密度185.6W/m²，建议采用单机容量3-4.5MW风机，预期年发电小时数约2400-2600小时。',
-    windSpeedMonthly: [7.8, 8.1, 7.6, 7.2, 6.8, 6.5, 6.4, 6.7, 7.2, 7.5, 7.9, 8.2],
+    recommendation:
+        '该地区属于Ⅱ类风区，年平均风速7.4m/s，风能密度185.6W/m²，建议采用单机容量3-4.5MW风机，预期年发电小时数约2400-2600小时。',
+    windSpeedMonthly: [
+      7.8,
+      8.1,
+      7.6,
+      7.2,
+      6.8,
+      6.5,
+      6.4,
+      6.7,
+      7.2,
+      7.5,
+      7.9,
+      8.2,
+    ],
     ghiMonthly: [],
-    temperatureMonthly: [-18.5, -15.2, -8.4, 5.6, 15.8, 22.4, 24.6, 23.1, 16.8, 4.3, -6.7, -16.2],
+    temperatureMonthly: [
+      -18.5,
+      -15.2,
+      -8.4,
+      5.6,
+      15.8,
+      22.4,
+      24.6,
+      23.1,
+      16.8,
+      4.3,
+      -6.7,
+      -16.2,
+    ],
   );
 
   static final FinancialModel mockFinancialModel = FinancialModel(

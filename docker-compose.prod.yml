@@ -1,0 +1,232 @@
+# 新能源智库 — 生产环境 Docker Compose
+# 用法: docker compose -f docker-compose.prod.yml up -d
+
+name: energy
+
+services:
+  postgres-cn:
+    image: postgres:16-alpine
+    container_name: energy-postgres-cn
+    environment:
+      POSTGRES_DB: energy_cn
+      POSTGRES_USER: energy_cn
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_CN:?POSTGRES_PASSWORD_CN must be set}
+    volumes:
+      - pg-data-cn:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U energy_cn"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  postgres-global:
+    image: postgres:16-alpine
+    container_name: energy-postgres-global
+    environment:
+      POSTGRES_DB: energy_global
+      POSTGRES_USER: energy_global
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_GLOBAL:?POSTGRES_PASSWORD_GLOBAL must be set}
+    volumes:
+      - pg-data-global:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U energy_global"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis-cn:
+    image: redis:7-alpine
+    container_name: energy-redis-cn
+    command: redis-server --requirepass ${REDIS_PASSWORD_CN:?REDIS_PASSWORD_CN must be set} --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data-cn:/data
+    ports:
+      - "127.0.0.1:6379:6379"
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$${REDIS_PASSWORD}\" ping | grep PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD_CN:?REDIS_PASSWORD_CN must be set}
+    restart: unless-stopped
+
+  redis-global:
+    image: redis:7-alpine
+    container_name: energy-redis-global
+    command: redis-server --requirepass ${REDIS_PASSWORD_GLOBAL:?REDIS_PASSWORD_GLOBAL must be set} --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data-global:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$${REDIS_PASSWORD}\" ping | grep PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD_GLOBAL:?REDIS_PASSWORD_GLOBAL must be set}
+    restart: unless-stopped
+
+  backend-cn:
+    build:
+      context: ./后端
+      dockerfile: Dockerfile
+    container_name: energy-backend-cn
+    ports:
+      - "127.0.0.1:8001:8000"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://energy_cn:${POSTGRES_PASSWORD_CN:?POSTGRES_PASSWORD_CN must be set}@postgres-cn:5432/energy_cn
+      - REDIS_URL=redis://:${REDIS_PASSWORD_CN:?REDIS_PASSWORD_CN must be set}@redis-cn:6379/0
+      - ENVIRONMENT=production
+      - MARKET_REGION=cn
+      - DEBUG=false
+      - SECRET_KEY=${SECRET_KEY_CN:?SECRET_KEY_CN must be set}
+      - JWT_ALGORITHM=HS256
+      - ACCESS_TOKEN_EXPIRE_MINUTES=30
+      - REFRESH_TOKEN_EXPIRE_DAYS=7
+      - CORS_ORIGINS=${CORS_ORIGINS_CN:-["https://cn.energy-thinktank.com"]}
+      - VECTOR_STORE_BACKEND=${VECTOR_STORE_BACKEND:-milvus}
+      - MILVUS_HOST=${MILVUS_HOST:?MILVUS_HOST must be set}
+      - MILVUS_PORT=${MILVUS_PORT:-19530}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
+      - DASHSCOPE_API_KEY=${DASHSCOPE_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
+      - SMTP_HOST=${SMTP_HOST:-}
+      - SMTP_PORT=${SMTP_PORT:-465}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASS=${SMTP_PASS:-}
+      - EMAIL_FROM=${EMAIL_FROM:-noreply@energy-thinktank.com}
+      - STORAGE_PROVIDER=oss
+      - OSS_BUCKET=${OSS_BUCKET:?OSS_BUCKET must be set}
+      - OSS_ENDPOINT=${OSS_ENDPOINT:?OSS_ENDPOINT must be set}
+      - OSS_ACCESS_KEY_ID=${OSS_ACCESS_KEY_ID:?OSS_ACCESS_KEY_ID must be set}
+      - OSS_ACCESS_KEY_SECRET=${OSS_ACCESS_KEY_SECRET:?OSS_ACCESS_KEY_SECRET must be set}
+      - SMTP_STARTTLS=${SMTP_STARTTLS:-}
+    volumes:
+      - backend-data:/app/data
+      - backend-uploads:/app/uploads
+      - backend-logs:/app/logs
+    depends_on:
+      postgres-cn:
+        condition: service_healthy
+      redis-cn:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8000/ready"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  backend-global:
+    extends:
+      service: backend-cn
+    container_name: energy-backend-global
+    ports:
+      - "127.0.0.1:8002:8000"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://energy_global:${POSTGRES_PASSWORD_GLOBAL:?POSTGRES_PASSWORD_GLOBAL must be set}@postgres-global:5432/energy_global
+      - REDIS_URL=redis://:${REDIS_PASSWORD_GLOBAL:?REDIS_PASSWORD_GLOBAL must be set}@redis-global:6379/0
+      - ENVIRONMENT=production
+      - MARKET_REGION=global
+      - DEBUG=false
+      - SECRET_KEY=${SECRET_KEY_GLOBAL:?SECRET_KEY_GLOBAL must be set}
+      - JWT_ALGORITHM=HS256
+      - CORS_ORIGINS=${CORS_ORIGINS_GLOBAL:-["https://energy-thinktank.com"]}
+      - VECTOR_STORE_BACKEND=${VECTOR_STORE_BACKEND_GLOBAL:-milvus}
+      - MILVUS_HOST=${MILVUS_HOST_GLOBAL:?MILVUS_HOST_GLOBAL must be set}
+      - STORAGE_PROVIDER=s3
+      - S3_BUCKET=${S3_BUCKET_GLOBAL:?S3_BUCKET_GLOBAL must be set}
+      - AWS_REGION=${AWS_REGION:?AWS_REGION must be set}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY_GLOBAL:?OPENROUTER_API_KEY_GLOBAL must be set}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY_GLOBAL:?STRIPE_SECRET_KEY_GLOBAL must be set}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET_GLOBAL:?STRIPE_WEBHOOK_SECRET_GLOBAL must be set}
+    volumes:
+      - backend-data-global:/app/data
+      - backend-uploads-global:/app/uploads
+      - backend-logs-global:/app/logs
+    depends_on:
+      postgres-global:
+        condition: service_healthy
+      redis-global:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8000/ready"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  frontend-cn:
+    build:
+      context: .
+      dockerfile: frontend-cn-web/Dockerfile
+    container_name: energy-frontend-cn
+    ports:
+      - "127.0.0.1:3001:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=/api
+      - API_INTERNAL_URL=http://backend-cn:8000
+      - NEXT_PUBLIC_USE_MOCK_DATA=false
+    depends_on:
+      backend-cn:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend-int:
+    build:
+      context: .
+      dockerfile: web-global/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: /api
+    container_name: energy-frontend-int
+    ports:
+      - "127.0.0.1:3003:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=/api
+      - API_INTERNAL_URL=http://backend-global:8000
+    depends_on:
+      backend-global:
+        condition: service_healthy
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: energy-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      backend-cn:
+        condition: service_healthy
+      backend-global:
+        condition: service_healthy
+      frontend-cn:
+        condition: service_healthy
+      frontend-int:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  pg-data-cn:
+  pg-data-global:
+  redis-data-cn:
+  redis-data-global:
+  backend-data:
+  backend-uploads:
+  backend-logs:
+  backend-data-global:
+  backend-uploads-global:
+  backend-logs-global:

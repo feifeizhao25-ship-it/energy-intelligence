@@ -18,7 +18,8 @@ class _AssistantScreenState extends State<AssistantScreen> {
     super.initState();
     _messages.add({
       'role': 'assistant',
-      'content': '您好！我是新能源智库AI助手。\n\n可以帮您：\n\n☀️ 查询光伏/风资源\n💰 计算项目收益\n🔧 诊断电站故障\n📄 搜索行业论文\n📋 了解政策法规'
+      'content':
+          '您好！我是新能源智库AI助手。\n\n可以帮您：\n\n☀️ 查询光伏/风资源\n💰 计算项目收益\n🔧 诊断电站故障\n📄 搜索行业论文\n📋 了解政策法规',
     });
   }
 
@@ -40,12 +41,14 @@ class _AssistantScreenState extends State<AssistantScreen> {
                 final msg = _messages[index];
                 final isUser = msg['role'] == 'user';
                 return Align(
-                  alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+                  alignment: isUser
+                      ? Alignment.centerRight
+                      : Alignment.centerLeft,
                   child: Container(
                     margin: const EdgeInsets.only(bottom: 12),
                     padding: const EdgeInsets.all(12),
                     constraints: BoxConstraints(
-                      maxWidth: MediaQuery.of(context).size.width * 0.75
+                      maxWidth: MediaQuery.of(context).size.width * 0.75,
                     ),
                     decoration: BoxDecoration(
                       color: isUser ? Colors.blue[700] : Colors.grey[200],
@@ -118,30 +121,28 @@ class _AssistantScreenState extends State<AssistantScreen> {
     try {
       // 调用 API
       final result = await ApiService.chat(text);
-      
+
       String reply;
       if (result['success'] == true) {
         // 使用 AI 响应
         reply = result['ai_response'] ?? '处理完成';
-        
+
         // 如果有详细数据，也显示
-        if (result['results'] != null && (result['results'] as Map).isNotEmpty) {
+        if (result['results'] != null &&
+            (result['results'] as Map).isNotEmpty) {
           final skills = (result['results'] as Map).keys.join(', ');
           reply += '\n\n(使用技能: $skills)';
         }
       } else {
         reply = result['error'] ?? '抱歉，请稍后重试';
       }
-      
+
       setState(() {
         _messages.add({'role': 'assistant', 'content': reply});
       });
     } catch (e) {
       setState(() {
-        _messages.add({
-          'role': 'assistant',
-          'content': '连接服务器失败: $e'
-        });
+        _messages.add({'role': 'assistant', 'content': '连接服务器失败: $e'});
       });
     } finally {
       setState(() {
