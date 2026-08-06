@@ -11,7 +11,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { Button, Card, Badge, KPIRibbon, StatCard, SegmentedControl, Progress } from '@energy-intelligence/ui-web';
+import { Button, Card, Badge, KPIRibbon, SegmentedControl, Progress } from '@energy-intelligence/ui-web';
 import { cn } from '@energy-intelligence/ui-web';
 import GlobalShell from '../GlobalShell';
 import DemoBadge from '../DemoBadge';

@@ -8,7 +8,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8002').replace(/\/$/, '');
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/$/, '');
 
 export interface HeroPayload {
   headline?: string;
@@ -40,6 +40,12 @@ export function usePersonalizedDashboard(userId: string | null): PersonalizedDas
     if (!userId) {
       setHero(null);
       setWidgets([]);
+      return;
+    }
+    if (!API_BASE) {
+      setHero(null);
+      setWidgets([]);
+      setError('Personalization service is not configured');
       return;
     }
     setLoading(true);

@@ -10,6 +10,7 @@ __pycache__/
 node_modules/
 web-global/out/
 .next/
+*.tsbuildinfo
 android-cn/build/
 android-cn/.dart_tool/
 android-cn/.gradle/
