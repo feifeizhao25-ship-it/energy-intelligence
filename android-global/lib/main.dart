@@ -16,8 +16,13 @@ import 'screens/projects/projects_screen.dart';
 import 'screens/projects/project_detail_screen.dart';
 import 'screens/research/research_screen.dart';
 import 'screens/settings/settings_screen.dart';
+import 'services/api_service.dart';
 
-void main() => runApp(const EnergyIntelligenceApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await ApiService.init(region: 'GLOBAL');
+  runApp(const EnergyIntelligenceApp());
+}
 
 class EnergyIntelligenceApp extends StatelessWidget {
   const EnergyIntelligenceApp({super.key});

@@ -43,6 +43,7 @@ jobs:
           node-version: 20
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: pnpm security:audit
       - run: pnpm --dir frontend-cn-web type-check
       - run: pnpm --dir frontend-cn-web build
       - run: pnpm --dir web-global type-check

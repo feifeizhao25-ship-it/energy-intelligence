@@ -73,6 +73,10 @@ for mobile_api in mobile_api_files:
     require(mobile_api, "String.fromEnvironment('API_BASE_URL')")
     require(mobile_api, "API_BASE_URL must use HTTPS in release builds")
     forbid(mobile_api, ("http://116.62.32.43", "_baseUrl = 'http://localhost"))
+    require(mobile_api, "FlutterSecureStorage")
+    forbid(mobile_api, ("prefs.setString('energy_token'", "prefs.getString('energy_token'"))
+
+require("android-global/lib/main.dart", "await ApiService.init(region: 'GLOBAL')")
 
 for gradle_file in (
     "android-cn/android/app/build.gradle.kts",
