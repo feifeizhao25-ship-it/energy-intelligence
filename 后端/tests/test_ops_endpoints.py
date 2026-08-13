@@ -101,6 +101,23 @@ async def test_rate_limit_triggers_429(client, monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_global_rate_limit_response_is_english_only(client, monkeypatch):
+    import app.middleware as middleware_module
+
+    monkeypatch.setattr(middleware_module.settings, "RATE_LIMIT_REQUESTS", 1)
+    monkeypatch.setattr(middleware_module.settings, "RATE_LIMIT_WINDOW", 60)
+    monkeypatch.setattr(middleware_module.settings, "MARKET_REGION", "global")
+    headers = {"X-Forwarded-For": "10.99.0.2"}
+
+    assert (await client.get("/api/v1/billing/plans", headers=headers)).status_code == 200
+    response = await client.get("/api/v1/billing/plans", headers=headers)
+
+    assert response.status_code == 429
+    assert response.json()["message"] == "Too many requests. Please try again later."
+    assert not any("\u3400" <= char <= "\u9fff" for char in response.text)
+
+
+@pytest.mark.asyncio
 async def test_rate_limit_exempt_paths(client, monkeypatch):
     """/health、/ready、/metrics 不参与限流。"""
     import app.middleware as middleware_module
