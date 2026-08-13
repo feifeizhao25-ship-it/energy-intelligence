@@ -126,11 +126,16 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         estimated = count + previous * (1.0 - elapsed_ratio)
         if estimated > limit:
             retry_after = max(1, int(window - (now - bucket * window)))
+            global_market = getattr(settings, "MARKET_REGION", "cn") == "global"
             return JSONResponse(
                 status_code=429,
                 content={
                     "code": 429,
-                    "message": "请求过于频繁，请稍后重试",
+                    "message": (
+                        "Too many requests. Please try again later."
+                        if global_market
+                        else "请求过于频繁，请稍后重试"
+                    ),
                     "error": {"limit": limit, "window_seconds": window},
                 },
                 headers={"Retry-After": str(retry_after)},
