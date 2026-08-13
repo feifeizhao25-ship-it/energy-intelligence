@@ -22,8 +22,8 @@ jobs:
       matrix:
         include:
           - name: backend
-            context: ./后端
-            dockerfile: ./后端/Dockerfile
+            context: ./.release/backend
+            dockerfile: ./.release/backend/Dockerfile
           - name: frontend-cn
             context: .
             dockerfile: ./frontend-cn-web/Dockerfile
@@ -43,6 +43,13 @@ jobs:
               exit 1
               ;;
           esac
+      - name: Prepare ASCII-only backend build context
+        if: matrix.name == 'backend'
+        run: |
+          mkdir -p .release/backend
+          cp -R "后端/." .release/backend/
+          test -f .release/backend/Dockerfile
+          test -f .release/backend/requirements.txt
       - uses: docker/setup-buildx-action@v3
       - uses: docker/login-action@v3
         with:
