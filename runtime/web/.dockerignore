@@ -1,0 +1,17 @@
+node_modules
+.next
+.git
+.env*
+!.env.production
+Dockerfile
+.dockerignore
+README.md
+LICENSE
+legacy-routes
+docs
+scripts
+*.md
+*.log
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts

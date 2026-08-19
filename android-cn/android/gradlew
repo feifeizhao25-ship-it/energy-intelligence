@@ -1,0 +1,11 @@
+fi
+
+ENERGY_GRADLE_INIT_SCRIPT="$APP_HOME/../../scripts/gradle-cn-mirrors.init.gradle"
+if [ -f "$ENERGY_GRADLE_INIT_SCRIPT" ]; then
+    set -- -I "$ENERGY_GRADLE_INIT_SCRIPT" "$@"
+fi
+
+# Split up the JVM_OPTS And GRADLE_OPTS values into an array, following the shell quoting and substitution rules
+function splitJvmOpts() {
+    JVM_OPTS=("$@")
+}

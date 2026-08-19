@@ -1,0 +1,1257 @@
+// 新能源智库数据库设计 - 完整会员体系
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ==================== 会员相关模型 ====================
+
+// 会员等级枚举
+enum Plan {
+  FREE
+  PRO
+  MAINTENANCE
+  FULL
+  TEAM
+  ENTERPRISE
+}
+
+// 订阅状态枚举
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+  PAUSED
+}
+
+// 用户表 - 增强版
+model User {
+  id       String  @id @default(cuid())
+  email    String  @unique
+  name     String?
+  avatar   String?
+  phone    String?
+  password String? // 密码（加密存储）
+
+  // 职业信息
+  company          String?
+  jobTitle         String?
+  industry         String?
+  bio              String?
+  profileCompleted Boolean @default(false)
+
+  // 会员信息
+  plan         Plan      @default(FREE)
+  planExpireAt DateTime?
+
+  // 每日使用统计（每日重置）
+  dailyAiCalls         Int      @default(0)
+  dailyResourceQueries Int      @default(0)
+  dailyCalculations    Int      @default(0)
+  dailyPaperSearches   Int      @default(0)
+  dailyDiagnoses       Int      @default(0)
+  lastResetAt          DateTime @default(now())
+
+  // 存储统计
+  projectCount Int @default(0)
+  paperCount   Int @default(0)
+  stationCount Int @default(0)
+  folderCount  Int @default(0)
+
+  // 团队关联（团队版/企业版）
+  teamId   String?
+  teamRole String? // owner/admin/member
+
+  // 增长与裂变
+  referralCode   String? @unique
+  referredById   String?
+  referralPoints Int     @default(0)
+
+  // 签到与积分
+  points        Int       @default(0) // 用户积分
+  streakDays    Int       @default(0) // 连续签到天数
+  lastCheckInAt DateTime? // 上次签到时间
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // 关联关系
+  subscription          Subscription?
+  team                  Team?                   @relation(fields: [teamId], references: [id])
+  ownedTeam             Team?                   @relation("TeamOwner")
+  projects              Project[]
+  calculations          Calculation[]
+  diagnoses             Diagnosis[]
+  savedPapers           SavedPaper[]
+  folders               PaperFolder[]
+  conversations         Conversation[]
+  savedLocations        SavedLocation[]
+  usageLogs             UsageLog[]
+  stations              Station[]
+  activatedProjects     ActivatedProject[] // 资产生命周期管理
+  calculationSnapshots  CalculationSnapshot[] // 可审计计算快照 - 重命名以避免冲突
+  projectEvents         ProjectEvent[] // 项目时间线事件
+  apiKeys               ApiKey[] // 开放平台接口密钥
+  apiLogs               ApiLog[] // 接口调用日志
+  PushSubscription      PushSubscription[]
+  UserAchievementDetail UserAchievementDetail[]
+
+  @@map("users")
+}
+
+// 订阅表
+model Subscription {
+  id                String             @id @default(cuid())
+  userId            String             @unique
+  plan              Plan
+  status            SubscriptionStatus @default(ACTIVE)
+  startDate         DateTime           @default(now())
+  endDate           DateTime
+  autoRenew         Boolean            @default(false)
+  trialEndsAt       DateTime? // 试用期结束时间
+  cancelAtPeriodEnd Boolean            @default(false)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  // 关联关系
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payments Payment[]
+
+  @@map("subscriptions")
+}
+
+// 支付记录表
+model Payment {
+  id             String    @id @default(cuid())
+  subscriptionId String
+  amount         Float // 支付金额
+  currency       String    @default("CNY")
+  status         String // pending/completed/failed/refunded
+  paymentMethod  String? // alipay/wechat/credit_card
+  transactionId  String? // 第三方交易ID
+  description    String? // 支付描述
+  paidAt         DateTime?
+  createdAt      DateTime  @default(now())
+
+  // 关联关系
+  subscription Subscription @relation(fields: [subscriptionId], references: [id])
+
+  @@map("payments")
+}
+
+// 团队表
+model Team {
+  id           String   @id @default(cuid())
+  name         String
+  ownerId      String   @unique
+  plan         Plan     @default(TEAM)
+  memberLimit  Int      @default(5)
+  storageLimit Float    @default(10737418240.0) // 10GB in bytes
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // 关联关系
+  owner   User   @relation("TeamOwner", fields: [ownerId], references: [id])
+  members User[]
+
+  @@map("teams")
+}
+
+// ==================== 项目与电站 ====================
+
+// 项目表（一个用户可以有多个项目）
+model Project {
+  id               String   @id @default(cuid())
+  userId           String
+  name             String
+  type             String // SOLAR/WIND/STORAGE
+  location         String?
+  lat              Float?
+  lng              Float?
+  capacity         Float? // 装机容量
+  area             Float? // 面积
+  siteData         Json?
+  comparisonResult Json?
+  recommendedType  String?
+  reportStatus     String   @default("LOCKED")
+  parameters       Json?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // 关联关系
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stations  Station[]
+  diagnoses Diagnosis[]
+
+  // 资产生命周期管理
+  activatedProject     ActivatedProject?
+  dailyAnalyses        DailyAnalysis[]
+  healthHistory        AssetHealthHistory[]
+  maintenancePlans     MaintenancePlan[]
+  realTimeData         RealTimeData[]
+  alerts               AssetAlert[]
+  calculationSnapshots CalculationSnapshot[]
+  projectEvents        ProjectEvent[]
+  comparisons          ProjectComparison[]
+  reports              Report[]
+  savedPapers          SavedPaper[]
+  paperRecommendations ProjectPaperRecommendation[]
+
+  @@map("projects")
+}
+
+// 电站表（一个项目可以有多个电站/测点）
+model Station {
+  id        String  @id @default(cuid())
+  projectId String?
+  userId    String
+  name      String
+  type      String // SOLAR/WIND
+  lat       Float
+  lng       Float
+  capacity  Float? // 装机容量 kW
+
+  // 实时数据
+  currentPower Float? // 当前功率 kW
+  dailyEnergy  Float? // 今日发电量 kWh
+  totalEnergy  Float? // 累计发电量 kWh
+  status       String    @default("normal") // normal/warning/fault/maintenance
+  lastUpdated  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // 关联关系
+  project Project?        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  records StationRecord[]
+
+  @@map("stations")
+}
+
+// 电站数据记录表
+model StationRecord {
+  id          String   @id @default(cuid())
+  stationId   String
+  timestamp   DateTime
+  power       Float? // 功率 kW
+  energy      Float? // 发电量 kWh
+  irradiance  Float? // 辐照度 W/m2
+  windSpeed   Float? // 风速 m/s
+  temperature Float? // 温度 °C
+  status      String   @default("normal")
+
+  // 关联关系
+  station Station @relation(fields: [stationId], references: [id], onDelete: Cascade)
+
+  @@index([stationId, timestamp])
+  @@map("station_records")
+}
+
+// 用户成就表
+model UserAchievement {
+  id            String      @id @default(cuid())
+  userId        String
+  achievementId String
+  unlockedAt    DateTime    @default(now())
+  rewardClaimed Boolean     @default(false)
+  Achievement   Achievement @relation(fields: [achievementId], references: [id])
+
+  @@unique([userId, achievementId])
+  @@map("user_achievements")
+}
+
+// 通知表
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String // morning/evening/alert/achievement/system
+  title     String
+  content   String   @db.Text
+  data      Json? // 额外数据
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, isRead])
+  @@map("notifications")
+}
+
+// 推送配置表
+model PushConfig {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  enabled       Boolean  @default(true)
+  morningReport Boolean  @default(true)
+  eveningReport Boolean  @default(true)
+  alerts        Boolean  @default(true)
+  weeklyDigest  Boolean  @default(true)
+  channels      String[] // app/sms/wechat
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("push_configs")
+}
+
+// 问答 - 问题表
+model Question {
+  id           String   @id @default(cuid())
+  userId       String
+  title        String
+  content      String   @db.Text
+  category     String // installation/maintenance/policy/technology
+  tags         String[]
+  views        Int      @default(0)
+  likes        Int      @default(0)
+  isAnswered   Boolean  @default(false)
+  bestAnswerId String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  answers Answer[]
+
+  @@map("questions")
+}
+
+// 问答 - 回答表
+model Answer {
+  id         String   @id @default(cuid())
+  questionId String
+  userId     String
+  content    String   @db.Text
+  likes      Int      @default(0)
+  isBest     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@map("answers")
+}
+
+// 邀请记录表
+model ReferralRecord {
+  id         String    @id @default(cuid())
+  inviterId  String
+  inviteeId  String
+  status     String    @default("registered") // registered/paid
+  rewardDays Int       @default(0)
+  rewardCash Float?
+  createdAt  DateTime  @default(now())
+  paidAt     DateTime?
+
+  @@map("referral_records")
+}
+
+// 保存的位置表
+model SavedLocation {
+  id     String @id @default(cuid())
+  userId String
+  name   String
+  lat    Float
+  lng    Float
+
+  // 资源数据缓存
+  solarGHI  Float? // 年总辐照量 kWh/m2
+  windSpeed Float? // 100m风速 m/s
+  lastFetch DateTime?
+
+  notes String?
+  tags  String[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // 关联
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("saved_locations")
+}
+
+// 计算记录表
+model Calculation {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String // SOLAR/WIND/COMPARE
+  input     Json // 计算输入参数
+  output    Json // 计算结果
+  createdAt DateTime @default(now())
+
+  // 关联关系
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("calculations")
+}
+
+// 诊断记录表
+model Diagnosis {
+  id        String   @id @default(cuid())
+  userId    String
+  projectId String?
+  type      String // HEALTH/FAULT/INSPECTION/LOSS/CLEANING/IV_CURVE/WIND_FAULT
+  input     Json // 诊断输入
+  result    Json // 诊断结果
+  createdAt DateTime @default(now())
+
+  // 关联关系
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project Project? @relation(fields: [projectId], references: [id])
+
+  @@map("diagnoses")
+}
+
+// 保存的文献表
+model SavedPaper {
+  id             String   @id @default(cuid())
+  userId         String
+  folderId       String?
+  projectId      String?
+  paperId        String
+  title          String
+  authors        Json // 作者数组
+  year           Int?
+  journal        String? // 期刊/会议
+  abstract       String?  @db.Text
+  pdfUrl         String?
+  source         String? // semantic/arxiv/upload
+  status         String?  @default("idle") // idle/indexing/completed/error
+  citationCount  Int?     @default(0)
+  tags           String[] // 个人标签
+  isRead         Boolean  @default(false)
+  aiSummary      String?  @db.Text // AI生成的中文摘要
+  aiInsights     String?  @db.Text
+  relevanceScore Float?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // 关联关系
+  user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  folder  PaperFolder? @relation(fields: [folderId], references: [id])
+  project Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  notes   PaperNote[]
+
+  @@unique([userId, paperId])
+  @@map("saved_papers")
+}
+
+model ProjectPaperRecommendation {
+  id        String   @id @default(cuid())
+  projectId String
+  paperId   String
+  title     String
+  authors   Json
+  abstract  String?  @db.Text
+  year      Int?
+  reason    String   @db.Text
+  score     Float
+  status    String   @default("active")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, paperId])
+  @@index([projectId, score])
+  @@map("project_paper_recommendations")
+}
+
+// 文献文件夹
+model PaperFolder {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  parentId  String? // 支持嵌套
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // 关联关系
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent   PaperFolder?  @relation("FolderHierarchy", fields: [parentId], references: [id])
+  children PaperFolder[] @relation("FolderHierarchy")
+  papers   SavedPaper[]
+
+  @@map("paper_folders")
+}
+
+// 文献笔记
+model PaperNote {
+  id           String   @id @default(cuid())
+  savedPaperId String
+  content      String   @db.Text
+  pageNumber   Int? // 关联页码
+  highlight    String?  @db.Text // 关联原文高亮
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // 关联关系
+  savedPaper SavedPaper @relation(fields: [savedPaperId], references: [id], onDelete: Cascade)
+
+  @@map("paper_notes")
+}
+
+// 对话历史表
+model Conversation {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String?
+  messages  Json // 消息数组
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // 关联关系
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("conversations")
+}
+
+// API调用日志表
+model ApiCall {
+  id        String   @id @default(cuid())
+  apiName   String
+  userId    String?
+  endpoint  String
+  status    Int
+  duration  Int
+  createdAt DateTime @default(now())
+
+  @@map("api_calls")
+}
+
+// 优惠码表
+model DiscountCode {
+  id              String   @id @default(cuid())
+  code            String   @unique
+  discountPercent Int // 折扣百分比 (如 20 表示 8折)
+  applicablePlans Plan[] // 适用的会员等级
+  maxUses         Int? // 最大使用次数
+  usedCount       Int      @default(0)
+  validFrom       DateTime
+  validUntil      DateTime
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+
+  @@map("discount_codes")
+}
+
+// 短信验证码模型
+model VerificationCode {
+  id        String   @id @default(cuid())
+  phone     String
+  code      String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([phone])
+  @@map("verification_codes")
+}
+
+// 政策表
+model Policy {
+  id         String    @id @default(cuid())
+  region     String // 省份/城市
+  type       String // SUBSIDY_KWH, SUBSIDY_ONE_TIME, ELECTRICITY_PRICE
+  value      Float
+  unit       String // 元/kWh, 元/W, 元/kW
+  conditions String? // 适用条件
+  sourceUrl  String?
+  startDate  DateTime?
+  endDate    DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([region, type])
+  @@map("policies")
+}
+
+// 使用日志表
+model UsageLog {
+  id       String   @id @default(cuid())
+  userId   String
+  type     String // AI_CALL, CALCULATION, PAPER_SEARCH, DIAGNOSIS
+  count    Int      @default(1)
+  metadata Json?
+  date     DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, date])
+  @@map("usage_logs")
+}
+
+model QuotaUsage {
+  id          String   @id @default(cuid())
+  userId      String
+  type        String
+  count       Int      @default(0)
+  periodStart DateTime
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, type, periodStart])
+  @@index([userId, periodStart])
+  @@map("quota_usage")
+}
+
+model ProjectTimeline {
+  id           String   @id
+  projectId    String
+  userId       String
+  type         String
+  title        String
+  description  String   @db.Text
+  data         Json?
+  auditId      String?
+  conclusionId String?
+  tags         String[]
+  isMilestone  Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  @@index([projectId, createdAt])
+  @@index([userId, createdAt])
+  @@map("project_timeline")
+}
+
+// ==================== 优化方案新增表 ====================
+
+// 推送订阅
+model PushSubscription {
+  id       String @id @default(cuid())
+  userId   String
+  user     User   @relation(fields: [userId], references: [id])
+  endpoint String @unique
+  p256dh   String
+  auth     String
+
+  morningPush     Boolean @default(true)
+  eveningPush     Boolean @default(true)
+  alertPush       Boolean @default(true)
+  achievementPush Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("push_subscriptions")
+}
+
+// 成就定义
+model Achievement {
+  id          String              @id @default(cuid())
+  code        String              @unique
+  name        String
+  description String
+  icon        String
+  category    AchievementCategory
+  threshold   Float
+  rewardType  RewardType
+  rewardValue Int
+
+  userAchievements      UserAchievement[]
+  UserAchievementDetail UserAchievementDetail[]
+
+  @@map("achievements")
+}
+
+model UserAchievementDetail {
+  id            String      @id @default(cuid())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id])
+  achievementId String
+  achievement   Achievement @relation(fields: [achievementId], references: [id])
+  unlockedAt    DateTime    @default(now())
+  notified      Boolean     @default(false)
+
+  @@unique([userId, achievementId])
+  @@map("user_achievements_detail")
+}
+
+enum AchievementCategory {
+  GENERATION
+  CARBON
+  USAGE
+  STREAK
+  COMMUNITY
+}
+
+enum RewardType {
+  PRO_DAYS
+  POINTS
+  DISCOUNT
+  BADGE
+}
+
+// 数据分析事件表
+model AnalyticsEvent {
+  id         String   @id @default(cuid())
+  event      String // 事件类型
+  userId     String? // 用户ID（可选）
+  deviceId   String // 设备ID
+  sessionId  String // 会话ID
+  properties Json // 事件属性
+  timestamp  DateTime @default(now())
+
+  @@index([event, timestamp])
+  @@index([userId, timestamp])
+  @@index([timestamp])
+  @@map("analytics_events")
+}
+
+// 功能开关/AB测试配置表
+model FeatureFlag {
+  id                String    @id @default(cuid())
+  name              String    @unique // 功能名称
+  description       String? // 功能描述
+  enabled           Boolean   @default(false) // 是否启用
+  rolloutPercentage Int       @default(0) //  rollout 百分比 0-100
+  targetingRules    Json? // 定向规则
+  variants          Json? // AB测试变体
+  startAt           DateTime? // 开始时间
+  endAt             DateTime? // 结束时间
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@map("feature_flags")
+}
+
+// 审计日志表
+model AuditLog {
+  id                String   @id @default(cuid())
+  userId            String // 操作人
+  action            String   @default("CALCULATE") // CREATE/READ/UPDATE/DELETE/EXPORT
+  resourceType      String   @default("calculation") // 资源类型
+  resourceId        String   @default("") // 资源ID
+  changes           Json? // 变更内容
+  ipAddress         String? // IP地址
+  userAgent         String? // User Agent
+  timestamp         DateTime @default(now())
+  type              String
+  projectId         String?
+  orgId             String?
+  calcVersion       String
+  assumptionVersion String
+  inputs            Json
+  outputs           Json
+  evidences         Json
+  assumptions       Json
+  intermediates     Json?
+  calibrations      String[]
+  checksum          String?
+  createdAt         DateTime @default(now())
+
+  @@index([userId, timestamp])
+  @@index([resourceType, timestamp])
+  @@index([projectId, createdAt])
+  @@map("audit_logs")
+}
+
+// ==================== 资产生命周期管理系统 ====================
+// 这是0→1亿的关键功能！让项目从"算一次"变成"长期托管"
+
+// 激活项目枚举
+enum ActivationStatus {
+  INACTIVE
+  ACTIVATING
+  ACTIVE
+  SUSPENDED
+  ARCHIVED
+}
+
+// 项目生命周期阶段
+enum ProjectLifecycleStage {
+  PLANNING
+  DESIGN
+  FINANCING
+  CONSTRUCTION
+  COMMISSIONING
+  OPERATING
+  OPTIMIZATION
+  DECOMMISSIONING
+}
+
+// 告警严重程度
+enum AlertSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+// 告警状态
+enum AlertStatus {
+  ACTIVE
+  ACKNOWLEDGED
+  RESOLVED
+  IGNORED
+}
+
+// 1. 激活的项目表
+model ActivatedProject {
+  id        String @id @default(cuid())
+  projectId String @unique // 关联项目
+  userId    String // 激活用户
+
+  // 激活状态
+  activationStatus ActivationStatus      @default(ACTIVE)
+  currentStage     ProjectLifecycleStage @default(OPERATING)
+
+  // 激活时间
+  activatedAt DateTime  @default(now())
+  suspendedAt DateTime?
+
+  // 数据源连接配置（JSONB）
+  dataConnections Json @default("{}")
+
+  // 自动化配置（JSONB）
+  automationConfig Json @default("{}")
+
+  // 监测统计（JSONB）
+  monitoringStats Json @default("{\"totalDaysMonitored\": 0, \"dataPointsCollected\": 0, \"anomaliesDetected\": 0, \"alertsSent\": 0, \"reportsGenerated\": 0}")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // 关联关系
+  project          Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user             User                 @relation(fields: [userId], references: [id])
+  dailyAnalyses    DailyAnalysis[]
+  healthHistory    AssetHealthHistory[]
+  maintenancePlans MaintenancePlan[]
+  realTimeData     RealTimeData[]
+  alerts           AssetAlert[]
+
+  @@index([userId])
+  @@index([activationStatus])
+  @@index([currentStage])
+  @@map("activated_projects")
+}
+
+// 2. 每日分析记录表
+model DailyAnalysis {
+  id                 String @id @default(cuid())
+  projectId          String
+  activatedProjectId String
+
+  // 分析日期
+  analysisDate DateTime @db.Date
+
+  // 发电数据
+  generationActual   Decimal @db.Decimal(12, 2)
+  generationExpected Decimal @db.Decimal(12, 2)
+  generationRatio    Decimal @db.Decimal(5, 4)
+
+  // PR数据
+  pr      Decimal @db.Decimal(5, 4)
+  prTrend String  @default("STABLE") // UP, DOWN, STABLE
+
+  // 收益数据
+  revenueActual    Decimal @db.Decimal(12, 2)
+  revenueExpected  Decimal @db.Decimal(12, 2)
+  revenueDeviation Decimal @db.Decimal(12, 2)
+
+  // 健康度评分
+  healthScore Decimal @db.Decimal(5, 2)
+  trend       String  @default("STABLE") // IMPROVING, STABLE, DEGRADING
+
+  // 异常检测（JSONB）
+  anomalies Json @default("[]")
+
+  // 故障统计
+  faultCount Int @default(0)
+
+  // 天气数据（JSONB）
+  weatherData Json?
+
+  createdAt DateTime @default(now())
+
+  // 关联关系
+  activatedProject ActivatedProject @relation(fields: [activatedProjectId], references: [id], onDelete: Cascade)
+  project          Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, analysisDate])
+  @@index([projectId])
+  @@index([analysisDate])
+  @@index([healthScore])
+  @@index([pr])
+  @@map("daily_analysis")
+}
+
+// 3. 资产健康度历史表
+model AssetHealthHistory {
+  id                 String @id @default(cuid())
+  projectId          String
+  activatedProjectId String
+
+  // 整体评分
+  overallScore Decimal @db.Decimal(5, 2)
+
+  // 投资等级（对标穆迪/标普）
+  investmentGrade String // AAA, AA, A, BBB, BB, B, C, D
+  gradeRationale  String
+
+  // 各维度评分（JSONB）
+  dimensions Json
+
+  // 改进建议（JSONB）
+  improvementActions Json @default("[]")
+
+  // 评估时间
+  assessedAt DateTime @default(now())
+
+  createdAt DateTime @default(now())
+
+  // 关联关系
+  activatedProject ActivatedProject @relation(fields: [activatedProjectId], references: [id], onDelete: Cascade)
+  project          Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([investmentGrade])
+  @@index([overallScore])
+  @@index([assessedAt])
+  @@map("asset_health_history")
+}
+
+// 4. 运维计划表
+model MaintenancePlan {
+  id                 String @id @default(cuid())
+  projectId          String
+  activatedProjectId String
+
+  //  计划周期
+  weekOf DateTime @db.Date
+
+  // 任务列表（JSONB）
+  tasks Json @default("[]")
+
+  // 生成时间
+  generatedAt DateTime @default(now())
+
+  // 完成状态
+  completed   Boolean   @default(false)
+  completedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // 关联关系
+  activatedProject ActivatedProject @relation(fields: [activatedProjectId], references: [id], onDelete: Cascade)
+  project          Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, weekOf])
+  @@index([projectId])
+  @@index([weekOf])
+  @@index([completed])
+  @@map("maintenance_plans")
+}
+
+// 5. 实时数据采集表
+model RealTimeData {
+  id                 String @id @default(cuid())
+  projectId          String
+  activatedProjectId String
+
+  // 数据类型
+  dataType String // INVERTER, METER, WEATHER, GRID
+
+  // 数据源
+  dataSource String
+
+  // 原始数据（JSONB）
+  rawData Json
+
+  // 解析后的数据（JSONB）
+  parsedData Json?
+
+  // 数据时间戳
+  dataTimestamp DateTime
+
+  // 采集时间
+  collectedAt DateTime @default(now())
+
+  createdAt DateTime @default(now())
+
+  // 关联关系
+  activatedProject ActivatedProject @relation(fields: [activatedProjectId], references: [id], onDelete: Cascade)
+  project          Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([dataType])
+  @@index([dataTimestamp])
+  @@map("real_time_data")
+}
+
+// 6. 告警记录表
+model AssetAlert {
+  id                 String @id @default(cuid())
+  projectId          String
+  activatedProjectId String
+
+  // 告警类型
+  alertType String // LOW_PR, FREQUENT_FAULTS, etc.
+
+  // 严重程度
+  severity AlertSeverity
+
+  // 告警内容
+  title          String
+  description    String
+  recommendation String?
+
+  // 关联数据（JSONB）
+  relatedData Json?
+
+  // 状态
+  status AlertStatus @default(ACTIVE)
+
+  // 发送状态（JSONB）
+  sentTo Json @default("[]")
+
+  // 处理信息
+  acknowledgedAt DateTime?
+  acknowledgedBy String?
+  resolvedAt     DateTime?
+  resolvedBy     String?
+  resolutionNote String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // 关联关系
+  activatedProject ActivatedProject @relation(fields: [activatedProjectId], references: [id], onDelete: Cascade)
+  project          Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([severity])
+  @@index([status])
+  @@index([createdAt])
+  @@map("asset_alerts")
+}
+
+// ========================================================
+// 🏰 护城河系统：可审计性 (Auditability)
+// ========================================================
+
+model CalculationSnapshot {
+  id String @id @default(cuid())
+
+  // 基础信息
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id])
+
+  // 计算类型
+  calcType CalcType
+
+  // 版本控制（核心！）
+  calcVersion       String // 计算引擎版本
+  assumptionVersion String // 假设集版本
+  dataSourceVersion String // 数据源版本
+
+  // 快照数据
+  inputSnapshot    Json // 完整输入参数
+  outputSnapshot   Json // 完整输出结果
+  calculationTrace Json // 关键中间变量和公式进度
+  dataEvidence     Json // 数据来源证据链
+
+  // 结构化结论
+  conclusion Json
+  risks      Json
+  nextSteps  Json
+
+  createdAt DateTime @default(now())
+
+  // 关联
+  projectEvents ProjectEvent[]
+  reports       Report[]
+
+  @@index([userId, calcType])
+  @@index([projectId])
+  @@index([createdAt])
+  @@map("calculation_snapshots")
+}
+
+enum CalcType {
+  SOLAR_REVENUE
+  WIND_REVENUE
+  STORAGE_REVENUE
+  PR_ANALYSIS
+  FAULT_DIAGNOSIS
+  CLEANING_ROI
+  RESOURCE_ASSESSMENT
+}
+
+model CalcVersionRegistry {
+  id                 String        @id @default(cuid())
+  version            String        @unique
+  releaseDate        DateTime
+  changelog          String        @db.Text
+  formulaDefinitions Json
+  status             VersionStatus @default(ACTIVE)
+  createdAt          DateTime      @default(now())
+
+  @@map("calc_version_registry")
+}
+
+enum VersionStatus {
+  DRAFT
+  ACTIVE
+  DEPRECATED
+  ARCHIVED
+}
+
+model AssumptionSet {
+  id                String        @id @default(cuid())
+  version           String        @unique
+  name              String
+  assumptions       Json
+  sources           Json
+  applicableRegions String[]
+  status            VersionStatus @default(ACTIVE)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@map("assumption_sets")
+}
+
+// ========================================================
+// 🏰 护城河系统：项目时间线 (Timeline OS)
+// ========================================================
+
+model ProjectEvent {
+  id        String  @id @default(cuid())
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id])
+
+  eventType   ProjectEventType
+  title       String
+  description String?
+
+  snapshotId String?
+  snapshot   CalculationSnapshot? @relation(fields: [snapshotId], references: [id])
+
+  metadata Json?
+  userId   String
+  user     User   @relation(fields: [userId], references: [id])
+
+  importance EventImportance @default(NORMAL)
+  eventDate  DateTime        @default(now())
+  createdAt  DateTime        @default(now())
+
+  @@index([projectId, eventDate])
+  @@map("project_events")
+}
+
+enum ProjectEventType {
+  PROJECT_CREATED
+  FEASIBILITY_STARTED
+  FEASIBILITY_COMPLETED
+  RESOURCE_ASSESSED
+  DESIGN_UPDATED
+  APPROVAL_SUBMITTED
+  APPROVAL_RECEIVED
+  CONSTRUCTION_STARTED
+  EQUIPMENT_ARRIVED
+  INSTALLATION_COMPLETED
+  GRID_CONNECTED
+  OPERATION_STARTED
+  GENERATION_MILESTONE
+  REVENUE_MILESTONE
+  DIAGNOSIS_PERFORMED
+  ISSUE_DETECTED
+  ISSUE_RESOLVED
+  CLEANING_PERFORMED
+  MAINTENANCE_SCHEDULED
+  MAINTENANCE_COMPLETED
+  REPORT_GENERATED
+  DATA_EXPORTED
+  COMPARISON_MADE
+  NOTE_ADDED
+}
+
+enum EventImportance {
+  LOW
+  NORMAL
+  HIGH
+  CRITICAL
+}
+
+model ProjectComparison {
+  id             String         @id @default(cuid())
+  projectId      String
+  project        Project        @relation(fields: [projectId], references: [id])
+  comparisonType ComparisonType
+  leftSnapshot   Json
+  rightSnapshot  Json
+  differences    Json
+  summary        String
+  createdAt      DateTime       @default(now())
+
+  @@map("project_comparisons")
+}
+
+enum ComparisonType {
+  TIME_SERIES
+  SCENARIO
+  ACTUAL_VS_FORECAST
+  BENCHMARK
+}
+
+model Report {
+  id         String               @id @default(cuid())
+  snapshotId String?
+  snapshot   CalculationSnapshot? @relation(fields: [snapshotId], references: [id])
+  projectId  String?
+  project    Project?             @relation(fields: [projectId], references: [id])
+  userId     String
+  templateId String
+  format     String // pdf, docx
+  filename   String
+  url        String
+  status     String               @default("GENERATED")
+  createdAt  DateTime             @default(now())
+
+  @@map("reports")
+}
+
+model ApiKey {
+  id          String       @id @default(cuid())
+  keyHash     String       @unique
+  keyPrefix   String
+  name        String?
+  userId      String
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status      ApiKeyStatus @default(ACTIVE)
+  permissions Json?
+  lastUsedAt  DateTime?
+  expiresAt   DateTime?
+  createdAt   DateTime     @default(now())
+
+  @@index([userId])
+  @@map("api_keys")
+}
+
+enum ApiKeyStatus {
+  ACTIVE
+  REVOKED
+  EXPIRED
+}
+
+model ApiLog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  apiKeyId  String?
+  endpoint  String
+  method    String
+  input     Json?
+  output    Json?
+  duration  Int
+  status    Int
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@map("api_logs")
+}

@@ -1,0 +1,180 @@
+{
+    "Index": {
+        "title": "首页",
+        "hero": {
+            "title": "新能源智库",
+            "subtitle": "光伏风电从业者的效率神器",
+            "cta": "立即计算",
+            "description": "基于NASA气象数据和AI深度分析，为您提供专业级的光伏/风电项目投资决策报告"
+        },
+        "features": {
+            "title": "核心功能",
+            "subtitle": "专业级的新能源项目分析工具",
+            "solar": {
+                "title": "光伏发电计算",
+                "description": "基于NASA辐射数据，精确计算25年发电量和投资回报"
+            },
+            "wind": {
+                "title": "风电效益分析",
+                "description": "分散式风电项目评估，智能推荐最优装机方案"
+            },
+            "storage": {
+                "title": "储能收益计算",
+                "description": "峰谷套利分析，优化储能系统配置"
+            },
+            "report": {
+                "title": "专业报告生成",
+                "description": "一键生成PDF投资分析报告，可用于立项审批"
+            },
+            "ai": {
+                "title": "AI智能问答",
+                "description": "新能源领域专家，解答所有技术政策问题"
+            },
+            "carbon": {
+                "title": "碳减排计算",
+                "description": "量化环境贡献，生成碳中和证书"
+            }
+        },
+        "stats": {
+            "projects": "已分析项目",
+            "generation": "累计发电量(kWh)",
+            "provinces": "覆盖省市",
+            "satisfaction": "用户满意度"
+        },
+        "dataSources": {
+            "title": "权威数据源",
+            "subtitle": "集成国际权威数据，确保分析结果专业可靠"
+        },
+        "pricing": {
+            "title": "价格方案",
+            "subtitle": "从个人投资到企业级应用，满足不同规模需求",
+            "free": "免费版",
+            "pro": "专业版",
+            "enterprise": "企业版",
+            "month": "/月",
+            "getStarted": "立即开始",
+            "mostPopular": "最受欢迎"
+        },
+        "cta": {
+            "title": "立即开始您的智能投资分析",
+            "subtitle": "免费注册即送10次专业测算，首次升级享7折优惠",
+            "button": "免费注册体验",
+            "hotline": "咨询热线"
+        }
+    },
+    "Auth": {
+        "login": "登录",
+        "register": "注册",
+        "phone": "手机号登录",
+        "email": "邮箱",
+        "password": "密码",
+        "forgotPassword": "忘记密码？",
+        "noAccount": "没有账号？",
+        "hasAccount": "已有账号？",
+        "loginWithPhone": "手机号登录",
+        "sendCode": "发送验证码",
+        "verificationCode": "验证码"
+    },
+    "Dashboard": {
+        "title": "仪表板",
+        "projects": "项目管理",
+        "calculator": "收益计算",
+        "assistant": "AI 助手",
+        "papers": "文献检索",
+        "stations": "我的电站",
+        "settings": "设置",
+        "achievements": "成就",
+        "community": "社区"
+    },
+    "Calculator": {
+        "title": "计算器",
+        "solar": "光伏计算器",
+        "wind": "风电计算器",
+        "storage": "储能计算器",
+        "quickCalc": "快速计算",
+        "location": "项目地址",
+        "capacity": "装机容量",
+        "calculate": "立即计算",
+        "calculating": "计算中...",
+        "results": {
+            "title": "计算结果",
+            "annualGeneration": "年发电量",
+            "irr": "内部收益率",
+            "paybackPeriod": "投资回收期",
+            "npv": "净现值",
+            "lcoe": "度电成本",
+            "co2Reduction": "年减碳",
+            "treesEquivalent": "等效植树"
+        }
+    },
+    "Station": {
+        "title": "我的电站",
+        "addStation": "添加电站",
+        "stationName": "电站名称",
+        "stationType": "电站类型",
+        "capacity": "装机容量",
+        "location": "位置",
+        "installDate": "安装日期",
+        "gridDate": "并网日期",
+        "save": "保存电站",
+        "todayGeneration": "今日发电",
+        "monthGeneration": "本月发电",
+        "yearGeneration": "本年发电",
+        "todayRevenue": "今日收益",
+        "monthRevenue": "本月收益",
+        "yearRevenue": "本年收益",
+        "efficiency": "运行效率",
+        "recordData": "录入数据",
+        "viewCharts": "查看图表"
+    },
+    "Common": {
+        "loading": "加载中...",
+        "error": "发生错误",
+        "save": "保存",
+        "cancel": "取消",
+        "confirm": "确认",
+        "delete": "删除",
+        "edit": "编辑",
+        "back": "返回",
+        "next": "下一步",
+        "submit": "提交",
+        "search": "搜索",
+        "filter": "筛选",
+        "sort": "排序",
+        "refresh": "刷新",
+        "download": "下载",
+        "share": "分享",
+        "copy": "复制",
+        "close": "关闭",
+        "yes": "是",
+        "no": "否",
+        "success": "成功",
+        "warning": "警告",
+        "info": "提示",
+        "kw": "kW",
+        "kwh": "kWh",
+        "yuan": "元",
+        "year": "年",
+        "years": "年",
+        "month": "月",
+        "day": "日",
+        "today": "今日",
+        "thisMonth": "本月",
+        "thisYear": "本年"
+    },
+    "Navigation": {
+        "home": "首页",
+        "features": "功能介绍",
+        "calculator": "在线计算",
+        "pricing": "价格方案",
+        "docs": "API文档",
+        "login": "登录",
+        "register": "注册"
+    },
+    "Welcome": {
+        "title": "欢迎来到新能源智库！",
+        "description": "开始你的绿色能源投资之旅吧！使用我们的智能计算器，快速评估光伏、风电和储能项目的投资收益。",
+        "badge": "🌱 绿色先行者",
+        "explore": "开始探索"
+    }
+}

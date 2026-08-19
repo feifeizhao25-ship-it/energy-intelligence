@@ -1,0 +1,44 @@
+name: V28 Auto Improvement Check
+
+on:
+  schedule:
+    # 每天 0:00 UTC 跑 (北京 8:00)
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  v28-rag-quality:
+    name: V28 RAG Quality Check (Daily)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install deps
+        run: |
+          cd backend
+          pip install requests aiosqlite
+      - name: Trigger RAG quality check
+        env:
+          API_URL: ${{ secrets.V28_API_URL }}
+          API_TOKEN: ${{ secrets.V28_API_TOKEN }}
+        run: |
+          if [ -n "$API_TOKEN" ]; then
+            curl -X POST "$API_URL/api/v1/rag/reload" \
+              -H "Authorization: Bearer $API_TOKEN" | tee /tmp/rag_reload.json
+            # 测 5 个标准查询
+            for q in "solar LCOE" "wind farm" "battery storage" "carbon trading" "virtual power plant"; do
+              curl -s "$API_URL/api/v1/rag/search?q=$q&top_k=3" \
+                -H "Authorization: Bearer $API_TOKEN" | python -c "import sys, json; d=json.load(sys.stdin); print(f'Q={d[\"data\"][\"query\"]}: {len(d[\"data\"][\"results\"])} results')"
+            done
+          else
+            echo "⚠️ V28_API_TOKEN not set, skipping"
+          fi
+      - name: Upload RAG report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v28-rag-quality
+          path: /tmp/rag_reload.json
+          retention-days: 7

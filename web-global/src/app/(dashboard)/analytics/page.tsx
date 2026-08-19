@@ -1,0 +1,2 @@
+              <ResponsiveContainer width="100%" height={300} minWidth={0} initialDimension={{ width: 640, height: 300 }}>
+              <ResponsiveContainer width="100%" height={300} minWidth={0} initialDimension={{ width: 640, height: 300 }}>

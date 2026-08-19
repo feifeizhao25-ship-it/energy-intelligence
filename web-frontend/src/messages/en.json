@@ -1,0 +1,180 @@
+{
+    "Index": {
+        "title": "Home",
+        "hero": {
+            "title": "New Energy Think Tank",
+            "subtitle": "AI-Powered Efficiency Tool for Solar, Wind & Storage Professionals",
+            "cta": "Calculate Now",
+            "description": "Based on NASA meteorological data and AI deep analysis, providing professional-grade investment decision reports for photovoltaic/wind power projects"
+        },
+        "features": {
+            "title": "Core Features",
+            "subtitle": "Professional-grade new energy project analysis tools",
+            "solar": {
+                "title": "Solar Power Calculation",
+                "description": "Based on NASA radiation data, accurately calculate 25-year power generation and ROI"
+            },
+            "wind": {
+                "title": "Wind Power Analysis",
+                "description": "Distributed wind power project evaluation, smart optimal installation recommendations"
+            },
+            "storage": {
+                "title": "Energy Storage",
+                "description": "Peak-valley arbitrage analysis, optimize storage system configuration"
+            },
+            "report": {
+                "title": "Professional Reports",
+                "description": "One-click PDF investment analysis reports for project approval"
+            },
+            "ai": {
+                "title": "AI Q&A",
+                "description": "New energy domain expert, answering all technical and policy questions"
+            },
+            "carbon": {
+                "title": "Carbon Reduction",
+                "description": "Quantify environmental contributions, generate carbon neutrality certificates"
+            }
+        },
+        "stats": {
+            "projects": "Analyzed Projects",
+            "generation": "Cumulative Generation (kWh)",
+            "provinces": "Covered Provinces",
+            "satisfaction": "User Satisfaction"
+        },
+        "dataSources": {
+            "title": "Authoritative Data Sources",
+            "subtitle": "Integrated with international authoritative data to ensure professional and reliable analysis"
+        },
+        "pricing": {
+            "title": "Pricing Plans",
+            "subtitle": "From personal investment to enterprise applications, meeting different scale needs",
+            "free": "Free",
+            "pro": "Pro",
+            "enterprise": "Enterprise",
+            "month": "/month",
+            "getStarted": "Get Started",
+            "mostPopular": "Most Popular"
+        },
+        "cta": {
+            "title": "Start Your Smart Investment Analysis Now",
+            "subtitle": "Register free to get 10 professional calculations, 30% off on first upgrade",
+            "button": "Register Free",
+            "hotline": "Hotline"
+        }
+    },
+    "Auth": {
+        "login": "Login",
+        "register": "Register",
+        "phone": "Phone Login",
+        "email": "Email",
+        "password": "Password",
+        "forgotPassword": "Forgot Password?",
+        "noAccount": "Don't have an account?",
+        "hasAccount": "Already have an account?",
+        "loginWithPhone": "Login with Phone",
+        "sendCode": "Send Code",
+        "verificationCode": "Verification Code"
+    },
+    "Dashboard": {
+        "title": "Dashboard",
+        "projects": "Projects",
+        "calculator": "Calculators",
+        "assistant": "AI Assistant",
+        "papers": "Papers",
+        "stations": "My Stations",
+        "settings": "Settings",
+        "achievements": "Achievements",
+        "community": "Community"
+    },
+    "Calculator": {
+        "title": "Calculator",
+        "solar": "Solar Calculator",
+        "wind": "Wind Calculator",
+        "storage": "Storage Calculator",
+        "quickCalc": "Quick Calculation",
+        "location": "Project Location",
+        "capacity": "Capacity",
+        "calculate": "Calculate",
+        "calculating": "Calculating...",
+        "results": {
+            "title": "Calculation Results",
+            "annualGeneration": "Annual Generation",
+            "irr": "Internal Rate of Return",
+            "paybackPeriod": "Payback Period",
+            "npv": "Net Present Value",
+            "lcoe": "Levelized Cost of Energy",
+            "co2Reduction": "CO2 Reduction",
+            "treesEquivalent": "Trees Equivalent"
+        }
+    },
+    "Station": {
+        "title": "My Stations",
+        "addStation": "Add Station",
+        "stationName": "Station Name",
+        "stationType": "Station Type",
+        "capacity": "Capacity",
+        "location": "Location",
+        "installDate": "Installation Date",
+        "gridDate": "Grid Connection Date",
+        "save": "Save Station",
+        "todayGeneration": "Today's Generation",
+        "monthGeneration": "Monthly Generation",
+        "yearGeneration": "Annual Generation",
+        "todayRevenue": "Today's Revenue",
+        "monthRevenue": "Monthly Revenue",
+        "yearRevenue": "Annual Revenue",
+        "efficiency": "Efficiency",
+        "recordData": "Record Data",
+        "viewCharts": "View Charts"
+    },
+    "Common": {
+        "loading": "Loading...",
+        "error": "Error occurred",
+        "save": "Save",
+        "cancel": "Cancel",
+        "confirm": "Confirm",
+        "delete": "Delete",
+        "edit": "Edit",
+        "back": "Back",
+        "next": "Next",
+        "submit": "Submit",
+        "search": "Search",
+        "filter": "Filter",
+        "sort": "Sort",
+        "refresh": "Refresh",
+        "download": "Download",
+        "share": "Share",
+        "copy": "Copy",
+        "close": "Close",
+        "yes": "Yes",
+        "no": "No",
+        "success": "Success",
+        "warning": "Warning",
+        "info": "Info",
+        "kw": "kW",
+        "kwh": "kWh",
+        "yuan": "CNY",
+        "year": "year",
+        "years": "years",
+        "month": "month",
+        "day": "day",
+        "today": "Today",
+        "thisMonth": "This Month",
+        "thisYear": "This Year"
+    },
+    "Navigation": {
+        "home": "Home",
+        "features": "Features",
+        "calculator": "Calculator",
+        "pricing": "Pricing",
+        "docs": "API Docs",
+        "login": "Login",
+        "register": "Register"
+    },
+    "Welcome": {
+        "title": "Welcome to New Energy Think Tank!",
+        "description": "Start your green energy investment journey! Use our smart calculators to quickly evaluate the ROI of solar, wind, and storage projects.",
+        "badge": "🌱 Green Pioneer",
+        "explore": "Start Exploring"
+    }
+}

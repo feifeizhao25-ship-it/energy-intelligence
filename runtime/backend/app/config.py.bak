@@ -1,0 +1,100 @@
+"""
+Application settings — loaded from environment variables via pydantic-settings.
+All secrets must be in environment (never committed to git).
+"""
+import json
+from typing import List
+
+from pydantic import field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=True,
+        extra="ignore",
+    )
+
+    # ── Application ───────────────────────────────────────────────────────────
+    APP_NAME: str = "Energy Intelligence Platform"
+    VERSION: str = "1.0.0"
+    ENVIRONMENT: str = "development"  # development | staging | production
+    DEBUG: bool = False
+
+    # ── Security ──────────────────────────────────────────────────────────────
+    SECRET_KEY: str = "change-me-in-production-must-be-32-chars"
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 30
+
+    # ── CORS ─────────────────────────────────────────────────────────────────
+    CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:3001"]
+
+    @field_validator("CORS_ORIGINS", mode="before")
+    @classmethod
+    def parse_cors(cls, v):
+        if isinstance(v, str):
+            try:
+                return json.loads(v)
+            except json.JSONDecodeError:
+                return [origin.strip() for origin in v.split(",")]
+        return v
+
+    # ── Database ──────────────────────────────────────────────────────────────
+    DATABASE_URL: str = "postgresql+asyncpg://energy:energy_dev_pass@localhost:5432/energy_global"
+
+    # ── Redis ─────────────────────────────────────────────────────────────────
+    REDIS_URL: str = "redis://:redis_dev_pass@localhost:6379/0"
+
+    # ── OpenAI ────────────────────────────────────────────────────────────────
+    OPENAI_API_KEY: str = ""
+    OPENAI_MODEL: str = "gpt-4o"
+    OPENAI_MAX_TOKENS: int = 4096
+
+    # ── Anthropic (optional fallback) ─────────────────────────────────────────
+    ANTHROPIC_API_KEY: str = ""
+
+    # ── Stripe ────────────────────────────────────────────────────────────────
+    STRIPE_SECRET_KEY: str = ""
+    STRIPE_WEBHOOK_SECRET: str = ""
+    STRIPE_PRO_PRICE_ID: str = ""
+    STRIPE_ENTERPRISE_PRICE_ID: str = ""
+    STRIPE_SUCCESS_URL: str = "http://localhost:3000/settings/billing?success=1"
+    STRIPE_CANCEL_URL: str = "http://localhost:3000/pricing"
+    STRIPE_PORTAL_RETURN_URL: str = "http://localhost:3000/settings/billing"
+
+    # ── Email / SendGrid ──────────────────────────────────────────────────────
+    SENDGRID_API_KEY: str = ""
+    FROM_EMAIL: str = "noreply@energy-global.com"
+    FROM_NAME: str = "Energy Intelligence"
+
+    # ── AWS ───────────────────────────────────────────────────────────────────
+    AWS_ACCESS_KEY_ID: str = ""
+    AWS_SECRET_ACCESS_KEY: str = ""
+    AWS_REGION: str = "us-east-1"
+    AWS_S3_BUCKET: str = "energy-global-assets"
+
+    # ── OAuth ─────────────────────────────────────────────────────────────────
+    GOOGLE_CLIENT_ID: str = ""
+    GOOGLE_CLIENT_SECRET: str = ""
+    GITHUB_CLIENT_ID: str = ""
+    GITHUB_CLIENT_SECRET: str = ""
+
+    # ── External APIs ─────────────────────────────────────────────────────────
+    NASA_POWER_BASE_URL: str = "https://power.larc.nasa.gov/api/temporal/monthly/point"
+
+    # ── Monitoring ────────────────────────────────────────────────────────────
+    SENTRY_DSN: str = ""
+
+    @property
+    def is_production(self) -> bool:
+        return self.ENVIRONMENT == "production"
+
+    @property
+    def docs_enabled(self) -> bool:
+        return not self.is_production
+
+
+settings = Settings()

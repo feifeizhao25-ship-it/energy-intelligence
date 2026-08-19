@@ -1,0 +1,53 @@
+# R25 红线：PostgreSQL 定时备份 CronJob
+# 通过 external Secret `prod-database-secrets` 注入 DATABASE_URL。
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: postgres-backup
+  namespace: energy-intelligence
+  labels:
+    app.kubernetes.io/name: postgres-backup
+    app.kubernetes.io/part-of: energy-intelligence
+spec:
+  schedule: "17 3 * * *"  # 每日 03:17
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 7
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: backup
+              image: postgres:16-alpine
+              env:
+                - name: DATABASE_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: prod-database-secrets
+                      key: DATABASE_URL
+                - name: RETENTION_DAYS
+                  value: "7"
+              command: ["/bin/sh", "-c"]
+              args:
+                - |
+                  set -euo pipefail
+                  TS="$(date +%Y%m%d_%H%M%S)"
+                  OUT="/backups/energy_${TS}.dump"
+                  pg_dump "$DATABASE_URL" --format=custom --compress=6 --file="$OUT"
+                  pg_restore --list "$OUT" > /dev/null
+                  sha256sum "$OUT" > "$OUT.sha256"
+                  find /backups -name "energy_*.dump*" -mtime "+${RETENTION_DAYS}" -delete
+                  echo "BACKUP_OK file=$OUT"
+              volumeMounts:
+                - name: backups
+                  mountPath: /backups
+              resources:
+                requests: { cpu: 100m, memory: 128Mi }
+                limits: { cpu: 500m, memory: 512Mi }
+          volumes:
+            - name: backups
+              persistentVolumeClaim:
+                claimName: postgres-backups

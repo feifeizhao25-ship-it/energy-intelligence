@@ -1,0 +1,21 @@
+# 生产编排入口
+#
+# 此前本文件是一份 4 行的残片（只有 frontend-cn 的 build 段，没有 services
+# 顶层键、没有后端、没有数据库），无法被 docker compose 解析。
+#
+# 真正完整可用的生产编排在 runtime/docker-compose.production.yml：
+#   - postgres / redis（强制密码 + healthcheck）
+#   - backend（Python FastAPI，build ./backend）
+#   - web-cn（build ./web，即 runtime/web —— 国内版主前端，57 个页面）
+#   - web-int（build ./web-int —— 国际版）
+#
+# 这里用 include 委托过去，避免两处配置各写一份互相漂移。
+# 需要 Docker Compose v2.20+。
+#
+# 用法：
+#   docker compose -f docker-compose.prod.yml up -d
+# 或直接：
+#   docker compose -f runtime/docker-compose.production.yml up -d
+
+include:
+  - path: runtime/docker-compose.production.yml

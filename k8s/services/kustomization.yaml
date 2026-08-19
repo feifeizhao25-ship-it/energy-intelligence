@@ -1,0 +1,48 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ai-engine/deployment.yaml
+  - ai-engine/hpa.yaml
+  - ai-engine/service.yaml
+  - analytics/deployment.yaml
+  - analytics/hpa.yaml
+  - analytics/service.yaml
+  - auth/deployment.yaml
+  - auth/hpa.yaml
+  - auth/service.yaml
+  - billing/deployment.yaml
+  - billing/hpa.yaml
+  - billing/service.yaml
+  - diagnostic/deployment.yaml
+  - diagnostic/hpa.yaml
+  - diagnostic/service.yaml
+  - financial/deployment.yaml
+  - financial/hpa.yaml
+  - financial/service.yaml
+  - gateway/deployment.yaml
+  - gateway/hpa.yaml
+  - gateway/service.yaml
+  - knowledge/deployment.yaml
+  - knowledge/hpa.yaml
+  - knowledge/service.yaml
+  - monetization/deployment.yaml
+  - monetization/service.yaml
+  - notification/deployment.yaml
+  - notification/hpa.yaml
+  - notification/service.yaml
+  - project/deployment.yaml
+  - project/hpa.yaml
+  - project/service.yaml
+  - report/deployment.yaml
+  - report/hpa.yaml
+  - report/service.yaml
+  - resource/deployment.yaml
+  - resource/hpa.yaml
+  - resource/service.yaml
+  - simulation/deployment.yaml
+  - simulation/hpa.yaml
+  - simulation/service.yaml
+  - user/deployment.yaml
+  - user/hpa.yaml
+  - user/service.yaml
