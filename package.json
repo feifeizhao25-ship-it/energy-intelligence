@@ -114,9 +114,7 @@
   },
   "workspaces": [
     "web-global",
-    "网页端-国内版",
-    "网页端-国际版",
-    "packages/*",
-    "apps/*"
+    "frontend-cn-web",
+    "packages/*"
   ]
 }
