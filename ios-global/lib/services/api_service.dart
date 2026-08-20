@@ -4,8 +4,8 @@
 
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiException implements Exception {
   final int statusCode;
@@ -17,6 +17,7 @@ class ApiException implements Exception {
 
 class ApiService {
   static final _client = http.Client();
+  static const _secureStorage = FlutterSecureStorage();
   static String? _token;
   static String _baseUrl = '';
 
@@ -34,8 +35,7 @@ class ApiService {
     if (kReleaseMode && !Uri.parse(_baseUrl).isScheme('https')) {
       throw StateError('API_BASE_URL must use HTTPS in release builds');
     }
-    final prefs = await SharedPreferences.getInstance();
-    _token = prefs.getString('energy_token');
+    _token = await _secureStorage.read(key: 'energy_token');
   }
 
   static void setToken(String token) => _token = token;
@@ -72,8 +72,7 @@ class ApiService {
     );
     final token = resp['access_token'] as String;
     _token = token;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('energy_token', token);
+    await _secureStorage.write(key: 'energy_token', value: token);
     return token;
   }
 
@@ -87,15 +86,13 @@ class ApiService {
     );
     final token = resp['access_token'] as String;
     _token = token;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('energy_token', token);
+    await _secureStorage.write(key: 'energy_token', value: token);
     return token;
   }
 
   static Future<void> logout() async {
     _token = null;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('energy_token');
+    await _secureStorage.delete(key: 'energy_token');
   }
 
   // ── Users ─────────────────────────────────────────────────────────────────
