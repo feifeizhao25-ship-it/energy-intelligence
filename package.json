@@ -96,7 +96,10 @@
     "overrides": {
       "fast-jwt": "^6.2.4",
       "fastify": "^5.8.5",
-      "fast-uri": "^3.1.2",
+      "fast-uri": "^3.1.5",
+      "brace-expansion@^2.0.0": "^2.1.4",
+      "js-yaml@^3.0.0": "^3.15.1",
+      "js-yaml@^4.0.0": "^4.3.1",
       "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
       "protobufjs": "^7.5.5",
       "tar-fs": "^3.1.2",
