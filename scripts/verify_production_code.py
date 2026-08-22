@@ -86,6 +86,10 @@ require(
     "全部学术数据源暂时不可用，未返回空结果或模拟论文",
 )
 require(
+    "runtime/web/src/lib/crawler/policy-crawler.ts",
+    "绝不回退到静态补贴金额或伪造的 /mock 链接",
+)
+require(
     "runtime/web/src/app/api/papers/search/route.ts",
     "UPSTREAM_UNAVAILABLE",
 )
@@ -158,6 +162,13 @@ forbid_tree(
         "cus_demo",
         "模拟支付成功",
         "MOCK_PAY_",
+        "400-888-8888",
+        "business@xinnengyuan.com",
+        "sourceUrl: 'https://fgw.sh.gov.cn/mock'",
+        "sourceUrl: 'https://fgw.beijing.gov.cn/mock'",
+        "sourceUrl: 'https://fgw.jiangsu.gov.cn/mock'",
+        "sourceUrl: 'https://fzggw.zj.gov.cn/mock'",
+        "sourceUrl: 'https://fzggw.gd.gov.cn/mock'",
     ),
 )
 for mobile_root in ("android-global/lib", "ios-global/lib"):

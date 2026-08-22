@@ -73,6 +73,8 @@ export default function HomePage() {
     const [isCalculating, setIsCalculating] = useState(false);
     const [showResult, setShowResult] = useState(false);
     const [result, setResult] = useState<any>(null);
+    const contactPhone = process.env.NEXT_PUBLIC_CONTACT_PHONE?.trim();
+    const contactEmail = process.env.NEXT_PUBLIC_CONTACT_EMAIL?.trim();
 
     useEffect(() => {
         setIsClient(true);
@@ -557,7 +559,7 @@ export default function HomePage() {
                             <ArrowRight className="w-5 h-5" />
                         </Link>
                         <a
-                            href="tel:400-888-8888"
+                            href={contactPhone ? `tel:${contactPhone}` : '/login'}
                             className="flex items-center gap-2 px-8 py-4 bg-white/20 text-white font-bold rounded-2xl hover:bg-white/30 transition-colors"
                         >
                             <Phone className="w-5 h-5" />
@@ -601,17 +603,17 @@ export default function HomePage() {
                             <ul className="space-y-2 text-sm">
                                 <li className="flex items-center gap-2">
                                     <MessageCircle className="w-4 h-4" />
-                                    business@xinnengyuan.com
+                                    {contactEmail || '请通过登录后的工单中心联系我们'}
                                 </li>
                                 <li className="flex items-center gap-2">
                                     <Phone className="w-4 h-4" />
-                                    400-888-8888
+                                    {contactPhone || '在线工单'}
                                 </li>
                             </ul>
                         </div>
                     </div>
                     <div className="border-t border-slate-800 pt-8 text-center text-sm">
-                        © 2024 新能源智库. 保留所有权利。
+                        © {new Date().getFullYear()} 新能源智库. 保留所有权利。
                     </div>
                 </div>
             </footer>
