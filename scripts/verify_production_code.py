@@ -126,6 +126,20 @@ require(
     "暂无真实告警记录",
 )
 require(
+    "runtime/web/src/contexts/StationContext.tsx",
+    "const INITIAL_STATIONS: Station[] = [];",
+)
+require(
+    "runtime/web/src/contexts/StationContext.tsx",
+    "const INITIAL_ISSUES: Issue[] = [];",
+)
+require(
+    "runtime/web/src/app/(dashboard)/referral/page.tsx",
+    "系统不会生成示例邀请码、虚构好友记录或未配置的返现承诺",
+)
+require("runtime/web/src/middleware.ts", "'/terms'")
+require("runtime/web/src/middleware.ts", "'/privacy'")
+require(
     "runtime/web/src/app/api/projects/diagnosis/route.ts",
     "NO_VERIFIED_TELEMETRY",
 )

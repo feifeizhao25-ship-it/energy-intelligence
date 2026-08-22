@@ -53,8 +53,8 @@ interface Station {
 }
 
 
-// Mock data
-const mockStations = [
+/* Historical demo fixtures removed from production runtime.
+const removedDemoStations = [
     {
         id: '1',
         name: '保定市区屋顶光伏',
@@ -99,7 +99,7 @@ const mockStations = [
         lastUpdate: '5分钟前',
         records: []
     }
-];
+]; */
 
 const typeConfig = {
     solar: { icon: Zap, color: 'amber', bg: 'bg-amber-50', text: 'text-amber-600', border: 'border-amber-200', gradient: 'from-amber-400 to-amber-600' },
@@ -108,7 +108,7 @@ const typeConfig = {
 };
 
 export default function MyStationsPage() {
-    const [stations, setStations] = useState<Station[]>(mockStations as Station[]);
+    const [stations, setStations] = useState<Station[]>([]);
     const [selectedPeriod, setSelectedPeriod] = useState<'day' | 'month' | 'year'>('month');
     const [showAddModal, setShowAddModal] = useState(false);
     const [selectedStation, setSelectedStation] = useState<string | null>(null);

@@ -23,6 +23,7 @@ function LoginContent() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
   const fromQuickCalc = searchParams.get('from') === 'quick-calc';
+  const supportEmail = process.env.NEXT_PUBLIC_CONTACT_EMAIL?.trim();
 
   const [isLogin, setIsLogin] = useState(true);
   const [loginMode, setLoginMode] = useState<'email' | 'phone'>('email');
@@ -207,7 +208,7 @@ function LoginContent() {
         </div>
 
         <div className="text-sm text-slate-400">
-          © 2024 新能源智库. 保留所有权利。
+          © {new Date().getFullYear()} 新能源智库. 保留所有权利。
         </div>
       </div>
 
@@ -407,12 +408,12 @@ function LoginContent() {
           </div>
 
           {/* Help */}
-          <div className="mt-6 text-center">
-            <a href="mailto:support@xinnengyuan.ai" className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-green-600">
+          {supportEmail && <div className="mt-6 text-center">
+            <a href={`mailto:${supportEmail}`} className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-green-600">
               <Phone className="w-4 h-4" />
-              联系支持：support@xinnengyuan.ai
+              联系支持：{supportEmail}
             </a>
-          </div>
+          </div>}
         </div>
       </div>
     </div>

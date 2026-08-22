@@ -56,8 +56,10 @@ interface StationContextType {
 
 const StationContext = createContext<StationContextType | undefined>(undefined);
 
-// Initial Mock Data
-const INITIAL_STATIONS: Station[] = [
+// 用户尚未接入 SCADA/IoT 时必须保持空状态，不能展示虚构资产与告警。
+const INITIAL_STATIONS: Station[] = [];
+/* Historical demo fixtures removed from production runtime.
+const REMOVED_DEMO_STATIONS: Station[] = [
     {
         id: '1',
         name: '保定市区屋顶光伏电站',
@@ -100,9 +102,11 @@ const INITIAL_STATIONS: Station[] = [
         dailyGeneration: 285.6,
         deviceCount: 5
     }
-];
+]; */
 
-const INITIAL_ISSUES: Issue[] = [
+const INITIAL_ISSUES: Issue[] = [];
+/* Historical demo fixtures removed from production runtime.
+const REMOVED_DEMO_ISSUES: Issue[] = [
     {
         id: '1',
         stationId: '2',
@@ -136,9 +140,11 @@ const INITIAL_ISSUES: Issue[] = [
         solved: false,
         createdAt: '2024-01-17 09:00'
     }
-];
+]; */
 
-const INITIAL_RECORDS: MaintenanceRecord[] = [
+const INITIAL_RECORDS: MaintenanceRecord[] = [];
+/* Historical demo fixtures removed from production runtime.
+const REMOVED_DEMO_RECORDS: MaintenanceRecord[] = [
     {
         id: '1',
         stationId: '1',
@@ -169,7 +175,7 @@ const INITIAL_RECORDS: MaintenanceRecord[] = [
         cost: 3500,
         status: 'completed'
     }
-];
+]; */
 
 export function StationProvider({ children }: { children: React.ReactNode }) {
     const [stations, setStations] = useState<Station[]>(INITIAL_STATIONS);
