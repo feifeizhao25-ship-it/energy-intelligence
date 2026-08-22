@@ -34,7 +34,7 @@ export interface WindResource {
     speed10m: number; // 10m风速 (m/s)
     speed50m: number; // 50m风速 (m/s)
     speed100m: number; // 100m风速 (m/s)
-    direction: number; // 主导风向 (度)
+    direction: number | null; // 主导风向（度）；数据源未提供时为 null
   }[];
   annual: {
     avgSpeed: number; // 年平均风速 (m/s)
@@ -224,6 +224,10 @@ export interface Paper {
   tldr?: string;
   venue?: string;
   doi?: string;
+  sourceProvider?: string;
+  sourceUrl?: string;
+  retrievedAt?: string;
+  evidenceStatus?: 'provider_verified';
 }
 
 export interface SearchOptions {
@@ -237,6 +241,10 @@ export interface SearchOptions {
 export interface SearchResult {
   total: number;
   papers: Paper[];
+  providers?: Array<{
+    name: 'Semantic Scholar' | 'OpenAlex' | 'arXiv';
+    status: 'available' | 'unavailable';
+  }>;
 }
 
 export interface ApiResponse<T> {

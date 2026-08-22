@@ -11,10 +11,10 @@ interface StatItem {
 }
 
 const defaultStats: StatItem[] = [
-    { value: '50万+', label: '次测算', icon: <Calculator className="w-4 h-4" /> },
-    { value: '12万+', label: '用户', icon: <Users className="w-4 h-4" /> },
-    { value: '98%', label: '满意度', icon: <Star className="w-4 h-4" /> },
-    { value: '¥28亿', label: '评估资产', icon: <DollarSign className="w-4 h-4" /> },
+    { value: '假设可见', label: '参数透明', icon: <Calculator className="w-4 h-4" /> },
+    { value: '来源可溯', label: '数据出处记录', icon: <Users className="w-4 h-4" /> },
+    { value: '版本化', label: '审计口径留痕', icon: <Star className="w-4 h-4" /> },
+    { value: '人工复核', label: '结论确认后导出', icon: <DollarSign className="w-4 h-4" /> },
 ];
 
 interface SocialProofProps {
@@ -143,8 +143,8 @@ export function RealtimeCounter({ className }: { className?: string }) {
             </div>
             <div className="flex items-center gap-1 text-sm text-gray-600">
                 <TrendingUp className="w-3 h-3 text-primary-500" />
-                <span className="font-semibold text-primary-600">12,847</span>
-                <span>人已完成测算</span>
+                <span className="font-semibold text-primary-600">假设与来源</span>
+                <span>全程留痕可审计</span>
             </div>
         </motion.div>
     );

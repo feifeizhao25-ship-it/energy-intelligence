@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
         }
         let projectId: string = rawProjectId;
 
-        // 如果是 "current"，获取用户的第一个项目或使用演示项目
+        // 如果是 "current"，仅获取当前用户真实存在的最近项目。
         if (projectId === 'current') {
             try {
                 const { PrismaClient } = await import('@prisma/client');
@@ -48,14 +48,20 @@ export async function GET(request: NextRequest) {
                 if (userProject) {
                     projectId = userProject.id;
                 } else {
-                    // 没有项目时返回演示数据
-                    projectId = 'demo-project';
+                    await prisma.$disconnect();
+                    return NextResponse.json(
+                        { error: 'Not Found', message: '当前账号还没有项目，请先创建项目' },
+                        { status: 404 }
+                    );
                 }
 
                 await prisma.$disconnect();
             } catch (err) {
                 console.error('Error fetching user project:', err);
-                projectId = 'demo-project';
+                return NextResponse.json(
+                    { error: 'Service Unavailable', message: '项目数据暂时不可用' },
+                    { status: 503 }
+                );
             }
         }
 

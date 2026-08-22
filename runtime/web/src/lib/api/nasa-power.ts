@@ -124,7 +124,8 @@ export const getWindResource = withCache('nasa:wind', async (lat: number, lng: n
         speed10m: speed10m || 0,
         speed50m,
         speed100m,
-        direction: 180 + Math.random() * 180 // NASA API不提供风向数据，随机生成
+        // NASA POWER does not provide direction for this request. Do not invent it.
+        direction: null
       };
     }).sort((a, b) => a.month - b.month);
 
@@ -225,13 +226,7 @@ export const getHistoricalData = withCache('nasa:history', async (
 
   } catch (error) {
     console.error('获取历史数据失败:', error);
-    // Return mock trend data if API fails (common with large ranges)
-    return Array.from({ length: endYear - startYear + 1 }, (_, i) => ({
-      year: startYear + i,
-      ghi: 4.5 + Math.random() * 0.5,
-      windSpeed: 5 + Math.random() * 1,
-      temperature: 15 + Math.random() * 2
-    }));
+    throw new Error('历史气象数据暂时不可用，请稍后重试');
   }
 });
 

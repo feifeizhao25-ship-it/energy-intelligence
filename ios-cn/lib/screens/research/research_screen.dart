@@ -52,7 +52,9 @@ class _ResearchScreenState extends State<ResearchScreen> {
                 hintText: '搜索论文...',
                 prefixIcon: Icon(Icons.search),
                 suffixIcon: Icon(Icons.filter_alt),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
               onChanged: (value) async {
                 setState(() => _isLoading = true);
@@ -68,12 +70,13 @@ class _ResearchScreenState extends State<ResearchScreen> {
             child: _isLoading
                 ? Center(child: CircularProgressIndicator())
                 : _papers.isEmpty
-                    ? Center(child: Text('没有找到相关论文'))
-                    : ListView.builder(
-                        padding: EdgeInsets.all(16),
-                        itemCount: _papers.length,
-                        itemBuilder: (context, index) => _buildPaperCard(_papers[index]),
-                      ),
+                ? Center(child: Text('没有找到相关论文'))
+                : ListView.builder(
+                    padding: EdgeInsets.all(16),
+                    itemCount: _papers.length,
+                    itemBuilder: (context, index) =>
+                        _buildPaperCard(_papers[index]),
+                  ),
           ),
         ],
       ),
@@ -92,7 +95,11 @@ class _ResearchScreenState extends State<ResearchScreen> {
           children: [
             Text(
               paper['title'] ?? '',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF0F172A),
+              ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
@@ -129,7 +136,10 @@ class _ResearchScreenState extends State<ResearchScreen> {
                       color: Color(0xFFF1F5F9),
                       borderRadius: BorderRadius.circular(3),
                     ),
-                    child: Text(tag, style: TextStyle(fontSize: 10, color: Color(0xFF475569))),
+                    child: Text(
+                      tag,
+                      style: TextStyle(fontSize: 10, color: Color(0xFF475569)),
+                    ),
                   );
                 }).toList(),
               ),
@@ -138,11 +148,14 @@ class _ResearchScreenState extends State<ResearchScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('引用: ${paper['citations']}', style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8))),
+                Text(
+                  '引用: ${paper['citations']}',
+                  style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                ),
                 TextButton(
                   onPressed: () {},
-                  child: Text('AI摘要', style: TextStyle(fontSize: 11)),
                   style: TextButton.styleFrom(padding: EdgeInsets.zero),
+                  child: Text('AI摘要', style: TextStyle(fontSize: 11)),
                 ),
               ],
             ),

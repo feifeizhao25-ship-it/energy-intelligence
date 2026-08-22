@@ -41,6 +41,105 @@ require(
     "services/ai-engine/app/skills/v31_new_skills.py",
     "No synthetic result was generated.",
 )
+require(
+    "runtime/backend/app/services/resource_service.py",
+    "production calculations never use synthetic data",
+)
+require(
+    "runtime/backend/app/services/nasa_power_service.py",
+    "NASA POWER solar resource data is currently unavailable",
+)
+require(
+    "runtime/backend/app/routers/reports.py",
+    "仅使用当前用户拥有的真实项目数据",
+)
+require(
+    "runtime/backend/app/routers/reports.py",
+    "财务模型缺少可核验的数据来源",
+)
+require(
+    "runtime/backend/Dockerfile",
+    "fonts-noto-cjk",
+)
+require(
+    "runtime/web/src/lib/api/semantic-scholar.ts",
+    "未返回任何替代或模拟论文",
+)
+require(
+    "runtime/web/src/app/api/v1/papers/search/route.ts",
+    "UPSTREAM_UNAVAILABLE",
+)
+require(
+    "runtime/web/src/lib/api/arxiv.ts",
+    "https://export.arxiv.org/api/query",
+)
+require(
+    "runtime/web/src/lib/api/openalex.ts",
+    "未返回模拟论文",
+)
+require(
+    "runtime/web/src/app/api/papers/chat/route.ts",
+    "NO_VERIFIED_EVIDENCE",
+)
+require(
+    "runtime/web/src/lib/papers/search.ts",
+    "全部学术数据源暂时不可用，未返回空结果或模拟论文",
+)
+require(
+    "runtime/web/src/app/api/papers/search/route.ts",
+    "UPSTREAM_UNAVAILABLE",
+)
+require(
+    "runtime/web/src/lib/supabase.ts",
+    "服务端数据操作已拒绝",
+)
+require(
+    "runtime/docker-compose.production.yml",
+    "OPENALEX_CONTACT_EMAIL is required",
+)
+require(
+    "runtime/web/src/lib/ai/router.ts",
+    "AI 服务已拒绝生成替代内容",
+)
+require(
+    "runtime/web/src/lib/ai/router.ts",
+    "向量服务已拒绝生成替代向量",
+)
+require(
+    "runtime/web/src/app/api/orchestrator/route.ts",
+    "当前账号还没有项目，请先创建项目",
+)
+require(
+    "runtime/web/src/app/(dashboard)/projects/page.tsx",
+    "今日发电', value: '待接入",
+)
+require(
+    "runtime/web/src/app/(dashboard)/projects/[id]/page.tsx",
+    "尚无已采集的发电数据",
+)
+require(
+    "runtime/web/src/app/(dashboard)/projects/[id]/page.tsx",
+    "暂无真实告警记录",
+)
+require(
+    "runtime/web/src/app/api/projects/diagnosis/route.ts",
+    "NO_VERIFIED_TELEMETRY",
+)
+for telemetry_route in (
+    "runtime/web/src/app/api/projects/[id]/monitoring/route.ts",
+    "runtime/web/src/app/api/projects/[id]/analytics/route.ts",
+    "runtime/web/src/app/api/projects/[id]/reports/route.ts",
+    "runtime/web/src/app/api/v1/projects/[id]/monitoring/route.ts",
+):
+    require(telemetry_route, "503")
+require(
+    "runtime/web/src/lib/api/nasa-power.ts",
+    "历史气象数据暂时不可用，请稍后重试",
+)
+require(
+    "runtime/web/src/lib/api/nasa-power.ts",
+    "direction: null",
+)
 forbid_tree(
     "web-global/src",
     (
@@ -50,6 +149,125 @@ forbid_tree(
         'https://example.com/wp',
         "mock-user-id",
     ),
+)
+forbid_tree(
+    "runtime/web/src",
+    (
+        "超级测试账号硬编码逻辑",
+        "dev-master-id",
+        "cus_demo",
+        "模拟支付成功",
+        "MOCK_PAY_",
+    ),
+)
+for mobile_root in ("android-global/lib", "ios-global/lib"):
+    forbid_tree(
+        mobile_root,
+        (
+            "http://116.62.32.43",
+            "MockData.projects",
+            "MockData.weeklyGen",
+            "847 GWh",
+            "\$46.6M",
+            "Fallback: compute locally",
+            "Navigator.pushReplacementNamed(context, '/main');\n  }",
+        ),
+    )
+    require(
+        f"{mobile_root}/services/api_service.dart",
+        "API_BASE_URL must be supplied as an HTTPS URL",
+    )
+    require(
+        f"{mobile_root}/screens/auth/login_screen.dart",
+        "await ApiService.login",
+    )
+    require(
+        f"{mobile_root}/screens/auth/register_screen.dart",
+        "await ApiService.register",
+    )
+    require(
+        f"{mobile_root}/screens/resource/solar_resource_screen.dart",
+        "Verified solar resource data is temporarily unavailable",
+    )
+    require(
+        f"{mobile_root}/screens/finance/wind_finance_screen.dart",
+        "await ApiService.calcWindFinance",
+    )
+    require(
+        f"{mobile_root}/screens/finance/storage_finance_screen.dart",
+        "await ApiService.calcStorageFinance",
+    )
+    require(
+        f"{mobile_root}/screens/operations/cleaning_screen.dart",
+        "await ApiService.calculateCleaningSchedule",
+    )
+    require(
+        f"{mobile_root}/screens/operations/anomaly_screen.dart",
+        "No synthetic alerts are shown",
+    )
+require(
+    "runtime/backend/app/api/v1/finance.py",
+    "storage-arbitrage-v1.0",
+)
+require(
+    "runtime/backend/app/api/v1/operations.py",
+    "cleaning-economic-interval-v1.0",
+)
+require(
+    "runtime/backend/app/main.py",
+    "v1_operations.router",
+)
+require(
+    "runtime/backend/app/main.py",
+    "personalization.router",
+)
+require(
+    "runtime/backend/app/api/v1/ai_assistant.py",
+    '@router.post("/chat-json")',
+)
+for mobile_root in ("android-cn/lib", "ios-cn/lib"):
+    forbid_tree(
+        mobile_root,
+        (
+            "http://116.62.32.43",
+            "http://localhost:4002",
+            "mockData",
+            "MockData",
+            "Fallback: compute locally",
+            "项目已创建",
+            "年均GHI: 1456.8",
+            "项目IRR: 12.47%",
+            "综合健康评分: 82分",
+        ),
+    )
+    require(
+        f"{mobile_root}/services/api_service.dart",
+        "API_BASE_URL 必须配置为 HTTPS 地址",
+    )
+    require(
+        f"{mobile_root}/screens/resource/compare_screen.dart",
+        "真实资源数据暂时不可用，请稍后重试",
+    )
+    require(
+        f"{mobile_root}/screens/ai_assistant/ai_assistant_screen.dart",
+        "await ApiService.chat",
+    )
+    require(
+        f"{mobile_root}/screens/finance/storage_finance_screen.dart",
+        "await ApiService.calcStorageFinance",
+    )
+    require(
+        f"{mobile_root}/screens/operations/cleaning_screen.dart",
+        "await ApiService.calculateCleaningSchedule",
+    )
+
+require(
+    "runtime/web/src/app/(dashboard)/dashboard/page.tsx",
+    "new Set(['chen_xin', 'wang_qiang', 'li_na'])",
+)
+require(
+    "web-global/src/components/dashboard/personalization-preview.ts",
+    "new Set(['john_smith', 'sarah_miller'])",
 )
 
 service_dockerfiles = sorted((ROOT / "services").glob("*/Dockerfile"))

@@ -17,7 +17,9 @@ WORKDIR /app
 ARG DATABASE_URL=postgresql://energy:build-only@postgres:5432/energy_web
 ARG DIRECT_URL=postgresql://energy:build-only@postgres:5432/energy_web
 ARG NEXT_PUBLIC_APP_EDITION=cn
-ENV DATABASE_URL=$DATABASE_URL DIRECT_URL=$DIRECT_URL NEXT_PUBLIC_APP_EDITION=$NEXT_PUBLIC_APP_EDITION NEXT_TELEMETRY_DISABLED=1
+ARG NEXT_PUBLIC_API_URL
+ARG BACKEND_INTERNAL_URL=http://backend:8000
+ENV DATABASE_URL=$DATABASE_URL DIRECT_URL=$DIRECT_URL NEXT_PUBLIC_APP_EDITION=$NEXT_PUBLIC_APP_EDITION NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL BACKEND_INTERNAL_URL=$BACKEND_INTERNAL_URL NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
@@ -38,6 +40,7 @@ WORKDIR /app
 ENV NODE_ENV production
 # ENV NEXT_TELEMETRY_DISABLED 1
 
+RUN apk add --no-cache wget
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
@@ -63,6 +66,9 @@ EXPOSE 3000
 ENV PORT 3000
 # set hostname to localhost
 ENV HOSTNAME "0.0.0.0"
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+  CMD wget -qO- http://127.0.0.1:3000/pricing >/dev/null || exit 1
 
 # server.js is created by next build from the standalone output
 # https://nextjs.org/docs/pages/api-reference/next-config-js/output

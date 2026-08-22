@@ -138,7 +138,7 @@ export default function CommunityPage() {
                             </div>
                             <h4 className="text-xl font-black mb-3">AI 智讯解答</h4>
                             <p className="text-slate-400 text-xs font-medium leading-relaxed mb-8">
-                                发布问题后，AI 将自动检索 <span className="text-white">2.4 亿篇</span> 文献与实时政策库，为您先行生成专业参考答案。
+                                发布问题后，AI 将自动检索 <span className="text-white">公开文献</span> 与实时政策库，为您先行生成专业参考答案。
                             </p>
                             <button className="w-full bg-white text-slate-900 py-4 rounded-2xl font-black hover:bg-green-500 hover:text-white transition-all text-[10px] uppercase tracking-widest cursor-pointer">
                                 立即匿名提问

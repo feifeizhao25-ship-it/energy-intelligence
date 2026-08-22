@@ -86,7 +86,7 @@ def _extraterrestrial_monthly(lat: float, month: int) -> float:
 async def fetch_solar_resource(req: SolarResourceRequest) -> SolarResourceResponse:
     """Fetch solar resource from Open-Meteo Climate API.
     GHI + temperature from Open-Meteo; DNI/DHI estimated via Orgill-Hollands.
-    Falls back to stub on any error."""
+    Provider failures are surfaced; production calculations never use synthetic data."""
     try:
         async with httpx.AsyncClient(timeout=15.0) as client:
             r1 = await client.get(
@@ -174,18 +174,12 @@ async def fetch_solar_resource(req: SolarResourceRequest) -> SolarResourceRespon
             monthly_ghi=[round(v, 1) for v in ghi_monthly_kwh],
         )
 
-    except Exception:
-        return SolarResourceResponse(
-            lat=req.lat, lng=req.lng,
-            ghi=1450.0, dni=1800.0, dhi=400.0,
-            peak_sun_hours=3.97, optimal_tilt=round(abs(req.lat) * 0.76 + 3.1, 1),
-            avg_temperature=15.0, resource_class="II", score=65.0,
-            data_source="open_meteo_stub", monthly_ghi=[120.0] * 12,
-        )
+    except Exception as exc:
+        raise RuntimeError("Open-Meteo solar resource data is currently unavailable") from exc
 
 
 async def fetch_wind_resource(req: WindResourceRequest) -> WindResourceResponse:
-    """Fetch wind resource from Open-Meteo. Falls back to stub on error."""
+    """Fetch wind resource from Open-Meteo without synthetic fallback."""
     try:
         async with httpx.AsyncClient(timeout=60.0) as client:
             # Use 1-month sample for speed, extrapolate to annual
@@ -210,7 +204,9 @@ async def fetch_wind_resource(req: WindResourceRequest) -> WindResourceResponse:
         monthly_speed_ms = [v / 3.6 for v in monthly_kmh]
 
         valid = [v for v in monthly_speed_ms if v > 0]
-        mean_speed = sum(valid) / len(valid) if valid else 8.4
+        if not valid:
+            raise ValueError("Open-Meteo returned no valid wind observations")
+        mean_speed = sum(valid) / len(valid)
 
         k = 2.0
         c_weibull = mean_speed / 0.886
@@ -230,11 +226,5 @@ async def fetch_wind_resource(req: WindResourceRequest) -> WindResourceResponse:
             resource_class=resource_class, score=round(score, 1),
             monthly_speed=[round(v, 1) for v in monthly_speed_ms],
         )
-    except Exception:
-        return WindResourceResponse(
-            lat=req.lat, lng=req.lng,
-            mean_speed=8.4, weibull_k=2.18, weibull_c=9.47,
-            wind_power_density=432, turbulence_intensity=0.11,
-            resource_class="I", score=88.6,
-            monthly_speed=[9.1, 8.8, 8.9, 8.7, 8.2, 7.9, 7.8, 8.0, 8.3, 8.6, 9.0, 9.2],
-        )
+    except Exception as exc:
+        raise RuntimeError("Open-Meteo wind resource data is currently unavailable") from exc

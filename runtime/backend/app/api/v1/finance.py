@@ -2,12 +2,75 @@ from typing import Union
 
 from fastapi import APIRouter, Depends, HTTPException, Body
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.schemas.finance import SolarFinanceRequest, WindFinanceRequest, FinancialModelResponse
+from app.schemas.finance import (
+    SolarFinanceRequest, WindFinanceRequest, FinancialModelResponse,
+    StorageFinanceRequest, StorageFinanceResponse,
+)
 from app.utils.financial_utils import calc_irr, calc_npv, calc_lcoe, build_solar_cashflows
 from app.core.dependencies import get_current_user_id
 from app.core.database import get_db
 
 router = APIRouter(prefix="/finance")
+
+
+@router.post("/storage", response_model=StorageFinanceResponse)
+async def storage_finance(
+    body: StorageFinanceRequest,
+    user_id: str = Depends(get_current_user_id),
+):
+    """Auditable storage-arbitrage model based solely on explicit user assumptions."""
+    if body.peak_price_per_mwh <= body.offpeak_price_per_mwh:
+        raise HTTPException(status_code=422, detail="Peak price must exceed off-peak price")
+
+    total_capex = body.capacity_mwh * 1000 * body.capex_per_kwh
+    annual_opex = total_capex * body.annual_opex_rate
+    price_spread = body.peak_price_per_mwh - body.offpeak_price_per_mwh
+    initial_discharged = body.capacity_mwh * body.cycles_per_year * body.roundtrip_efficiency
+    cashflows = [-total_capex]
+    discharged_energy = []
+    for year in range(body.project_life):
+        retained_capacity = max(0.0, 1 - body.annual_degradation_rate * year)
+        discharged = initial_discharged * retained_capacity
+        discharged_energy.append(discharged)
+        cashflows.append(discharged * price_spread - annual_opex)
+
+    irr = calc_irr(cashflows)
+    npv = calc_npv(body.discount_rate, cashflows)
+    cumulative = -total_capex
+    payback = 99.0
+    for year, cashflow in enumerate(cashflows[1:], start=1):
+        previous = cumulative
+        cumulative += cashflow
+        if cumulative >= 0 and cashflow > 0:
+            payback = (year - 1) + (-previous / cashflow)
+            break
+    discounted_costs = total_capex + sum(
+        annual_opex / ((1 + body.discount_rate) ** year)
+        for year in range(1, body.project_life + 1)
+    )
+    discounted_energy = sum(
+        energy / ((1 + body.discount_rate) ** year)
+        for year, energy in enumerate(discharged_energy, start=1)
+    )
+    lcos = discounted_costs / discounted_energy if discounted_energy > 0 else 0
+
+    return StorageFinanceResponse(
+        irr=round(float(irr), 4), npv=round(float(npv), 2), lcos=round(lcos, 4),
+        payback_years=round(min(payback, 99.0), 2),
+        annual_revenue=round(initial_discharged * price_spread, 2),
+        annual_discharged_mwh=round(initial_discharged, 2), total_capex=round(total_capex, 2),
+        cashflows=[round(value, 2) for value in cashflows[1:]],
+        assumption_version="storage-arbitrage-v1.0",
+        assumptions={
+            "source": "user_input",
+            "roundtrip_efficiency": body.roundtrip_efficiency,
+            "annual_degradation_rate": body.annual_degradation_rate,
+            "annual_opex_rate": body.annual_opex_rate,
+            "discount_rate": body.discount_rate,
+            "project_life": body.project_life,
+            "currency": body.currency,
+        },
+    )
 
 
 @router.post("/solar", response_model=FinancialModelResponse)

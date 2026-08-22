@@ -18,7 +18,11 @@ import 'screens/projects/project_detail_screen.dart';
 import 'screens/research/research_screen.dart';
 import 'screens/settings/settings_screen.dart';
 
-void main() => runApp(const EnergyIntelligenceApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await ApiService.init(region: 'GLOBAL');
+  runApp(const EnergyIntelligenceApp());
+}
 
 class EnergyIntelligenceApp extends StatelessWidget {
   const EnergyIntelligenceApp({super.key});
@@ -90,7 +94,13 @@ class _MainNavigationState extends State<MainNavigation> {
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           color: Colors.white,
-          boxShadow: [BoxShadow(color: Color(0x1A000000), blurRadius: 12, offset: Offset(0, -2))],
+          boxShadow: [
+            BoxShadow(
+              color: Color(0x1A000000),
+              blurRadius: 12,
+              offset: Offset(0, -2),
+            ),
+          ],
         ),
         child: SafeArea(
           child: Padding(
@@ -98,11 +108,41 @@ class _MainNavigationState extends State<MainNavigation> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _NavItem(icon: Icons.grid_view_rounded, label: 'Dashboard', index: 0, current: _currentIndex, onTap: (i) => setState(() => _currentIndex = i)),
-                _NavItem(icon: Icons.folder_outlined, label: 'Projects', index: 1, current: _currentIndex, onTap: (i) => setState(() => _currentIndex = i)),
-                _NavItem(icon: Icons.wb_sunny_outlined, label: 'Resources', index: 2, current: _currentIndex, onTap: (i) => setState(() => _currentIndex = i)),
-                _NavItem(icon: Icons.calculate_outlined, label: 'Finance', index: 3, current: _currentIndex, onTap: (i) => setState(() => _currentIndex = i)),
-                _NavItem(icon: Icons.auto_awesome_outlined, label: 'AI', index: 4, current: _currentIndex, onTap: (i) => setState(() => _currentIndex = i)),
+                _NavItem(
+                  icon: Icons.grid_view_rounded,
+                  label: 'Dashboard',
+                  index: 0,
+                  current: _currentIndex,
+                  onTap: (i) => setState(() => _currentIndex = i),
+                ),
+                _NavItem(
+                  icon: Icons.folder_outlined,
+                  label: 'Projects',
+                  index: 1,
+                  current: _currentIndex,
+                  onTap: (i) => setState(() => _currentIndex = i),
+                ),
+                _NavItem(
+                  icon: Icons.wb_sunny_outlined,
+                  label: 'Resources',
+                  index: 2,
+                  current: _currentIndex,
+                  onTap: (i) => setState(() => _currentIndex = i),
+                ),
+                _NavItem(
+                  icon: Icons.calculate_outlined,
+                  label: 'Finance',
+                  index: 3,
+                  current: _currentIndex,
+                  onTap: (i) => setState(() => _currentIndex = i),
+                ),
+                _NavItem(
+                  icon: Icons.auto_awesome_outlined,
+                  label: 'AI',
+                  index: 4,
+                  current: _currentIndex,
+                  onTap: (i) => setState(() => _currentIndex = i),
+                ),
               ],
             ),
           ),
@@ -138,7 +178,11 @@ class _NavItem extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 22, color: isActive ? AppTheme.primary : const Color(0xFF94A3B8)),
+            Icon(
+              icon,
+              size: 22,
+              color: isActive ? AppTheme.primary : const Color(0xFF94A3B8),
+            ),
             const SizedBox(height: 2),
             Text(
               label,

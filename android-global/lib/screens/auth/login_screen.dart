@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
+import '../../services/api_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -7,7 +8,8 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStateMixin {
+class _LoginScreenState extends State<LoginScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
@@ -29,11 +31,37 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   }
 
   Future<void> _login() async {
+    if (_tabController.index == 1) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Magic-link sign-in is not configured yet. Use your password.',
+          ),
+        ),
+      );
+      return;
+    }
+    if (_emailCtrl.text.trim().isEmpty || _passCtrl.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter your email and password.')),
+      );
+      return;
+    }
     setState(() => _loading = true);
-    await Future.delayed(const Duration(seconds: 1));
-    if (!mounted) return;
-    setState(() => _loading = false);
-    Navigator.pushReplacementNamed(context, '/main');
+    try {
+      await ApiService.login(
+        email: _emailCtrl.text.trim(),
+        password: _passCtrl.text,
+      );
+      if (mounted) Navigator.pushReplacementNamed(context, '/main');
+    } on ApiException catch (error) {
+      if (mounted)
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.message)));
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   @override
@@ -58,14 +86,33 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    Row(children: [
-                      const Icon(Icons.bolt, color: Colors.white, size: 32),
-                      const SizedBox(width: 8),
-                      const Text('Energy Intelligence', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-                    ]),
+                    Row(
+                      children: [
+                        const Icon(Icons.bolt, color: Colors.white, size: 32),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'Energy Intelligence',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: 12),
-                    const Text('Welcome back', style: TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold)),
-                    const Text('Sign in to your account', style: TextStyle(color: Colors.white70, fontSize: 14)),
+                    const Text(
+                      'Welcome back',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const Text(
+                      'Sign in to your account',
+                      style: TextStyle(color: Colors.white70, fontSize: 14),
+                    ),
                   ],
                 ),
               ),
@@ -77,33 +124,65 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
               child: Column(
                 children: [
                   OutlinedButton.icon(
-                    onPressed: _login,
+                    onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Google sign-in is not configured.'),
+                      ),
+                    ),
                     icon: const Icon(Icons.login, size: 20),
                     label: const Text('Continue with Google'),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: const Color(0xFF1E293B),
                       side: const BorderSide(color: Color(0xFFE2E8F0)),
                       minimumSize: const Size(double.infinity, 48),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
-                  const Row(children: [
-                    Expanded(child: Divider(color: Color(0xFFE2E8F0))),
-                    Padding(padding: EdgeInsets.symmetric(horizontal: 12), child: Text('or', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12))),
-                    Expanded(child: Divider(color: Color(0xFFE2E8F0))),
-                  ]),
+                  const Row(
+                    children: [
+                      Expanded(child: Divider(color: Color(0xFFE2E8F0))),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 12),
+                        child: Text(
+                          'or',
+                          style: TextStyle(
+                            color: Color(0xFF94A3B8),
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                      Expanded(child: Divider(color: Color(0xFFE2E8F0))),
+                    ],
+                  ),
                   const SizedBox(height: 16),
                   Container(
-                    decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(10)),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                     child: TabBar(
                       controller: _tabController,
-                      indicator: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 4)]),
+                      indicator: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.06),
+                            blurRadius: 4,
+                          ),
+                        ],
+                      ),
                       indicatorSize: TabBarIndicatorSize.tab,
                       labelColor: const Color(0xFF1E293B),
                       unselectedLabelColor: const Color(0xFF64748B),
                       dividerColor: Colors.transparent,
-                      tabs: const [Tab(text: 'Password'), Tab(text: 'Magic Link')],
+                      tabs: const [
+                        Tab(text: 'Password'),
+                        Tab(text: 'Magic Link'),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -117,7 +196,11 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                             TextField(
                               controller: _emailCtrl,
                               keyboardType: TextInputType.emailAddress,
-                              decoration: const InputDecoration(labelText: 'Email', hintText: 'you@company.com', prefixIcon: Icon(Icons.email_outlined)),
+                              decoration: const InputDecoration(
+                                labelText: 'Email',
+                                hintText: 'you@company.com',
+                                prefixIcon: Icon(Icons.email_outlined),
+                              ),
                             ),
                             const SizedBox(height: 12),
                             TextField(
@@ -127,7 +210,15 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                 labelText: 'Password',
                                 hintText: '••••••••',
                                 prefixIcon: const Icon(Icons.lock_outline),
-                                suffixIcon: IconButton(icon: Icon(_showPass ? Icons.visibility_off : Icons.visibility), onPressed: () => setState(() => _showPass = !_showPass)),
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _showPass
+                                        ? Icons.visibility_off
+                                        : Icons.visibility,
+                                  ),
+                                  onPressed: () =>
+                                      setState(() => _showPass = !_showPass),
+                                ),
                               ),
                             ),
                           ],
@@ -137,10 +228,20 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                             TextField(
                               controller: _emailCtrl,
                               keyboardType: TextInputType.emailAddress,
-                              decoration: const InputDecoration(labelText: 'Email', hintText: 'you@company.com', prefixIcon: Icon(Icons.email_outlined)),
+                              decoration: const InputDecoration(
+                                labelText: 'Email',
+                                hintText: 'you@company.com',
+                                prefixIcon: Icon(Icons.email_outlined),
+                              ),
                             ),
                             const SizedBox(height: 8),
-                            const Text('We\'ll send a magic sign-in link to your email.', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                            const Text(
+                              'We\'ll send a magic sign-in link to your email.',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFF64748B),
+                              ),
+                            ),
                           ],
                         ),
                       ],
@@ -149,18 +250,47 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                   const SizedBox(height: 8),
                   ElevatedButton(
                     onPressed: _loading ? null : _login,
-                    child: _loading ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('Sign In'),
+                    child: _loading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text('Sign In'),
                   ),
                   const SizedBox(height: 16),
-                  Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                    const Text("Don't have an account? ", style: TextStyle(color: Color(0xFF64748B), fontSize: 14)),
-                    GestureDetector(
-                      onTap: () => Navigator.pushNamed(context, '/register'),
-                      child: const Text('Sign up free', style: TextStyle(color: Color(0xFF1D4ED8), fontWeight: FontWeight.w600, fontSize: 14)),
-                    ),
-                  ]),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        "Don't have an account? ",
+                        style: TextStyle(
+                          color: Color(0xFF64748B),
+                          fontSize: 14,
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () => Navigator.pushNamed(context, '/register'),
+                        child: const Text(
+                          'Sign up free',
+                          style: TextStyle(
+                            color: Color(0xFF1D4ED8),
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 12),
-                  const Text('By signing in, you agree to our Terms and Privacy Policy (GDPR compliant).', textAlign: TextAlign.center, style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8))),
+                  const Text(
+                    'By signing in, you agree to our Terms and Privacy Policy (GDPR compliant).',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                  ),
                 ],
               ),
             ),

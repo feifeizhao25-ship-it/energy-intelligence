@@ -18,20 +18,6 @@ interface ApiKey {
 // 共享的 API Keys 存储
 export const apiKeysDb: Map<string, ApiKey> = new Map();
 
-// 预置一个测试 API Key
-const demoKey: ApiKey = {
-    id: 'key-demo-001',
-    key: 'xny_pk_demo_1234567890abcdef',
-    name: 'Demo API Key',
-    userId: 'dev-master-id',
-    permissions: ['read:projects', 'read:monitoring', 'read:papers'],
-    rateLimit: 100,
-    createdAt: new Date(),
-    status: 'active',
-    usageCount: 0
-};
-apiKeysDb.set(demoKey.key, demoKey);
-
 // 验证 API Key
 export function validateApiKey(key: string): { valid: boolean; apiKey?: ApiKey; error?: string } {
     const apiKey = apiKeysDb.get(key);

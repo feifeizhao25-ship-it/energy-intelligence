@@ -1,218 +1,190 @@
 import 'package:flutter/material.dart';
-import '../../theme/app_theme.dart';
 import '../../services/api_service.dart';
-import '../../models/resource_assessment.dart';
-import '../../widgets/site_score_card.dart';
 import '../../widgets/bar_chart.dart';
 
 class SolarResourceScreen extends StatefulWidget {
   const SolarResourceScreen({super.key});
-
   @override
   State<SolarResourceScreen> createState() => _SolarResourceScreenState();
 }
 
 class _SolarResourceScreenState extends State<SolarResourceScreen> {
-  final _latController = TextEditingController();
-  final _lngController = TextEditingController();
-  ResourceAssessment? _result;
-  bool _isLoading = false;
-  bool _showAdvanced = false;
+  final _lat = TextEditingController();
+  final _lng = TextEditingController();
+  Map<String, dynamic>? _result;
+  String? _error;
+  bool _loading = false;
 
   @override
   void dispose() {
-    _latController.dispose();
-    _lngController.dispose();
+    _lat.dispose();
+    _lng.dispose();
     super.dispose();
   }
 
-  void _handleQuery() async {
-    if (_latController.text.isEmpty || _lngController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('请输入经纬度')),
-      );
+  Future<void> _assess() async {
+    final lat = double.tryParse(_lat.text);
+    final lng = double.tryParse(_lng.text);
+    if (lat == null ||
+        lng == null ||
+        lat < -90 ||
+        lat > 90 ||
+        lng < -180 ||
+        lng > 180) {
+      setState(() => _error = 'Enter valid WGS84 coordinates.');
       return;
     }
-
-    setState(() => _isLoading = true);
+    setState(() {
+      _loading = true;
+      _error = null;
+      _result = null;
+    });
     try {
-      final result = await ApiService.getSolarResource(
-        double.parse(_latController.text),
-        double.parse(_lngController.text),
-      );
-      setState(() {
-        _result = ResourceAssessment.fromJson(result);
-        _isLoading = false;
-      });
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('查询失败')));
-      setState(() => _isLoading = false);
+      final result = await ApiService.getSolarResource(lat, lng);
+      if (mounted) setState(() => _result = result);
+    } on ApiException catch (error) {
+      if (mounted) setState(() => _error = error.message);
+    } catch (_) {
+      if (mounted)
+        setState(
+          () => _error =
+              'Verified solar resource data is temporarily unavailable.',
+        );
+    } finally {
+      if (mounted) setState(() => _loading = false);
     }
   }
 
+  double _number(String key) => (_result?[key] as num?)?.toDouble() ?? 0;
+  List<double> get _monthly => ((_result?['monthly_ghi'] as List?) ?? const [])
+      .whereType<num>()
+      .map((v) => v.toDouble())
+      .toList();
+
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('光伏资源评估')),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(title: const Text('Solar Resource')),
+    body: ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        const Text(
+          'Coordinates',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+        ),
+        const SizedBox(height: 12),
+        Row(
           children: [
-            Card(
-              child: Padding(
-                padding: EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('定位位置', style: Theme.of(context).textTheme.titleMedium),
-                    SizedBox(height: 12),
-                    TextField(
-                      controller: _latController,
-                      decoration: InputDecoration(
-                        labelText: '纬度 (例: 37.5273)',
-                        prefixIcon: Icon(Icons.location_on),
-                      ),
-                      keyboardType: TextInputType.numberWithOptions(decimal: true),
-                    ),
-                    SizedBox(height: 12),
-                    TextField(
-                      controller: _lngController,
-                      decoration: InputDecoration(
-                        labelText: '经度 (例: 116.3004)',
-                        prefixIcon: Icon(Icons.location_on),
-                      ),
-                      keyboardType: TextInputType.numberWithOptions(decimal: true),
-                    ),
-                    SizedBox(height: 16),
-                    ExpansionTile(
-                      title: Text('高级选项', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                      children: [
-                        Column(
-                          children: [
-                            Text('组件类型: 单晶硅', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
-                            Text('倾角: 优化角', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
-                          ],
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _handleQuery,
-                        child: _isLoading
-                            ? SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                            : Text('查询评估'),
-                      ),
-                    ),
-                  ],
+            Expanded(
+              child: TextField(
+                controller: _lat,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                  signed: true,
+                ),
+                decoration: const InputDecoration(
+                  labelText: 'Latitude (WGS84)',
                 ),
               ),
             ),
-            if (_isLoading)
-              Padding(
-                padding: EdgeInsets.symmetric(vertical: 32),
-                child: Center(child: CircularProgressIndicator()),
+            const SizedBox(width: 12),
+            Expanded(
+              child: TextField(
+                controller: _lng,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                  signed: true,
+                ),
+                decoration: const InputDecoration(
+                  labelText: 'Longitude (WGS84)',
+                ),
               ),
-            if (_result != null) ...[
-              SizedBox(height: 24),
-              SiteScoreCard(
-                score: _result!.siteScore,
-                grade: _result!.siteGrade,
-                gradeColor: _convertGradeColor(_result!.siteGrade),
-                recommendation: _result!.recommendation,
-              ),
-              SizedBox(height: 24),
-              Text('资源数据', style: Theme.of(context).textTheme.headlineSmall),
-              SizedBox(height: 12),
-              GridView.count(
-                crossAxisCount: 2,
-                shrinkWrap: true,
-                physics: NeverScrollableScrollPhysics(),
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-                children: [
-                  _buildDataCard('GHI', '${_result!.ghiAnnual.toStringAsFixed(1)}', 'kWh/m²'),
-                  _buildDataCard('DNI', '${_result!.dniAnnual.toStringAsFixed(1)}', 'kWh/m²'),
-                  _buildDataCard('风速年均', '${_result!.windSpeedAnnual.toStringAsFixed(2)}', 'm/s'),
-                  _buildDataCard('温度年均', '${_result!.temperatureMonthly.reduce((a, b) => a + b) / 12}', '°C'),
-                ],
-              ),
-              SizedBox(height: 24),
-              BarChart(
-                title: '月均GHI分布',
-                values: _result!.ghiMonthly,
-                labels: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'],
-                barColor: AppTheme.primaryColor,
-                gradientStartColor: Color(0xFFFCD34D),
-                gradientEndColor: Color(0xFFF97316),
-              ),
-              SizedBox(height: 24),
-              BarChart(
-                title: '月均温度',
-                values: _result!.temperatureMonthly,
-                labels: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'],
-                barColor: Color(0xFFF59E0B),
-              ),
-              SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () {},
-                      icon: Icon(Icons.description_outlined),
-                      label: Text('生成报告'),
-                    ),
-                  ),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () {},
-                      icon: Icon(Icons.bookmark_border),
-                      label: Text('保存'),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDataCard(String label, String value, String unit) {
-    return Card(
-      child: Padding(
-        padding: EdgeInsets.all(12),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(label, style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
-            SizedBox(height: 6),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.baseline,
-              textBaseline: TextBaseline.alphabetic,
-              children: [
-                Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                SizedBox(width: 4),
-                Text(unit, style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8))),
-              ],
             ),
           ],
         ),
-      ),
-    );
-  }
+        const SizedBox(height: 16),
+        FilledButton(
+          onPressed: _loading ? null : _assess,
+          child: _loading
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text('Assess site'),
+        ),
+        if (_error != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 16),
+            child: Text(_error!, style: const TextStyle(color: Colors.red)),
+          ),
+        if (_result != null) ...[
+          const SizedBox(height: 24),
+          Text(
+            'Source: ' +
+                (_result?['data_source']?.toString() ?? 'Not supplied'),
+            style: const TextStyle(color: Color(0xFF475569)),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              _Metric(
+                'Resource class',
+                _result?['resource_class']?.toString() ?? '—',
+              ),
+              _Metric('Score', _number('score').toStringAsFixed(1)),
+              _Metric(
+                'GHI',
+                _number('ghi').toStringAsFixed(1) + ' kWh/m²/year',
+              ),
+              _Metric(
+                'DNI',
+                _number('dni').toStringAsFixed(1) + ' kWh/m²/year',
+              ),
+              _Metric(
+                'DHI',
+                _number('dhi').toStringAsFixed(1) + ' kWh/m²/year',
+              ),
+              _Metric(
+                'Peak sun hours',
+                _number('peak_sun_hours').toStringAsFixed(2),
+              ),
+            ],
+          ),
+          if (_monthly.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 20),
+              child: BarChart(
+                values: _monthly,
+                title: 'Monthly GHI (provider data)',
+              ),
+            ),
+        ],
+      ],
+    ),
+  );
+}
 
-  Color _convertGradeColor(String grade) {
-    switch (grade) {
-      case 'A': return Color(0xFF10B981);
-      case 'B': return Color(0xFF3B82F6);
-      case 'C': return Color(0xFFF59E0B);
-      default: return Color(0xFFEF4444);
-    }
-  }
+class _Metric extends StatelessWidget {
+  final String label;
+  final String value;
+  const _Metric(this.label, this.value);
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    width: 160,
+    child: Card(
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: const TextStyle(color: Color(0xFF64748B))),
+            const SizedBox(height: 6),
+            Text(value, style: const TextStyle(fontWeight: FontWeight.w700)),
+          ],
+        ),
+      ),
+    ),
+  );
 }

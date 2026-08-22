@@ -11,9 +11,37 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
+from datetime import date
 from typing import Dict, List, Optional
 
 from app.services.rag_sources import SourceRegistry, verification_status
+
+
+class StalePolicyError(Exception):
+    """过期政策语料被用于结论生成时抛出（fail-closed）。"""
+
+    def __init__(self, source_ids: List[str]) -> None:
+        self.source_ids = list(source_ids)
+        super().__init__(
+            "政策类语料已过期（stale），不得用于生成投资结论: "
+            + ", ".join(self.source_ids)
+        )
+
+
+def assert_no_stale_policy(hits: List["RAGHit"]) -> None:
+    """Fail-closed 守卫：命中中存在 stale 政策类语料时抛出 StalePolicyError。
+
+    生成「可投资」类结论前必须调用；过期政策只能触发重新核验，
+    不能静默进入结论。
+    """
+    stale = [
+        hit.source_id
+        for hit in hits
+        if hit.metadata.get("type") == "policy"
+        and hit.metadata.get("freshness_status") == "stale"
+    ]
+    if stale:
+        raise StalePolicyError(stale)
 
 
 @dataclass
@@ -71,15 +99,20 @@ class RAGService:
             self._registry = registry or SourceRegistry.from_file()
             self._corpus = self._registry.sources
 
-    def search(self, query: str, top_k: int = 5, market: str = "cn") -> RAGResult:
+    def search(self, query: str, top_k: int = 5, market: str = "cn",
+               exclude_stale: bool = False) -> RAGResult:
         lang = "cn" if market == "cn" else "en"
         countries = _detect_countries(query, market)
         query_tokens = set(re.findall(r"[a-z0-9\u4e00-\u9fff]+", query.lower()))
+        retrieved_at = date.today().isoformat()
 
         scored: List[RAGHit] = []
         for doc in self._corpus:
             if doc["lang"] != lang:
                 continue  # 语言隔离：global 不返回未翻译中文
+            freshness = self._freshness_of(doc)
+            if exclude_stale and freshness == "stale":
+                continue  # 时效保护：过期语料不进入检索结果
             doc_tokens = set(
                 re.findall(r"[a-z0-9\u4e00-\u9fff]+", (doc["title"] + " " + doc["content"]).lower())
             )
@@ -91,10 +124,15 @@ class RAGService:
                 content=doc["content"],
                 score=score,
                 metadata={
+                    "type": doc.get("type"),
                     "year": int(doc["year"]),
                     "last_verified_at": doc["last_verified_at"],
-                    "freshness_status": self._freshness_of(doc),
+                    "retrieved_at": retrieved_at,
+                    "freshness_status": freshness,
                     "verification": verification_status(doc),
+                    "source_url": doc.get("source_url"),
+                    "source_org": doc.get("source_org"),
+                    "license_note": doc.get("license_note"),
                     "market": market,
                     "countries": sorted(countries),
                 },

@@ -1,47 +1,37 @@
-// API: 获取当前用户会员信息
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth/auth-options';
+import { prisma } from '@/lib/prisma';
 
-// Mock user data - 实际应从数据库获取
-export async function GET(req: NextRequest) {
-    try {
-        // TODO: 从session/JWT获取用户ID
-        const userId = 'user_123';
+export const dynamic = 'force-dynamic';
 
-        // TODO: 从数据库查询用户信息
-        const user = {
-            id: userId,
-            name: '张三',
-            email: 'zhang@example.com',
-            plan: 'FULL',
-            planExpireAt: new Date('2027-01-06').toISOString(),
-
-            // 每日使用量
-            dailyAiCalls: 245,
-            dailyResourceQueries: 38,
-            dailyCalculations: 28,
-            dailyPaperSearches: 67,
-            dailyDiagnoses: 15,
-            lastResetAt: new Date().toISOString(),
-
-            // 存储统计
-            projectCount: 45,
-            paperCount: 156,
-            stationCount: 8,
-            folderCount: 12,
-        };
-
-        return NextResponse.json({
-            success: true,
-            data: user,
-        });
-    } catch (error) {
-        return NextResponse.json(
-            {
-                success: false,
-                error: 'INTERNAL_ERROR',
-                message: '获取用户信息失败',
-            },
-            { status: 500 }
-        );
+export async function GET() {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+        return NextResponse.json({ success: false, error: 'UNAUTHORIZED', message: '请先登录' }, { status: 401 });
     }
+
+    const user = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: {
+            id: true, name: true, email: true, plan: true, planExpireAt: true,
+            dailyAiCalls: true, dailyResourceQueries: true, dailyCalculations: true,
+            dailyPaperSearches: true, dailyDiagnoses: true, projectCount: true,
+            paperCount: true, stationCount: true, folderCount: true,
+            subscription: {
+                select: {
+                    status: true, endDate: true, autoRenew: true,
+                    payments: {
+                        where: { status: 'completed' }, orderBy: { createdAt: 'desc' }, take: 20,
+                        select: { id: true, amount: true, currency: true, paymentMethod: true, description: true, paidAt: true, createdAt: true },
+                    },
+                },
+            },
+        },
+    });
+
+    if (!user) {
+        return NextResponse.json({ success: false, error: 'NOT_FOUND', message: '用户不存在' }, { status: 404 });
+    }
+    return NextResponse.json({ success: true, data: user });
 }

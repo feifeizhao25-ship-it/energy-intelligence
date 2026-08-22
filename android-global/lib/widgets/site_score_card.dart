@@ -25,7 +25,7 @@ class SiteScoreCard extends StatelessWidget {
         child: Column(
           children: [
             Text(
-              '资源评估指数',
+              'Resource Assessment Index',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -40,10 +40,7 @@ class SiteScoreCard extends StatelessWidget {
                   width: 160,
                   height: 160,
                   child: CustomPaint(
-                    painter: _ScoreArcPainter(
-                      score: score,
-                      color: gradeColor,
-                    ),
+                    painter: _ScoreArcPainter(score: score, color: gradeColor),
                   ),
                 ),
                 Column(
@@ -57,7 +54,7 @@ class SiteScoreCard extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      '级别 $grade',
+                      'Grade $grade',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -96,10 +93,7 @@ class _ScoreArcPainter extends CustomPainter {
   final double score;
   final Color color;
 
-  _ScoreArcPainter({
-    required this.score,
-    required this.color,
-  });
+  _ScoreArcPainter({required this.score, required this.color});
 
   @override
   void paint(Canvas canvas, Size size) {

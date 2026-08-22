@@ -9,7 +9,7 @@ import importlib.util
 import json
 import os
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 # ── 加载 .env（必须在 import app 之前）──────────────────────────────────────────
@@ -51,15 +51,19 @@ with open(_json_path, encoding="utf-8") as _f:
     USER_SCENARIOS: list[dict] = json.load(_f)
 
 # ── 60分制双语评分提示词 ────────────────────────────────────────────────────────
+CURRENT_DATE = datetime.now(timezone.utc).date().isoformat()
+GENERATION_MODEL = os.environ.get("SCENARIO_GENERATION_MODEL", "deepseek-v4-flash")
+JUDGE_MODEL = os.environ.get("SCENARIO_JUDGE_MODEL", "qwen-plus")
+
 JUDGE_PROMPT_CN = """你是新能源行业内容质量审计专家，请对以下AI回答进行专业评审。
 
 【评审维度】（每项0-10分，合计60分）
-1. 数据准确性（10分）：技术参数与计算数字是否准确，符合2024年行业数据。
+1. 数据准确性（10分）：技术参数与计算数字是否准确；时效性信息是否有可核验来源和日期。
 2. 计算完整性（10分）：财务/发电量等计算是否有完整推导过程，不截断。
 3. 专业性（10分）：术语使用规范，标准编号与版本年份是否正确。
 4. 可操作性（10分）：建议是否具体可执行，流程是否完整。
 5. Skills与RAG合规性（10分）：是否显式调用[Skill:...]工具，是否引用[RAG:...]文献。
-6. 时效性（10分）：是否使用最新2024年数据，而非过时数据。
+6. 时效性（10分）：以评测日期 {current_date} 为准，是否使用当前有效资料并标注发布日期/生效日期。
 
 【输出格式】（必须严格按此格式）
 总分: <X>/60
@@ -80,12 +84,12 @@ AI回答: {answer}
 JUDGE_PROMPT_EN = """You are a strict renewable energy content quality auditor. Review the AI response below.
 
 【Review Dimensions】(0-10 each, 60 total)
-1. Data Accuracy (10pts): Are parameters and calculations accurate per 2024 industry data?
+1. Data Accuracy (10pts): Are parameters and calculations accurate, with verifiable sources and dates for time-sensitive claims?
 2. Calculation Completeness (10pts): Are financial/generation calculations fully derived?
 3. Professionalism (10pts): Are terms correct? Are standard codes with version years cited?
 4. Actionability (10pts): Are recommendations specific and executable?
 5. Skills & RAG Compliance (10pts): Are [Skill:...] tools called? Are [RAG:...] sources cited?
-6. Timeliness (10pts): Does it use latest 2024 data instead of outdated figures?
+6. Timeliness (10pts): As of {current_date}, does it use currently effective sources and state publication/effective dates?
 
 【Output Format】(strictly follow)
 Total Score: <X>/60
@@ -110,7 +114,7 @@ async def generate_response(service: LLMService, prompt: str, system: str, local
                 {"role": "user",   "content": prompt}]
     chunks: list[str] = []
     target_locale = "global" if locale == "en" else "cn"
-    async for chunk in service.chat_stream(messages, model="deepseek-v4-flash", target_locale=target_locale):
+    async for chunk in service.chat_stream(messages, model=GENERATION_MODEL, target_locale=target_locale):
         if chunk.startswith("data:"):
             try:
                 d = json.loads(chunk[5:].strip())
@@ -124,10 +128,12 @@ async def generate_response(service: LLMService, prompt: str, system: str, local
 async def judge_response(service: LLMService, question: str, answer: str, locale: str) -> str:
     tmpl = JUDGE_PROMPT_CN if locale == "cn" else JUDGE_PROMPT_EN
     messages = [{"role": "system", "content": "You are a strict industry content quality auditor."},
-                {"role": "user",   "content": tmpl.format(question=question, answer=answer)}]
+                {"role": "user",   "content": tmpl.format(current_date=CURRENT_DATE, question=question, answer=answer)}]
     chunks: list[str] = []
     target_locale = "global" if locale == "en" else "cn"
-    async for chunk in service.chat_stream(messages, model="deepseek-v4-flash", target_locale=target_locale):
+    if JUDGE_MODEL == GENERATION_MODEL:
+        raise RuntimeError("SCENARIO_JUDGE_MODEL must differ from SCENARIO_GENERATION_MODEL")
+    async for chunk in service.chat_stream(messages, model=JUDGE_MODEL, target_locale=target_locale):
         if chunk.startswith("data:"):
             try:
                 d = json.loads(chunk[5:].strip())

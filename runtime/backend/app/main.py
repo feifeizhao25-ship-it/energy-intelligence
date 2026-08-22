@@ -81,10 +81,11 @@ async def health():
 from app.api.v1 import ai_assistant as v1_ai  # noqa: E402
 from app.api.v1 import auth as v1_auth  # noqa: E402
 from app.api.v1 import finance as v1_finance  # noqa: E402
+from app.api.v1 import operations as v1_operations  # noqa: E402
 from app.api.v1 import research as v1_research  # noqa: E402
 from app.api.v1 import resource as v1_resource  # noqa: E402
 from app.api.v1 import users as v1_users  # noqa: E402
-from app.routers import misc, projects  # noqa: E402
+from app.routers import misc, personalization, projects  # noqa: E402
 
 app.include_router(v1_auth.router, prefix="/api/v1", tags=["auth"])
 app.include_router(v1_users.router, prefix="/api/v1", tags=["users"])
@@ -92,8 +93,14 @@ app.include_router(v1_resource.router, prefix="/api/v1", tags=["resource"])
 app.include_router(v1_research.router, prefix="/api/v1", tags=["research"])
 app.include_router(v1_ai.router, prefix="/api/v1", tags=["ai"])
 app.include_router(v1_finance.router, prefix="/api/v1", tags=["finance"])
+app.include_router(v1_operations.router, prefix="/api/v1", tags=["operations"])
 app.include_router(projects.router, prefix="/api/v1", tags=["projects"])
 app.include_router(misc.router, prefix="/api/v1", tags=["misc"])
+app.include_router(
+    personalization.router,
+    prefix="/api/v1",
+    tags=["personalization-demo"],
+)
 
 try:  # 报告中心路由较大，独立防护：导入失败不影响核心 API
     from app.routers import reports as reports_router

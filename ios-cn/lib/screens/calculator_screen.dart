@@ -28,7 +28,10 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('项目类型', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            const Text(
+              '项目类型',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
             const SizedBox(height: 8),
             SegmentedButton<String>(
               segments: const [
@@ -40,7 +43,10 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
               onSelectionChanged: (s) => setState(() => _projectType = s.first),
             ),
             const SizedBox(height: 24),
-            const Text('参数设置', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            const Text(
+              '参数设置',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
             const SizedBox(height: 12),
             TextField(
               controller: _capacityController,
@@ -64,8 +70,12 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
             const SizedBox(height: 16),
             ElevatedButton.icon(
               onPressed: _calculating ? null : _calculate,
-              icon: _calculating 
-                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white))
+              icon: _calculating
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(color: Colors.white),
+                    )
                   : const Icon(Icons.calculate),
               label: Text(_calculating ? '计算中...' : '开始计算'),
               style: ElevatedButton.styleFrom(
@@ -86,7 +96,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
 
   Widget _buildResultCard() {
     final data = _result!['data']?['outputs'] ?? _result!;
-    
+
     return Card(
       color: Colors.blue[50],
       child: Padding(
@@ -98,38 +108,60 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
               children: const [
                 Icon(Icons.analytics, color: Colors.blue),
                 SizedBox(width: 8),
-                Text('计算结果', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                Text(
+                  '计算结果',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
               ],
             ),
             const Divider(),
-            _buildResultRow('年发电量', '${data['annual_generation_kwh'] ?? '0'} kWh'),
+            _buildResultRow(
+              '年发电量',
+              '${data['annual_generation_kwh'] ?? '0'} kWh',
+            ),
             _buildResultRow('年均收益', '¥${data['annual_revenue_yuan'] ?? '0'}'),
             _buildResultRow('年均利润', '¥${data['annual_profit_yuan'] ?? '0'}'),
-            _buildResultRow('IRR', '${data['irr_percent'] ?? '0'}%', highlight: true),
+            _buildResultRow(
+              'IRR',
+              '${data['irr_percent'] ?? '0'}%',
+              highlight: true,
+            ),
             _buildResultRow('回收期', '${data['payback_years'] ?? '0'} 年'),
             _buildResultRow('LCOE', '¥${data['lcoe_yuan_per_kwh'] ?? '0'}/kWh'),
             const Divider(),
-            _buildResultRow('25年总利润', '¥${data['total_profit_25y_yuan'] ?? '0'}', highlight: true),
+            _buildResultRow(
+              '25年总利润',
+              '¥${data['total_profit_25y_yuan'] ?? '0'}',
+              highlight: true,
+            ),
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: (data['irr_percent'] ?? 0) >= 10 ? Colors.green[100] : Colors.orange[100],
+                color: (data['irr_percent'] ?? 0) >= 10
+                    ? Colors.green[100]
+                    : Colors.orange[100],
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
-                    (data['irr_percent'] ?? 0) >= 10 ? Icons.thumb_up : Icons.warning,
-                    color: (data['irr_percent'] ?? 0) >= 10 ? Colors.green : Colors.orange,
+                    (data['irr_percent'] ?? 0) >= 10
+                        ? Icons.thumb_up
+                        : Icons.warning,
+                    color: (data['irr_percent'] ?? 0) >= 10
+                        ? Colors.green
+                        : Colors.orange,
                   ),
                   const SizedBox(width: 8),
                   Text(
                     (data['irr_percent'] ?? 0) >= 10 ? '✅ 建议投资' : '⚠️ 建议进一步评估',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: (data['irr_percent'] ?? 0) >= 10 ? Colors.green[700] : Colors.orange[700],
+                      color: (data['irr_percent'] ?? 0) >= 10
+                          ? Colors.green[700]
+                          : Colors.orange[700],
                     ),
                   ),
                 ],
@@ -164,9 +196,9 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   Future<void> _calculate() async {
     final capacity = int.tryParse(_capacityController.text) ?? 0;
     if (capacity <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('请输入有效的装机容量')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('请输入有效的装机容量')));
       return;
     }
 
@@ -177,7 +209,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
 
     try {
       final result = await ApiService.calculateROI(capacity.toDouble());
-      
+
       setState(() {
         _result = result;
         _calculating = false;
@@ -187,9 +219,9 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         _calculating = false;
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('计算失败: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('计算失败: $e')));
       }
     }
   }

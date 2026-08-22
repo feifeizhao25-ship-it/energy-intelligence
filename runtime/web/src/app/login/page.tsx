@@ -192,16 +192,16 @@ function LoginContent() {
           {/* Stats */}
           <div className="grid grid-cols-3 gap-6 pt-8 border-t border-white/10">
             <div>
-              <div className="text-3xl font-black">10,000+</div>
-              <div className="text-sm text-slate-400">已分析项目</div>
+              <div className="text-3xl font-black">全程留痕</div>
+              <div className="text-sm text-slate-400">假设与来源可审计</div>
             </div>
             <div>
               <div className="text-3xl font-black">31</div>
               <div className="text-sm text-slate-400">覆盖省市</div>
             </div>
             <div>
-              <div className="text-3xl font-black">99.8%</div>
-              <div className="text-sm text-slate-400">用户满意度</div>
+              <div className="text-3xl font-black">人工复核</div>
+              <div className="text-sm text-slate-400">关键结论确认后导出</div>
             </div>
           </div>
         </div>

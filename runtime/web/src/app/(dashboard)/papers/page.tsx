@@ -119,8 +119,8 @@ export default function PapersPage() {
     const [activeFilter, setActiveFilter] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [isSearching, setIsSearching] = useState(false);
-    const [papers, setPapers] = useState<any[]>(mockPapers);
-    const [total, setTotal] = useState(5);
+    const [papers, setPapers] = useState<any[]>([]);
+    const [total, setTotal] = useState(0);
     const [bookmarked, setBookmarked] = useState<string[]>([]);
     const [isSaving, setIsSaving] = useState<string | null>(null);
 
@@ -193,7 +193,7 @@ export default function PapersPage() {
                             <Bookmark className="w-4 h-4" /> 我的文献库
                         </Link>
                     </div>
-                    <p className="text-indigo-100 mb-6">2.1 亿+ 全球学术资源 · AI 辅助检索与摘要</p>
+                    <p className="text-indigo-100 mb-6">公开学术资源检索 · AI 辅助检索与摘要</p>
 
                     {/* Search */}
                     <form

@@ -24,7 +24,9 @@ class DiagnosticFinding {
       category: json['category'] ?? '',
       description: json['description'] ?? '',
       impact: json['impact'] ?? '',
-      foundAt: DateTime.parse(json['foundAt'] ?? DateTime.now().toIso8601String()),
+      foundAt: DateTime.parse(
+        json['foundAt'] ?? DateTime.now().toIso8601String(),
+      ),
     );
   }
 
@@ -107,7 +109,9 @@ class DiagnosticReport {
           .toList(),
       economicImpact: json['economicImpact'] ?? {},
       recommendations: (json['recommendations'] ?? [])
-          .map<DiagnosticRecommendation>((r) => DiagnosticRecommendation.fromJson(r))
+          .map<DiagnosticRecommendation>(
+            (r) => DiagnosticRecommendation.fromJson(r),
+          )
           .toList(),
     );
   }

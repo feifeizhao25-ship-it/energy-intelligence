@@ -24,11 +24,15 @@ const publicPaths = [
 
 // 检查路径是否是公开的
 function isPublicPath(pathname: string): boolean {
+  // next-intl may internally rewrite `/pricing` to `/zh/pricing` even when
+  // localePrefix is `never`. Authorization must evaluate the user-visible
+  // path, otherwise a public page redirects to sign-in forever.
+  const normalizedPath = pathname.replace(/^\/(?:zh|en)(?=\/|$)/, '') || '/';
   // 完全匹配
-  if (publicPaths.includes(pathname)) return true;
+  if (publicPaths.includes(normalizedPath)) return true;
   // 前缀匹配
   return publicPaths.some(path =>
-    path !== '/' && pathname.startsWith(path + '/')
+    path !== '/' && normalizedPath.startsWith(path + '/')
   );
 }
 
@@ -80,8 +84,12 @@ export default function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // 对于公开页面，直接使用 intlMiddleware（不需要 auth）
-  if (isPublicPath(path) || isDemoDashboardPreview(path)) {
+  // 国内版公开转化页无需 locale 重写。next-intl 在 standalone 环境会把
+  // `/pricing` 反复改写为 `/zh/pricing`，造成公开页面重定向循环。
+  if (isPublicPath(path)) {
+    return NextResponse.next();
+  }
+  if (isDemoDashboardPreview(path)) {
     return intlMiddleware(req);
   }
 

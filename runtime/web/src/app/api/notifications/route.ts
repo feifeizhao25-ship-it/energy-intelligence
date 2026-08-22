@@ -90,7 +90,8 @@ const demoNotifications = [
 // GET - 获取通知列表
 export async function GET(req: NextRequest) {
     const session = await getServerSession(authOptions);
-    const userId = session?.user?.id || 'dev-master-id';
+    if (!session?.user?.id) return NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 });
+    const userId = session.user.id;
 
     const url = new URL(req.url);
     const unreadOnly = url.searchParams.get('unreadOnly') === 'true';
@@ -144,7 +145,8 @@ export async function GET(req: NextRequest) {
 // POST - 创建新通知
 export async function POST(req: NextRequest) {
     const session = await getServerSession(authOptions);
-    const userId = session?.user?.id || 'dev-master-id';
+    if (!session?.user?.id) return NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 });
+    const userId = session.user.id;
 
     const body = await req.json();
     const { type, category, title, message, priority = 'medium', actionUrl, actionText, metadata } = body;
@@ -176,7 +178,8 @@ export async function POST(req: NextRequest) {
 // PATCH - 更新通知状态（标记为已读/未读）
 export async function PATCH(req: NextRequest) {
     const session = await getServerSession(authOptions);
-    const userId = session?.user?.id || 'dev-master-id';
+    if (!session?.user?.id) return NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 });
+    const userId = session.user.id;
 
     const body = await req.json();
     const { notificationIds, read, readAll } = body;
@@ -210,7 +213,8 @@ export async function PATCH(req: NextRequest) {
 // DELETE - 删除通知
 export async function DELETE(req: NextRequest) {
     const session = await getServerSession(authOptions);
-    const userId = session?.user?.id || 'dev-master-id';
+    if (!session?.user?.id) return NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 });
+    const userId = session.user.id;
 
     const url = new URL(req.url);
     const notificationId = url.searchParams.get('id');

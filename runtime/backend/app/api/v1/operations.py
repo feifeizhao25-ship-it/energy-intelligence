@@ -5,15 +5,80 @@ from datetime import datetime, timezone
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from pydantic import BaseModel, Field
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user_id
+from app.config import settings
 from app.models.database import Project
 from app.utils.financial_utils import calc_optimal_cleaning_interval
 
 router = APIRouter(prefix="/operations")
+
+
+class CleaningCalculationRequest(BaseModel):
+    cleaning_cost_usd: float = Field(..., gt=0)
+    daily_revenue_usd: float = Field(..., gt=0)
+    soiling_rate_fraction_per_day: float = Field(..., gt=0, le=0.10)
+
+
+@router.post("/cleaning/calculate")
+async def calculate_cleaning_schedule(
+    body: CleaningCalculationRequest,
+    user_id: str = Depends(get_current_user_id),
+):
+    """Auditable economic interval based only on explicit user assumptions."""
+    optimal_interval = calc_optimal_cleaning_interval(
+        body.cleaning_cost_usd,
+        body.daily_revenue_usd,
+        body.soiling_rate_fraction_per_day * 100,
+    )
+    annual_cleanings = max(1, round(365 / optimal_interval))
+    daily_loss = body.daily_revenue_usd * body.soiling_rate_fraction_per_day
+    loss_per_cycle = daily_loss * optimal_interval * (optimal_interval + 1) / 2
+    annual_cleaning_cost = annual_cleanings * body.cleaning_cost_usd
+    annual_soiling_loss = annual_cleanings * loss_per_cycle
+    theoretical_interval = math.sqrt(
+        2 * body.cleaning_cost_usd
+        / (body.daily_revenue_usd * body.soiling_rate_fraction_per_day)
+    )
+    scenarios = []
+    for interval in sorted({7, 14, 30, optimal_interval}):
+        cleanings = max(1, round(365 / interval))
+        soiling_loss = cleanings * daily_loss * interval * (interval + 1) / 2
+        scenarios.append({
+            "days": interval,
+            "total": round(cleanings * body.cleaning_cost_usd + soiling_loss, 2),
+        })
+    return {
+        "optimal_interval_days": optimal_interval,
+        "theoretical_interval_days": round(theoretical_interval, 4),
+        "annual_cleanings": annual_cleanings,
+        "annual_cleaning_cost": round(annual_cleaning_cost, 2),
+        "annual_soiling_loss": round(annual_soiling_loss, 2),
+        "total_annual_cost": round(annual_cleaning_cost + annual_soiling_loss, 2),
+        "scenarios": scenarios,
+        "model_version": "cleaning-economic-interval-v1.0",
+        "formula": "N* = sqrt(2C / (R_daily * s_fraction))",
+        "assumptions": {
+            "source": "user_input",
+            **body.model_dump(),
+        },
+    }
+
+
+def _reject_demo_operations_data_in_production() -> None:
+    """Never present generated telemetry as measured plant data in production."""
+    if settings.ENVIRONMENT == "production":
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=(
+                "实时运维数据源尚未配置。请接入经过授权的 SCADA/IoT 数据源后重试；"
+                "系统不会在生产环境返回模拟数据。"
+            ),
+        )
 
 
 # ── Shared mock generator (until IoT/SCADA integration) ──────────────────────
@@ -97,6 +162,7 @@ async def get_project_health(
     project = result.scalar_one_or_none()
     if not project:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
+    _reject_demo_operations_data_in_production()
     return _mock_health_data(project_id)
 
 
@@ -109,6 +175,7 @@ async def list_alerts(
     db: AsyncSession = Depends(get_db),
 ):
     """Return operational alerts for the current user."""
+    _reject_demo_operations_data_in_production()
     # Mock alert data (replace with DB query when alert ingestion pipeline exists)
     all_alerts = [
         {
@@ -155,6 +222,7 @@ async def mark_alert_read(
     user_id: str = Depends(get_current_user_id),
 ):
     """Mark a specific alert as read."""
+    _reject_demo_operations_data_in_production()
     # When real DB is integrated: UPDATE alerts SET is_read=true WHERE id=alert_id AND user_id=user_id
     return {
         "id": alert_id,
@@ -230,6 +298,8 @@ async def get_performance(
     project = result.scalar_one_or_none()
     if not project:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
+
+    _reject_demo_operations_data_in_production()
 
     capacity_mw = project.capacity_mw or 10.0
     return {

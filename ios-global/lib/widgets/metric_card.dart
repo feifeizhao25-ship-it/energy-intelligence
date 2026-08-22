@@ -1,32 +1,48 @@
 import 'package:flutter/material.dart';
-import '../theme/app_theme.dart';
 
 class MetricCard extends StatelessWidget {
-  final String label;
-  final String value;
-  final String unit;
-  final String trend;
-  final double changePercent;
-  final Color accentColor;
-  final IconData icon;
+  // Old android-global API
+  final String? title;
+  final String? value;
+  final String? subtitle;
+  final IconData? icon;
+  final Color? color;
+
+  // New ios-cn API
+  final String? label;
+  final String? unit;
+  final String? trend;
+  final double? changePercent;
+  final Color? accentColor;
+
   final VoidCallback? onTap;
 
   const MetricCard({
     Key? key,
-    required this.label,
-    required this.value,
-    required this.unit,
-    required this.trend,
-    required this.changePercent,
-    required this.accentColor,
-    required this.icon,
+    this.title,
+    this.value,
+    this.subtitle,
+    this.icon,
+    this.color,
+    this.label,
+    this.unit,
+    this.trend,
+    this.changePercent,
+    this.accentColor,
     this.onTap,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    bool isPositive = trend == 'up';
-    
+    // Support both old and new API
+    final displayLabel = label ?? title ?? '';
+    final displayValue = value ?? '';
+    final displayUnit = unit ?? (subtitle ?? '');
+    final displayIcon = icon ?? Icons.analytics;
+    final displayAccent = accentColor ?? color ?? const Color(0xFF1D4ED8);
+    final isPositive = trend == null || trend == 'up' || trend == 'neutral';
+    final pct = changePercent ?? 0.0;
+
     return Card(
       elevation: 1,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -34,7 +50,7 @@ class MetricCard extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: EdgeInsets.all(16),
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -42,64 +58,70 @@ class MetricCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Container(
-                    padding: EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: accentColor.withOpacity(0.1),
+                      color: displayAccent.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Icon(icon, color: accentColor, size: 20),
+                    child: Icon(displayIcon, color: displayAccent, size: 20),
                   ),
-                  Row(
-                    children: [
-                      Icon(
-                        isPositive ? Icons.trending_up : Icons.trending_down,
-                        color: isPositive ? Color(0xFF10B981) : Color(0xFFEF4444),
-                        size: 16,
-                      ),
-                      SizedBox(width: 4),
-                      Text(
-                        '${changePercent.toStringAsFixed(1)}%',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: isPositive ? Color(0xFF10B981) : Color(0xFFEF4444),
+                  if (changePercent != null || trend != null)
+                    Row(
+                      children: [
+                        Icon(
+                          isPositive ? Icons.trending_up : Icons.trending_down,
+                          color: isPositive
+                              ? const Color(0xFF10B981)
+                              : const Color(0xFFEF4444),
+                          size: 16,
                         ),
-                      ),
-                    ],
-                  ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${pct.toStringAsFixed(1)}%',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: isPositive
+                                ? const Color(0xFF10B981)
+                                : const Color(0xFFEF4444),
+                          ),
+                        ),
+                      ],
+                    ),
                 ],
               ),
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
               Text(
-                label,
-                style: TextStyle(
+                displayLabel,
+                style: const TextStyle(
                   fontSize: 12,
                   color: Color(0xFF64748B),
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.baseline,
                 textBaseline: TextBaseline.alphabetic,
                 children: [
                   Text(
-                    value,
-                    style: TextStyle(
+                    displayValue,
+                    style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF0F172A),
                     ),
                   ),
-                  SizedBox(width: 4),
-                  Text(
-                    unit,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF64748B),
-                      fontWeight: FontWeight.w500,
+                  const SizedBox(width: 4),
+                  if (displayUnit.isNotEmpty)
+                    Text(
+                      displayUnit,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF64748B),
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                  ),
                 ],
               ),
             ],

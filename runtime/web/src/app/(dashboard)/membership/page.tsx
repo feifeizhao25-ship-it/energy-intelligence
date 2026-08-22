@@ -1,320 +1,124 @@
 'use client';
 
-import React from 'react';
-import { Plan, PLAN_DETAILS } from '@/lib/membership/plans';
-import {
-    Crown,
-    Calendar,
-    TrendingUp,
-    FileText,
-    Database,
-    Zap,
-    Award,
-    CreditCard,
-    Settings,
-    HelpCircle,
-} from 'lucide-react';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { AlertCircle, Award, Calendar, Database, Loader2, TrendingUp, Zap } from 'lucide-react';
+import { Plan, PLAN_DETAILS, USAGE_LIMITS } from '@/lib/membership/plans';
 
-// Mock user data - 实际应该从API获取
-const mockUser = {
-    id: 'user_123',
-    name: '张三',
-    email: 'zhang@example.com',
-    plan: Plan.FULL,
-    planExpireAt: new Date('2027-01-06'),
-    dailyAiCalls: 245,
-    dailyResourceQueries: 38,
-    dailyCalculations: 28,
-    dailyDiagnoses: 15,
-    paperCount: 156,
-    projectCount: 45,
-    stationCount: 8,
-    folderCount: 12,
+type Payment = { id: string; amount: number; currency: string; description?: string | null; paidAt?: string | null; createdAt: string };
+type Member = {
+    id: string; name?: string | null; email: string; plan: Plan; planExpireAt?: string | null;
+    dailyAiCalls: number; dailyResourceQueries: number; dailyCalculations: number;
+    dailyPaperSearches: number; dailyDiagnoses: number; projectCount: number;
+    paperCount: number; stationCount: number; folderCount: number;
+    subscription?: { status: string; endDate: string; autoRenew: boolean; payments: Payment[] } | null;
 };
 
 export default function MembershipCenterPage() {
-    const daysLeft = Math.ceil(
-        (new Date(mockUser.planExpireAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
-    );
+    const [member, setMember] = useState<Member | null>(null);
+    const [error, setError] = useState('');
 
-    const planDetails = PLAN_DETAILS[mockUser.plan];
+    useEffect(() => {
+        const controller = new AbortController();
+        fetch('/api/membership/me', { cache: 'no-store', signal: controller.signal })
+            .then(async response => {
+                const body = await response.json();
+                if (!response.ok) throw new Error(body.message || '会员信息加载失败');
+                setMember(body.data);
+            })
+            .catch(reason => {
+                if (reason.name !== 'AbortError') setError(reason.message || '会员信息加载失败');
+            });
+        return () => controller.abort();
+    }, []);
+
+    if (error) return <State message={error} error />;
+    if (!member) return <State message="正在读取您的会员权益…" />;
+
+    const details = PLAN_DETAILS[member.plan] || PLAN_DETAILS.FREE;
+    const limits = USAGE_LIMITS[member.plan] || USAGE_LIMITS.FREE;
+    const expiry = member.planExpireAt || member.subscription?.endDate;
+    const active = member.plan === Plan.FREE || (!!expiry && new Date(expiry).getTime() > Date.now());
+    const effectivePlan = active ? member.plan : Plan.FREE;
+    const effectiveDetails = PLAN_DETAILS[effectivePlan];
+    const effectiveLimits = USAGE_LIMITS[effectivePlan];
+    const payments = member.subscription?.payments || [];
 
     return (
-        <div className="min-h-screen bg-gray-900 text-white p-8">
-            <div className="max-w-6xl mx-auto">
-                {/* Header */}
-                <div className="mb-8">
-                    <h1 className="text-4xl font-bold mb-2">会员中心</h1>
-                    <p className="text-gray-400">管理您的会员权益和使用情况</p>
-                </div>
+        <main className="min-h-screen bg-slate-950 text-white p-4 md:p-8">
+            <div className="max-w-6xl mx-auto space-y-8">
+                <header>
+                    <h1 className="text-3xl md:text-4xl font-bold">会员中心</h1>
+                    <p className="text-slate-400 mt-2">查看真实权益、当日用量、存储数量和付款记录</p>
+                </header>
 
-                {/* Current Plan Card */}
-                <div className="bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl p-8 mb-8 shadow-2xl">
-                    <div className="flex items-center justify-between mb-6">
+                {!active && <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-amber-100">原 {details.name} 已到期，当前按免费版权益执行。</div>}
+
+                <section className="rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-700 p-6 md:p-8 shadow-2xl">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-5">
                         <div className="flex items-center gap-4">
-                            <div className="text-6xl">{planDetails.icon}</div>
+                            <span className="text-5xl" aria-hidden>{effectiveDetails.icon}</span>
                             <div>
-                                <h2 className="text-3xl font-bold">{planDetails.name}会员</h2>
-                                <p className="text-purple-100">
-                                    到期时间：{mockUser.planExpireAt.toLocaleDateString('zh-CN')}
-                                    （剩余{daysLeft}天）
-                                </p>
+                                <h2 className="text-2xl md:text-3xl font-bold">{effectiveDetails.name}</h2>
+                                <p className="text-indigo-100 mt-1">{expiry ? `有效期至 ${new Date(expiry).toLocaleDateString('zh-CN')}` : '无固定到期日'}</p>
                             </div>
                         </div>
-                        <div className="flex gap-3">
-                            <button className="bg-white/20 hover:bg-white/30 backdrop-blur px-6 py-3 rounded-lg font-semibold transition-all">
-                                续费
-                            </button>
-                            <button className="bg-white text-purple-600 hover:bg-gray-100 px-6 py-3 rounded-lg font-semibold transition-all">
-                                升级团队版
-                            </button>
+                        <Link href="/pricing" className="rounded-xl bg-white px-5 py-3 text-center font-semibold text-indigo-700 hover:bg-indigo-50">查看升级方案</Link>
+                    </div>
+                </section>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <section className="rounded-2xl bg-slate-900 border border-slate-800 p-6">
+                        <h3 className="text-xl font-bold flex items-center gap-2"><TrendingUp className="text-blue-400" />今日使用情况</h3>
+                        <div className="mt-5 space-y-4">
+                            <Usage label="AI 对话" value={member.dailyAiCalls} limit={effectiveLimits.ai_chat} />
+                            <Usage label="资源查询" value={member.dailyResourceQueries} limit={effectiveLimits.resource_query} />
+                            <Usage label="收益计算" value={member.dailyCalculations} limit={effectiveLimits.calculation} />
+                            <Usage label="文献检索" value={member.dailyPaperSearches} limit={effectiveLimits.paper_search} />
+                            <Usage label="运维诊断" value={member.dailyDiagnoses} limit={effectiveLimits.diagnosis} />
                         </div>
-                    </div>
-
-                    {/* Benefits */}
-                    <div className="grid grid-cols-4 gap-4">
-                        <BenefitBadge icon={<Zap />} label="无水印报告" />
-                        <BenefitBadge icon={<Crown />} label="优先响应" />
-                        <BenefitBadge icon={<Database />} label="永久数据" />
-                        <BenefitBadge icon={<Award />} label="全功能解锁" />
-                    </div>
-                </div>
-
-                {/* Usage Statistics */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                    <div className="bg-gray-800 rounded-xl p-6">
-                        <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                            <TrendingUp className="w-6 h-6 text-blue-500" />
-                            本月使用统计
-                        </h3>
-                        <div className="space-y-4">
-                            <UsageBar label="AI对话" current={245} max={300} color="blue" />
-                            <UsageBar label="资源查询" current={38} max={-1} color="green" />
-                            <UsageBar label="收益计算" current={28} max={-1} color="purple" />
-                            <UsageBar label="运维诊断" current={15} max={-1} color="orange" />
+                    </section>
+                    <section className="rounded-2xl bg-slate-900 border border-slate-800 p-6">
+                        <h3 className="text-xl font-bold flex items-center gap-2"><Database className="text-violet-400" />已保存内容</h3>
+                        <div className="mt-5 grid grid-cols-2 gap-4">
+                            <Count label="项目" value={member.projectCount} limit={effectiveLimits.projects} />
+                            <Count label="文献" value={member.paperCount} limit={effectiveLimits.saved_papers} />
+                            <Count label="电站" value={member.stationCount} limit={effectiveLimits.stations} />
+                            <Count label="文献夹" value={member.folderCount} limit={effectiveLimits.folders} />
                         </div>
-                    </div>
+                    </section>
+                </div>
 
-                    <div className="bg-gray-800 rounded-xl p-6">
-                        <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                            <Database className="w-6 h-6 text-purple-500" />
-                            存储空间
-                        </h3>
-                        <div className="space-y-4">
-                            <StorageItem label="项目" current={45} max={200} icon="📊" />
-                            <StorageItem label="文献" current={156} max={2000} icon="📚" />
-                            <StorageItem label="电站" current={8} max={50} icon="⚡" />
-                            <StorageItem label="文献夹" current={12} max={50} icon="📁" />
+                <section className="rounded-2xl bg-slate-900 border border-slate-800 p-6">
+                    <h3 className="text-xl font-bold flex items-center gap-2"><Award className="text-amber-400" />当前核心权益</h3>
+                    <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-slate-200">
+                        <Benefit icon={<Zap />} text={`${formatLimit(effectiveLimits.ai_chat)} AI 对话`} />
+                        <Benefit icon={<Database />} text={`${formatLimit(effectiveLimits.projects)} 项目`} />
+                        <Benefit icon={<Award />} text={effectivePlan === Plan.FREE ? '基础计算与查询' : '专业报告导出'} />
+                        <Benefit icon={<Calendar />} text={member.subscription?.autoRenew ? '已开启自动续费' : '未开启自动续费'} />
+                    </div>
+                </section>
+
+                <section className="rounded-2xl bg-slate-900 border border-slate-800 p-6">
+                    <h3 className="text-xl font-bold">付款记录</h3>
+                    {payments.length === 0 ? <p className="mt-4 text-slate-400">暂无已完成的付款记录。</p> : (
+                        <div className="mt-4 divide-y divide-slate-800">
+                            {payments.map(payment => <div key={payment.id} className="py-4 flex justify-between gap-4"><div><p>{payment.description || '会员订阅'}</p><p className="text-sm text-slate-400">{new Date(payment.paidAt || payment.createdAt).toLocaleDateString('zh-CN')}</p></div><strong>{payment.currency === 'CNY' ? '¥' : `${payment.currency} `}{payment.amount.toLocaleString('zh-CN')}</strong></div>)}
                         </div>
-                    </div>
-                </div>
-
-                {/* Exclusive Benefits */}
-                <div className="bg-gray-800 rounded-xl p-6 mb-8">
-                    <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                        <Award className="w-6 h-6 text-yellow-500" />
-                        专属权益
-                    </h3>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <BenefitCard icon="📄" title="无水印报告导出" />
-                        <BenefitCard icon="⚡" title="优先响应" />
-                        <BenefitCard icon="💾" title="历史数据永久保存" />
-                        <BenefitCard icon="🛠️" title="20个工具全解锁" />
-                    </div>
-                </div>
-
-                {/* Order History */}
-                <div className="bg-gray-800 rounded-xl p-6 mb-8">
-                    <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                        <FileText className="w-6 h-6 text-green-500" />
-                        订单记录
-                    </h3>
-                    <div className="space-y-3">
-                        <OrderItem
-                            date="2026-01-06"
-                            type="全能版年付"
-                            amount={3980}
-                            status="已支付"
-                        />
-                        <OrderItem
-                            date="2025-01-06"
-                            type="专业版年付"
-                            amount={1980}
-                            status="已支付"
-                        />
-                    </div>
-                </div>
-
-                {/* Quick Actions */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <ActionCard
-                        icon={<CreditCard className="w-8 h-8" />}
-                        title="支付方式"
-                        description="管理支付方式和发票"
-                        action="管理"
-                    />
-                    <ActionCard
-                        icon={<Settings className="w-8 h-8" />}
-                        title="账户设置"
-                        description="修改个人信息和偏好"
-                        action="设置"
-                    />
-                    <ActionCard
-                        icon={<HelpCircle className="w-8 h-8" />}
-                        title="帮助中心"
-                        description="查看使用指南和常见问题"
-                        action="查看"
-                    />
-                </div>
+                    )}
+                </section>
             </div>
-        </div>
+        </main>
     );
 }
 
-function BenefitBadge({ icon, label }: { icon: React.ReactNode; label: string }) {
-    return (
-        <div className="bg-white/10 backdrop-blur rounded-lg px-4 py-2 flex items-center gap-2">
-            <div className="text-white/90">{icon}</div>
-            <span className="text-sm font-medium">{label}</span>
-        </div>
-    );
+function State({ message, error = false }: { message: string; error?: boolean }) {
+    return <main className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-6"><div className="flex items-center gap-3">{error ? <AlertCircle className="text-red-400" /> : <Loader2 className="animate-spin text-blue-400" />}<span>{message}</span></div></main>;
 }
-
-function UsageBar({
-    label,
-    current,
-    max,
-    color,
-}: {
-    label: string;
-    current: number;
-    max: number;
-    color: string;
-}) {
-    const percentage = max === -1 ? 100 : Math.min((current / max) * 100, 100);
-    const isUnlimited = max === -1;
-
-    const colorMap: Record<string, string> = {
-        blue: 'bg-blue-500',
-        green: 'bg-green-500',
-        purple: 'bg-purple-500',
-        orange: 'bg-orange-500',
-    };
-
-    return (
-        <div>
-            <div className="flex justify-between mb-1 text-sm">
-                <span className="text-gray-300">{label}</span>
-                <span className="text-gray-400">
-                    {current}{isUnlimited ? '' : `/${max}`}次
-                </span>
-            </div>
-            <div className="w-full bg-gray-700 rounded-full h-2">
-                <div
-                    className={`${colorMap[color]} h-2 rounded-full transition-all`}
-                    style={{ width: `${isUnlimited ? 100 : percentage}%` }}
-                />
-            </div>
-        </div>
-    );
+function formatLimit(limit: number) { return limit === Infinity ? '不限量' : `最多 ${limit} 次`; }
+function Usage({ label, value, limit }: { label: string; value: number; limit: number }) {
+    const unlimited = limit === Infinity; const ratio = unlimited ? 0 : Math.min(100, limit === 0 ? 100 : value / limit * 100);
+    return <div><div className="flex justify-between text-sm"><span>{label}</span><span className="text-slate-400">{value} / {unlimited ? '不限量' : limit}</span></div><div className="mt-2 h-2 rounded bg-slate-800"><div className={`h-2 rounded ${ratio >= 100 ? 'bg-amber-500' : 'bg-blue-500'}`} style={{ width: unlimited ? '8%' : `${ratio}%` }} /></div></div>;
 }
-
-function StorageItem({
-    label,
-    current,
-    max,
-    icon,
-}: {
-    label: string;
-    current: number;
-    max: number;
-    icon: string;
-}) {
-    const percentage = Math.min((current / max) * 100, 100);
-
-    return (
-        <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-                <span className="text-2xl">{icon}</span>
-                <div>
-                    <div className="font-medium">{label}</div>
-                    <div className="text-sm text-gray-400">
-                        {current}/{max}个
-                    </div>
-                </div>
-            </div>
-            <div className="w-32">
-                <div className="w-full bg-gray-700 rounded-full h-2">
-                    <div
-                        className="bg-purple-500 h-2 rounded-full"
-                        style={{ width: `${percentage}%` }}
-                    />
-                </div>
-            </div>
-        </div>
-    );
-}
-
-function BenefitCard({ icon, title }: { icon: string; title: string }) {
-    return (
-        <div className="bg-gray-700 rounded-lg p-4 text-center">
-            <div className="text-3xl mb-2">{icon}</div>
-            <div className="text-sm text-gray-300">{title}</div>
-        </div>
-    );
-}
-
-function OrderItem({
-    date,
-    type,
-    amount,
-    status,
-}: {
-    date: string;
-    type: string;
-    amount: number;
-    status: string;
-}) {
-    return (
-        <div className="flex items-center justify-between p-4 bg-gray-700 rounded-lg">
-            <div className="flex items-center gap-4">
-                <Calendar className="w-5 h-5 text-gray-400" />
-                <div>
-                    <div className="font-medium">{type}</div>
-                    <div className="text-sm text-gray-400">{date}</div>
-                </div>
-            </div>
-            <div className="text-right">
-                <div className="font-bold">¥{amount.toLocaleString()}</div>
-                <div className="text-sm text-green-500">{status}</div>
-            </div>
-            <div className="flex gap-2">
-                <button className="text-blue-400 hover:text-blue-300 text-sm">查看</button>
-                <button className="text-blue-400 hover:text-blue-300 text-sm">发票</button>
-            </div>
-        </div>
-    );
-}
-
-function ActionCard({
-    icon,
-    title,
-    description,
-    action,
-}: {
-    icon: React.ReactNode;
-    title: string;
-    description: string;
-    action: string;
-}) {
-    return (
-        <div className="bg-gray-800 rounded-xl p-6 hover:bg-gray-750 transition-colors cursor-pointer">
-            <div className="text-blue-500 mb-3">{icon}</div>
-            <h4 className="font-bold mb-2">{title}</h4>
-            <p className="text-sm text-gray-400 mb-4">{description}</p>
-            <button className="text-blue-400 hover:text-blue-300 text-sm font-medium">
-                {action} →
-            </button>
-        </div>
-    );
-}
+function Count({ label, value, limit }: { label: string; value: number; limit: number }) { return <div className="rounded-xl bg-slate-800 p-4"><p className="text-slate-400 text-sm">{label}</p><p className="text-2xl font-bold mt-1">{value}<span className="text-sm font-normal text-slate-500"> / {limit === Infinity ? '不限' : limit}</span></p></div>; }
+function Benefit({ icon, text }: { icon: React.ReactNode; text: string }) { return <div className="rounded-xl bg-slate-800 p-4 flex items-center gap-3"><span className="text-indigo-400">{icon}</span><span>{text}</span></div>; }

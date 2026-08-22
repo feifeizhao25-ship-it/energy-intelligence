@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import {
     Check,
     Crown,
@@ -29,6 +30,7 @@ export default function PricingPage() {
                 '标准 PDF 报告导出'
             ],
             cta: '立即开始',
+            href: '/login?callbackUrl=/dashboard',
             recommended: false,
             color: 'slate'
         },
@@ -39,13 +41,14 @@ export default function PricingPage() {
             desc: '专为新能源工程师与投资分析师设计',
             features: [
                 '全量三合一引擎 (光/风/储)',
-                '工程级 IRR 财务分析 (118项参数)',
-                '2.4亿篇文献与政策库全文检索',
+                '工程级 IRR 财务分析',
+                '公开文献与政策库全文检索',
                 '无限次 AI 专家决策分析',
                 '自定义品牌测算报告',
                 '多场景综合对比工具'
             ],
             cta: '免费试用 7 天',
+            href: '/checkout?plan=professional',
             recommended: true,
             color: 'emerald'
         },
@@ -63,6 +66,7 @@ export default function PricingPage() {
                 '全员协同项目管理空间'
             ],
             cta: '联系我们',
+            href: '/checkout?plan=enterprise',
             recommended: false,
             color: 'slate'
         }
@@ -155,14 +159,15 @@ export default function PricingPage() {
                                 ))}
                             </div>
 
-                            <button className={cn(
+                            <Link href={plan.href} className={cn(
                                 "w-full py-6 rounded-3xl font-black text-xs uppercase tracking-[0.2em] transition-all shadow-xl",
+                                "text-center",
                                 plan.recommended
                                     ? "bg-green-500 text-white hover:bg-green-600 shadow-green-500/20"
                                     : "bg-slate-900 text-white hover:bg-slate-800 shadow-slate-900/10"
                             )}>
                                 {plan.cta}
-                            </button>
+                            </Link>
                         </div>
                     ))}
                 </div>
@@ -181,9 +186,9 @@ export default function PricingPage() {
 
                         <div className="space-y-8">
                             {[
-                                { title: '算力保障', desc: '即使在用电高峰期，您的收益测算也能在 1 秒内完成。', icon: Zap },
+                                { title: '算力保障', desc: '收益测算由服务端引擎完成，计算过程与耗时全程留痕。', icon: Zap },
                                 { title: '数据主权', desc: '支持本地化离线导出，您的项目数据完全受加密保护。', icon: ShieldCheck },
-                                { title: 'AI 合规性', desc: 'AI 生成的报告均通过了电力系统主流设计院的合规性核验。', icon: Sparkles }
+                                { title: '合规留痕', desc: 'AI 生成的报告记录全部假设、数据来源与口径版本，便于合规复核。', icon: Sparkles }
                             ].map((v, i) => (
                                 <div key={i} className="flex gap-6 group">
                                     <div className="w-14 h-14 bg-white rounded-3xl border border-slate-100 flex items-center justify-center shadow-lg shadow-slate-900/5 group-hover:bg-green-500 group-hover:text-white transition-all">
@@ -211,9 +216,9 @@ export default function PricingPage() {
                                 如果您需要集成到现有 ERP 系统或需要大规模私网部署，我们的专业团队可提供全栈新能源 SaaS 定制。
                             </p>
                         </div>
-                        <button className="relative z-10 w-fit flex items-center gap-4 bg-white text-slate-900 px-10 py-5 rounded-2xl font-black text-sm hover:bg-green-500 hover:text-white transition-all shadow-2xl">
+                        <Link href="/demo-request" className="relative z-10 w-fit flex items-center gap-4 bg-white text-slate-900 px-10 py-5 rounded-2xl font-black text-sm hover:bg-green-500 hover:text-white transition-all shadow-2xl">
                             立即预约演示 <ArrowRight className="w-5 h-5" />
-                        </button>
+                        </Link>
                     </div>
                 </div>
 

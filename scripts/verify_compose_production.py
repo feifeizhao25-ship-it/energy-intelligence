@@ -24,7 +24,7 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 ENTRY_FILE = ROOT / "docker-compose.prod.yml"
-required_services = {"postgres", "redis", "backend", "web-cn", "web-int"}
+required_services = {"postgres", "redis", "backend", "web-cn", "web-int", "gateway"}
 
 
 def _resolve_compose(entry: Path) -> tuple[Path, dict]:
@@ -97,11 +97,24 @@ if command:
         "POSTGRES_PASSWORD": "validation-only-password",
         "REDIS_PASSWORD": "validation-only-password",
         "SECRET_KEY": "Validation-Only_Secret-7k!2p#9Vz-L4n",
+        "CORS_ORIGINS": "https://cn.example.test,https://global.example.test",
+        "CN_NEXTAUTH_URL": "https://cn.example.test",
+        "NEXTAUTH_SECRET": "Validation-Only_NextAuth-4m!8q#2Ks-X7p",
+        "NEXT_PUBLIC_SUPABASE_URL": "https://validation.supabase.co",
+        "NEXT_PUBLIC_SUPABASE_ANON_KEY": "validation-anon-key",
+        "SUPABASE_SERVICE_ROLE_KEY": "validation-service-role-key",
+        "IMAGE_REGISTRY": "registry.example.test/energy",
+        "IMAGE_TAG": "validation-sha",
+        "CN_PUBLIC_API_URL": "https://cn.example.test/api/backend",
+        "CN_DOMAIN": "cn.example.test",
+        "INT_DOMAIN": "global.example.test",
+        "TLS_EMAIL": "ops@example.test",
         "MILVUS_HOST": "milvus.internal",
         "OSS_BUCKET": "validation-bucket",
         "OSS_ENDPOINT": "oss.internal",
         "OSS_ACCESS_KEY_ID": "validation-key",
         "OSS_ACCESS_KEY_SECRET": "validation-secret",
+        "OPENALEX_CONTACT_EMAIL": "ops@example.test",
     }
     result = subprocess.run(command, cwd=ROOT, env=env, text=True, capture_output=True, check=False)
     if result.returncode:

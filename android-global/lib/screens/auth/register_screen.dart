@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
+import '../../services/api_service.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -27,11 +28,36 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<void> _register() async {
+    if (_nameCtrl.text.trim().isEmpty ||
+        _emailCtrl.text.trim().isEmpty ||
+        _passCtrl.text.length < 8) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Enter your name, a valid email and a password of at least 8 characters.',
+          ),
+        ),
+      );
+      return;
+    }
     setState(() => _loading = true);
-    await Future.delayed(const Duration(seconds: 1));
-    if (!mounted) return;
-    setState(() => _loading = false);
-    Navigator.pushReplacementNamed(context, '/main');
+    try {
+      await ApiService.register(
+        name: _nameCtrl.text.trim(),
+        email: _emailCtrl.text.trim(),
+        password: _passCtrl.text,
+        company: _companyCtrl.text.trim(),
+        role: _role,
+      );
+      if (mounted) Navigator.pushReplacementNamed(context, '/main');
+    } on ApiException catch (error) {
+      if (mounted)
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.message)));
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   @override
@@ -56,8 +82,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    const Text('Join Energy Intelligence', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-                    const Text('Create your account', style: TextStyle(color: Colors.white70, fontSize: 14)),
+                    const Text(
+                      'Join Energy Intelligence',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const Text(
+                      'Create your account',
+                      style: TextStyle(color: Colors.white70, fontSize: 14),
+                    ),
                   ],
                 ),
               ),
@@ -68,26 +104,44 @@ class _RegisterScreenState extends State<RegisterScreen> {
               padding: const EdgeInsets.all(24),
               child: Column(
                 children: [
-                  Text('Step ${_step + 1} of 2', style: const TextStyle(fontSize: 14, color: Color(0xFF64748B))),
+                  Text(
+                    'Step ${_step + 1} of 2',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF64748B),
+                    ),
+                  ),
                   const SizedBox(height: 16),
                   if (_step == 0)
                     Column(
                       children: [
                         TextField(
                           controller: _nameCtrl,
-                          decoration: const InputDecoration(labelText: 'Full Name', hintText: 'John Doe', prefixIcon: Icon(Icons.person_outline)),
+                          decoration: const InputDecoration(
+                            labelText: 'Full Name',
+                            hintText: 'John Doe',
+                            prefixIcon: Icon(Icons.person_outline),
+                          ),
                         ),
                         const SizedBox(height: 12),
                         TextField(
                           controller: _emailCtrl,
                           keyboardType: TextInputType.emailAddress,
-                          decoration: const InputDecoration(labelText: 'Email', hintText: 'you@company.com', prefixIcon: Icon(Icons.email_outlined)),
+                          decoration: const InputDecoration(
+                            labelText: 'Email',
+                            hintText: 'you@company.com',
+                            prefixIcon: Icon(Icons.email_outlined),
+                          ),
                         ),
                         const SizedBox(height: 12),
                         TextField(
                           controller: _passCtrl,
                           obscureText: true,
-                          decoration: const InputDecoration(labelText: 'Password', hintText: '••••••••', prefixIcon: Icon(Icons.lock_outline)),
+                          decoration: const InputDecoration(
+                            labelText: 'Password',
+                            hintText: '••••••••',
+                            prefixIcon: Icon(Icons.lock_outline),
+                          ),
                         ),
                         const SizedBox(height: 32),
                         ElevatedButton(
@@ -101,14 +155,35 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       children: [
                         TextField(
                           controller: _companyCtrl,
-                          decoration: const InputDecoration(labelText: 'Company', hintText: 'Your Company Inc.', prefixIcon: Icon(Icons.business_outlined)),
+                          decoration: const InputDecoration(
+                            labelText: 'Company',
+                            hintText: 'Your Company Inc.',
+                            prefixIcon: Icon(Icons.business_outlined),
+                          ),
                         ),
                         const SizedBox(height: 12),
                         DropdownButtonFormField<String>(
-                          value: _role,
-                          decoration: const InputDecoration(labelText: 'Role', prefixIcon: Icon(Icons.work_outline)),
-                          items: ['Developer', 'O&M Engineer', 'Investor', 'Researcher'].map((role) => DropdownMenuItem(value: role, child: Text(role))).toList(),
-                          onChanged: (val) => setState(() => _role = val ?? 'Developer'),
+                          initialValue: _role,
+                          decoration: const InputDecoration(
+                            labelText: 'Role',
+                            prefixIcon: Icon(Icons.work_outline),
+                          ),
+                          items:
+                              [
+                                    'Developer',
+                                    'O&M Engineer',
+                                    'Investor',
+                                    'Researcher',
+                                  ]
+                                  .map(
+                                    (role) => DropdownMenuItem(
+                                      value: role,
+                                      child: Text(role),
+                                    ),
+                                  )
+                                  .toList(),
+                          onChanged: (val) =>
+                              setState(() => _role = val ?? 'Developer'),
                         ),
                         const SizedBox(height: 16),
                         Row(
@@ -116,12 +191,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           children: [
                             Checkbox(
                               value: _gdprAccepted,
-                              onChanged: (val) => setState(() => _gdprAccepted = val ?? false),
+                              onChanged: (val) =>
+                                  setState(() => _gdprAccepted = val ?? false),
                             ),
                             Expanded(
                               child: Padding(
                                 padding: const EdgeInsets.only(top: 8),
-                                child: const Text('I agree to the Terms of Service and Privacy Policy (GDPR compliant)', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                                child: const Text(
+                                  'I agree to the Terms of Service and Privacy Policy (GDPR compliant)',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Color(0xFF64748B),
+                                  ),
+                                ),
                               ),
                             ),
                           ],
@@ -138,8 +220,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             const SizedBox(width: 12),
                             Expanded(
                               child: ElevatedButton(
-                                onPressed: _gdprAccepted && !_loading ? _register : null,
-                                child: _loading ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('Sign Up'),
+                                onPressed: _gdprAccepted && !_loading
+                                    ? _register
+                                    : null,
+                                child: _loading
+                                    ? const SizedBox(
+                                        height: 20,
+                                        width: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.white,
+                                        ),
+                                      )
+                                    : const Text('Sign Up'),
                               ),
                             ),
                           ],
@@ -147,13 +240,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ],
                     ),
                   const SizedBox(height: 16),
-                  Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                    const Text('Already have an account? ', style: TextStyle(color: Color(0xFF64748B), fontSize: 14)),
-                    GestureDetector(
-                      onTap: () => Navigator.pushNamed(context, '/login'),
-                      child: const Text('Sign in', style: TextStyle(color: Color(0xFF1D4ED8), fontWeight: FontWeight.w600, fontSize: 14)),
-                    ),
-                  ]),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        'Already have an account? ',
+                        style: TextStyle(
+                          color: Color(0xFF64748B),
+                          fontSize: 14,
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () => Navigator.pushNamed(context, '/login'),
+                        child: const Text(
+                          'Sign in',
+                          style: TextStyle(
+                            color: Color(0xFF1D4ED8),
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),

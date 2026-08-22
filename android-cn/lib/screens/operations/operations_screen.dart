@@ -17,8 +17,10 @@ class OperationsScreen extends StatelessWidget {
           children: [
             Text('电站运维管理', style: Theme.of(context).textTheme.headlineSmall),
             SizedBox(height: 8),
-            Text('全面监测与诊断，保障电站高效运营',
-                style: TextStyle(color: Color(0xFF64748B), fontSize: 13)),
+            Text(
+              '全面监测与诊断，保障电站高效运营',
+              style: TextStyle(color: Color(0xFF64748B), fontSize: 13),
+            ),
             SizedBox(height: 24),
             _buildModuleCard(
               context,
@@ -26,9 +28,9 @@ class OperationsScreen extends StatelessWidget {
               subtitle: '设备状态与性能分析',
               icon: Icons.favorite,
               color: Color(0xFFEF4444),
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => HealthScreen()),
-              ),
+              onTap: () => Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => HealthScreen())),
             ),
             SizedBox(height: 16),
             _buildModuleCard(
@@ -37,9 +39,9 @@ class OperationsScreen extends StatelessWidget {
               subtitle: '异常波动分析与故障定位',
               icon: Icons.warning_amber_rounded,
               color: Color(0xFFF97316),
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => AnomalyScreen()),
-              ),
+              onTap: () => Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => AnomalyScreen())),
             ),
             SizedBox(height: 16),
             _buildModuleCard(
@@ -48,9 +50,9 @@ class OperationsScreen extends StatelessWidget {
               subtitle: '最优清洗周期与成本分析',
               icon: Icons.clean_hands,
               color: Color(0xFF06B6D4),
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => CleaningScreen()),
-              ),
+              onTap: () => Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => CleaningScreen())),
             ),
             SizedBox(height: 16),
             _buildModuleCard(
@@ -59,7 +61,9 @@ class OperationsScreen extends StatelessWidget {
               subtitle: '发电数据深度挖掘',
               icon: Icons.analytics,
               color: Color(0xFF10B981),
-              onTap: () => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('功能开发中'))),
+              onTap: () => ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text('功能开发中'))),
             ),
           ],
         ),
@@ -88,7 +92,10 @@ class OperationsScreen extends StatelessWidget {
               Container(
                 width: 56,
                 height: 56,
-                decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 child: Icon(icon, color: color, size: 28),
               ),
               SizedBox(width: 16),
@@ -96,9 +103,19 @@ class OperationsScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF0F172A),
+                      ),
+                    ),
                     SizedBox(height: 4),
-                    Text(subtitle, style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
+                    Text(
+                      subtitle,
+                      style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                    ),
                   ],
                 ),
               ),

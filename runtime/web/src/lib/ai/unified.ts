@@ -2,9 +2,9 @@
 import { Message } from '@/types';
 import { callAI, AIModel, createEmbedding } from './router';
 
-// 获取当前配置的AI提供商 (现在统一为 siliconflow 或 mock)
+// 获取当前配置的 AI 提供商；未配置时明确标记不可用。
 export function getAIProvider(): string {
-    return process.env.SILICONFLOW_API_KEY ? 'siliconflow' : 'mock';
+    return process.env.SILICONFLOW_API_KEY ? 'siliconflow' : 'unavailable';
 }
 
 // AI服务配置
@@ -106,7 +106,7 @@ export function getServiceStatus() {
     return {
         siliconflow: {
             configured: !!process.env.SILICONFLOW_API_KEY,
-            status: 'active'
+            status: process.env.SILICONFLOW_API_KEY ? 'active' : 'unavailable'
         },
         currentProvider: getAIProvider(),
         defaultModel: 'glm-4-plus'

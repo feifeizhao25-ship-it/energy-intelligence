@@ -36,7 +36,9 @@ class BarChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final vals = _values;
-    final max = maxValue > 0 ? maxValue : (vals.isNotEmpty ? vals.reduce(math.max) : 100.0);
+    final max = maxValue > 0
+        ? maxValue
+        : (vals.isNotEmpty ? vals.reduce(math.max) : 100.0);
 
     return Card(
       elevation: 1,
@@ -99,7 +101,12 @@ class _BarChartPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     if (values.isEmpty) return;
 
-    final padding = const EdgeInsets.only(left: 40, right: 20, top: 20, bottom: 40);
+    final padding = const EdgeInsets.only(
+      left: 40,
+      right: 20,
+      top: 20,
+      bottom: 40,
+    );
     final chartWidth = size.width - padding.left - padding.right;
     final chartHeight = size.height - padding.top - padding.bottom;
 
@@ -161,10 +168,7 @@ class _BarChartPainter extends CustomPainter {
       valueTextPainter.layout();
       valueTextPainter.paint(
         canvas,
-        Offset(
-          x + barWidth / 2 - valueTextPainter.width / 2,
-          y - 18,
-        ),
+        Offset(x + barWidth / 2 - valueTextPainter.width / 2, y - 18),
       );
     }
 
@@ -172,15 +176,13 @@ class _BarChartPainter extends CustomPainter {
       final labelTextPainter = TextPainter(
         text: TextSpan(
           text: labels[i],
-          style: const TextStyle(
-            color: Color(0xFF64748B),
-            fontSize: 11,
-          ),
+          style: const TextStyle(color: Color(0xFF64748B), fontSize: 11),
         ),
         textDirection: TextDirection.ltr,
       );
       labelTextPainter.layout();
-      final x = padding.left + (i + 0.5) * barSpacing - labelTextPainter.width / 2;
+      final x =
+          padding.left + (i + 0.5) * barSpacing - labelTextPainter.width / 2;
       final y = size.height - padding.bottom + 8;
       labelTextPainter.paint(canvas, Offset(x, y));
     }

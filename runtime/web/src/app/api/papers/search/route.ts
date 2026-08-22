@@ -19,8 +19,11 @@ export async function POST(request: NextRequest) {
     } catch (error) {
         console.error('Search API error:', error);
         return NextResponse.json(
-            { error: error instanceof Error ? error.message : 'Search failed' },
-            { status: 500 }
+            {
+                error: error instanceof Error ? error.message : '学术数据源暂时不可用',
+                code: 'UPSTREAM_UNAVAILABLE'
+            },
+            { status: 503 }
         );
     }
 }

@@ -4,10 +4,14 @@ const BASE_URL = 'https://api.openalex.org';
 
 export async function searchOpenAlex(query: string, limit: number = 10): Promise<Paper[]> {
     try {
+        const contact = process.env.OPENALEX_CONTACT_EMAIL;
+        if (process.env.NODE_ENV === 'production' && !contact) {
+            throw new Error('OPENALEX_CONTACT_EMAIL is required in production');
+        }
         const url = `${BASE_URL}/works?search=${encodeURIComponent(query)}&per-page=${limit}`;
         const response = await fetch(url, {
             headers: {
-                'User-Agent': 'mailto:test@example.com' // Replace with proper email
+                'User-Agent': `EnergyIntelligence/1.0 (${contact || 'development'})`
             }
         });
 
@@ -26,11 +30,15 @@ export async function searchOpenAlex(query: string, limit: number = 10): Promise
             citationCount: work.cited_by_count,
             pdfUrl: work.open_access.is_oa ? work.open_access.pdf_url : null,
             venue: work.primary_location?.source?.display_name || '',
-            doi: work.doi ? work.doi.replace('https://doi.org/', '') : undefined
+            doi: work.doi ? work.doi.replace('https://doi.org/', '') : undefined,
+            sourceProvider: 'OpenAlex',
+            sourceUrl: work.id,
+            retrievedAt: new Date().toISOString(),
+            evidenceStatus: 'provider_verified' as const,
         }));
 
     } catch (error) {
         console.error('OpenAlex search failed', error);
-        return [];
+        throw new Error('OpenAlex 数据暂时不可用，未返回模拟论文');
     }
 }

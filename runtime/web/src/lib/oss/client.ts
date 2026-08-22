@@ -22,15 +22,6 @@ function getClient() {
  * @param fileBuffer 文件内容
  */
 export async function uploadToOSS(path: string, fileBuffer: Buffer | ReadableStream | Blob) {
-    // 开发环境下如果没有配置 Key，则直接返回模拟 URL
-    if (process.env.NODE_ENV === 'development' && (!process.env.ALIYUN_ACCESS_KEY_ID)) {
-        console.log(`[OSS MOCK] Uploading to: ${path}`);
-        return {
-            url: `https://mock-oss.xinnengyuan.ai/${path}`,
-            success: true
-        };
-    }
-
     try {
         const client = getClient();
         if (!client) {
@@ -55,10 +46,6 @@ export async function uploadToOSS(path: string, fileBuffer: Buffer | ReadableStr
  * 获取文件临时访问链接 (适用于私有 Bucket)
  */
 export async function getSignedUrl(path: string, expires: number = 3600) {
-    if (process.env.NODE_ENV === 'development' && (!process.env.ALIYUN_ACCESS_KEY_ID)) {
-        return `https://mock-oss.xinnengyuan.ai/${path}?token=mock`;
-    }
-
     try {
         const client = getClient();
         if (!client) return null;

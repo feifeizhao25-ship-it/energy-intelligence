@@ -76,12 +76,18 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? '';
 // 国内版 / 国际版默认人设（auth 会话目前没有 persona 字段，暂按 market 给默认）
 const IS_INTL = process.env.NEXT_PUBLIC_APP_EDITION === 'international';
 const DEFAULT_PERSONA = IS_INTL ? 'john_smith' : 'chen_xin';
+const ALLOWED_PERSONAS = IS_INTL
+    ? new Set(['john_smith', 'sarah_miller'])
+    : new Set(['chen_xin', 'wang_qiang', 'li_na']);
 
 // 人设与天数确定顺序：URL 查询参数（?persona=&day=，demo/预览用）
 //   → 用户会话 persona（当前 auth 体系无此字段，跳过）
 //   → 按 market 的默认人设
 function resolvePersonaDay(searchParams: URLSearchParams): { persona: string; day: number } {
-    const persona = searchParams.get('persona') || DEFAULT_PERSONA;
+    const requestedPersona = searchParams.get('persona');
+    const persona = requestedPersona && ALLOWED_PERSONAS.has(requestedPersona)
+        ? requestedPersona
+        : DEFAULT_PERSONA;
     const parsed = parseInt(searchParams.get('day') || '', 10);
     const day = parsed >= 1 && parsed <= 7 ? parsed : 1;
     return { persona, day };

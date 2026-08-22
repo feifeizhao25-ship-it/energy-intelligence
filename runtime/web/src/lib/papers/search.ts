@@ -44,19 +44,30 @@ export async function unifiedSearch(
     // 使用优化后的第一个词（通常是翻译后的英文）进行搜索
     const finalQuery = queries[0];
 
-    const searchPromises: Promise<any>[] = [
-        searchSemantic(finalQuery, options).catch(e => ({ total: 0, papers: [] })),
-        searchOpenAlex(finalQuery, limit).then(papers => ({ total: papers.length, papers })).catch(e => ({ total: 0, papers: [] }))
+    const searchPromises: Promise<{ total: number; papers: Paper[] }>[] = [
+        searchSemantic(finalQuery, options),
+        searchOpenAlex(finalQuery, limit).then(papers => ({ total: papers.length, papers }))
     ];
 
     // 如果包含中文且有原始中文词，对于某些可能支持中文的源可以尝试（虽然目前主流源都是英文为主）
     // 为了保证质量，这里我们主要信任英文搜索结果
 
     if (options.openAccess || true) {
-        searchPromises.push(searchArxiv(finalQuery, { limit }).then(papers => ({ total: papers.length, papers })).catch(e => ({ total: 0, papers: [] })));
+        searchPromises.push(searchArxiv(finalQuery, { limit }).then(papers => ({ total: papers.length, papers })));
     }
 
-    const results = await Promise.all(searchPromises);
+    const settled = await Promise.allSettled(searchPromises);
+    const providerNames = ['Semantic Scholar', 'OpenAlex', 'arXiv'] as const;
+    const providers = settled.map((result, index) => ({
+        name: providerNames[index],
+        status: result.status === 'fulfilled' ? 'available' as const : 'unavailable' as const,
+    }));
+    if (settled.every(result => result.status === 'rejected')) {
+        throw new Error('全部学术数据源暂时不可用，未返回空结果或模拟论文');
+    }
+    const results = settled.map(result =>
+        result.status === 'fulfilled' ? result.value : { total: 0, papers: [] as Paper[] }
+    );
 
     // 3. 结果合并与去重
     const semanticResult = results[0];
@@ -81,8 +92,9 @@ export async function unifiedSearch(
     mergeResults(arxivResult?.papers);
 
     return {
-        total: (semanticResult.total || 0) + (arxivResult?.total || 0),
-        papers: allPapers.slice(0, limit)
+        total: results.reduce((sum, result) => sum + (result.total || 0), 0),
+        papers: allPapers.slice(0, limit),
+        providers,
     };
 }
 

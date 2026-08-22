@@ -34,11 +34,34 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());
           }
+          if (snapshot.hasError) {
+            return Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.cloud_off_outlined, size: 48, color: Colors.grey),
+                  SizedBox(height: 12),
+                  Text('项目数据暂时不可用'),
+                  TextButton(
+                    onPressed: () => setState(() {
+                      _projectsFuture = ApiService.getProjects().then(
+                        (maps) => maps.map((m) => Project.fromJson(m)).toList(),
+                      );
+                    }),
+                    child: Text('重试'),
+                  ),
+                ],
+              ),
+            );
+          }
 
           final projects = snapshot.data ?? [];
           final filtered = projects.where((p) {
-            bool typeMatch = _filterType == '全部' || p.projectType == _filterType;
-            bool searchMatch = p.name.toLowerCase().contains(_searchQuery.toLowerCase());
+            bool typeMatch =
+                _filterType == '全部' || p.projectType == _filterType;
+            bool searchMatch = p.name.toLowerCase().contains(
+              _searchQuery.toLowerCase(),
+            );
             return typeMatch && searchMatch;
           }).toList();
 
@@ -52,9 +75,12 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                       decoration: InputDecoration(
                         hintText: '搜索项目...',
                         prefixIcon: Icon(Icons.search),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
-                      onChanged: (value) => setState(() => _searchQuery = value),
+                      onChanged: (value) =>
+                          setState(() => _searchQuery = value),
                     ),
                     SizedBox(height: 12),
                     SingleChildScrollView(
@@ -86,7 +112,8 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                               onTap: () {
                                 Navigator.of(context).push(
                                   MaterialPageRoute(
-                                    builder: (_) => ProjectDetailScreen(project: project),
+                                    builder: (_) =>
+                                        ProjectDetailScreen(project: project),
                                   ),
                                 );
                               },
@@ -100,7 +127,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _showCreateProjectDialog(),
+        onPressed: () => Navigator.pushNamed(context, '/resource'),
         child: Icon(Icons.add),
       ),
     );
@@ -114,35 +141,6 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
         label: Text(label ?? value),
         selected: isActive,
         onSelected: (_) => setState(() => _filterType = value),
-      ),
-    );
-  }
-
-  void _showCreateProjectDialog() {
-    final nameController = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('新建项目'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameController,
-              decoration: InputDecoration(labelText: '项目名称'),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: Text('取消')),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('项目已创建')));
-            },
-            child: Text('创建'),
-          ),
-        ],
       ),
     );
   }

@@ -55,37 +55,10 @@ class NASAPowerService:
                         "data_period": "2020-2023",
                     }
                 
-                return self._get_fallback_data(lat, lon)
+                raise RuntimeError("NASA POWER returned no valid solar observations")
                 
-        except Exception as e:
-            # 返回模拟数据
-            return self._get_fallback_data(lat, lon)
-    
-    def _get_fallback_data(self, lat: float, lon: float) -> dict:
-        """获取备用数据（基于纬度的估算）"""
-        # 基于纬度简单估算GHI
-        import math
-        
-        # 纬度越低，GHI越高
-        abs_lat = abs(lat)
-        base_ghi = 2200  # 赤道附近
-        
-        # 每增加10度纬度，GHI下降约200
-        estimated_ghi = max(800, base_ghi - (abs_lat / 10) * 200)
-        
-        # 根据经度微调（模拟不同地区差异）
-        regional_factor = 1.0 + 0.1 * math.sin(lon * math.pi / 180)
-        estimated_ghi *= regional_factor
-        
-        return {
-            "ghi_annual": round(estimated_ghi, 1),
-            "dni_annual": round(estimated_ghi * 0.6, 1),
-            "dhi_annual": round(estimated_ghi * 0.4, 1),
-            "temp_avg": max(0, 30 - abs_lat / 3),
-            "data_source": "估算数据（NASA API暂时不可用）",
-            "data_period": "长期平均值",
-            "note": "这是基于纬度的估算值，仅供参考"
-        }
+        except Exception as exc:
+            raise RuntimeError("NASA POWER solar resource data is currently unavailable") from exc
 
 
 async def assess_solar_resource(lat: float, lon: float) -> dict:

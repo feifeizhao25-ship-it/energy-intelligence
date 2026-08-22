@@ -25,14 +25,6 @@ import {
 import { cn } from '@/lib/utils';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-// Mock data for chart
-const generateChartData = () => {
-    return Array.from({ length: 24 }, (_, i) => ({
-        time: `${i}:00`,
-        value: Math.floor(Math.random() * 100) + 20
-    }));
-};
-
 interface DiagnosisResult {
     summary: string;
     status: 'healthy' | 'warning' | 'critical';
@@ -61,25 +53,13 @@ interface ProjectDetailProps {
 export default function ProjectDetailPage({ params }: ProjectDetailProps) {
     const [project, setProject] = useState<any>(null);
     const [loading, setLoading] = useState(true);
-    const [chartData] = useState(generateChartData());
+    const [chartData, setChartData] = useState<Array<{ time: string; value: number }>>([]);
+    const [alerts, setAlerts] = useState<any[]>([]);
     const [diagnosisLoading, setDiagnosisLoading] = useState(false);
     const [diagnosis, setDiagnosis] = useState<DiagnosisResult | null>(null);
 
     useEffect(() => {
         const fetchProject = async () => {
-            // Keep the static mocks for immediate demo satisfaction if user clicks them
-            if (['1', '2', '3', '4'].includes(params.id)) {
-                const mocks: any = {
-                    '1': { id: '1', name: "北京朝阳分布式光伏示范站", type: "solar", status: "running", capacity: 120, location: "北京市朝阳区", createdAt: "2024-12-15", dailyGen: 450, totalGen: 12500, health: 98 },
-                    '2': { id: '2', name: "内蒙古辉腾锡勒风电场 III 期", type: "wind", status: "analyzing", capacity: 50000, location: "内蒙古呼和浩特", createdAt: "2024-12-20", dailyGen: 120000, totalGen: 4500000, health: 85 },
-                    '3': { id: '3', name: "上海临港工商业储能调峰站", type: "storage", status: "draft", capacity: 2000, location: "上海市浦东新区", createdAt: "2024-12-25", dailyGen: 0, totalGen: 0, health: 0 },
-                    '4': { id: '4', name: "广东惠州渔光互补项目", type: "solar", status: "warning", capacity: 5000, location: "广东省惠州市", createdAt: "2024-11-10", dailyGen: 18000, totalGen: 650000, health: 72 }
-                };
-                setProject(mocks[params.id]);
-                setLoading(false);
-                return;
-            }
-
             try {
                 // Fetch from real API
                 const res = await fetch(`/api/projects/${params.id}`);
@@ -87,6 +67,9 @@ export default function ProjectDetailPage({ params }: ProjectDetailProps) {
 
                 if (data.success) {
                     const p = data.data;
+                    const latestAnalysis = p.dailyAnalyses?.[0];
+                    const dailyEnergy = p.stations?.reduce((sum: number, station: any) => sum + (station.dailyEnergy || 0), 0);
+                    const totalEnergy = p.stations?.reduce((sum: number, station: any) => sum + (station.totalEnergy || 0), 0);
                     // Adapt DB data to UI model
                     setProject({
                         id: p.id,
@@ -96,11 +79,15 @@ export default function ProjectDetailPage({ params }: ProjectDetailProps) {
                         capacity: p.capacity,
                         location: p.parameters?.address || '未知位置',
                         createdAt: new Date(p.createdAt).toLocaleDateString(),
-                        // Mock generation data for now since we don't have real-time monitoring yet
-                        dailyGen: (p.capacity * 3.5).toFixed(1),
-                        totalGen: (p.capacity * 100).toFixed(1),
-                        health: 98
+                        dailyGen: p.stations?.length ? dailyEnergy : (latestAnalysis ? Number(latestAnalysis.generationActual) : null),
+                        totalGen: p.stations?.length ? totalEnergy : null,
+                        health: latestAnalysis ? Number(latestAnalysis.healthScore) : null
                     });
+                    setChartData((p.dailyAnalyses || []).slice().reverse().map((item: any) => ({
+                        time: new Date(item.analysisDate).toLocaleDateString('zh-CN', { month: 'numeric', day: 'numeric' }),
+                        value: Number(item.generationActual),
+                    })));
+                    setAlerts(p.alerts || []);
                 } else {
                     console.error('Project not found API error');
                 }
@@ -216,10 +203,9 @@ export default function ProjectDetailPage({ params }: ProjectDetailProps) {
                             <div className="p-2 bg-amber-50 rounded-lg">
                                 <Zap className="w-5 h-5 text-amber-500" />
                             </div>
-                            <span className="text-emerald-600 text-xs font-bold">+12%</span>
                         </div>
                         <div className="text-sm font-bold text-slate-500">今日发电量</div>
-                        <div className="text-2xl font-black text-slate-900">{project.dailyGen} <span className="text-xs font-bold text-slate-400">kWh</span></div>
+                        <div className="text-2xl font-black text-slate-900">{project.dailyGen ?? '待接入'} {project.dailyGen != null && <span className="text-xs font-bold text-slate-400">kWh</span>}</div>
                     </div>
                     <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
                         <div className="flex justify-between items-start mb-2">
@@ -228,7 +214,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailProps) {
                             </div>
                         </div>
                         <div className="text-sm font-bold text-slate-500">总发电量</div>
-                        <div className="text-2xl font-black text-slate-900">{(project.totalGen / 1000).toFixed(1)} <span className="text-xs font-bold text-slate-400">MWh</span></div>
+                        <div className="text-2xl font-black text-slate-900">{project.totalGen != null ? (project.totalGen / 1000).toFixed(1) : '待接入'} {project.totalGen != null && <span className="text-xs font-bold text-slate-400">MWh</span>}</div>
                     </div>
                     <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
                         <div className="flex justify-between items-start mb-2">
@@ -247,7 +233,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailProps) {
                             </div>
                         </div>
                         <div className="text-sm font-bold text-slate-500">系统健康度</div>
-                        <div className="text-2xl font-black text-slate-900">{project.health} <span className="text-xs font-bold text-slate-400">/ 100</span></div>
+                        <div className="text-2xl font-black text-slate-900">{project.health ?? '待诊断'} {project.health != null && <span className="text-xs font-bold text-slate-400">/ 100</span>}</div>
                     </div>
                 </div>
 
@@ -266,6 +252,9 @@ export default function ProjectDetailPage({ params }: ProjectDetailProps) {
                                 </select>
                             </div>
                             <div className="h-[300px] w-full">
+                                {chartData.length === 0 ? (
+                                    <div className="h-full flex items-center justify-center text-sm text-slate-400">尚无已采集的发电数据</div>
+                                ) : (
                                 <ResponsiveContainer width="100%" height="100%">
                                     <LineChart data={chartData}>
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
@@ -278,6 +267,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailProps) {
                                         <Line type="monotone" dataKey="value" stroke="#10b981" strokeWidth={3} dot={false} activeDot={{ r: 6, fill: '#10b981' }} />
                                     </LineChart>
                                 </ResponsiveContainer>
+                                )}
                             </div>
                         </div>
 
@@ -285,22 +275,16 @@ export default function ProjectDetailPage({ params }: ProjectDetailProps) {
                         <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
                             <h3 className="text-lg font-bold text-slate-900 mb-4">最近告警 / 提示</h3>
                             <div className="space-y-4">
-                                <div className="flex items-start gap-4 p-4 bg-amber-50 rounded-xl border border-amber-100">
-                                    <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-                                    <div>
-                                        <div className="text-sm font-bold text-slate-900">逆变器 #03 效率偏低</div>
-                                        <div className="text-xs text-slate-500 mt-1">检测到 3 号逆变器在最近 2 小时内转换效率低于预期值 (-15%)，建议检查散热情况。</div>
-                                        <div className="text-amber-600 text-[10px] font-bold mt-2">刚刚</div>
+                                {alerts.length === 0 ? <div className="p-6 text-center text-sm text-slate-400 bg-slate-50 rounded-xl">暂无真实告警记录</div> : alerts.map(alert => (
+                                    <div key={alert.id} className="flex items-start gap-4 p-4 bg-amber-50 rounded-xl border border-amber-100">
+                                        <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                                        <div>
+                                            <div className="text-sm font-bold text-slate-900">{alert.title}</div>
+                                            <div className="text-xs text-slate-500 mt-1">{alert.description}</div>
+                                            {alert.recommendation && <div className="text-xs text-amber-700 mt-2">建议：{alert.recommendation}</div>}
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="flex items-start gap-4 p-4 bg-slate-50 rounded-xl border border-slate-100">
-                                    <CheckCircle className="w-5 h-5 text-slate-400 shrink-0 mt-0.5" />
-                                    <div>
-                                        <div className="text-sm font-bold text-slate-900">系统自检完成</div>
-                                        <div className="text-xs text-slate-500 mt-1">每日例行巡检已完成，未发现重大安全隐患。</div>
-                                        <div className="text-slate-400 text-[10px] font-bold mt-2">3小时前</div>
-                                    </div>
-                                </div>
+                                ))}
                             </div>
                         </div>
                     </div>

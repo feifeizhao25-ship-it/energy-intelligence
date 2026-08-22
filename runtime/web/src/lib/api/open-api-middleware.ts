@@ -33,21 +33,6 @@ interface RateLimitEntry {
 // API 调用日志
 const apiLogsDb: { timestamp: Date; keyId: string; endpoint: string; method: string; status: number; latency: number }[] = [];
 
-// 预置测试 API Key
-if (!apiKeysDb.has('xny_pk_demo_1234567890abcdef')) {
-    apiKeysDb.set('xny_pk_demo_1234567890abcdef', {
-        id: 'key-demo-001',
-        key: 'xny_pk_demo_1234567890abcdef',
-        name: 'Demo API Key',
-        userId: 'dev-master-id',
-        permissions: ['read:projects', 'read:monitoring', 'read:papers', 'read:analytics'],
-        rateLimit: 100,
-        createdAt: new Date(),
-        status: 'active',
-        usageCount: 0
-    });
-}
-
 /**
  * 验证 API Key
  */

@@ -21,7 +21,7 @@ function withCache<T extends (...args: any[]) => Promise<any>>(fn: T): T {
   }) as T;
 }
 
-const BASE_URL = 'http://export.arxiv.org/api/query';
+const BASE_URL = 'https://export.arxiv.org/api/query';
 
 /**
  * 搜索arXiv论文
@@ -109,7 +109,11 @@ function parseArxivXML(xmlText: string): Paper[] {
             pdfUrl: pdfMatch ? pdfMatch[1] : undefined,
             tldr: undefined,
             venue: `arXiv:${categories[0] || 'general'}`,
-            doi: doiMatch ? doiMatch[1] : undefined
+            doi: doiMatch ? doiMatch[1] : undefined,
+            sourceProvider: 'arXiv',
+            sourceUrl: idMatch[1],
+            retrievedAt: new Date().toISOString(),
+            evidenceStatus: 'provider_verified'
           });
         }
       } catch (parseError) {
@@ -210,28 +214,7 @@ export const searchTopicPapers = withCache(async (
  * 获取arXiv统计信息
  */
 export const getArxivStats = withCache(async () => {
-  try {
-    // 获取一些基本统计信息（模拟）
-    const stats = {
-      totalPapers: 2400000, // 估计总数
-      monthlySubmissions: 120000, // 月度提交量
-      categories: {
-        'physics': 800000,
-        'mathematics': 600000,
-        'computer-science': 400000,
-        'biology': 200000,
-        'finance': 100000,
-        'statistics': 100000
-      },
-      updatedAt: new Date().toISOString()
-    };
-
-    return stats;
-
-  } catch (error) {
-    console.error('获取arXiv统计信息失败:', error);
-    throw new Error('获取统计信息失败，请稍后重试');
-  }
+  throw new Error('arXiv 未在当前接口提供可核验的全站统计数据');
 });
 
 /**

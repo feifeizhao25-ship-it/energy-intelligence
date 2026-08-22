@@ -13,7 +13,10 @@ import { getApiStats } from '@/lib/api/open-api-middleware';
 
 export async function GET(req: NextRequest) {
     const session = await getServerSession(authOptions);
-    const userId = session?.user?.id || 'dev-master-id';
+    if (!session?.user?.id) {
+        return NextResponse.json({ error: 'UNAUTHORIZED', message: '请先登录' }, { status: 401 });
+    }
+    const userId = session.user.id;
 
     const url = new URL(req.url);
     const keyId = url.searchParams.get('keyId');

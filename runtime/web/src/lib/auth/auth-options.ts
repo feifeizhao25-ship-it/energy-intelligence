@@ -12,27 +12,12 @@ export const authOptions: NextAuthOptions = {
                 code: { label: "Code", type: "text" },
             },
             async authorize(credentials) {
-                console.log('--- Auth Attempt ---', credentials?.phone);
-
-                // 1. 🚀 超级测试账号硬编码逻辑 (防止数据库连接失败阻碍演示)
-                if (credentials?.phone === '13888888888' && credentials?.code === '123456') {
-                    console.log('Auth Success: Master Account bypassing DB');
-                    return {
-                        id: 'dev-master-id',
-                        name: '超级测试员',
-                        email: 'test@xinnengyuan.ai',
-                        phone: '13888888888',
-                        plan: 'ENTERPRISE',
-                        profileCompleted: true
-                    };
-                }
-
                 if (!credentials?.phone || !credentials?.code) {
                     throw new Error("请提供手机号和验证码");
                 }
 
                 try {
-                    // 2. 正常逻辑：验证数据库验证码 (用于其他手机号测试)
+                    // 验证数据库中未使用且未过期的验证码。
                     const verification = await prisma.verificationCode.findFirst({
                         where: {
                             phone: credentials.phone,
@@ -53,7 +38,7 @@ export const authOptions: NextAuthOptions = {
                         data: { used: true },
                     });
 
-                    // 3. 查找或创建用户
+                    // 查找或创建用户。
                     let user = await prisma.user.findFirst({
                         where: { phone: credentials.phone }
                     });
@@ -81,7 +66,6 @@ export const authOptions: NextAuthOptions = {
                     };
                 } catch (error: any) {
                     console.error('Core Auth Error:', error.message);
-                    // 演示目的：如果数据库挂了但不是测试账号，报错友好提示
                     throw new Error(error.message || "身份验证暂时不可用");
                 }
             },

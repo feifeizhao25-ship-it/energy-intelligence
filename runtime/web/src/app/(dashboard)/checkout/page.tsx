@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -30,7 +30,6 @@ export default function CheckoutPage() {
 
     const [method, setMethod] = useState<'wechat' | 'alipay'>('wechat');
     const [isProcessing, setIsProcessing] = useState(false);
-    const [step, setStep] = useState(1); // 1: confirm, 2: scan, 3: success
 
     const plan = PLANS_DATA[planId] || PLANS_DATA.PRO;
     const price = billing === 'yearly' ? plan.yearly : plan.monthly;
@@ -40,15 +39,7 @@ export default function CheckoutPage() {
         setIsProcessing(true);
         setTimeout(() => {
             setIsProcessing(false);
-            setStep(2);
-        }, 1500);
-    };
-
-    const handleComplete = () => {
-        setStep(3);
-        setTimeout(() => {
-            router.push('/dashboard');
-        }, 3000);
+        }, 500);
     };
 
     return (
@@ -75,7 +66,7 @@ export default function CheckoutPage() {
                 {/* Left: Summary & Payment (Col 1-2) */}
                 <div className="lg:col-span-2 space-y-8">
                     <AnimatePresence mode="wait">
-                        {step === 1 && (
+                        {(
                             <motion.div
                                 key="step1"
                                 initial={{ opacity: 0, y: 10 }}
@@ -147,66 +138,12 @@ export default function CheckoutPage() {
                                 <div className="flex gap-4 p-5 rounded-2xl bg-amber-50 border border-amber-100">
                                     <Info className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
                                     <p className="text-amber-800 text-sm leading-relaxed">
-                                        本系统目前处于生产演练阶段，点击支付将进行<b>模拟支付流程</b>。不会产生真实费用。
+                                        支付通道尚未完成商户配置，当前不会扣款，也不会开通会员。请联系销售获取正式合同与付款方式。
                                     </p>
                                 </div>
                             </motion.div>
                         )}
 
-                        {step === 2 && (
-                            <motion.div
-                                key="step2"
-                                initial={{ opacity: 0, scale: 0.95 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                className="bg-white rounded-[2rem] border border-slate-200 p-12 text-center shadow-lg"
-                            >
-                                <div className="space-y-6">
-                                    <div className="text-lg font-bold">请使用{method === 'wechat' ? '微信' : '支付宝'}扫码支付</div>
-                                    <div className="w-64 h-64 bg-slate-100 mx-auto rounded-3xl flex items-center justify-center border-4 border-slate-50 relative overflow-hidden group">
-                                        {/* Placeholder for QR Code */}
-                                        <div className="absolute inset-0 bg-blue-600/5 group-hover:bg-transparent transition-colors"></div>
-                                        <Image
-                                            src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=MOCK_PAY_${Date.now()}`}
-                                            width={200}
-                                            height={200}
-                                            alt="QR Code"
-                                            className="relative z-10"
-                                        />
-                                    </div>
-                                    <div className="text-3xl font-black text-blue-600">¥{price}.00</div>
-                                    <div className="text-slate-400 text-sm flex items-center justify-center gap-2">
-                                        <Loader2 className="w-4 h-4 animate-spin" />
-                                        正在等待支付结果反馈...
-                                    </div>
-                                    <button
-                                        onClick={handleComplete}
-                                        className="mt-8 px-10 py-4 bg-slate-900 text-white font-black rounded-2xl hover:bg-slate-800 transition-all shadow-xl shadow-slate-200"
-                                    >
-                                        模拟支付成功
-                                    </button>
-                                </div>
-                            </motion.div>
-                        )}
-
-                        {step === 3 && (
-                            <motion.div
-                                key="step3"
-                                initial={{ opacity: 0, scale: 0.95 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                className="bg-white rounded-[2rem] border border-slate-200 p-20 text-center shadow-xl space-y-6"
-                            >
-                                <div className="w-24 h-24 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-8 animate-bounce">
-                                    <CheckCircle2 className="w-12 h-12" />
-                                </div>
-                                <h2 className="text-4xl font-black">支付成功！</h2>
-                                <p className="text-lg text-slate-500 max-w-sm mx-auto">
-                                    欢迎您的加入。您的 {plan.name} 已立即生效，现在即可使用全部高级功能。
-                                </p>
-                                <div className="pt-8 text-slate-400 text-sm">
-                                    正在为您跳转至仪表板...
-                                </div>
-                            </motion.div>
-                        )}
                     </AnimatePresence>
                 </div>
 
@@ -234,12 +171,12 @@ export default function CheckoutPage() {
 
                         <button
                             onClick={handlePay}
-                            disabled={isProcessing || step !== 1}
+                            disabled={isProcessing}
                             className="w-full mt-8 bg-blue-600 hover:bg-blue-500 text-white font-black py-5 rounded-2xl shadow-xl shadow-blue-200 flex items-center justify-center gap-3 transition-all active:scale-95 disabled:opacity-50"
                         >
                             {isProcessing ? <Loader2 className="w-6 h-6 animate-spin" /> : (
                                 <>
-                                    立即支付
+                                    联系销售开通
                                     <ChevronRight className="w-5 h-5" />
                                 </>
                             )}

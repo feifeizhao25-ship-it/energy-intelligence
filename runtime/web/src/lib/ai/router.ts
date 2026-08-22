@@ -29,18 +29,12 @@ const siliconFlowKey = process.env.SILICONFLOW_API_KEY;
 export async function callAI(req: AIRequest) {
     const model = req.model || 'glm-4-plus';
 
-    // 如果没有配置 SiliconFlow，开发环境下模拟返回
-    if (!siliconFlowKey && process.env.NODE_ENV === 'development') {
-        console.log(`[AI MOCK] Calling ${model} with ${req.messages.length} messages`);
-        if (req.stream) {
-            // 返回一个简单的模拟流
-            return mockStreamResponse(model);
-        }
-        return mockResponse(model, req);
+    if (!siliconFlowKey) {
+        throw new Error('SILICONFLOW_API_KEY 未配置，AI 服务已拒绝生成替代内容');
     }
 
     const client = new OpenAI({
-        apiKey: siliconFlowKey || 'mock-key',
+        apiKey: siliconFlowKey,
         baseURL: "https://api.siliconflow.cn/v1",
     });
 
@@ -77,14 +71,12 @@ export async function callAI(req: AIRequest) {
  * 使用 BAAI/bge-m3 模型，支持 1024 维向量
  */
 export async function createEmbedding(input: string | string[]) {
-    // 模拟环境
-    if (!siliconFlowKey && process.env.NODE_ENV === 'development') {
-        const mockVector = new Array(1024).fill(0).map(() => Math.random());
-        return Array.isArray(input) ? input.map(() => mockVector) : [mockVector];
+    if (!siliconFlowKey) {
+        throw new Error('SILICONFLOW_API_KEY 未配置，向量服务已拒绝生成替代向量');
     }
 
     const client = new OpenAI({
-        apiKey: siliconFlowKey || 'mock-key',
+        apiKey: siliconFlowKey,
         baseURL: "https://api.siliconflow.cn/v1",
     });
 

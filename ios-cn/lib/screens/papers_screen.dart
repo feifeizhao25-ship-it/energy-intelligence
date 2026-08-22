@@ -30,7 +30,10 @@ class _PapersScreenState extends State<PapersScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('论文库'), backgroundColor: Colors.blue[700]),
+      appBar: AppBar(
+        title: const Text('论文库'),
+        backgroundColor: Colors.blue[700],
+      ),
       body: Column(
         children: [
           Padding(
@@ -40,7 +43,9 @@ class _PapersScreenState extends State<PapersScreen> {
               decoration: InputDecoration(
                 hintText: '搜索论文...',
                 prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 filled: true,
                 fillColor: Colors.grey[100],
               ),
@@ -71,17 +76,35 @@ class _PapersScreenState extends State<PapersScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(paper['title'], style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(
+              paper['title'],
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 8),
-            Text((paper['authors'] as List).join(', '), style: TextStyle(color: Colors.grey[600])),
+            Text(
+              (paper['authors'] as List).join(', '),
+              style: TextStyle(color: Colors.grey[600]),
+            ),
             const SizedBox(height: 8),
-            Text(paper['abstract'], maxLines: 3, overflow: TextOverflow.ellipsis, style: TextStyle(color: Colors.grey[700])),
+            Text(
+              paper['abstract'],
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(color: Colors.grey[700]),
+            ),
             const SizedBox(height: 12),
             Row(
               children: [
                 Chip(label: Text('${paper['year']}')),
                 const SizedBox(width: 8),
-                ...(paper['tags'] as List).take(2).map((tag) => Chip(label: Text('$tag'), backgroundColor: Colors.blue[50])),
+                ...(paper['tags'] as List)
+                    .take(2)
+                    .map(
+                      (tag) => Chip(
+                        label: Text('$tag'),
+                        backgroundColor: Colors.blue[50],
+                      ),
+                    ),
                 const Spacer(),
                 IconButton(icon: const Icon(Icons.download), onPressed: () {}),
               ],

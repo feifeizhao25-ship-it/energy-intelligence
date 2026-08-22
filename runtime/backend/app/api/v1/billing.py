@@ -87,7 +87,12 @@ async def customer_portal(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    customer_id = user.stripe_customer_id or "cus_demo"
+    if not user.stripe_customer_id:
+        raise HTTPException(
+            status_code=409,
+            detail="No billing customer exists. Complete checkout before opening the portal.",
+        )
+    customer_id = user.stripe_customer_id
     try:
         url = stripe_service.create_billing_portal_session(customer_id)
         return {"url": url}

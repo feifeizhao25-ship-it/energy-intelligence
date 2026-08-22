@@ -1,4 +1,5 @@
 from typing import Optional
+from pydantic import BaseModel, Field
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
@@ -12,6 +13,10 @@ from app.services.ai_service import ai_assistant
 import json
 
 router = APIRouter(prefix="/ai")
+
+
+class MobileChatRequest(BaseModel):
+    message: str = Field(..., min_length=1, max_length=4000)
 
 SYSTEM_PROMPT = """You are the Energy Intelligence AI Assistant, an expert in global renewable energy.
 You are fluent in solar PV, wind energy, energy storage, and project finance.
@@ -32,6 +37,18 @@ async def chat(message: str, project_id: Optional[str] = None, user_id: str = De
         media_type="text/event-stream",
         headers={"X-Accel-Buffering": "no"},
     )
+
+
+@router.post("/chat-json")
+async def chat_json(
+    body: MobileChatRequest,
+    user_id: str = Depends(get_current_user_id),
+):
+    """Authenticated non-streaming chat response for mobile clients."""
+    response = await ai_assistant.chat_openai(body.message, SYSTEM_PROMPT)
+    if not response or not response.strip():
+        raise HTTPException(status_code=503, detail="AI assistant is unavailable")
+    return {"message": response}
 
 
 @router.post("/analyze")

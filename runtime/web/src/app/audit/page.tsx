@@ -13,6 +13,7 @@ import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/auth-options';
+import { redirect } from 'next/navigation';
 
 async function getSnapshots(userId: string) {
     try {
@@ -30,7 +31,8 @@ async function getSnapshots(userId: string) {
 
 export default async function AuditLibraryPage() {
     const session = await getServerSession(authOptions);
-    const userId = session?.user?.id || 'dev-master-id';
+    if (!session?.user?.id) redirect('/login');
+    const userId = session.user.id;
     const snapshots = await getSnapshots(userId);
 
     return (
@@ -75,13 +77,13 @@ export default async function AuditLibraryPage() {
                         icon={<FileText className="text-blue-500" />}
                     />
                     <StatMiniCard
-                        label="系统合规度"
-                        value="99.9%"
+                        label="审计口径"
+                        value="版本化"
                         icon={<BadgeCheck className="text-green-500" />}
                     />
                     <StatMiniCard
                         label="数据可追溯性"
-                        value="100%"
+                        value="全量留痕"
                         icon={<Zap className="text-yellow-500" />}
                     />
                 </div>

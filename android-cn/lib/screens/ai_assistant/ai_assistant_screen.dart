@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
+import '../../services/api_service.dart';
 
 class Message {
   final String content;
@@ -37,57 +38,18 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
       _messageController.clear();
     });
 
-    await Future.delayed(Duration(milliseconds: 800));
-
-    String toolName = '';
-    String response = '';
-
-    if (text.contains('光伏') || text.contains('太阳')) {
-      toolName = '光伏资源评估';
-      response = '正在为您查询山东地区的光伏资源数据...\n\n' +
-          '📊 光伏资源评估结果：\n' +
-          '• 年均GHI: 1456.8 kWh/m²\n' +
-          '• 年均DNI: 1876.5 kWh/m²\n' +
-          '• 资源等级: B级\n' +
-          '• 建议: 该地区属于二类资源区，光照条件良好，建议采用固定式安装方案。';
-    } else if (text.contains('收益') || text.contains('财务') || text.contains('计算')) {
-      toolName = '财务计算';
-      response = '正在为您计算项目财务指标...\n\n' +
-          '💰 财务模型计算结果：\n' +
-          '• 项目IRR: 12.47%\n' +
-          '• NPV (25年): 45.23百万元\n' +
-          '• LCOE: ¥0.2186/kWh\n' +
-          '• 投资回收期: 8.2年\n' +
-          '该项目具有良好的经济性。';
-    } else if (text.contains('故障') || text.contains('诊断') || text.contains('运维')) {
-      toolName = '健康诊断';
-      response = '正在分析设备运行状态...\n\n' +
-          '⚠️ 诊断结果：\n' +
-          '• 综合健康评分: 82分\n' +
-          '• 关键发现: 发现3处需要关注的问题\n' +
-          '• 逆变器: 输出功率下降15%\n' +
-          '• 建议: 立即进行PCS-12号机组故障诊断与维修，预期可恢复月度收益4375元。';
-    } else {
-      response = '我是新能源智库的AI助手，可以帮助您：\n\n' +
-          '✅ 查询光伏/风电资源评估\n' +
-          '✅ 计算项目财务指标\n' +
-          '✅ 诊断电站设备状况\n' +
-          '✅ 提供运维优化建议\n\n' +
-          '请告诉我您需要什么帮助，比如"查询光伏资源"或"计算项目收益"。';
-    }
-
-    await Future.delayed(Duration(milliseconds: 1200));
-
-    if (toolName.isNotEmpty) {
-      setState(() {
-        _messages.add(Message(content: '正在$toolName...', isUser: false, toolName: toolName));
-      });
-      await Future.delayed(Duration(milliseconds: 2000));
-    }
-
+    final result = await ApiService.chat(text);
+    if (!mounted) return;
+    final response = result['message'] as String?;
     setState(() {
-      _messages.removeWhere((m) => m.toolName != null);
-      _messages.add(Message(content: response, isUser: false));
+      _messages.add(
+        Message(
+          content: response?.trim().isNotEmpty == true
+              ? response!
+              : (result['error'] as String? ?? 'AI服务暂时不可用，请稍后重试。'),
+          isUser: false,
+        ),
+      );
       _isProcessing = false;
     });
 
@@ -120,7 +82,8 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                 : ListView.builder(
                     padding: EdgeInsets.all(16),
                     itemCount: _messages.length,
-                    itemBuilder: (context, index) => _buildMessage(_messages[index]),
+                    itemBuilder: (context, index) =>
+                        _buildMessage(_messages[index]),
                   ),
           ),
           _buildInputArea(),
@@ -152,20 +115,28 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
               spacing: 8,
               runSpacing: 8,
               children: _quickPrompts
-                  .map((prompt) => GestureDetector(
-                        onTap: () => _sendMessage(prompt),
-                        child: Container(
-                          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: AppTheme.primaryColor),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            prompt,
-                            style: TextStyle(fontSize: 12, color: AppTheme.primaryColor),
+                  .map(
+                    (prompt) => GestureDetector(
+                      onTap: () => _sendMessage(prompt),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: AppTheme.primaryColor),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          prompt,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppTheme.primaryColor,
                           ),
                         ),
-                      ))
+                      ),
+                    ),
+                  )
                   .toList(),
             ),
           ),
@@ -211,7 +182,9 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
     return Padding(
       padding: EdgeInsets.only(bottom: 12),
       child: Row(
-        mainAxisAlignment: message.isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment: message.isUser
+            ? MainAxisAlignment.end
+            : MainAxisAlignment.start,
         children: [
           if (!message.isUser)
             Padding(
@@ -219,7 +192,10 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
               child: Container(
                 width: 32,
                 height: 32,
-                decoration: BoxDecoration(color: AppTheme.primaryColor, shape: BoxShape.circle),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor,
+                  shape: BoxShape.circle,
+                ),
                 child: Icon(Icons.smart_toy, color: Colors.white, size: 18),
               ),
             ),
@@ -227,7 +203,9 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
             child: Container(
               padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
-                color: message.isUser ? AppTheme.primaryColor : Color(0xFFF1F5F9),
+                color: message.isUser
+                    ? AppTheme.primaryColor
+                    : Color(0xFFF1F5F9),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
@@ -259,8 +237,13 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
               decoration: InputDecoration(
                 hintText: '输入问题或指令...',
                 prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(24)),
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
               ),
               enabled: !_isProcessing,
             ),
@@ -268,7 +251,9 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
           SizedBox(width: 8),
           FloatingActionButton(
             mini: true,
-            onPressed: _isProcessing ? null : () => _sendMessage(_messageController.text),
+            onPressed: _isProcessing
+                ? null
+                : () => _sendMessage(_messageController.text),
             child: Icon(Icons.send),
           ),
         ],

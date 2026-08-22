@@ -11,47 +11,60 @@ class BarChart extends StatelessWidget {
   final String? title;
   final String? yAxisLabel;
 
+  // Support both `data` (alias for values) and `values`
+  final List<double>? data;
+
   const BarChart({
     Key? key,
-    required this.values,
-    required this.labels,
-    required this.barColor,
+    this.values = const [],
+    this.labels = const [],
+    this.barColor = const Color(0xFF1D4ED8),
     this.gradientStartColor,
     this.gradientEndColor,
     this.maxValue = 0,
     this.title,
     this.yAxisLabel,
+    this.data,
   }) : super(key: key);
+
+  List<double> get _values => data ?? values;
+  List<String> get _labels {
+    if (labels.isNotEmpty) return labels;
+    return List.generate(_values.length, (i) => '${i + 1}');
+  }
 
   @override
   Widget build(BuildContext context) {
-    final max = maxValue > 0 ? maxValue : (values.isNotEmpty ? values.reduce(math.max) : 100.0);
+    final vals = _values;
+    final max = maxValue > 0
+        ? maxValue
+        : (vals.isNotEmpty ? vals.reduce(math.max) : 100.0);
 
     return Card(
       elevation: 1,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (title != null) ...[
               Text(
                 title!,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF0F172A),
                 ),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
             ],
             SizedBox(
               height: 240,
               child: CustomPaint(
                 painter: _BarChartPainter(
-                  values: values,
-                  labels: labels,
+                  values: vals,
+                  labels: _labels,
                   barColor: barColor,
                   gradientStartColor: gradientStartColor,
                   gradientEndColor: gradientEndColor,
@@ -88,12 +101,17 @@ class _BarChartPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     if (values.isEmpty) return;
 
-    final padding = EdgeInsets.only(left: 40, right: 20, top: 20, bottom: 40);
+    final padding = const EdgeInsets.only(
+      left: 40,
+      right: 20,
+      top: 20,
+      bottom: 40,
+    );
     final chartWidth = size.width - padding.left - padding.right;
     final chartHeight = size.height - padding.top - padding.bottom;
 
     final gridLinePaint = Paint()
-      ..color = Color(0xFFE2E8F0)
+      ..color = const Color(0xFFE2E8F0)
       ..strokeWidth = 1;
 
     for (int i = 1; i < 5; i++) {
@@ -139,7 +157,7 @@ class _BarChartPainter extends CustomPainter {
       final valueTextPainter = TextPainter(
         text: TextSpan(
           text: value.toStringAsFixed(0),
-          style: TextStyle(
+          style: const TextStyle(
             color: Color(0xFF475569),
             fontSize: 11,
             fontWeight: FontWeight.w500,
@@ -150,10 +168,7 @@ class _BarChartPainter extends CustomPainter {
       valueTextPainter.layout();
       valueTextPainter.paint(
         canvas,
-        Offset(
-          x + barWidth / 2 - valueTextPainter.width / 2,
-          y - 18,
-        ),
+        Offset(x + barWidth / 2 - valueTextPainter.width / 2, y - 18),
       );
     }
 
@@ -161,21 +176,19 @@ class _BarChartPainter extends CustomPainter {
       final labelTextPainter = TextPainter(
         text: TextSpan(
           text: labels[i],
-          style: TextStyle(
-            color: Color(0xFF64748B),
-            fontSize: 11,
-          ),
+          style: const TextStyle(color: Color(0xFF64748B), fontSize: 11),
         ),
         textDirection: TextDirection.ltr,
       );
       labelTextPainter.layout();
-      final x = padding.left + (i + 0.5) * barSpacing - labelTextPainter.width / 2;
+      final x =
+          padding.left + (i + 0.5) * barSpacing - labelTextPainter.width / 2;
       final y = size.height - padding.bottom + 8;
       labelTextPainter.paint(canvas, Offset(x, y));
     }
 
     final axisLinePaint = Paint()
-      ..color = Color(0xFFCBD5E1)
+      ..color = const Color(0xFFCBD5E1)
       ..strokeWidth = 1;
 
     canvas.drawLine(

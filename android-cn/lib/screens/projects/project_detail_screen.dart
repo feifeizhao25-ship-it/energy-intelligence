@@ -19,9 +19,7 @@ class ProjectDetailScreen extends StatelessWidget {
             expandedHeight: 180,
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
-                decoration: BoxDecoration(
-                  gradient: _getProjectGradient(),
-                ),
+                decoration: BoxDecoration(gradient: _getProjectGradient()),
                 child: Padding(
                   padding: EdgeInsets.all(20),
                   child: Column(
@@ -32,10 +30,14 @@ class ProjectDetailScreen extends StatelessWidget {
                         width: 56,
                         height: 56,
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
+                          color: Colors.white.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Icon(_getTypeIcon(), color: Colors.white, size: 28),
+                        child: Icon(
+                          _getTypeIcon(),
+                          color: Colors.white,
+                          size: 28,
+                        ),
                       ),
                       SizedBox(height: 12),
                       Text(
@@ -76,7 +78,14 @@ class ProjectDetailScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('快速操作', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+        Text(
+          '快速操作',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF0F172A),
+          ),
+        ),
         SizedBox(height: 12),
         GridView.count(
           crossAxisCount: 2,
@@ -89,31 +98,33 @@ class ProjectDetailScreen extends StatelessWidget {
               title: '资源评估',
               icon: Icons.terrain,
               color: Color(0xFFFCD34D),
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => SolarResourceScreen()),
-              ),
+              onTap: () => Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => SolarResourceScreen())),
             ),
             _buildActionCard(
               title: '收益计算',
               icon: Icons.calculate,
               color: Color(0xFF10B981),
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => SolarFinanceScreen()),
-              ),
+              onTap: () => Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => SolarFinanceScreen())),
             ),
             _buildActionCard(
               title: '运维诊断',
               icon: Icons.favorite,
               color: Color(0xFFEF4444),
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => HealthScreen()),
-              ),
+              onTap: () => Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => HealthScreen())),
             ),
             _buildActionCard(
               title: 'AI分析',
               icon: Icons.smart_toy,
               color: Color(0xFF3B82F6),
-              onTap: () => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('功能开发中'))),
+              onTap: () => ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text('功能开发中'))),
             ),
           ],
         ),
@@ -139,11 +150,18 @@ class ProjectDetailScreen extends StatelessWidget {
             Container(
               width: 44,
               height: 44,
-              decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
               child: Icon(icon, color: color, size: 22),
             ),
             SizedBox(height: 8),
-            Text(title, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600), textAlign: TextAlign.center),
+            Text(
+              title,
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+              textAlign: TextAlign.center,
+            ),
           ],
         ),
       ),
@@ -154,7 +172,14 @@ class ProjectDetailScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('项目信息', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+        Text(
+          '项目信息',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF0F172A),
+          ),
+        ),
         SizedBox(height: 12),
         _buildInfoRow('类型', project.projectTypeLabel),
         _buildInfoRow('状态', project.statusLabel),
@@ -173,7 +198,14 @@ class ProjectDetailScreen extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
-          Text(value, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF0F172A))),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF0F172A),
+            ),
+          ),
         ],
       ),
     );
@@ -183,7 +215,14 @@ class ProjectDetailScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('项目历程', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+        Text(
+          '项目历程',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF0F172A),
+          ),
+        ),
         SizedBox(height: 12),
         _buildTimelineItem(
           title: '项目创建',
@@ -220,7 +259,10 @@ class ProjectDetailScreen extends StatelessWidget {
           Container(
             width: 40,
             height: 40,
-            decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(20)),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(20),
+            ),
             child: Icon(icon, color: color, size: 20),
           ),
           SizedBox(width: 12),
@@ -228,7 +270,10 @@ class ProjectDetailScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                Text(
+                  title,
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                ),
                 Text(
                   '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}',
                   style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
@@ -243,19 +288,31 @@ class ProjectDetailScreen extends StatelessWidget {
 
   IconData _getTypeIcon() {
     switch (project.projectType) {
-      case 'solar_pv': return Icons.wb_sunny;
-      case 'wind': return Icons.cloud;
-      case 'storage': return Icons.battery_charging_full;
-      default: return Icons.energy_savings_leaf;
+      case 'solar_pv':
+        return Icons.wb_sunny;
+      case 'wind':
+        return Icons.cloud;
+      case 'storage':
+        return Icons.battery_charging_full;
+      default:
+        return Icons.energy_savings_leaf;
     }
   }
 
   LinearGradient _getProjectGradient() {
     switch (project.projectType) {
-      case 'solar_pv': return AppTheme.solarGradient();
-      case 'wind': return AppTheme.windGradient();
-      case 'storage': return LinearGradient(colors: [Color(0xFF8B5CF6), Color(0xFF6366F1)], begin: Alignment.topLeft, end: Alignment.bottomRight);
-      default: return AppTheme.primaryGradient();
+      case 'solar_pv':
+        return AppTheme.solarGradient();
+      case 'wind':
+        return AppTheme.windGradient();
+      case 'storage':
+        return LinearGradient(
+          colors: [Color(0xFF8B5CF6), Color(0xFF6366F1)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        );
+      default:
+        return AppTheme.primaryGradient();
     }
   }
 }

@@ -42,6 +42,8 @@ ROOT = Path(__file__).resolve().parent.parent
 INTL_SRCS = [
     ROOT / "runtime" / "web-int" / "src",
     ROOT / "web-global" / "src",
+    ROOT / "android-global" / "lib",
+    ROOT / "ios-global" / "lib",
 ]
 CN_SRCS = [
     ROOT / "runtime" / "web" / "src",
@@ -49,10 +51,10 @@ CN_SRCS = [
 ]
 ALLOWLIST_FILE = ROOT / "scripts" / "language_isolation.allowlist"
 
-SOURCE_EXTS = {".ts", ".tsx", ".js", ".jsx"}
+SOURCE_EXTS = {".ts", ".tsx", ".js", ".jsx", ".dart"}
 JSX_EXTS = {".tsx", ".jsx"}
 
-SKIP_DIR_NAMES = {"node_modules", ".next", "dist", "build", "__tests__", "i18n", "locales"}
+SKIP_DIR_NAMES = {"node_modules", ".next", "dist", "build", "__tests__", "i18n", "l10n", "locales"}
 CJK_RE = re.compile(r"[一-鿿]")
 
 # import 路径豁免:剥掉模块说明符后再查 CJK

@@ -1,75 +1,56 @@
-const copy = {
- title: 'Advanced Energy Calculators',
- subtitle: 'Nine specialist calculators for markets, distributed energy, storage and hybrid projects.',
- dataSource: 'Calculations run through the Skills API. Validate source dates and project assumptions before relying on results.',
- executeBtn: 'Run',
- computing: 'Calculating...',
- results: 'Calculation Results',
-};
- { id: 'SK-101', name: 'Carbon Market Cost', icon: '🌍', color: 'emerald',
- desc: 'Compare EU ETS exposure and eligible carbon offsets.',
- params: [
- { key: 'annual_emissions_tons', label: 'Annual Emissions (tCO₂e)', type: 'number', default: 100000 },
- { key: 'eu_ets_price_eur', label: 'EU ETS Price (EUR/tCO₂e)', type: 'number', default: 85 },
- { key: 'ccer_price_cny', label: 'Offset Price (CNY/tCO₂e)', type: 'number', default: 80 },
- { key: 'offset_ratio', label: 'Eligible Offset Share', type: 'number', step: 0.01, default: 0.05 },
- ] },
- { id: 'SK-102', name: 'Virtual Power Plant Aggregation', icon: '⚡', color: 'blue',
- desc: 'Estimate dispatchable VPP capacity and market revenue.',
- params: [
- { key: 'der_count', label: 'DER Count', type: 'number', default: 1000 },
- { key: 'avg_capacity_kw', label: 'Average DER Capacity (kW)', type: 'number', default: 10 },
- { key: 'participation_rate', label: 'Participation Rate', type: 'number', step: 0.05, default: 0.6 },
- { key: 'market_price_cny_kwh', label: 'Dispatch Price (CNY/kWh)', type: 'number', step: 0.01, default: 0.5 },
- ] },
- { id: 'SK-103', name: 'Green Hydrogen LCOH', icon: '🟢', color: 'green',
- desc: 'Estimate levelized hydrogen cost from electrolyzer and electricity assumptions.',
- params: [
- { key: 'capacity_mw', label: 'Electrolyzer Capacity (MW)', type: 'number', default: 100 },
- { key: 'capacity_factor', label: 'Capacity Factor', type: 'number', step: 0.05, default: 0.6 },
- { key: 'electricity_cost_cny_kwh', label: 'Electricity Cost (CNY/kWh)', type: 'number', step: 0.01, default: 0.2 },
- { key: 'capex_per_kw', label: 'CAPEX (CNY/kW)', type: 'number', default: 3500 },
- ] },
- { id: 'SK-104', name: 'Microgrid Capacity Mix', icon: '🔌', color: 'amber',
- desc: 'Size a preliminary solar, wind and storage portfolio.',
- params: [
- { key: 'load_mw', label: 'Peak Load (MW)', type: 'number', default: 50 },
- { key: 'solar_share', label: 'Solar Share', type: 'number', step: 0.05, default: 0.5 },
- { key: 'wind_share', label: 'Wind Share', type: 'number', step: 0.05, default: 0.3 },
- { key: 'storage_hours', label: 'Storage Duration (hours)', type: 'number', default: 4 },
- ] },
- { id: 'SK-105', name: 'BESS Energy Arbitrage', icon: '🔋', color: 'purple',
- desc: 'Estimate gross arbitrage value from cycling and price spreads.',
- params: [
- { key: 'capacity_mwh', label: 'Storage Capacity (MWh)', type: 'number', default: 100 },
- { key: 'cycle_count_per_year', label: 'Cycles per Year', type: 'number', default: 365 },
- { key: 'peak_price_cny_kwh', label: 'Peak Price (CNY/kWh)', type: 'number', step: 0.05, default: 1.0 },
- { key: 'valley_price_cny_kwh', label: 'Off-peak Price (CNY/kWh)', type: 'number', step: 0.05, default: 0.3 },
- ] },
- { id: 'SK-106', name: 'Pumped Hydro Storage', icon: '💧', color: 'cyan',
- desc: 'Estimate preliminary pumped-hydro energy and efficiency metrics.',
- params: [
- { key: 'capacity_mwh', label: 'Storage Capacity (MWh)', type: 'number', default: 1000 },
- { key: 'head_m', label: 'Hydraulic Head (m)', type: 'number', default: 200 },
- { key: 'round_trip_eff', label: 'Round-trip Efficiency', type: 'number', step: 0.05, default: 0.75 },
- ] },
- { id: 'SK-107', name: 'Grid Carbon Flow', icon: '🌫️', color: 'gray',
- desc: 'Estimate grid emissions from the generation mix and annual consumption.',
- params: [
- { key: 'renewable_share', label: 'Renewable Share', type: 'number', step: 0.05, default: 0.35 },
- { key: 'coal_share', label: 'Coal Share', type: 'number', step: 0.05, default: 0.55 },
- { key: 'annual_consumption_twh', label: 'Annual Consumption (TWh)', type: 'number', default: 500 },
- ] },
- { id: 'SK-108', name: 'Hybrid Portfolio LCOE', icon: '🌅', color: 'orange',
- desc: 'Estimate a weighted LCOE for a solar, wind and storage portfolio.',
- { key: 'solar_capex_per_w', label: 'Solar CAPEX (CNY/W)', type: 'number', step: 0.1, default: 4.0 },
- { key: 'wind_capex_per_kw', label: 'Wind CAPEX (CNY/kW)', type: 'number', default: 6500 },
- ] },
- { id: 'SK-109', name: 'Capacity Market Bid', icon: '💰', color: 'yellow',
- desc: 'Estimate annual capacity-market revenue from bid assumptions.',
- params: [
- { key: 'technology', label: 'Technology', type: 'text', default: 'Energy Storage' },
- { key: 'capacity_mw', label: 'Bid Capacity (MW)', type: 'number', default: 100 },
- { key: 'capacity_price_cny_kw_yr', label: 'Capacity Price (CNY/kW-year)', type: 'number', default: 330 },
- const locale = 'global' as const;
- const t = copy;
+'use client';
+
+import { useEffect, useState } from 'react';
+import { API_BASE, extractList, fetchJson } from '../../../../lib/config';
+
+type Skill = { id: string; name: string; description?: string; version?: string };
+
+export default function SkillsWorkbenchPage() {
+  const [skills, setSkills] = useState<Skill[]>([]);
+  const [status, setStatus] = useState<'loading' | 'ready' | 'unavailable'>('loading');
+
+  useEffect(() => {
+    void fetchJson(`${API_BASE}/api/v1/ai/skills`, { credentials: 'include' })
+      .then((payload) => {
+        const rows = extractList(payload);
+        if (!rows) throw new Error('Invalid skills response');
+        setSkills(rows.map((row) => ({
+          id: String(row.id ?? row.skill_id ?? ''),
+          name: String(row.name ?? row.title ?? row.id ?? 'Unnamed skill'),
+          description: row.description ? String(row.description) : undefined,
+          version: row.version ? String(row.version) : undefined,
+        })).filter((skill) => skill.id));
+        setStatus('ready');
+      })
+      .catch(() => setStatus('unavailable'));
+  }, []);
+
+  return (
+    <main className="mx-auto max-w-6xl space-y-6 p-5 md:p-8">
+      <div>
+        <p className="text-sm text-slate-500">Registry-backed tools only</p>
+        <h1 className="text-3xl font-bold text-slate-950">Advanced Energy Skills</h1>
+        <p className="mt-2 max-w-3xl text-slate-600">Review each skill’s version, assumptions and cited sources before using its output in an investment decision.</p>
+      </div>
+      {status === 'loading' && <p>Loading the verified skill registry…</p>}
+      {status === 'unavailable' && (
+        <div role="alert" className="rounded-xl border border-amber-300 bg-amber-50 p-5 text-amber-950">
+          The verified Skills registry is unavailable. No locally invented calculators are shown.
+        </div>
+      )}
+      {status === 'ready' && skills.length === 0 && <p>No verified skills are currently published.</p>}
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {skills.map((skill) => (
+          <article key={skill.id} className="rounded-2xl border border-slate-200 bg-white p-5">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="font-bold text-slate-950">{skill.name}</h2>
+              {skill.version && <span className="rounded-full bg-blue-50 px-2 py-1 text-xs text-blue-800">v{skill.version}</span>}
+            </div>
+            <p className="mt-2 text-sm text-slate-600">{skill.description ?? 'No registry description supplied.'}</p>
+            <p className="mt-4 text-xs text-slate-400">Skill ID: {skill.id}</p>
+          </article>
+        ))}
+      </div>
+    </main>
+  );
+}

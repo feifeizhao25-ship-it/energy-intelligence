@@ -205,7 +205,7 @@ export default function HomePage() {
                                     ))}
                                 </div>
                                 <span className="text-sm text-slate-300">
-                                    <span className="font-bold text-green-400">12,847</span> 人已完成测算
+                                    <span className="font-bold text-green-400">假设与来源</span> 全程留痕可审计
                                 </span>
                             </div>
 
@@ -371,10 +371,10 @@ export default function HomePage() {
                 <div className="max-w-6xl mx-auto px-4">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
                         {[
-                            { value: '10,000+', label: '已分析项目', icon: Building2 },
-                            { value: '500M+', label: '累计发电量(kWh)', icon: Zap },
+                            { value: '假设可见', label: '关键参数可调整', icon: Building2 },
+                            { value: '来源可溯', label: '数据出处与时间记录', icon: Zap },
                             { value: '31', label: '覆盖省市', icon: MapPin },
-                            { value: '99.8%', label: '用户满意度', icon: Star },
+                            { value: '人工复核', label: '结论导出前确认', icon: Star },
                         ].map((stat, i) => (
                             <div key={i} className="text-center">
                                 <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-2xl flex items-center justify-center mx-auto mb-3">
@@ -477,7 +477,7 @@ export default function HomePage() {
             <section className="py-16 px-4 bg-slate-900 text-white">
                 <div className="max-w-4xl mx-auto text-center">
                     <h2 className="text-3xl font-black mb-4">权威数据源</h2>
-                    <p className="text-lg text-slate-400 mb-12">集成国际权威数据，确保分析结果专业可靠</p>
+                    <p className="text-lg text-slate-400 mb-12">集成国际公开数据源，分析假设与来源全程可见</p>
 
                     <div className="grid md:grid-cols-4 gap-6">
                         {[

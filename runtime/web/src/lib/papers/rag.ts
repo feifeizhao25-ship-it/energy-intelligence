@@ -1,6 +1,7 @@
 import { aiService } from '../ai/unified';
-import { supabase } from '../supabase';
-const pdf = require('pdf-parse');
+import { requireSupabaseAdmin } from '../supabase';
+import { PDFParse } from 'pdf-parse';
+import { assertValidPdfBuffer } from './pdf-guard';
 
 /**
  * PDF RAG 处理器
@@ -12,9 +13,15 @@ export const ragProcessor = {
      */
     async indexPdf(buffer: Buffer, documentId: string, metadata: any = {}) {
         try {
-            // 1. 解析 PDF
-            const data = await pdf(buffer);
-            const text = data.text;
+            const required = ['title', 'userId', 'sourceUrl', 'retrievedAt'];
+            const missing = required.filter(key => !metadata?.[key]);
+            if (missing.length) throw new Error(`RAG 来源元数据缺失: ${missing.join(', ')}`);
+            if (!String(metadata.sourceUrl).startsWith('https://')) throw new Error('RAG 来源必须使用 HTTPS');
+            // 0. 安全校验：大小限制 + 魔数检查，恶意/超大文件在此被拒绝
+            assertValidPdfBuffer(buffer);
+
+            // 1. 解析 PDF（解析失败一律转为明确错误，不向外泄露解析器内部信息）
+            const text = await this.extractText(buffer);
 
             // 2. 文本分块 (每块约 500 字符，重叠 100 字符)
             const chunks = this.chunkText(text, 500, 100);
@@ -37,7 +44,7 @@ export const ragProcessor = {
                 }
             }));
 
-            const { error } = await supabase
+            const { error } = await requireSupabaseAdmin()
                 .from('document_chunks')
                 .insert(rows);
 
@@ -63,7 +70,7 @@ export const ragProcessor = {
             const searchFilter = { ...filter };
             if (documentId) searchFilter.documentId = documentId;
 
-            const { data, error } = await supabase.rpc('match_document_chunks', {
+            const { data, error } = await requireSupabaseAdmin().rpc('match_document_chunks', {
                 query_embedding: queryEmbedding,
                 match_threshold: 0.5,
                 match_count: limit,
@@ -72,10 +79,33 @@ export const ragProcessor = {
 
             if (error) throw error;
 
-            return data || [];
+            return (data || []).filter((chunk: any) =>
+                chunk?.metadata?.userId === searchFilter.userId &&
+                chunk?.metadata?.title &&
+                chunk?.metadata?.sourceUrl?.startsWith('https://') &&
+                chunk?.metadata?.retrievedAt
+            );
         } catch (error) {
             console.error('[RAG] Search Error:', error);
-            return [];
+            throw error;
+        }
+    },
+
+    /**
+     * 提取 PDF 文本。损坏/加密/格式不受支持的文件抛出统一错误（fail-closed）。
+     */
+    async extractText(buffer: Buffer): Promise<string> {
+        const parser = new PDFParse({ data: buffer });
+        try {
+            const result = await parser.getText();
+            const text = result.text || '';
+            if (!text.trim()) throw new Error('PDF 未包含可提取的文本内容');
+            return text;
+        } catch (error: any) {
+            if (error?.message === 'PDF 未包含可提取的文本内容') throw error;
+            throw new Error('PDF 解析失败：文件损坏、已加密或格式不受支持');
+        } finally {
+            await parser.destroy().catch(() => undefined);
         }
     },
 

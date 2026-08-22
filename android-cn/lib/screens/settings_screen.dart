@@ -16,7 +16,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('设置'), backgroundColor: Colors.blue[700]),
+      appBar: AppBar(
+        title: const Text('设置'),
+        backgroundColor: Colors.blue[700],
+      ),
       body: ListView(
         children: [
           // 区域设置
@@ -46,7 +49,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
           ]),
-          
+
           // 通知设置
           _buildSection('通知设置', [
             SwitchListTile(
@@ -62,7 +65,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               onChanged: (v) => setState(() => _emailNotification = v),
             ),
           ]),
-          
+
           // 账号
           _buildSection('账号', [
             ListTile(
@@ -78,7 +81,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               onTap: () {},
             ),
           ]),
-          
+
           // 关于
           _buildSection('关于', [
             const ListTile(
@@ -110,7 +113,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
-          child: Text(title, style: TextStyle(color: Colors.grey[600], fontWeight: FontWeight.bold)),
+          child: Text(
+            title,
+            style: TextStyle(
+              color: Colors.grey[600],
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ),
         ...children,
         const Divider(),

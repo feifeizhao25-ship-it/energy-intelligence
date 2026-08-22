@@ -13,7 +13,10 @@ import { addToExportCache } from '@/lib/exports/cache';
 
 export async function POST(req: NextRequest) {
     const session = await getServerSession(authOptions);
-    const userId = session?.user?.id || 'dev-master-id'; // 兼容演示模式
+    if (!session?.user?.id) {
+        return NextResponse.json({ error: 'UNAUTHORIZED', message: '请先登录' }, { status: 401 });
+    }
+    const userId = session.user.id;
 
     const body = await req.json();
     const { dataType, format = 'csv' } = body;

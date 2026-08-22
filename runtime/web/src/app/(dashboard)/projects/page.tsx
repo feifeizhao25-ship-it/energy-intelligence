@@ -16,7 +16,6 @@ import {
   Search,
   BrainCircuit,
   ArrowRight,
-  Loader2,
   Activity
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -26,7 +25,6 @@ export default function ProjectsPage() {
   const router = useRouter();
   const [projects, setProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [creating, setCreating] = useState(false);
 
   useEffect(() => {
     fetchProjects();
@@ -43,32 +41,6 @@ export default function ProjectsPage() {
       console.error('Failed to fetch projects', e);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleCreateDemo = async () => {
-    setCreating(true);
-    try {
-      // Quick demo creation for testing
-      const res = await fetch('/api/projects', {
-        method: 'POST',
-        body: JSON.stringify({
-          name: `新建示范电站 ${Math.floor(Math.random() * 1000)}`,
-          type: Math.random() > 0.5 ? 'solar' : 'wind',
-          capacity: (Math.random() * 5000 + 100).toFixed(0),
-          location: '北京市朝阳区示范基地',
-          lat: 39.9,
-          lng: 116.4
-        })
-      });
-      const data = await res.json();
-      if (data.success) {
-        await fetchProjects();
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setCreating(false);
     }
   };
 
@@ -135,16 +107,7 @@ export default function ProjectsPage() {
               className="pl-9 pr-4 py-2.5 rounded-xl bg-white border border-slate-200 text-sm font-bold focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-all w-64 shadow-sm"
             />
           </div>
-          {/* Create Button with dual functionality for demo */}
           <div className="flex gap-2">
-            <button
-              onClick={handleCreateDemo}
-              disabled={creating}
-              className="flex items-center gap-2 px-4 py-2.5 bg-white text-slate-700 border border-slate-200 rounded-xl hover:bg-slate-50 transition-all font-bold text-sm"
-            >
-              {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-              快速模拟 (Debug)
-            </button>
             <Link
               href="/calculator"
               className="flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white rounded-xl hover:bg-green-600 transition-all shadow-lg hover:shadow-green-200 font-bold text-sm group"
@@ -167,15 +130,14 @@ export default function ProjectsPage() {
             {[
               { label: '资产总数', value: totalCount, unit: '个', icon: MapPin, color: 'text-blue-500', bg: 'bg-blue-50' },
               { label: '总装机容量', value: totalCapacity.toFixed(1), unit: 'MW', icon: Zap, color: 'text-amber-500', bg: 'bg-amber-50' },
-              { label: '今日发电', value: (totalCapacity * 3.5).toFixed(1), unit: 'MWh', icon: TrendingUp, color: 'text-green-500', bg: 'bg-green-50' },
-              { label: '健康度', value: totalCount > 0 ? '94.2' : '-', unit: '分', icon: CheckCircle2, color: 'text-purple-500', bg: 'bg-purple-50' },
+              { label: '今日发电', value: '待接入', unit: '', icon: TrendingUp, color: 'text-green-500', bg: 'bg-green-50' },
+              { label: '健康度', value: '待接入', unit: '', icon: CheckCircle2, color: 'text-purple-500', bg: 'bg-purple-50' },
             ].map((stat, i) => (
               <div key={i} className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm hover:shadow-md transition-all group">
                 <div className="flex items-start justify-between mb-4">
                   <div className={cn("p-3 rounded-xl transition-colors", stat.bg)}>
                     <stat.icon className={cn("w-6 h-6", stat.color)} />
                   </div>
-                  {i === 2 && totalCount > 0 && <span className="text-[10px] font-black text-green-600 bg-green-50 px-2 py-1 rounded-lg">+12%</span>}
                 </div>
                 <div className="space-y-1">
                   <div className="text-slate-500 text-xs font-bold uppercase tracking-wider">{stat.label}</div>

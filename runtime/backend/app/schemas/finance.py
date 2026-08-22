@@ -39,3 +39,31 @@ class WindFinanceRequest(BaseModel):
     tax_rate: float = Field(default=0.21, ge=0, le=0.50)
     project_life: int = Field(default=25, ge=10, le=40)
     currency: str = Field(default="USD")
+
+
+class StorageFinanceRequest(BaseModel):
+    power_mw: float = Field(..., gt=0)
+    capacity_mwh: float = Field(..., gt=0)
+    cycles_per_year: float = Field(..., gt=0, le=365)
+    peak_price_per_mwh: float = Field(..., ge=0)
+    offpeak_price_per_mwh: float = Field(..., ge=0)
+    capex_per_kwh: float = Field(..., gt=0)
+    roundtrip_efficiency: float = Field(default=0.88, gt=0, le=1)
+    annual_degradation_rate: float = Field(default=0.025, ge=0, le=0.10)
+    annual_opex_rate: float = Field(default=0.02, ge=0, le=0.20)
+    discount_rate: float = Field(default=0.08, ge=0, le=0.30)
+    project_life: int = Field(default=10, ge=5, le=30)
+    currency: str = Field(default="USD", pattern="^[A-Z]{3}$")
+
+
+class StorageFinanceResponse(BaseModel):
+    irr: float
+    npv: float
+    lcos: float
+    payback_years: float
+    annual_revenue: float
+    annual_discharged_mwh: float
+    total_capex: float
+    cashflows: List[float]
+    assumption_version: str
+    assumptions: dict

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dart:math';
+import '../../services/api_service.dart';
 
 class CleaningScreen extends StatefulWidget {
   const CleaningScreen({super.key});
@@ -25,41 +25,42 @@ class _CleaningScreenState extends State<CleaningScreen> {
 
   void _calculate() async {
     setState(() => _isCalc = true);
-    await Future.delayed(const Duration(milliseconds: 500));
-
-    final s = double.tryParse(_soilingCtrl.text) ?? 0.003;
-    final C = double.tryParse(_costCtrl.text) ?? 1200.0; // USD
-    final Rs = double.tryParse(_revenueCtrl.text) ?? 18000.0; // USD/day
-
-    // Optimal interval: N* = sqrt(2C / (Rs × s))
-    final nStar = sqrt(2 * C / (Rs * s));
-    final nOptimal = nStar.round().clamp(1, 365);
-
-    final dailyLoss = Rs * s;
-    final lossBetweenCleans = dailyLoss * nOptimal * (nOptimal + 1) / 2;
-    final cleaningsPerYear = (365 / nOptimal).floor();
-    final annualCleaningCost = cleaningsPerYear * C;
-    final annualLoss = cleaningsPerYear * lossBetweenCleans;
-
-    final scenarios = [7, 14, 30, nOptimal].toSet().toList()..sort();
-    final scenarioResults = scenarios.map((n) {
-      final lossN = (365 / n).floor() * dailyLoss * n * (n + 1) / 2;
-      final costN = (365 / n).floor() * C;
-      return {'days': n, 'total': lossN + costN};
-    }).toList();
-
-    setState(() {
-      _result = {
-        'nOptimal': nOptimal,
-        'nStar': nStar,
-        'cleaningsPerYear': cleaningsPerYear,
-        'annualCleaningCost': annualCleaningCost,
-        'annualLoss': annualLoss,
-        'totalAnnualCost': annualCleaningCost + annualLoss,
-        'scenarios': scenarioResults,
-      };
-      _isCalc = false;
-    });
+    try {
+      final response = await ApiService.calculateCleaningSchedule(
+        cleaningCostUsd: double.parse(_costCtrl.text),
+        dailyRevenueUsd: double.parse(_revenueCtrl.text),
+        soilingRateFractionPerDay: double.parse(_soilingCtrl.text),
+      );
+      if (mounted)
+        setState(
+          () => _result = {
+            'nOptimal': response['optimal_interval_days'],
+            'nStar': (response['theoretical_interval_days'] as num).toDouble(),
+            'cleaningsPerYear': response['annual_cleanings'],
+            'annualCleaningCost': (response['annual_cleaning_cost'] as num)
+                .toDouble(),
+            'annualLoss': (response['annual_soiling_loss'] as num).toDouble(),
+            'totalAnnualCost': (response['total_annual_cost'] as num)
+                .toDouble(),
+            'modelVersion': response['model_version'],
+            'scenarios':
+                response['scenarios'] ?? const <Map<String, dynamic>>[],
+          },
+        );
+    } catch (error) {
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              error is ApiException
+                  ? error.message
+                  : 'Cleaning calculation is temporarily unavailable.',
+            ),
+          ),
+        );
+    } finally {
+      if (mounted) setState(() => _isCalc = false);
+    }
   }
 
   @override
@@ -88,9 +89,23 @@ class _CleaningScreenState extends State<CleaningScreen> {
               child: const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Optimal Cleaning Algorithm', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF0369A1))),
+                  Text(
+                    'Optimal Cleaning Algorithm',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF0369A1),
+                    ),
+                  ),
                   SizedBox(height: 4),
-                  Text('N* = √(2C / (Rₛ × s))\n\nC = cleaning cost per event, Rₛ = daily revenue, s = daily soiling rate', style: TextStyle(fontSize: 11, color: Color(0xFF0C4A6E), fontFamily: 'monospace')),
+                  Text(
+                    'N* = √(2C / (Rₛ × s))\n\nC = cleaning cost per event, Rₛ = daily revenue, s = daily soiling rate',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF0C4A6E),
+                      fontFamily: 'monospace',
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -116,11 +131,26 @@ class _CleaningScreenState extends State<CleaningScreen> {
                   backgroundColor: const Color(0xFF1D4ED8),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
                 child: _isCalc
-                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                    : const Text('Calculate Optimal Interval', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Text(
+                        'Calculate Optimal Interval',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
               ),
             ),
 
@@ -141,10 +171,33 @@ class _CleaningScreenState extends State<CleaningScreen> {
                 ),
                 child: Column(
                   children: [
-                    const Text('Optimal Cleaning Interval', style: TextStyle(color: Colors.white70, fontSize: 13)),
+                    const Text(
+                      'Optimal Cleaning Interval',
+                      style: TextStyle(color: Colors.white70, fontSize: 13),
+                    ),
                     const SizedBox(height: 8),
-                    Text('${_result!['nOptimal']} days', style: const TextStyle(color: Colors.white, fontSize: 34, fontWeight: FontWeight.bold)),
-                    Text('N* = ${(_result!['nStar'] as double).toStringAsFixed(2)} days (theoretical)', style: const TextStyle(color: Colors.white70, fontSize: 11)),
+                    Text(
+                      '${_result!['nOptimal']} days',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 34,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      'N* = ${(_result!['nStar'] as double).toStringAsFixed(2)} days (theoretical)',
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 11,
+                      ),
+                    ),
+                    Text(
+                      'Model ${_result!['modelVersion']} · user-supplied assumptions',
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 10,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -158,15 +211,38 @@ class _CleaningScreenState extends State<CleaningScreen> {
                 crossAxisSpacing: 10,
                 childAspectRatio: 1.9,
                 children: [
-                  _buildStatCard('Cleanings/Year', '${_result!['cleaningsPerYear']}×', const Color(0xFF059669)),
-                  _buildStatCard('Annual Cleaning Cost', '\$${((_result!['annualCleaningCost'] as double) / 1000).toStringAsFixed(1)}K', const Color(0xFFEA580C)),
-                  _buildStatCard('Annual Soiling Loss', '\$${((_result!['annualLoss'] as double) / 1000).toStringAsFixed(1)}K', const Color(0xFFDC2626)),
-                  _buildStatCard('Total Annual Cost', '\$${((_result!['totalAnnualCost'] as double) / 1000).toStringAsFixed(1)}K', const Color(0xFF7C3AED)),
+                  _buildStatCard(
+                    'Cleanings/Year',
+                    '${_result!['cleaningsPerYear']}×',
+                    const Color(0xFF059669),
+                  ),
+                  _buildStatCard(
+                    'Annual Cleaning Cost',
+                    '\$${((_result!['annualCleaningCost'] as double) / 1000).toStringAsFixed(1)}K',
+                    const Color(0xFFEA580C),
+                  ),
+                  _buildStatCard(
+                    'Annual Soiling Loss',
+                    '\$${((_result!['annualLoss'] as double) / 1000).toStringAsFixed(1)}K',
+                    const Color(0xFFDC2626),
+                  ),
+                  _buildStatCard(
+                    'Total Annual Cost',
+                    '\$${((_result!['totalAnnualCost'] as double) / 1000).toStringAsFixed(1)}K',
+                    const Color(0xFF7C3AED),
+                  ),
                 ],
               ),
               const SizedBox(height: 20),
 
-              const Text('Schedule Comparison', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF0F172A))),
+              const Text(
+                'Schedule Comparison',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
               const SizedBox(height: 10),
               ...(_result!['scenarios'] as List<dynamic>).map((s) {
                 final days = s['days'] as int;
@@ -174,27 +250,65 @@ class _CleaningScreenState extends State<CleaningScreen> {
                 final isOpt = days == _result!['nOptimal'];
                 return Container(
                   margin: const EdgeInsets.only(bottom: 8),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: isOpt ? const Color(0xFFEFF6FF) : Colors.white,
-                    border: Border.all(color: isOpt ? const Color(0xFF1D4ED8) : const Color(0xFFE2E8F0), width: isOpt ? 2 : 1),
+                    border: Border.all(
+                      color: isOpt
+                          ? const Color(0xFF1D4ED8)
+                          : const Color(0xFFE2E8F0),
+                      width: isOpt ? 2 : 1,
+                    ),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(children: [
-                        Text('Every $days days', style: TextStyle(fontWeight: isOpt ? FontWeight.bold : FontWeight.normal)),
-                        if (isOpt) ...[
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(color: const Color(0xFF1D4ED8), borderRadius: BorderRadius.circular(4)),
-                            child: const Text('Optimal', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
+                      Row(
+                        children: [
+                          Text(
+                            'Every $days days',
+                            style: TextStyle(
+                              fontWeight: isOpt
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                            ),
                           ),
+                          if (isOpt) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF1D4ED8),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: const Text(
+                                'Optimal',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
                         ],
-                      ]),
-                      Text('\$${(total / 1000).toStringAsFixed(1)}K/yr', style: TextStyle(fontWeight: FontWeight.bold, color: isOpt ? const Color(0xFF1D4ED8) : const Color(0xFF0F172A))),
+                      ),
+                      Text(
+                        '\$${(total / 1000).toStringAsFixed(1)}K/yr',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: isOpt
+                              ? const Color(0xFF1D4ED8)
+                              : const Color(0xFF0F172A),
+                        ),
+                      ),
                     ],
                   ),
                 );
@@ -209,7 +323,14 @@ class _CleaningScreenState extends State<CleaningScreen> {
   Widget _buildLabel(String text) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
-      child: Text(text, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF374151))),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFF374151),
+        ),
+      ),
     );
   }
 
@@ -220,8 +341,14 @@ class _CleaningScreenState extends State<CleaningScreen> {
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 13),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 10,
+        ),
         filled: true,
         fillColor: Colors.white,
       ),
@@ -232,17 +359,27 @@ class _CleaningScreenState extends State<CleaningScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.07),
-        border: Border.all(color: color.withOpacity(0.25)),
+        color: color.withValues(alpha: 0.07),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(label, style: const TextStyle(fontSize: 10, color: Color(0xFF64748B))),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 10, color: Color(0xFF64748B)),
+          ),
           const SizedBox(height: 5),
-          Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: color)),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
         ],
       ),
     );

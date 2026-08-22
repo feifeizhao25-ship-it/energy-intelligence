@@ -1255,3 +1255,20 @@ model ApiLog {
   @@index([userId, createdAt])
   @@map("api_logs")
 }
+
+// ==================== 企业预约演示 ====================
+
+model DemoRequest {
+  id        String   @id @default(cuid())
+  name      String
+  company   String
+  email     String
+  phone     String?
+  message   String?
+  status    String   @default("new") // new / contacted / closed
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email, createdAt])
+  @@map("demo_requests")
+}

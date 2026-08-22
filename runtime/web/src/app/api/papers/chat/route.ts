@@ -18,8 +18,16 @@ export async function POST(req: NextRequest) {
         const lastMessage = messages[messages.length - 1].content;
 
         // 1. 检索相关上下文
-        const contextChunks = await ragProcessor.searchContext(lastMessage, paperId, 5);
-        const contextText = contextChunks.map((c: any) => c.content).join('\n\n---\n\n');
+        const contextChunks = await ragProcessor.searchContext(lastMessage, paperId, 5, { userId: session.user.id });
+        if (contextChunks.length === 0) {
+            return new Response(JSON.stringify({
+                error: 'NO_VERIFIED_EVIDENCE',
+                message: '未检索到属于当前用户且来源完整的论文片段，因此不生成回答。',
+            }), { status: 422, headers: { 'Content-Type': 'application/json' } });
+        }
+        const contextText = contextChunks.map((c: any, index: number) =>
+            `[${index + 1}] ${c.metadata.title} | ${c.metadata.sourceUrl} | 获取日期 ${c.metadata.retrievedAt}\n${c.content}`
+        ).join('\n\n---\n\n');
 
         // 2. 构建系统提示词
         const systemPrompt = `你是一位专业的新能源学术助手。以下是从论文中提取的相关片段，请结合这些内容回答用户的问题。
@@ -28,7 +36,7 @@ export async function POST(req: NextRequest) {
 相关内容库：
 ${contextText}
 
-注意：仅参考提供的片段，并在回答中尽量引用原文细节。`;
+注意：仅参考提供的片段。每项事实必须使用对应的 [编号] 引用；证据不足时明确说无法判断。`;
 
         // 3. 调用 AI 流式响应
         const responseMessages = [

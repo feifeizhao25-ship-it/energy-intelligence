@@ -3,39 +3,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { checkFeatureAccess, checkUsageLimit, shouldResetDailyUsage, getEffectivePlan } from './permissions';
 import type { User } from './permissions';
-import { Plan } from './plans';
 
-// Mock函数 - 实际应该从数据库获取
+// 该旧中间件尚未接入生产会话与持久化用量。必须默认拒绝，不能用
+// 示例用户绕过身份认证或伪造会员用量。新接口应使用 `@/lib/auth`。
 async function getCurrentUser(req: NextRequest): Promise<User | null> {
-    // TODO: 实现真实的用户认证逻辑
-    // 这里应该从session/JWT中获取用户信息
-
-    // 示例用户
-    return {
-        id: 'user_123',
-        plan: Plan.FREE,
-        planExpireAt: undefined,
-        dailyAiCalls: 0,
-        dailyResourceQueries: 0,
-        dailyCalculations: 0,
-        dailyPaperSearches: 0,
-        dailyDiagnoses: 0,
-        projectCount: 0,
-        paperCount: 0,
-        stationCount: 0,
-        folderCount: 0,
-        lastResetAt: new Date(),
-    };
+    void req;
+    return null;
 }
 
 async function updateUserUsage(userId: string, feature: string, increment: number = 1): Promise<void> {
-    // TODO: 更新数据库中的使用量
-    console.log(`Incrementing ${feature} for user ${userId} by ${increment}`);
+    throw new Error(`旧会员中间件未接入持久化用量：${userId}/${feature}/${increment}`);
 }
 
 async function resetDailyUsage(userId: string): Promise<void> {
-    // TODO: 重置数据库中的每日使用量
-    console.log(`Resetting daily usage for user ${userId}`);
+    throw new Error(`旧会员中间件未接入每日用量重置：${userId}`);
 }
 
 /**

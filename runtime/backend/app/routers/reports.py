@@ -24,6 +24,7 @@ import os
 import math
 import asyncio
 import logging
+import sys
 from datetime import datetime, date
 from enum import Enum
 from typing import Any, Dict, List, Optional
@@ -43,7 +44,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 # ── 项目内部依赖 ──────────────────────────────────────────────
-from app.database import get_db
+from app.database import AsyncSessionLocal, get_db
 from app.core.dependencies import get_current_user_id
 from app.models.report import Report
 from app.models.project import Project
@@ -80,8 +81,10 @@ try:
 except ImportError:
     HAS_REPORTLAB = False
 
-FONT_TITLE_CN = "SimHei"
-FONT_BODY_CN = "SimSun"
+# DOCX does not embed fonts by default. Use a font installed in the production
+# image and the native macOS equivalent during render QA.
+FONT_TITLE_CN = "STHeiti" if sys.platform == "darwin" else "Noto Sans CJK SC"
+FONT_BODY_CN = FONT_TITLE_CN
 FONT_EN = "Arial"
 
 # ── 版式常量 (docx / pdf 两个渲染器共用, 改排版只动这里) ──
@@ -165,7 +168,7 @@ class ConfidentialLevel(str, Enum):
 
 class GenerateReportRequest(BaseModel):
     """生成报告请求"""
-    project_id: Optional[str] = Field(None, description="项目ID (空则用 demo 数据)")
+    project_id: str = Field(..., min_length=1, description="当前用户拥有的项目ID")
     report_type: ReportTemplateType = Field(ReportTemplateType.FEASIBILITY, description="报告模板类型")
     format: OutputFormat = Field(OutputFormat.PDF, description="输出格式 pdf/docx")
     title: Optional[str] = Field(None, description="自定义标题 (空则自动生成)")
@@ -284,34 +287,28 @@ TEMPLATES: Dict[str, TemplateInfo] = {
 
 async def fetch_project_data(
     db: Optional[AsyncSession],
-    project_id: Optional[str],
+    project_id: str,
+    user_id: str,
 ) -> Dict[str, Any]:
     """
-    查询项目 + 财务数据; 如果不存在用 demo 数据
+    查询当前用户拥有的项目及财务数据。不存在、越权或查询失败均不生成报告。
     """
-    if db and project_id:
-        try:
-            result = await db.execute(select(Project).where(Project.id == project_id))
-            project = result.scalar_one_or_none()
-            if project:
-                # 尝试查现金流
-                cf_data = None
-                try:
-                    cf_result = await db.execute(
-                        select(CashflowProjection)
-                        .where(CashflowProjection.project_id == project_id)
-                        .order_by(CashflowProjection.created_at.desc())
-                        .limit(1)
-                    )
-                    cf_data = cf_result.scalar_one_or_none()
-                except Exception:
-                    pass
+    if not db:
+        raise HTTPException(status_code=503, detail="报告数据服务暂不可用")
+    result = await db.execute(
+        select(Project).where(Project.id == project_id, Project.user_id == user_id)
+    )
+    project = result.scalar_one_or_none()
+    if not project:
+        raise HTTPException(status_code=404, detail="项目不存在或无权访问")
 
-                return _build_project_dict(project, cf_data)
-        except Exception as e:
-            logger.warning(f"查询项目 {project_id} 失败: {e}, 使用 demo 数据")
-
-    return _demo_data()
+    cf_result = await db.execute(
+        select(CashflowProjection)
+        .where(CashflowProjection.project_id == project_id)
+        .order_by(CashflowProjection.created_at.desc())
+        .limit(1)
+    )
+    return _build_project_dict(project, cf_result.scalar_one_or_none())
 
 
 def _build_project_dict(project: Any, cf: Any = None) -> Dict[str, Any]:
@@ -328,24 +325,52 @@ def _build_project_dict(project: Any, cf: Any = None) -> Dict[str, Any]:
         "status": getattr(project, "status", "development"),
     }
 
-    if cf:
-        data["financial"] = {
-            "initial_investment": float(getattr(cf, "initial_investment", 0) or 0),
-            "project_life_years": getattr(cf, "project_life_years", 25),
-            "discount_rate": float(getattr(cf, "discount_rate", 0.08) or 0.08),
-            "annual_generation_mwh": float(getattr(cf, "annual_generation_first_year", 0) or 0),
-            "electricity_price": float(getattr(cf, "electricity_price", 0) or 0),
-            "price_escalation_rate": float(getattr(cf, "price_escalation_rate", 0.02) or 0.02),
-            "opex_annual": float(getattr(cf, "opex_annual", 0) or 0),
-            "opex_escalation_rate": float(getattr(cf, "opex_escalation_rate", 0.025) or 0.025),
-            "loan_ratio": float(getattr(cf, "loan_ratio", 0.70) or 0.70),
-            "loan_interest_rate": float(getattr(cf, "loan_interest_rate", 0.045) or 0.045),
-            "loan_term_years": getattr(cf, "loan_term_years", 15),
+    payload = getattr(cf, "yearly_cashflows", None) if cf else None
+    if isinstance(payload, dict):
+        data["financial"] = dict(payload.get("assumptions") or {})
+        data["financial"]["yearly_cashflows"] = payload.get("values") or []
+        data["financial"]["stored_metrics"] = {
+            "irr": getattr(cf, "irr", None), "npv": getattr(cf, "npv", None),
+            "lcoe": getattr(cf, "lcoe", None), "payback_years": getattr(cf, "payback_years", None),
         }
+        data["data_sources"] = payload.get("sources") or []
     else:
         data["financial"] = {}
+        data["data_sources"] = []
 
     return data
+
+
+REQUIRED_FINANCIAL_INPUTS = {
+    "initial_investment", "project_life_years", "discount_rate",
+    "annual_generation_mwh", "electricity_price", "opex_annual",
+}
+
+
+def validate_financial_evidence(data: Dict[str, Any]) -> None:
+    """Reject investment conclusions unless assumptions and traceable sources exist."""
+    financial = data.get("financial") or {}
+    missing = sorted(REQUIRED_FINANCIAL_INPUTS - set(financial))
+    if missing:
+        raise HTTPException(status_code=422, detail=f"财务模型缺少必要输入: {', '.join(missing)}")
+    if not financial.get("yearly_cashflows"):
+        raise HTTPException(status_code=422, detail="财务模型缺少年度现金流序列")
+    sources = data.get("data_sources") or []
+    verified = [s for s in sources if isinstance(s, dict) and s.get("title") and s.get("url") and s.get("retrieved_at")]
+    if not verified:
+        raise HTTPException(status_code=422, detail="财务模型缺少可核验的数据来源（标题、URL、获取日期）")
+    # fail-closed：已标记过期（stale）的政策类来源不得支撑投资结论，
+    # 必须重新核验后才能生成报告。
+    stale_policy = [
+        s for s in sources
+        if isinstance(s, dict) and s.get("type") == "policy" and s.get("freshness_status") == "stale"
+    ]
+    if stale_policy:
+        titles = ", ".join(str(s.get("title", "<untitled>")) for s in stale_policy)
+        raise HTTPException(
+            status_code=422,
+            detail=f"政策类数据来源已过期（stale），需重新核验后方可生成投资结论: {titles}",
+        )
 
 
 def _demo_data() -> Dict[str, Any]:
@@ -686,8 +711,7 @@ def generate_docx(
     # ════ 目录 ════
     _add_toc_page(doc, template_info)
 
-    # ════ 正文 ════
-    doc.add_page_break()
+    # ════ 正文 ════（目录函数已写入分页符）
 
     if report_type == "feasibility":
         _add_feasibility_content(doc, data, metrics)
@@ -785,7 +809,7 @@ def _setup_header_footer(doc, title: str, confidential: str):
 
 
 def _set_run_fonts(run, cn_font: str = FONT_BODY_CN):
-    """安全设置 run 的东亚字体"""
+    """Set every OOXML font slot so headless renderers cannot select a missing font."""
     from docx.oxml.ns import qn
     rPr = run.element.get_or_add_rPr()
     rFonts = rPr.find(qn('w:rFonts'))
@@ -793,11 +817,13 @@ def _set_run_fonts(run, cn_font: str = FONT_BODY_CN):
         from docx.oxml import OxmlElement
         rFonts = OxmlElement('w:rFonts')
         rPr.insert(0, rFonts)
-    rFonts.set(qn('w:eastAsia'), cn_font)
+    for slot in ('w:ascii', 'w:hAnsi', 'w:eastAsia', 'w:cs'):
+        rFonts.set(qn(slot), cn_font)
+    run.font.name = cn_font
 
 
 def _set_run_fonts_style(style, cn_font: str = FONT_BODY_CN):
-    """安全设置 style 的东亚字体"""
+    """Set every OOXML font slot on a style."""
     from docx.oxml.ns import qn
     from docx.oxml import OxmlElement
     rPr = style.element.get_or_add_rPr()
@@ -805,7 +831,9 @@ def _set_run_fonts_style(style, cn_font: str = FONT_BODY_CN):
     if rFonts is None:
         rFonts = OxmlElement('w:rFonts')
         rPr.insert(0, rFonts)
-    rFonts.set(qn('w:eastAsia'), cn_font)
+    for slot in ('w:ascii', 'w:hAnsi', 'w:eastAsia', 'w:cs'):
+        rFonts.set(qn(slot), cn_font)
+    style.font.name = cn_font
 
 
 def _add_cover_page(doc, title: str, report_type: str, confidential: str, data: Dict):
@@ -1546,15 +1574,11 @@ def _add_appendix(doc, data: Dict, metrics: Dict):
     )
 
     _add_heading(doc, "B. 数据来源", level=2)
-    sources = [
-        "项目可行性研究资料",
-        "国家气象局辐射观测数据",
-        "当地电力公司电价政策文件",
-        "行业基准数据 (IRENA / IEA / CPIA)",
-        "中国人民银行贷款基准利率",
-    ]
+    sources = data.get("data_sources") or []
+    if not sources:
+        _add_body(doc, "未附可核验来源；本报告不得用于投资决策。")
     for i, src in enumerate(sources, 1):
-        _add_body(doc, f"[{i}] {src}")
+        _add_body(doc, f"[{i}] {src.get('title', '未命名来源')} | {src.get('url', '无URL')} | 获取日期：{src.get('retrieved_at', '未记录')}")
 
     _add_heading(doc, "C. 免责声明", level=2)
     p = doc.add_paragraph()
@@ -2045,14 +2069,14 @@ def _build_pdf_appendix(story, data, metrics, style_h1, style_h2, style_body, cn
     story.append(Spacer(1, 10))
 
     story.append(Paragraph("B. 数据来源", style_h2))
-    sources = [
-        "项目可行性研究资料",
-        "国家气象局辐射观测数据",
-        "当地电力公司电价政策文件",
-        "IRENA / IEA / CPIA 行业基准",
-    ]
-    for i, s in enumerate(sources, 1):
-        story.append(Paragraph(f"[{i}] {s}", style_body))
+    sources = data.get("data_sources") or []
+    if not sources:
+        story.append(Paragraph("未附可核验来源；本报告不得用于投资决策。", style_body))
+    for i, source in enumerate(sources, 1):
+        story.append(Paragraph(
+            f"[{i}] {source.get('title', '未命名来源')} | {source.get('url', '无URL')} | "
+            f"获取日期：{source.get('retrieved_at', '未记录')}", style_body,
+        ))
 
     story.append(Paragraph("C. 免责声明", style_h2))
     story.append(Paragraph(
@@ -2076,7 +2100,6 @@ async def _generate_report_task(
     output_format: str,
     title: str,
     confidential: str,
-    db: Optional[AsyncSession] = None,
 ):
     """后台任务: 实际生成报告文件"""
     template_info = TEMPLATES[report_type]
@@ -2114,20 +2137,20 @@ async def _generate_report_task(
             "completed_at": datetime.now().isoformat(),
         })
 
-        # 更新 DB (如果可用)
-        if db:
+        # 后台任务必须使用自己的数据库会话；请求会话在响应后已关闭。
+        async with AsyncSessionLocal() as db:
             try:
                 result = await db.execute(select(Report).where(Report.id == report_id))
                 report = result.scalar_one_or_none()
                 if report:
                     report.status = "completed"
-                    report.progress = 100
-                    report.size = len(file_bytes)
                     report.file_path = filepath
-                    report.completed_at = datetime.utcnow()
+                    report.updated_at = datetime.now()
                     await db.commit()
             except Exception as e:
-                logger.warning(f"更新 DB 报告状态失败: {e}")
+                await db.rollback()
+                logger.exception("更新报告完成状态失败")
+                raise
 
         logger.info(f"报告 {report_id} 生成完成: {filepath}")
 
@@ -2138,6 +2161,14 @@ async def _generate_report_task(
             "progress": 0,
             "error": str(e),
         })
+        async with AsyncSessionLocal() as db:
+            result = await db.execute(select(Report).where(Report.id == report_id))
+            report = result.scalar_one_or_none()
+            if report:
+                report.status = "failed"
+                report.content = str(e)[:1000]
+                report.updated_at = datetime.now()
+                await db.commit()
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -2204,6 +2235,7 @@ async def get_report_templates(market: str = "cn"):
 async def generate_report(
     req: GenerateReportRequest,
     background_tasks: BackgroundTasks,
+    user_id: str = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -2211,7 +2243,7 @@ async def generate_report(
 
     - 支持 4 种模板: feasibility / investment / compliance / esg
     - 支持两种格式: pdf / docx
-    - 项目数据自动查询，不存在则用 demo 数据
+    - 仅使用当前用户拥有的真实项目数据
     """
     report_id = str(uuid4())
     template_info = TEMPLATES[req.report_type.value]
@@ -2220,7 +2252,9 @@ async def generate_report(
     title = req.title or f"{template_info.name} — {datetime.now().strftime('%Y%m%d')}"
 
     # 获取数据
-    data = await fetch_project_data(db, req.project_id)
+    data = await fetch_project_data(db, req.project_id, user_id)
+    if req.report_type in (ReportTemplateType.FEASIBILITY, ReportTemplateType.INVESTMENT):
+        validate_financial_evidence(data)
 
     # 初始化状态
     _report_store[report_id] = {
@@ -2233,6 +2267,7 @@ async def generate_report(
         "confidential": req.confidential.value,
         "created_at": datetime.now().isoformat(),
         "project_id": req.project_id,
+        "user_id": user_id,
     }
 
     # 如果 DB 可用，创建记录
@@ -2240,17 +2275,21 @@ async def generate_report(
         try:
             report = Report(
                 id=report_id,
-                user_id="system",  # TODO: 从 auth context 获取
+                user_id=user_id,
                 project_id=req.project_id,
                 title=title,
-                type=req.format.value,
-                category=req.report_type.value,
+                report_type=req.report_type.value,
+                language="zh",
                 status="generating",
+                data_sources={"sources": data.get("data_sources", []), "generated_at": datetime.now().isoformat()},
             )
             db.add(report)
             await db.commit()
         except Exception as e:
-            logger.warning(f"DB 报告记录创建失败 (不影响生成): {e}")
+            _report_store.pop(report_id, None)
+            await db.rollback()
+            logger.exception("创建报告记录失败")
+            raise HTTPException(status_code=503, detail="报告任务创建失败") from e
 
     # 后台生成
     background_tasks.add_task(
@@ -2261,7 +2300,6 @@ async def generate_report(
         output_format=req.format.value,
         title=title,
         confidential=req.confidential.value,
-        db=None,  # 后台不传 db session
     )
 
     return {
@@ -2279,11 +2317,16 @@ async def generate_report(
 
 
 @router.get("/{report_id}")
-async def get_report_status(report_id: str):
+async def get_report_status(
+    report_id: str,
+    user_id: str = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+):
     """
     获取报告状态 / 下载信息
     """
     # 先查内存
+    await _assert_report_owner(report_id, user_id, db)
     if report_id in _report_store:
         info = _report_store[report_id]
         return {"data": info}
@@ -2307,10 +2350,15 @@ async def get_report_status(report_id: str):
 
 
 @router.get("/{report_id}/file")
-async def download_report_file(report_id: str):
+async def download_report_file(
+    report_id: str,
+    user_id: str = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+):
     """
     下载已生成的报告文件
     """
+    await _assert_report_owner(report_id, user_id, db)
     # 查文件系统
     for ext in ["pdf", "docx"]:
         filepath = os.path.join(os.getcwd(), "generated_reports", f"{report_id}.{ext}")
@@ -2335,6 +2383,16 @@ async def download_report_file(report_id: str):
 
 # ── 兼容旧接口 ──────────────────────────────────────────────────
 # 以下保留原有路由接口，确保前端兼容
+
+async def _assert_report_owner(report_id: str, user_id: str, db: AsyncSession) -> Report:
+    result = await db.execute(
+        select(Report).where(Report.id == report_id, Report.user_id == user_id)
+    )
+    report = result.scalar_one_or_none()
+    if not report:
+        raise HTTPException(status_code=404, detail="报告不存在或无权访问")
+    return report
+
 
 @router.get("")
 async def list_reports_compat(

@@ -28,14 +28,6 @@ jest.mock('@/lib/policy/electricity-price', () => ({
     }))
 }));
 
-jest.mock('@/lib/policy/feed-in-tariff', () => ({
-    calculateFinalTariff: jest.fn(() => ({
-        finalTariff: 0.42,
-        localSubsidy: 0.02,
-        subsidyYears: 5
-    }))
-}));
-
 describe('Solar Calculator', () => {
     const baseInput: SolarCalculationInput = {
         lat: 30.5,

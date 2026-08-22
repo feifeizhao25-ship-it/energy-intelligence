@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../services/api_service.dart';
 
 class AnomalyScreen extends StatefulWidget {
   const AnomalyScreen({super.key});
@@ -87,44 +86,62 @@ class _AnomalyScreenState extends State<AnomalyScreen> {
 
   Color _severityColor(String severity) {
     switch (severity) {
-      case 'high': return Color(0xFFDC2626);
-      case 'medium': return Color(0xFFEA580C);
-      case 'low': return Color(0xFFCA8A04);
-      default: return Color(0xFF64748B);
+      case 'high':
+        return Color(0xFFDC2626);
+      case 'medium':
+        return Color(0xFFEA580C);
+      case 'low':
+        return Color(0xFFCA8A04);
+      default:
+        return Color(0xFF64748B);
     }
   }
 
   String _severityLabel(String severity) {
     switch (severity) {
-      case 'high': return '严重';
-      case 'medium': return '中等';
-      case 'low': return '轻微';
-      default: return '未知';
+      case 'high':
+        return '严重';
+      case 'medium':
+        return '中等';
+      case 'low':
+        return '轻微';
+      default:
+        return '未知';
     }
   }
 
   Color _statusColor(String status) {
     switch (status) {
-      case 'active': return Color(0xFFDC2626);
-      case 'monitoring': return Color(0xFFCA8A04);
-      case 'resolved': return Color(0xFF059669);
-      default: return Color(0xFF64748B);
+      case 'active':
+        return Color(0xFFDC2626);
+      case 'monitoring':
+        return Color(0xFFCA8A04);
+      case 'resolved':
+        return Color(0xFF059669);
+      default:
+        return Color(0xFF64748B);
     }
   }
 
   String _statusLabel(String status) {
     switch (status) {
-      case 'active': return '待处理';
-      case 'monitoring': return '监测中';
-      case 'resolved': return '已解决';
-      default: return '';
+      case 'active':
+        return '待处理';
+      case 'monitoring':
+        return '监测中';
+      case 'resolved':
+        return '已解决';
+      default:
+        return '';
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final active = _anomalies.where((a) => a['status'] == 'active').length;
-    final monitoring = _anomalies.where((a) => a['status'] == 'monitoring').length;
+    final monitoring = _anomalies
+        .where((a) => a['status'] == 'monitoring')
+        .length;
 
     return Scaffold(
       appBar: AppBar(
@@ -132,10 +149,7 @@ class _AnomalyScreenState extends State<AnomalyScreen> {
         backgroundColor: const Color(0xFF1D4ED8),
         foregroundColor: Colors.white,
         actions: [
-          IconButton(
-            icon: Icon(Icons.refresh),
-            onPressed: _loadAnomalies,
-          ),
+          IconButton(icon: Icon(Icons.refresh), onPressed: _loadAnomalies),
         ],
       ),
       body: _isLoading
@@ -156,11 +170,18 @@ class _AnomalyScreenState extends State<AnomalyScreen> {
                       value: _selectedProject,
                       isExpanded: true,
                       underline: SizedBox(),
-                      onChanged: (v) { setState(() => _selectedProject = v!); _loadAnomalies(); },
-                      items: _projects.map((p) => DropdownMenuItem(
-                        value: p['id'],
-                        child: Text(p['name']!),
-                      )).toList(),
+                      onChanged: (v) {
+                        setState(() => _selectedProject = v!);
+                        _loadAnomalies();
+                      },
+                      items: _projects
+                          .map(
+                            (p) => DropdownMenuItem(
+                              value: p['id'],
+                              child: Text(p['name']!),
+                            ),
+                          )
+                          .toList(),
                     ),
                   ),
                   SizedBox(height: 16),
@@ -168,16 +189,44 @@ class _AnomalyScreenState extends State<AnomalyScreen> {
                   // Summary cards
                   Row(
                     children: [
-                      Expanded(child: _buildSummaryCard('待处理异常', '$active', Color(0xFFDC2626), Icons.warning_rounded)),
+                      Expanded(
+                        child: _buildSummaryCard(
+                          '待处理异常',
+                          '$active',
+                          Color(0xFFDC2626),
+                          Icons.warning_rounded,
+                        ),
+                      ),
                       SizedBox(width: 12),
-                      Expanded(child: _buildSummaryCard('监测中', '$monitoring', Color(0xFFCA8A04), Icons.visibility)),
+                      Expanded(
+                        child: _buildSummaryCard(
+                          '监测中',
+                          '$monitoring',
+                          Color(0xFFCA8A04),
+                          Icons.visibility,
+                        ),
+                      ),
                       SizedBox(width: 12),
-                      Expanded(child: _buildSummaryCard('总异常数', '${_anomalies.length}', Color(0xFF1D4ED8), Icons.analytics)),
+                      Expanded(
+                        child: _buildSummaryCard(
+                          '总异常数',
+                          '${_anomalies.length}',
+                          Color(0xFF1D4ED8),
+                          Icons.analytics,
+                        ),
+                      ),
                     ],
                   ),
                   SizedBox(height: 24),
 
-                  Text('异常详情', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+                  Text(
+                    '异常详情',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF0F172A),
+                    ),
+                  ),
                   SizedBox(height: 12),
 
                   ..._anomalies.map((anomaly) => _buildAnomalyCard(anomaly)),
@@ -187,20 +236,36 @@ class _AnomalyScreenState extends State<AnomalyScreen> {
     );
   }
 
-  Widget _buildSummaryCard(String label, String value, Color color, IconData icon) {
+  Widget _buildSummaryCard(
+    String label,
+    String value,
+    Color color,
+    IconData icon,
+  ) {
     return Container(
       padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
-        border: Border.all(color: color.withOpacity(0.3)),
+        color: color.withValues(alpha: 0.08),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
         children: [
           Icon(icon, color: color, size: 20),
           SizedBox(height: 6),
-          Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color)),
-          Text(label, style: TextStyle(fontSize: 10, color: Color(0xFF64748B)), textAlign: TextAlign.center),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+          Text(
+            label,
+            style: TextStyle(fontSize: 10, color: Color(0xFF64748B)),
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );
@@ -215,7 +280,7 @@ class _AnomalyScreenState extends State<AnomalyScreen> {
       elevation: 1,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: sevColor.withOpacity(0.3), width: 1),
+        side: BorderSide(color: sevColor.withValues(alpha: 0.3), width: 1),
       ),
       child: Padding(
         padding: EdgeInsets.all(16),
@@ -230,10 +295,19 @@ class _AnomalyScreenState extends State<AnomalyScreen> {
                     Container(
                       width: 8,
                       height: 8,
-                      decoration: BoxDecoration(color: sevColor, shape: BoxShape.circle),
+                      decoration: BoxDecoration(
+                        color: sevColor,
+                        shape: BoxShape.circle,
+                      ),
                     ),
                     SizedBox(width: 8),
-                    Text(anomaly['type'] as String, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                    Text(
+                      anomaly['type'] as String,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
+                    ),
                   ],
                 ),
                 Row(
@@ -241,19 +315,33 @@ class _AnomalyScreenState extends State<AnomalyScreen> {
                     Container(
                       padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: sevColor.withOpacity(0.1),
+                        color: sevColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(4),
                       ),
-                      child: Text(_severityLabel(anomaly['severity'] as String), style: TextStyle(fontSize: 11, color: sevColor, fontWeight: FontWeight.bold)),
+                      child: Text(
+                        _severityLabel(anomaly['severity'] as String),
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: sevColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                     SizedBox(width: 8),
                     Container(
                       padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: statusColor.withOpacity(0.1),
+                        color: statusColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(4),
                       ),
-                      child: Text(_statusLabel(anomaly['status'] as String), style: TextStyle(fontSize: 11, color: statusColor, fontWeight: FontWeight.bold)),
+                      child: Text(
+                        _statusLabel(anomaly['status'] as String),
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: statusColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -264,7 +352,12 @@ class _AnomalyScreenState extends State<AnomalyScreen> {
               children: [
                 Icon(Icons.location_on, size: 14, color: Color(0xFF64748B)),
                 SizedBox(width: 4),
-                Expanded(child: Text(anomaly['location'] as String, style: TextStyle(fontSize: 13, color: Color(0xFF64748B)))),
+                Expanded(
+                  child: Text(
+                    anomaly['location'] as String,
+                    style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                  ),
+                ),
               ],
             ),
             SizedBox(height: 8),
@@ -274,7 +367,11 @@ class _AnomalyScreenState extends State<AnomalyScreen> {
                 SizedBox(width: 16),
                 _buildMetric('期望值', '${anomaly['expected']}'),
                 SizedBox(width: 16),
-                _buildMetric('偏差', '${anomaly['deviation'].toStringAsFixed(1)}%', color: sevColor),
+                _buildMetric(
+                  '偏差',
+                  '${anomaly['deviation'].toStringAsFixed(1)}%',
+                  color: sevColor,
+                ),
               ],
             ),
             if ((anomaly['estimatedLoss'] as double) > 0) ...[
@@ -287,15 +384,25 @@ class _AnomalyScreenState extends State<AnomalyScreen> {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.trending_down, size: 14, color: Color(0xFFDC2626)),
+                    Icon(
+                      Icons.trending_down,
+                      size: 14,
+                      color: Color(0xFFDC2626),
+                    ),
                     SizedBox(width: 6),
-                    Text('估计损失: ${(anomaly['estimatedLoss'] as double) > 0 ? (anomaly['estimatedLoss'] / 10000).toStringAsFixed(2) + ' 万元' : '-'}', style: TextStyle(fontSize: 12, color: Color(0xFFDC2626))),
+                    Text(
+                      '估计损失: ${(anomaly['estimatedLoss'] as double) > 0 ? (anomaly['estimatedLoss'] / 10000).toStringAsFixed(2) + ' 万元' : '-'}',
+                      style: TextStyle(fontSize: 12, color: Color(0xFFDC2626)),
+                    ),
                   ],
                 ),
               ),
             ],
             SizedBox(height: 8),
-            Text(anomaly['time'] as String, style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8))),
+            Text(
+              anomaly['time'] as String,
+              style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+            ),
           ],
         ),
       ),
@@ -307,7 +414,14 @@ class _AnomalyScreenState extends State<AnomalyScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label, style: TextStyle(fontSize: 10, color: Color(0xFF94A3B8))),
-        Text(value, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: color ?? Color(0xFF0F172A))),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+            color: color ?? Color(0xFF0F172A),
+          ),
+        ),
       ],
     );
   }

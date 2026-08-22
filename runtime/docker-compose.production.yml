@@ -35,7 +35,7 @@ services:
 
   backend:
     build: ./backend
-    image: energy-api:${IMAGE_TAG:-local}
+    image: ${IMAGE_REGISTRY:?IMAGE_REGISTRY is required}/energy-api:${IMAGE_TAG:?IMAGE_TAG is required}
     restart: unless-stopped
     environment:
       ENVIRONMENT: production
@@ -55,13 +55,21 @@ services:
       postgres: { condition: service_healthy }
       redis: { condition: service_healthy }
     networks: [backend]
+    read_only: true
+    tmpfs:
+      - /tmp:size=256m,mode=1777
+      - /app/logs:size=128m,mode=1777
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
 
   web-cn:
     build:
       context: ./web
       args:
         NEXT_PUBLIC_APP_EDITION: cn
-    image: energy-web-cn:${IMAGE_TAG:-local}
+        NEXT_PUBLIC_API_URL: ${CN_PUBLIC_API_URL:?CN_PUBLIC_API_URL is required}
+        BACKEND_INTERNAL_URL: http://backend:8000
+    image: ${IMAGE_REGISTRY:?IMAGE_REGISTRY is required}/energy-web-cn:${IMAGE_TAG:?IMAGE_TAG is required}
     restart: unless-stopped
     environment:
       DATABASE_URL: postgresql://energy:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/energy_web
@@ -71,27 +79,62 @@ services:
       NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:?NEXT_PUBLIC_SUPABASE_URL is required}
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY:?NEXT_PUBLIC_SUPABASE_ANON_KEY is required}
       SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:?SUPABASE_SERVICE_ROLE_KEY is required}
+      OPENALEX_CONTACT_EMAIL: ${OPENALEX_CONTACT_EMAIL:?OPENALEX_CONTACT_EMAIL is required}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
       SILICONFLOW_API_KEY: ${SILICONFLOW_API_KEY:-}
-    ports:
-      - "${CN_WEB_PORT:-3300}:3000"
+      BACKEND_INTERNAL_URL: http://backend:8000
+    expose: ["3000"]
     depends_on:
       postgres: { condition: service_healthy }
+      backend: { condition: service_healthy }
     networks: [backend]
+    read_only: true
+    tmpfs:
+      - /tmp:size=256m,mode=1777
+      - /app/.next/cache:size=256m,mode=1777
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
 
   web-int:
     build: ./web-int
-    image: energy-web-int:${IMAGE_TAG:-local}
+    image: ${IMAGE_REGISTRY:?IMAGE_REGISTRY is required}/energy-web-int:${IMAGE_TAG:?IMAGE_TAG is required}
     restart: unless-stopped
-    ports:
-      - "${INT_WEB_PORT:-3400}:3000"
+    expose: ["3000"]
     networks: [backend]
+    read_only: true
+    tmpfs:
+      - /tmp:size=128m,mode=1777
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+
+  gateway:
+    image: caddy:2.10-alpine
+    restart: unless-stopped
+    environment:
+      CN_DOMAIN: ${CN_DOMAIN:?CN_DOMAIN is required}
+      INT_DOMAIN: ${INT_DOMAIN:?INT_DOMAIN is required}
+      TLS_EMAIL: ${TLS_EMAIL:?TLS_EMAIL is required}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      web-cn: { condition: service_healthy }
+      web-int: { condition: service_healthy }
+    networks: [backend]
+    security_opt: [no-new-privileges:true]
 
 volumes:
   postgres_data:
   redis_data:
+  caddy_data:
+  caddy_config:
 
 networks:
   backend:

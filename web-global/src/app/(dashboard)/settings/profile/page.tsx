@@ -1,1 +1,5 @@
-import { Card, Form, Input, Button, Avatar, message, Spin, Descriptions, Alert } from 'antd';
+import SettingsPage from '../../../../pages/SettingsPage';
+
+export default function ProfileSettingsRoute() {
+  return <SettingsPage />;
+}

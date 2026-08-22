@@ -1,12 +1,22 @@
+'use client';
+
 import Sidebar from '@/components/layout/Sidebar';
 import OnboardingFlow from '@/components/onboarding/OnboardingFlow';
 import { StationProvider } from '@/contexts/StationContext';
+import { usePathname } from 'next/navigation';
 
 export default function DashboardLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
+    const pathname = usePathname();
+    const isPublicConversionPage = pathname === '/pricing' || pathname === '/checkout';
+
+    if (isPublicConversionPage) {
+        return <StationProvider>{children}</StationProvider>;
+    }
+
     return (
         <StationProvider>
         <div className="min-h-screen">
