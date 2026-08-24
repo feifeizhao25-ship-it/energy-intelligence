@@ -10,7 +10,7 @@ on:
     - cron: '0 2 * * *'
 
 env:
-  PYTHON_VERSION: '3.13'
+  PYTHON_VERSION: '3.12'
   NODE_VERSION: '20'
 
 jobs:
@@ -171,8 +171,8 @@ jobs:
         run: |
           if [ -f "apps/api/Dockerfile" ]; then
             docker build -f apps/api/Dockerfile -t eip-api:scan apps/api
-          elif [ -f "backend/Dockerfile" ]; then
-            docker build -f backend/Dockerfile -t eip-api:scan backend
+          elif [ -f "runtime/backend/Dockerfile" ]; then
+            docker build -f runtime/backend/Dockerfile -t eip-api:scan runtime/backend
           else
             echo "No Dockerfile found, skipping image scan"
             exit 0
