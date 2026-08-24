@@ -34,7 +34,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd runtime/backend
-          pip install -r requirements.txt
+          pip install -r requirements.txt pytest-cov
       - name: Run backend tests
         env:
           TEST_DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/energy_intelligence_test
@@ -61,7 +61,7 @@ jobs:
       - name: Install Playwright
         run: npx playwright install chromium
       - name: Run E2E tests
-        run: npx playwright test --project=chromium --reporter=list
+        run: npx playwright test --reporter=list
       - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v4

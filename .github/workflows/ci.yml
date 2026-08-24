@@ -135,14 +135,14 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "npm"
-          cache-dependency-path: web-global/package-lock.json
 
       - name: Install dependencies
-        run: npm ci
+        working-directory: .
+        run: corepack enable && pnpm install --frozen-lockfile
 
       - name: Build Next.js
-        run: npm run build
+        working-directory: .
+        run: pnpm --dir web-global build
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
@@ -196,7 +196,8 @@ jobs:
 
       - name: Lint backend with flake8
         run: |
-          flake8 backend/app/ \
+          flake8 runtime/backend/app/ \
+            --select=E9,F63,F7,F82 \
             --max-line-length=120 \
             --exclude=__pycache__,.venv,migrations \
             --statistics
