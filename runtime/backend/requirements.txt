@@ -17,7 +17,6 @@ pypdf
 pytest-asyncio==1.4.0
 pytest==9.0.3
 python-jose[cryptography]==3.4.0
-pyasn1==0.6.4
 python-multipart==0.0.31
 redis==5.0.8
 sendgrid==6.11.0
