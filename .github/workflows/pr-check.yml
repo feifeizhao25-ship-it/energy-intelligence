@@ -63,23 +63,23 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          cd backend
+          cd runtime/backend
           pip install black flake8 mypy
           pip install -r requirements.txt
 
       - name: Run Black
         run: |
-          cd backend
+          cd runtime/backend
           black --check app/ || true
 
       - name: Run Flake8
         run: |
-          cd backend
+          cd runtime/backend
           flake8 app/ --max-line-length=120 || true
 
       - name: Run MyPy
         run: |
-          cd backend
+          cd runtime/backend
           mypy app/ || true
 
   lint-flutter:
@@ -203,13 +203,13 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          cd backend
+          cd runtime/backend
           pip install -r requirements.txt
           pip install pytest pytest-asyncio pytest-cov
 
       - name: Run Tests
         run: |
-          cd backend
+          cd runtime/backend
           pytest --cov=app --cov-report=xml -v
         env:
           DATABASE_URL: postgresql://test:test@localhost:5432/test_db
@@ -218,7 +218,7 @@ jobs:
       - name: Upload Coverage
         uses: codecov/codecov-action@v4
         with:
-          file: ./backend/coverage.xml
+          file: ./runtime/backend/coverage.xml
           flags: backend
 
   # ============================================

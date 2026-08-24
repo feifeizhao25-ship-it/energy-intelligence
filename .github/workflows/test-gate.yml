@@ -52,12 +52,12 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r backend/requirements.txt
+          pip install -r runtime/backend/requirements.txt
           pip install pytest pytest-asyncio pytest-cov httpx
 
       - name: Run alembic migrations (test DB)
         run: |
-          cd backend
+          cd runtime/backend
           alembic upgrade head
         env:
           DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/test
@@ -65,7 +65,7 @@ jobs:
 
       - name: Run pytest with coverage
         run: |
-          cd backend
+          cd runtime/backend
           pytest tests/ -v \
             --cov=app --cov=skills \
             --cov-report=xml:coverage.xml \
@@ -74,14 +74,14 @@ jobs:
         env:
           DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/test
           REDIS_URL: redis://localhost:6379
-          PYTHONPATH: ${{ github.workspace }}/backend
+          PYTHONPATH: ${{ github.workspace }}/runtime/backend
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: python-coverage
-          path: backend/coverage.xml
+          path: runtime/backend/coverage.xml
 
   # ── RLS Security Validation ────────────────────────────────────────────
   rls-validation:
@@ -108,23 +108,23 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r backend/requirements.txt
+          pip install -r runtime/backend/requirements.txt
           pip install pytest pytest-asyncio asyncpg
 
       - name: Run migrations & seed RLS
         run: |
-          cd backend
+          cd runtime/backend
           alembic upgrade head
         env:
           DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/test
 
       - name: Run RLS tests
         run: |
-          cd backend
+          cd runtime/backend
           pytest tests/test_auth_rls.py -v -k "RLS" || true
         env:
           DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/test
-          PYTHONPATH: ${{ github.workspace }}/backend
+          PYTHONPATH: ${{ github.workspace }}/runtime/backend
 
       - name: Run SQL RLS validation script
         run: |
@@ -259,7 +259,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install pytest requests
-          pip install -r backend/requirements.txt || true
+          pip install -r runtime/backend/requirements.txt || true
 
       - name: Run contract tests (fallback)
         run: |

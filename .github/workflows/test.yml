@@ -38,12 +38,12 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install -r backend/requirements.txt
+        pip install -r runtime/backend/requirements.txt
         pip install pytest pytest-asyncio pytest-cov
 
     - name: Run unit tests
       run: |
-        cd backend && pytest tests -v --cov=app --cov-report=xml
+        cd runtime/backend && pytest tests -v --cov=app --cov-report=xml
       env:
         DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test
         REDIS_URL: redis://localhost:6379/0
@@ -51,7 +51,7 @@ jobs:
     - name: Upload coverage
       uses: codecov/codecov-action@v4
       with:
-        file: ./backend/coverage.xml
+        file: ./runtime/backend/coverage.xml
 
   integration-tests:
     runs-on: ubuntu-latest
@@ -67,11 +67,11 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install -r backend/requirements.txt
+        pip install -r runtime/backend/requirements.txt
         pip install pytest pytest-asyncio
 
     - name: Run integration tests
-      run: cd backend && pytest tests -v -m integration
+      run: cd runtime/backend && pytest tests -v -m integration
 
   e2e-tests:
     runs-on: ubuntu-latest

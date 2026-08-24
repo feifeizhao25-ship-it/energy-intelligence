@@ -33,19 +33,19 @@ jobs:
           python-version: '3.13'
       - name: Install dependencies
         run: |
-          cd backend
+          cd runtime/backend
           pip install -r requirements.txt
       - name: Run backend tests
         env:
           TEST_DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/energy_intelligence_test
           SUPERUSER_DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/energy_intelligence_test
         run: |
-          cd backend
+          cd runtime/backend
           pytest tests/ -v --cov=app --cov-report=xml --junitxml=junit.xml
       - name: Upload coverage
         uses: codecov/codecov-action@v4
         with:
-          files: ./backend/coverage.xml
+          files: ./runtime/backend/coverage.xml
           fail_ci_if_error: false
 
   e2e-tests:
@@ -95,15 +95,15 @@ jobs:
           python-version: '3.13'
       - name: Install dependencies
         run: |
-          cd backend
+          cd runtime/backend
           pip install -r requirements.txt
       - name: Run contract tests
         env:
           TEST_DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/energy_intelligence_test
           SUPERUSER_DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/energy_intelligence_test
         run: |
-          cd backend
-          pytest tests/test_api_contract.py tests/test_billing.py tests/test_ai_quota.py tests/test_team_quota.py -v
+          cd runtime/backend
+          pytest tests/test_api.py tests/test_auth.py tests/test_entitlements_api.py tests/test_stripe_checkout_safety.py -v
 
   test-report:
     name: Generate Test Report

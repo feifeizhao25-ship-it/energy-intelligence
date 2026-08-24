@@ -74,7 +74,7 @@ jobs:
 
       - name: Run pip-audit
         run: |
-          cd backend
+          cd runtime/backend
           pip-audit -r requirements.txt --desc --format=json -o pip-audit.json || true
           pip-audit -r requirements.txt --desc
         continue-on-error: true
