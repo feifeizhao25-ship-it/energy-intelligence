@@ -4,6 +4,7 @@ GDPR background tasks — executed asynchronously via Celery.
 import json
 import asyncio
 from datetime import datetime, timezone
+from sqlalchemy import select
 from app.tasks.celery_app import celery_app
 
 

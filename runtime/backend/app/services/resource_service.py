@@ -150,7 +150,7 @@ async def fetch_solar_resource(req: SolarResourceRequest) -> SolarResourceRespon
             # DNI from rearranged: GHI = DNI * cos(z) + DHI
             # cos(z) for monthly avg (approximation)
             cos_z = 0.65  # average cos(zenith) for mid-latitudes
-            dni_m = (ghi_m - dhi_m) / cos_z if cos_z > 0 else dni_m
+            dni_m = (ghi_m - dhi_m) / cos_z if cos_z > 0 else 0.0
             dni_m = max(dni_m, 0)
             dni_monthly.append(round(dni_m, 1))
             dhi_monthly.append(round(dhi_m, 1))

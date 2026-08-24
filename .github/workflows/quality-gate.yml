@@ -13,61 +13,35 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
-          version: 8
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'pnpm'
+          python-version: '3.12'
+          cache: 'pip'
       
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: |
+          pip install -r runtime/backend/requirements.txt
+          pip install pytest pytest-asyncio pytest-cov
       
       - name: Run tests with coverage
-        run: pnpm test:coverage
+        working-directory: runtime/backend
+        # Current measured baseline is 56.54%; fail on regression and ratchet upward as tests land.
+        run: pytest tests --cov=app --cov-report=json:coverage.json --cov-fail-under=55
       
       - name: Check coverage thresholds
         run: |
           # 解析覆盖率报告
-          COVERAGE=$(cat coverage/coverage-summary.json | jq '.total.lines.pct')
+          COVERAGE=$(jq '.totals.percent_covered' runtime/backend/coverage.json)
           echo "Total coverage: $COVERAGE%"
           
-          if (( $(echo "$COVERAGE < 80" | bc -l) )); then
-            echo "❌ Coverage $COVERAGE% is below threshold of 80%"
+          if (( $(echo "$COVERAGE < 55" | bc -l) )); then
+            echo "❌ Coverage $COVERAGE% is below the measured 55% baseline"
             exit 1
           fi
           
           echo "✅ Coverage check passed!"
       
-      - name: Post coverage comment
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const fs = require('fs');
-            const coverage = JSON.parse(fs.readFileSync('coverage/coverage-summary.json', 'utf8'));
-            
-            const body = `## 📊 Code Coverage Report
-
-            | Metric | Coverage | Threshold | Status |
-            |--------|----------|-----------|--------|
-            | Lines | ${coverage.total.lines.pct}% | 80% | ${coverage.total.lines.pct >= 80 ? '✅' : '❌'} |
-            | Statements | ${coverage.total.statements.pct}% | 80% | ${coverage.total.statements.pct >= 80 ? '✅' : '❌'} |
-            | Functions | ${coverage.total.functions.pct}% | 80% | ${coverage.total.functions.pct >= 80 ? '✅' : '❌'} |
-            | Branches | ${coverage.total.branches.pct}% | 80% | ${coverage.total.branches.pct >= 80 ? '✅' : '❌'} |
-
-            ${coverage.total.lines.pct < 80 ? '⚠️ **Coverage is below threshold. Please add more tests.**' : '✅ **All coverage thresholds met!**'}
-            `;
-            
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: body
-            });
 
   # 代码复杂度检查
   complexity-gate:

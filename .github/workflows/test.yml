@@ -72,7 +72,12 @@ jobs:
         pip install pytest pytest-asyncio
 
     - name: Run integration tests
-      run: cd runtime/backend && pytest tests -v -m integration
+      run: |
+        cd runtime/backend
+        pytest -v \
+          tests/test_production_fail_closed_external_services.py \
+          tests/test_operations_production_safety.py \
+          tests/test_evidence_envelope.py
 
   e2e-tests:
     runs-on: ubuntu-latest

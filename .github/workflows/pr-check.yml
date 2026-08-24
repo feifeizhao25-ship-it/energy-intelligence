@@ -105,9 +105,9 @@ jobs:
 
       - name: Check Formatting
         run: |
-          cd packages/energy_ui
-          flutter pub get
-          dart format --set-exit-if-changed lib/ || true
+          for app in ios-cn ios-global android-cn android-global; do
+            dart format --output=none --set-exit-if-changed "$app/lib"
+          done
 
   # ============================================
   # TYPE CHECKING
@@ -207,7 +207,7 @@ jobs:
           cd runtime/backend
           pytest --cov=app --cov-report=xml -v
         env:
-          DATABASE_URL: postgresql://test:test@localhost:5432/test_db
+          DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/test_db
           REDIS_URL: redis://localhost:6379/0
 
       - name: Upload Coverage

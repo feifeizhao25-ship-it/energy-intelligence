@@ -170,8 +170,7 @@ jobs:
           cache: "pip"
 
       - name: Run translation key checker
-        run: |
-          python scripts/check_translation_keys.py --threshold 95
+        run: python scripts/verify_language_isolation.py
 
   # ──────────────────────────────────────────
   # 5. Lint

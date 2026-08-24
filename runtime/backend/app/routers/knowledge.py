@@ -5,6 +5,7 @@ Knowledge 路由 — 知识库文章浏览与搜索
 
 from datetime import datetime
 from typing import List, Optional
+import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field

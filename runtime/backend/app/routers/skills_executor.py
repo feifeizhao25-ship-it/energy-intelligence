@@ -40,6 +40,40 @@ router = APIRouter(prefix="/skills", tags=["技能"])
 _tasks_store: Dict[str, Dict[str, Any]] = {}
 
 
+async def _run_skill_async(
+    task_id: str, skill_id: str, params: Dict[str, Any], user_id: str
+) -> None:
+    """Execute a registered skill and persist a pollable terminal state."""
+    task = _tasks_store[task_id]
+    task["status"] = SkillStatus.RUNNING.value
+    task["progress"] = 10
+    started = time.time()
+    try:
+        from app.skills.param_adapter import adapt_skill_params
+
+        result = await get_registry().execute(
+            skill_id, adapt_skill_params(skill_id, params)
+        )
+        failed = result.get("status") == SkillStatus.FAILED.value
+        task.update({
+            "status": SkillStatus.FAILED.value if failed else SkillStatus.COMPLETED.value,
+            "progress": 100,
+            "result": None if failed else result.get("data"),
+            "output": None if failed else result.get("data"),
+            "error": result.get("error") if failed else None,
+        })
+    except Exception as exc:
+        logger.exception("Asynchronous skill execution failed: %s", skill_id)
+        task.update({
+            "status": SkillStatus.FAILED.value,
+            "progress": 100,
+            "error": str(exc),
+        })
+    finally:
+        task["duration_ms"] = int((time.time() - started) * 1000)
+        task["completed_at"] = datetime.now().isoformat()
+
+
 # ---------------------------------------------------------------------------
 # GET /skills — 列出所有 Skills
 # ---------------------------------------------------------------------------
