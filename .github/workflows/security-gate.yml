@@ -81,13 +81,8 @@ jobs:
 
       - name: Check pip-audit severity
         run: |
-          if [ -f backend/pip-audit.json ]; then
-            CRITICAL=$(python3 -c "
-import json,sys
-d=json.load(sys.stdin)
-cnt=sum(1 for dep in d.get('dependencies',[]) for vuln in dep.get('vulns',[]) if vuln.get('fix_versions'))
-print(cnt)
-" < backend/pip-audit.json)
+          if [ -f runtime/backend/pip-audit.json ]; then
+            CRITICAL=$(python3 -c "import json,sys; d=json.load(sys.stdin); print(sum(1 for dep in d.get('dependencies',[]) for vuln in dep.get('vulns',[]) if vuln.get('fix_versions')))" < runtime/backend/pip-audit.json)
             echo "Python dependencies with fixable vulnerabilities: $CRITICAL"
             if [ "$CRITICAL" -gt 10 ]; then
               echo "⚠️ $CRITICAL fixable vulnerabilities found (threshold: 10)"

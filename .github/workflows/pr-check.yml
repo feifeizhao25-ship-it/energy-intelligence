@@ -8,7 +8,7 @@ on:
 env:
   NODE_VERSION: '20'
   FLUTTER_VERSION: '3.24.0'
-  PYTHON_VERSION: '3.13'
+  PYTHON_VERSION: '3.12'
 
 jobs:
   # ============================================
@@ -25,10 +25,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
 
       - name: Install Dependencies
-        run: npm install
+        run: corepack enable && pnpm install --frozen-lockfile
 
       - name: Lint Packages
         run: |
@@ -39,7 +38,7 @@ jobs:
       - name: Lint Web Global
         run: |
           cd web-global
-          npm ci
+          npm install
           npm run lint || true
 
       # 目标从空壳目录 frontend-cn-web 改为主干 runtime/web
@@ -127,12 +126,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
 
       - name: Type Check Web Global
         run: |
           cd web-global
-          npm ci
+          npm install
           npx tsc --noEmit || true
 
       - name: Type Check Web CN
@@ -235,10 +233,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
 
       - name: Install Dependencies
-        run: npm install
+        run: corepack enable && pnpm install --frozen-lockfile
 
       - name: Build Packages
         run: |
@@ -248,13 +245,13 @@ jobs:
       - name: Build Web Global
         run: |
           cd web-global
-          npm ci
+          npm install
           npm run build || true
 
       - name: Build Web CN
         run: |
           cd runtime/web
-          npm ci
+          npm install
           npx prisma generate --schema src/prisma/schema.prisma
           npm run build || true
 
@@ -276,13 +273,13 @@ jobs:
       - name: Check Web Global Bundle Size
         run: |
           cd web-global
-          npm ci
+          npm install
           npm run build
           du -sh dist/ || true
 
       - name: Check Web CN Bundle Size
         run: |
-          cd frontend-cn-web
+          cd runtime/web
           npm ci
           npm run build
           du -sh dist/ || true

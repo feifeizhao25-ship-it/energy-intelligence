@@ -51,14 +51,14 @@ jobs:
             const coverage = JSON.parse(fs.readFileSync('coverage/coverage-summary.json', 'utf8'));
             
             const body = `## 📊 Code Coverage Report
-            
-| Metric | Coverage | Threshold | Status |
-|--------|----------|-----------|--------|
-| Lines | ${coverage.total.lines.pct}% | 80% | ${coverage.total.lines.pct >= 80 ? '✅' : '❌'} |
-| Statements | ${coverage.total.statements.pct}% | 80% | ${coverage.total.statements.pct >= 80 ? '✅' : '❌'} |
-| Functions | ${coverage.total.functions.pct}% | 80% | ${coverage.total.functions.pct >= 80 ? '✅' : '❌'} |
-| Branches | ${coverage.total.branches.pct}% | 80% | ${coverage.total.branches.pct >= 80 ? '✅' : '❌'} |
-            
+
+            | Metric | Coverage | Threshold | Status |
+            |--------|----------|-----------|--------|
+            | Lines | ${coverage.total.lines.pct}% | 80% | ${coverage.total.lines.pct >= 80 ? '✅' : '❌'} |
+            | Statements | ${coverage.total.statements.pct}% | 80% | ${coverage.total.statements.pct >= 80 ? '✅' : '❌'} |
+            | Functions | ${coverage.total.functions.pct}% | 80% | ${coverage.total.functions.pct >= 80 ? '✅' : '❌'} |
+            | Branches | ${coverage.total.branches.pct}% | 80% | ${coverage.total.branches.pct >= 80 ? '✅' : '❌'} |
+
             ${coverage.total.lines.pct < 80 ? '⚠️ **Coverage is below threshold. Please add more tests.**' : '✅ **All coverage thresholds met!**'}
             `;
             

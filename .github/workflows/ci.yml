@@ -15,7 +15,7 @@ jobs:
   # 1. Backend Tests
   # ──────────────────────────────────────────
   backend-test:
-    name: Backend Test (Python 3.13)
+    name: Backend Test (Python 3.12)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -30,10 +30,10 @@ jobs:
         with:
           version: "latest"
 
-      - name: Set up Python 3.13
+      - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
-          python-version: "3.13"
+          python-version: "3.12"
           cache: "pip"
 
       - name: Install dependencies
@@ -163,10 +163,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python 3.13
+      - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
-          python-version: "3.13"
+          python-version: "3.12"
           cache: "pip"
 
       - name: Run translation key checker
@@ -185,10 +185,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python 3.13
+      - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
-          python-version: "3.13"
+          python-version: "3.12"
           cache: "pip"
 
       - name: Install flake8
@@ -233,10 +233,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python 3.13
+      - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
-          python-version: "3.13"
+          python-version: "3.12"
 
       - name: Install PyYAML
         run: pip install pyyaml
