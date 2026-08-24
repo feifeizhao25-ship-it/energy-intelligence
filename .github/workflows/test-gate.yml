@@ -7,7 +7,7 @@ on:
     branches: [main, develop]
 
 env:
-  PYTHON_VERSION: '3.13'
+  PYTHON_VERSION: '3.12'
   NODE_VERSION: '20'
   COVERAGE_THRESHOLD: 55
 
@@ -202,7 +202,6 @@ jobs:
     name: Coverage Gate (≥55%)
     runs-on: ubuntu-latest
     needs: [python-unit, node-unit]
-    if: always()
     steps:
       - uses: actions/checkout@v4
 
