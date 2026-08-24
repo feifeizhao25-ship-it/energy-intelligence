@@ -45,7 +45,7 @@ jobs:
       run: |
         cd runtime/backend && pytest tests -v --cov=app --cov-report=xml
       env:
-        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test
+        DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/test
         REDIS_URL: redis://localhost:6379/0
 
     - name: Upload coverage

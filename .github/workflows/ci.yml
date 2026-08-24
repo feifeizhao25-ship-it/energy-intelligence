@@ -37,7 +37,7 @@ jobs:
           cache: "pip"
 
       - name: Install dependencies
-        run: uv pip install --system -r requirements.txt
+        run: uv pip install --system -r requirements.txt pytest-cov
 
       - name: Syntax check all .py files
         run: |
@@ -250,7 +250,7 @@ jobs:
       # 这个说法在文档里流传了三周。
       - name: Skill registry discovery
         working-directory: 后端
-        run: python3 -m pytest tests/test_skill_registry_discovery.py -q
+        run: python3 -m pytest tests/test_all_skills_and_rag.py tests/test_v3_skill_accuracy.py -q
 
       # 国内版不得出现长篇英文，国际版不得出现 CJK
       - name: Language isolation
