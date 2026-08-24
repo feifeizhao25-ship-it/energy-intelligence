@@ -1,0 +1,70 @@
+# ============================================
+# Staging Environment — 30分钟核心功能验证
+# ============================================
+# 用途：在本地或测试服务器快速启动完整服务栈，验证核心功能
+#
+# 启动:
+#   docker compose -f docker-compose.staging.yml up -d
+# 停止:
+#   docker compose -f docker-compose.staging.yml down -v
+
+name: energy-intelligence-staging
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: eip_staging_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: energy
+      POSTGRES_PASSWORD: energy_staging_pass
+      POSTGRES_DB: energy_staging
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_staging_data:/var/lib/postgresql/data
+      - ./backend/scripts/init_extensions.sql:/docker-entrypoint-initdb.d/01_extensions.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U energy -d energy_staging"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: eip_staging_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass redis_staging_pass
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_staging_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "_ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # Backend API（可选：如果本地 Python 环境可用，推荐本地运行以便调试）
+  # 如需容器化运行，取消下面注释并确保 backend/Dockerfile 存在
+  # backend:
+  #   build:
+  #     context: ./backend
+  #     dockerfile: Dockerfile
+  #   container_name: eip_staging_backend
+  #   restart: unless-stopped
+  #   ports:
+  #     - "8000:8000"
+  #   environment:
+  #     DATABASE_URL: postgresql+asyncpg://energy:energy_staging_pass@postgres:5432/energy_staging
+  #     REDIS_URL: redis://:redis_staging_pass@redis:6379/0
+  #     SECRET_KEY: staging-secret-key-must-be-at-least-32-chars-long-for-security-checks-only
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+
+volumes:
+  postgres_staging_data:
+  redis_staging_data:

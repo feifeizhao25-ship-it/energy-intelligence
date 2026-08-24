@@ -163,7 +163,7 @@ class _ResearchScreenState extends State<ResearchScreen> {
                   ),
                 ),
               );
-            }).toList(),
+            }),
           ],
         ),
       ),

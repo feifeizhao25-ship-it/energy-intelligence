@@ -15,7 +15,7 @@ class BarChart extends StatelessWidget {
   final List<double>? data;
 
   const BarChart({
-    Key? key,
+    super.key,
     this.values = const [],
     this.labels = const [],
     this.barColor = const Color(0xFF1D4ED8),
@@ -25,7 +25,7 @@ class BarChart extends StatelessWidget {
     this.title,
     this.yAxisLabel,
     this.data,
-  }) : super(key: key);
+  });
 
   List<double> get _values => data ?? values;
   List<String> get _labels {

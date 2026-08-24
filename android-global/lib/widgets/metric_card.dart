@@ -18,7 +18,7 @@ class MetricCard extends StatelessWidget {
   final VoidCallback? onTap;
 
   const MetricCard({
-    Key? key,
+    super.key,
     this.title,
     this.value,
     this.subtitle,
@@ -30,7 +30,7 @@ class MetricCard extends StatelessWidget {
     this.changePercent,
     this.accentColor,
     this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

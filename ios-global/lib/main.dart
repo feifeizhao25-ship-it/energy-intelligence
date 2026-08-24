@@ -1,22 +1,4 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
-import 'services/api_service.dart';
-import 'theme/app_theme.dart';
-import 'screens/auth/login_screen.dart';
-import 'screens/auth/register_screen.dart';
-import 'screens/dashboard/dashboard_screen.dart';
-import 'screens/resource/resource_screen.dart';
-import 'screens/resource/solar_resource_screen.dart';
-import 'screens/resource/wind_resource_screen.dart';
-import 'screens/finance/finance_screen.dart';
-import 'screens/finance/solar_finance_screen.dart';
-import 'screens/operations/operations_screen.dart';
-import 'screens/operations/health_screen.dart';
-import 'screens/ai_assistant/ai_assistant_screen.dart';
-import 'screens/projects/projects_screen.dart';
-import 'screens/projects/project_detail_screen.dart';
-import 'screens/research/research_screen.dart';
-import 'screens/settings/settings_screen.dart';
+import 'package:energy_global/main.dart' as global_app;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

@@ -1,0 +1,11 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  exclude:
+    # These legacy duplicate files are no longer part of the iOS global app.
+    # lib/main.dart imports the canonical global implementation.
+    - lib/models/**
+    - lib/screens/**
+    - lib/services/**
+    - lib/theme/**
+    - lib/widgets/**

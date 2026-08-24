@@ -1,0 +1,64 @@
+name: Release Images
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Immutable image tag (release version or commit SHA; latest is rejected)
+        required: true
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ${{ github.repository_owner }}/energy-intelligence
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: backend
+            context: ./.release/backend
+            dockerfile: ./.release/backend/Dockerfile
+          - name: frontend-cn
+            context: .
+            dockerfile: ./frontend-cn-web/Dockerfile
+          - name: frontend-int
+            context: .
+            dockerfile: ./web-global/Dockerfile
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Validate immutable image tag
+        env:
+          IMAGE_TAG: ${{ inputs.tag }}
+        run: |
+          case "$IMAGE_TAG" in
+            latest|*[!A-Za-z0-9._-]*|'')
+              echo "Use an immutable release version or commit SHA, not '$IMAGE_TAG'." >&2
+              exit 1
+              ;;
+          esac
+      - name: Prepare ASCII-only backend build context
+        if: matrix.name == 'backend'
+        run: |
+          mkdir -p .release/backend
+          cp -R "后端/." .release/backend/
+          test -f .release/backend/Dockerfile
+          test -f .release/backend/requirements.txt
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-${{ matrix.name }}:${{ inputs.tag }}

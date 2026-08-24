@@ -4,8 +4,9 @@
 library;
 
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiException implements Exception {
   final int statusCode;
@@ -17,6 +18,7 @@ class ApiException implements Exception {
 
 class ApiService {
   static final _client = http.Client();
+  static const _secureStorage = FlutterSecureStorage();
   static String? _token;
   static final String _baseUrl = const String.fromEnvironment('API_BASE_URL');
 
@@ -63,8 +65,7 @@ class ApiService {
     );
     final token = resp['access_token'] as String;
     _token = token;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('energy_token', token);
+    await _secureStorage.write(key: 'energy_token', value: token);
     return token;
   }
 
@@ -78,15 +79,13 @@ class ApiService {
     );
     final token = resp['access_token'] as String;
     _token = token;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('energy_token', token);
+    await _secureStorage.write(key: 'energy_token', value: token);
     return token;
   }
 
   static Future<void> logout() async {
     _token = null;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('energy_token');
+    await _secureStorage.delete(key: 'energy_token');
   }
 
   // ── Users ─────────────────────────────────────────────────────────────────

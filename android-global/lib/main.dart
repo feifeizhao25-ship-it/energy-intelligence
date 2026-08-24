@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'services/api_service.dart';
 import 'theme/app_theme.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
@@ -17,6 +16,7 @@ import 'screens/projects/projects_screen.dart';
 import 'screens/projects/project_detail_screen.dart';
 import 'screens/research/research_screen.dart';
 import 'screens/settings/settings_screen.dart';
+import 'services/api_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

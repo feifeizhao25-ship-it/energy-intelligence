@@ -8,12 +8,12 @@ class SiteScoreCard extends StatelessWidget {
   final String recommendation;
 
   const SiteScoreCard({
-    Key? key,
+    super.key,
     required this.score,
     required this.grade,
     required this.gradeColor,
     required this.recommendation,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "product": "EnergyIQ Global",
+  "market": "global",
+  "currency": "USD",
+  "annual_revenue_target": 100000000,
+  "business_model": "B2B intelligence subscriptions and enterprise data/API contracts",
+  "revenue_model": [
+    {"segment": "professional", "customers": 12000, "annual_revenue_per_customer": 2400},
+    {"segment": "team", "customers": 4000, "annual_revenue_per_customer": 9600},
+    {"segment": "enterprise", "customers": 410, "annual_revenue_per_customer": 80000}
+  ],
+  "funnel_events": [
+    "landing_viewed", "dataset_previewed", "workspace_created",
+    "analysis_completed", "report_exported", "trial_started",
+    "checkout_started", "payment_succeeded", "subscription_renewed",
+    "subscription_cancelled", "enterprise_lead_qualified"
+  ],
+  "release_gates": [
+    "production_build", "language_isolation", "security_scan",
+    "billing_live_mode", "payment_webhook", "analytics_ingestion",
+    "privacy_and_terms", "backup_restore", "rollback", "slo_monitoring"
+  ],
+  "automation": {
+    "health_check_minutes": 5,
+    "growth_digest_hours": 24,
+    "experiment_review_days": 7,
+    "knowledge_freshness_days": 30,
+    "maximum_recurring_human_hours_per_week": 20
+  },
+  "human_only": [
+    "legal_and_regulatory_approval",
+    "enterprise_contract_signature",
+    "payment_provider_identity_verification",
+    "severity_one_incident_command",
+    "pricing_or_paid_media_budget_change"
+  ],
+  "stop_rules": {
+    "payment_failure_rate_percent": 3,
+    "refund_rate_percent": 5,
+    "oldest_blocker_days": 7,
+    "knowledge_staleness_days": 30
+  }
+}
