@@ -200,4 +200,3 @@ jobs:
       run: |
         kubectl get pods -n energy-production
         kubectl get svc -n energy-production
-Production Kubernetes gate passed: 113 resources, 9 external Secret contracts
