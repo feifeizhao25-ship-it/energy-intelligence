@@ -178,7 +178,6 @@ class FrontendSkillExecuteRequest(BaseModel):
 async def execute_skill_compat(
     req: FrontendSkillExecuteRequest,
     request: Request,
-    request: Request,
     async_exec: bool = Query(False, alias="async", description="是否异步执行"),
     timeout: float = Query(60.0, description="超时秒数 (同步模式)"),
     user_id: str = Depends(get_current_user_id),
@@ -186,7 +185,6 @@ async def execute_skill_compat(
     """前端兼容端点，通过请求体传入 skill_id"""
     return await execute_skill(
         skill_id=req.skill_id,
-        request=request,
         request=request,
         params=req.parameters,
         async_exec=async_exec,
