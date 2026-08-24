@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
                     });
 
                     headers = ['ID', '项目名称', '类型', '容量(kW)', '经度', '纬度', '创建日期'];
-                    rows = projects.length > 0 ? projects.map((p: any) => [
+                    rows = projects.map((p: any) => [
                         p.id,
                         p.name,
                         p.type === 'SOLAR' ? '光伏' : '风电',
@@ -45,17 +45,10 @@ export async function POST(req: NextRequest) {
                         p.lng,
                         p.lat,
                         p.createdAt.toISOString().split('T')[0]
-                    ]) : [
-                        ['demo-1', '示例光伏项目', '光伏', '150', '116.4', '39.9', '2025-01-01'],
-                        ['demo-2', '示例风电项目', '风电', '2000', '110.5', '41.2', '2025-01-05']
-                    ];
+                    ]);
                 } catch (dbError) {
-                    console.error('Projects DB fetch failed, using fallback:', dbError);
-                    headers = ['ID', '项目名称', '类型', '容量(kW)', '位置', '创建日期'];
-                    rows = [
-                        ['demo-1', '北京朝阳分布式光伏示范站', '光伏', '120', '北京市朝阳区', '2024-12-15'],
-                        ['demo-2', '内蒙古辉腾锡勒风电场 III 期', '风电', '50000', '内蒙古呼和浩特', '2024-12-20']
-                    ];
+                    console.error('Projects DB fetch failed:', dbError);
+                    throw new Error('项目数据暂时无法读取，未导出示例数据');
                 }
                 break;
 
@@ -69,36 +62,21 @@ export async function POST(req: NextRequest) {
                     });
 
                     headers = ['ID', '类型', '输入参数', '年发电量(kWh)', '创建日期'];
-                    rows = calculations.length > 0 ? calculations.map((c: any) => [
+                    rows = calculations.map((c: any) => [
                         c.id,
                         c.type,
                         JSON.stringify(c.input),
                         (c.output as any)?.energy?.annualGeneration || 'N/A',
                         c.createdAt.toISOString().split('T')[0]
-                    ]) : [
-                        ['calc-1', 'SOLAR', '{"capacity": 100}', '145000', '2025-01-15'],
-                        ['calc-2', 'WIND', '{"capacity": 5000}', '12500000', '2025-01-18']
-                    ];
+                    ]);
                 } catch (dbError) {
-                    console.error('Calculations DB fetch failed, using fallback:', dbError);
-                    headers = ['日期', '类型', '容量(kW)', '位置', '年发电量(kWh)', 'LCOE(元/kWh)', 'IRR(%)'];
-                    rows = [
-                        ['2025-01-15', '光伏', '500', '北京', '550000', '0.42', '12.5'],
-                        ['2025-01-12', '风电', '2000', '内蒙古', '4200000', '0.38', '14.2']
-                    ];
+                    console.error('Calculations DB fetch failed:', dbError);
+                    throw new Error('计算记录暂时无法读取，未导出示例数据');
                 }
                 break;
 
-            case 'monitoring': // 演示数据
-                filenameBase = `monitoring_export_${Date.now()}`;
-                headers = ['时间', '功率(kW)', '效率(%)', '温度(°C)'];
-                rows = Array.from({ length: 24 }, (_, i) => [
-                    new Date(Date.now() - (23 - i) * 60 * 60 * 1000).toISOString(),
-                    (Math.random() * 100 + 20).toFixed(2),
-                    (Math.random() * 10 + 90).toFixed(2),
-                    (Math.random() * 20 + 35).toFixed(1)
-                ]);
-                break;
+            case 'monitoring':
+                return NextResponse.json({ success: false, error: 'MONITORING_SOURCE_UNAVAILABLE', message: '尚未接入经验证的监控数据源，未生成随机数据' }, { status: 503 });
 
             default:
                 return NextResponse.json({
@@ -173,22 +151,6 @@ export async function POST(req: NextRequest) {
 }
 
 // GET - 获取导出历史 (演示)
-export async function GET(req: NextRequest) {
-    const history = [
-        {
-            id: 'export-mock-1',
-            filename: 'projects_latest.xlsx',
-            dataType: 'projects',
-            format: 'xlsx',
-            size: '12 KB',
-            createdAt: new Date().toISOString(),
-            downloadUrl: '#',
-            status: 'completed'
-        }
-    ];
-
-    return NextResponse.json({
-        success: true,
-        data: history
-    });
+export async function GET() {
+    return NextResponse.json({ success: true, data: [], message: '导出历史持久化尚未接入，未返回示例记录' });
 }

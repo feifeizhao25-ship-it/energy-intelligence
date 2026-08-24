@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
     Folder,
     MoreVertical,
@@ -30,11 +30,7 @@ export default function LibraryPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    useEffect(() => {
-        fetchLibrary();
-    }, [activeFolder]);
-
-    const fetchLibrary = async () => {
+    const fetchLibrary = useCallback(async () => {
         setIsLoading(true);
         try {
             const url = activeFolder ? `/api/user/papers?folderId=${activeFolder}` : '/api/user/papers';
@@ -46,7 +42,11 @@ export default function LibraryPage() {
             }
         } catch (e) { console.error(e); }
         setIsLoading(false);
-    };
+    }, [activeFolder]);
+
+    useEffect(() => {
+        void fetchLibrary();
+    }, [fetchLibrary]);
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -64,7 +64,7 @@ export default function LibraryPage() {
             });
             const data = await res.json();
             if (data.success) {
-                fetchLibrary();
+                void fetchLibrary();
             }
         } catch (e) {
             console.error('Upload failed', e);

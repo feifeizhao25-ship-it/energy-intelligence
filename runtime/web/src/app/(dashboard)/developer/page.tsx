@@ -546,12 +546,9 @@ function ApiDocs() {
             <h2 className="text-2xl font-black text-slate-900 mb-6">API 文档</h2>
 
             <div className="space-y-6">
-                <div>
-                    <h3 className="text-lg font-bold text-slate-900 mb-2">Demo API Key</h3>
-                    <p className="text-slate-600 mb-3">用于测试的演示 Key（只读权限）：</p>
-                    <code className="block p-4 bg-slate-100 rounded-xl text-sm font-mono">
-                        xny_pk_demo_1234567890abcdef
-                    </code>
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+                    <h3 className="text-lg font-bold text-slate-900 mb-2">密钥安全</h3>
+                    <p className="text-slate-600">平台不提供可公开共享的演示密钥。请创建权限最小化的专用密钥；完整值仅显示一次，不要写入前端代码、日志或公开仓库。</p>
                 </div>
 
                 <div>
@@ -565,8 +562,8 @@ function ApiDocs() {
                 <div>
                     <h3 className="text-lg font-bold text-slate-900 mb-2">示例请求</h3>
                     <pre className="p-4 bg-slate-900 text-green-400 rounded-xl text-sm overflow-x-auto">
-                        {`curl http://localhost:3001/api/v1/projects \\
-  -H "X-API-Key: xny_pk_demo_1234567890abcdef"`}
+                        {`curl "/api/v1/projects?page=1&limit=20" \\
+  -H "X-API-Key: <your-secret-key>"`}
                     </pre>
                 </div>
 
@@ -580,8 +577,7 @@ function ApiDocs() {
                         查看完整文档
                     </a>
                     <a
-                        href="/docs/OPEN_API.md"
-                        target="_blank"
+                        href="/developer/docs"
                         className="px-6 py-3 border border-slate-200 rounded-xl font-bold text-slate-700 hover:bg-slate-50 transition-colors inline-flex items-center gap-2"
                     >
                         <FileText className="w-5 h-5" />

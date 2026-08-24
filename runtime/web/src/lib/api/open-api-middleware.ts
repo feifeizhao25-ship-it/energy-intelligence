@@ -1,19 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
+import crypto from 'crypto';
+import { prisma } from '@/lib/prisma';
 
 /**
  * 开放 API 中间件工具
  * 提供认证、限流、日志等功能
  */
 
-// API Keys 存储 (与 keys/route.ts 共享)
-const apiKeysDb: Map<string, ApiKeyData> = new Map();
-
 // Rate limiting storage
 const rateLimitDb: Map<string, RateLimitEntry> = new Map();
 
 interface ApiKeyData {
     id: string;
-    key: string;
+    keyHash: string;
     name: string;
     userId: string;
     permissions: string[];
@@ -36,40 +35,39 @@ const apiLogsDb: { timestamp: Date; keyId: string; endpoint: string; method: str
 /**
  * 验证 API Key
  */
-export function validateApiKey(apiKey: string): {
+export async function validateApiKey(apiKey: string): Promise<{
     valid: boolean;
     data?: ApiKeyData;
     error?: string;
     errorCode?: string;
-} {
+}> {
     if (!apiKey) {
         return { valid: false, error: 'API key is required', errorCode: 'MISSING_API_KEY' };
     }
 
-    if (!apiKey.startsWith('xny_pk_')) {
+    if (!apiKey.startsWith('xny_')) {
         return { valid: false, error: 'Invalid API key format', errorCode: 'INVALID_FORMAT' };
     }
 
-    const keyData = apiKeysDb.get(apiKey);
+    const keyHash = crypto.createHash('sha256').update(apiKey).digest('hex');
+    const record = await prisma.apiKey.findUnique({ where: { keyHash } });
 
-    if (!keyData) {
+    if (!record) {
         return { valid: false, error: 'Invalid API key', errorCode: 'INVALID_KEY' };
     }
 
-    if (keyData.status === 'revoked') {
+    if (record.status === 'REVOKED') {
         return { valid: false, error: 'API key has been revoked', errorCode: 'KEY_REVOKED' };
     }
 
-    if (keyData.expiresAt && new Date() > keyData.expiresAt) {
-        keyData.status = 'expired';
+    if (record.status === 'EXPIRED' || (record.expiresAt && new Date() > record.expiresAt)) {
+        if (record.status !== 'EXPIRED') await prisma.apiKey.update({ where: { id: record.id }, data: { status: 'EXPIRED' } });
         return { valid: false, error: 'API key has expired', errorCode: 'KEY_EXPIRED' };
     }
 
-    // 更新使用统计
-    keyData.lastUsedAt = new Date();
-    keyData.usageCount++;
-
-    return { valid: true, data: keyData };
+    await prisma.apiKey.update({ where: { id: record.id }, data: { lastUsedAt: new Date() } });
+    const permissions = Array.isArray(record.permissions) ? record.permissions.filter((value): value is string => typeof value === 'string') : [];
+    return { valid: true, data: { id: record.id, keyHash, name: record.name || '', userId: record.userId, permissions, rateLimit: 60, createdAt: record.createdAt, lastUsedAt: record.lastUsedAt || undefined, expiresAt: record.expiresAt || undefined, status: 'active', usageCount: 0 } };
 }
 
 /**
@@ -173,7 +171,13 @@ export function withOpenApi(
         const apiKey = req.headers.get('X-API-Key') || req.headers.get('Authorization')?.replace('Bearer ', '');
 
         // 2. 验证 API Key
-        const validation = validateApiKey(apiKey || '');
+        let validation: Awaited<ReturnType<typeof validateApiKey>>;
+        try {
+            validation = await validateApiKey(apiKey || '');
+        } catch (error) {
+            console.error('Open API key store unavailable', error);
+            return NextResponse.json({ success: false, error: { code: 'API_KEY_STORE_UNAVAILABLE', message: 'API authentication is temporarily unavailable' } }, { status: 503 });
+        }
         if (!validation.valid) {
             return NextResponse.json({
                 success: false,
@@ -205,7 +209,7 @@ export function withOpenApi(
         }
 
         // 4. 检查速率限制
-        const rateLimit = checkRateLimit(keyData.key, keyData.rateLimit);
+        const rateLimit = checkRateLimit(keyData.keyHash, keyData.rateLimit);
         if (!rateLimit.allowed) {
             return NextResponse.json({
                 success: false,
@@ -238,13 +242,13 @@ export function withOpenApi(
             response.headers.set('X-Response-Time', `${latency}ms`);
 
             // 7. 记录调用
-            logApiCall(keyData.id, req.nextUrl.pathname, req.method, 200, latency);
+            await prisma.apiLog.create({ data: { userId: keyData.userId, apiKeyId: keyData.id, endpoint: req.nextUrl.pathname, method: req.method, duration: latency, status: response.status } });
 
             return response;
 
         } catch (error: any) {
             const latency = Date.now() - startTime;
-            logApiCall(keyData.id, req.nextUrl.pathname, req.method, 500, latency);
+            await prisma.apiLog.create({ data: { userId: keyData.userId, apiKeyId: keyData.id, endpoint: req.nextUrl.pathname, method: req.method, duration: latency, status: 500 } }).catch(() => undefined);
 
             return NextResponse.json({
                 success: false,

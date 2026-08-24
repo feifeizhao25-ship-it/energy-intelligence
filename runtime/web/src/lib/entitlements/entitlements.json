@@ -1,0 +1,243 @@
+{
+  "product": "新能源智库",
+  "version": "1.0.0",
+  "updated_at": "2026-08-23",
+  "tier_order": ["free", "pro", "maintenance", "full", "team", "enterprise"],
+  "tiers": {
+    "free": {
+      "name": "免费版",
+      "name_en": "Evaluation",
+      "description": "基础体验，建立认知",
+      "description_en": "Validate one project workflow before procurement.",
+      "price": { "monthly_cny": 0, "yearly_cny": 0 },
+      "quotas": {
+        "ai_queries_per_day": 20,
+        "resource_queries_per_day": 2,
+        "calculations_per_day": 2,
+        "max_projects": 1,
+        "report_exports_per_month": 5
+      },
+      "knowledge": {
+        "data_sources": ["basic"],
+        "paper_search_per_day": 3,
+        "citation_tools": false
+      },
+      "personalization": {
+        "custom_dashboard": false,
+        "saved_preferences": false,
+        "recommendation_reasons": true
+      },
+      "export": {
+        "formats": ["pdf"],
+        "citation_export": false
+      },
+      "collaboration": {
+        "team_seats": 1,
+        "shared_projects": false
+      },
+      "service": {
+        "support_level": "community",
+        "data_retention_days": 7
+      },
+      "features_zh": ["每日 3 次 AI 对话", "每日 2 次资源查询与测算", "最多 1 个项目", "数据保留 7 天"],
+      "features_en": ["3 AI interactions per day", "2 resource queries and calculations per day", "1 active project", "7-day data retention"]
+    },
+    "pro": {
+      "name": "专业版",
+      "name_en": "Professional",
+      "description": "资源查询+收益计算+文献检索",
+      "description_en": "For analysts developing reviewable investment cases.",
+      "price": { "monthly_cny": 198, "yearly_cny": 1980 },
+      "quotas": {
+        "ai_queries_per_day": 200,
+        "resource_queries_per_day": -1,
+        "calculations_per_day": -1,
+        "max_projects": 10,
+        "report_exports_per_month": 50
+      },
+      "knowledge": {
+        "data_sources": ["basic", "premium_weather", "grid_tariff"],
+        "paper_search_per_day": -1,
+        "citation_tools": true
+      },
+      "personalization": {
+        "custom_dashboard": true,
+        "saved_preferences": true,
+        "recommendation_reasons": true
+      },
+      "export": {
+        "formats": ["pdf", "docx"],
+        "citation_export": true
+      },
+      "collaboration": {
+        "team_seats": 5,
+        "shared_projects": false
+      },
+      "service": {
+        "support_level": "email",
+        "data_retention_days": 365
+      },
+      "features_zh": ["每日 100 次 AI 对话", "资源查询与测算不限次", "文献检索与引用工具", "PDF 与 Word 报告导出"],
+      "features_en": ["100 AI interactions per day", "Unlimited resource queries and calculations", "Literature search and citation tools", "PDF and Word export"]
+    },
+    "maintenance": {
+      "name": "运维版",
+      "name_en": "Operations",
+      "description": "专业运维诊断+检修管理",
+      "description_en": "For teams reviewing real plant and maintenance data.",
+      "price": { "monthly_cny": 298, "yearly_cny": 2980 },
+      "quotas": {
+        "ai_queries_per_day": 100,
+        "resource_queries_per_day": -1,
+        "calculations_per_day": 10,
+        "max_projects": 10,
+        "report_exports_per_month": 50,
+        "diagnoses_per_day": -1,
+        "max_stations": 10
+      },
+      "knowledge": {
+        "data_sources": ["basic", "premium_weather", "grid_tariff"],
+        "paper_search_per_day": 10,
+        "citation_tools": true
+      },
+      "personalization": {
+        "custom_dashboard": true,
+        "saved_preferences": true,
+        "recommendation_reasons": true
+      },
+      "export": {
+        "formats": ["pdf"],
+        "citation_export": true
+      },
+      "collaboration": {
+        "team_seats": 3,
+        "shared_projects": false
+      },
+      "service": {
+        "support_level": "email",
+        "data_retention_days": 365
+      },
+      "features_zh": ["运维诊断与检修管理", "最多 10 个电站", "每日 100 次 AI 对话", "PDF 报告导出"],
+      "features_en": ["Maintenance diagnosis workflow", "Up to 10 stations", "100 AI interactions per day", "PDF export"]
+    },
+    "full": {
+      "name": "全能版",
+      "name_en": "Complete",
+      "description": "全部功能无限制",
+      "description_en": "Planning and operations in one governed workspace.",
+      "price": { "monthly_cny": 398, "yearly_cny": 3980 },
+      "quotas": {
+        "ai_queries_per_day": 300,
+        "resource_queries_per_day": -1,
+        "calculations_per_day": -1,
+        "max_projects": 200,
+        "report_exports_per_month": -1,
+        "diagnoses_per_day": -1,
+        "max_stations": 50
+      },
+      "knowledge": {
+        "data_sources": ["basic", "premium_weather", "grid_tariff"],
+        "paper_search_per_day": -1,
+        "citation_tools": true
+      },
+      "personalization": {
+        "custom_dashboard": true,
+        "saved_preferences": true,
+        "recommendation_reasons": true
+      },
+      "export": {
+        "formats": ["pdf", "docx", "xlsx"],
+        "citation_export": true
+      },
+      "collaboration": {
+        "team_seats": 10,
+        "shared_projects": true
+      },
+      "service": {
+        "support_level": "priority",
+        "data_retention_days": 730
+      },
+      "features_zh": ["专业版与运维版全部功能", "最多 200 个项目与 50 个电站", "PDF、Word 与 Excel 导出", "优先响应"],
+      "features_en": ["Professional and Operations capabilities", "Up to 200 projects and 50 stations", "PDF, Word, and Excel export", "Priority response"]
+    },
+    "team": {
+      "name": "团队版",
+      "name_en": "Team",
+      "description": "5账号+协作功能",
+      "description_en": "For a five-person project or advisory team.",
+      "price": { "monthly_cny": 0, "yearly_cny": 9800 },
+      "quotas": {
+        "ai_queries_per_day": 500,
+        "resource_queries_per_day": -1,
+        "calculations_per_day": -1,
+        "max_projects": -1,
+        "report_exports_per_month": 200
+      },
+      "knowledge": {
+        "data_sources": ["basic", "premium_weather", "grid_tariff"],
+        "paper_search_per_day": -1,
+        "citation_tools": true
+      },
+      "personalization": {
+        "custom_dashboard": true,
+        "saved_preferences": true,
+        "recommendation_reasons": true
+      },
+      "export": {
+        "formats": ["pdf", "docx", "xlsx"],
+        "citation_export": true
+      },
+      "collaboration": {
+        "team_seats": 5,
+        "shared_projects": true
+      },
+      "service": {
+        "support_level": "priority",
+        "data_retention_days": 730
+      },
+      "features_zh": ["5 个团队账号", "共享项目与协作空间", "团队级使用额度", "PDF、Word 与 Excel 导出"],
+      "features_en": ["5 team accounts", "Shared projects and review workflow", "Team-level usage allocation", "PDF, Word, and Excel export"]
+    },
+    "enterprise": {
+      "name": "企业版",
+      "name_en": "Enterprise",
+      "description": "无限账号+API+定制",
+      "description_en": "For governed integrations and multi-team rollouts.",
+      "price": { "monthly_cny": 0, "yearly_cny": 38000 },
+      "quotas": {
+        "ai_queries_per_day": -1,
+        "resource_queries_per_day": -1,
+        "calculations_per_day": -1,
+        "max_projects": -1,
+        "report_exports_per_month": -1
+      },
+      "knowledge": {
+        "data_sources": ["all"],
+        "paper_search_per_day": -1,
+        "citation_tools": true
+      },
+      "personalization": {
+        "custom_dashboard": true,
+        "saved_preferences": true,
+        "recommendation_reasons": true
+      },
+      "export": {
+        "formats": ["pdf", "docx", "xlsx", "api"],
+        "citation_export": true
+      },
+      "collaboration": {
+        "team_seats": -1,
+        "shared_projects": true,
+        "sso": true,
+        "white_label": true
+      },
+      "service": {
+        "support_level": "dedicated",
+        "data_retention_days": -1,
+        "private_deployment": true
+      },
+      "features_zh": ["企业账号与权限配置", "API、SSO 与白标能力", "用量和项目数量按合同配置", "私有化与定制需求评估"],
+      "features_en": ["Enterprise roles and controls", "API, SSO, and white-label options", "Contract-defined scale and retention", "Private deployment assessment"]
+    }
+  }
+}

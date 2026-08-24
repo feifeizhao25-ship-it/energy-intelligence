@@ -21,16 +21,31 @@ export interface AIRequest {
 }
 
 const siliconFlowKey = process.env.SILICONFLOW_API_KEY;
+const openRouterKey = process.env.OPENROUTER_API_KEY;
 
 /**
  * 统一 AI 路由服务
  * 优先使用 SiliconFlow 接入国产模型，支持自动备选切换
  */
 export async function callAI(req: AIRequest) {
+    if (openRouterKey) {
+        const primary = process.env.OPENROUTER_MODEL_QUALITY || 'deepseek/deepseek-v3.2';
+        const fallbacks = (process.env.OPENROUTER_FALLBACK_MODELS || 'qwen/qwen3-30b-a3b-instruct-2507,google/gemini-2.5-flash').split(',').map(item => item.trim()).filter(Boolean);
+        const client = new OpenAI({ apiKey: openRouterKey, baseURL: process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1', defaultHeaders: { 'HTTP-Referer': process.env.OPENROUTER_SITE_URL || 'https://xinnengyuan.ai', 'X-Title': '新能源智库' } });
+        return client.chat.completions.create({
+            model: primary,
+            messages: req.messages,
+            temperature: req.temperature ?? 0.4,
+            max_tokens: Math.min(4096, Math.max(1, req.max_tokens || 2000)),
+            stream: req.stream || false,
+            tools: req.tools,
+            tool_choice: req.tool_choice,
+        }, { body: { models: [primary, ...fallbacks], provider: { data_collection: 'deny', zdr: true, require_parameters: true } } });
+    }
     const model = req.model || 'glm-4-plus';
 
     if (!siliconFlowKey) {
-        throw new Error('SILICONFLOW_API_KEY 未配置，AI 服务已拒绝生成替代内容');
+        throw new Error('OPENROUTER_API_KEY 或 SILICONFLOW_API_KEY 未配置，AI 服务已拒绝生成替代内容');
     }
 
     const client = new OpenAI({
@@ -105,106 +120,9 @@ function getModelMapping(model: AIModel): string {
         // DeepSeek V3 保持原样
         'deepseek-v3': 'deepseek-ai/DeepSeek-V3',
         'deepseek-chat': 'deepseek-ai/DeepSeek-V3',
-        // Claude 使用 OpenRouter（如果配置）
-        'claude-sonnet': 'anthropic/claude-3.5-sonnet'
+        // 旧内部标识在 SiliconFlow 路径映射到可用的通用质量模型；
+        // OpenRouter 路径由 OPENROUTER_MODEL_QUALITY 统一选型。
+        'claude-sonnet': 'Pro/zai-org/GLM-4.7'
     };
     return mapping[model] || mapping['glm-4-plus'];
-}
-
-/**
- * 开发环境模拟响应
- */
-async function mockResponse(model: string, req?: AIRequest) {
-    await new Promise(resolve => setTimeout(resolve, 800));
-
-    let content = `[这是来自 ${model} 的演示响应] 该光伏项目的年度等效利用小时数预计为 1250 小时，建议关注 3-5 月的辐照度波动。`;
-
-    // 智能 Mock：根据 Prompt 内容返回符合格式的数据
-    const lastMsg = req?.messages?.[req.messages.length - 1]?.content || '';
-    console.log('[MockDebug] Last Msg Preview:', lastMsg.substring(0, 100));
-
-    if (lastMsg.toLowerCase().includes('json')) {
-        let jsonContent = '[]';
-
-        if (lastMsg.includes('翻译') || lastMsg.includes('translation')) {
-            // 尝试提取原文中的标题和摘要，使 Mock 更真实
-            let mockTitle = "Sample Title";
-            let mockAbstract = "Sample Abstract";
-
-            try {
-                const titleMatch = lastMsg.match(/Title:\s*([^\n]+)/);
-                if (titleMatch) mockTitle = titleMatch[1].trim();
-
-                const abstractMatch = lastMsg.match(/Abstract:\s*([^\n]+)/);
-                if (abstractMatch) mockAbstract = abstractMatch[1].trim().substring(0, 100) + "...";
-            } catch (e) {
-                console.error('[Mock] Extraction failed', e);
-            }
-
-            jsonContent = JSON.stringify([
-                { "section": "标题", "en": mockTitle, "zh": `${mockTitle} (中文译本)` },
-                { "section": "摘要", "en": mockAbstract, "zh": "（此处为系统自动生成的模拟翻译结果，用于演示界面布局。由于处于演示模式，未调用真实翻译API。）" },
-                { "section": "研究结论", "en": "The study concludes that the proposed method is effective.", "zh": "研究表明，该方法在特定条件下具有显著优势，可提升系统效率约 15%。" }
-            ]);
-        } else if (lastMsg.includes('extract') || lastMsg.includes('提取')) {
-            jsonContent = JSON.stringify([
-                { "label": "演示效率", "value": "24.5%", "context": "实验室测试效率" },
-                { "label": "成本降低", "value": "12%", "context": "与传统工艺相比" }
-            ]);
-        } else {
-            // Default JSON fallback
-            jsonContent = JSON.stringify({ "note": "Mock JSON response" });
-        }
-
-        content = jsonContent;
-    } else if (lastMsg.includes('结构化的中文摘要') || lastMsg.includes('structure')) {
-        content = `### 研究背景
-本文针对新能源领域的核心问题进行了深入探讨，特别是在光伏/风电的效率优化方面。
-
-### 主要方法
-研究团队采用了基于深度学习的预测模型，结合了过去5年的气象数据与实地测试结果。
-
-### 核心结论
-1. 提出的新算法将预测精度提升了 15%。
-2. 系统在极端天气下的稳定性提高了 20%。
-3. 成本分析显示，该方案具有显著的经济效益。
-
-### 实际意义
-该研究为未来的智能电网调度提供了重要的理论依据和技术支持。`;
-    }
-
-    return {
-        id: 'mock-id',
-        object: 'chat.completion',
-        created: Date.now(),
-        model: model,
-        choices: [
-            {
-                index: 0,
-                message: {
-                    role: 'assistant',
-                    content: content
-                },
-                finish_reason: 'stop'
-            }
-        ],
-        usage: { prompt_tokens: 100, completion_tokens: 50, total_tokens: 150 }
-    };
-}
-
-/**
- * 模拟流式生成
- */
-async function* mockStreamResponse(model: string) {
-    const content = `[AI 助手 ${model}] 正在为您计算... 结果显示该区域风速分布均匀，适合安装 5MW 级别机组。`;
-    const words = content.split(' ');
-    for (const word of words) {
-        await new Promise(resolve => setTimeout(resolve, 100));
-        yield {
-            choices: [{
-                delta: { content: word + ' ' },
-                finish_reason: null
-            }]
-        };
-    }
 }

@@ -1,7 +1,7 @@
 import { aiService } from '../ai/unified';
 import { requireSupabaseAdmin } from '../supabase';
 import { PDFParse } from 'pdf-parse';
-import { assertValidPdfBuffer } from './pdf-guard';
+import { assertValidPdfBuffer, neutralizePromptInjections } from './pdf-guard';
 
 /**
  * PDF RAG 处理器
@@ -23,8 +23,14 @@ export const ragProcessor = {
             // 1. 解析 PDF（解析失败一律转为明确错误，不向外泄露解析器内部信息）
             const text = await this.extractText(buffer);
 
+            // 1.5 提示词注入防护：中和已知注入模式（标记不阻断），命中记录告警日志
+            const scan = neutralizePromptInjections(text);
+            if (scan.flagged) {
+                console.warn(`[RAG] Neutralized ${scan.matches.length} suspected prompt-injection fragment(s) in PDF text`);
+            }
+
             // 2. 文本分块 (每块约 500 字符，重叠 100 字符)
-            const chunks = this.chunkText(text, 500, 100);
+            const chunks = this.chunkText(scan.text, 500, 100);
 
             console.log(`[RAG] Split PDF into ${chunks.length} chunks`);
 

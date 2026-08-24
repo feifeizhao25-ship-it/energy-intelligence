@@ -24,23 +24,7 @@ import {
     ReferenceLine
 } from 'recharts';
 
-// Mock AI Actions (will move to actions/maintenance in real app)
-const mockIVAnalysis = async (params: any) => {
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
-    // Simulate diagnosis based on "abnormal" param for demo
-    const isAbnormal = Math.random() > 0.4;
-
-    return {
-        health: isAbnormal ? 78 : 96,
-        diagnosis: isAbnormal ? 'PID (电势诱导衰减) 早期特征' : '组件运行特性良好',
-        issues: isAbnormal ? ['填充因子 (FF) 偏低', '串联电阻 (Rs) 异常升高'] : [],
-        suggestion: isAbnormal ? '建议检查接地系统并考虑加装防PID模块' : '建议每季度进行一次例行扫描',
-        curveData: generateCurveData(isAbnormal ? 'pid' : 'normal')
-    };
-};
-
-// Generate mock IV curve data
+// 仅用于空状态坐标系，不表示实测曲线或诊断结果。
 const generateCurveData = (type: 'normal' | 'pid' | 'shade') => {
     const data = [];
     const voc = 45;
@@ -89,15 +73,7 @@ export default function IVCurveAnalysisView() {
     }, []);
 
     const handleScan = async () => {
-        setLoading(true);
-        setAnalyzing(true);
-        try {
-            const data = await mockIVAnalysis({});
-            setResult(data);
-        } finally {
-            setLoading(false);
-            setAnalyzing(false);
-        }
+        return;
     };
 
     return (
@@ -122,12 +98,11 @@ export default function IVCurveAnalysisView() {
                             <option>汇流箱 #A02</option>
                         </select>
                         <button
-                            onClick={handleScan}
-                            disabled={loading}
+                            disabled
                             className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2.5 rounded-xl font-bold text-sm shadow-lg shadow-indigo-500/30 transition-all flex items-center gap-2 disabled:opacity-70"
                         >
                             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-                            {loading ? '全站扫描中...' : '开始诊断'}
+                            等待 IV 实测数据
                         </button>
                     </div>
                 </div>

@@ -10,9 +10,23 @@ from app.config import settings
 from app.core.dependencies import get_current_user_id
 from app.core.database import get_db
 from app.services.ai_service import ai_assistant
+from app.core.subscription import QuotaExceeded, assert_ai_quota, consume_ai_quota
+from app.services.evidence_envelope import envelope_from_rag
+from app.services.rag_service import RAGService
 import json
 
 router = APIRouter(prefix="/ai")
+
+_AI_LIMITATIONS = ["AI 生成内容仅供辅助分析，关键投资与工程决策需人工复核"]
+
+
+def _evidence_for(query: str, answer: str) -> dict:
+    """为 AI 问答构建统一证据封装；检索失败时降级为「无来源」而非报错。"""
+    try:
+        hits = RAGService().search(query, top_k=3, market="cn").hits
+    except Exception:
+        hits = []
+    return envelope_from_rag(answer, hits, limitations=_AI_LIMITATIONS)
 
 
 class MobileChatRequest(BaseModel):
@@ -43,12 +57,23 @@ async def chat(message: str, project_id: Optional[str] = None, user_id: str = De
 async def chat_json(
     body: MobileChatRequest,
     user_id: str = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
 ):
     """Authenticated non-streaming chat response for mobile clients."""
-    response = await ai_assistant.chat_openai(body.message, SYSTEM_PROMPT)
-    if not response or not response.strip():
-        raise HTTPException(status_code=503, detail="AI assistant is unavailable")
-    return {"message": response}
+    try:
+        user = await assert_ai_quota(user_id, db)
+    except QuotaExceeded as error:
+        raise HTTPException(status_code=429, detail=str(error)) from error
+    try:
+        result = await ai_assistant.chat_openai_with_metadata(body.message, SYSTEM_PROMPT)
+    except RuntimeError as error:
+        raise HTTPException(status_code=503, detail="AI service temporarily unavailable") from error
+    await consume_ai_quota(user, db)
+    return {
+        "message": result["content"],
+        "ai_metadata": result["metadata"],
+        "evidence": _evidence_for(body.message, result["content"]),
+    }
 
 
 @router.post("/analyze")
@@ -56,10 +81,23 @@ async def analyze(
     query: str,
     context: dict,
     user_id: str = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
 ):
     """Get AI analysis of renewable energy data."""
-    response = await ai_assistant.chat_openai(query, SYSTEM_PROMPT)
-    return {"analysis": response}
+    try:
+        user = await assert_ai_quota(user_id, db)
+    except QuotaExceeded as error:
+        raise HTTPException(status_code=429, detail=str(error)) from error
+    try:
+        result = await ai_assistant.chat_openai_with_metadata(query, SYSTEM_PROMPT)
+    except RuntimeError as error:
+        raise HTTPException(status_code=503, detail="AI service temporarily unavailable") from error
+    await consume_ai_quota(user, db)
+    return {
+        "analysis": result["content"],
+        "ai_metadata": result["metadata"],
+        "evidence": _evidence_for(query, result["content"]),
+    }
 
 
 @router.get("/suggestions/{project_id}")

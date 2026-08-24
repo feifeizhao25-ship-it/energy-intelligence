@@ -27,9 +27,14 @@ mark "language isolation" $?
 
 if [ "${1:-}" = "--with-flutter" ]; then
   step "5/5 国内 Android 发布构建"
+  if [ -z "${API_BASE_URL:-}" ] || printf '%s' "$API_BASE_URL" | grep -Eq 'example\.(com|invalid)|localhost|127\.0\.0\.1'; then
+    echo "必须通过 API_BASE_URL 传入真实的 HTTPS 生产 API 地址" >&2
+    mark "android-cn appbundle" 1
+  else
   ( cd android-cn && flutter pub get && flutter build appbundle --release \
-      --dart-define=API_BASE_URL=https://api.example.com )
+      --dart-define=API_BASE_URL="$API_BASE_URL" )
   mark "android-cn appbundle" $?
+  fi
 else
   echo; echo "(跳过 Flutter；传入 --with-flutter 可执行 Android 发布构建)"
 fi

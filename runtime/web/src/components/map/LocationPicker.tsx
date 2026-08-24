@@ -125,7 +125,9 @@ export default function LocationPicker({ value, onChange, placeholder = "点击�
                 mapRef.current = null;
             }
         };
-    }, [isMapOpen, value, onChange, placeholder]);
+        // 地图实例只在弹层开关或初始坐标变化时重建；选择回调在地图事件中读取。
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isMapOpen, value?.lat, value?.lng, value?.province]);
 
     // 添加标记
     const addMarker = (lat: number, lng: number, AMap: any, map: any) => {

@@ -11,7 +11,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import TodayOverview from '@/components/dashboard/TodayOverview';
 import TrendChart from '@/components/dashboard/TrendChart';
@@ -95,19 +95,7 @@ export default function ProjectDashboard() {
     const [error, setError] = useState<string | null>(null);
     const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
-    // 获取Dashboard数据
-    useEffect(() => {
-        fetchDashboardData();
-
-        // 每5分钟自动刷新
-        const interval = setInterval(() => {
-            fetchDashboardData();
-        }, 5 * 60 * 1000);
-
-        return () => clearInterval(interval);
-    }, [projectId]);
-
-    const fetchDashboardData = async () => {
+    const fetchDashboardData = useCallback(async () => {
         try {
             setLoading(true);
             const response = await fetch(`/api/v2/project/${projectId}/dashboard`);
@@ -131,7 +119,14 @@ export default function ProjectDashboard() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [projectId]);
+
+    // 获取Dashboard数据
+    useEffect(() => {
+        void fetchDashboardData();
+        const interval = setInterval(() => void fetchDashboardData(), 5 * 60 * 1000);
+        return () => clearInterval(interval);
+    }, [fetchDashboardData]);
 
     if (loading && !data) {
         return (

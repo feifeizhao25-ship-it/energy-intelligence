@@ -36,6 +36,33 @@ def test_registry_validate_has_no_problems():
     assert registry.validate() == []
 
 
+def test_registry_validate_flags_bad_published_at():
+    registry = SourceRegistry.from_file()
+    broken = dict(registry.sources[0])
+    broken["published_at"] = "not-a-date"
+    problems = SourceRegistry(registry.sources[:-1] + [broken]).validate()
+    assert any("published_at must be ISO date" in p for p in problems)
+
+
+def test_registry_validate_flags_missing_provenance_fields():
+    registry = SourceRegistry.from_file()
+    stripped = {k: v for k, v in registry.sources[0].items()
+                if k not in ("authors", "version", "published_at", "locator")}
+    problems = SourceRegistry(registry.sources[:-1] + [stripped]).validate()
+    for field in ("authors", "version", "published_at", "locator"):
+        assert any(f"missing required field {field}" in p for p in problems)
+
+
+def test_search_metadata_surfaces_literature_provenance():
+    hits = RAGService().search("光伏并网", top_k=10, market="cn").hits
+    assert hits
+    for hit in hits:
+        assert hit.metadata["authors"]
+        assert hit.metadata["version"]
+        date.fromisoformat(hit.metadata["published_at"])
+        assert hit.metadata["locator"]
+
+
 def test_registry_required_fields_present():
     registry = SourceRegistry.from_file()
     for source in registry.sources:

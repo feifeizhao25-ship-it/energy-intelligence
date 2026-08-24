@@ -79,6 +79,7 @@ async def health():
 
 # ── 路由挂载（仅挂载仓库中真实存在的模块）──────────────────────────────────────
 from app.api.v1 import ai_assistant as v1_ai  # noqa: E402
+from app.api.v1 import billing as v1_billing  # noqa: E402
 from app.api.v1 import auth as v1_auth  # noqa: E402
 from app.api.v1 import finance as v1_finance  # noqa: E402
 from app.api.v1 import operations as v1_operations  # noqa: E402
@@ -86,16 +87,20 @@ from app.api.v1 import research as v1_research  # noqa: E402
 from app.api.v1 import resource as v1_resource  # noqa: E402
 from app.api.v1 import users as v1_users  # noqa: E402
 from app.routers import misc, personalization, projects  # noqa: E402
+from app.routers import entitlements as entitlements_router  # noqa: E402
 
 app.include_router(v1_auth.router, prefix="/api/v1", tags=["auth"])
 app.include_router(v1_users.router, prefix="/api/v1", tags=["users"])
 app.include_router(v1_resource.router, prefix="/api/v1", tags=["resource"])
 app.include_router(v1_research.router, prefix="/api/v1", tags=["research"])
 app.include_router(v1_ai.router, prefix="/api/v1", tags=["ai"])
+app.include_router(v1_billing.router, prefix="/api/v1", tags=["billing"])
 app.include_router(v1_finance.router, prefix="/api/v1", tags=["finance"])
 app.include_router(v1_operations.router, prefix="/api/v1", tags=["operations"])
 app.include_router(projects.router, prefix="/api/v1", tags=["projects"])
 app.include_router(misc.router, prefix="/api/v1", tags=["misc"])
+# 权益注册表对定价/支付/客服页公开，路径按契约为 /api/entitlements（不带 v1）
+app.include_router(entitlements_router.router, prefix="/api", tags=["entitlements"])
 app.include_router(
     personalization.router,
     prefix="/api/v1",

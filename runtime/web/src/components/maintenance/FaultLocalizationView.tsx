@@ -18,37 +18,6 @@ export default function FaultLocalizationView() {
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState<StringAnalysis | null>(null);
 
-    const handleMockAnalysis = async () => {
-        setLoading(true);
-        try {
-            // Mock Input: Simulate an inverter with 16 strings, 2 faulty
-            const mockStrings = Array.from({ length: 16 }, (_, i) => {
-                const isFaulty = i === 4; // String 5 is faulty
-                const isShaded = i === 12; // String 13 is shaded
-
-                const baseVoltage = 650;
-                const baseCurrent = 12;
-
-                return {
-                    id: `S-${i + 1}`,
-                    voltage: isFaulty ? 0 : baseVoltage + (Math.random() * 10 - 5),
-                    current: isFaulty ? 0 : isShaded ? 4 : baseCurrent + (Math.random() * 0.5 - 0.25),
-                    power: 0 // Will be calculated
-                };
-            }).map(s => ({ ...s, power: s.voltage * s.current }));
-
-            const data = await getStringAnalysisAction({
-                invName: "INV-01-A区",
-                strings: mockStrings
-            });
-            setResult(data);
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
     return (
         <div className="space-y-6">
             {/* Control Panel */}
@@ -64,18 +33,17 @@ export default function FaultLocalizationView() {
                         </div>
                     </div>
                     <button
-                        onClick={handleMockAnalysis}
-                        disabled={loading}
+                        disabled
                         className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-xl font-bold text-sm shadow-lg shadow-orange-500/30 transition-all flex items-center gap-2 disabled:opacity-70"
                     >
                         {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-                        {loading ? '扫描中...' : '启动全站扫描'}
+                        等待 SCADA 数据接入
                     </button>
                 </div>
 
                 <div className="p-4 bg-orange-50 rounded-xl border border-orange-100 text-sm text-orange-800 flex items-start gap-2">
                     <AlertCircle className="w-5 h-5 shrink-0" />
-                    <p>演示模式：点击扫描将使用模拟数据生成一个典型的故障场景（包含组串开路和阴影遮挡）。</p>
+                    <p>尚未接入组串级实测数据。系统不会使用随机数据生成故障结论；完成 SCADA/IoT 数据源配置后才可扫描。</p>
                 </div>
             </div>
 

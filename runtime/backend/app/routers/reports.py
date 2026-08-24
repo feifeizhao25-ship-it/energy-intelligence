@@ -51,6 +51,7 @@ from app.models.project import Project
 from app.models.cashflow import CashflowProjection
 from app.schemas.common import SuccessResponse
 from app.utils.response import success
+from app.services.evidence_envelope import build_envelope, source_from_dict
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/reports", tags=["报告中心"])
@@ -371,6 +372,26 @@ def validate_financial_evidence(data: Dict[str, Any]) -> None:
             status_code=422,
             detail=f"政策类数据来源已过期（stale），需重新核验后方可生成投资结论: {titles}",
         )
+
+
+def _format_citation(index: int, src: Dict[str, Any]) -> str:
+    """格式化单条数据来源引用；文献溯源字段（作者/版本/发布日期/页码）存在即透出。"""
+    parts = [
+        f"[{index}] {src.get('title', '未命名来源')}",
+        str(src.get('url', '无URL')),
+    ]
+    if src.get("authors"):
+        parts.append(f"作者：{src['authors']}")
+    if src.get("version"):
+        parts.append(f"版本：{src['version']}")
+    if src.get("published_at"):
+        parts.append(f"发布日期：{src['published_at']}")
+    if src.get("locator"):
+        parts.append(f"页码/段落：{src['locator']}")
+    parts.append(f"获取日期：{src.get('retrieved_at', '未记录')}")
+    if src.get("license_note"):
+        parts.append(f"许可：{src['license_note']}")
+    return " | ".join(parts)
 
 
 def _demo_data() -> Dict[str, Any]:
@@ -1578,7 +1599,7 @@ def _add_appendix(doc, data: Dict, metrics: Dict):
     if not sources:
         _add_body(doc, "未附可核验来源；本报告不得用于投资决策。")
     for i, src in enumerate(sources, 1):
-        _add_body(doc, f"[{i}] {src.get('title', '未命名来源')} | {src.get('url', '无URL')} | 获取日期：{src.get('retrieved_at', '未记录')}")
+        _add_body(doc, _format_citation(i, src))
 
     _add_heading(doc, "C. 免责声明", level=2)
     p = doc.add_paragraph()
@@ -2073,10 +2094,7 @@ def _build_pdf_appendix(story, data, metrics, style_h1, style_h2, style_body, cn
     if not sources:
         story.append(Paragraph("未附可核验来源；本报告不得用于投资决策。", style_body))
     for i, source in enumerate(sources, 1):
-        story.append(Paragraph(
-            f"[{i}] {source.get('title', '未命名来源')} | {source.get('url', '无URL')} | "
-            f"获取日期：{source.get('retrieved_at', '未记录')}", style_body,
-        ))
+        story.append(Paragraph(_format_citation(i, source), style_body))
 
     story.append(Paragraph("C. 免责声明", style_h2))
     story.append(Paragraph(
@@ -2256,6 +2274,9 @@ async def generate_report(
     if req.report_type in (ReportTemplateType.FEASIBILITY, ReportTemplateType.INVESTMENT):
         validate_financial_evidence(data)
 
+    # 统一证据封装（19 项要求第 1 项）：来源/假设/计算轨迹随响应透出
+    evidence = _build_report_evidence(title, data)
+
     # 初始化状态
     _report_store[report_id] = {
         "report_id": report_id,
@@ -2313,7 +2334,49 @@ async def generate_report(
             "message": "报告生成中，请轮询 status_url 获取进度",
         },
         "meta": {"template": template_info.name},
+        "evidence": evidence,
     }
+
+
+def _build_report_evidence(title: str, data: Dict[str, Any]) -> Dict[str, Any]:
+    """为报告生成响应组装 evidence_envelope。
+
+    sources 复用项目/财务模型已有的来源元数据（标题/URL/作者/版本/发布日期/
+    页码/许可/获取日期）；calculation_trace 在财务输入齐备时给出 NPV/IRR/
+    LCOE/回收期四个可复核公式条目，输入不全则不编造轨迹。
+    """
+    raw_sources = data.get("data_sources") or []
+    sources = [source_from_dict(s) for s in raw_sources if isinstance(s, dict)]
+
+    financial = data.get("financial") or {}
+    assumptions = [
+        f"{key} = {value}"
+        for key, value in financial.items()
+        if key != "yearly_cashflows" and isinstance(value, (int, float, str))
+    ]
+
+    trace: List[Dict[str, Any]] = []
+    if REQUIRED_FINANCIAL_INPUTS <= set(financial):
+        metrics = calc_financial_metrics(financial)
+        inputs = {key: financial.get(key) for key in sorted(REQUIRED_FINANCIAL_INPUTS)}
+        trace = [
+            {"formula": "NPV = Σ CF_t / (1 + r)^t", "inputs": inputs,
+             "result": round(metrics["npv"], 2)},
+            {"formula": "IRR: NPV(r) = 0（Newton-Raphson 求解）", "inputs": inputs,
+             "result": round(metrics["irr"], 6)},
+            {"formula": "LCOE = 全生命周期成本现值 / 总发电量", "inputs": inputs,
+             "result": round(metrics["lcoe"], 6)},
+            {"formula": "静态回收期 = 累计现金流转正年份", "inputs": inputs,
+             "result": metrics["payback_years"]},
+        ]
+
+    return build_envelope(
+        f"报告生成任务已受理：{title}",
+        sources,
+        assumptions=assumptions,
+        calculation_trace=trace,
+        limitations=["报告基于用户提供的项目假设与来源生成，仅供辅助分析，不构成投资建议"],
+    )
 
 
 @router.get("/{report_id}")

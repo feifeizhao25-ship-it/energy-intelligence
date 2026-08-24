@@ -100,7 +100,7 @@ export async function compareSiteEnergies(input: {
         hybrid,
         recommendation,
         metadata: {
-            dataSources: ['NASA POWER', 'Local Utility Rates (2024)', 'SolarWind Pro Engine V1'],
+            dataSources: ['NASA POWER', 'Local Utility Rates (2024)', '新能源智库计算引擎 V1'],
             calculationVersion: '1.0.0-prod',
             timestamp: new Date().toISOString()
         },

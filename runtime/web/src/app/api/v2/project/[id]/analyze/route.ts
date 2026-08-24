@@ -35,6 +35,7 @@ export async function POST(
     req: NextRequest,
     { params }: { params: { id: string } }
 ) {
+    const requestStartedAt = Date.now();
     try {
         const session = await getServerSession(authOptions);
         const userId = session?.user?.id;
@@ -145,7 +146,7 @@ export async function POST(
                 userId
             );
 
-            console.log(`[Phase 3] ✅ 报告生成完成: ${report.id}`);
+            console.log(`[Phase 3] 报告内容组装完成（未生成下载文件）: ${report.id}`);
 
             // 记录报告生成里程碑
             await TimelineManager.recordReportGeneration(
@@ -263,11 +264,11 @@ export async function POST(
 
             // 元数据
             meta: {
-                processingTime: Date.now() - Date.now(), // TODO: 实际计算
+                processingTime: Date.now() - requestStartedAt,
                 phases: {
                     phase1: "✅ 核心计算完成",
                     phase2: "✅ 智能编排完成",
-                    phase3: generateReport ? "✅ 报告生成完成" : "⏭ 未生成报告"
+                    phase3: generateReport ? "✅ 报告内容已组装（文件导出未启用）" : "⏭ 未生成报告"
                 },
                 architecture: "终极护城河 v1.1",
                 moatStrength: "🏰🏰🏰🏰🏰"

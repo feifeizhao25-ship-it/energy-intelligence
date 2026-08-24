@@ -33,7 +33,8 @@ export async function POST(req: NextRequest) {
         // 1. 下载 PDF
         const response = await axios.get(pdfUrl, {
             responseType: 'arraybuffer', timeout: 15000, maxContentLength: 25 * 1024 * 1024,
-            maxBodyLength: 25 * 1024 * 1024, maxRedirects: 2,
+            // 禁止跟随重定向，避免获准域名将服务器引向内网地址。
+            maxBodyLength: 25 * 1024 * 1024, maxRedirects: 0,
         });
         if (!String(response.headers['content-type'] || '').toLowerCase().includes('application/pdf')) {
             return NextResponse.json({ error: '远程内容不是 PDF' }, { status: 415 });

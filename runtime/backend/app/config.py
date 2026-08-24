@@ -217,6 +217,12 @@ class Settings(BaseSettings):
     # 国际版
     ANTHROPIC_API_KEY: Optional[str] = None
     OPENAI_API_KEY: Optional[str] = None
+    OPENROUTER_API_KEY: Optional[str] = None
+    OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
+    OPENROUTER_MODEL_FAST: str = "qwen/qwen3-30b-a3b-instruct-2507"
+    OPENROUTER_MODEL_QUALITY: str = "deepseek/deepseek-v3.2"
+    OPENROUTER_CIRCUIT_FAILURES: int = 3
+    OPENROUTER_CIRCUIT_COOLDOWN_SECONDS: int = 60
     
     # 嵌入模型
     EMBEDDING_PROVIDER: str = "auto"
@@ -248,6 +254,9 @@ class Settings(BaseSettings):
     STRIPE_WEBHOOK_SECRET: Optional[str] = None
     STRIPE_PRO_PRICE_ID: Optional[str] = None
     STRIPE_ENTERPRISE_PRICE_ID: Optional[str] = None
+    STRIPE_SUCCESS_URL: Optional[str] = None
+    STRIPE_CANCEL_URL: Optional[str] = None
+    STRIPE_PORTAL_RETURN_URL: Optional[str] = None
 
     # 支付 - 支付宝 (国内)
     ALIPAY_APP_ID: Optional[str] = None

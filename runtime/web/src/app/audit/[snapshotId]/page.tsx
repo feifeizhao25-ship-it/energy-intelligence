@@ -15,9 +15,20 @@ export default async function AuditPage({ params }: { params: { snapshotId: stri
     // 🏰 护城河核心：审计链接应该是公开可访问的，以证明其透明度
     // 移除 session 检查，允许外部审计员或未登录用户查阅
 
-    // 获取请求的基础 URL
-    const requestUrl = process.env.NEXTAUTH_URL
-        ?? (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+    // 获取请求的基础 URL：优先显式环境变量（NEXTAUTH_URL / VERCEL_URL），
+    // 否则按当前请求的 Host 推导——禁止硬编码 localhost 兜底进生产构建。
+    let requestUrl = process.env.NEXTAUTH_URL
+        ?? (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined);
+    if (!requestUrl) {
+        const { headers } = await import('next/headers');
+        const host = headers().get('x-forwarded-host') ?? headers().get('host');
+        if (!host) {
+            // fail-closed：无法确定站点地址时不渲染伪造数据
+            throw new Error('无法确定站点地址：请配置 NEXTAUTH_URL 环境变量');
+        }
+        const proto = headers().get('x-forwarded-proto') ?? 'https';
+        requestUrl = `${proto}://${host}`;
+    }
 
     const res = await fetch(`${requestUrl}/api/audit/${params.snapshotId}`, { cache: 'no-store' });
     const data = res.ok ? await res.json() : null;
@@ -137,7 +148,7 @@ export default async function AuditPage({ params }: { params: { snapshotId: stri
                 {/* 审计页脚声明 */}
                 <div className="mt-12 text-center text-gray-400 text-xs px-8">
                     <p>
-                        本审计报告由新能源智库 (SolarWind Pro) 自动生成。数据受不可更改的时间戳保护。
+                        本审计报告由新能源智库自动生成。数据受不可更改的时间戳保护。
                         <br />
                         结果基于当前行业最优算法，仅供投资决策参考，不构成任何法律担保。
                     </p>

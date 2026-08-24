@@ -43,9 +43,10 @@ import {
     Calculator as CalcIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import LanguageSwitcher from '@/components/ui/LanguageSwitcher';
 import AddressAutocomplete from '@/components/ui/AddressAutocomplete';
+import InternationalLanding from '@/components/home/InternationalLanding';
 
 // 快速计算结果展示组件
 function QuickResultCard({ icon: Icon, label, value, unit, color }: any) {
@@ -65,6 +66,7 @@ function QuickResultCard({ icon: Icon, label, value, unit, color }: any) {
 
 export default function HomePage() {
     const t = useTranslations('Index');
+    const locale = useLocale();
     const router = useRouter();
     const [isClient, setIsClient] = useState(false);
     const [location, setLocation] = useState('');
@@ -78,6 +80,8 @@ export default function HomePage() {
     useEffect(() => {
         setIsClient(true);
     }, []);
+
+    if (locale === 'en') return <InternationalLanding />;
 
     const handleQuickCalc = async () => {
         if (!location.trim() || capacity <= 0) return;
@@ -133,12 +137,12 @@ export default function HomePage() {
         <div className="min-h-screen bg-slate-50">
             {/* Navigation */}
             <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-100">
-                <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center">
+                <div className="max-w-6xl mx-auto px-3 sm:px-4 h-16 flex items-center justify-between gap-2">
+                    <div className="flex min-w-0 items-center gap-2">
+                        <div className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center">
                             <Zap className="w-5 h-5 text-white" />
                         </div>
-                        <span className="font-bold text-xl text-slate-900">新能源智库</span>
+                        <span className="font-bold text-base sm:text-xl text-slate-900 whitespace-nowrap">新能源智库</span>
                     </div>
                     <div className="hidden md:flex items-center gap-8">
                         <Link href="#features" className="text-slate-600 hover:text-green-600 text-sm font-medium">功能介绍</Link>
@@ -146,11 +150,11 @@ export default function HomePage() {
                         <Link href="#cases" className="text-slate-600 hover:text-green-600 text-sm font-medium">客户案例</Link>
                         <Link href="/pricing" className="text-slate-600 hover:text-green-600 text-sm font-medium">价格方案</Link>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
                         <LanguageSwitcher />
-                        <Link href="/login" className="text-slate-600 hover:text-green-600 text-sm font-medium">登录</Link>
-                        <Link href="/login" className="px-4 py-2 bg-green-500 text-white text-sm font-bold rounded-xl hover:bg-green-600 transition-colors">
-                            免费注册
+                        <Link href="/login" className="whitespace-nowrap text-slate-600 hover:text-green-600 text-sm font-medium">登录</Link>
+                        <Link href="/login" className="whitespace-nowrap px-2.5 sm:px-4 py-2 bg-green-500 text-white text-sm font-bold rounded-xl hover:bg-green-600 transition-colors">
+                            <span className="sm:hidden">注册</span><span className="hidden sm:inline">免费注册</span>
                         </Link>
                     </div>
                 </div>
@@ -503,9 +507,9 @@ export default function HomePage() {
 
                     <div className="grid md:grid-cols-3 gap-6">
                         {[
-                            { name: '免费版', price: '¥0', features: ['基础测算', '3个方案对比', '简单报告'] },
-                            { name: '专业版', price: '¥99/月', features: ['无限测算', 'AI深度分析', '专业文献库', 'API调用'], popular: true },
-                            { name: '企业版', price: '¥499/月', features: ['团队协作', '白标定制', '无限API', '专属客服'], popular: false },
+                            { name: '免费版', price: '¥0', features: ['每日2次测算', '最多1个项目', '数据保留7天'] },
+                            { name: '专业版', price: '¥198/月', features: ['测算与资源查询不限次', '文献检索', 'PDF与Word导出'], popular: true },
+                            { name: '企业版', price: '¥38,000/年', features: ['企业权限', 'API与SSO', '白标与定制评估'], popular: false },
                         ].map((plan, i) => (
                             <div key={i} className={cn(
                                 "bg-white rounded-2xl p-6 shadow-sm border-2",
@@ -527,7 +531,7 @@ export default function HomePage() {
                                     ))}
                                 </ul>
                                 <Link
-                                    href="/login"
+                                    href="/pricing"
                                     className={cn(
                                         "block w-full py-3 rounded-xl font-bold text-center transition-colors",
                                         plan.popular
@@ -535,7 +539,7 @@ export default function HomePage() {
                                             : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                                     )}
                                 >
-                                    立即开始
+                                    查看完整方案
                                 </Link>
                             </div>
                         ))}
@@ -547,7 +551,7 @@ export default function HomePage() {
             <section className="py-16 px-4 bg-gradient-to-br from-green-500 to-emerald-600 text-white">
                 <div className="max-w-3xl mx-auto text-center">
                     <h2 className="text-3xl font-black mb-4">立即开始您的智能投资分析</h2>
-                    <p className="text-lg text-green-100 mb-8">免费注册即送10次专业测算，首次升级享7折优惠</p>
+                    <p className="text-lg text-green-100 mb-8">免费版可体验基础测算；完整额度与会员权益以价格方案页为准</p>
                     <div className="flex flex-wrap justify-center gap-4">
                         <Link
                             href="/login"

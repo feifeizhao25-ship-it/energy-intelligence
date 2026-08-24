@@ -126,6 +126,10 @@ class RAGService:
                 metadata={
                     "type": doc.get("type"),
                     "year": int(doc["year"]),
+                    "authors": doc.get("authors"),
+                    "version": doc.get("version"),
+                    "published_at": doc.get("published_at"),
+                    "locator": doc.get("locator"),
                     "last_verified_at": doc["last_verified_at"],
                     "retrieved_at": retrieved_at,
                     "freshness_status": freshness,

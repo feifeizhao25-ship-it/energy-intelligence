@@ -1,200 +1,43 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
-import {
-    ShieldCheck,
-    CreditCard,
-    CheckCircle2,
-    Loader2,
-    ArrowLeft,
-    ChevronRight,
-    Info,
-    Zap,
-    Lock
-} from 'lucide-react';
-import Image from 'next/image';
+import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+import { ArrowLeft, Check, Info, ShieldCheck } from 'lucide-react';
+import { useLocale } from 'next-intl';
+import { PLAN_DETAILS, Plan } from '@/lib/membership/plans';
 
-const PLANS_DATA = {
-    PRO: { name: '专业版', monthly: 99, yearly: 999, originalYearly: 1188 },
-    MAINTENANCE: { name: '运维版', monthly: 199, yearly: 1999, originalYearly: 2388 },
-    FULL: { name: '全能版', monthly: 299, yearly: 2999, originalYearly: 3588 },
-};
+const purchasable = [Plan.PRO, Plan.MAINTENANCE, Plan.FULL] as const;
+type PurchasablePlan = (typeof purchasable)[number];
 
 export default function CheckoutPage() {
-    const searchParams = useSearchParams();
-    const router = useRouter();
-    const planId = searchParams.get('plan') as keyof typeof PLANS_DATA;
-    const billing = searchParams.get('billing') || 'yearly';
+  const searchParams = useSearchParams();
+  const isEnglish = useLocale() === 'en';
+  const requested = searchParams.get('plan')?.toUpperCase() as Plan | undefined;
+  const plan: PurchasablePlan = requested && (purchasable as readonly Plan[]).includes(requested)
+    ? requested as PurchasablePlan
+    : Plan.PRO;
+  const billing = searchParams.get('billing') === 'yearly' ? 'yearly' : 'monthly';
+  const details = PLAN_DETAILS[plan];
+  const amount = billing === 'yearly' ? details.yearlyPrice : details.monthlyPrice;
+  const planName = isEnglish
+    ? ({ PRO: 'Professional', MAINTENANCE: 'Operations', FULL: 'Complete' } as const)[plan]
+    : details.name;
 
-    const [method, setMethod] = useState<'wechat' | 'alipay'>('wechat');
-    const [isProcessing, setIsProcessing] = useState(false);
-
-    const plan = PLANS_DATA[planId] || PLANS_DATA.PRO;
-    const price = billing === 'yearly' ? plan.yearly : plan.monthly;
-    const originalPrice = billing === 'yearly' ? plan.originalYearly : null;
-
-    const handlePay = () => {
-        setIsProcessing(true);
-        setTimeout(() => {
-            setIsProcessing(false);
-        }, 500);
-    };
-
-    return (
-        <div className="min-h-screen bg-slate-50 text-slate-900 pb-20">
-            {/* Top Nav */}
-            <nav className="bg-white border-b border-slate-200">
-                <div className="max-w-5xl mx-auto px-6 h-20 flex items-center justify-between">
-                    <button onClick={() => router.back()} className="flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors font-bold">
-                        <ArrowLeft className="w-5 h-5" />
-                        返回
-                    </button>
-                    <div className="flex items-center gap-2">
-                        <Zap className="w-6 h-6 text-blue-600" />
-                        <span className="font-black text-xl tracking-tight">结算中心</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-emerald-600 font-bold text-xs uppercase bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-100">
-                        <Lock className="w-3.5 h-3.5" />
-                        SSL 加密安全支付
-                    </div>
-                </div>
-            </nav>
-
-            <main className="max-w-5xl mx-auto px-6 mt-12 grid grid-cols-1 lg:grid-cols-3 gap-12">
-                {/* Left: Summary & Payment (Col 1-2) */}
-                <div className="lg:col-span-2 space-y-8">
-                    <AnimatePresence mode="wait">
-                        {(
-                            <motion.div
-                                key="step1"
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -10 }}
-                                className="space-y-8"
-                            >
-                                {/* Plan Selection Card */}
-                                <div className="bg-white rounded-[2rem] border border-slate-200 p-8 shadow-sm">
-                                    <h2 className="text-xl font-black mb-6 flex items-center gap-3">
-                                        <span className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold">1</span>
-                                        确认订阅方案
-                                    </h2>
-                                    <div className="flex items-center justify-between p-6 rounded-2xl bg-slate-50 border border-slate-100">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-14 h-14 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-200">
-                                                <Zap className="w-8 h-8 text-white" />
-                                            </div>
-                                            <div>
-                                                <div className="text-lg font-black">{plan.name}</div>
-                                                <div className="text-slate-500 text-sm">{billing === 'yearly' ? '按年订阅 (最具性价比)' : '按月计费'}</div>
-                                            </div>
-                                        </div>
-                                        <div className="text-right">
-                                            <div className="text-2xl font-black text-blue-600">¥{price}</div>
-                                            {originalPrice && (
-                                                <div className="text-slate-400 text-sm line-through">¥{originalPrice}</div>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Payment Method */}
-                                <div className="bg-white rounded-[2rem] border border-slate-200 p-8 shadow-sm">
-                                    <h2 className="text-xl font-black mb-6 flex items-center gap-3">
-                                        <span className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold">2</span>
-                                        选择支付方式
-                                    </h2>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <button
-                                            onClick={() => setMethod('wechat')}
-                                            className={`relative p-6 rounded-2xl border-2 transition-all flex flex-col items-center gap-3 ${method === 'wechat' ? 'border-blue-600 bg-blue-50/50' : 'border-slate-100 hover:border-slate-200'
-                                                }`}
-                                        >
-                                            <Image src="https://img.icons8.com/color/96/weixing.png" width={40} height={40} alt="WeChat" />
-                                            <span className="font-bold text-slate-700">微信支付</span>
-                                            {method === 'wechat' && (
-                                                <div className="absolute top-3 right-3 text-blue-600">
-                                                    <CheckCircle2 className="w-5 h-5 fill-current text-white bg-blue-600 rounded-full" />
-                                                </div>
-                                            )}
-                                        </button>
-                                        <button
-                                            onClick={() => setMethod('alipay')}
-                                            className={`relative p-6 rounded-2xl border-2 transition-all flex flex-col items-center gap-3 ${method === 'alipay' ? 'border-blue-600 bg-blue-50/50' : 'border-slate-100 hover:border-slate-200'
-                                                }`}
-                                        >
-                                            <Image src="https://img.icons8.com/color/96/alipay.png" width={40} height={40} alt="Alipay" />
-                                            <span className="font-bold text-slate-700">支付宝</span>
-                                            {method === 'alipay' && (
-                                                <div className="absolute top-3 right-3 text-blue-600">
-                                                    <CheckCircle2 className="w-5 h-5 fill-current text-white bg-blue-600 rounded-full" />
-                                                </div>
-                                            )}
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div className="flex gap-4 p-5 rounded-2xl bg-amber-50 border border-amber-100">
-                                    <Info className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                                    <p className="text-amber-800 text-sm leading-relaxed">
-                                        支付通道尚未完成商户配置，当前不会扣款，也不会开通会员。请联系销售获取正式合同与付款方式。
-                                    </p>
-                                </div>
-                            </motion.div>
-                        )}
-
-                    </AnimatePresence>
-                </div>
-
-                {/* Right: Order Summary */}
-                <div className="space-y-8">
-                    <div className="bg-white rounded-[2rem] border border-slate-200 p-8 shadow-sm sticky top-28">
-                        <h3 className="font-black text-lg mb-6">订单小计</h3>
-                        <div className="space-y-4">
-                            <div className="flex justify-between text-slate-600">
-                                <span>{plan.name} - {billing === 'yearly' ? '年度' : '月度'}方案</span>
-                                <span>¥{originalPrice || price}</span>
-                            </div>
-                            {originalPrice && (
-                                <div className="flex justify-between text-emerald-600">
-                                    <span>年度优惠 (17% OFF)</span>
-                                    <span>-¥{originalPrice - price}</span>
-                                </div>
-                            )}
-                            <div className="h-px bg-slate-100 my-4"></div>
-                            <div className="flex justify-between items-end">
-                                <span className="font-black text-lg">应付总额</span>
-                                <span className="text-3xl font-black text-blue-600">¥{price}</span>
-                            </div>
-                        </div>
-
-                        <button
-                            onClick={handlePay}
-                            disabled={isProcessing}
-                            className="w-full mt-8 bg-blue-600 hover:bg-blue-500 text-white font-black py-5 rounded-2xl shadow-xl shadow-blue-200 flex items-center justify-center gap-3 transition-all active:scale-95 disabled:opacity-50"
-                        >
-                            {isProcessing ? <Loader2 className="w-6 h-6 animate-spin" /> : (
-                                <>
-                                    联系销售开通
-                                    <ChevronRight className="w-5 h-5" />
-                                </>
-                            )}
-                        </button>
-
-                        <div className="mt-8 space-y-4">
-                            <div className="flex items-center gap-3 text-slate-500 text-xs font-bold uppercase tracking-widest leading-loose">
-                                <ShieldCheck className="w-4 h-4 text-emerald-500" />
-                                7天无理由退款保障
-                            </div>
-                            <div className="flex items-center gap-3 text-slate-500 text-xs font-bold uppercase tracking-widest leading-loose">
-                                <CreditCard className="w-4 h-4 text-blue-500" />
-                                开具增值税普票/专票
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </main>
-        </div>
-    );
+  return <div className="min-h-screen bg-slate-50 text-slate-900">
+    <nav className="border-b border-slate-200 bg-white"><div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4"><Link href="/pricing" className="flex items-center gap-2 text-sm font-bold text-slate-600"><ArrowLeft className="h-4 w-4" />{isEnglish ? 'Back to plans' : '返回方案'}</Link><span className="font-black">{isEnglish ? 'Order review' : '订单确认'}</span></div></nav>
+    <main className="mx-auto grid max-w-5xl gap-8 px-4 py-12 lg:grid-cols-[1fr_360px]">
+      <section className="rounded-3xl border border-slate-200 bg-white p-7 sm:p-9">
+        <p className="text-sm font-bold text-emerald-700">{isEnglish ? 'Selected plan' : '已选方案'}</p>
+        <h1 className="mt-2 text-3xl font-black">{planName}</h1>
+        <div className="mt-7 rounded-2xl bg-slate-50 p-5"><div className="flex justify-between gap-4"><span className="text-slate-600">{isEnglish ? (billing === 'yearly' ? 'Annual term' : 'Monthly term') : (billing === 'yearly' ? '按年' : '按月')}</span><strong>{isEnglish ? 'Commercial quote required' : `¥${amount}`}</strong></div></div>
+        <div className="mt-7 flex gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm leading-6 text-amber-900"><Info className="mt-0.5 h-5 w-5 shrink-0" /><p>{isEnglish ? 'International price, currency, tax, data residency, support scope, renewal, and cancellation terms must be confirmed in a written quote. This page does not collect payment or activate access.' : '国内支付商户配置尚未完成，本页面不会扣款或开通会员。销售确认价格、合同、发票、续费与退款条件后，才会提供正式付款方式。'}</p></div>
+        <div className="mt-7 space-y-3 text-sm text-slate-700">{[
+          isEnglish ? 'No access is activated from client-side state.' : '前端状态不会直接开通权益。',
+          isEnglish ? 'Activation requires verified payment or an approved contract.' : '仅在支付验证成功或合同审核通过后生效。',
+          isEnglish ? 'Final entitlements are recorded by the server.' : '最终会员等级和额度由服务端记录。',
+        ].map(item => <div key={item} className="flex gap-2"><Check className="h-4 w-4 shrink-0 text-emerald-600" />{item}</div>)}</div>
+      </section>
+      <aside className="h-fit rounded-3xl bg-slate-900 p-7 text-white"><ShieldCheck className="h-9 w-9 text-emerald-400" /><h2 className="mt-5 text-2xl font-black">{isEnglish ? 'Request a reviewable quote' : '申请正式开通方案'}</h2><p className="mt-3 text-sm leading-6 text-slate-300">{isEnglish ? 'Tell us your region, organization size, data residency needs, and required integrations. Do not submit confidential project files in the initial request.' : '请说明团队规模、使用场景、所需接口和发票要求。首次申请不要提交项目机密文件。'}</p><Link href={`/demo-request?market=${isEnglish ? 'global' : 'cn'}&plan=${plan}&billing=${billing}`} className="mt-7 block rounded-xl bg-emerald-400 px-4 py-3 text-center font-bold text-slate-950 hover:bg-emerald-300">{isEnglish ? 'Request a quote' : '联系销售确认'}</Link><Link href="/terms" className="mt-4 block text-center text-sm text-slate-400 hover:text-white">{isEnglish ? 'Review service terms' : '查看服务条款'}</Link></aside>
+    </main>
+  </div>;
 }

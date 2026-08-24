@@ -2,7 +2,8 @@
 RAG source registry — JSON 驱动的语料来源注册表。
 
 语料条目从 ``后端/data/rag_sources.json`` 加载，每条带官方来源 URL、
-发布机构、版权说明与核验周期（verify_interval_days）：
+发布机构、版权说明与核验周期（verify_interval_days），并带文献溯源字段：
+作者（authors）、版本（version）、发布日期（published_at）、页码/段落（locator）：
 
 - 政策（policy）90 天
 - 标准（standard）365 天
@@ -28,6 +29,10 @@ REQUIRED_FIELDS = (
     "type",
     "lang",
     "title",
+    "authors",
+    "version",
+    "published_at",
+    "locator",
     "content",
     "year",
     "last_verified_at",
@@ -125,6 +130,10 @@ class SourceRegistry:
                 date.fromisoformat(str(source.get("last_verified_at", "")))
             except ValueError:
                 problems.append("%s: last_verified_at must be ISO date" % sid)
+            try:
+                date.fromisoformat(str(source.get("published_at", "")))
+            except ValueError:
+                problems.append("%s: published_at must be ISO date" % sid)
             for ref in source.get("corroborated_by") or []:
                 if ref not in self._by_id:
                     problems.append("%s: corroborated_by unknown source %s" % (sid, ref))

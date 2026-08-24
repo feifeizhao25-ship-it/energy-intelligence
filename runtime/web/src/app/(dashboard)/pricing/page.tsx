@@ -1,246 +1,101 @@
 'use client';
 
-import React from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import {
-    Check,
-    Crown,
-    Zap,
-    Sparkles,
-    Ship,
-    ShieldCheck,
-    ChevronRight,
-    HelpCircle,
-    ArrowRight,
-    Star
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Check, Crown, ShieldCheck } from 'lucide-react';
+import { useLocale } from 'next-intl';
+import { Plan } from '@/lib/membership/plans';
+import bundledRegistry from '@/lib/entitlements/entitlements.json';
+
+/**
+ * 套餐与权益文案的唯一事实源是后端权益注册表
+ * （runtime/backend/data/entitlements.json，GET /api/entitlements）。
+ * 本页构建期注入同步副本（scripts/sync-entitlements.mjs 保证一致），
+ * 运行时再尝试从 API 拉取最新版本覆盖；API 不可用时回退到构建期副本。
+ */
+
+interface TierInfo {
+  name: string;
+  name_en: string;
+  description: string;
+  description_en: string;
+  price: { monthly_cny: number; yearly_cny: number };
+  features_zh: string[];
+  features_en: string[];
+}
+
+interface EntitlementsRegistry {
+  product: string;
+  version: string;
+  tier_order: string[];
+  tiers: Record<string, TierInfo>;
+}
+
+const registry = bundledRegistry as unknown as EntitlementsRegistry;
+
+const planOrder = [Plan.FREE, Plan.PRO, Plan.MAINTENANCE, Plan.FULL, Plan.TEAM, Plan.ENTERPRISE] as const;
+
+function tierKey(plan: Plan): string {
+  return plan.toLowerCase();
+}
+
+function domesticPrice(tier: TierInfo) {
+  if (tier.price.monthly_cny > 0) return `¥${tier.price.monthly_cny}/月`;
+  if (tier.price.yearly_cny > 0) return `¥${tier.price.yearly_cny}/年`;
+  return '¥0';
+}
+
+function isValidRegistry(data: unknown): data is EntitlementsRegistry {
+  const r = data as EntitlementsRegistry;
+  return Boolean(r && r.version && r.tiers && ['free', 'pro', 'team', 'enterprise'].every(t => r.tiers[t]));
+}
 
 export default function PricingPage() {
-    const plans = [
-        {
-            name: '初创版 / Starter',
-            price: '0',
-            desc: '适合个人学习与小型户用光伏初步估算',
-            features: [
-                '基础光伏收益测算 (10项指标)',
-                'NASA 气象数据基础调用',
-                '社区问答广场访问',
-                '基础 AI 助手 (每日20次对话)',
-                '标准 PDF 报告导出'
-            ],
-            cta: '立即开始',
-            href: '/login?callbackUrl=/dashboard',
-            recommended: false,
-            color: 'slate'
-        },
-        {
-            name: '专业版 / Professional',
-            price: '199',
-            period: '/ 月',
-            desc: '专为新能源工程师与投资分析师设计',
-            features: [
-                '全量三合一引擎 (光/风/储)',
-                '工程级 IRR 财务分析',
-                '公开文献与政策库全文检索',
-                '无限次 AI 专家决策分析',
-                '自定义品牌测算报告',
-                '多场景综合对比工具'
-            ],
-            cta: '免费试用 7 天',
-            href: '/checkout?plan=professional',
-            recommended: true,
-            color: 'emerald'
-        },
-        {
-            name: '企业版 / Enterprise',
-            price: '899',
-            period: '/ 月',
-            desc: '为大型项目开发、EPC 企业提供统筹能力',
-            features: [
-                '多省份/多电站集中运维看板',
-                '10min 级精准资源气象模拟',
-                'API 接口私有化调用权限',
-                '1对1 资深电力系统架构师咨询',
-                '专属服务器算力保障',
-                '全员协同项目管理空间'
-            ],
-            cta: '联系我们',
-            href: '/checkout?plan=enterprise',
-            recommended: false,
-            color: 'slate'
-        }
-    ];
+  const isEnglish = useLocale() === 'en';
+  const [reg, setReg] = useState<EntitlementsRegistry>(registry);
 
-    const faqs = [
-        { q: '专业版的 118 项参数包括什么？', a: '包括详细的衰减率模型、融资贷款分时还款、增值税退税抵扣、深度环境参数等精细化财务指标。' },
-        { q: '我可以随时取消订阅吗？', a: '是的，您可以随时在个人设置中取消续费，已支付的周期将继续生效至结束。' },
-        { q: '企业版支持内网部署吗？', a: '我们提供私有化部署方案，请联系我们的商务团队进行定制化需求对接。' }
-    ];
+  useEffect(() => {
+    const base = (process.env.NEXT_PUBLIC_API_URL || '/api/backend').replace(/\/$/, '');
+    fetch(`${base}/entitlements`, { cache: 'no-store' })
+      .then(res => (res.ok ? res.json() : null))
+      .then(data => { if (isValidRegistry(data)) setReg(data); })
+      .catch(() => { /* API 不可用时使用构建期注入副本 */ });
+  }, []);
 
-    return (
-        <div className="min-h-screen bg-[#F8FAFC] pb-20">
-            {/* Header Section */}
-            <div className="bg-white pt-32 pb-24 px-4 md:px-8 text-center relative overflow-hidden">
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-lg h-96 bg-green-500/5 blur-[120px] rounded-full pointer-events-none"></div>
+  return <div className="min-h-screen bg-slate-50 pb-20 text-slate-900">
+    <header className="border-b border-slate-200 bg-white px-4 pb-16 pt-24 text-center">
+      <div className="mx-auto max-w-4xl">
+        <div className="mx-auto inline-flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700"><Crown className="h-4 w-4" />{isEnglish ? 'Plans and governance' : '会员方案与权益'}</div>
+        <h1 className="mt-6 text-4xl font-black sm:text-6xl">{isEnglish ? 'Choose the controls your team needs.' : '选择与项目阶段匹配的能力'}</h1>
+        <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-slate-600">{isEnglish ? 'International commercial terms are confirmed by region, data residency, support scope, and tax requirements. We do not display an invented currency conversion.' : '价格、额度和导出权益直接来自统一会员配置；最终金额、续费与退款以下单确认页为准。'}</p>
+      </div>
+    </header>
 
-                <div className="max-w-4xl mx-auto space-y-8 relative z-10">
-                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-green-50 text-green-600 text-[10px] font-black uppercase tracking-widest mx-auto">
-                        <Crown className="w-4 h-4" />
-                        Membership System
-                    </div>
-                    <h1 className="text-5xl lg:text-7xl font-black text-slate-900 tracking-tighter leading-none">
-                        释放您的 <br />
-                        <span className="text-green-500">新能源规划潜力</span>
-                    </h1>
-                    <p className="text-slate-500 font-medium text-xl max-w-2xl mx-auto">
-                        从简单的户用估算到工程级的 IRR 分析，选择最适合您的算力模组。
-                    </p>
+    <main className="mx-auto max-w-7xl px-4 py-14">
+      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+        {planOrder.map((plan) => {
+          const tier = reg.tiers[tierKey(plan)];
+          if (!tier) return null;
+          const recommended = plan === Plan.PRO || plan === Plan.FULL;
+          const href = plan === Plan.FREE
+            ? '/login?callbackUrl=/dashboard'
+            : isEnglish || plan === Plan.TEAM || plan === Plan.ENTERPRISE
+              ? `/demo-request?market=${isEnglish ? 'global' : 'cn'}&plan=${plan}`
+              : `/checkout?plan=${plan}&billing=monthly`;
+          const features = isEnglish ? tier.features_en : tier.features_zh;
+          return <article key={plan} className={`relative flex flex-col rounded-3xl border bg-white p-7 ${recommended ? 'border-emerald-500 shadow-xl shadow-emerald-100' : 'border-slate-200'}`}>
+            {recommended && <span className="absolute -top-3 left-6 rounded-full bg-emerald-600 px-3 py-1 text-xs font-bold text-white">{isEnglish ? 'Common choice' : '常用方案'}</span>}
+            <h2 className="text-2xl font-black">{isEnglish ? tier.name_en : tier.name}</h2>
+            <p className="mt-2 min-h-12 text-sm leading-6 text-slate-500">{isEnglish ? tier.description_en : tier.description}</p>
+            <p className="mt-5 text-3xl font-black">{isEnglish ? (plan === Plan.FREE ? 'No charge' : 'Contact sales') : domesticPrice(tier)}</p>
+            {!isEnglish && tier.price.yearly_cny > 0 && tier.price.monthly_cny > 0 && <p className="mt-1 text-sm text-slate-500">年付 ¥{tier.price.yearly_cny}</p>}
+            <ul className="mt-6 flex-1 space-y-3">{features.map(feature => <li key={feature} className="flex gap-2 text-sm leading-6 text-slate-700"><Check className="mt-1 h-4 w-4 shrink-0 text-emerald-600" />{feature}</li>)}</ul>
+            <Link href={href} className={`mt-7 rounded-xl px-4 py-3 text-center text-sm font-bold ${recommended ? 'bg-emerald-600 text-white hover:bg-emerald-500' : 'bg-slate-900 text-white hover:bg-slate-800'}`}>{plan === Plan.FREE ? (isEnglish ? 'Start evaluation' : '免费开始') : (isEnglish || plan === Plan.TEAM || plan === Plan.ENTERPRISE ? (isEnglish ? 'Discuss requirements' : '联系销售') : '选择方案')}</Link>
+          </article>;
+        })}
+      </div>
 
-                    <div className="flex items-center justify-center gap-4 pt-4">
-                        <div className="flex -space-x-3">
-                            {[1, 2, 3, 4].map(i => (
-                                <div key={i} className="w-10 h-10 rounded-full border-2 border-white bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-400">
-                                    {String.fromCharCode(64 + i)}
-                                </div>
-                            ))}
-                        </div>
-                        <div className="text-left">
-                            <div className="flex items-center gap-1">
-                                {[1, 2, 3, 4, 5].map(i => <Star key={i} className="w-3 h-3 text-amber-500 fill-amber-500" />)}
-                            </div>
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Trusted by 12,000+ Engineers</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <main className="max-w-7xl mx-auto -mt-12 px-4 md:px-8">
-                {/* Pricing Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {plans.map((plan, i) => (
-                        <div
-                            key={i}
-                            className={cn(
-                                "relative bg-white rounded-[64px] border p-12 flex flex-col transition-all duration-500 hover:-translate-y-2",
-                                plan.recommended
-                                    ? "border-green-500 shadow-2xl shadow-green-500/10 z-10 scale-105"
-                                    : "border-slate-100 shadow-xl shadow-slate-900/5"
-                            )}
-                        >
-                            {plan.recommended && (
-                                <div className="absolute top-0 right-12 bg-green-500 text-white px-6 py-2 rounded-b-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-green-500/20">
-                                    Most Popular
-                                </div>
-                            )}
-
-                            <div className="mb-10">
-                                <h3 className="text-xl font-black text-slate-900 mb-2 uppercase tracking-tight">{plan.name}</h3>
-                                <p className="text-slate-400 text-xs font-medium leading-relaxed">{plan.desc}</p>
-                            </div>
-
-                            <div className="flex items-baseline gap-1 mb-10">
-                                <span className="text-sm font-black text-slate-400">¥</span>
-                                <span className="text-6xl font-black text-slate-900 tracking-tighter">{plan.price}</span>
-                                {plan.period && <span className="text-sm font-black text-slate-400">{plan.period}</span>}
-                            </div>
-
-                            <div className="space-y-6 mb-12 flex-1">
-                                {plan.features.map((feature, j) => (
-                                    <div key={j} className="flex items-start gap-3 group">
-                                        <div className={cn(
-                                            "w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors",
-                                            plan.recommended ? "bg-green-100 text-green-600" : "bg-slate-100 text-slate-400"
-                                        )}>
-                                            <Check className="w-3 h-3" />
-                                        </div>
-                                        <span className="text-sm font-medium text-slate-600 group-hover:text-slate-900 transition-colors">{feature}</span>
-                                    </div>
-                                ))}
-                            </div>
-
-                            <Link href={plan.href} className={cn(
-                                "w-full py-6 rounded-3xl font-black text-xs uppercase tracking-[0.2em] transition-all shadow-xl",
-                                "text-center",
-                                plan.recommended
-                                    ? "bg-green-500 text-white hover:bg-green-600 shadow-green-500/20"
-                                    : "bg-slate-900 text-white hover:bg-slate-800 shadow-slate-900/10"
-                            )}>
-                                {plan.cta}
-                            </Link>
-                        </div>
-                    ))}
-                </div>
-
-                {/* Additional Value Proposition */}
-                <div className="mt-32 grid grid-cols-1 lg:grid-cols-2 gap-20 items-center px-4">
-                    <div className="space-y-10">
-                        <div className="space-y-4 text-center lg:text-left">
-                            <h2 className="text-4xl font-black text-slate-900 tracking-tighter leading-tight">
-                                为什么选择 <span className="text-green-500">智库会员</span> ？
-                            </h2>
-                            <p className="text-slate-500 font-medium text-lg leading-relaxed">
-                                我们不仅提供数据，更提供深入新能源行业的“洞察主权”。
-                            </p>
-                        </div>
-
-                        <div className="space-y-8">
-                            {[
-                                { title: '算力保障', desc: '收益测算由服务端引擎完成，计算过程与耗时全程留痕。', icon: Zap },
-                                { title: '数据主权', desc: '支持本地化离线导出，您的项目数据完全受加密保护。', icon: ShieldCheck },
-                                { title: '合规留痕', desc: 'AI 生成的报告记录全部假设、数据来源与口径版本，便于合规复核。', icon: Sparkles }
-                            ].map((v, i) => (
-                                <div key={i} className="flex gap-6 group">
-                                    <div className="w-14 h-14 bg-white rounded-3xl border border-slate-100 flex items-center justify-center shadow-lg shadow-slate-900/5 group-hover:bg-green-500 group-hover:text-white transition-all">
-                                        <v.icon className="w-6 h-6" />
-                                    </div>
-                                    <div className="flex-1">
-                                        <h4 className="text-lg font-black text-slate-900 group-hover:text-green-600 transition-colors uppercase tracking-tight">{v.title}</h4>
-                                        <p className="text-sm font-medium text-slate-500 leading-relaxed">{v.desc}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div className="bg-slate-900 rounded-[64px] p-12 lg:p-20 text-white flex flex-col justify-between relative overflow-hidden h-[500px]">
-                        <div className="absolute top-0 right-0 p-12 opacity-10">
-                            <Ship className="w-64 h-64 rotate-12" />
-                        </div>
-                        <div className="relative z-10">
-                            <h3 className="text-3xl font-black mb-6 tracking-tighter leading-tight">
-                                面向大型项目？<br />
-                                <span className="text-green-400">寻找定制化方案</span>
-                            </h3>
-                            <p className="text-slate-400 font-medium leading-relaxed mb-12">
-                                如果您需要集成到现有 ERP 系统或需要大规模私网部署，我们的专业团队可提供全栈新能源 SaaS 定制。
-                            </p>
-                        </div>
-                        <Link href="/demo-request" className="relative z-10 w-fit flex items-center gap-4 bg-white text-slate-900 px-10 py-5 rounded-2xl font-black text-sm hover:bg-green-500 hover:text-white transition-all shadow-2xl">
-                            立即预约演示 <ArrowRight className="w-5 h-5" />
-                        </Link>
-                    </div>
-                </div>
-
-                {/* FAQ Section */}
-                <div className="mt-32 max-w-3xl mx-auto space-y-12">
-                    <h2 className="text-2xl font-black text-slate-900 text-center uppercase tracking-widest flex items-center justify-center gap-4">
-                        <HelpCircle className="w-6 h-6 text-slate-300" />
-                        常见问题解答
-                    </h2>
-                    <div className="space-y-4">
-                        {faqs.map((faq, i) => (
-                            <div key={i} className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm hover:shadow-xl transition-all cursor-pointer group">
-                                <div className="flex justify-between items-center mb-4">
-                                    <h4 className="font-black text-slate-900 group-hover:text-green-600 transition-colors">{faq.q}</h4>
-                                    <ChevronRight className="w-5 h-5 text-slate-300 group-hover:translate-x-1 transition-transform" />
-                                </div>
-                                <p className="text-sm font-medium text-slate-500 leading-relaxed">{faq.a}</p>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </main>
-        </div>
-    );
+      <section className="mt-14 rounded-3xl bg-slate-900 p-8 text-white sm:p-10"><div className="flex flex-col gap-6 md:flex-row md:items-center"><ShieldCheck className="h-10 w-10 shrink-0 text-emerald-400" /><div><h2 className="text-2xl font-black">{isEnglish ? 'Entitlements are enforced by the server.' : '会员权益以后端校验为准'}</h2><p className="mt-2 leading-7 text-slate-300">{isEnglish ? 'The interface does not unlock paid access by changing local state. Activation requires verified payment or an approved enterprise contract. Usage, retention, export, and cancellation terms remain visible before commitment.' : '前端修改状态不会开通付费能力。会员仅在支付渠道验证成功或企业合同审核完成后生效，额度、保留期限、导出和取消规则需在确认前展示。'}</p></div></div></section>
+    </main>
+  </div>;
 }

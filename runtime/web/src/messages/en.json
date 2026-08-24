@@ -176,5 +176,83 @@
         "description": "Start your green energy investment journey! Use our smart calculators to quickly evaluate the ROI of solar, wind, and storage projects.",
         "badge": "🌱 Green Pioneer",
         "explore": "Start Exploring"
+    },
+    "InternationalLanding": {
+        "brand": "Energy Intelligence",
+        "brandAria": "Energy Intelligence home",
+        "nav": {
+            "why": "Why it matters",
+            "workflow": "Workflow",
+            "plans": "Plans",
+            "signIn": "Sign in",
+            "startFree": "Start free"
+        },
+        "hero": {
+            "badge": "Renewable-energy decisions with an audit trail",
+            "title": "Turn site data into a reviewable investment case.",
+            "subtitle": "Assess solar, wind, and storage opportunities with explicit assumptions, traceable public data, sensitivity ranges, and human approval before export.",
+            "createAssessment": "Create an assessment",
+            "exploreApi": "Explore the API",
+            "disclaimer": "Planning support only. Outputs do not replace licensed engineering, legal, tax, or investment advice."
+        },
+        "card": {
+            "eyebrow": "Assessment readiness",
+            "title": "Evidence first",
+            "items": [
+                "Source and retrieval date attached",
+                "Assumptions editable and versioned",
+                "Downside sensitivity included",
+                "Human approval required for export"
+            ]
+        },
+        "why": {
+            "eyebrow": "What international teams ask first",
+            "title": "Can the result be challenged, reproduced, and approved?",
+            "priorities": [
+                {
+                    "title": "Decision-grade evidence",
+                    "body": "Every conclusion keeps its assumptions, source, retrieval date, and confidence visible for technical review."
+                },
+                {
+                    "title": "Bankability before vanity metrics",
+                    "body": "Compare yield, downside cases, curtailment, degradation, and cash-flow risk in one review path."
+                },
+                {
+                    "title": "Built for review teams",
+                    "body": "Give developers, engineers, investors, and advisers a shared record instead of disconnected spreadsheets."
+                }
+            ]
+        },
+        "workflow": {
+            "title": "A review workflow, not a black box",
+            "steps": [
+                {
+                    "number": "1",
+                    "title": "Define the site",
+                    "body": "Set technology, location, capacity, commercial assumptions, and the decision you need to make."
+                },
+                {
+                    "number": "2",
+                    "title": "Review evidence",
+                    "body": "Inspect source dates, calculation assumptions, sensitivity ranges, and missing-data warnings."
+                },
+                {
+                    "number": "3",
+                    "title": "Approve the output",
+                    "body": "Export only after a named reviewer confirms the scope and limitations."
+                }
+            ]
+        },
+        "plans": {
+            "title": "Start with a transparent assessment.",
+            "body": "Free evaluation for individual projects. Team controls, API access, and governance features are available on paid plans.",
+            "compare": "Compare plans"
+        },
+        "footer": {
+            "tagline": "Traceable analysis for renewable-energy decisions.",
+            "privacy": "Privacy",
+            "terms": "Terms",
+            "support": "Support"
+        }
     }
 }

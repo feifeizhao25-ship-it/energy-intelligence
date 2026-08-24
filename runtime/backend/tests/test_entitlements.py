@@ -11,6 +11,8 @@ from app.core.subscription import (
     QuotaExceeded,
     assert_entitlement,
     assert_project_quota,
+    assert_ai_quota,
+    consume_ai_quota,
     check_numeric_entitlement,
 )
 from app.models.database import Project
@@ -115,6 +117,27 @@ def test_check_numeric_entitlement_rejects_non_numeric_key():
 def test_check_numeric_entitlement_unknown_plan_falls_back_to_free():
     user = _make_user("nonexistent-plan")
     assert check_numeric_entitlement(user, "max_projects") == 1
+
+
+@pytest.mark.asyncio
+async def test_ai_quota_is_consumed_only_after_success(db_session, persisted_user):
+    user = await persisted_user("free")
+    checked = await assert_ai_quota(user.id, db_session)
+    assert checked.usage_quota["ai_calls"] == {}
+    await consume_ai_quota(checked, db_session)
+    refreshed = await assert_ai_quota(user.id, db_session)
+    assert sum(refreshed.usage_quota["ai_calls"].values()) == 1
+
+
+@pytest.mark.asyncio
+async def test_ai_quota_rejects_exhausted_free_member(db_session, persisted_user):
+    from datetime import datetime, timezone
+    user = await persisted_user("free")
+    key = f"daily_{datetime.now(timezone.utc).strftime('%Y-%m-%d')}"
+    user.usage_quota = {"ai_calls": {key: 20}, "report_exports": {}}
+    await db_session.commit()
+    with pytest.raises(QuotaExceeded):
+        await assert_ai_quota(user.id, db_session)
 
 
 # ── assert_entitlement 允许/拒绝边界 ─────────────────────────────────────────

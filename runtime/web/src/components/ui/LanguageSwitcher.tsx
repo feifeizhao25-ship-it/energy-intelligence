@@ -42,7 +42,7 @@ export default function LanguageSwitcher() {
             ) : (
                 <>
                     <Languages className="w-4 h-4" />
-                    <span>{locale === 'zh' ? 'EN' : '中文'}</span>
+                    <span>{locale === 'zh' ? 'EN' : 'CN'}</span>
                 </>
             )}
         </button>

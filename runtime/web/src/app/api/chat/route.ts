@@ -137,7 +137,7 @@ export async function GET() {
 
         return new Response(
             JSON.stringify({
-                message: 'SolarWind Pro AI对话API',
+                message: '新能源智库 AI 对话API',
                 usage: 'POST /api/chat with { messages: [{role, content}], provider?: string, model?: string }',
                 streaming: true,
                 status,
@@ -148,7 +148,7 @@ export async function GET() {
     } catch (error) {
         return new Response(
             JSON.stringify({
-                message: 'SolarWind Pro AI对话API',
+                message: '新能源智库 AI 对话API',
                 error: error instanceof Error ? error.message : '未配置AI服务'
             }),
             { headers: { 'Content-Type': 'application/json' } }

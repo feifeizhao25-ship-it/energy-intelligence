@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useStation } from '@/contexts/StationContext';
 import { useSession } from 'next-auth/react';
 
@@ -27,21 +27,9 @@ export default function Sidebar() {
     const { issues } = useStation();
     const pathname = usePathname();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-    useEffect(() => {
-        // 模拟登录状态检测
-        const checkAuth = async () => {
-            try {
-                const res = await fetch('/api/auth/session');
-                const data = await res.json();
-                setIsLoggedIn(!!data?.user);
-            } catch (e) {
-                setIsLoggedIn(false);
-            }
-        };
-        checkAuth();
-    }, []);
+    // 登录态直接取 useSession（AuthProvider 在未配置时挂载空会话），
+    // 不再裸 fetch /api/auth/session——未配置时该接口 fail-closed 返回 503。
+    const isLoggedIn = !!session?.user;
 
     const unresolvedIssuesCount = issues.filter(i => !i.solved && (i.severity === 'error' || i.severity === 'warning')).length;
 

@@ -24,26 +24,26 @@ import {
     formatProgressText,
 } from '@/lib/achievements/check';
 
-// Mock user data - 实际应从API获取
-const mockUserStats: UserStats = {
-    totalGeneration: 15680,
-    stationCount: 1,
-    recordStreak: 12,
-    totalRecords: 45,
-    aiChatCount: 23,
-    questionCount: 2,
-    answerCount: 5,
-    totalLikes: 18,
-    referralCount: 1,
-    calcCount: 8,
+// 成就服务尚未返回真实用量时保持零值，绝不伪造用户成绩。
+const emptyUserStats: UserStats = {
+    totalGeneration: 0,
+    stationCount: 0,
+    recordStreak: 0,
+    totalRecords: 0,
+    aiChatCount: 0,
+    questionCount: 0,
+    answerCount: 0,
+    totalLikes: 0,
+    referralCount: 0,
+    calcCount: 0,
 };
 
-const mockUnlockedAchievements = ['first_calc', 'first_station', 'gen_1k', 'gen_10k', 'carbon_1t', 'streak_7'];
+const initialUnlockedAchievements: string[] = [];
 
 export default function AchievementsPage() {
     const [selectedCategory, setSelectedCategory] = useState<AchievementCategory | 'all'>('all');
-    const [stats] = useState<UserStats>(mockUserStats);
-    const [unlocked] = useState<string[]>(mockUnlockedAchievements);
+    const [stats] = useState<UserStats>(emptyUserStats);
+    const [unlocked] = useState<string[]>(initialUnlockedAchievements);
 
     // 过滤成就
     const displayedAchievements = useMemo(() => {
@@ -101,6 +101,11 @@ export default function AchievementsPage() {
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+            <div className="max-w-4xl mx-auto px-6 pt-6">
+                <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                    成就只会根据已同步的真实项目和操作数据解锁；数据尚未同步时不展示演示成绩。
                 </div>
             </div>
 

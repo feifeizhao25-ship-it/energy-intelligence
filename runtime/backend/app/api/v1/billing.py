@@ -1,4 +1,5 @@
 import stripe
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -8,9 +9,37 @@ from app.core.dependencies import get_current_user_id
 from app.core.database import get_db
 from app.models.database import User
 from app.services.stripe_service import stripe_service
+from app.core.subscription import PLAN_QUOTAS
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 router = APIRouter(prefix="/billing")
+
+
+@router.get("/usage")
+async def get_usage(
+    user_id: str = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+):
+    """返回会员权益的真实用量、剩余额度与 80%/95% 预警。"""
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    now = datetime.now(timezone.utc)
+    usage = dict(user.usage_quota or {})
+    limits = PLAN_QUOTAS.get(user.subscription_plan or "free", PLAN_QUOTAS["free"])
+
+    def usage_item(category: str, used: int, limit: int, period: str):
+        ratio = 0 if limit == -1 else used / max(limit, 1)
+        level = "unlimited" if limit == -1 else "blocked" if ratio >= 1 else "critical" if ratio >= 0.95 else "warning" if ratio >= 0.8 else "normal"
+        return {"category": category, "used": used, "limit": limit, "remaining": -1 if limit == -1 else max(limit - used, 0), "usage_ratio": round(ratio, 4), "warning_level": level, "period": period}
+
+    day_key = f"daily_{now.strftime('%Y-%m-%d')}"
+    month_key = f"monthly_{now.strftime('%Y-%m')}"
+    return {"plan": user.subscription_plan or "free", "items": [
+        usage_item("ai_queries", int(dict(usage.get("ai_calls", {})).get(day_key, 0) or 0), limits["ai_queries_per_day"], "day"),
+        usage_item("report_exports", int(dict(usage.get("report_exports", {})).get(month_key, 0) or 0), limits["report_exports_per_month"], "month"),
+    ]}
 
 
 @router.post("/create-checkout")
@@ -22,7 +51,9 @@ async def create_checkout(
     """Create Stripe checkout session for subscription."""
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
-    customer_id = user.stripe_customer_id if user else None
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    customer_id = user.stripe_customer_id
     try:
         url = stripe_service.create_checkout_session(user_id, plan, customer_id)
         return {"url": url}
@@ -40,38 +71,34 @@ async def stripe_webhook(request: Request, db: AsyncSession = Depends(get_db)):
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-    customer_id = event.get("data", {}).get("object", {}).get("customer", "")
-    if not customer_id:
-        return {"status": "ok"}
-
-    # Find user by stripe_customer_id
-    result = await db.execute(
-        select(User).where(User.stripe_customer_id == customer_id)
-    )
-    user = result.scalar_one_or_none()
+    event_object = event.get("data", {}).get("object", {})
+    customer_id = event_object.get("customer", "")
+    metadata = event_object.get("metadata", {}) or {}
+    user_id_meta = metadata.get("user_id")
+    user = await db.get(User, user_id_meta) if user_id_meta else None
+    if not user and customer_id:
+        result = await db.execute(select(User).where(User.stripe_customer_id == customer_id))
+        user = result.scalar_one_or_none()
     if not user:
         return {"status": "ok"}
 
     if event["type"] == "customer.subscription.created":
-        new_plan = event["data"]["object"].get("metadata", {}).get("plan", "pro")
-        await db.execute(
-            select(User).where(User.id == user.id)
-        )
+        new_plan = metadata.get("plan")
+        if new_plan not in {"pro", "enterprise"}:
+            raise HTTPException(status_code=400, detail="Invalid subscription plan metadata")
         user.plan = new_plan
-        await db.flush()
+        if customer_id:
+            user.stripe_customer_id = customer_id
     elif event["type"] == "customer.subscription.deleted":
         user.plan = "free"
-        await db.flush()
     elif event["type"] == "checkout.session.completed":
-        # Link stripe_customer_id to user after successful checkout
-        customer_id = event["data"]["object"].get("customer")
-        user_id_meta = event["data"]["object"].get("metadata", {}).get("user_id")
-        if customer_id and user:
+        if customer_id:
             user.stripe_customer_id = customer_id
-            await db.flush()
-    elif event["type"] == "invoice.payment_succeeded":
-        # Extend subscription period — log or update as needed
-        pass
+        plan = metadata.get("plan")
+        if plan in {"pro", "enterprise"}:
+            user.plan = plan
+
+    await db.commit()
 
     return {"status": "ok"}
 

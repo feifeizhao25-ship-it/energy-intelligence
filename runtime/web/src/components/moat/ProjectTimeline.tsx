@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
     Activity, BarChart3, FileText, AlertTriangle, Milestone,
@@ -53,13 +53,7 @@ export function ProjectTimeline({ projectId, events: initialEvents, summary: ini
     const [loading, setLoading] = useState(!initialEvents);
     const [filter, setFilter] = useState<string | null>(null);
 
-    useEffect(() => {
-        if (!initialEvents) {
-            fetchTimeline();
-        }
-    }, [projectId]);
-
-    const fetchTimeline = async () => {
+    const fetchTimeline = useCallback(async () => {
         try {
             const res = await fetch(`/api/projects/${projectId}/timeline?limit=50`);
             if (res.ok) {
@@ -72,7 +66,17 @@ export function ProjectTimeline({ projectId, events: initialEvents, summary: ini
         } finally {
             setLoading(false);
         }
-    };
+    }, [projectId]);
+
+    useEffect(() => {
+        if (initialEvents) {
+            setEvents(initialEvents);
+            setSummary(initialSummary);
+            setLoading(false);
+            return;
+        }
+        void fetchTimeline();
+    }, [fetchTimeline, initialEvents, initialSummary]);
 
     const filteredEvents = filter
         ? events.filter(e => e.type === filter)

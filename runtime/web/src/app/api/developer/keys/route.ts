@@ -8,6 +8,8 @@ function hashKey(value: string) {
     return crypto.createHash('sha256').update(value).digest('hex');
 }
 
+const allowedPermissions = new Set(['read:projects', 'read:monitoring', 'read:analytics', 'read:papers', 'openclaw:execute']);
+
 async function currentUserId() {
     const session = await getServerSession(authOptions);
     return session?.user?.id;
@@ -16,7 +18,7 @@ async function currentUserId() {
 export async function GET() {
     const userId = await currentUserId();
     if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    const keys = await prisma.apiKey.findMany({
+    const records = await prisma.apiKey.findMany({
         where: { userId },
         orderBy: { createdAt: 'desc' },
         select: {
@@ -24,6 +26,19 @@ export async function GET() {
             status: true, createdAt: true, lastUsedAt: true, expiresAt: true,
         },
     });
+    const counts = await prisma.apiLog.groupBy({ by: ['apiKeyId'], where: { userId, apiKeyId: { not: null } }, _count: { _all: true } });
+    const countByKey = new Map(counts.map(item => [item.apiKeyId, item._count._all]));
+    const keys = records.map(record => ({
+        id: record.id,
+        name: record.name || '未命名密钥',
+        keyPreview: record.keyPrefix,
+        permissions: Array.isArray(record.permissions) ? record.permissions : [],
+        rateLimit: 60,
+        createdAt: record.createdAt,
+        lastUsedAt: record.lastUsedAt,
+        status: record.status.toLowerCase(),
+        usageCount: countByKey.get(record.id) || 0,
+    }));
     return NextResponse.json({ success: true, data: { keys, total: keys.length, limits: { maxKeys: 5 } } });
 }
 
@@ -37,6 +52,12 @@ export async function POST(req: NextRequest) {
     if (await prisma.apiKey.count({ where: { userId, status: 'ACTIVE' } }) >= 5) {
         return NextResponse.json({ error: 'Maximum API keys limit reached' }, { status: 409 });
     }
+    const selectedPermissions = Array.isArray(permissions)
+        ? [...new Set(permissions.filter((value: unknown): value is string => typeof value === 'string' && allowedPermissions.has(value)))]
+        : [];
+    if (Array.isArray(permissions) && selectedPermissions.length !== permissions.length) {
+        return NextResponse.json({ error: 'One or more API permissions are invalid' }, { status: 400 });
+    }
     const rawKey = `xny_${crypto.randomBytes(32).toString('base64url')}`;
     const apiKey = await prisma.apiKey.create({
         data: {
@@ -44,7 +65,7 @@ export async function POST(req: NextRequest) {
             name: String(name).trim(),
             keyHash: hashKey(rawKey),
             keyPrefix: `${rawKey.slice(0, 12)}…`,
-            permissions: Array.isArray(permissions) ? permissions : ['openclaw:execute'],
+            permissions: selectedPermissions.length ? selectedPermissions : ['read:projects'],
             expiresAt: expiresInDays
                 ? new Date(Date.now() + Math.min(Number(expiresInDays), 365) * 86_400_000)
                 : null,

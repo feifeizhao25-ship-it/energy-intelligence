@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/auth-options';
-import { getApiStats } from '@/lib/api/open-api-middleware';
+import { prisma } from '@/lib/prisma';
 
 /**
  * API 使用统计
@@ -22,59 +22,30 @@ export async function GET(req: NextRequest) {
     const keyId = url.searchParams.get('keyId');
     const period = url.searchParams.get('period') || '24h';
 
-    // 获取统计数据
-    const stats = getApiStats(keyId || undefined);
+    const keyFilter = keyId ? { apiKeyId: keyId } : {};
+    if (keyId && !(await prisma.apiKey.findFirst({ where: { id: keyId, userId }, select: { id: true } }))) {
+        return NextResponse.json({ error: 'API_KEY_NOT_FOUND' }, { status: 404 });
+    }
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const [logs, activeKeys] = await Promise.all([
+        prisma.apiLog.findMany({ where: { userId, ...keyFilter }, orderBy: { createdAt: 'desc' }, take: 10000 }),
+        prisma.apiKey.count({ where: { userId, status: 'ACTIVE' } }),
+    ]);
+    const recent = logs.filter(log => log.createdAt >= since);
+    const endpointCounts = new Map<string, number>();
+    for (const log of recent) endpointCounts.set(log.endpoint, (endpointCounts.get(log.endpoint) || 0) + 1);
+    const avgLatency = recent.length ? recent.reduce((sum, log) => sum + log.duration, 0) / recent.length : 0;
+    const successRate = recent.length ? recent.filter(log => log.status < 400).length / recent.length * 100 : 0;
 
-    // 模拟更详细的使用数据
     const usageData = {
         overview: {
-            totalCalls: stats.total,
-            callsLast24h: stats.last24h,
-            avgLatency: `${stats.avgLatency.toFixed(1)}ms`,
-            successRate: `${stats.successRate}%`,
-            activeKeys: 2
+            totalCalls: logs.length,
+            callsLast24h: recent.length,
+            avgLatency: `${avgLatency.toFixed(1)}ms`,
+            successRate: `${successRate.toFixed(1)}%`,
+            activeKeys
         },
-
-        byEndpoint: stats.byEndpoint.length > 0 ? stats.byEndpoint : [
-            { endpoint: '/api/v1/projects', count: 125 },
-            { endpoint: '/api/v1/projects/{id}/monitoring', count: 89 },
-            { endpoint: '/api/v1/papers/search', count: 67 },
-            { endpoint: '/api/v1/projects/{id}/analytics', count: 45 }
-        ],
-
-        byDay: Array.from({ length: 7 }, (_, i) => ({
-            date: new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-            calls: Math.floor(Math.random() * 200 + 50),
-            errors: Math.floor(Math.random() * 10)
-        })),
-
-        byHour: Array.from({ length: 24 }, (_, i) => ({
-            hour: i,
-            calls: Math.floor(Math.random() * 50 + 10)
-        })),
-
-        errors: {
-            total: 23,
-            byType: [
-                { code: 'RATE_LIMIT_EXCEEDED', count: 12 },
-                { code: 'INVALID_API_KEY', count: 6 },
-                { code: 'INSUFFICIENT_PERMISSIONS', count: 3 },
-                { code: 'INTERNAL_ERROR', count: 2 }
-            ]
-        },
-
-        quotas: {
-            monthly: {
-                limit: 10000,
-                used: 3256,
-                remaining: 6744,
-                percentage: 32.56
-            },
-            rateLimit: {
-                perMinute: 60,
-                currentUsage: 12
-            }
-        }
+        byEndpoint: [...endpointCounts.entries()].map(([endpoint, count]) => ({ endpoint, count })).sort((a, b) => b.count - a.count),
     };
 
     return NextResponse.json({

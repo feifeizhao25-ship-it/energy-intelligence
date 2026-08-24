@@ -96,6 +96,7 @@ export const authOptions: NextAuthOptions = {
     },
     pages: {
         signIn: "/login",
+        error: "/auth/error", // 中文错误页，替代默认全英文 /api/auth/error
     },
     session: {
         strategy: "jwt",

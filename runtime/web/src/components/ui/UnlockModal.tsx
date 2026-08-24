@@ -91,7 +91,7 @@ export default function UnlockModal({
                         </button>
 
                         <p className="text-center mt-4 text-xs text-slate-400">
-                            7天无理由退款 · 安全支付保障
+                            实际价格、续费与退款条件以下单确认页为准
                         </p>
                     </div>
                 </motion.div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
     ArrowLeft,
@@ -45,7 +45,7 @@ export default function OperationsMaintenancePage({ params }: OmPageProps) {
     const [monitoring, setMonitoring] = useState<any>(null);
     const [activeTab, setActiveTab] = useState<'overview' | 'devices' | 'alerts' | 'maintenance'>('overview');
 
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         try {
             // Fetch project details
             const projectRes = await fetch(`/api/projects/${params.id}`);
@@ -89,21 +89,21 @@ export default function OperationsMaintenancePage({ params }: OmPageProps) {
             setLoading(false);
             setRefreshing(false);
         }
-    };
+    }, [params.id]);
 
     useEffect(() => {
-        fetchData();
+        void fetchData();
         // Auto-refresh every 30 seconds
         const interval = setInterval(() => {
             setRefreshing(true);
-            fetchData();
+            void fetchData();
         }, 30000);
         return () => clearInterval(interval);
-    }, [params.id]);
+    }, [fetchData]);
 
     const handleRefresh = () => {
         setRefreshing(true);
-        fetchData();
+        void fetchData();
     };
 
     if (loading) {

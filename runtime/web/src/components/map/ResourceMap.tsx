@@ -45,6 +45,8 @@ const LeafletFallbackMap = ({ onSelect }: { onSelect: any }) => {
         } else {
             setIsLeafletLoaded(true);
         }
+        // 地图 SDK 只初始化一次；加载状态和父回调不应触发实例销毁重建。
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
@@ -338,6 +340,8 @@ export default function ResourceMap({ layer, mapStyle, onSelectLocation }: Resou
             isMounted = false;
             if (mapInstance) mapInstance.destroy();
         };
+        // 地图 SDK 只初始化一次；加载状态和父回调不应触发实例销毁重建。
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     if (isMock) {

@@ -65,11 +65,11 @@ export default function ProfessionalConfigPanel({ type }: { type: string }) {
                     <h3 className="text-3xl font-black text-slate-900 tracking-tighter">
                         专业工程参数 <span className="text-green-500">精细化配置</span>
                     </h3>
-                    <p className="text-slate-400 font-bold text-sm">调节 118 项底层参数以获得银行级的可研分析</p>
+                    <p className="text-slate-400 font-bold text-sm">调整关键工程与财务假设，并保留参数版本供专业人员复核</p>
                 </div>
                 <div className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest">
                     <ShieldCheck className="w-3 h-3 text-green-500" />
-                    BIM Level Validated
+                    参数版本可追溯
                 </div>
             </div>
 

@@ -25,6 +25,10 @@ def _doc(source_id: str, doc_type: str, days_ago: int, interval: int = 90) -> di
         "type": doc_type,
         "lang": "cn",
         "title": f"{source_id} 标题",
+        "authors": "国家能源局",
+        "version": "2026 年版",
+        "published_at": "2026-01-01",
+        "locator": "第二章 并网申请",
         "content": "分布式 光伏 并网 政策 电价 补贴",
         "year": 2025,
         "last_verified_at": _iso(days_ago),
@@ -35,7 +39,7 @@ def _doc(source_id: str, doc_type: str, days_ago: int, interval: int = 90) -> di
     }
 
 
-# ── 元数据完整性：ID/标题/版本/发布日期/检索时间/许可 ──────────────────────────
+# ── 元数据完整性：ID/标题/作者/版本/发布日期/检索时间/页码/许可 ─────────────────
 
 
 def test_rag_hits_carry_full_provenance_metadata():
@@ -48,12 +52,38 @@ def test_rag_hits_carry_full_provenance_metadata():
     metadata = hit.metadata
     assert metadata["type"] == "policy"
     assert isinstance(metadata["year"], int)          # 版本/发布年份
+    assert metadata["authors"] == "国家能源局"          # 作者
+    assert metadata["version"] == "2026 年版"          # 版本
+    assert metadata["published_at"] == "2026-01-01"   # 发布日期
+    assert metadata["locator"] == "第二章 并网申请"     # 页码/段落
     assert metadata["last_verified_at"]               # 最近核验日期
     assert metadata["retrieved_at"] == TODAY.isoformat()  # 检索时间
     assert metadata["license_note"]                   # 许可
     assert metadata["source_url"].startswith("https://")
     assert metadata["source_org"]
     assert metadata["freshness_status"] == "current"
+
+
+def test_report_citation_surfaces_provenance_fields():
+    line = reports._format_citation(1, {
+        "title": "分布式光伏并网管理细则（2026）",
+        "url": "https://example.gov/policy",
+        "retrieved_at": "2026-08-20",
+        "authors": "国家能源局",
+        "version": "2026 年版",
+        "published_at": "2026-01-01",
+        "locator": "第二章 并网申请",
+        "license_note": "政府公开信息",
+    })
+    assert line.startswith("[1] 分布式光伏并网管理细则（2026） | https://example.gov/policy")
+    for label in ("作者：国家能源局", "版本：2026 年版", "发布日期：2026-01-01",
+                  "页码/段落：第二章 并网申请", "获取日期：2026-08-20", "许可：政府公开信息"):
+        assert label in line
+
+
+def test_report_citation_omits_absent_provenance_fields():
+    line = reports._format_citation(2, {"title": "来源", "url": "https://a.cn", "retrieved_at": "2026-08-20"})
+    assert line == "[2] 来源 | https://a.cn | 获取日期：2026-08-20"
 
 
 # ── 过期政策：失效标记 / 排除 / fail-closed ────────────────────────────────────

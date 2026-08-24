@@ -84,13 +84,13 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
     },
     {
         id: 'complete',
-        title: '您已获得专属奖励！',
-        subtitle: '感谢完成引导，这些福利已发放到您的账户',
+        title: '个性化设置已完成',
+        subtitle: '免费版实际额度如下，升级前可在价格方案页查看完整权益',
         icon: Gift,
         rewards: [
-            { label: '10次免费AI对话', value: 10 },
-            { label: '5次专业测算', value: 5 },
-            { label: '新手积分', value: 100 },
+            { label: '每日 AI 对话', value: 3 },
+            { label: '每日项目测算', value: 2 },
+            { label: '最多项目数', value: 1 },
         ]
     }
 ];

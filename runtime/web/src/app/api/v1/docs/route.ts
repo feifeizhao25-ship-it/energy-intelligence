@@ -1,338 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-/**
- * 开放 API 文档
- * 
- * GET /api/v1/docs
- * 
- * 返回完整的 API 文档（OpenAPI 3.0 格式）
- */
-
-const openApiSpec = {
-    openapi: '3.0.3',
-    info: {
-        title: '新能源智库 开放 API',
-        description: `
-# 新能源智库 Open API
-
-欢迎使用新能源智库开放API！本API提供新能源项目数据、监控信息、文献资源等接口服务。
-
-## 认证方式
-
-所有API请求需要在Header中携带API Key：
-
-\`\`\`
-X-API-Key: your_api_key
-\`\`\`
-
-或使用 Bearer Token：
-
-\`\`\`
-Authorization: Bearer your_api_key
-\`\`\`
-
-## 获取API Key
-
-1. 登录开发者控制台
-2. 进入 API Keys 管理页面
-3. 创建新的 API Key
-4. 保存 Key（只显示一次）
-
-## 速率限制
-
-- 默认限制：60 次/分钟
-- 响应头包含速率限制信息：
-  - \`X-RateLimit-Limit\`: 限制次数
-  - \`X-RateLimit-Remaining\`: 剩余次数
-  - \`X-RateLimit-Reset\`: 重置时间戳
-
-## Demo API Key
-
-用于测试的演示 Key（只读权限）：
-\`\`\`
-xny_pk_demo_1234567890abcdef
-\`\`\`
-        `.trim(),
-        version: '1.0.0',
-        contact: {
-            name: '新能源智库技术支持',
-            email: 'api-support@xinnengyuan.ai',
-            url: 'https://xinnengyuan.ai/developer'
-        },
-        license: {
-            name: 'MIT',
-            url: 'https://opensource.org/licenses/MIT'
-        }
-    },
-    servers: [
-        {
-            url: 'https://api.xinnengyuan.ai/v1',
-            description: '生产环境'
-        },
-        {
-            url: 'http://localhost:3001/api/v1',
-            description: '开发环境'
-        }
-    ],
-    security: [
-        { ApiKeyAuth: [] }
-    ],
-    tags: [
-        { name: 'Projects', description: '项目管理相关接口' },
-        { name: 'Monitoring', description: '监控数据相关接口' },
-        { name: 'Analytics', description: '分析数据相关接口' },
-        { name: 'Papers', description: '文献资源相关接口' }
-    ],
-    paths: {
-        '/projects': {
-            get: {
-                tags: ['Projects'],
-                summary: '获取项目列表',
-                description: '获取用户有权访问的所有项目列表，支持分页和过滤',
-                operationId: 'listProjects',
-                parameters: [
-                    { name: 'page', in: 'query', schema: { type: 'integer', default: 1 }, description: '页码' },
-                    { name: 'limit', in: 'query', schema: { type: 'integer', default: 20, maximum: 100 }, description: '每页数量' },
-                    { name: 'type', in: 'query', schema: { type: 'string', enum: ['solar', 'wind', 'storage'] }, description: '项目类型' },
-                    { name: 'status', in: 'query', schema: { type: 'string', enum: ['running', 'planning', 'warning'] }, description: '项目状态' }
-                ],
-                responses: {
-                    '200': {
-                        description: '成功返回项目列表',
-                        content: {
-                            'application/json': {
-                                schema: { $ref: '#/components/schemas/ProjectListResponse' }
-                            }
-                        }
-                    },
-                    '401': { $ref: '#/components/responses/Unauthorized' },
-                    '429': { $ref: '#/components/responses/RateLimited' }
-                }
-            }
-        },
-        '/projects/{id}': {
-            get: {
-                tags: ['Projects'],
-                summary: '获取项目详情',
-                description: '获取指定项目的详细信息，包括设备配置、运行指标等',
-                operationId: 'getProject',
-                parameters: [
-                    { name: 'id', in: 'path', required: true, schema: { type: 'string' }, description: '项目ID' }
-                ],
-                responses: {
-                    '200': {
-                        description: '成功返回项目详情',
-                        content: {
-                            'application/json': {
-                                schema: { $ref: '#/components/schemas/ProjectDetailResponse' }
-                            }
-                        }
-                    },
-                    '404': { $ref: '#/components/responses/NotFound' }
-                }
-            }
-        },
-        '/projects/{id}/monitoring': {
-            get: {
-                tags: ['Monitoring'],
-                summary: '获取监控数据',
-                description: '获取项目的时序监控数据，包括功率、效率、温度等指标',
-                operationId: 'getMonitoring',
-                parameters: [
-                    { name: 'id', in: 'path', required: true, schema: { type: 'string' }, description: '项目ID' },
-                    { name: 'range', in: 'query', schema: { type: 'string', enum: ['realtime', '1h', '24h', '7d', '30d'], default: '24h' }, description: '时间范围' },
-                    { name: 'interval', in: 'query', schema: { type: 'string', enum: ['1m', '5m', '15m', '1h', '1d'], default: '1h' }, description: '数据间隔' }
-                ],
-                responses: {
-                    '200': {
-                        description: '成功返回监控数据',
-                        content: {
-                            'application/json': {
-                                schema: { $ref: '#/components/schemas/MonitoringResponse' }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        '/projects/{id}/analytics': {
-            get: {
-                tags: ['Analytics'],
-                summary: '获取性能分析',
-                description: '获取项目的深度性能分析数据，包括效率分析、损失分解、对标分析等',
-                operationId: 'getAnalytics',
-                parameters: [
-                    { name: 'id', in: 'path', required: true, schema: { type: 'string' }, description: '项目ID' },
-                    { name: 'period', in: 'query', schema: { type: 'string', enum: ['7d', '30d', '90d', '1y'], default: '30d' }, description: '分析周期' }
-                ],
-                responses: {
-                    '200': {
-                        description: '成功返回分析数据',
-                        content: {
-                            'application/json': {
-                                schema: { $ref: '#/components/schemas/AnalyticsResponse' }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        '/papers/search': {
-            get: {
-                tags: ['Papers'],
-                summary: '搜索文献',
-                description: '搜索新能源领域的学术文献',
-                operationId: 'searchPapers',
-                parameters: [
-                    { name: 'q', in: 'query', required: true, schema: { type: 'string' }, description: '搜索关键词' },
-                    { name: 'page', in: 'query', schema: { type: 'integer', default: 1 }, description: '页码' },
-                    { name: 'limit', in: 'query', schema: { type: 'integer', default: 20 }, description: '每页数量' },
-                    { name: 'year', in: 'query', schema: { type: 'integer' }, description: '年份过滤' },
-                    { name: 'sort', in: 'query', schema: { type: 'string', enum: ['relevance', 'citations', 'year'] }, description: '排序方式' }
-                ],
-                responses: {
-                    '200': {
-                        description: '成功返回搜索结果',
-                        content: {
-                            'application/json': {
-                                schema: { $ref: '#/components/schemas/PaperSearchResponse' }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    },
-    components: {
-        securitySchemes: {
-            ApiKeyAuth: {
-                type: 'apiKey',
-                in: 'header',
-                name: 'X-API-Key',
-                description: '使用 API Key 进行认证'
-            }
-        },
-        schemas: {
-            Project: {
-                type: 'object',
-                properties: {
-                    id: { type: 'string', example: 'demo-1' },
-                    name: { type: 'string', example: '北京朝阳分布式光伏示范站' },
-                    type: { type: 'string', enum: ['solar', 'wind', 'storage'] },
-                    capacity: { type: 'number', example: 120 },
-                    capacityUnit: { type: 'string', example: 'kW' },
-                    location: {
-                        type: 'object',
-                        properties: {
-                            address: { type: 'string' },
-                            lat: { type: 'number' },
-                            lng: { type: 'number' }
-                        }
-                    },
-                    status: { type: 'string', enum: ['running', 'planning', 'warning'] },
-                    createdAt: { type: 'string', format: 'date-time' }
-                }
-            },
-            Paper: {
-                type: 'object',
-                properties: {
-                    id: { type: 'string' },
-                    title: { type: 'string' },
-                    authors: { type: 'array', items: { type: 'string' } },
-                    year: { type: 'integer' },
-                    journal: { type: 'string' },
-                    abstract: { type: 'string' },
-                    keywords: { type: 'array', items: { type: 'string' } },
-                    citations: { type: 'integer' },
-                    doi: { type: 'string' }
-                }
-            },
-            Pagination: {
-                type: 'object',
-                properties: {
-                    page: { type: 'integer' },
-                    limit: { type: 'integer' },
-                    total: { type: 'integer' },
-                    totalPages: { type: 'integer' },
-                    hasMore: { type: 'boolean' }
-                }
-            },
-            Error: {
-                type: 'object',
-                properties: {
-                    code: { type: 'string' },
-                    message: { type: 'string' }
-                }
-            }
-        },
-        responses: {
-            Unauthorized: {
-                description: '认证失败',
-                content: {
-                    'application/json': {
-                        schema: {
-                            type: 'object',
-                            properties: {
-                                success: { type: 'boolean', example: false },
-                                error: { $ref: '#/components/schemas/Error' }
-                            }
-                        }
-                    }
-                }
-            },
-            NotFound: {
-                description: '资源不存在',
-                content: {
-                    'application/json': {
-                        schema: {
-                            type: 'object',
-                            properties: {
-                                success: { type: 'boolean', example: false },
-                                error: { $ref: '#/components/schemas/Error' }
-                            }
-                        }
-                    }
-                }
-            },
-            RateLimited: {
-                description: '请求频率超限',
-                headers: {
-                    'X-RateLimit-Limit': { schema: { type: 'integer' }, description: '限制次数' },
-                    'X-RateLimit-Remaining': { schema: { type: 'integer' }, description: '剩余次数' },
-                    'Retry-After': { schema: { type: 'integer' }, description: '重试等待秒数' }
-                },
-                content: {
-                    'application/json': {
-                        schema: {
-                            type: 'object',
-                            properties: {
-                                success: { type: 'boolean', example: false },
-                                error: { $ref: '#/components/schemas/Error' }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-};
+function isEnglish(req: NextRequest) {
+    const requested = req.nextUrl.searchParams.get('locale');
+    if (requested) return requested.toLowerCase().startsWith('en');
+    const cookie = req.cookies.get('NEXT_LOCALE')?.value;
+    if (cookie) return cookie === 'en';
+    return req.headers.get('accept-language')?.toLowerCase().startsWith('en') ?? false;
+}
 
 export async function GET(req: NextRequest) {
-    const url = new URL(req.url);
-    const format = url.searchParams.get('format') || 'json';
-
-    if (format === 'yaml') {
-        // 简化的 YAML 转换
-        const yamlContent = JSON.stringify(openApiSpec, null, 2)
-            .replace(/"/g, '')
-            .replace(/,$/gm, '');
-
-        return new NextResponse(yamlContent, {
-            headers: {
-                'Content-Type': 'text/yaml'
-            }
-        });
-    }
-
-    return NextResponse.json(openApiSpec);
+    const en = isEnglish(req);
+    const t = en ? {
+        title: 'Renewable Energy Intelligence Open API', description: 'Auditable project, literature, and calculation endpoints. Send X-API-Key. Availability depends on key permissions and plan entitlements. Synthetic telemetry and analytics are disabled.', current: 'Current origin',
+        projects: 'List projects owned by the API-key user', project: 'Read an accessible project', papers: 'Search Semantic Scholar literature', solar: 'Run an auditable solar-return calculation', monitoring: 'Telemetry is unavailable until a verified SCADA or IoT source is connected', analytics: 'Analytics are unavailable until verified telemetry and benchmark data are connected',
+        ok: 'Successful response', unavailable: 'Verified source is not connected', unauthorized: 'Missing or invalid API key', forbidden: 'The key lacks the required permission', limited: 'Rate limit exceeded', notFound: 'Resource not found',
+    } : {
+        title: '新能源智库开放 API', description: '提供可审计的项目、文献和计算接口。请求须携带 X-API-Key，实际能力取决于密钥权限和会员权益；系统禁止生成虚假遥测与分析数据。', current: '当前站点',
+        projects: '分页读取 API Key 所属用户的项目', project: '读取有权访问的单个项目', papers: '通过 Semantic Scholar 检索文献', solar: '执行带审计快照的光伏收益计算', monitoring: '接入经验证的 SCADA 或 IoT 数据前返回不可用', analytics: '接入经验证的遥测与基准数据前返回不可用',
+        ok: '请求成功', unavailable: '尚未接入经验证的数据源', unauthorized: 'API Key 缺失或无效', forbidden: '密钥缺少所需权限', limited: '请求频率超限', notFound: '资源不存在',
+    };
+    const errorResponses = {
+        '401': { description: t.unauthorized, content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+        '403': { description: t.forbidden, content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+        '429': { description: t.limited, content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+    };
+    const idParameter = { name: 'id', in: 'path', required: true, schema: { type: 'string' } };
+    const spec = {
+        openapi: '3.0.3', info: { title: t.title, description: t.description, version: '1.0.0' }, servers: [{ url: '/api/v1', description: t.current }], security: [{ ApiKeyAuth: [] }],
+        paths: {
+            '/projects': { get: { summary: t.projects, operationId: 'listProjects', parameters: [{ name: 'page', in: 'query', schema: { type: 'integer', minimum: 1, default: 1 } }, { name: 'limit', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 100, default: 20 } }, { name: 'type', in: 'query', schema: { type: 'string' } }], responses: { '200': { description: t.ok }, ...errorResponses } } },
+            '/projects/{id}': { get: { summary: t.project, operationId: 'getProject', parameters: [idParameter], responses: { '200': { description: t.ok }, '404': { description: t.notFound }, ...errorResponses } } },
+            '/projects/{id}/monitoring': { get: { summary: t.monitoring, operationId: 'getMonitoring', parameters: [idParameter], responses: { '503': { description: t.unavailable }, ...errorResponses } } },
+            '/projects/{id}/analytics': { get: { summary: t.analytics, operationId: 'getAnalytics', parameters: [idParameter], responses: { '503': { description: t.unavailable }, ...errorResponses } } },
+            '/papers/search': { get: { summary: t.papers, operationId: 'searchPapers', parameters: [{ name: 'q', in: 'query', required: true, schema: { type: 'string' } }, { name: 'page', in: 'query', schema: { type: 'integer', minimum: 1, default: 1 } }, { name: 'limit', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 100, default: 20 } }, { name: 'year', in: 'query', schema: { type: 'integer' } }], responses: { '200': { description: t.ok }, '503': { description: t.unavailable }, ...errorResponses } } },
+            '/calculate/solar': { post: { summary: t.solar, operationId: 'calculateSolar', requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', additionalProperties: true } } } }, responses: { '200': { description: t.ok }, ...errorResponses } } },
+        },
+        components: { securitySchemes: { ApiKeyAuth: { type: 'apiKey', in: 'header', name: 'X-API-Key' } }, schemas: { ErrorResponse: { type: 'object', required: ['success', 'error'], properties: { success: { type: 'boolean', enum: [false] }, error: { type: 'object', properties: { code: { type: 'string' }, message: { type: 'string' } } } } } } },
+    };
+    return NextResponse.json(spec, { headers: { 'Cache-Control': 'public, max-age=300', 'Content-Language': en ? 'en' : 'zh-CN', Vary: 'Cookie, Accept-Language' } });
 }

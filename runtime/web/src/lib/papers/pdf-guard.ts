@@ -48,3 +48,44 @@ export function assertValidPdfBuffer(buffer: Buffer | null | undefined, mimeType
     const rejection = validatePdfBuffer(buffer, mimeType);
     if (rejection) throw new PdfValidationError(rejection);
 }
+
+/**
+ * 提示词注入基础防护：PDF 提取文本进入分块/向量库（最终进入 LLM 上下文）前，
+ * 对已知注入模式做检测 + 中和标记。不阻断正常内容——仅把命中的注入指令
+ * 片段替换为占位标记，并记录命中片段供审计。
+ */
+const INJECTION_PATTERNS: RegExp[] = [
+    /ignore\s+(all\s+|any\s+|the\s+)?(previous|prior|above|earlier)\s+(instructions?|prompts?|directions?)/gi,
+    /disregard\s+(all\s+|any\s+|the\s+)?(previous|prior|above)\s+(instructions?|prompts?|directions?)/gi,
+    /forget\s+(all\s+|the\s+)?(previous|prior|above)\s+(instructions?|prompts?)/gi,
+    /you\s+are\s+now\s+(a|an)\s+[^.\n]{0,40}?(assistant|ai|model|bot)/gi,
+    /(new|override)\s+system\s+(prompt|instructions?)\s*:/gi,
+    /忽略(之前|上述|以上|先前|所有)[^，。；\n]{0,12}(指令|指示|要求|提示)/g,
+    /无视(之前|上述|以上|所有)[^，。；\n]{0,12}(指令|指示|要求)/g,
+    /忘记(之前|上述|以上|所有)[^，。；\n]{0,12}(指令|指示)/g,
+];
+
+export const INJECTION_PLACEHOLDER = '[已过滤：疑似提示词注入]';
+
+export interface InjectionScan {
+    /** 中和后的文本（未命中时与输入一致） */
+    text: string;
+    /** 是否命中过注入模式 */
+    flagged: boolean;
+    /** 被中和的注入片段原文（供日志审计） */
+    matches: string[];
+}
+
+/** 检测并中和文本中的已知提示词注入模式。 */
+export function neutralizePromptInjections(text: string): InjectionScan {
+    let sanitized = text;
+    const matches: string[] = [];
+    for (const pattern of INJECTION_PATTERNS) {
+        pattern.lastIndex = 0; // 全局正则复用前重置游标
+        const found = sanitized.match(pattern);
+        if (found) matches.push(...found);
+        pattern.lastIndex = 0;
+        sanitized = sanitized.replace(pattern, INJECTION_PLACEHOLDER);
+    }
+    return { text: sanitized, flagged: matches.length > 0, matches };
+}

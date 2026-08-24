@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, ThumbsUp, Check, Share2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -42,11 +42,7 @@ export function QuestionDetail({ questionId }: { questionId: string }) {
   const [answerContent, setAnswerContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    fetchQuestion();
-  }, [questionId]);
-
-  const fetchQuestion = async () => {
+  const fetchQuestion = useCallback(async () => {
     try {
       const response = await fetch(`/api/community/questions/${questionId}`);
       if (response.ok) {
@@ -59,7 +55,11 @@ export function QuestionDetail({ questionId }: { questionId: string }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [questionId]);
+
+  useEffect(() => {
+    void fetchQuestion();
+  }, [fetchQuestion]);
 
   const handleSubmitAnswer = async () => {
     if (!answerContent.trim()) return;

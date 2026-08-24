@@ -183,8 +183,38 @@ forbid_tree(
         "sourceUrl: 'https://fgw.jiangsu.gov.cn/mock'",
         "sourceUrl: 'https://fzggw.zj.gov.cn/mock'",
         "sourceUrl: 'https://fzggw.gd.gov.cn/mock'",
+        "const mockQuestions = [",
+        "let questions: Question[] = [",
+        "const mockPapers = [",
+        "Math.floor(Math.random() * 5)",
+        "mock-el-original.jpg",
+        "Mock JSON response",
+        "const projectsData = [",
+        "const demoNotifications = [",
+        "export-mock-1",
     ),
 )
+require(
+    "runtime/web/src/lib/maintenance/solar-advanced.ts",
+    "未生成任何诊断结果",
+)
+require(
+    "runtime/web/src/lib/maintenance/wind-advanced.ts",
+    "叶片图像分析服务尚未接入经验证的生产模型",
+)
+require(
+    "runtime/web/src/app/api/community/questions/route.ts",
+    "COMMUNITY_STORAGE_UNAVAILABLE",
+)
+require("runtime/web/src/app/api/v1/projects/route.ts", "未返回示例数据")
+require("runtime/web/src/app/api/v1/projects/[id]/route.ts", "userId: keyData.userId")
+require("runtime/web/src/app/api/exports/route.ts", "未生成随机数据")
+require("runtime/web/src/lib/ai/router.ts", "deepseek/deepseek-v3.2")
+require("runtime/web/src/lib/ai/router.ts", "data_collection: 'deny'")
+require("runtime/web/src/lib/ai/router.ts", "Math.min(4096")
+require("runtime/backend/app/services/ai_service.py", '"zdr": True')
+require("runtime/backend/app/services/ai_service.py", "chat_openai_with_metadata")
+require("runtime/backend/app/api/v1/ai_assistant.py", '"ai_metadata"')
 for mobile_root in ("android-global/lib", "ios-global/lib"):
     forbid_tree(
         mobile_root,

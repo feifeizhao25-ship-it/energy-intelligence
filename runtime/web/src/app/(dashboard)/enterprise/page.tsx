@@ -207,7 +207,7 @@ export default function EnterpriseCenterPage() {
                                 </div>
                                 <h4 className="text-2xl font-black text-slate-900 tracking-tight">企业级功能开发中</h4>
                                 <p className="text-slate-500 font-medium max-w-sm mx-auto">
-                                    此模块涉及 118 项核心功能中的企业管理部分，我们的工程师正在全力构建中。
+                                    此企业管理模块尚未开放；当前页面不会模拟已完成的功能或返回伪造结果。
                                 </p>
                                 <button className="text-blue-500 font-black text-[10px] uppercase tracking-widest hover:underline">
                                     查看开发进度看板 <ArrowUpRight className="inline w-3 h-3 ml-1" />

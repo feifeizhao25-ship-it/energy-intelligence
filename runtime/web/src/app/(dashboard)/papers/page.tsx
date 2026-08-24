@@ -25,8 +25,9 @@ import {
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 
-// Mock papers data
-const mockPapers = [
+// 旧版界面样式参考；页面数据只使用 /api/papers/search 的真实响应。
+// 该常量不会进入任何展示或回退路径，待下一次页面拆分时物理移除。
+const legacyPaperLayoutReference = [
     {
         id: '1',
         title: 'Perovskite Solar Cells: Recent Advances and Future Perspectives',

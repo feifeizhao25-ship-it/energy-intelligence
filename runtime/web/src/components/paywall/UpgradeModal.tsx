@@ -225,7 +225,7 @@ export default function UpgradeModal({
                         {/* Footer */}
                         <div className="px-6 pb-6 text-center">
                             <p className="text-xs text-slate-400">
-                                支持微信、支付宝付款 · 7天无理由退款 ·
+                                支付方式、续费与退款条件以下单确认页为准 ·
                                 <Link href="/pricing" className="text-blue-600 hover:underline">
                                     查看完整对比
                                 </Link>

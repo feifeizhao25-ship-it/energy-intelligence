@@ -377,11 +377,8 @@ export class ReportGenerator {
             }
         };
 
-        // 8. 生成PDF/Excel（异步）
-        // TODO: 实际生成文件
-        // report.pdfUrl = await this.generatePDF(report);
-        // report.excelUrl = await this.generateExcel(report);
-        report.jsonUrl = `/api/reports/${reportId}/json`;
+        // 文件导出服务未持久化前不返回伪造下载地址。
+        // 调用方可展示已组装的报告内容，但不应声称文件已生成。
 
         return report;
     }

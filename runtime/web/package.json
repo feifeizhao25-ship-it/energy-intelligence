@@ -11,6 +11,8 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
+    "check:i18n-runtime": "node scripts/check-i18n-runtime.mjs",
+    "check:openapi": "node scripts/check-open-api-contract.mjs",
     "db:push": "prisma db push",
     "db:generate": "prisma generate",
     "db:studio": "prisma studio"
