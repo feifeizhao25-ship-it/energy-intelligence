@@ -36,10 +36,7 @@ jobs:
           cd ../skills-sdk && npm run lint || true
 
       - name: Lint Web Global
-        run: |
-          cd web-global
-          npm install
-          npm run lint || true
+        run: pnpm --dir web-global lint
 
       # 目标从空壳目录 frontend-cn-web 改为主干 runtime/web
       - name: Lint Web CN
@@ -127,18 +124,18 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
+      - name: Install Dependencies
+        run: corepack enable && pnpm install --frozen-lockfile
+
       - name: Type Check Web Global
-        run: |
-          cd web-global
-          npm install
-          npx tsc --noEmit || true
+        run: pnpm --dir web-global type-check
 
       - name: Type Check Web CN
         run: |
           cd runtime/web
           npm ci
           npx prisma generate --schema src/prisma/schema.prisma
-          npx tsc --noEmit || true
+          npx tsc --noEmit
 
   # ============================================
   # SECURITY SCAN
@@ -243,17 +240,14 @@ jobs:
           cd ../ui-components && npm ci && npm run build || true
 
       - name: Build Web Global
-        run: |
-          cd web-global
-          npm install
-          npm run build || true
+        run: pnpm --dir web-global build
 
       - name: Build Web CN
         run: |
           cd runtime/web
-          npm install
+          npm ci
           npx prisma generate --schema src/prisma/schema.prisma
-          npm run build || true
+          npm run build
 
   # ============================================
   # SIZE CHECK
@@ -270,16 +264,17 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
+      - name: Install Dependencies
+        run: corepack enable && pnpm install --frozen-lockfile
+
       - name: Check Web Global Bundle Size
         run: |
-          cd web-global
-          npm install
-          npm run build
-          du -sh dist/ || true
+          pnpm --dir web-global build
+          du -sh web-global/.next/
 
       - name: Check Web CN Bundle Size
         run: |
           cd runtime/web
           npm ci
           npm run build
-          du -sh dist/ || true
+          du -sh .next/

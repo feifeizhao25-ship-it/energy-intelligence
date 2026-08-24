@@ -16,7 +16,7 @@ export interface MarkdownRendererProps {
 
 export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, className }) => {
   const html = useMemo(() => {
-    let text = content;
+    const text = content;
     try {
       const rendered = marked.parse(text, { async: false });
       return DOMPurify.sanitize(rendered, {

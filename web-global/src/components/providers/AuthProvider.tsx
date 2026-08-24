@@ -19,7 +19,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
       .me()
       .then((res) => {
         if (res.success && res.data?.user) {
-          setUserState(normalizeUser(res.data.user as any));
+          setUserState(normalizeUser(res.data.user as unknown as Record<string, unknown>));
         }
       })
       .catch(() => {

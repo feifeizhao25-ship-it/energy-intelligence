@@ -447,23 +447,23 @@ export const skillsApi = {
     if (params?.page) q.set('page', String(params.page));
     if (params?.page_size) q.set('page_size', String(params.page_size));
     const qs = q.toString();
-    return fetchApi<ApiResponse<{ items: any[]; total: number }>>(`/api/v1/ai/skills${qs ? '?' + qs : ''}`);
+    return fetchApi<ApiResponse<{ items: unknown[]; total: number }>>(`/api/v1/ai/skills${qs ? '?' + qs : ''}`);
   },
   //  Sync执line skill
-  execute: (skillId: string, params: Record<string, any>) =>
-    fetchApi<ApiResponse<{ result: any; status: string; skill_id: string }>>(
+  execute: (skillId: string, params: Record<string, unknown>) =>
+    fetchApi<ApiResponse<{ result: unknown; status: string; skill_id: string }>>(
       `/api/v1/skills/${skillId}/execute`,
       { method: 'POST', body: JSON.stringify(params) }),
   //  Async执line
-  executeAsync: (skillId: string, params: Record<string, any>) =>
+  executeAsync: (skillId: string, params: Record<string, unknown>) =>
     fetchApi<ApiResponse<{ task_id: string; status: string }>>(
       `/api/v1/skills/${skillId}/execute?async=true`,
       { method: 'POST', body: JSON.stringify(params) }),
   // 获取 schema
   schema: (skillId: string) =>
-    fetchApi<ApiResponse<any>>(`/api/v1/skills/${skillId}/schema`),
+    fetchApi<ApiResponse<unknown>>(`/api/v1/skills/${skillId}/schema`),
 };
 
 export const dashboardApi = {
-  metrics: () => fetchApi<ApiResponse<any>>('/api/v1/dashboard/metrics'),
+  metrics: () => fetchApi<ApiResponse<unknown>>('/api/v1/dashboard/metrics'),
 };
