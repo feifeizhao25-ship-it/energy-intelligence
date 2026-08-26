@@ -61,7 +61,7 @@ async def _clear_attempts(ip: str) -> None:
 from app.core.database import get_db
 from app.core.security import hash_password, verify_password, create_access_token, create_refresh_token, decode_token
 from app.core.dependencies import get_current_user_id
-from app.models.database import User
+from app.models.user import User
 from app.schemas.auth import RegisterRequest, LoginRequest, TokenResponse, MagicLinkRequest
 from app.schemas.common import SuccessResponse
 from app.utils.response import success
@@ -308,7 +308,7 @@ async def forgot_password_send_code(body: dict, db: AsyncSession = Depends(get_d
     from app.config import settings
     if settings.is_development:
         import logging
-        logging.getLogger(__name__).info("[DEV] Verification code for %s: %s", phone, code)
+        logging.getLogger(__name__).info("[DEV] Verification code generated; inspect the configured SMS sandbox")
 
     return success(data={"message": "Verification code sent"})
 

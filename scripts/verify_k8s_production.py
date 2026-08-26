@@ -45,7 +45,7 @@ result = subprocess.run(
     check=False,
 )
 if result.returncode:
-    fail(result.stderr.strip() or "kustomize render failed")
+    fail("kustomize render failed; inspect kubectl output in a protected local session")
 
 documents = [
     document

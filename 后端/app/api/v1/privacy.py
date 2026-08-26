@@ -16,7 +16,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.dependencies import get_current_user_id
 from app.core.database import get_db
 from app.models.cashflow import CashflowProjection
-from app.models.database import ConsentRecord, FinancialModel, Project, ResourceAssessment, User
+from app.models.database import ConsentRecord, FinancialModel, Project, ResourceAssessment
+from app.models.user import User
 from app.models.report import Report
 
 router = APIRouter(prefix="/privacy")

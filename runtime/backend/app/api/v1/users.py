@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user_id
-from app.models.database import User
+from app.models.user import User
 from app.schemas.user import UserResponse, UserUpdateRequest
 
 router = APIRouter(prefix="/users")

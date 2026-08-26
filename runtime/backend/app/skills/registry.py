@@ -608,7 +608,7 @@ class SkillRegistry:
 
         except Exception as exc:
             elapsed_ms = (_time.monotonic() - start) * 1000
-            logger.exception("Skill %s execution failed", skill_id)
+            logger.exception("Skill execution failed")
             return SkillExecutionResult(
                 skill_id=skill_id,
                 status=SkillStatus.FAILED,

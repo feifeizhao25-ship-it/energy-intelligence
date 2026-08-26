@@ -82,8 +82,3 @@ class ConsentRecord(Base):
     updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     __table_args__ = (Index("idx_user_consent", "user_id"),)
-
-
-# Canonical User 定义在 app.models.user（共享本模块的 Base）。
-# 放在文件末尾导入以避免循环依赖；同时保留 `from app.models.database import User` 的兼容入口。
-from app.models.user import User  # noqa: E402,F401

@@ -417,14 +417,14 @@ async def yield_estimate(
             pr=body.pr,
             degradation=body.degradation,
         )
-    except Exception as e:
-        logger.warning("Yield estimate API failed for (%s, %s): %s", body.latitude, body.longitude, e)
+    except Exception:
+        logger.warning("Yield estimate API failed; using the audited local fallback")
         import skills
         try:
             skill_res = skills.execute_skill("RA-001", params={"latitude": body.latitude, "longitude": body.longitude})
             annual_ghi = skill_res.get("result", {}).get("annual_ghi", 1600)
-        except Exception as e:
-            logger.warning("Skill fallback failed for yield estimate GHI, using default 1600: %s", e)
+        except Exception:
+            logger.warning("Skill fallback failed; using the documented default GHI")
             annual_ghi = 1600
         annual_generation_kwh = body.capacity_mw * 1000 * annual_ghi * body.pr
         p50_mwh = annual_generation_kwh / 1000

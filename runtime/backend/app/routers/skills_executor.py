@@ -63,7 +63,7 @@ async def _run_skill_async(
             "error": result.get("error") if failed else None,
         })
     except Exception as exc:
-        logger.exception("Asynchronous skill execution failed: %s", skill_id)
+        logger.exception("Asynchronous skill execution failed")
         task.update({
             "status": SkillStatus.FAILED.value,
             "progress": 100,

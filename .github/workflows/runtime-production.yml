@@ -8,6 +8,9 @@ on:
       - '.github/workflows/runtime-production.yml'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 env:
   REGISTRY: ghcr.io
 
@@ -26,7 +29,7 @@ jobs:
           python -m pytest tests -q --disable-warnings
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: npm
           cache-dependency-path: |
             runtime/web/package-lock.json

@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings
 from app.core.dependencies import get_current_user_id
 from app.core.database import get_db
-from app.models.database import User
+from app.models.user import User
 from app.services.stripe_service import stripe_service
 from app.core.subscription import PLAN_QUOTAS
 

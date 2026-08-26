@@ -6,7 +6,8 @@ import uuid
 
 from app.core.dependencies import get_current_user_id
 from app.core.database import get_db
-from app.models.database import User, ConsentRecord
+from app.models.database import ConsentRecord
+from app.models.user import User
 from app.tasks.gdpr import export_user_data, delete_user_account
 
 router = APIRouter(prefix="/privacy")

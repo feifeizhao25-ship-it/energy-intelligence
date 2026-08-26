@@ -118,7 +118,7 @@ if command:
     }
     result = subprocess.run(command, cwd=ROOT, env=env, text=True, capture_output=True, check=False)
     if result.returncode:
-        errors.append("docker-compose config failed: " + (result.stderr.strip() or result.stdout.strip()))
+        errors.append("docker-compose config failed; rerun locally with redacted environment values")
 
 if errors:
     for error in errors:

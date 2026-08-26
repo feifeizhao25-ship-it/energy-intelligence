@@ -1,12 +1,12 @@
 """SQLAlchemy models package — export Base and all models for Alembic autogenerate."""
 from .database import (
     Base,
-    User,
     Project,
     ResourceAssessment,
     FinancialModel,
     ConsentRecord,
 )
+from .user import User
 from .alert import AlertRule
 
 __all__ = [

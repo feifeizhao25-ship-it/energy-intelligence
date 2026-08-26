@@ -83,6 +83,14 @@ def _esc(value: object) -> str:
     return html.escape(str(value))
 
 
+def _safe_internal_href(value: object) -> str:
+    """Only render application-relative navigation targets into demo HTML."""
+    href = str(value).strip()
+    if not href.startswith("/") or href.startswith("//") or "\\" in href:
+        return "#"
+    return html.escape(href, quote=True)
+
+
 def _render_layout(layout: dict) -> str:
     hero = layout["hero"]
     day = layout["day"]
@@ -116,7 +124,7 @@ def _render_layout(layout: dict) -> str:
 
     reco = layout["recommendation"]
     reco_items = "".join(
-        f'<li><a href="{_esc(item["href"])}">{_esc(item["title"])}</a></li>'
+        f'<li><a href="{_safe_internal_href(item["href"])}">{_esc(item["title"])}</a></li>'
         for item in reco["items"]
     )
 
@@ -140,7 +148,7 @@ def _render_layout(layout: dict) -> str:
     <div class="day-tag">{_esc(hero["title"])}</div>
     <h1>{_esc(hero["headline"])}</h1>
     <p class="sub">{_esc(hero["subtext"])}</p>
-    <a class="next-action" href="{_esc(next_action["href"])}">{_esc(next_action["label"])} →</a>
+    <a class="next-action" href="{_safe_internal_href(next_action["href"])}">{_esc(next_action["label"])} →</a>
     <div class="evidence">evidence_status: {_esc(hero["evidence_status"])}</div>
   </div>
   <div class="section-title">WIDGETS · 按人设优先级排序 / ORDERED BY PERSONA PRIORITY</div>
