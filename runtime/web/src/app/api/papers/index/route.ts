@@ -22,9 +22,16 @@ export async function POST(req: NextRequest) {
         }
 
         const parsedUrl = new URL(pdfUrl);
-        const allowedHosts = (process.env.RAG_PDF_ALLOWED_HOSTS || 'arxiv.org,export.arxiv.org')
-            .split(',').map(value => value.trim().toLowerCase()).filter(Boolean);
-        if (parsedUrl.protocol !== 'https:' || !allowedHosts.includes(parsedUrl.hostname.toLowerCase())) {
+        // Fixed public origins only. An environment-controlled allowlist could be
+        // misconfigured to include an internal host and would reintroduce SSRF.
+        const allowedHosts = new Set(['arxiv.org', 'export.arxiv.org']);
+        if (
+            parsedUrl.protocol !== 'https:' ||
+            !allowedHosts.has(parsedUrl.hostname.toLowerCase()) ||
+            (parsedUrl.port !== '' && parsedUrl.port !== '443') ||
+            parsedUrl.username !== '' ||
+            parsedUrl.password !== ''
+        ) {
             return NextResponse.json({ error: 'PDF 来源域名未获准' }, { status: 400 });
         }
 
@@ -49,7 +56,7 @@ export async function POST(req: NextRequest) {
             title,
             userId: session.user.id,
             source: 'external',
-            sourceUrl: pdfUrl,
+            sourceUrl: parsedUrl.toString(),
             retrievedAt: new Date().toISOString(),
         });
 
