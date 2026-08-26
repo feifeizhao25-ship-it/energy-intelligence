@@ -1,5 +1,8 @@
 name: V28 Auto Improvement Check
 
+permissions:
+  contents: read
+
 on:
   schedule:
     # 每天 0:00 UTC 跑 (北京 8:00)

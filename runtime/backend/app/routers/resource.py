@@ -320,8 +320,8 @@ async def solar_resource(
     """获取指定坐标的太阳能资源数据。"""
     try:
         result = await ResourceService.get_solar_resource(latitude, longitude, use_cache)
-    except Exception as e:
-        logger.warning("External solar resource API failed for (%s, %s): %s", latitude, longitude, e)
+    except Exception:
+        logger.warning("External solar resource API failed; using the verified fallback pipeline")
         # Fallback to real skill calculation instead of hardcoded mock
         try:
             import skills
@@ -345,8 +345,8 @@ async def solar_resource(
                 "from_cache": False,
                 "data_source": "EIP Skill Engine (RA-001)",
             }
-        except Exception as skill_err:
-            logger.error("Skill fallback also failed for (%.4f, %.4f): %s", latitude, longitude, skill_err)
+        except Exception:
+            logger.error("Skill fallback failed; returning the conservative fallback model")
             # Return fallback data with safe defaults
             result = {
                 "solar_resource": {
@@ -387,9 +387,9 @@ async def get_solar_weather(
         data = await weather_service.get_solar_resource(lat, lon)
         return {"success": True, "data": data}
     except Exception as e:
-        logger.error("NASA POWER weather fetch failed for (%s, %s): %s", lat, lon, e)
+        logger.error("NASA POWER weather fetch failed")
         from app.utils.exceptions import ExternalServiceError
-        raise ExternalServiceError(f"气象数据获取失败: {e}")
+        raise ExternalServiceError("气象数据获取失败") from e
 
 
 @router.get("/wind", response_model=SuccessResponse[Dict])

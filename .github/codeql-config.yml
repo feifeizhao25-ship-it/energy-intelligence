@@ -1,0 +1,9 @@
+name: "Production source"
+
+paths-ignore:
+  # Incomplete pre-runtime migration fragments retained only for provenance.
+  # Deployed services and CI use runtime/backend and the top-level applications.
+  - backend/**
+  - "**/.next/**"
+  - "**/node_modules/**"
+  - "**/.dart_tool/**"

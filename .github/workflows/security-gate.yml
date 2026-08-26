@@ -11,7 +11,7 @@ on:
 
 env:
   PYTHON_VERSION: '3.12'
-  NODE_VERSION: '20'
+  NODE_VERSION: '22'
 
 jobs:
   # ── Python SAST (Bandit) ───────────────────────────────────────────────
@@ -33,10 +33,10 @@ jobs:
 
       - name: Run Bandit on backend
         run: |
-          bandit -r backend/app backend/skills -f sarif -o bandit-results.sarif || true
-          bandit -r backend/app backend/skills -f json -o bandit-results.json || true
+          bandit -r runtime/backend/app -f sarif -o bandit-results.sarif || true
+          bandit -r runtime/backend/app -f json -o bandit-results.json || true
           # 同时输出到控制台，任何 HIGH/CRITICAL 即失败
-          bandit -r backend/app backend/skills -ll -ii
+          bandit -r runtime/backend/app -ll -ii
         continue-on-error: true
 
       - name: Upload Bandit SARIF
@@ -235,6 +235,7 @@ jobs:
         with:
           languages: ${{ matrix.language }}
           queries: security-extended,security-and-quality
+          config-file: ./.github/codeql-config.yml
 
       - name: Autobuild
         uses: github/codeql-action/autobuild@v3

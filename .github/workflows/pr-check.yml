@@ -1,12 +1,15 @@
 name: PR Checks
 
+permissions:
+  contents: read
+
 on:
   pull_request:
     branches: [main, develop]
     types: [opened, synchronize, reopened]
 
 env:
-  NODE_VERSION: '20'
+  NODE_VERSION: '22'
   FLUTTER_VERSION: '3.38.5'
   PYTHON_VERSION: '3.12'
 

@@ -47,6 +47,18 @@ def test_report_request_requires_project_id():
         reports.GenerateReportRequest(report_type="feasibility", format="pdf")
 
 
+def test_report_file_path_accepts_only_server_generated_uuid(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    report_id = "123e4567-e89b-12d3-a456-426614174000"
+    assert reports._report_file(report_id, "pdf") == str(
+        tmp_path / "generated_reports" / f"{report_id}.pdf"
+    )
+
+    with pytest.raises(HTTPException) as traversal:
+        reports._report_file("../../etc/passwd", "pdf")
+    assert traversal.value.status_code == 404
+
+
 def test_production_report_source_has_no_demo_fallback():
     source = inspect.getsource(reports.fetch_project_data)
     assert "_demo_data" not in source

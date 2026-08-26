@@ -28,7 +28,7 @@ import sys
 from datetime import datetime, date
 from enum import Enum
 from typing import Any, Dict, List, Optional
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from fastapi import (
     APIRouter,
@@ -55,6 +55,16 @@ from app.services.evidence_envelope import build_envelope, source_from_dict
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/reports", tags=["报告中心"])
+
+
+def _report_file(report_id: str, extension: str) -> str:
+    """Return a report path only for canonical server-generated UUIDs."""
+    try:
+        safe_id = str(UUID(report_id))
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail="报告不存在或无权访问") from exc
+    report_dir = os.path.realpath(os.path.join(os.getcwd(), "generated_reports"))
+    return os.path.join(report_dir, f"{safe_id}.{extension}")
 
 # ═══════════════════════════════════════════════════════════════
 # 1. 常量 & 枚举
@@ -2396,7 +2406,7 @@ async def get_report_status(
 
     # 查文件系统
     for ext in ["pdf", "docx"]:
-        filepath = os.path.join(os.getcwd(), "generated_reports", f"{report_id}.{ext}")
+        filepath = _report_file(report_id, ext)
         if os.path.exists(filepath):
             return {
                 "data": {
@@ -2424,7 +2434,7 @@ async def download_report_file(
     await _assert_report_owner(report_id, user_id, db)
     # 查文件系统
     for ext in ["pdf", "docx"]:
-        filepath = os.path.join(os.getcwd(), "generated_reports", f"{report_id}.{ext}")
+        filepath = _report_file(report_id, ext)
         if os.path.exists(filepath):
             mime = (
                 "application/pdf" if ext == "pdf"
