@@ -25,7 +25,7 @@ EXPECTED_EXTERNAL_SECRETS = {
 
 
 def fail(message: str) -> None:
-    print(f"Production Kubernetes gate failed: {message}", file=sys.stderr)
+    print("Production Kubernetes gate failed; inspect the protected validation log", file=sys.stderr)
     raise SystemExit(1)
 
 

@@ -101,7 +101,7 @@ def test_exclude_stale_removes_expired_sources():
         _doc("fresh-one", "policy", days_ago=5),
     ]
     service = RAGService(corpus=corpus)
-    hits = service.search("光伏 政策", market="cn", exclude_stale=True).hits
+    hits = service.search("光伏 政策", 5, "cn", True).hits
     assert {h.source_id for h in hits} == {"fresh-one"}
 
 

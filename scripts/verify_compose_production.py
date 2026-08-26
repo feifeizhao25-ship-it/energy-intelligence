@@ -121,8 +121,7 @@ if command:
         errors.append("docker-compose config failed; rerun locally with redacted environment values")
 
 if errors:
-    for error in errors:
-        print(f"- {error}", file=sys.stderr)
+    print("Production Compose gate found invalid production configuration", file=sys.stderr)
     raise SystemExit(f"Production Compose gate failed: {len(errors)} error(s)")
 
 print(f"Production Compose gate passed: {len(services)} services")

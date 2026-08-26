@@ -72,10 +72,20 @@ def freshness_status(
     return "current"
 
 
-def verification_status(source: Dict) -> str:
-    """多方验证标记：存在独立第二来源即为 verified。"""
-    corroborated = source.get("corroborated_by") or []
-    return "verified" if corroborated else "single_source"
+def verification_status(source: Dict, registry: Optional["SourceRegistry"] = None) -> str:
+    """Only mark independently corroborated records as verified."""
+    refs = source.get("corroborated_by") or []
+    if registry is None:
+        return "verified" if refs else "single_source"
+    for ref in refs:
+        other = registry.get(ref)
+        if other and (
+            other.get("lang") == source.get("lang")
+            and other.get("type") == source.get("type")
+            and other.get("source_org") != source.get("source_org")
+        ):
+            return "verified"
+    return "single_source"
 
 
 class SourceRegistry:

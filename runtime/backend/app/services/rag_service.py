@@ -133,7 +133,7 @@ class RAGService:
                     "last_verified_at": doc["last_verified_at"],
                     "retrieved_at": retrieved_at,
                     "freshness_status": freshness,
-                    "verification": verification_status(doc),
+                    "verification": verification_status(doc, self._registry),
                     "source_url": doc.get("source_url"),
                     "source_org": doc.get("source_org"),
                     "license_note": doc.get("license_note"),

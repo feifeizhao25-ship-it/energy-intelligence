@@ -83,12 +83,26 @@ def _esc(value: object) -> str:
     return html.escape(str(value))
 
 
+_SAFE_HREFS = {
+    path: path
+    for path in (
+        "/onboarding", "/projects/connect", "/insights", "/actions",
+        "/reports/weekly", "/insights/county-pv", "/insights/tou-tariff",
+        "/benchmarks/roi", "/insights/green-power", "/kb/string-mismatch",
+        "/kb/inverter-overheat", "/benchmarks/pr", "/kb/drone-inspection",
+        "/reports/shandong-lease", "/tools/dual-cycle",
+        "/insights/shared-storage", "/insights/ancillary-rules",
+        "/insights/ercot-queue", "/kb/itc-safe-harbor", "/benchmarks/ppa",
+        "/reports/permitting-q3", "/kb/capture-rate",
+        "/insights/storage-stack", "/benchmarks/mape",
+        "/reports/spp-curtailment",
+    )
+}
+
+
 def _safe_internal_href(value: object) -> str:
-    """Only render application-relative navigation targets into demo HTML."""
-    href = str(value).strip()
-    if not href.startswith("/") or href.startswith("//") or "\\" in href:
-        return "#"
-    return html.escape(href, quote=True)
+    """Map engine output to a closed set of literal application routes."""
+    return _SAFE_HREFS.get(str(value), "#")
 
 
 def _render_layout(layout: dict) -> str:
