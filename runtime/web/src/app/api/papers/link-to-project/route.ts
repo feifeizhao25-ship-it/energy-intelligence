@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
             }
 
             // 获取论文详情（从推荐表或API）
-            const paperDetails = await fetchPaperDetails(paperId, projectId);
+            const paperDetails = await fetchPaperDetails(paperId);
 
             if (!paperDetails) {
                 return NextResponse.json(
@@ -183,11 +183,15 @@ export async function POST(request: NextRequest) {
 /**
  * 获取论文详情
  */
-async function fetchPaperDetails(paperId: string, projectId: string) {
+async function fetchPaperDetails(paperId: string) {
     // 调用 Semantic Scholar 获取公开元数据。
+    if (!/^[A-Za-z0-9:_./-]{1,200}$/.test(paperId)) {
+        return null;
+    }
+    const encodedPaperId = encodeURIComponent(paperId);
     try {
         const response = await fetch(
-            `https://api.semanticscholar.org/graph/v1/paper/${paperId}?fields=title,authors,year,abstract,openAccessPdf`,
+            `https://api.semanticscholar.org/graph/v1/paper/${encodedPaperId}?fields=title,authors,year,abstract,openAccessPdf`,
             {
                 headers: {
                     'Content-Type': 'application/json',

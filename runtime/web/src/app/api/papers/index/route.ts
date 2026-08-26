@@ -28,10 +28,13 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'PDF 来源域名未获准' }, { status: 400 });
         }
 
-        console.log(`[RAG] Starting indexing for paper: ${paperId}, URL: ${pdfUrl}`);
+        console.log('[RAG] Starting indexing for an authenticated paper');
 
         // 1. 下载 PDF
-        const response = await axios.get(pdfUrl, {
+        // Host, scheme, size and redirects are constrained above; the allowlist is
+        // controlled by the operator rather than by the request.
+        // lgtm[js/request-forgery]
+        const response = await axios.get(parsedUrl.toString(), {
             responseType: 'arraybuffer', timeout: 15000, maxContentLength: 25 * 1024 * 1024,
             // 禁止跟随重定向，避免获准域名将服务器引向内网地址。
             maxBodyLength: 25 * 1024 * 1024, maxRedirects: 0,
@@ -55,10 +58,10 @@ export async function POST(req: NextRequest) {
             message: '索引完成',
             chunks: result.chunks
         });
-    } catch (error: any) {
-        console.error('[RAG API] Indexing failed:', error);
+    } catch {
+        console.error('[RAG API] Indexing failed');
         return NextResponse.json({
-            error: error.message || '索引失败'
+            error: '索引失败'
         }, { status: 500 });
     }
 }

@@ -104,7 +104,7 @@ export async function GET(request: NextRequest) {
             };
         });
 
-        console.log(`Generated ${data.length} grid points for ${type} resource map`);
+        console.log('Generated resource map grid', { points: data.length });
 
         return NextResponse.json({
             success: true,
@@ -115,8 +115,8 @@ export async function GET(request: NextRequest) {
             dataPoints: data.length,
             gridResolution: '~1.5° x 1.2°'
         });
-    } catch (error) {
-        console.error('Error generating map data:', error);
+    } catch {
+        console.error('Resource map generation failed');
         return NextResponse.json(
             { success: false, error: 'Failed to generate resource data' },
             { status: 500 }

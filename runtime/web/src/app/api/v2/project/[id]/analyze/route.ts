@@ -58,7 +58,7 @@ export async function POST(
             projectName = "未命名项目"
         } = body;
 
-        console.log(`[🚀 开始分析] 项目ID=${projectId}, 质量=${qualityTag}`);
+        console.log('[Analysis] Starting authenticated project analysis');
 
         // ═══════════════════════════════════════
         // Phase 1: 核心计算（可信、可复现）

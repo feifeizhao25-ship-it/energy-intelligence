@@ -91,8 +91,8 @@ export async function POST(req: Request) {
                 updatedAt: pricing.updatedAt,
             },
         });
-    } catch (error) {
-        console.error('Solar calculation error:', error);
+    } catch {
+        console.error('Solar calculation failed');
         return NextResponse.json(
             { success: false, error: '计算服务出错' },
             { status: 500 },

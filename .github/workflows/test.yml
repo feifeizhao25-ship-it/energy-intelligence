@@ -97,14 +97,18 @@ jobs:
     - name: Set up Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '20'
+        node-version: '22'
         cache: 'pnpm'
 
     - name: Install dependencies
       run: pnpm install --frozen-lockfile
 
+    - name: Install CN web dependencies
+      working-directory: runtime/web
+      run: npm ci
+
     - name: Install Playwright
-      run: pnpm exec playwright install
+      run: pnpm exec playwright install --with-deps chromium
 
     - name: Run E2E tests
       run: pnpm exec playwright test

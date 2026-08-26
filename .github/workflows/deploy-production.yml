@@ -66,6 +66,7 @@ jobs:
   build-and-push:
     needs: test
     runs-on: ubuntu-latest
+    # checkov:skip=CKV2_GHA_1: package publishing requires only packages:write; all other scopes remain read-only.
     permissions:
       contents: read
       packages: write

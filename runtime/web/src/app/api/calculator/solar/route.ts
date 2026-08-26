@@ -44,8 +44,8 @@ export async function POST(req: NextRequest) {
                             stale: provincePrice.stale,
                             updatedAt: provincePrice.updatedAt,
                         };
-                    } catch (pError) {
-                        console.warn('Price auto-fill failed:', pError);
+                    } catch {
+                        console.warn('Price auto-fill failed');
                         return NextResponse.json(
                             {
                                 error: 'ELECTRICITY_PRICE_UNAVAILABLE',

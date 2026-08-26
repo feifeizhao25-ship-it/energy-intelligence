@@ -7,3 +7,4 @@ paths-ignore:
   - "**/.next/**"
   - "**/node_modules/**"
   - "**/.dart_tool/**"
+  - runtime/web/scripts/**

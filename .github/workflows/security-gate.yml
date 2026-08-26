@@ -220,6 +220,7 @@ jobs:
   codeql:
     name: CodeQL Analysis
     runs-on: ubuntu-latest
+    # checkov:skip=CKV2_GHA_1: SARIF upload requires only security-events:write; code and actions remain read-only.
     permissions:
       actions: read
       contents: read
