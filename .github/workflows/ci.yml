@@ -85,10 +85,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Node 20
+      - name: Set up Node 22
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: "npm"
           cache-dependency-path: runtime/web/package-lock.json
 
@@ -131,10 +131,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Node 20
+      - name: Set up Node 22
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
 
       - name: Install dependencies
         working-directory: .
@@ -201,23 +201,23 @@ jobs:
             --exclude=__pycache__,.venv,migrations \
             --statistics
 
-      - name: Set up Node 20
+      - name: Set up Node 22
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
 
       # 同上：lint 目标从空壳目录 frontend-cn-web 改为主干 runtime/web
       - name: Lint runtime/web with eslint
         working-directory: runtime/web
         run: |
           npm ci
-          npx eslint src/ --max-warnings=0 || true
+          npx eslint src/ --max-warnings=0
 
       - name: Lint web-global with eslint
-        working-directory: web-global
         run: |
-          npm ci
-          npx eslint src/ --max-warnings=0 || true
+          corepack enable
+          pnpm install --frozen-lockfile
+          pnpm --dir web-global exec eslint src/ --max-warnings=0
 
   # ─────────────────────────────────────────────────────────────
   # 仓库里已有四个校验脚本，但 2026-08-18 复核发现**一个都没有接进 CI** ——
