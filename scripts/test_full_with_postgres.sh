@@ -9,12 +9,14 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-if [ -d "$ROOT/backend" ]; then
+if [ -d "$ROOT/runtime/backend" ]; then
+  BACKEND_DIR="$ROOT/runtime/backend"
+elif [ -d "$ROOT/backend" ]; then
   BACKEND_DIR="$ROOT/backend"
 elif [ -d "$ROOT/后端" ]; then
   BACKEND_DIR="$ROOT/后端"
 else
-  echo "未找到后端目录（期望 backend/ 或 后端/）" >&2
+  echo "未找到后端目录（期望 runtime/backend/、backend/ 或 后端/）" >&2
   exit 1
 fi
 PGDIR="$(mktemp -d /tmp/energy-pg.XXXXXX)"

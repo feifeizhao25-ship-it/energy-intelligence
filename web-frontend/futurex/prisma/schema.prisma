@@ -1,0 +1,251 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String   @default("")
+  region    String   @default("GLOBAL")
+  role      String   @default("user")
+  createdAt DateTime @default(now())
+
+  profile         UserProfile?
+  agents          UserAgent[]
+  messages        Message[]
+  tasks           Task[]
+  runs            Run[]
+  following       Follow[]        @relation("follower")
+  followers       Follow[]        @relation("following")
+  activities      Activity[]
+  notifications   Notification[]
+  agentShares     AgentShare[]
+  oauthConnections OAuthConnection[]
+  reports         Report[]
+  rateLimitEvents RateLimitEvent[]
+  createdAgents   Agent[]         @relation("creator")
+  agentForks      AgentFork[]
+  referralsGiven  ReferralAttribution[] @relation("referrer")
+  referralsReceived ReferralAttribution[] @relation("referred")
+}
+
+model UserProfile {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  username  String   @unique
+  avatar    String   @default("")
+  bio       String   @default("")
+  isPublic  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Agent {
+  id            String   @id @default(uuid())
+  agentId       String   @unique
+  name          String
+  description   String   @default("")
+  icon          String   @default("🤖")
+  category      String   @default("general")
+  manifestJson  String   @default("{}")
+  apiBase       String   @default("")
+  authType      String   @default("none")
+  creatorUserId String
+  visibility    String   @default("public")
+  status        String   @default("pending")
+  regionScope   String   @default("GLOBAL")
+  createdAt     DateTime @default(now())
+
+  creator       User            @relation("creator", fields: [creatorUserId], references: [id])
+  stats         AgentPublicStats?
+  userAgents    UserAgent[]
+  messages      Message[]
+  tasks         Task[]
+  runs          Run[]
+  activities    Activity[]
+  notifications Notification[]
+  shares        AgentShare[]
+  parentForks   AgentFork[]     @relation("parentAgent")
+  childForks    AgentFork[]     @relation("childAgent")
+  referrals     ReferralAttribution[]
+}
+
+model AgentPublicStats {
+  id            String   @id @default(uuid())
+  agentId       String   @unique
+  installCount  Int      @default(0)
+  runCount      Int      @default(0)
+  ratingAvg     Float    @default(0)
+  ratingCount   Int      @default(0)
+  trendingScore Float    @default(0)
+  updatedAt     DateTime @default(now())
+
+  agent Agent @relation(fields: [agentId], references: [id])
+}
+
+model UserAgent {
+  id        String   @id @default(uuid())
+  userId    String
+  agentId   String
+  installed Boolean  @default(true)
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id])
+  agent Agent @relation(fields: [agentId], references: [id])
+
+  @@unique([userId, agentId])
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  userId    String
+  agentId   String?
+  role      String
+  content   String
+  createdAt DateTime @default(now())
+
+  user  User   @relation(fields: [userId], references: [id])
+  agent Agent? @relation(fields: [agentId], references: [id])
+}
+
+model Task {
+  id         String   @id @default(uuid())
+  userId     String
+  agentId    String
+  status     String   @default("pending")
+  resultJson String   @default("{}")
+  schedule   String?
+  createdAt  DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id])
+  agent Agent @relation(fields: [agentId], references: [id])
+}
+
+model Run {
+  id        String   @id @default(uuid())
+  userId    String
+  agentId   String
+  status    String   @default("running")
+  input     String   @default("")
+  output    String   @default("")
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id])
+  agent Agent @relation(fields: [agentId], references: [id])
+}
+
+model Follow {
+  id          String   @id @default(uuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+
+  follower  User @relation("follower", fields: [followerId], references: [id])
+  following User @relation("following", fields: [followingId], references: [id])
+
+  @@unique([followerId, followingId])
+}
+
+model Activity {
+  id          String   @id @default(uuid())
+  type        String
+  actorUserId String
+  agentId     String?
+  metadata    String   @default("{}")
+  createdAt   DateTime @default(now())
+
+  actor User   @relation(fields: [actorUserId], references: [id])
+  agent Agent? @relation(fields: [agentId], references: [id])
+}
+
+model Notification {
+  id          String   @id @default(uuid())
+  userId      String
+  type        String
+  agentId     String?
+  actorUserId String?
+  read        Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  user  User   @relation(fields: [userId], references: [id])
+  agent Agent? @relation(fields: [agentId], references: [id])
+}
+
+model AgentShare {
+  id            String   @id @default(uuid())
+  agentId       String
+  shareCode     String   @unique
+  creatorUserId String
+  createdAt     DateTime @default(now())
+
+  agent   Agent @relation(fields: [agentId], references: [id])
+  creator User  @relation(fields: [creatorUserId], references: [id])
+}
+
+model ReferralAttribution {
+  id             String   @id @default(uuid())
+  shareCode      String
+  referrerUserId String
+  referredUserId String
+  agentId        String
+  eventType      String   @default("install")
+  createdAt      DateTime @default(now())
+
+  referrer User  @relation("referrer", fields: [referrerUserId], references: [id])
+  referred User  @relation("referred", fields: [referredUserId], references: [id])
+  agent    Agent @relation(fields: [agentId], references: [id])
+}
+
+model AgentFork {
+  id            String   @id @default(uuid())
+  parentAgentId String
+  childAgentId  String
+  creatorUserId String
+  createdAt     DateTime @default(now())
+
+  parentAgent Agent @relation("parentAgent", fields: [parentAgentId], references: [id])
+  childAgent  Agent @relation("childAgent", fields: [childAgentId], references: [id])
+  creator     User  @relation(fields: [creatorUserId], references: [id])
+}
+
+model OAuthConnection {
+  id                    String   @id @default(uuid())
+  userId                String
+  provider              String
+  encryptedAccessToken  String   @default("")
+  encryptedRefreshToken String   @default("")
+  expiresAt             DateTime?
+  createdAt             DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, provider])
+}
+
+model Report {
+  id             String   @id @default(uuid())
+  reporterUserId String
+  targetType     String
+  targetAgentId  String?
+  reason         String
+  status         String   @default("pending")
+  createdAt      DateTime @default(now())
+
+  reporter User @relation(fields: [reporterUserId], references: [id])
+}
+
+model RateLimitEvent {
+  id        String   @id @default(uuid())
+  userId    String
+  action    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}

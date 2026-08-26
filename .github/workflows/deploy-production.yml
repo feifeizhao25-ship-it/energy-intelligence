@@ -1,0 +1,206 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: energy-intelligence
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v2
+      with:
+        version: 8
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+        cache: 'pnpm'
+
+    - name: Install dependencies
+      run: pnpm install --frozen-lockfile
+
+    - name: Run linter
+      run: pnpm run lint
+
+    - name: Run tests
+      run: pnpm run test:ci
+
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Install backend and production-gate dependencies
+      run: pip install -r 后端/requirements.txt PyYAML
+
+    - name: Run backend tests
+      working-directory: 后端
+      run: python -m pytest tests -q --disable-warnings
+
+    - name: Setup kubectl
+      uses: azure/setup-kubectl@v4
+      with:
+        version: 'v1.31.0'
+
+    - name: Setup Kustomize
+      uses: imranismail/setup-kustomize@v2
+      with:
+        kustomize-version: '5.5.0'
+
+    - name: Verify production code and Kubernetes manifests
+      run: pnpm run verify:production
+
+    - name: Security audit
+      run: pnpm audit --audit-level=high
+
+  build-and-push:
+    needs: test
+    runs-on: ubuntu-latest
+    # checkov:skip=CKV2_GHA_1: package publishing requires only packages:write; all other scopes remain read-only.
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        include:
+          - context: auth-service
+            image: auth-service
+          - context: user-service
+            image: user-service
+          - context: project-service
+            image: project-service
+          - context: resource-service
+            image: resource-service
+          - context: simulation-service
+            image: simulation-service
+          - context: financial-service
+            image: financial-service
+          - context: gateway
+            image: gateway
+          - context: ai-engine
+            image: ai-engine-service
+          - context: knowledge-service
+            image: knowledge-service
+          - context: report-service
+            image: report-service
+          - context: analytics-service
+            image: analytics-service
+          - context: notification-service
+            image: notification-service
+          - context: billing-service
+            image: billing-service
+          - context: monetization-service
+            image: monetization-service
+          - context: diagnostic-service
+            image: diagnostic-service
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Login to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ matrix.image }}
+        tags: |
+          type=raw,value=${{ github.sha }}
+    
+    - name: Build and push
+      uses: docker/build-push-action@v5
+      with:
+        context: ./services/${{ matrix.context }}
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup kubectl
+      uses: azure/setup-kubectl@v4
+      with:
+        version: 'v1.31.0'
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-west-2
+
+    - name: Setup Kustomize
+      uses: imranismail/setup-kustomize@v2
+      with:
+        kustomize-version: '5.5.0'
+    
+    - name: Update kubeconfig
+      run: aws eks update-kubeconfig --name energy-intelligence-cluster
+    
+    - name: Deploy to Kubernetes
+      run: |
+        kubectl create namespace energy-production --dry-run=client -o yaml | kubectl apply -f -
+
+        for secret in database-secrets redis-secrets rabbitmq-secrets security-secrets external-api-secrets sso-secrets messaging-secrets monitoring-secrets monitoring-basic-auth; do
+          kubectl get secret "$secret" -n energy-production >/dev/null
+        done
+
+        cd k8s/overlays/production
+        while read -r image; do
+          kustomize edit set image \
+            "energy-intelligence/${image}=${REGISTRY}/${IMAGE_PREFIX}/${image}:${GITHUB_SHA}"
+        done <<'EOF'
+        gateway
+        auth-service
+        user-service
+        project-service
+        resource-service
+        financial-service
+        simulation-service
+        diagnostic-service
+        ai-engine-service
+        knowledge-service
+        report-service
+        analytics-service
+        notification-service
+        billing-service
+        monetization-service
+        EOF
+
+        kustomize build . | kubectl apply -f -
+
+        for deployment in $(kubectl get deployments -n energy-production -l environment=production -o name); do
+          kubectl rollout status "$deployment" -n energy-production --timeout=300s
+        done
+    
+    - name: Verify deployment
+      run: |
+        kubectl get pods -n energy-production
+        kubectl get svc -n energy-production

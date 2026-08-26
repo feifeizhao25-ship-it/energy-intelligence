@@ -26,6 +26,7 @@ class _HealthScreenState extends State<HealthScreen> {
     setState(() => _isLoading = true);
     try {
       final report = await ApiService.getHealthReport(_selectedProject);
+      if (!mounted) return;
       setState(() {
         _report = DiagnosticReport.fromJson(report);
         _isLoading = false;

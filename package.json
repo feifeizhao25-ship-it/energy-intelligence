@@ -4,15 +4,15 @@
   "private": true,
   "description": "新能源智库 - AI-powered renewable energy assessment platform",
   "scripts": {
-    "build": "pnpm --dir frontend-cn-web build && pnpm --dir web-global build",
-    "dev": "pnpm --dir web-global dev",
-    "lint": "pnpm --dir web-global lint",
-    "lint:fix": "pnpm --dir web-global lint --fix",
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "lint:fix": "turbo run lint:fix",
     "format": "prettier --write \"**/*.{ts,tsx,md,json,yml,yaml}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,md,json,yml,yaml}\"",
-    "test": "python3 -m pytest 后端/tests -q --disable-warnings && pnpm --dir web-global test",
-    "test:unit": "jest --config tests/jest.config.js --selectProjects=unit",
-    "test:unit:coverage": "jest --config tests/jest.config.js --selectProjects=unit --coverage",
+    "test": "turbo run test",
+    "test:unit": "pnpm --filter energy-intelligence-global test",
+    "test:unit:coverage": "pnpm --filter energy-intelligence-global test",
     "test:integration": "jest --config tests/jest.config.js --selectProjects=integration",
     "test:integration:coverage": "jest --config tests/jest.config.js --selectProjects=integration --coverage",
     "test:e2e": "playwright test",
@@ -25,8 +25,8 @@
     "test:load:skill": "k6 run tests/load/skill-load.js",
     "test:watch": "jest --config tests/jest.config.js --watch",
     "test:clear": "jest --config tests/jest.config.js --clearCache",
-    "type-check": "pnpm --dir frontend-cn-web type-check && pnpm --dir web-global type-check",
-    "clean": "rm -rf frontend-cn-web/.next web-global/.next",
+    "type-check": "turbo run type-check",
+    "clean": "turbo run clean && rm -rf node_modules",
     "db:migrate": "cd apps/api && npx prisma migrate dev",
     "db:generate": "cd apps/api && npx prisma generate",
     "db:seed": "cd apps/api && npx prisma db seed",
@@ -96,10 +96,7 @@
     "overrides": {
       "fast-jwt": "^6.2.4",
       "fastify": "^5.8.5",
-      "fast-uri": "^3.1.5",
-      "brace-expansion@^2.0.0": "^2.1.4",
-      "js-yaml@^3.0.0": "^3.15.1",
-      "js-yaml@^4.0.0": "^4.3.1",
+      "fast-uri": "^3.1.2",
       "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
       "protobufjs": "^7.5.5",
       "tar-fs": "^3.1.2",
@@ -112,16 +109,13 @@
       "fast-xml-parser": "^5.7.0",
       "thrift": "^0.23.0",
       "@xmldom/xmldom": "^0.8.13",
-      "basic-ftp": "^5.3.1",
-      "sharp": "^0.35.0",
-      "postcss": "^8.5.23",
-      "nanoid": "^3.3.17",
-      "dompurify": "^3.4.13"
+      "basic-ftp": "^5.3.1"
     }
   },
+  "_workspaces_note": "网页端-国内版 / 网页端-国际版 已从 workspaces 移除——两者分别只有 2 个和 0 个源文件，是废弃空壳。国内版主前端是 runtime/web（57 页），国际版是 runtime/web-int，二者各自带 package-lock.json 独立用 npm 构建，与 runtime/docker-compose.production.yml 的 build context 一致，故不纳入 pnpm workspace。",
   "workspaces": [
     "web-global",
-    "frontend-cn-web",
-    "packages/*"
+    "packages/*",
+    "apps/*"
   ]
 }

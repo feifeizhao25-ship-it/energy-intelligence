@@ -1,146 +1,153 @@
 import 'package:flutter/material.dart';
-import '../../services/mock_data.dart';
+import '../../services/api_service.dart';
 
-class ProjectsScreen extends StatelessWidget {
+class ProjectsScreen extends StatefulWidget {
   const ProjectsScreen({super.key});
+  @override
+  State<ProjectsScreen> createState() => _ProjectsScreenState();
+}
+
+class _ProjectsScreenState extends State<ProjectsScreen> {
+  List<Map<String, dynamic>> _projects = const [];
+  String? _error;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final projects = await ApiService.getProjects();
+      if (mounted) setState(() => _projects = projects);
+    } on ApiException catch (error) {
+      if (mounted) setState(() => _error = error.message);
+    } catch (_) {
+      if (mounted)
+        setState(() => _error = 'Projects are temporarily unavailable.');
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Projects'),
-        elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF1E293B),
-        actions: [IconButton(icon: const Icon(Icons.search), onPressed: () {})],
-      ),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: MockData.projects.length,
-        itemBuilder: (context, index) {
-          final project = MockData.projects[index];
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: GestureDetector(
-              onTap: () => Navigator.pushNamed(context, '/project-detail'),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 6,
-                    ),
-                  ],
-                ),
+      appBar: AppBar(title: const Text('Projects')),
+      body: RefreshIndicator(
+        onRefresh: _load,
+        child: _loading
+            ? const Center(child: CircularProgressIndicator())
+            : _error != null
+            ? ListView(
+                children: [
+                  const SizedBox(height: 180),
+                  const Icon(
+                    Icons.cloud_off_outlined,
+                    size: 48,
+                    color: Color(0xFF94A3B8),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(_error!, textAlign: TextAlign.center),
+                  TextButton(onPressed: _load, child: const Text('Try again')),
+                ],
+              )
+            : _projects.isEmpty
+            ? ListView(
+                children: const [
+                  SizedBox(height: 180),
+                  Icon(
+                    Icons.folder_open_outlined,
+                    size: 48,
+                    color: Color(0xFF94A3B8),
+                  ),
+                  SizedBox(height: 12),
+                  Text(
+                    'No projects yet',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  SizedBox(height: 6),
+                  Text(
+                    'Create a project on the web or with the add button.',
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              )
+            : ListView.separated(
                 padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          project.type == 'solar'
-                              ? '☀️'
-                              : project.type == 'wind'
-                              ? '💨'
-                              : '🔋',
-                          style: const TextStyle(fontSize: 24),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                project.name,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF1E293B),
-                                ),
-                              ),
-                              Text(
-                                project.locationAddress,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: Color(0xFF64748B),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: _getStatusColor(
-                              project.status,
-                            ).withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            _getStatusLabel(project.status),
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                              color: _getStatusColor(project.status),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      '${project.capacity} MW',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF1E293B),
-                      ),
-                    ),
-                  ],
-                ),
+                itemCount: _projects.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (context, index) =>
+                    _ProjectCard(project: _projects[index]),
               ),
-            ),
-          );
-        },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        backgroundColor: const Color(0xFF1D4ED8),
+        onPressed: () => Navigator.pushNamed(context, '/resource'),
         child: const Icon(Icons.add),
       ),
     );
   }
+}
 
-  String _getStatusLabel(String status) {
-    switch (status) {
-      case 'operating':
-        return 'Active';
-      case 'development':
-        return 'Planning';
-      case 'completed':
-        return 'Completed';
-      default:
-        return status;
-    }
-  }
+class _ProjectCard extends StatelessWidget {
+  final Map<String, dynamic> project;
+  const _ProjectCard({required this.project});
 
-  Color _getStatusColor(String status) {
-    switch (status) {
-      case 'operating':
-        return const Color(0xFF10B981);
-      case 'development':
-        return const Color(0xFF3B82F6);
-      case 'completed':
-        return const Color(0xFF8B5CF6);
-      default:
-        return const Color(0xFF64748B);
-    }
+  @override
+  Widget build(BuildContext context) {
+    final type = (project['type'] ?? project['technology'] ?? '')
+        .toString()
+        .toLowerCase();
+    final name = (project['name'] ?? 'Untitled project').toString();
+    final location = (project['location'] ?? 'Location not provided')
+        .toString();
+    final capacity =
+        project['capacity_mw'] ?? project['capacityMw'] ?? project['capacity'];
+    final status = (project['status'] ?? 'planning').toString();
+    return Semantics(
+      button: true,
+      label: '$name, $status',
+      child: Card(
+        margin: EdgeInsets.zero,
+        child: ListTile(
+          contentPadding: const EdgeInsets.all(16),
+          leading: Text(
+            type.contains('solar')
+                ? '☀️'
+                : type.contains('wind')
+                ? '💨'
+                : '🔋',
+            style: const TextStyle(fontSize: 24),
+          ),
+          title: Text(
+            name,
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Text(
+              location +
+                  (capacity == null ? '' : '\n' + capacity.toString() + ' MW'),
+            ),
+          ),
+          trailing: Text(
+            status,
+            style: const TextStyle(fontSize: 12, color: Color(0xFF475569)),
+          ),
+          onTap: () => Navigator.pushNamed(
+            context,
+            '/project-detail',
+            arguments: project,
+          ),
+        ),
+      ),
+    );
   }
 }

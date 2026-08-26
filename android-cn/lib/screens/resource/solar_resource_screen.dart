@@ -17,8 +17,6 @@ class _SolarResourceScreenState extends State<SolarResourceScreen> {
   final _lngController = TextEditingController();
   ResourceAssessment? _result;
   bool _isLoading = false;
-  // ignore: unused_field
-  final bool _showAdvanced = false;
 
   @override
   void dispose() {
@@ -41,6 +39,7 @@ class _SolarResourceScreenState extends State<SolarResourceScreen> {
         double.parse(_latController.text),
         double.parse(_lngController.text),
       );
+      if (!mounted) return;
       setState(() {
         _result = ResourceAssessment.fromJson(result);
         _isLoading = false;

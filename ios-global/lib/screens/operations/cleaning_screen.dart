@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dart:math';
+import '../../services/api_service.dart';
 
 class CleaningScreen extends StatefulWidget {
   const CleaningScreen({super.key});
@@ -25,41 +25,42 @@ class _CleaningScreenState extends State<CleaningScreen> {
 
   void _calculate() async {
     setState(() => _isCalc = true);
-    await Future.delayed(const Duration(milliseconds: 500));
-
-    final s = double.tryParse(_soilingCtrl.text) ?? 0.003;
-    final C = double.tryParse(_costCtrl.text) ?? 1200.0; // USD
-    final Rs = double.tryParse(_revenueCtrl.text) ?? 18000.0; // USD/day
-
-    // Optimal interval: N* = sqrt(2C / (Rs × s))
-    final nStar = sqrt(2 * C / (Rs * s));
-    final nOptimal = nStar.round().clamp(1, 365);
-
-    final dailyLoss = Rs * s;
-    final lossBetweenCleans = dailyLoss * nOptimal * (nOptimal + 1) / 2;
-    final cleaningsPerYear = (365 / nOptimal).floor();
-    final annualCleaningCost = cleaningsPerYear * C;
-    final annualLoss = cleaningsPerYear * lossBetweenCleans;
-
-    final scenarios = [7, 14, 30, nOptimal].toSet().toList()..sort();
-    final scenarioResults = scenarios.map((n) {
-      final lossN = (365 / n).floor() * dailyLoss * n * (n + 1) / 2;
-      final costN = (365 / n).floor() * C;
-      return {'days': n, 'total': lossN + costN};
-    }).toList();
-
-    setState(() {
-      _result = {
-        'nOptimal': nOptimal,
-        'nStar': nStar,
-        'cleaningsPerYear': cleaningsPerYear,
-        'annualCleaningCost': annualCleaningCost,
-        'annualLoss': annualLoss,
-        'totalAnnualCost': annualCleaningCost + annualLoss,
-        'scenarios': scenarioResults,
-      };
-      _isCalc = false;
-    });
+    try {
+      final response = await ApiService.calculateCleaningSchedule(
+        cleaningCostUsd: double.parse(_costCtrl.text),
+        dailyRevenueUsd: double.parse(_revenueCtrl.text),
+        soilingRateFractionPerDay: double.parse(_soilingCtrl.text),
+      );
+      if (mounted)
+        setState(
+          () => _result = {
+            'nOptimal': response['optimal_interval_days'],
+            'nStar': (response['theoretical_interval_days'] as num).toDouble(),
+            'cleaningsPerYear': response['annual_cleanings'],
+            'annualCleaningCost': (response['annual_cleaning_cost'] as num)
+                .toDouble(),
+            'annualLoss': (response['annual_soiling_loss'] as num).toDouble(),
+            'totalAnnualCost': (response['total_annual_cost'] as num)
+                .toDouble(),
+            'modelVersion': response['model_version'],
+            'scenarios':
+                response['scenarios'] ?? const <Map<String, dynamic>>[],
+          },
+        );
+    } catch (error) {
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              error is ApiException
+                  ? error.message
+                  : 'Cleaning calculation is temporarily unavailable.',
+            ),
+          ),
+        );
+    } finally {
+      if (mounted) setState(() => _isCalc = false);
+    }
   }
 
   @override
@@ -188,6 +189,13 @@ class _CleaningScreenState extends State<CleaningScreen> {
                       style: const TextStyle(
                         color: Colors.white70,
                         fontSize: 11,
+                      ),
+                    ),
+                    Text(
+                      'Model ${_result!['modelVersion']} · user-supplied assumptions',
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 10,
                       ),
                     ),
                   ],

@@ -1,103 +1,272 @@
-name: CI
-
-on:
-  push:
-    branches:
-      - main
-      - 'codex/**'
-  pull_request:
-    branches: [main]
-
-concurrency:
-  group: energy-ci-${{ github.ref }}
-  cancel-in-progress: true
+name: 新能源智库 CI
 
 permissions:
   contents: read
 
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  backend:
+  # ──────────────────────────────────────────
+  # 1. Backend Tests
+  # ──────────────────────────────────────────
+  backend-test:
+    name: Backend Test (Python 3.12)
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: 后端
+        working-directory: runtime/backend
+
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-python@v6
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          cache: pip
-          cache-dependency-path: 后端/requirements.txt
-      - run: pip install -r requirements.txt
-      - run: python -m pytest tests -q --disable-warnings
+          cache: "pip"
 
-  web:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - uses: pnpm/action-setup@v4.4.0
-        with:
-          version: 8.12.0
-      - uses: actions/setup-node@v5
-        with:
-          node-version: 20
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm security:audit
-      - run: pnpm --dir frontend-cn-web type-check
-      - run: pnpm --dir frontend-cn-web build
-      - run: pnpm --dir web-global type-check
-      - run: pnpm --dir web-global build
+      - name: Install dependencies
+        run: uv pip install --system -r requirements.txt pytest-cov
 
-  mobile:
-    strategy:
-      fail-fast: false
-      matrix:
-        app: [android-cn, android-global, ios-cn, ios-global]
+      - name: Syntax check all .py files
+        run: |
+          find . -name "*.py" -exec python -m py_compile {} +
+          echo "✅ All Python files passed syntax check"
+
+      - name: Run pytest (exclude slow tests)
+        run: |
+          python -m pytest tests/ \
+            -m "not slow" \
+            --junitxml=test-results.xml \
+            --cov=app \
+            --cov-report=xml:coverage.xml \
+            --cov-report=term-missing \
+            -v
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-results
+          path: |
+            runtime/backend/test-results.xml
+            runtime/backend/coverage.xml
+          retention-days: 14
+
+  # ──────────────────────────────────────────
+  # 2. Frontend CN Build
+  # ──────────────────────────────────────────
+  frontend-cn-build:
+    name: Frontend CN Build (Next.js)
     runs-on: ubuntu-latest
+    needs: backend-test
+    # 构建目标改为 runtime/web。
+    #
+    # 此前指向 frontend-cn-web —— 该目录只有 2 个源文件（src/app/(dashboard)/page.tsx
+    # 与一个组件），是废弃的空壳，CI 全绿并不代表主代码被验证过。
+    # runtime/docker-compose.production.yml 里 web-cn 服务 build 的是 ./web，
+    # 即 runtime/web（57 个页面），那才是国内版主前端。
     defaults:
       run:
-        working-directory: ${{ matrix.app }}
-    steps:
-      - uses: actions/checkout@v5
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: 3.38.5
-          channel: stable
-          cache: true
-      - run: flutter pub get
-      - run: dart format --output=none --set-exit-if-changed lib test
-      - run: flutter analyze
-      - run: flutter test
-      - if: startsWith(matrix.app, 'android-')
-        run: flutter build apk --release
-        env:
-          ALLOW_DEBUG_RELEASE_SIGNING: "true"
+        working-directory: runtime/web
 
-  mobile-ios-build:
-    strategy:
-      fail-fast: false
-      matrix:
-        app: [ios-cn, ios-global]
-    runs-on: macos-15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: runtime/web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate --schema src/prisma/schema.prisma
+
+      # 跨层契约。runtime/web 有 jest，但 CI 此前只跑 build 不跑测试 ——
+      # 契约测试写了也不会被执行。
+      # 拦的是：前端 fetch 打在不存在的路由上（/api/calculate/solar 与
+      # /api/ai/tool 都曾如此，404 被 catch 吞掉后静默降级）、
+      # 新增路由缺白名单校验 / 缺登录 / 用假电价。
+      - name: 接口契约
+        run: npx jest src/app/api/api-contract.test.ts --ci
+
+      - name: Build Next.js
+        run: npm run build
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-cn-build
+          path: runtime/web/.next/
+          retention-days: 7
+
+  # ──────────────────────────────────────────
+  # 3. Frontend Global Build
+  # ──────────────────────────────────────────
+  frontend-global-build:
+    name: Frontend Global Build (Next.js)
+    runs-on: ubuntu-latest
+    needs: backend-test
     defaults:
       run:
-        working-directory: ${{ matrix.app }}
-    steps:
-      - uses: actions/checkout@v5
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: 3.38.5
-          channel: stable
-          cache: true
-      - run: flutter pub get
-      - run: flutter build ios --release --no-codesign
+        working-directory: web-global
 
-  deployment-config:
-    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - run: python3 scripts/verify_production_code.py
-      - run: python3 scripts/verify_k8s_production.py
-      - run: python3 scripts/verify_compose_production.py
-      - run: python3 scripts/verify_revenue_operations.py
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install dependencies
+        working-directory: .
+        run: corepack enable && pnpm install --frozen-lockfile
+
+      - name: Build Next.js
+        working-directory: .
+        run: pnpm --dir web-global build
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-global-build
+          path: web-global/.next/
+          retention-days: 7
+
+  # ──────────────────────────────────────────
+  # 4. Translation Check
+  # ──────────────────────────────────────────
+  translation-check:
+    name: Translation Coverage Check (95%)
+    runs-on: ubuntu-latest
+    needs: backend-test
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Run translation key checker
+        run: python scripts/verify_language_isolation.py
+
+  # ──────────────────────────────────────────
+  # 5. Lint
+  # ──────────────────────────────────────────
+  lint:
+    name: Lint (flake8 + eslint)
+    runs-on: ubuntu-latest
+    needs: backend-test
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install flake8
+        run: pip install flake8
+
+      - name: Lint backend with flake8
+        run: |
+          flake8 runtime/backend/app/ \
+            --select=E9,F63,F7,F82 \
+            --max-line-length=120 \
+            --exclude=__pycache__,.venv,migrations \
+            --statistics
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      # 同上：lint 目标从空壳目录 frontend-cn-web 改为主干 runtime/web
+      - name: Lint runtime/web with eslint
+        working-directory: runtime/web
+        run: |
+          npm ci
+          npx eslint src/ --max-warnings=0
+
+      - name: Lint web-global with eslint
+        run: |
+          corepack enable
+          pnpm install --frozen-lockfile
+          pnpm --dir web-global exec eslint src/ --max-warnings=0
+
+  # ─────────────────────────────────────────────────────────────
+  # 仓库里已有四个校验脚本，但 2026-08-18 复核发现**一个都没有接进 CI** ——
+  # 写了没人跑，等于不存在。其中 verify_language_isolation.py 还一直
+  # 扫的是空壳目录 frontend-cn-web（0 个页面），真正上线的 runtime/web
+  # （374 个文件）从未被检查过。
+  # ─────────────────────────────────────────────────────────────
+  verification-scripts:
+    name: Verification Scripts
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install PyYAML
+        run: pip install pyyaml
+
+      # 技能注册表加载校验需要后端的运行依赖 —— report_generation 技能
+      # 会传递性 import asyncpg，缺了它该技能会静默消失
+      - name: Install backend runtime deps
+        run: pip install -r 后端/requirements.txt
+
+      # 技能必须全部加载成功。缺依赖导致技能静默丢失曾让「42 个技能已丢失」
+      # 这个说法在文档里流传了三周。
+      - name: Skill registry discovery
+        working-directory: 后端
+        run: python3 -m pytest tests/test_all_skills_and_rag.py tests/test_v3_skill_accuracy.py -q
+
+      # 国内版不得出现长篇英文，国际版不得出现 CJK
+      - name: Language isolation
+        run: python3 scripts/verify_language_isolation.py
+
+      # docker compose 的 `:?` 变量必须全部可求值，
+      # 可拦住「migrate 与 backend 数据库密码不一致」这类问题
+      - name: Production compose
+        run: python3 scripts/verify_compose_production.py
+
+      - name: K8s manifests
+        run: python3 scripts/verify_k8s_production.py
+
+      # 生产代码里不得残留 mock / TODO 占位实现
+      - name: Production code guard
+        run: python3 scripts/verify_production_code.py

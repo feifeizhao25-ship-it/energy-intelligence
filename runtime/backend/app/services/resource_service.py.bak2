@@ -1,0 +1,271 @@
+import httpx
+from app.config import settings
+from app.schemas.resource import SolarResourceRequest, SolarResourceResponse, WindResourceRequest, WindResourceResponse
+import math
+from collections import defaultdict
+
+
+def _classify_solar(ghi: float) -> tuple[str, float]:
+    """International solar resource classification."""
+    if ghi >= 2000:
+        return "I", min(100, 60 + (ghi - 2000) / 50)
+    elif ghi >= 1600:
+        return "II", 40 + (ghi - 1600) / 20
+    elif ghi >= 1200:
+        return "III", 20 + (ghi - 1200) / 20
+    else:
+        return "IV", max(0, (ghi / 1200) * 20)
+
+
+def _classify_wind(wpd: float) -> tuple[str, float]:
+    """International wind resource classification."""
+    if wpd >= 400:
+        return "I", min(100, 70 + (wpd - 400) / 10)
+    elif wpd >= 300:
+        return "II", 50 + (wpd - 300)
+    elif wpd >= 200:
+        return "III", 30 + (wpd - 200)
+    else:
+        return "IV", max(0, (wpd / 200) * 30)
+
+
+def _diffuse_fraction_orgill_hollands(kt: float) -> float:
+    """Estimate diffuse fraction from clearness index (Orgill-Hollands model).
+    kt = GHI / H0 (extraterrestrial radiation).
+    Returns diffuse fraction (DHI/GHI approximation)."""
+    if kt <= 0.0:
+        return 1.0
+    elif kt < 0.21:
+        return 1.0 - 0.09 * kt
+    elif kt < 0.75:
+        return 1.587 - 3.537 * kt + 6.798 * kt ** 2 - 4.986 * kt ** 3 + 1.165 * kt ** 4
+    else:
+        return 0.177
+
+
+def _monthly_extraterrestrial_radiation(lat: float, month: int) -> float:
+    """Estimate monthly extraterrestrial radiation H0 in MJ/m²/month.
+    Simplified Ångström-Prescott formula."""
+    # Day of year for mid-month (rough approximation)
+    days_in_month = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    cum_days = [15, 74, 133, 163, 194, 224, 255, 285, 316, 346, 377, 407]
+    day_of_year = cum_days[month - 1]
+
+    # Solar constant in MJ/m²/min
+    Gsc = 0.0820  # MJ/m²/min
+    # Solar declination
+    delta = 0.409 * math.sin(2 * math.pi / 365 * day_of_year - 1.39)
+    lat_rad = math.radians(lat)
+
+    # Sunset hour angle
+    cos_omega_s = -math.tan(lat_rad) * math.tan(delta)
+    cos_omega_s = max(-1.0, min(1.0, cos_omega_s))
+    omega_s = math.acos(cos_omega_s)
+
+    # Daily extraterrestrial radiation MJ/m²/day
+    Rd = (24 * 60 / math.pi) * Gsc * (
+        (1 + 0.033 * math.cos(2 * math.pi * day_of_year / 365)) *
+        (omega_s * math.sin(lat_rad) * math.sin(delta) +
+         math.cos(lat_rad) * math.cos(delta) * math.sin(omega_s))
+    )
+    return Rd * days_in_month[month - 1]
+
+
+def _aggregate_daily_to_monthly_sum(daily_data: list, dates: list) -> list:
+    """Aggregate daily values into monthly sums. Returns 12 values (Jan-Dec)."""
+    monthly = defaultdict(float)
+    for val, date_str in zip(daily_data, dates):
+        if val is not None:
+            month = int(date_str[5:7])
+            monthly[month] += val
+    return [monthly[m] for m in range(1, 13)]
+
+
+def _aggregate_daily_to_monthly_avg(daily_data: list, dates: list) -> list:
+    """Aggregate daily values into monthly averages. Returns 12 values (Jan-Dec)."""
+    monthly = defaultdict(float)
+    counts = defaultdict(int)
+    for val, date_str in zip(daily_data, dates):
+        if val is not None:
+            month = int(date_str[5:7])
+            monthly[month] += val
+            counts[month] += 1
+    return [monthly[m] / counts[m] if counts[m] > 0 else 0.0 for m in range(1, 13)]
+
+
+async def fetch_solar_resource(req: SolarResourceRequest) -> SolarResourceResponse:
+    """Fetch solar resource data from Open-Meteo Archive API.
+    Returns stub data if external API is unreachable.
+    
+    Open-Meteo ERA5 archive provides:
+    - shortwave_radiation_sum: GHI in MJ/m²/day
+    - temperature_2m_mean: °C
+    
+    DNI and DHI are estimated using Orgill-Hollands diffuse fraction model.
+    """
+    try:
+        url = "https://archive-api.open-meteo.com/v1/archive"
+        params = {
+            "latitude": req.lat,
+            "longitude": req.lng,
+            "start_date": "2020-01-01",
+            "end_date": "2020-12-31",
+            "daily": "shortwave_radiation_sum,temperature_2m_mean",
+            "timezone": "Asia/Shanghai",
+        }
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            resp = await client.get(url, params=params)
+            resp.raise_for_status()
+            data = resp.json()
+
+        daily = data.get("daily", {})
+        dates = daily.get("time", [])
+        ghi_daily_mj = daily.get("shortwave_radiation_sum", [])  # MJ/m²/day
+        temp_daily = daily.get("temperature_2m_mean", [])         # °C
+
+        # Monthly GHI sum in MJ → convert to kWh/m²/month
+        # 1 MJ = 0.27778 kWh (but GHI is MJ/day, so monthly sum is MJ/month)
+        ghi_monthly_mj = _aggregate_daily_to_monthly_sum(ghi_daily_mj, dates)
+        ghi_monthly_kwh = [v * 0.27778 for v in ghi_monthly_mj]  # MJ → kWh
+
+        # Monthly average temperature
+        temp_monthly = _aggregate_daily_to_monthly_avg(temp_daily, dates)
+
+        # Estimate DNI and DHI using diffuse fraction model
+        dni_monthly_kwh = []
+        dhi_monthly_kwh = []
+        days_in_month = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+
+        for i, (ghi_mj, h0_mj) in enumerate(zip(ghi_monthly_mj, [
+            _monthly_extraterrestrial_radiation(req.lat, m + 1) for m in range(12)
+        ])):
+            kt = (ghi_mj / h0_mj) if h0_mj > 0 else 0.0
+            df = _diffuse_fraction_orgill_hollands(kt)
+            # DHI = GHI * diffuse_fraction
+            dhi_mj = ghi_mj * df
+            # DNI from GHI = DNI * cos(zenith) + DHI, using average cos(zenith) ~ 0.5
+            avg_cos_zenith = 0.5
+            dni_mj = (ghi_mj - dhi_mj) / avg_cos_zenith if avg_cos_zenith > 0 else 0.0
+            dni_monthly_kwh.append(dni_mj * 0.27778)
+            dhi_monthly_kwh.append(dhi_mj * 0.27778)
+
+        # Annual totals
+        ghi_annual = sum(ghi_monthly_kwh)
+        dni_annual = sum(dni_monthly_kwh)
+        dhi_annual = sum(dhi_monthly_kwh)
+        avg_temp = sum(temp_monthly) / 12
+
+        resource_class, score = _classify_solar(ghi_annual)
+        optimal_tilt = abs(req.lat) * 0.76 + 3.1
+        peak_sun_hours = ghi_annual / 365
+
+        return SolarResourceResponse(
+            lat=req.lat,
+            lng=req.lng,
+            ghi=round(ghi_annual, 1),
+            dni=round(dni_annual, 1),
+            dhi=round(dhi_annual, 1),
+            peak_sun_hours=round(peak_sun_hours, 2),
+            optimal_tilt=round(optimal_tilt, 1),
+            avg_temperature=round(avg_temp, 1),
+            resource_class=resource_class,
+            score=round(score, 1),
+            data_source="open_meteo",
+            monthly_ghi=[round(v, 1) for v in ghi_monthly_kwh],
+        )
+    except Exception as e:
+        # Return stub when Open-Meteo API is unreachable
+        return SolarResourceResponse(
+            lat=req.lat,
+            lng=req.lng,
+            ghi=1450.0,
+            dni=1800.0,
+            dhi=400.0,
+            peak_sun_hours=3.97,
+            optimal_tilt=round(abs(req.lat) * 0.76 + 3.1, 1),
+            avg_temperature=15.0,
+            resource_class="II",
+            score=65.0,
+            data_source="open_meteo_stub",
+            monthly_ghi=[120.0] * 12,
+        )
+
+
+async def fetch_wind_resource(req: WindResourceRequest) -> WindResourceResponse:
+    """Fetch wind resource data from Open-Meteo Archive API.
+    Returns stub data if external API is unreachable.
+    
+    Open-Meteo ERA5 archive provides wind_speed_100m_max in km/h (daily max).
+    Convert to mean wind speed using a 0.6 factor (typical ratio of max to mean).
+    """
+    try:
+        url = "https://archive-api.open-meteo.com/v1/archive"
+        params = {
+            "latitude": req.lat,
+            "longitude": req.lng,
+            "start_date": "2020-01-01",
+            "end_date": "2020-12-31",
+            "daily": "wind_speed_100m_max",
+            "timezone": "Asia/Shanghai",
+        }
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            resp = await client.get(url, params=params)
+            resp.raise_for_status()
+            data = resp.json()
+
+        daily = data.get("daily", {})
+        dates = daily.get("time", [])
+        wind_max_kmh = daily.get("wind_speed_100m_max", [])  # km/h daily max
+
+        # Monthly average of daily max (km/h) → convert to m/s mean
+        # Typical ratio of mean to max daily wind ~ 0.55-0.65 for ERA5
+        monthly_max_kmh = _aggregate_daily_to_monthly_avg(wind_max_kmh, dates)
+        monthly_mean_ms = [v * 0.6 * (1000 / 3600) for v in monthly_max_kmh]  # km/h → m/s with 0.6 factor
+
+        valid_speeds = [s for s in monthly_mean_ms if s > 0]
+        mean_speed = sum(valid_speeds) / len(valid_speeds) if valid_speeds else 0.0
+
+        # Weibull parameters: k typically 1.5-2.5, using 2.0
+        # c = mean_speed / Gamma(1 + 1/k); Gamma(1.5) ≈ 0.8862
+        k = 2.0
+        gamma_factor = 0.8862
+        c_weibull = mean_speed / gamma_factor
+
+        # Wind power density: WPD = 0.5 * rho * v^3
+        # Use mean of cubed monthly speeds for more accurate WPD
+        rho = 1.225  # kg/m³ air density at sea level
+        if valid_speeds:
+            mean_cubed = sum(s ** 3 for s in valid_speeds) / len(valid_speeds)
+            wpd = 0.5 * rho * mean_cubed
+        else:
+            wpd = 432.0
+
+        turbulence_intensity = 0.11  # typical value
+        resource_class, score = _classify_wind(wpd)
+
+        return WindResourceResponse(
+            lat=req.lat,
+            lng=req.lng,
+            mean_speed=round(mean_speed, 2),
+            weibull_k=round(k, 2),
+            weibull_c=round(c_weibull, 2),
+            wind_power_density=round(wpd, 1),
+            turbulence_intensity=turbulence_intensity,
+            resource_class=resource_class,
+            score=round(score, 1),
+            monthly_speed=[round(s, 1) for s in monthly_mean_ms],
+        )
+    except Exception as e:
+        # Return stub when Open-Meteo API is unreachable
+        return WindResourceResponse(
+            lat=req.lat,
+            lng=req.lng,
+            mean_speed=8.4,
+            weibull_k=2.18,
+            weibull_c=9.47,
+            wind_power_density=432,
+            turbulence_intensity=0.11,
+            resource_class="I",
+            score=88.6,
+            monthly_speed=[9.1, 8.8, 8.9, 8.7, 8.2, 7.9, 7.8, 8.0, 8.3, 8.6, 9.0, 9.2],
+        )

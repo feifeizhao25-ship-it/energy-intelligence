@@ -320,8 +320,8 @@ async def solar_resource(
     """获取指定坐标的太阳能资源数据。"""
     try:
         result = await ResourceService.get_solar_resource(latitude, longitude, use_cache)
-    except Exception as e:
-        logger.warning("External solar resource API failed for (%s, %s): %s", latitude, longitude, e)
+    except Exception:
+        logger.warning("External solar resource API failed; using the audited skill fallback")
         # Fallback to real skill calculation instead of hardcoded mock
         try:
             import skills
@@ -345,8 +345,8 @@ async def solar_resource(
                 "from_cache": False,
                 "data_source": "EIP Skill Engine (RA-001)",
             }
-        except Exception as skill_err:
-            logger.error("Skill fallback also failed for (%.4f, %.4f): %s", latitude, longitude, skill_err)
+        except Exception:
+            logger.error("Solar resource skill fallback failed; using documented safe defaults")
             # Return fallback data with safe defaults
             result = {
                 "solar_resource": {
@@ -417,14 +417,14 @@ async def yield_estimate(
             pr=body.pr,
             degradation=body.degradation,
         )
-    except Exception as e:
-        logger.warning("Yield estimate API failed for (%s, %s): %s", body.latitude, body.longitude, e)
+    except Exception:
+        logger.warning("Yield estimate API failed; using the audited local fallback")
         import skills
         try:
             skill_res = skills.execute_skill("RA-001", params={"latitude": body.latitude, "longitude": body.longitude})
             annual_ghi = skill_res.get("result", {}).get("annual_ghi", 1600)
-        except Exception as e:
-            logger.warning("Skill fallback failed for yield estimate GHI, using default 1600: %s", e)
+        except Exception:
+            logger.warning("Skill fallback failed; using the documented default GHI")
             annual_ghi = 1600
         annual_generation_kwh = body.capacity_mw * 1000 * annual_ghi * body.pr
         p50_mwh = annual_generation_kwh / 1000

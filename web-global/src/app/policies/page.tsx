@@ -1,4 +1,4 @@
-import PoliciesPage from '../../components/pages/PoliciesPage';
+import PoliciesPage from '../../pages/PoliciesPage';
 
 export default function Route() {
   return <PoliciesPage />;

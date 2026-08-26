@@ -176,7 +176,8 @@ NEXT_PUBLIC_API_URL=https://energy.example.com/api/v1
 NEXT_PUBLIC_APP_ENV=production
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_...
 
-# NextAuth.js
+# NextAuth.js（必填：缺失时登录 fail-closed，/api/auth/* 返回 503 configured:false；
+# NEXTAUTH_URL 必须是生产真实外网地址，禁止 localhost 兜底）
 NEXTAUTH_SECRET=<generate: openssl rand -base64 32>
 NEXTAUTH_URL=https://energy.example.com
 

@@ -440,30 +440,30 @@ export const plantDataApi = {
 
 // V28 P84: Skills API
 export const skillsApi = {
-  // List skills with optional category and pagination filters.
+  // columnout skills (支持 category filter + analysispage)
   list: (params?: { category?: string; page?: number; page_size?: number }) => {
     const q = new URLSearchParams();
     if (params?.category) q.set('category', params.category);
     if (params?.page) q.set('page', String(params.page));
     if (params?.page_size) q.set('page_size', String(params.page_size));
     const qs = q.toString();
-    return fetchApi<ApiResponse<{ items: Record<string, unknown>[]; total: number }>>(`/api/v1/ai/skills${qs ? '?' + qs : ''}`);
+    return fetchApi<ApiResponse<{ items: unknown[]; total: number }>>(`/api/v1/ai/skills${qs ? '?' + qs : ''}`);
   },
-  // Execute a skill synchronously.
+  //  Sync执line skill
   execute: (skillId: string, params: Record<string, unknown>) =>
     fetchApi<ApiResponse<{ result: unknown; status: string; skill_id: string }>>(
       `/api/v1/skills/${skillId}/execute`,
       { method: 'POST', body: JSON.stringify(params) }),
-  // Execute a skill asynchronously.
+  //  Async执line
   executeAsync: (skillId: string, params: Record<string, unknown>) =>
     fetchApi<ApiResponse<{ task_id: string; status: string }>>(
       `/api/v1/skills/${skillId}/execute?async=true`,
       { method: 'POST', body: JSON.stringify(params) }),
-  // Fetch the skill input schema.
+  // 获取 schema
   schema: (skillId: string) =>
-    fetchApi<ApiResponse<Record<string, unknown>>>(`/api/v1/skills/${skillId}/schema`),
+    fetchApi<ApiResponse<unknown>>(`/api/v1/skills/${skillId}/schema`),
 };
 
 export const dashboardApi = {
-  metrics: () => fetchApi<ApiResponse<Record<string, unknown>>>('/api/v1/dashboard/metrics'),
+  metrics: () => fetchApi<ApiResponse<unknown>>('/api/v1/dashboard/metrics'),
 };

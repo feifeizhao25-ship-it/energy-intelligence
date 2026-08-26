@@ -25,7 +25,7 @@ class SiteScoreCard extends StatelessWidget {
         child: Column(
           children: [
             Text(
-              'Resource assessment score',
+              'Resource Assessment Index',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,

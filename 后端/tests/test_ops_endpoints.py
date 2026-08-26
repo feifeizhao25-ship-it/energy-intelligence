@@ -6,7 +6,8 @@ import pytest
 from sqlalchemy import select
 
 from app.core.security import create_access_token
-from app.models.database import Project, User
+from app.models.database import Project
+from app.models.user import User
 from app.models.report import Report
 from app.utils.security import get_password_hash
 

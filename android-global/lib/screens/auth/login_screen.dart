@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
+import '../../services/api_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -30,11 +31,37 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   Future<void> _login() async {
+    if (_tabController.index == 1) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Magic-link sign-in is not configured yet. Use your password.',
+          ),
+        ),
+      );
+      return;
+    }
+    if (_emailCtrl.text.trim().isEmpty || _passCtrl.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter your email and password.')),
+      );
+      return;
+    }
     setState(() => _loading = true);
-    await Future.delayed(const Duration(seconds: 1));
-    if (!mounted) return;
-    setState(() => _loading = false);
-    Navigator.pushReplacementNamed(context, '/main');
+    try {
+      await ApiService.login(
+        email: _emailCtrl.text.trim(),
+        password: _passCtrl.text,
+      );
+      if (mounted) Navigator.pushReplacementNamed(context, '/main');
+    } on ApiException catch (error) {
+      if (mounted)
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.message)));
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   @override
@@ -97,7 +124,11 @@ class _LoginScreenState extends State<LoginScreen>
               child: Column(
                 children: [
                   OutlinedButton.icon(
-                    onPressed: _login,
+                    onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Google sign-in is not configured.'),
+                      ),
+                    ),
                     icon: const Icon(Icons.login, size: 20),
                     label: const Text('Continue with Google'),
                     style: OutlinedButton.styleFrom(

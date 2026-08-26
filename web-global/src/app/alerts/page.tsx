@@ -1,4 +1,4 @@
-import AlertsPage from '../../components/pages/AlertsPage';
+import AlertsPage from '../../pages/AlertsPage';
 
 export default function Route() {
   return <AlertsPage />;

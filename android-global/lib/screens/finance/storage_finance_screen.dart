@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'dart:math';
 import '../../widgets/bar_chart.dart';
+import '../../services/api_service.dart';
 
 class StorageFinanceScreen extends StatefulWidget {
   const StorageFinanceScreen({super.key});
@@ -32,58 +32,45 @@ class _StorageFinanceScreenState extends State<StorageFinanceScreen> {
 
   void _calculate() async {
     setState(() => _isCalc = true);
-    await Future.delayed(const Duration(milliseconds: 600));
-
-    final powerMw = double.tryParse(_powerCtrl.text) ?? 100;
-    final capacityMwh = double.tryParse(_capacityCtrl.text) ?? 400;
-    final cycles = double.tryParse(_cyclesCtrl.text) ?? 250;
-    final peakPrice = double.tryParse(_peakCtrl.text) ?? 120; // $/MWh
-    final valleyPrice = double.tryParse(_valleyCtrl.text) ?? 30;
-    final capexPerKwh = double.tryParse(_capexCtrl.text) ?? 280; // $/kWh
-
-    final spread = peakPrice - valleyPrice;
-    const roundtripEff = 0.88;
-    final annualRevenue = capacityMwh * cycles * spread * roundtripEff;
-    final totalCapex = capacityMwh * 1000 * capexPerKwh;
-    final annualOpex = totalCapex * 0.02;
-
-    final cashflows = <double>[-totalCapex];
-    for (int y = 1; y <= 10; y++) {
-      final degradation = 1.0 - 0.025 * (y - 1);
-      cashflows.add(annualRevenue * degradation - annualOpex);
+    try {
+      final response = await ApiService.calcStorageFinance(
+        powerMw: double.parse(_powerCtrl.text),
+        capacityMwh: double.parse(_capacityCtrl.text),
+        cyclesPerYear: double.parse(_cyclesCtrl.text),
+        peakPricePerMwh: double.parse(_peakCtrl.text),
+        offpeakPricePerMwh: double.parse(_valleyCtrl.text),
+        capexPerKwh: double.parse(_capexCtrl.text),
+      );
+      if (mounted)
+        setState(
+          () => _result = {
+            'irr': (response['irr'] as num).toDouble(),
+            'annualRevenue':
+                (response['annual_revenue'] as num).toDouble() / 1e6,
+            'arbitrageMwh': (response['annual_discharged_mwh'] as num)
+                .toDouble(),
+            'payback': (response['payback_years'] as num).toDouble(),
+            'totalCapex': (response['total_capex'] as num).toDouble() / 1e6,
+            'cashflows': ((response['cashflows'] as List?) ?? const [])
+                .map((v) => (v as num).toDouble() / 1e6)
+                .toList(),
+            'assumptionVersion': response['assumption_version'],
+          },
+        );
+    } catch (error) {
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              error is ApiException
+                  ? error.message
+                  : 'Storage calculation is temporarily unavailable.',
+            ),
+          ),
+        );
+    } finally {
+      if (mounted) setState(() => _isCalc = false);
     }
-
-    double irr = 0.08;
-    for (int i = 0; i < 1000; i++) {
-      double npv = 0, dnpv = 0;
-      for (int t = 0; t < cashflows.length; t++) {
-        final disc = pow(1 + irr, t).toDouble();
-        npv += cashflows[t] / disc;
-        dnpv -= t * cashflows[t] / (disc * (1 + irr));
-      }
-      if (dnpv.abs() < 1e-10) break;
-      final newIrr = irr - npv / dnpv;
-      if ((newIrr - irr).abs() < 1e-7) {
-        irr = newIrr;
-        break;
-      }
-      irr = newIrr;
-    }
-
-    final payback = totalCapex / (annualRevenue - annualOpex);
-
-    setState(() {
-      _result = {
-        'irr': irr * 100,
-        'annualRevenue': annualRevenue / 1e6,
-        'arbitrageMwh': capacityMwh * cycles * roundtripEff,
-        'storageDurationHours': capacityMwh / powerMw,
-        'payback': payback,
-        'totalCapex': totalCapex / 1e6,
-        'cashflows': cashflows.sublist(1).map((c) => c / 1e6).toList(),
-      };
-      _isCalc = false;
-    });
   }
 
   @override
@@ -168,6 +155,11 @@ class _StorageFinanceScreenState extends State<StorageFinanceScreen> {
               ),
               const SizedBox(height: 12),
               _buildResultGrid(),
+              const SizedBox(height: 8),
+              Text(
+                'Model: ${_result!['assumptionVersion']} · Based on your assumptions, not a market forecast.',
+                style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+              ),
               const SizedBox(height: 20),
               const Text(
                 '10-Year Cash Flow (USD M)',

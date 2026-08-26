@@ -1,4 +1,4 @@
-import BillingPage from '../../components/pages/BillingPage';
+import BillingPage from '../../pages/BillingPage';
 
 export default function BillingRoute() {
   return <BillingPage />;

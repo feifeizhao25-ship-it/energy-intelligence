@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'dart:math';
 import '../../widgets/bar_chart.dart';
+import '../../services/api_service.dart';
 
 class WindFinanceScreen extends StatefulWidget {
   const WindFinanceScreen({super.key});
@@ -31,64 +31,45 @@ class _WindFinanceScreenState extends State<WindFinanceScreen> {
 
   void _calculate() async {
     setState(() => _isCalc = true);
-    await Future.delayed(const Duration(milliseconds: 800));
-
-    final capacityMw = double.tryParse(_capacityCtrl.text) ?? 100;
-    final cf = double.tryParse(_cfCtrl.text) ?? 0.30;
-    final capexPerKw = (double.tryParse(_capexCtrl.text) ?? 1.4) * 1000; // $/kW
-    final opexPerKwPerYr = double.tryParse(_opexCtrl.text) ?? 35;
-    final pricePerMwh = double.tryParse(_priceCtrl.text) ?? 45;
-
-    final capacityKw = capacityMw * 1000;
-    final annualGenMwh = capacityMw * cf * 8760;
-    final annualRevenue = annualGenMwh * pricePerMwh;
-    final totalCapex = capexPerKw * capacityKw;
-    final annualOpex = opexPerKwPerYr * capacityKw;
-
-    // 25-year Newton-Raphson IRR
-    final cashflows = <double>[-totalCapex];
-    for (int y = 1; y <= 25; y++) {
-      final degradation = 1.0 - 0.005 * (y - 1);
-      cashflows.add(annualRevenue * degradation - annualOpex);
+    try {
+      final capacity = double.parse(_capacityCtrl.text);
+      final factor = double.parse(_cfCtrl.text);
+      final response = await ApiService.calcWindFinance(
+        capacityMw: capacity,
+        capexPerKw: double.parse(_capexCtrl.text) * 1000,
+        opexPerKwYr: double.parse(_opexCtrl.text),
+        electricityPrice: double.parse(_priceCtrl.text),
+        windCapacityFactor: factor,
+      );
+      if (mounted)
+        setState(() {
+          _result = {
+            'irr': (response['irr'] as num).toDouble(),
+            'npv': (response['npv'] as num).toDouble() / 1e6,
+            'lcoe': (response['lcoe'] as num).toDouble(),
+            'annualGen': capacity * factor * 8760,
+            'payback': (response['payback_years'] as num).toDouble(),
+            'cashflows': ((response['cashflows'] as List?) ?? const [])
+                .take(10)
+                .map((v) => (v as num).toDouble() / 1e6)
+                .toList(),
+          };
+          _currentStep = 3;
+        });
+    } catch (error) {
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              error is ApiException
+                  ? error.message
+                  : 'Financial calculation is temporarily unavailable.',
+            ),
+          ),
+        );
+    } finally {
+      if (mounted) setState(() => _isCalc = false);
     }
-
-    double irr = 0.08;
-    for (int i = 0; i < 1000; i++) {
-      double npv = 0, dnpv = 0;
-      for (int t = 0; t < cashflows.length; t++) {
-        final disc = pow(1 + irr, t).toDouble();
-        npv += cashflows[t] / disc;
-        dnpv -= t * cashflows[t] / (disc * (1 + irr));
-      }
-      if (dnpv.abs() < 1e-10) break;
-      final newIrr = irr - npv / dnpv;
-      if ((newIrr - irr).abs() < 1e-7) {
-        irr = newIrr;
-        break;
-      }
-      irr = newIrr;
-    }
-
-    double npv8 = 0;
-    for (int t = 0; t < cashflows.length; t++) {
-      npv8 += cashflows[t] / pow(1.08, t).toDouble();
-    }
-
-    final lcoe = (totalCapex + annualOpex * 25) / (annualGenMwh * 25);
-    final payback = totalCapex / (annualRevenue - annualOpex);
-
-    setState(() {
-      _result = {
-        'irr': irr * 100,
-        'npv': npv8 / 1e6,
-        'lcoe': lcoe,
-        'annualGen': annualGenMwh,
-        'payback': payback,
-        'cashflows': cashflows.sublist(1, 11).map((c) => c / 1e6).toList(),
-      };
-      _currentStep = 3;
-      _isCalc = false;
-    });
   }
 
   @override

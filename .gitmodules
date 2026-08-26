@@ -1,0 +1,10 @@
+# 「后端」早就是独立仓库。此前它以 gitlink 形式存在但没有 .gitmodules，
+# `git clone --recursive` 无法解析，克隆下来是空目录。
+#
+# 待办：该仓库把整个 .venv/ 提交了进去（12,685 个文件）。
+# 已确认其中没有真实凭证（命中的都是 boto3/ecdsa 等库自带的示例密钥），
+# 但仍应从历史中移除并加进 .gitignore —— 那是一次独立的历史重写操作。
+[submodule "后端"]
+	path = 后端
+	url = https://github.com/feifeizhao25-ship-it/energy-backend.git
+	branch = main

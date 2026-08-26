@@ -1,11 +1,12 @@
 /// ApiService — real HTTP client for Energy backend v2
-/// Configure with --dart-define=API_BASE_URL=https://api.example.com
+/// The HTTPS origin is injected with --dart-define=API_BASE_URL=...
 /// Import http: ^1.6.0 (already in pubspec.yaml)
 
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiException implements Exception {
   final int statusCode;
@@ -19,23 +20,15 @@ class ApiService {
   static final _client = http.Client();
   static const _secureStorage = FlutterSecureStorage();
   static String? _token;
-  static String _baseUrl = '';
+  static String _baseUrl = const String.fromEnvironment('API_BASE_URL');
 
   /// Initialize with region — call from main() before runApp
   static Future<void> init({String region = 'CN'}) async {
-    const configuredUrl = String.fromEnvironment('API_BASE_URL');
-    if (configuredUrl.isEmpty && kReleaseMode) {
-      throw StateError(
-        'API_BASE_URL is required for release builds. '
-        'Pass --dart-define=API_BASE_URL=https://api.example.com',
-      );
+    if (_baseUrl.isEmpty || !_baseUrl.startsWith('https://')) {
+      throw StateError('API_BASE_URL must be supplied as an HTTPS URL');
     }
-    _baseUrl = (configuredUrl.isEmpty ? 'http://localhost:4001' : configuredUrl)
-        .replaceFirst(RegExp(r'/$'), '');
-    if (kReleaseMode && !Uri.parse(_baseUrl).isScheme('https')) {
-      throw StateError('API_BASE_URL must use HTTPS in release builds');
-    }
-    _token = await _secureStorage.read(key: 'energy_token');
+    final prefs = await SharedPreferences.getInstance();
+    _token = prefs.getString('energy_token');
   }
 
   static void setToken(String token) => _token = token;
@@ -203,71 +196,40 @@ class ApiService {
       final cf = (pr * 100).clamp(0.0, 100.0);
       // opexAnnual (yuan/yr) -> opex_per_kw_yr = opexAnnual / (capMw*1000)
       final opKw = capMw > 0 ? opexAnnual / (capMw * 1000) : 287.5;
-      try {
-        final resp = await _post(
-          '/api/v1/finance/solar',
-          body: {
-            'capacity_mw': capMw,
-            'capex_per_w': cpW,
-            'opex_per_kw_yr': opKw,
-            'electricity_price': elecPrice,
-            'ghi_annual': ghi,
-            'capacity_factor': cf,
-            'degradation_rate': 0.005,
-            'project_life': 25,
-          },
-        );
-        // Transform backend response to FinancialModel format
-        return {
-          'id': '',
-          'modelType': 'solar',
-          'modelName': '光伏财务模型',
-          'capacityMwp': resp['capacity_mw'] ?? capMw,
-          'capexTotal': resp['capex_per_w'] != null
-              ? (resp['capex_per_w'] * capMw * 1e6)
-              : capexTotal,
-          'opexAnnual': resp['opex_per_kw_yr'] != null
-              ? (resp['opex_per_kw_yr'] * capMw * 1000)
-              : opexAnnual,
-          'electricityPrice': resp['electricity_price'] ?? elecPrice,
-          'irrEquity': (resp['irr'] ?? resp['irr_equity'] ?? 0.0).toDouble(),
-          'npv': (resp['npv'] ?? 0.0).toDouble(),
-          'lcoe': (resp['lcoe'] ?? 0.0).toDouble(),
-          'paybackStatic': (resp['payback_years'] ?? resp['payback'] ?? 0.0)
-              .toDouble(),
-          'annualCashflow': _toDoubleList(
-            resp['cashflows'] ?? resp['annual_cashflows'] ?? [],
-          ),
-        };
-      } catch (_) {
-        // Fallback: compute locally
-        final annualGen = capMw * 1e6 * ghi / 1000 * pr / 1000;
-        final annualRevenue = annualGen * elecPrice;
-        final annualOp = opexAnnual;
-        final netAnnual = annualRevenue - annualOp;
-        final totalCapex = capexTotal;
-        final lcoe = totalCapex > 0 && annualGen > 0
-            ? totalCapex / annualGen / 25
-            : 0.0;
-        final irr = netAnnual > 0 && totalCapex > 0
-            ? netAnnual / totalCapex * 100
-            : 0.0;
-        final payback = netAnnual > 0 ? totalCapex / netAnnual : 0.0;
-        return {
-          'id': '',
-          'modelType': 'solar',
-          'modelName': '光伏财务模型',
-          'capacityMwp': capMw,
-          'capexTotal': capexTotal,
-          'opexAnnual': opexAnnual,
-          'electricityPrice': elecPrice,
-          'irrEquity': irr,
-          'npv': netAnnual * 25 - totalCapex,
-          'lcoe': lcoe,
-          'paybackStatic': payback,
-          'annualCashflow': List.generate(25, (i) => netAnnual),
-        };
-      }
+      final resp = await _post(
+        '/api/v1/finance/solar',
+        body: {
+          'capacity_mw': capMw,
+          'capex_per_w': cpW,
+          'opex_per_kw_yr': opKw,
+          'electricity_price': elecPrice,
+          'ghi_annual': ghi,
+          'capacity_factor': cf,
+          'degradation_rate': 0.005,
+          'project_life': 25,
+        },
+      );
+      return {
+        'id': '',
+        'modelType': 'solar',
+        'modelName': 'Solar Financial Model',
+        'capacityMwp': resp['capacity_mw'] ?? capMw,
+        'capexTotal': resp['capex_per_w'] != null
+            ? (resp['capex_per_w'] * capMw * 1e6)
+            : capexTotal,
+        'opexAnnual': resp['opex_per_kw_yr'] != null
+            ? (resp['opex_per_kw_yr'] * capMw * 1000)
+            : opexAnnual,
+        'electricityPrice': resp['electricity_price'] ?? elecPrice,
+        'irrEquity': (resp['irr'] ?? resp['irr_equity'] ?? 0.0).toDouble(),
+        'npv': (resp['npv'] ?? 0.0).toDouble(),
+        'lcoe': (resp['lcoe'] ?? 0.0).toDouble(),
+        'paybackStatic': (resp['payback_years'] ?? resp['payback'] ?? 0.0)
+            .toDouble(),
+        'annualCashflow': _toDoubleList(
+          resp['cashflows'] ?? resp['annual_cashflows'] ?? [],
+        ),
+      };
     }
     return await _post(
       '/api/v1/finance/solar',
@@ -298,18 +260,39 @@ class ApiService {
     required double capexPerKw,
     required double opexPerKwYr,
     required double electricityPrice,
-    required double windSpeedAnnual,
+    required double windCapacityFactor,
     int projectLifespan = 25,
   }) async {
     return await _post(
       '/api/v1/finance/wind',
       body: {
-        'capacityMw': capacityMw,
-        'capexPerKw': capexPerKw,
-        'opexPerKwYr': opexPerKwYr,
-        'electricityPrice': electricityPrice,
-        'windSpeedAnnual': windSpeedAnnual,
-        'projectLifespan': projectLifespan,
+        'capacity_mw': capacityMw,
+        'capex_per_kw': capexPerKw,
+        'opex_per_kw_yr': opexPerKwYr,
+        'electricity_price': electricityPrice,
+        'wind_capacity_factor': windCapacityFactor,
+        'project_life': projectLifespan,
+      },
+    );
+  }
+
+  static Future<Map<String, dynamic>> calcStorageFinance({
+    required double powerMw,
+    required double capacityMwh,
+    required double cyclesPerYear,
+    required double peakPricePerMwh,
+    required double offpeakPricePerMwh,
+    required double capexPerKwh,
+  }) async {
+    return await _post(
+      '/api/v1/finance/storage',
+      body: {
+        'power_mw': powerMw,
+        'capacity_mwh': capacityMwh,
+        'cycles_per_year': cyclesPerYear,
+        'peak_price_per_mwh': peakPricePerMwh,
+        'offpeak_price_per_mwh': offpeakPricePerMwh,
+        'capex_per_kwh': capexPerKwh,
       },
     );
   }
@@ -320,6 +303,21 @@ class ApiService {
     String projectId,
   ) async {
     return await _get('/api/v1/operations/health', {'projectId': projectId});
+  }
+
+  static Future<Map<String, dynamic>> calculateCleaningSchedule({
+    required double cleaningCostUsd,
+    required double dailyRevenueUsd,
+    required double soilingRateFractionPerDay,
+  }) async {
+    return await _post(
+      '/api/v1/operations/cleaning/calculate',
+      body: {
+        'cleaning_cost_usd': cleaningCostUsd,
+        'daily_revenue_usd': dailyRevenueUsd,
+        'soiling_rate_fraction_per_day': soilingRateFractionPerDay,
+      },
+    );
   }
 
   // ── AI Chat ───────────────────────────────────────────────────────────────
@@ -340,63 +338,38 @@ class ApiService {
       final resp = await _post('/api/v1/ai/chat', body: {'message': message});
       return resp;
     } catch (_) {
-      return {'success': false, 'error': 'AI服务暂时不可用'};
-    }
-  }
-
-  /// ROI calculation — local calculation
-  static Future<Map<String, dynamic>> calculateROI(double capacityMw) async {
-    final netAnnual = 300.0 * capacityMw; // stub: estimate
-    final initialInvestment = capacityMw * 4850000;
-    final total = netAnnual * 25 - initialInvestment;
-    final roi = (total / initialInvestment) * 100;
-    return {
-      'total_roi': roi,
-      'net_profit': total,
-      'payback_years': initialInvestment / netAnnual,
-      'annual_net': netAnnual,
-    };
-  }
-
-  /// Dashboard metrics — calls backend or returns stub
-  static Future<Map<String, dynamic>> getDashboardMetrics() async {
-    try {
-      return await _get('/api/v1/dashboard/metrics');
-    } catch (_) {
       return {
-        'total_projects': 0,
-        'total_capacity_mw': 0.0,
-        'total_irr': 0.0,
-        'alerts_count': 0,
+        'success': false,
+        'error': 'AI service is temporarily unavailable',
       };
     }
   }
 
+  /// A capacity-only ROI would be misleading; use the full financial model.
+  static Future<Map<String, dynamic>> calculateROI(double capacityMw) async {
+    throw ApiException(
+      422,
+      'Capacity alone is insufficient for a reliable ROI. Use the full model with cost, tariff, operating and resource assumptions.',
+    );
+  }
+
+  /// Dashboard metrics — calls backend or returns stub
+  static Future<Map<String, dynamic>> getDashboardMetrics() async {
+    return await _get('/api/v1/dashboard/metrics');
+  }
+
   /// Get alerts — calls backend or returns stub
   static Future<List<Map<String, dynamic>>> getAlerts() async {
-    try {
-      final resp = await _get('/api/v1/alerts');
-      if (resp is List)
-        return (resp as List)
-            .map((e) => Map<String, dynamic>.from(e as Map))
-            .toList();
-      if (resp['alerts'] is List)
-        return (resp['alerts'] as List)
-            .map((e) => Map<String, dynamic>.from(e as Map))
-            .toList();
-      return [];
-    } catch (_) {
-      return [];
-    }
+    final resp = await _get('/api/v1/operations/alerts');
+    final rows = resp['data'] ?? resp['alerts'];
+    if (rows is List)
+      return rows.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+    return [];
   }
 
   /// Health data — calls backend or returns stub
   static Future<Map<String, dynamic>> getHealthData(String projectId) async {
-    try {
-      return await _get('/api/v1/operations/health/$projectId');
-    } catch (_) {
-      return {'status': 'unknown', 'score': 0.0};
-    }
+    return await _get('/api/v1/operations/health/$projectId');
   }
 
   /// Health report — alias for getHealthData
@@ -410,24 +383,20 @@ class ApiService {
     int page = 1,
     int pageSize = 20,
   }) async {
-    try {
-      final resp = await _get('/api/v1/research/papers', {
-        if (query != null) 'query': query,
-        'page': page.toString(),
-        'pageSize': pageSize.toString(),
-      });
-      if (resp['data'] is List)
-        return (resp['data'] as List)
-            .map((e) => Map<String, dynamic>.from(e as Map))
-            .toList();
-      if (resp['papers'] is List)
-        return (resp['papers'] as List)
-            .map((e) => Map<String, dynamic>.from(e as Map))
-            .toList();
-      return [];
-    } catch (_) {
-      return [];
-    }
+    final resp = await _get('/api/v1/research/papers', {
+      if (query != null) 'query': query,
+      'page': page.toString(),
+      'pageSize': pageSize.toString(),
+    });
+    if (resp['data'] is List)
+      return (resp['data'] as List)
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList();
+    if (resp['papers'] is List)
+      return (resp['papers'] as List)
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList();
+    return [];
   }
 
   /// Get metrics — alias for getDashboardMetrics

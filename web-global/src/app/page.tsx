@@ -1,4 +1,4 @@
-import DashboardPage from '../components/pages/DashboardPage';
+import DashboardPage from '../pages/DashboardPage';
 
 export default function HomePage() {
   return <DashboardPage />;

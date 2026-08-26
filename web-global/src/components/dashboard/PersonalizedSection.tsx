@@ -17,8 +17,7 @@ import { Badge, Button, Card } from '@energy-intelligence/ui-web';
 import EmptyState from '../EmptyState';
 import DemoBadge from '../DemoBadge';
 import { API_BASE, fetchJson } from '../../lib/config';
-
-const DEFAULT_PERSONA = 'john_smith';
+import { resolvePersonaDay } from './personalization-preview';
 
 interface HeroCard {
   title?: string;
@@ -55,13 +54,6 @@ interface DailyLayout {
   recommendations?: RecommendationCard[] | RecommendationCard;
   recommendation?: RecommendationCard[] | RecommendationCard;
   evidence_note?: string;
-}
-
-function resolvePersonaDay(searchParams: Pick<URLSearchParams, 'get'> | null): { persona: string; day: number } {
-  const persona = searchParams?.get('persona') || DEFAULT_PERSONA;
-  const parsed = parseInt(searchParams?.get('day') || '', 10);
-  const day = parsed >= 1 && parsed <= 7 ? parsed : 1;
-  return { persona, day };
 }
 
 function toRecommendationList(layout: DailyLayout): RecommendationCard[] {

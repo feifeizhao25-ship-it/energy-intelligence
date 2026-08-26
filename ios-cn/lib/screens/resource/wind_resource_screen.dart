@@ -38,6 +38,7 @@ class _WindResourceScreenState extends State<WindResourceScreen> {
         double.parse(_latController.text),
         double.parse(_lngController.text),
       );
+      if (!mounted) return;
       setState(() {
         _result = ResourceAssessment.fromJson(result);
         _isLoading = false;

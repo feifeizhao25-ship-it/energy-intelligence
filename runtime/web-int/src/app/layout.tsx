@@ -1,0 +1,3 @@
+import type {Metadata} from 'next';import Link from 'next/link';import SiteNav from './site-nav';import './globals.css';
+export const metadata:Metadata={title:'Energy Intelligence Global',description:'Evidence-led renewable energy decisions for international teams.'};
+export default function Layout({children}:{children:React.ReactNode}){return <html lang="en"><body><header className="bar"><Link className="logo" href="/">Energy Intelligence <span>Global</span></Link><SiteNav/><Link className="button secondary cta" href="/assessment">New analysis</Link></header>{children}<footer>Energy Intelligence Global · Assumptions visible · Human review required</footer></body></html>}

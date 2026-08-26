@@ -19,7 +19,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
       .me()
       .then((res) => {
         if (res.success && res.data?.user) {
-          setUserState(normalizeUser(res.data.user));
+          setUserState(normalizeUser(res.data.user as unknown as Record<string, unknown>));
         }
       })
       .catch(() => {
@@ -48,9 +48,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
-function normalizeUser(value: unknown): User {
-  const apiUser =
-    value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
+function normalizeUser(apiUser: Record<string, unknown>): User {
   return {
     id: String(apiUser.id ?? ''),
     name: String(apiUser.name ?? ''),

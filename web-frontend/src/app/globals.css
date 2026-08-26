@@ -1,0 +1,223 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* CSS Variables - Green Theme */
+:root {
+  --primary: 142 71% 45%;
+  --primary-foreground: 0 0% 100%;
+
+  --background: 0 0% 100%;
+  --foreground: 222 47% 11%;
+
+  --muted: 210 40% 96%;
+  --muted-foreground: 215 16% 47%;
+
+  --accent: 142 71% 45%;
+  --accent-foreground: 0 0% 100%;
+
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 214 32% 91%;
+  --input: 214 32% 91%;
+  --ring: 142 71% 45%;
+
+  --radius: 12px;
+}
+
+/* Smooth Scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Base Styles */
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Number Display Font */
+  .font-display {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+  }
+
+  /* Selection */
+  ::selection {
+    @apply bg-primary/20 text-primary-900;
+  }
+}
+
+/* Component Utilities */
+@layer components {
+
+  /* Big Number Display - 用于展示大数字 */
+  .big-number {
+    @apply font-display text-6xl font-black tracking-tighter;
+  }
+
+  .big-number-xl {
+    @apply font-display text-7xl md:text-8xl font-black tracking-tighter leading-none;
+  }
+
+  /* Card Styles */
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-xl hover:-translate-y-1;
+  }
+
+  .card-interactive {
+    @apply transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-primary-300 cursor-pointer;
+  }
+
+  /* Button Base */
+  .btn-primary {
+    @apply bg-primary-500 text-white font-bold rounded-2xl px-6 py-3 shadow-primary transition-all duration-200 hover:bg-primary-600 hover:shadow-primary-lg active:scale-[0.98];
+  }
+
+  .btn-secondary {
+    @apply bg-white text-primary-600 font-bold rounded-2xl px-6 py-3 border-2 border-primary-200 transition-all duration-200 hover:bg-primary-50 hover:border-primary-400;
+  }
+
+  .btn-ghost {
+    @apply bg-transparent text-slate-600 font-bold rounded-2xl px-6 py-3 transition-all duration-200 hover:bg-slate-100 hover:text-primary-600;
+  }
+
+  /* Input Styles */
+  .input-base {
+    @apply w-full bg-slate-50 p-4 rounded-2xl border-2 border-transparent outline-none font-medium transition-all duration-200 focus:border-primary-500 focus:bg-white focus:ring-4 focus:ring-primary-100;
+  }
+
+  /* Tag/Badge Styles */
+  .tag {
+    @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider;
+  }
+
+  .tag-primary {
+    @apply tag bg-primary-100 text-primary-700;
+  }
+
+  .tag-solar {
+    @apply tag bg-solar-100 text-solar-700;
+  }
+
+  .tag-wind {
+    @apply tag bg-wind-100 text-wind-700;
+  }
+
+  .tag-storage {
+    @apply tag bg-storage-100 text-storage-700;
+  }
+
+  /* Gradient Backgrounds */
+  .gradient-primary {
+    @apply bg-gradient-to-br from-primary-400 to-primary-600;
+  }
+
+  .gradient-solar {
+    @apply bg-gradient-to-br from-solar-400 to-solar-600;
+  }
+
+  .gradient-wind {
+    @apply bg-gradient-to-br from-wind-400 to-wind-600;
+  }
+
+  .gradient-storage {
+    @apply bg-gradient-to-br from-storage-400 to-storage-600;
+  }
+
+  .gradient-dark {
+    @apply bg-gradient-to-br from-slate-800 to-slate-900;
+  }
+}
+
+/* Animation Utilities */
+@layer utilities {
+  .animate-in {
+    animation: animateIn 0.3s ease-out forwards;
+  }
+
+  .slide-in-from-bottom-4 {
+    --tw-enter-translate-y: 1rem;
+  }
+
+  .slide-in-from-bottom-8 {
+    --tw-enter-translate-y: 2rem;
+  }
+
+  .slide-in-from-bottom-12 {
+    --tw-enter-translate-y: 3rem;
+  }
+
+  .fade-in {
+    --tw-enter-opacity: 0;
+  }
+
+  .duration-500 {
+    animation-duration: 500ms;
+  }
+
+  .duration-700 {
+    animation-duration: 700ms;
+  }
+
+  .duration-1000 {
+    animation-duration: 1000ms;
+  }
+
+  .delay-100 {
+    animation-delay: 100ms;
+  }
+
+  .delay-200 {
+    animation-delay: 200ms;
+  }
+
+  .delay-300 {
+    animation-delay: 300ms;
+  }
+
+  .delay-500 {
+    animation-delay: 500ms;
+  }
+}
+
+@keyframes animateIn {
+  from {
+    opacity: var(--tw-enter-opacity, 1);
+    transform: translateY(var(--tw-enter-translate-y, 0));
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-200 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-slate-300;
+}
+
+/* Focus Visible */
+.focus-visible\:ring-primary:focus-visible {
+  @apply ring-2 ring-primary-500 ring-offset-2;
+}

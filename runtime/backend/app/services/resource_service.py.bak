@@ -1,0 +1,89 @@
+import httpx
+from app.config import settings
+from app.schemas.resource import SolarResourceRequest, SolarResourceResponse, WindResourceRequest, WindResourceResponse
+import math
+
+
+def _classify_solar(ghi: float) -> tuple[str, float]:
+    """International solar resource classification."""
+    if ghi >= 2000:
+        return "I", min(100, 60 + (ghi - 2000) / 50)
+    elif ghi >= 1600:
+        return "II", 40 + (ghi - 1600) / 20
+    elif ghi >= 1200:
+        return "III", 20 + (ghi - 1200) / 20
+    else:
+        return "IV", max(0, (ghi / 1200) * 20)
+
+
+def _classify_wind(wpd: float) -> tuple[str, float]:
+    """International wind resource classification."""
+    if wpd >= 400:
+        return "I", min(100, 70 + (wpd - 400) / 10)
+    elif wpd >= 300:
+        return "II", 50 + (wpd - 300)
+    elif wpd >= 200:
+        return "III", 30 + (wpd - 200)
+    else:
+        return "IV", max(0, (wpd / 200) * 30)
+
+
+async def fetch_solar_resource(req: SolarResourceRequest) -> SolarResourceResponse:
+    """Fetch solar resource data from NASA POWER API.
+    Returns stub data if external API is unreachable."""
+    try:
+        url = f"{settings.NASA_POWER_BASE_URL}/climatology/point"
+        params = {
+            "parameters": "ALLSKY_SFC_SW_DWN,CLRSKY_SFC_SW_DWN,ALLSKY_SFC_SW_DNI,ALLSKY_SFC_SW_DIF,T2M",
+            "community": "RE",
+            "longitude": req.lng,
+            "latitude": req.lat,
+            "format": "JSON",
+            "header": "true",
+        }
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            resp = await client.get(url, params=params)
+            resp.raise_for_status()
+            data = resp.json()
+
+        props = data.get("properties", {}).get("parameter", {})
+        ghi_monthly = list(props.get("ALLSKY_SFC_SW_DWN", {}).values())[:12]
+        ghi_annual = sum(ghi_monthly) * 365 / 12  # Convert from daily to annual
+        dni_annual = sum(props.get("ALLSKY_SFC_SW_DNI", {}).values()[:12]) * 365 / 12
+        dhi_annual = sum(props.get("ALLSKY_SFC_SW_DIF", {}).values()[:12]) * 365 / 12
+        temp = sum(props.get("T2M", {}).values()[:12]) / 12
+
+        resource_class, score = _classify_solar(ghi_annual)
+        optimal_tilt = abs(req.lat) * 0.76 + 3.1
+        peak_sun_hours = ghi_annual / 365
+
+        return SolarResourceResponse(
+            lat=req.lat,
+            lng=req.lng,
+            ghi=round(ghi_annual, 1),
+            dni=round(dni_annual, 1),
+            dhi=round(dhi_annual, 1),
+            peak_sun_hours=round(peak_sun_hours, 2),
+            optimal_tilt=round(optimal_tilt, 1),
+            avg_temperature=round(temp, 1),
+            resource_class=resource_class,
+            score=round(score, 1),
+            data_source=req.data_source,
+            monthly_ghi=[round(v * 30, 1) for v in ghi_monthly],
+        )
+    except Exception:
+        # Return stub when NASA API is unreachable
+        return SolarResourceResponse(
+            lat=req.lat,
+            lng=req.lng,
+            ghi=1450.0,
+            dni=1800.0,
+            dhi=400.0,
+            peak_sun_hours=3.97,
+            optimal_tilt=round(abs(req.lat) * 0.76 + 3.1, 1),
+            avg_temperature=15.0,
+            resource_class="II",
+            score=65.0,
+            data_source="nasa_power_stub",
+            monthly_ghi=[120.0] * 12,
+        )

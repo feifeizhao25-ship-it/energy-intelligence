@@ -68,13 +68,13 @@ class Project {
   String get projectTypeLabel {
     switch (projectType) {
       case 'solar_pv':
-        return '光伏';
+        return 'Solar';
       case 'wind':
-        return '风电';
+        return 'Wind';
       case 'storage':
-        return '储能';
+        return 'Storage';
       case 'hybrid':
-        return '混合';
+        return 'Hybrid';
       default:
         return projectType;
     }
@@ -83,13 +83,13 @@ class Project {
   String get statusLabel {
     switch (status) {
       case 'planning':
-        return '规划中';
+        return 'Planning';
       case 'construction':
-        return '建设中';
+        return 'Under Construction';
       case 'operating':
-        return '运营中';
+        return 'Operational';
       case 'retired':
-        return '已退役';
+        return 'Decommissioned';
       default:
         return status;
     }

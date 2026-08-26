@@ -18,7 +18,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.dependencies import get_current_user_id
 from app.core.subscription import assert_entitlement
-from app.models.database import Project, User
+from app.models.database import Project
+from app.models.user import User
 from app.models.report import Report
 
 router = APIRouter(prefix="/reports", tags=["定制报告"])

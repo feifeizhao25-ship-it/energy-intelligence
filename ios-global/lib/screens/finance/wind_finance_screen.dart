@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../widgets/bar_chart.dart';
+import '../../services/api_service.dart';
 
 class WindFinanceScreen extends StatefulWidget {
   const WindFinanceScreen({super.key});
@@ -10,295 +11,189 @@ class WindFinanceScreen extends StatefulWidget {
 
 class _WindFinanceScreenState extends State<WindFinanceScreen> {
   int _currentStep = 0;
-  final _capacityController = TextEditingController(text: '50');
-  final _capacityFactorController = TextEditingController(text: '0.28');
-  final _capexController = TextEditingController(text: '72000');
-  final _opexController = TextEditingController(text: '450');
-  final _electricityController = TextEditingController(text: '0.38');
-  bool _isCalculating = false;
-
+  final _capacityCtrl = TextEditingController(text: '100');
+  final _cfCtrl = TextEditingController(text: '0.30');
+  final _capexCtrl = TextEditingController(text: '1.4');
+  final _opexCtrl = TextEditingController(text: '35');
+  final _priceCtrl = TextEditingController(text: '45');
+  bool _isCalc = false;
   Map<String, dynamic>? _result;
 
   @override
   void dispose() {
-    _capacityController.dispose();
-    _capacityFactorController.dispose();
-    _capexController.dispose();
-    _opexController.dispose();
-    _electricityController.dispose();
+    _capacityCtrl.dispose();
+    _cfCtrl.dispose();
+    _capexCtrl.dispose();
+    _opexCtrl.dispose();
+    _priceCtrl.dispose();
     super.dispose();
   }
 
   void _calculate() async {
-    setState(() => _isCalculating = true);
-    await Future.delayed(Duration(milliseconds: 800));
-
-    final capacityMw = double.tryParse(_capacityController.text) ?? 50;
-    final cf = double.tryParse(_capacityFactorController.text) ?? 0.28;
-    final capex = double.tryParse(_capexController.text) ?? 72000;
-    final opex = double.tryParse(_opexController.text) ?? 450;
-    final price = double.tryParse(_electricityController.text) ?? 0.38;
-
-    final annualGenMwh = capacityMw * cf * 8760;
-    final annualRevenue = annualGenMwh * price * 10000;
-    final totalCapex = capex * capacityMw * 10000;
-    final annualOpex = opex * capacityMw * 10000;
-
-    // Newton-Raphson IRR (25-year lifecycle)
-    final cashflows = <double>[-totalCapex];
-    for (int y = 1; y <= 25; y++) {
-      final degradationFactor = 1.0 - 0.005 * (y - 1);
-      cashflows.add((annualRevenue * degradationFactor) - annualOpex);
+    setState(() => _isCalc = true);
+    try {
+      final capacity = double.parse(_capacityCtrl.text);
+      final factor = double.parse(_cfCtrl.text);
+      final response = await ApiService.calcWindFinance(
+        capacityMw: capacity,
+        capexPerKw: double.parse(_capexCtrl.text) * 1000,
+        opexPerKwYr: double.parse(_opexCtrl.text),
+        electricityPrice: double.parse(_priceCtrl.text),
+        windCapacityFactor: factor,
+      );
+      if (mounted)
+        setState(() {
+          _result = {
+            'irr': (response['irr'] as num).toDouble(),
+            'npv': (response['npv'] as num).toDouble() / 1e6,
+            'lcoe': (response['lcoe'] as num).toDouble(),
+            'annualGen': capacity * factor * 8760,
+            'payback': (response['payback_years'] as num).toDouble(),
+            'cashflows': ((response['cashflows'] as List?) ?? const [])
+                .take(10)
+                .map((v) => (v as num).toDouble() / 1e6)
+                .toList(),
+          };
+          _currentStep = 3;
+        });
+    } catch (error) {
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              error is ApiException
+                  ? error.message
+                  : 'Financial calculation is temporarily unavailable.',
+            ),
+          ),
+        );
+    } finally {
+      if (mounted) setState(() => _isCalc = false);
     }
-
-    double irr = 0.08;
-    for (int i = 0; i < 1000; i++) {
-      double npv = 0, dnpv = 0;
-      for (int t = 0; t < cashflows.length; t++) {
-        final disc = _pow(1 + irr, t);
-        npv += cashflows[t] / disc;
-        dnpv -= t * cashflows[t] / (disc * (1 + irr));
-      }
-      if (dnpv.abs() < 1e-10) break;
-      final newIrr = irr - npv / dnpv;
-      if ((newIrr - irr).abs() < 1e-7) {
-        irr = newIrr;
-        break;
-      }
-      irr = newIrr;
-    }
-
-    final npv8 = cashflows.fold<double>(0, (sum, cf) {
-      final t = cashflows.indexOf(cf);
-      return sum + cf / _pow(1.08, t);
-    });
-
-    final lcoe = (totalCapex + annualOpex * 25) / (annualGenMwh * 25);
-
-    setState(() {
-      _result = {
-        'irr': irr * 100,
-        'npv': npv8 / 1e4,
-        'lcoe': lcoe,
-        'annualGen': annualGenMwh,
-        'payback': totalCapex / (annualRevenue - annualOpex),
-        'cashflows': cashflows.sublist(1, 11).map((c) => c / 1e4).toList(),
-      };
-      _currentStep = 3;
-      _isCalculating = false;
-    });
-  }
-
-  double _pow(double base, int exp) {
-    double result = 1;
-    for (int i = 0; i < exp; i++) result *= base;
-    return result;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('风电财务分析'),
-        backgroundColor: const Color(0xFF1D4ED8),
-        foregroundColor: Colors.white,
+        title: const Text('Wind Finance'),
+        elevation: 0,
+        backgroundColor: Colors.white,
+        foregroundColor: const Color(0xFF1E293B),
       ),
+      backgroundColor: const Color(0xFFF8FAFC),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Step indicators
+            // Step progress
             Row(
-              children: ['基本参数', '电价设置', '分析结果'].asMap().entries.map((e) {
-                final active = _currentStep >= e.key;
-                return Expanded(
-                  child: Container(
-                    margin: EdgeInsets.symmetric(horizontal: 2),
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: active ? Color(0xFF1D4ED8) : Color(0xFFE2E8F0),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                );
-              }).toList(),
+              children: ['Project Specs', 'Pricing', 'Results']
+                  .asMap()
+                  .entries
+                  .map((e) {
+                    return Expanded(
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 2),
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: _currentStep >= e.key
+                              ? const Color(0xFF1D4ED8)
+                              : const Color(0xFFE2E8F0),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    );
+                  })
+                  .toList(),
             ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
 
-            // Input parameters
-            Text(
-              '装机容量 (MW)',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF0F172A),
-              ),
-            ),
-            SizedBox(height: 8),
-            TextField(
-              controller: _capacityController,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                contentPadding: EdgeInsets.all(12),
-                suffixText: 'MW',
-              ),
-            ),
-            SizedBox(height: 16),
-            Text(
-              '年利用小时数 (容量系数)',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF0F172A),
-              ),
-            ),
-            SizedBox(height: 8),
-            TextField(
-              controller: _capacityFactorController,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                contentPadding: EdgeInsets.all(12),
-                hintText: '如: 0.28 表示 28%',
-              ),
-            ),
-            SizedBox(height: 16),
-            Text(
-              '单位投资成本 (万元/MW)',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF0F172A),
-              ),
-            ),
-            SizedBox(height: 8),
-            TextField(
-              controller: _capexController,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                contentPadding: EdgeInsets.all(12),
-                suffixText: '万元/MW',
-              ),
-            ),
-            SizedBox(height: 16),
-            Text(
-              '年度运维成本 (万元/MW)',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF0F172A),
-              ),
-            ),
-            SizedBox(height: 8),
-            TextField(
-              controller: _opexController,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                contentPadding: EdgeInsets.all(12),
-                suffixText: '万元/MW',
-              ),
-            ),
-            SizedBox(height: 16),
-            Text(
-              '上网电价 (元/kWh)',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF0F172A),
-              ),
-            ),
-            SizedBox(height: 8),
-            TextField(
-              controller: _electricityController,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                contentPadding: EdgeInsets.all(12),
-                suffixText: '元/kWh',
-              ),
-            ),
-            SizedBox(height: 24),
+            _buildLabel('Capacity (MW)'),
+            _buildInput(_capacityCtrl, 'MW'),
+            const SizedBox(height: 14),
+
+            _buildLabel('Capacity Factor'),
+            _buildInput(_cfCtrl, 'e.g. 0.30 = 30%'),
+            const SizedBox(height: 14),
+
+            _buildLabel('CAPEX (USD/kW in thousands)'),
+            _buildInput(_capexCtrl, '\$/kW × 1000'),
+            const SizedBox(height: 14),
+
+            _buildLabel('OPEX (USD/kW/year)'),
+            _buildInput(_opexCtrl, '\$/kW/yr'),
+            const SizedBox(height: 14),
+
+            _buildLabel('Power Purchase Price (USD/MWh)'),
+            _buildInput(_priceCtrl, '\$/MWh'),
+            const SizedBox(height: 24),
 
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: _isCalculating
+                onPressed: _isCalc
                     ? null
                     : () {
                         setState(() => _currentStep = 1);
                         _calculate();
                       },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF1D4ED8),
+                  backgroundColor: const Color(0xFF1D4ED8),
                   foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(vertical: 16),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                child: _isCalculating
-                    ? Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
-                            ),
-                          ),
-                          SizedBox(width: 12),
-                          Text('计算中...'),
-                        ],
+                child: _isCalc
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
                       )
-                    : Text(
-                        '开始计算',
+                    : const Text(
+                        'Calculate',
                         style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
               ),
             ),
 
-            // Results
             if (_result != null) ...[
-              SizedBox(height: 32),
-              Text(
-                '财务分析结果',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 16),
-              _buildResultGrid(),
-              SizedBox(height: 24),
-              Text(
-                '未来10年现金流 (万元)',
+              const SizedBox(height: 28),
+              const Text(
+                'Results',
                 style: TextStyle(
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF0F172A),
                 ),
               ),
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
+              _buildResultGrid(),
+              const SizedBox(height: 20),
+              const Text(
+                '10-Year Cash Flow (USD M)',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+              const SizedBox(height: 10),
               SizedBox(
-                height: 200,
+                height: 180,
                 child: BarChart(
                   values: (_result!['cashflows'] as List<dynamic>)
-                      .map((e) => (e as double).toDouble())
-                      .toList(),
+                      .cast<double>(),
                   labels: List.generate(10, (i) => 'Y${i + 1}'),
-                  barColor: Color(0xFF06B6D4),
+                  barColor: const Color(0xFF7C3AED),
                 ),
               ),
             ],
@@ -308,77 +203,109 @@ class _WindFinanceScreenState extends State<WindFinanceScreen> {
     );
   }
 
+  Widget _buildLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFF374151),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInput(TextEditingController ctrl, String hint) {
+    return TextField(
+      controller: ctrl,
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 13),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 10,
+        ),
+        filled: true,
+        fillColor: Colors.white,
+      ),
+    );
+  }
+
   Widget _buildResultGrid() {
     final items = [
       {
-        'label': 'IRR (内部收益率)',
-        'value': '${_result!['irr'].toStringAsFixed(2)}%',
-        'color': Color(0xFF059669),
+        'label': 'IRR',
+        'value': '${(_result!['irr'] as double).toStringAsFixed(2)}%',
+        'color': const Color(0xFF059669),
       },
       {
-        'label': 'NPV (净现值 @8%)',
-        'value': '${(_result!['npv'] as double).toStringAsFixed(0)} 万元',
-        'color': Color(0xFF1D4ED8),
+        'label': 'NPV (8% discount)',
+        'value': '\$${(_result!['npv'] as double).toStringAsFixed(2)}M',
+        'color': const Color(0xFF1D4ED8),
       },
       {
-        'label': 'LCOE (度电成本)',
+        'label': 'LCOE',
         'value':
-            '${((_result!['lcoe'] as double) * 1000).toStringAsFixed(2)} 元/kWh',
-        'color': Color(0xFF7C3AED),
+            '\$${((_result!['lcoe'] as double) * 1000).toStringAsFixed(1)}/MWh',
+        'color': const Color(0xFF7C3AED),
       },
       {
-        'label': '回收期',
-        'value': '${(_result!['payback'] as double).toStringAsFixed(1)} 年',
-        'color': Color(0xFFEA580C),
+        'label': 'Payback Period',
+        'value': '${(_result!['payback'] as double).toStringAsFixed(1)} yrs',
+        'color': const Color(0xFFEA580C),
       },
       {
-        'label': '年发电量',
+        'label': 'Annual Generation',
         'value':
-            '${((_result!['annualGen'] as double) / 10000).toStringAsFixed(1)} 亿kWh',
-        'color': Color(0xFF0891B2),
+            '${((_result!['annualGen'] as double) / 1000).toStringAsFixed(1)} GWh',
+        'color': const Color(0xFF0891B2),
       },
     ];
 
     return GridView.count(
       crossAxisCount: 2,
       shrinkWrap: true,
-      physics: NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 12,
-      crossAxisSpacing: 12,
-      childAspectRatio: 1.8,
-      children: items
-          .map(
-            (item) => Container(
-              padding: EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: (item['color'] as Color).withValues(alpha: 0.08),
-                border: Border.all(
-                  color: (item['color'] as Color).withValues(alpha: 0.3),
+      physics: const NeverScrollableScrollPhysics(),
+      mainAxisSpacing: 10,
+      crossAxisSpacing: 10,
+      childAspectRatio: 1.9,
+      children: items.map((item) {
+        final color = item['color'] as Color;
+        return Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.07),
+            border: Border.all(color: color.withValues(alpha: 0.25)),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                item['label'] as String,
+                style: const TextStyle(fontSize: 10, color: Color(0xFF64748B)),
+              ),
+              const SizedBox(height: 5),
+              Text(
+                item['value'] as String,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: color,
                 ),
-                borderRadius: BorderRadius.circular(12),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    item['label'] as String,
-                    style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
-                  ),
-                  SizedBox(height: 6),
-                  Text(
-                    item['value'] as String,
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: item['color'] as Color,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          )
-          .toList(),
+            ],
+          ),
+        );
+      }).toList(),
     );
   }
 }

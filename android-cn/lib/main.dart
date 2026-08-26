@@ -37,7 +37,7 @@ class NewEnergyApp extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      supportedLocales: const [Locale('zh', 'CN'), Locale('en', 'US')],
+      supportedLocales: const [Locale('zh', 'CN')],
       debugShowCheckedModeBanner: false,
       initialRoute: '/login',
       routes: {

@@ -1,0 +1,104 @@
+name: Quality Gate
+
+permissions:
+  contents: read
+
+on:
+  pull_request:
+    branches: [main, develop]
+    types: [opened, synchronize, reopened]
+
+jobs:
+  # 代码覆盖率门禁
+  coverage-gate:
+    name: Coverage Gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install -r runtime/backend/requirements.txt
+          pip install pytest pytest-asyncio pytest-cov
+      
+      - name: Run tests with coverage
+        working-directory: runtime/backend
+        # Current measured baseline is 56.54%; fail on regression and ratchet upward as tests land.
+        run: pytest tests --cov=app --cov-report=json:coverage.json --cov-fail-under=55
+      
+      - name: Check coverage thresholds
+        run: |
+          # 解析覆盖率报告
+          COVERAGE=$(jq '.totals.percent_covered' runtime/backend/coverage.json)
+          echo "Total coverage: $COVERAGE%"
+          
+          if (( $(echo "$COVERAGE < 55" | bc -l) )); then
+            echo "❌ Coverage $COVERAGE% is below the measured 55% baseline"
+            exit 1
+          fi
+          
+          echo "✅ Coverage check passed!"
+      
+
+  # 代码复杂度检查
+  complexity-gate:
+    name: Complexity Gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install complexity-check
+        run: npm install -g complexity-report
+      
+      - name: Check code complexity
+        run: |
+          # 检查函数复杂度
+          find apps/api/src -name "*.ts" -not -path "*/node_modules/*" -not -path "*/__tests__/*" | \
+          while read file; do
+            complexity=$(npx ts-complexity "$file" 2>/dev/null | jq '.average.complexity' || echo "0")
+            if (( $(echo "$complexity > 10" | bc -l) )); then
+              echo "⚠️ High complexity in $file: $complexity"
+            fi
+          done
+
+  # 重复代码检查
+  duplication-gate:
+    name: Duplication Gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install jscpd
+        run: npm install -g jscpd
+      
+      - name: Check for code duplication
+        run: |
+          jscpd --threshold 3 --reporters console,json --output reports/jscpd \
+            apps/api/src packages/*/src
+          
+          # 检查重复率
+          if [ -f reports/jscpd/jscpd-report.json ]; then
+            duplication=$(cat reports/jscpd/jscpd-report.json | jq '.statistics.total.percentage')
+            echo "Code duplication: ${duplication}%"
+            
+            if (( $(echo "$duplication > 3" | bc -l) )); then
+              echo "❌ Code duplication ${duplication}% exceeds threshold of 3%"
+              exit 1
+            fi
+          fi

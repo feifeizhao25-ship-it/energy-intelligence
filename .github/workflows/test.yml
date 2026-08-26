@@ -1,0 +1,121 @@
+name: Tests
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        pip install -r runtime/backend/requirements.txt
+        pip install pytest pytest-asyncio pytest-cov
+
+    - name: Run unit tests
+      run: |
+        cd runtime/backend && pytest tests -v --cov=app --cov-report=xml
+      env:
+        DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/test
+        REDIS_URL: redis://localhost:6379/0
+
+    - name: Upload coverage
+      uses: codecov/codecov-action@v4
+      with:
+        file: ./runtime/backend/coverage.xml
+
+  integration-tests:
+    runs-on: ubuntu-latest
+    needs: unit-tests
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        pip install -r runtime/backend/requirements.txt
+        pip install pytest pytest-asyncio
+
+    - name: Run integration tests
+      run: |
+        cd runtime/backend
+        pytest -v \
+          tests/test_production_fail_closed_external_services.py \
+          tests/test_operations_production_safety.py \
+          tests/test_evidence_envelope.py
+
+  e2e-tests:
+    runs-on: ubuntu-latest
+    needs: integration-tests
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v2
+      with:
+        version: 8
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+        cache: 'pnpm'
+
+    - name: Install dependencies
+      run: pnpm install --frozen-lockfile
+
+    - name: Install CN web dependencies
+      working-directory: runtime/web
+      run: npm ci
+
+    - name: Install Playwright
+      run: pnpm exec playwright install --with-deps chromium
+
+    - name: Run E2E tests
+      run: pnpm exec playwright test
+
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: playwright-report
+        path: playwright-report/

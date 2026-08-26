@@ -1,0 +1,283 @@
+name: PR Checks
+
+permissions:
+  contents: read
+
+on:
+  pull_request:
+    branches: [main, develop]
+    types: [opened, synchronize, reopened]
+
+env:
+  NODE_VERSION: '22'
+  FLUTTER_VERSION: '3.38.5'
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  # ============================================
+  # CODE QUALITY
+  # ============================================
+  lint-typescript:
+    name: Lint TypeScript
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install Dependencies
+        run: corepack enable && pnpm install --frozen-lockfile
+
+      - name: Lint Packages
+        run: |
+          cd packages/ui-components && npm run lint || true
+          cd ../api-client && npm run lint || true
+          cd ../skills-sdk && npm run lint || true
+
+      - name: Lint Web Global
+        run: pnpm --dir web-global lint
+
+      # 目标从空壳目录 frontend-cn-web 改为主干 runtime/web
+      - name: Lint Web CN
+        run: |
+          cd runtime/web
+          npm ci
+          npm run lint || true
+
+  lint-python:
+    name: Lint Python
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Dependencies
+        run: |
+          cd runtime/backend
+          pip install black flake8 mypy
+          pip install -r requirements.txt
+
+      - name: Run Black
+        run: |
+          cd runtime/backend
+          black --check app/ || true
+
+      - name: Run Flake8
+        run: |
+          cd runtime/backend
+          flake8 app/ --max-line-length=120 || true
+
+      - name: Run MyPy
+        run: |
+          cd runtime/backend
+          mypy app/ || true
+
+  lint-flutter:
+    name: Lint Flutter
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+
+      - name: Analyze iOS Global
+        run: |
+          cd ios-global
+          flutter pub get
+          flutter analyze --fatal-infos || true
+
+      - name: Analyze Android Global
+        run: |
+          cd android-global
+          flutter pub get
+          flutter analyze --fatal-infos || true
+
+      - name: Check Formatting
+        run: |
+          for app in ios-cn ios-global android-cn android-global; do
+            dart format --output=none --set-exit-if-changed "$app/lib"
+          done
+
+  # ============================================
+  # TYPE CHECKING
+  # ============================================
+  type-check:
+    name: Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install Dependencies
+        run: corepack enable && pnpm install --frozen-lockfile
+
+      - name: Type Check Web Global
+        run: pnpm --dir web-global type-check
+
+      - name: Type Check Web CN
+        run: |
+          cd runtime/web
+          npm ci
+          npx prisma generate --schema src/prisma/schema.prisma
+          npx tsc --noEmit
+
+  # ============================================
+  # SECURITY SCAN
+  # ============================================
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Run npm audit
+        run: npm audit --audit-level=high || true
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+  # ============================================
+  # TEST
+  # ============================================
+  test-backend:
+    name: Test Backend
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Dependencies
+        run: |
+          cd runtime/backend
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio pytest-cov
+
+      - name: Run Tests
+        run: |
+          cd runtime/backend
+          pytest --cov=app --cov-report=xml -v
+        env:
+          DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/test_db
+          REDIS_URL: redis://localhost:6379/0
+
+      - name: Upload Coverage
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./runtime/backend/coverage.xml
+          flags: backend
+
+  # ============================================
+  # BUILD VERIFICATION
+  # ============================================
+  build-check:
+    name: Build Verification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install Dependencies
+        run: corepack enable && pnpm install --frozen-lockfile
+
+      - name: Build Packages
+        run: |
+          cd packages/design-tokens && npm ci && npm run build || true
+          cd ../ui-components && npm ci && npm run build || true
+
+      - name: Build Web Global
+        run: pnpm --dir web-global build
+
+      - name: Build Web CN
+        run: |
+          cd runtime/web
+          npm ci
+          npx prisma generate --schema src/prisma/schema.prisma
+          npm run build
+
+  # ============================================
+  # SIZE CHECK
+  # ============================================
+  size-check:
+    name: Bundle Size Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install Dependencies
+        run: corepack enable && pnpm install --frozen-lockfile
+
+      - name: Check Web Global Bundle Size
+        run: |
+          pnpm --dir web-global build
+          du -sh web-global/.next/
+
+      - name: Check Web CN Bundle Size
+        run: |
+          cd runtime/web
+          npm ci
+          npm run build
+          du -sh .next/

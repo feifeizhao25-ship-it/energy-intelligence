@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dart:math' as math;
+import '../../services/api_service.dart';
 
 class CleaningScreen extends StatefulWidget {
   const CleaningScreen({super.key});
@@ -25,43 +25,36 @@ class _CleaningScreenState extends State<CleaningScreen> {
 
   void _calculate() async {
     setState(() => _isCalculating = true);
-    await Future.delayed(Duration(milliseconds: 500));
-
-    final s = double.tryParse(_soilingRateController.text) ?? 0.003; // 日积灰率
-    final C = double.tryParse(_cleaningCostController.text) ?? 8000; // 单次清洗成本 元
-    final rs = double.tryParse(_revenueController.text) ?? 120000; // 日发电收益 元
-
-    // Optimal cleaning interval: N* = sqrt(2C / (Rs × s))
-    final nStar = math.sqrt(2 * C / (rs * s));
-    final nOptimal = nStar.round().clamp(1, 365);
-
-    // Annual loss with optimal schedule
-    final dailyLoss = rs * s;
-    final lossBetweenCleans = dailyLoss * nOptimal * (nOptimal + 1) / 2;
-    final cleaningsPerYear = (365 / nOptimal).floor();
-    final annualCleaningCost = cleaningsPerYear * C;
-    final annualLoss = cleaningsPerYear * lossBetweenCleans;
-
-    // Compare with fixed schedules
-    final scenarios = {7, 14, 30, nOptimal}.toList()..sort();
-    final scenarioResults = scenarios.map((n) {
-      final lossN = (365 / n).floor() * dailyLoss * n * (n + 1) / 2;
-      final costN = (365 / n).floor() * C.toDouble();
-      return {'days': n, 'total': lossN + costN};
-    }).toList();
-
-    setState(() {
-      _result = {
-        'nOptimal': nOptimal,
-        'nStar': nStar,
-        'cleaningsPerYear': cleaningsPerYear,
-        'annualCleaningCost': annualCleaningCost,
-        'annualLoss': annualLoss,
-        'totalAnnualCost': annualCleaningCost + annualLoss,
-        'scenarios': scenarioResults,
-      };
-      _isCalculating = false;
-    });
+    try {
+      final response = await ApiService.calculateCleaningSchedule(
+        cleaningCost: double.parse(_cleaningCostController.text),
+        dailyRevenue: double.parse(_revenueController.text),
+        soilingRateFractionPerDay: double.parse(_soilingRateController.text),
+      );
+      if (!mounted) return;
+      setState(() {
+        _result = {
+          'nOptimal': response['optimal_interval_days'],
+          'nStar': (response['theoretical_interval_days'] as num).toDouble(),
+          'cleaningsPerYear': response['annual_cleanings'],
+          'annualCleaningCost': (response['annual_cleaning_cost'] as num)
+              .toDouble(),
+          'annualLoss': (response['annual_soiling_loss'] as num).toDouble(),
+          'totalAnnualCost': (response['total_annual_cost'] as num).toDouble(),
+          'modelVersion': response['model_version'],
+          'scenarios': response['scenarios'] ?? const <Map<String, dynamic>>[],
+        };
+      });
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error is ApiException ? error.message : '清洗优化服务暂时不可用'),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isCalculating = false);
+    }
   }
 
   @override

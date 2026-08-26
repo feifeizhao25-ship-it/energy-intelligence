@@ -26,7 +26,8 @@ def export_user_data(self, user_id: str, user_email: str):
     GDPR Right of Access — compile all user data and send export email.
     Runs asynchronously via Celery.
     """
-    from app.models.database import User, Project, ResourceAssessment, FinancialModel, ConsentRecord
+    from app.models.database import Project, ResourceAssessment, FinancialModel, ConsentRecord
+    from app.models.user import User
     from sqlalchemy import select
 
     session = _get_sync_db_session()
@@ -111,7 +112,8 @@ def delete_user_account(self, user_id: str):
     GDPR Right to Erasure — permanently delete user account and all data.
     Scheduled to run after 30-day grace period via Celery eta.
     """
-    from app.models.database import User, Project, ResourceAssessment, FinancialModel, ConsentRecord
+    from app.models.database import Project, ResourceAssessment, FinancialModel, ConsentRecord
+    from app.models.user import User
     from sqlalchemy import delete
 
     session = _get_sync_db_session()

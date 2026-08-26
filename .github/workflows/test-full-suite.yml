@@ -1,0 +1,132 @@
+name: Full Test Suite
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 2 * * 1-5'  # 工作日早 2 点
+
+jobs:
+  backend-tests:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: energy_intelligence_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: |
+          cd runtime/backend
+          pip install -r requirements.txt pytest-cov
+      - name: Run backend tests
+        env:
+          TEST_DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/energy_intelligence_test
+          SUPERUSER_DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/energy_intelligence_test
+        run: |
+          cd runtime/backend
+          pytest tests/ -v --cov=app --cov-report=xml --junitxml=junit.xml
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./runtime/backend/coverage.xml
+          fail_ci_if_error: false
+
+  e2e-tests:
+    name: E2E Tests (Playwright)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies
+        run: corepack enable && pnpm install --frozen-lockfile
+      - name: Install CN web dependencies
+        working-directory: runtime/web
+        run: npm ci
+      - name: Install Playwright
+        run: npx playwright install chromium
+      - name: Run E2E tests
+        run: npx playwright test --reporter=list
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+
+  contract-tests:
+    name: API Contract Tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: energy_intelligence_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: |
+          cd runtime/backend
+          pip install -r requirements.txt
+      - name: Run contract tests
+        env:
+          TEST_DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/energy_intelligence_test
+          SUPERUSER_DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/energy_intelligence_test
+        run: |
+          cd runtime/backend
+          pytest tests/test_api.py tests/test_auth.py tests/test_entitlements_api.py tests/test_stripe_checkout_safety.py -v
+
+  test-report:
+    name: Generate Test Report
+    needs: [backend-tests, e2e-tests, contract-tests]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Summarize Results
+        run: |
+          echo "## 新能源智库测试报告 $(date)" > test-report.md
+          echo "| 模块 | 状态 |" >> test-report.md
+          echo "|------|------|" >> test-report.md
+          echo "| Backend | ${{ needs.backend-tests.result == 'success' && '✅' || '❌' }} |" >> test-report.md
+          echo "| E2E | ${{ needs.e2e-tests.result == 'success' && '✅' || '❌' }} |" >> test-report.md
+          echo "| Contract | ${{ needs.contract-tests.result == 'success' && '✅' || '❌' }} |" >> test-report.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: test-report.md

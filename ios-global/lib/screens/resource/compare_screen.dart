@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/api_service.dart';
 
 class CompareScreen extends StatefulWidget {
   const CompareScreen({super.key});
@@ -8,10 +9,7 @@ class CompareScreen extends StatefulWidget {
 }
 
 class _CompareScreenState extends State<CompareScreen> {
-  final List<Map<String, dynamic>> _sites = [
-    {'name': 'Mojave, CA', 'lat': '35.05', 'lon': '-116.27'},
-    {'name': 'Riyadh, SA', 'lat': '24.68', 'lon': '46.72'},
-  ];
+  final List<Map<String, dynamic>> _sites = [];
   bool _isComparing = false;
   List<Map<String, dynamic>>? _results;
 
@@ -56,67 +54,41 @@ class _CompareScreenState extends State<CompareScreen> {
       _isComparing = true;
       _results = null;
     });
-    await Future.delayed(const Duration(milliseconds: 1000));
-
-    // Deterministic mock data keyed by index
-    final mock = [
-      {
-        'ghi': 2285.4,
-        'solarClass': 'I',
-        'solarScore': 96,
-        'wpd': 182.3,
-        'windClass': 'III',
-      },
-      {
-        'ghi': 2198.7,
-        'solarClass': 'I',
-        'solarScore': 94,
-        'wpd': 145.6,
-        'windClass': 'IV',
-      },
-      {
-        'ghi': 1876.2,
-        'solarClass': 'II',
-        'solarScore': 83,
-        'wpd': 312.4,
-        'windClass': 'II',
-      },
-      {
-        'ghi': 1654.9,
-        'solarClass': 'II',
-        'solarScore': 76,
-        'wpd': 445.8,
-        'windClass': 'I',
-      },
-      {
-        'ghi': 1342.6,
-        'solarClass': 'III',
-        'solarScore': 64,
-        'wpd': 267.3,
-        'windClass': 'III',
-      },
-    ];
-
-    setState(() {
-      _results =
-          _sites.asMap().entries.map((e) {
-            final m = mock[e.key % mock.length];
-            return {
-              'name': e.value['name'],
-              'lat': e.value['lat'],
-              'lon': e.value['lon'],
-              'ghi': m['ghi'],
-              'solarClass': m['solarClass'],
-              'solarScore': m['solarScore'],
-              'wpd': m['wpd'],
-              'windClass': m['windClass'],
-            };
-          }).toList()..sort(
-            (a, b) =>
-                (b['solarScore'] as int).compareTo(a['solarScore'] as int),
-          );
-      _isComparing = false;
-    });
+    try {
+      final rows = await Future.wait(
+        _sites.map((site) async {
+          final lat = double.parse(site['lat'] as String);
+          final lon = double.parse(site['lon'] as String);
+          final data = await Future.wait([
+            ApiService.getSolarResource(lat, lon),
+            ApiService.getWindResource(lat, lon),
+          ]);
+          return {
+            'name': site['name'],
+            'lat': site['lat'],
+            'lon': site['lon'],
+            'ghi': data[0]['ghi'],
+            'solarClass': data[0]['resource_class'],
+            'solarScore': data[0]['score'],
+            'wpd': data[1]['wind_power_density'],
+            'windClass': data[1]['resource_class'],
+          };
+        }),
+      );
+      rows.sort(
+        (a, b) => (b['solarScore'] as num).compareTo(a['solarScore'] as num),
+      );
+      if (mounted) setState(() => _results = rows);
+    } catch (_) {
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Verified resource data is temporarily unavailable.'),
+          ),
+        );
+    } finally {
+      if (mounted) setState(() => _isComparing = false);
+    }
   }
 
   Color _classColor(String cls) {

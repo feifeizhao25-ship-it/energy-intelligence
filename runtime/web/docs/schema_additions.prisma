@@ -1,0 +1,75 @@
+
+// ==================== API 开发者相关模型 ====================
+
+// API密钥表
+model ApiKey {
+  id          String    @id @default(cuid())
+  userId      String
+  name        String
+  key         String    @unique
+  permissions Json      // ['solar:calculate', 'wind:calculate', etc.]
+  rateLimit   Int       @default(10000)  // 每月调用限制
+  usageCount  Int       @default(0)      // 当前月使用次数
+  lastUsedAt  DateTime?
+  expiresAt   DateTime?
+  status      String    @default("active") // active/disabled/expired
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  // 关联关系
+  user   User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  usage  ApiUsage[]
+  
+  @@index([userId])
+  @@index([status])
+  @@map("api_keys")
+}
+
+// API使用记录表
+model ApiUsage {
+  id           String   @id @default(cuid())
+  apiKeyId     String
+  userId       String
+  projectId    String?   // 关联项目（如果适用）
+  endpoint     String    // '/v1/solar/calculate'
+  method       String    // 'POST'
+  statusCode   Int
+  responseTime Int       // 响应时间(ms)
+  metadata     Json?     // 请求元数据
+  createdAt    DateTime  @default(now())
+  
+  // 关联关系
+  apiKey  ApiKey   @relation(fields: [apiKeyId], references: [id], onDelete: Cascade)
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  
+  @@index([userId, createdAt])
+  @@index([apiKeyId, createdAt])
+  @@index([projectId])
+  @@map("api_usage")
+}
+
+// ==================== 文献项目关联模型 ====================
+
+// 项目文献推荐表
+model ProjectPaperRecommendation {
+  id          String   @id @default(cuid())
+  projectId   String
+  paperId     String   // Semantic Scholar paper ID
+  title       String
+  authors     String[]
+  abstract    String?  @db.Text
+  year        Int?
+  reason      String   @db.Text  // AI推荐理由
+  score       Float              // 推荐分数 (0-1)
+  status      String   @default("pending") // pending/accepted/dismissed
+  createdAt   DateTime @default(now())
+  
+  // 关联关系
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  @@unique([projectId, paperId])
+  @@index([projectId, score])
+  @@index([status])
+  @@map("project_paper_recommendations")
+}

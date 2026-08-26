@@ -1,16 +1,32 @@
 __pycache__/
 *.pyc
 .venv/
+venv/
+# runtime/backend/.runtime-venv 是实际存在的虚拟环境目录，
+# 上面两条规则匹配不到它，会把整个 site-packages 提交进仓库
+.runtime-venv/
+*-venv/
+.tox/
+
+# ── 环境变量：只允许 .env.example 入库 ──
+# 注意：此前只忽略了 .env，导致 web-frontend/.env.local
+# （含 Supabase service_role、数据库明文密码、多个 AI API key）被提交。
 .env
 .env.*
 !.env.example
+!.env.sample
+!.env.template
 !.env.production.example
+!**/.env.production.example
+
 *.db
 *.sqlite
+*.sqlite3
 node_modules/
 web-global/out/
 .next/
-*.tsbuildinfo
+out/
+.turbo/
 android-cn/build/
 android-cn/.dart_tool/
 android-cn/.gradle/
@@ -23,4 +39,12 @@ android-global/.dart_tool/
 ios-global/build/
 ios-global/Pods/
 .DS_Store
-._*
+coverage/
+dist/
+*.log
+.flutter-plugins-dependencies
+.dart_tool/
+local.properties
+tmp/
+*.tsbuildinfo
+**/android/build/

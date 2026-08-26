@@ -9,24 +9,22 @@ plugins {
 }
 
 android {
-    namespace = "com.energy.cn"
+    namespace = "com.example.energy_app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
-        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlin {
-        compilerOptions {
-            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
-        }
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_17.toString()
     }
 
     defaultConfig {
-        applicationId = "com.energy.cn"
+        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
+        applicationId = "cn.xinnengyuan.app"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
@@ -35,21 +33,18 @@ android {
         versionName = flutter.versionName
     }
 
-    // Release signing via android/key.properties (never commit that file):
-    //   storeFile=release.keystore
-    //   storePassword=...
-    //   keyAlias=...
-    //   keyPassword=...
     val keystoreProperties = Properties()
     val keystorePropertiesFile = rootProject.file("key.properties")
-    val allowDebugReleaseSigning =
-        System.getenv("ALLOW_DEBUG_RELEASE_SIGNING") == "true"
+    val isReleaseBuild = gradle.startParameter.taskNames.any {
+        it.lowercase().contains("release")
+    }
+    val allowDebugReleaseSigning = System.getenv("ALLOW_DEBUG_RELEASE_SIGNING") == "true"
     if (keystorePropertiesFile.exists()) {
         keystoreProperties.load(FileInputStream(keystorePropertiesFile))
-    } else if (!allowDebugReleaseSigning) {
+    } else if (isReleaseBuild && !allowDebugReleaseSigning) {
         throw GradleException(
             "Release keystore is required. Add android/key.properties or set " +
-                "ALLOW_DEBUG_RELEASE_SIGNING=true for CI smoke builds only."
+                "ALLOW_DEBUG_RELEASE_SIGNING=true for CI smoke builds only.",
         )
     }
 
@@ -68,15 +63,13 @@ android {
         release {
             signingConfig = if (keystorePropertiesFile.exists()) {
                 signingConfigs.getByName("release")
-            } else {
+            } else if (allowDebugReleaseSigning) {
                 signingConfigs.getByName("debug")
+            } else {
+                null
             }
         }
     }
-}
-
-dependencies {
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }
 
 flutter {

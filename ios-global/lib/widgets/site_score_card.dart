@@ -25,7 +25,7 @@ class SiteScoreCard extends StatelessWidget {
         child: Column(
           children: [
             Text(
-              '资源评估指数',
+              'Resource Assessment Index',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -54,7 +54,7 @@ class SiteScoreCard extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      '级别 $grade',
+                      'Grade $grade',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,

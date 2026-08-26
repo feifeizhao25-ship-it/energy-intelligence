@@ -68,7 +68,7 @@ class Project {
   String get projectTypeLabel {
     switch (projectType) {
       case 'solar_pv':
-        return 'Solar PV';
+        return 'Solar';
       case 'wind':
         return 'Wind';
       case 'storage':
@@ -85,11 +85,11 @@ class Project {
       case 'planning':
         return 'Planning';
       case 'construction':
-        return 'Under construction';
+        return 'Under Construction';
       case 'operating':
-        return 'Operating';
+        return 'Operational';
       case 'retired':
-        return 'Retired';
+        return 'Decommissioned';
       default:
         return status;
     }

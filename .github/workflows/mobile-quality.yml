@@ -1,0 +1,54 @@
+name: Mobile Quality
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'android-cn/**'
+      - 'ios-cn/**'
+      - 'android-global/**'
+      - 'ios-global/**'
+      - 'scripts/verify_language_isolation.py'
+      - '.github/workflows/mobile-quality.yml'
+  pull_request:
+    paths:
+      - 'android-cn/**'
+      - 'ios-cn/**'
+      - 'android-global/**'
+      - 'ios-global/**'
+      - 'scripts/verify_language_isolation.py'
+
+jobs:
+  language:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 scripts/verify_language_isolation.py
+
+  flutter:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        edition: [android-cn, ios-cn, android-global, ios-global]
+    defaults:
+      run:
+        working-directory: ${{ matrix.edition }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.38.5'
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter analyze --no-fatal-infos --no-fatal-warnings
+      - run: flutter test --no-pub
+      - name: Build Android release smoke artifact
+        if: startsWith(matrix.edition, 'android-')
+        env:
+          ALLOW_DEBUG_RELEASE_SIGNING: "true"
+        run: flutter build apk --release --no-pub

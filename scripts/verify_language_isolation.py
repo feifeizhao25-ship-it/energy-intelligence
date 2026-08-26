@@ -2,10 +2,17 @@
 """语言隔离 CI 校验 — 项目-新能源智库
 
 规则:
-- 国际版 web-global/src: .ts/.tsx/.js/.jsx 中 JSX 文本节点与用户可见字符串
+- 国际版: .ts/.tsx/.js/.jsx 中 JSX 文本节点与用户可见字符串
   不得出现 CJK 字符([一-鿿])。
-- 国内版 frontend-cn-web/src: JSX 文本节点中不得出现长篇英文
+- 国内版: JSX 文本节点中不得出现长篇英文
   (连续 >= 5 个自然语言英文单词;品牌名/技术词/变量插值不计)。
+
+⚠️ 2026-08-18 更正:原先检查的是 frontend-cn-web/src 与 web-global/src,
+   而 runtime/docker-compose.production.yml 实际部署的是 runtime/web(53 页)
+   与 runtime/web-int(3 页)。frontend-cn-web 只有 0 个页面(空壳),
+   web-global 根本没有被部署 —— 也就是说这个检查一直跑在没上线的代码上,
+   真正面向用户的 374 个文件从未被检查过。
+   现改为扫描全部候选目录,存在即检查。
 
 豁免:
 - i18n / locales 语言包目录
@@ -30,14 +37,24 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 
-INTL_SRC = ROOT / "web-global" / "src"
-CN_SRC = ROOT / "frontend-cn-web" / "src"
+# 生产部署的前端在 runtime/ 下(见 runtime/docker-compose.production.yml);
+# web-global / frontend-cn-web 是历史目录,保留检查以防回流。
+INTL_SRCS = [
+    ROOT / "runtime" / "web-int" / "src",
+    ROOT / "web-global" / "src",
+    ROOT / "android-global" / "lib",
+    ROOT / "ios-global" / "lib",
+]
+CN_SRCS = [
+    ROOT / "runtime" / "web" / "src",
+    ROOT / "frontend-cn-web" / "src",
+]
 ALLOWLIST_FILE = ROOT / "scripts" / "language_isolation.allowlist"
 
-SOURCE_EXTS = {".ts", ".tsx", ".js", ".jsx"}
+SOURCE_EXTS = {".ts", ".tsx", ".js", ".jsx", ".dart"}
 JSX_EXTS = {".tsx", ".jsx"}
 
-SKIP_DIR_NAMES = {"node_modules", ".next", "dist", "build", "__tests__", "i18n", "locales"}
+SKIP_DIR_NAMES = {"node_modules", ".next", "dist", "build", "__tests__", "i18n", "l10n", "locales"}
 CJK_RE = re.compile(r"[一-鿿]")
 
 # import 路径豁免:剥掉模块说明符后再查 CJK
@@ -249,8 +266,19 @@ def check_cn(src_dir: Path, allowlist: set[str]) -> list[str]:
 def main() -> int:
     allowlist = load_allowlist()
     violations: list[str] = []
-    violations += check_intl(INTL_SRC, allowlist)
-    violations += check_cn(CN_SRC, allowlist)
+    checked: list[str] = []
+    for src in INTL_SRCS:
+        if src.is_dir():
+            checked.append(src.relative_to(ROOT).as_posix())
+            violations += check_intl(src, allowlist)
+    for src in CN_SRCS:
+        if src.is_dir():
+            checked.append(src.relative_to(ROOT).as_posix())
+            violations += check_cn(src, allowlist)
+
+    if not checked:
+        print("语言隔离检查失败:没有找到任何前端源码目录")
+        return 1
 
     if violations:
         print(f"语言隔离检查失败: {len(violations)} 条违规")
@@ -260,7 +288,9 @@ def main() -> int:
         print("修复:国际版文案改为英文,国内版文案改为中文;")
         print(f"确需豁免的待办项写入 {ALLOWLIST_FILE.relative_to(ROOT)}")
         return 1
-    print("language isolation check passed (web-global 无 CJK, frontend-cn-web 无长篇英文)")
+    print("语言隔离检查通过。已检查目录:")
+    for c in checked:
+        print(f"  - {c}")
     return 0
 
 

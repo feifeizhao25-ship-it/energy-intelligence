@@ -1,4 +1,4 @@
-# energy_cn
+# energy_app
 
 A new Flutter project.
 

@@ -1,0 +1,84 @@
+name: Runtime Production Images
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'runtime/**'
+      - '.github/workflows/runtime-production.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Backend tests
+        working-directory: runtime/backend
+        run: |
+          pip install -r requirements.txt
+          python -m pytest tests -q --disable-warnings
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: |
+            runtime/web/package-lock.json
+            runtime/web-int/package-lock.json
+      - name: Build domestic web
+        working-directory: runtime/web
+        run: npm ci && npm run build
+      - name: Build international web
+        working-directory: runtime/web-int
+        run: npm ci && npm run build
+      - name: Validate production Compose contract
+        run: python scripts/verify_compose_production.py
+
+  publish:
+    needs: verify
+    runs-on: ubuntu-latest
+    # checkov:skip=CKV2_GHA_1: package publishing requires only packages:write; all other scopes remain read-only.
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        include:
+          - context: runtime/backend
+            image: energy-api
+          - context: runtime/web
+            image: energy-web-cn
+          - context: runtime/web-int
+            image: energy-web-int
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.image }}
+          tags: |
+            type=sha
+            type=raw,value=latest,enable={{is_default_branch}}
+      - uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

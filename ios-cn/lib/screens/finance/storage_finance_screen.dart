@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../widgets/bar_chart.dart';
+import '../../services/api_service.dart';
 
 class StorageFinanceScreen extends StatefulWidget {
   const StorageFinanceScreen({super.key});
@@ -31,68 +32,41 @@ class _StorageFinanceScreenState extends State<StorageFinanceScreen> {
 
   void _calculate() async {
     setState(() => _isCalculating = true);
-    await Future.delayed(Duration(milliseconds: 600));
-
-    final powerMw = double.tryParse(_powerController.text) ?? 100;
-    final capacityMwh = double.tryParse(_capacityController.text) ?? 200;
-    final cycles = double.tryParse(_cyclesController.text) ?? 300;
-    final peakPrice = double.tryParse(_peakPriceController.text) ?? 0.85;
-    final valleyPrice = double.tryParse(_valleyPriceController.text) ?? 0.28;
-    final capexPerKwh = double.tryParse(_capexController.text) ?? 150;
-
-    final spread = peakPrice - valleyPrice; // 峰谷差价
-    final roundtripEff = 0.88;
-    final annualRevenue = capacityMwh * cycles * spread * roundtripEff * 10000;
-    final totalCapex = capacityMwh * capexPerKwh * 10000 * 10; // 元
-    final annualOpex = totalCapex * 0.02;
-
-    // 10-year cashflows with capacity degradation
-    final cashflows = <double>[-totalCapex];
-    for (int y = 1; y <= 10; y++) {
-      final degradation = 1.0 - 0.025 * (y - 1); // 2.5%/yr
-      cashflows.add(annualRevenue * degradation - annualOpex);
+    try {
+      final response = await ApiService.calcStorageFinance(
+        powerMw: double.parse(_powerController.text),
+        capacityMwh: double.parse(_capacityController.text),
+        cyclesPerYear: double.parse(_cyclesController.text),
+        peakPricePerMwh: double.parse(_peakPriceController.text) * 1000,
+        offpeakPricePerMwh: double.parse(_valleyPriceController.text) * 1000,
+        capexPerKwh: double.parse(_capexController.text) * 10,
+      );
+      if (!mounted) return;
+      setState(() {
+        _result = {
+          'irr': (response['irr'] as num).toDouble(),
+          'annualRevenue':
+              (response['annual_revenue'] as num).toDouble() / 10000,
+          'annualArbitrage': (response['annual_discharged_mwh'] as num)
+              .toDouble(),
+          'payback': (response['payback_years'] as num).toDouble(),
+          'totalCapex': (response['total_capex'] as num).toDouble() / 10000,
+          'cashflows': ((response['cashflows'] as List?) ?? const [])
+              .map((value) => (value as num).toDouble() / 10000)
+              .toList(),
+          'assumptionVersion': response['assumption_version'],
+        };
+      });
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error is ApiException ? error.message : '储能测算服务暂时不可用'),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isCalculating = false);
     }
-
-    double irr = 0.08;
-    for (int i = 0; i < 1000; i++) {
-      double npv = 0, dnpv = 0;
-      for (int t = 0; t < cashflows.length; t++) {
-        final disc = _pow(1 + irr, t);
-        npv += cashflows[t] / disc;
-        dnpv -= t * cashflows[t] / (disc * (1 + irr));
-      }
-      if (dnpv.abs() < 1e-10) break;
-      final newIrr = irr - npv / dnpv;
-      if ((newIrr - irr).abs() < 1e-7) {
-        irr = newIrr;
-        break;
-      }
-      irr = newIrr;
-    }
-
-    final annualArbitrage = capacityMwh * cycles * spread * roundtripEff;
-    final payback = totalCapex / (annualRevenue - annualOpex);
-
-    setState(() {
-      _result = {
-        'irr': irr * 100,
-        'annualRevenue': annualRevenue / 10000,
-        'annualArbitrage': annualArbitrage,
-        'storageDurationHours': capacityMwh / powerMw,
-        'payback': payback,
-        'totalCapex': totalCapex / 10000,
-        'cashflows': cashflows.sublist(1).map((c) => c / 10000).toList(),
-      };
-      _isCalculating = false;
-    });
-  }
-
-  double _pow(double base, int exp) {
-    double result = 1;
-    for (int i = 0; i < exp; i++) {
-      result *= base;
-    }
-    return result;
   }
 
   @override

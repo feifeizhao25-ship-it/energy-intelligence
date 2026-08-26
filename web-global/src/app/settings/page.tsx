@@ -1,4 +1,4 @@
-import SettingsPage from '../../components/pages/SettingsPage';
+import SettingsPage from '../../pages/SettingsPage';
 
 export default function Route() {
   return <SettingsPage />;

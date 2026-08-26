@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../services/api_service.dart';
+import '../../models/resource_assessment.dart';
 
 class CompareScreen extends StatefulWidget {
   const CompareScreen({super.key});
@@ -8,10 +10,7 @@ class CompareScreen extends StatefulWidget {
 }
 
 class _CompareScreenState extends State<CompareScreen> {
-  final List<Map<String, dynamic>> _sites = [
-    {'name': '山东德州', 'lat': '37.36', 'lon': '116.31'},
-    {'name': '内蒙古鄂尔多斯', 'lat': '39.81', 'lon': '109.99'},
-  ];
+  final List<Map<String, dynamic>> _sites = [];
   bool _isComparing = false;
   List<Map<String, dynamic>>? _results;
 
@@ -61,67 +60,42 @@ class _CompareScreenState extends State<CompareScreen> {
       _isComparing = true;
       _results = null;
     });
-    await Future.delayed(Duration(milliseconds: 1000));
-
-    // Deterministic mock results for each site
-    final mockData = <Map<String, dynamic>>[
-      {
-        'ghi': 1560.4,
-        'class': 'II',
-        'score': 78,
-        'wpd': 248.6,
-        'windClass': 'III',
-      },
-      {
-        'ghi': 1898.2,
-        'class': 'II',
-        'score': 85,
-        'wpd': 382.1,
-        'windClass': 'II',
-      },
-      {
-        'ghi': 2145.6,
-        'class': 'I',
-        'score': 94,
-        'wpd': 178.4,
-        'windClass': 'IV',
-      },
-      {
-        'ghi': 1234.8,
-        'class': 'III',
-        'score': 61,
-        'wpd': 456.2,
-        'windClass': 'II',
-      },
-      {
-        'ghi': 1720.3,
-        'class': 'II',
-        'score': 80,
-        'wpd': 312.7,
-        'windClass': 'II',
-      },
-    ];
-
-    setState(() {
-      _results =
-          _sites.asMap().entries.map((e) {
-            final mock = mockData[e.key % mockData.length];
-            return {
-              'name': e.value['name'],
-              'lat': e.value['lat'],
-              'lon': e.value['lon'],
-              'ghi': mock['ghi'],
-              'solarClass': mock['class'],
-              'solarScore': mock['score'],
-              'wpd': mock['wpd'],
-              'windClass': mock['windClass'],
-            };
-          }).toList()..sort(
-            (a, b) =>
-                (b['solarScore'] as int).compareTo(a['solarScore'] as int),
-          );
-      _isComparing = false;
-    });
+    try {
+      final rows = await Future.wait(
+        _sites.map((site) async {
+          final lat = double.parse(site['lat'] as String);
+          final lon = double.parse(site['lon'] as String);
+          final responses = await Future.wait([
+            ApiService.getSolarResource(lat, lon),
+            ApiService.getWindResource(lat, lon),
+          ]);
+          final solar = ResourceAssessment.fromJson(responses[0]);
+          final wind = ResourceAssessment.fromJson(responses[1]);
+          return {
+            'name': site['name'],
+            'lat': site['lat'],
+            'lon': site['lon'],
+            'ghi': solar.ghiAnnual.toStringAsFixed(1),
+            'solarClass': solar.siteGrade,
+            'solarScore': solar.siteScore,
+            'wpd': wind.windPowerDensity.toStringAsFixed(1),
+            'windClass': wind.siteGrade,
+          };
+        }),
+      );
+      rows.sort(
+        (a, b) => (b['solarScore'] as num).compareTo(a['solarScore'] as num),
+      );
+      if (mounted) setState(() => _results = rows);
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('真实资源数据暂时不可用，请稍后重试')));
+      }
+    } finally {
+      if (mounted) setState(() => _isComparing = false);
+    }
   }
 
   Color _classColor(String cls) {

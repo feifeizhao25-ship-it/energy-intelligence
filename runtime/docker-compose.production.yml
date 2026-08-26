@@ -1,0 +1,143 @@
+name: energy-intelligence
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: energy_api
+      POSTGRES_USER: energy
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U energy -d energy_api"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [backend]
+
+  redis:
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:?REDIS_PASSWORD is required}"]
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD is required}
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$${REDIS_PASSWORD}\" ping | grep PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [backend]
+
+  backend:
+    build: ./backend
+    image: ${IMAGE_REGISTRY:?IMAGE_REGISTRY is required}/energy-api:${IMAGE_TAG:?IMAGE_TAG is required}
+    restart: unless-stopped
+    environment:
+      ENVIRONMENT: production
+      DEBUG: "false"
+      SECRET_KEY: ${SECRET_KEY:?SECRET_KEY is required}
+      DATABASE_URL: postgresql+asyncpg://energy:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/energy_api
+      REDIS_URL: redis://:${REDIS_PASSWORD:?REDIS_PASSWORD is required}@redis:6379/0
+      CORS_ORIGINS: ${CORS_ORIGINS:?CORS_ORIGINS is required}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY:-}
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      FORWARDED_ALLOW_IPS: ${FORWARDED_ALLOW_IPS:-127.0.0.1}
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    networks: [backend]
+    read_only: true
+    tmpfs:
+      - /tmp:size=256m,mode=1777
+      - /app/logs:size=128m,mode=1777
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+
+  web-cn:
+    build:
+      context: ./web
+      args:
+        NEXT_PUBLIC_APP_EDITION: cn
+        NEXT_PUBLIC_API_URL: ${CN_PUBLIC_API_URL:?CN_PUBLIC_API_URL is required}
+        BACKEND_INTERNAL_URL: http://backend:8000
+    image: ${IMAGE_REGISTRY:?IMAGE_REGISTRY is required}/energy-web-cn:${IMAGE_TAG:?IMAGE_TAG is required}
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://energy:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/energy_web
+      DIRECT_URL: postgresql://energy:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/energy_web
+      NEXTAUTH_URL: ${CN_NEXTAUTH_URL:?CN_NEXTAUTH_URL is required}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:?NEXTAUTH_SECRET is required}
+      NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:?NEXT_PUBLIC_SUPABASE_URL is required}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY:?NEXT_PUBLIC_SUPABASE_ANON_KEY is required}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:?SUPABASE_SERVICE_ROLE_KEY is required}
+      OPENALEX_CONTACT_EMAIL: ${OPENALEX_CONTACT_EMAIL:?OPENALEX_CONTACT_EMAIL is required}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      OPENROUTER_CIRCUIT_FAILURES: ${OPENROUTER_CIRCUIT_FAILURES:-3}
+      OPENROUTER_CIRCUIT_COOLDOWN_SECONDS: ${OPENROUTER_CIRCUIT_COOLDOWN_SECONDS:-60}
+      SILICONFLOW_API_KEY: ${SILICONFLOW_API_KEY:-}
+      BACKEND_INTERNAL_URL: http://backend:8000
+    expose: ["3000"]
+    depends_on:
+      postgres: { condition: service_healthy }
+      backend: { condition: service_healthy }
+    networks: [backend]
+    read_only: true
+    tmpfs:
+      - /tmp:size=256m,mode=1777
+      - /app/.next/cache:size=256m,mode=1777
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+
+  web-int:
+    build: ./web-int
+    image: ${IMAGE_REGISTRY:?IMAGE_REGISTRY is required}/energy-web-int:${IMAGE_TAG:?IMAGE_TAG is required}
+    restart: unless-stopped
+    expose: ["3000"]
+    networks: [backend]
+    read_only: true
+    tmpfs:
+      - /tmp:size=128m,mode=1777
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+
+  gateway:
+    image: caddy:2.10-alpine
+    restart: unless-stopped
+    environment:
+      CN_DOMAIN: ${CN_DOMAIN:?CN_DOMAIN is required}
+      INT_DOMAIN: ${INT_DOMAIN:?INT_DOMAIN is required}
+      TLS_EMAIL: ${TLS_EMAIL:?TLS_EMAIL is required}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      web-cn: { condition: service_healthy }
+      web-int: { condition: service_healthy }
+    networks: [backend]
+    security_opt: [no-new-privileges:true]
+
+volumes:
+  postgres_data:
+  redis_data:
+  caddy_data:
+  caddy_config:
+
+networks:
+  backend:
+    driver: bridge

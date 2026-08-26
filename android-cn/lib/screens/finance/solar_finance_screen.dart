@@ -46,6 +46,7 @@ class _SolarFinanceScreenState extends State<SolarFinanceScreen> {
           'electricityPrice': double.parse(_electricityController.text),
         },
       );
+      if (!mounted) return;
       setState(() {
         _result = FinancialModel.fromJson(result);
         _currentStep = 3;
