@@ -20,7 +20,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_PREFIX: energy-intelligence
+  IMAGE_PREFIX: ${{ github.repository }}
 
 jobs:
   build-backend:
@@ -103,7 +103,7 @@ jobs:
       - name: Build and push Node.js API image
         uses: docker/build-push-action@v5
         with:
-          context: ./apps/api
+          context: ./runtime/backend
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -192,7 +192,8 @@ jobs:
       - name: Build and push Web Global image
         uses: docker/build-push-action@v5
         with:
-          context: ./web-global
+          context: .
+          file: ./web-global/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -208,7 +209,7 @@ jobs:
       - name: Run Trivy vulnerability scanner (Node API)
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/api:${{ github.sha }}
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/api:${{ github.ref_name }}
           format: 'sarif'
           output: 'trivy-results-api.sarif'
 
