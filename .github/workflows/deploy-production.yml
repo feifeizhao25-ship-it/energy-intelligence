@@ -10,7 +10,7 @@ permissions:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_PREFIX: energy-intelligence
+  IMAGE_PREFIX: ${{ github.repository }}
 
 jobs:
   test:

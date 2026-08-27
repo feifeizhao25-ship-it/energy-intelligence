@@ -19,7 +19,7 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
     "test:coverage": "jest --config tests/jest.config.js --coverage",
-    "test:ci": "jest --config tests/jest.config.js --ci --coverage --maxWorkers=2",
+    "test:ci": "turbo run test",
     "test:load": "k6 run tests/load/api-load.js",
     "test:load:chat": "k6 run tests/load/chat-load.js",
     "test:load:skill": "k6 run tests/load/skill-load.js",
