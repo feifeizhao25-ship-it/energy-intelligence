@@ -96,7 +96,7 @@
     "overrides": {
       "fast-jwt": "^6.2.4",
       "fastify": "^5.8.5",
-      "fast-uri": "^3.1.2",
+      "fast-uri": "^3.1.5",
       "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
       "protobufjs": "^7.5.5",
       "tar-fs": "^3.1.2",
@@ -109,7 +109,14 @@
       "fast-xml-parser": "^5.7.0",
       "thrift": "^0.23.0",
       "@xmldom/xmldom": "^0.8.13",
-      "basic-ftp": "^5.3.1"
+      "basic-ftp": "^5.3.1",
+      "sharp": "^0.35.0",
+      "postcss": "^8.5.23",
+      "brace-expansion@>=2.0.0 <2.1.4": "^2.1.4",
+      "brace-expansion@<2.0.0": "^1.1.12",
+      "js-yaml@>=4.0.0 <4.3.1": "^4.3.1",
+      "js-yaml@<4.0.0": "^3.15.1",
+      "nanoid@<3.3.18": "^3.3.18"
     }
   },
   "_workspaces_note": "网页端-国内版 / 网页端-国际版 已从 workspaces 移除——两者分别只有 2 个和 0 个源文件，是废弃空壳。国内版主前端是 runtime/web（57 页），国际版是 runtime/web-int，二者各自带 package-lock.json 独立用 npm 构建，与 runtime/docker-compose.production.yml 的 build context 一致，故不纳入 pnpm workspace。",
