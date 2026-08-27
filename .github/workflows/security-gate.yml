@@ -2,7 +2,6 @@ name: Security Gate
 
 permissions:
   contents: read
-  security-events: write
 
 on:
   push:
@@ -22,6 +21,10 @@ jobs:
   bandit:
     name: Python SAST (Bandit)
     runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -83,13 +86,13 @@ jobs:
           fetch-depth: 0
 
       - name: TruffleHog OSS (push range)
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' && github.event.before != '0000000000000000000000000000000000000000'
         uses: trufflesecurity/trufflehog@main
         with:
           path: ./
           base: ${{ github.event.before }}
-          head: ${{ github.event.after }}
-          extra_args: --debug --only-verified
+          head: ${{ github.sha }}
+          extra_args: --only-verified
 
       - name: TruffleHog OSS (pull request range)
         if: github.event_name == 'pull_request'
@@ -98,14 +101,14 @@ jobs:
           path: ./
           base: ${{ github.event.pull_request.base.sha }}
           head: ${{ github.event.pull_request.head.sha }}
-          extra_args: --debug --only-verified
+          extra_args: --only-verified
 
-      - name: TruffleHog OSS (full scheduled/manual scan)
-        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+      - name: TruffleHog OSS (full repository)
+        if: github.event_name == 'schedule' || (github.event_name == 'push' && github.event.before == '0000000000000000000000000000000000000000')
         uses: trufflesecurity/trufflehog@main
         with:
           path: ./
-          extra_args: --debug --only-verified
+          extra_args: --only-verified
 
   # ── Node.js Dependency Audit ───────────────────────────────────────────
   npm-audit:
@@ -163,6 +166,10 @@ jobs:
     name: Container Image Scan (Trivy)
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
     steps:
       - uses: actions/checkout@v4
 
@@ -197,6 +204,10 @@ jobs:
   checkov:
     name: Production Kubernetes Security (Checkov)
     runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
     steps:
       - uses: actions/checkout@v4
 
@@ -271,13 +282,15 @@ jobs:
     steps:
       - name: Summarize results
         run: |
-          echo "## 🔒 Security Gate Results" >> $GITHUB_STEP_SUMMARY
-          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Bandit (Python SAST) | ${{ needs.bandit.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| pip-audit (Python deps) | ${{ needs.pip-audit.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| TruffleHog (Secrets) | ${{ needs.trufflehog.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| npm-audit (Node deps) | ${{ needs.npm-audit.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Trivy Image Scan | ${{ needs.trivy-image.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Checkov (IaC) | ${{ needs.checkov.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| CodeQL | ${{ needs.codeql.result }} |" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## 🔒 Security Gate Results"
+            echo "| Job | Status |"
+            echo "|-----|--------|"
+            echo "| Bandit (Python SAST) | ${{ needs.bandit.result }} |"
+            echo "| pip-audit (Python deps) | ${{ needs.pip-audit.result }} |"
+            echo "| TruffleHog (Secrets) | ${{ needs.trufflehog.result }} |"
+            echo "| npm-audit (Node deps) | ${{ needs.npm-audit.result }} |"
+            echo "| Trivy Image Scan | ${{ needs.trivy-image.result }} |"
+            echo "| Checkov (IaC) | ${{ needs.checkov.result }} |"
+            echo "| CodeQL | ${{ needs.codeql.result }} |"
+          } >> "$GITHUB_STEP_SUMMARY"
