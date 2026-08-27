@@ -47,7 +47,9 @@ jobs:
         run: |
           set -euo pipefail
           test -f web-global/out/index.html
-          printf '{"commit":"%s"}\n' "$GITHUB_SHA" > web-global/out/release.json
+          grep -q '<head>' web-global/out/index.html
+          sed -i "s#<head>#<head><meta name=\"energy-release\" content=\"$GITHUB_SHA\">#" \
+            web-global/out/index.html
           tar -czf /tmp/energy-web.tar.gz -C web-global/out .
           ls -lh /tmp/energy-web.tar.gz
 
@@ -130,14 +132,11 @@ jobs:
           set -euo pipefail
           curl --fail --silent --show-error --location \
             --retry 4 --retry-all-errors --connect-timeout 10 --max-time 30 \
-            "https://energyiq.tianji-astrology.com/release.json?deploy=$GITHUB_SHA" \
-            -o /tmp/energy-public-release.json
-          cmp /tmp/energy-public-release.json web-global/out/release.json
-          curl --fail --silent --show-error --location \
-            --retry 4 --retry-all-errors --connect-timeout 10 --max-time 30 \
             "https://energyiq.tianji-astrology.com/?deploy=$GITHUB_SHA" \
             -o /tmp/energy-public-index.html
           grep -Eq '<html[^>]+lang="en"' /tmp/energy-public-index.html
+          grep -Fq "<meta name=\"energy-release\" content=\"$GITHUB_SHA\">" \
+            /tmp/energy-public-index.html
           echo 'Public edge serves the deployed commit and an English document.'
 
       - name: Prune old backups on server
