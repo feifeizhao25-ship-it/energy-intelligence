@@ -1,17 +1,14 @@
 """Operations API — asset health diagnostics, alerts, cleaning schedule."""
-import uuid
 import math
-from datetime import datetime, timezone
-from typing import List, Optional
+from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
-from sqlalchemy import select, update
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user_id
-from app.config import settings
 from app.models.database import Project
 from app.utils.financial_utils import calc_optimal_cleaning_interval
 
@@ -69,83 +66,15 @@ async def calculate_cleaning_schedule(
     }
 
 
-def _reject_demo_operations_data_in_production() -> None:
-    """Never present generated telemetry as measured plant data in production."""
-    if settings.ENVIRONMENT == "production":
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=(
-                "实时运维数据源尚未配置。请接入经过授权的 SCADA/IoT 数据源后重试；"
-                "系统不会在生产环境返回模拟数据。"
-            ),
-        )
-
-
-# ── Shared mock generator (until IoT/SCADA integration) ──────────────────────
-def _mock_health_data(project_id: str) -> dict:
-    """Generate deterministic mock health data based on project_id hash."""
-    seed = sum(ord(c) for c in project_id) % 100
-    overall = 65 + (seed % 30)  # 65–94
-    return {
-        "overall_score": round(overall, 1),
-        "status": "excellent" if overall >= 90 else "good" if overall >= 75 else "fair" if overall >= 60 else "poor",
-        "dimensions": {
-            "generation":   round(overall - 2 + (seed % 8), 1),
-            "equipment":    round(overall + 1 - (seed % 6), 1),
-            "availability": round(min(99.5, overall + 3), 1),
-            "pr_ratio":     round(overall - 4 + (seed % 5), 1),
-        },
-        "findings": [
-            {
-                "id": "f001",
-                "category": "Soiling",
-                "description": "Estimated 4.2% generation loss due to soiling accumulation on panel surfaces.",
-                "severity": "medium",
-                "estimated_loss": round(1800 + seed * 120, 2),
-            },
-            {
-                "id": "f002",
-                "category": "Inverter",
-                "description": f"Inverter unit INV-{seed % 4 + 1:02d} showing elevated temperature (78°C vs 70°C baseline).",
-                "severity": "low" if seed < 50 else "high",
-                "estimated_loss": round(600 + seed * 40, 2),
-            },
-            {
-                "id": "f003",
-                "category": "String Mismatch",
-                "description": "String S-07 underperforming by 8.3% relative to adjacent strings.",
-                "severity": "medium",
-                "estimated_loss": round(900 + seed * 30, 2),
-            },
-        ],
-        "recommendations": [
-            {
-                "title": "Schedule Emergency Cleaning",
-                "description": "Deploy cleaning crew within 7 days to address soiling loss.",
-                "priority": "high",
-                "benefit": "Recover 4.2% generation — approx. $1,800/month",
-                "estimated_roi": "820%",
-                "timeframe": "Within 7 days",
-            },
-            {
-                "title": "Inverter Thermal Inspection",
-                "description": f"Inspect and clean cooling system on INV-{seed % 4 + 1:02d}. Check fan operation.",
-                "priority": "medium",
-                "benefit": "Prevent unplanned downtime and extend inverter life by 3+ years",
-                "estimated_roi": "340%",
-                "timeframe": "Within 30 days",
-            },
-            {
-                "title": "String-Level IV Curve Tracing",
-                "description": "Perform I-V curve tracing on string S-07 to identify shading, cell degradation or bypass diode failure.",
-                "priority": "low",
-                "benefit": "Recover 8.3% output on affected string",
-                "estimated_roi": "180%",
-                "timeframe": "Within 90 days",
-            },
-        ],
-        "generated_at": datetime.now(timezone.utc).isoformat(),
-    }
+def _operations_source_unavailable() -> None:
+    """Fail closed until an authorised SCADA/IoT ingestion source is configured."""
+    raise HTTPException(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        detail=(
+            "实时运维数据源尚未配置。请接入经过授权的 SCADA/IoT 数据源后重试；"
+            "系统不会返回模拟健康分、告警、发电量或设备状态。"
+        ),
+    )
 
 
 # ── GET /operations/health/{project_id} ───────────────────────────────────────
@@ -162,8 +91,7 @@ async def get_project_health(
     project = result.scalar_one_or_none()
     if not project:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
-    _reject_demo_operations_data_in_production()
-    return _mock_health_data(project_id)
+    _operations_source_unavailable()
 
 
 # ── GET /operations/alerts ─────────────────────────────────────────────────────
@@ -175,44 +103,7 @@ async def list_alerts(
     db: AsyncSession = Depends(get_db),
 ):
     """Return operational alerts for the current user."""
-    _reject_demo_operations_data_in_production()
-    # Mock alert data (replace with DB query when alert ingestion pipeline exists)
-    all_alerts = [
-        {
-            "id": "alert-001",
-            "title": "Inverter Overtemperature",
-            "message": "INV-03 temperature exceeded 80°C threshold at 14:32 UTC.",
-            "severity": "critical",
-            "is_read": False,
-            "project_id": None,
-            "created_at": datetime.now(timezone.utc).isoformat(),
-        },
-        {
-            "id": "alert-002",
-            "title": "Soiling Rate Above Threshold",
-            "message": "Daily soiling rate reached 0.35% — cleaning recommended within 5 days.",
-            "severity": "warning",
-            "is_read": False,
-            "project_id": None,
-            "created_at": datetime.now(timezone.utc).isoformat(),
-        },
-        {
-            "id": "alert-003",
-            "title": "Grid Curtailment Event",
-            "message": "14.2 MWh curtailed between 11:00–13:30 UTC per grid operator request.",
-            "severity": "info",
-            "is_read": True,
-            "project_id": None,
-            "created_at": datetime.now(timezone.utc).isoformat(),
-        },
-    ]
-
-    if unread_only:
-        all_alerts = [a for a in all_alerts if not a["is_read"]]
-    if severity:
-        all_alerts = [a for a in all_alerts if a["severity"] == severity]
-
-    return all_alerts
+    _operations_source_unavailable()
 
 
 # ── PATCH /operations/alerts/{alert_id}/read ───────────────────────────────────
@@ -222,13 +113,7 @@ async def mark_alert_read(
     user_id: str = Depends(get_current_user_id),
 ):
     """Mark a specific alert as read."""
-    _reject_demo_operations_data_in_production()
-    # When real DB is integrated: UPDATE alerts SET is_read=true WHERE id=alert_id AND user_id=user_id
-    return {
-        "id": alert_id,
-        "is_read": True,
-        "updated_at": datetime.now(timezone.utc).isoformat(),
-    }
+    _operations_source_unavailable()
 
 
 # ── GET /operations/cleaning/{project_id} ─────────────────────────────────────
@@ -299,17 +184,4 @@ async def get_performance(
     if not project:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
 
-    _reject_demo_operations_data_in_production()
-
-    capacity_mw = project.capacity_mw or 10.0
-    return {
-        "project_id": project_id,
-        "capacity_mw": capacity_mw,
-        "daily_generation_mwh": round(capacity_mw * 5.8, 1),
-        "monthly_generation_mwh": round(capacity_mw * 5.8 * 30, 1),
-        "capacity_factor": 0.215,
-        "performance_ratio": 0.823,
-        "availability": 0.981,
-        "specific_yield_kwh_kwp": round(5.8 * 30, 1),
-        "updated_at": datetime.now(timezone.utc).isoformat(),
-    }
+    _operations_source_unavailable()

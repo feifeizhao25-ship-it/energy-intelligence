@@ -269,6 +269,22 @@ require(
     "cleaning-economic-interval-v1.0",
 )
 require(
+    "runtime/backend/app/api/v1/operations.py",
+    "系统不会返回模拟健康分、告警、发电量或设备状态",
+)
+require(
+    "runtime/web/src/app/(dashboard)/maintenance/page.tsx",
+    "redirect('/projects')",
+)
+forbid_tree(
+    "runtime/backend/app/api/v1",
+    (
+        "_mock_health_data",
+        '"overall_score": round(overall',
+        '"capacity_factor": 0.215',
+    ),
+)
+require(
     "runtime/backend/app/main.py",
     "v1_operations.router",
 )

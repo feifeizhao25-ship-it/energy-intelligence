@@ -6,17 +6,13 @@ from fastapi import HTTPException
 from app.api.v1 import operations
 
 
-def test_demo_operations_data_is_rejected_in_production(monkeypatch):
-    monkeypatch.setattr(operations.settings, "ENVIRONMENT", "production")
-
+def test_operations_without_verified_source_are_always_rejected():
     with pytest.raises(HTTPException) as exc_info:
-        operations._reject_demo_operations_data_in_production()
+        operations._operations_source_unavailable()
 
     assert exc_info.value.status_code == 503
-    assert "不会在生产环境返回模拟数据" in exc_info.value.detail
+    assert "系统不会返回模拟健康分、告警、发电量或设备状态" in exc_info.value.detail
 
 
-def test_demo_operations_data_remains_available_for_local_development(monkeypatch):
-    monkeypatch.setattr(operations.settings, "ENVIRONMENT", "development")
-
-    operations._reject_demo_operations_data_in_production()
+def test_production_module_contains_no_generated_telemetry_helper():
+    assert not hasattr(operations, "_mock_health_data")
