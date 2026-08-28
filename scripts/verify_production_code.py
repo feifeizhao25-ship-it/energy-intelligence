@@ -276,12 +276,28 @@ require(
     "runtime/web/src/app/(dashboard)/maintenance/page.tsx",
     "redirect('/projects')",
 )
+require("runtime/web/src/app/api/dashboard/route.ts", "DASHBOARD_AGGREGATION_UNAVAILABLE")
+require("runtime/web/src/app/api/papers/graph/route.ts", "VERIFIED_CITATION_GRAPH_UNAVAILABLE")
+require("runtime/web/src/app/api/projects/unlock/route.ts", "VERIFIED_ENTITLEMENT_REQUIRED")
+require("runtime/web/src/app/api/projects/[id]/stations/route.ts", "STATION_LIMIT_REACHED")
+require("runtime/web/src/app/api/projects/[id]/stations/route.ts", "尚无经验证的 SCADA/IoT 测量数据")
+require("runtime/web/src/components/dashboard/site-wizard/SiteWizard.tsx", "/pricing?feature=report-export")
 forbid_tree(
     "runtime/backend/app/api/v1",
     (
         "_mock_health_data",
         '"overall_score": round(overall',
         '"capacity_factor": 0.215',
+    ),
+)
+forbid_tree(
+    "runtime/web/src/app/api",
+    (
+        "stationsDb",
+        "模拟用户数据汇总",
+        "模拟知识图谱数据",
+        "reportStatus: 'READY'",
+        "power: Math.random()",
     ),
 )
 require(

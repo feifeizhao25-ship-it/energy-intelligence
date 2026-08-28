@@ -86,10 +86,8 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({
                     <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
                         <div className="flex items-center justify-between mb-6">
                             <div>
-                                <div className="text-xs text-slate-400 line-through">原价 ¥199.00</div>
-                                <div className="text-3xl font-black text-slate-900 dark:text-white">
-                                    ¥39.00 <small className="text-sm font-bold text-green-500 tracking-normal">/ 份</small>
-                                </div>
+                                <div className="text-xs text-slate-400">具体价格、额度和退款规则以会员页实时展示为准</div>
+                                <div className="text-2xl font-black text-slate-900 dark:text-white">选择适合的会员方案</div>
                             </div>
                             <div className="bg-green-100 text-green-600 text-[10px] font-black px-2 py-1 rounded-lg">
                                 限时 2 折
@@ -105,7 +103,7 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({
                                 <Loader2 className="w-5 h-5 animate-spin" />
                             ) : (
                                 <>
-                                    立即解锁报告
+                                    查看会员与报告权益
                                     <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                                 </>
                             )}

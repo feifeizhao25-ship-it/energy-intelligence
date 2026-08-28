@@ -34,8 +34,6 @@ export const SiteWizard: React.FC<SiteWizardProps> = ({ onComplete }) => {
     const [aiExplanation, setAiExplanation] = useState<any>(null);
     const [isExplaining, setIsExplaining] = useState(false);
     const [showUpgrade, setShowUpgrade] = useState(false);
-    const [isUnlocking, setIsUnlocking] = useState(false);
-    const [unlockedProject, setUnlockedProject] = useState<any>(null);
 
     const startAssessment = async (coords: { lat: number, lng: number, province: string, address: string }) => {
         setStep('assessing');
@@ -78,44 +76,7 @@ export const SiteWizard: React.FC<SiteWizardProps> = ({ onComplete }) => {
     };
 
     const handleUnlock = async () => {
-        if (!result) return;
-        setIsUnlocking(true);
-        setError(null);
-
-        try {
-            // 1. 调用解锁 API 创建项目
-            const res = await fetch('/api/projects/unlock', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ comparisonResult: result })
-            });
-            const data = await res.json();
-            if (!data.success) throw new Error(data.error || '解锁失败');
-
-            setUnlockedProject(data.data);
-            setShowUpgrade(false);
-
-            // 2. 触发报告下载
-            // AI explanation is object, need to stringify or pass simplified version if API expects string
-            // But API now expects object or handles it. Passing encoded JSON might be too long for URL.
-            // For now, pass summary only or handle in API? API handles object if passed in body?
-            // Wait, download is GET. We can't pass large JSON in URL.
-            // Better to rely on what's in DB or pass simple summary.
-            // Actually, for Phase 1, we can just pass the summary string.
-            const summary = aiExplanation?.summary || '详细报告';
-            const downloadUrl = `/api/projects/report?projectId=${data.data.id}&aiExplanation=${encodeURIComponent(summary)}`;
-            const link = document.createElement('a');
-            link.href = downloadUrl;
-            link.download = `Engineering_Report_${data.data.id}.docx`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-
-        } catch (err: any) {
-            setError(err.message);
-        } finally {
-            setIsUnlocking(false);
-        }
+        window.location.href = '/pricing?feature=report-export';
     };
 
     const handleSearch = async () => {
@@ -295,7 +256,7 @@ export const SiteWizard: React.FC<SiteWizardProps> = ({ onComplete }) => {
                 isOpen={showUpgrade}
                 onClose={() => setShowUpgrade(false)}
                 onConfirm={handleUnlock}
-                isLoading={isUnlocking}
+                isLoading={false}
                 projectName={result?.address || '新能源站点评估'}
             />
         </div>

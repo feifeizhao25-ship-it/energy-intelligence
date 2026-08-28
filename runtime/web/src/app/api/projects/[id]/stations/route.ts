@@ -1,138 +1,87 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth/auth-options';
+import { prisma } from '@/lib/prisma';
+import { USAGE_LIMITS } from '@/lib/membership/plans';
 
-// In-memory storage for stations (demo mode)
-const stationsDb: Map<string, any[]> = new Map();
+type RouteContext = { params: Promise<{ id: string }> };
 
-// Demo stations for preset projects
-stationsDb.set('demo-1', [
-    {
-        id: 'station-1-1',
-        name: '1号逆变器组',
-        type: 'inverter',
-        status: 'online',
-        power: 24.5, // kW
-        efficiency: 98.2,
-        temperature: 45,
-        lastUpdate: new Date()
-    },
-    {
-        id: 'station-1-2',
-        name: '2号逆变器组',
-        type: 'inverter',
-        status: 'online',
-        power: 23.8,
-        efficiency: 97.8,
-        temperature: 47,
-        lastUpdate: new Date()
-    },
-    {
-        id: 'station-1-3',
-        name: '3号逆变器组',
-        type: 'inverter',
-        status: 'warning',
-        power: 18.2,
-        efficiency: 85.1,
-        temperature: 62,
-        lastUpdate: new Date(),
-        alert: '温度过高，效率下降'
-    }
-]);
-
-stationsDb.set('demo-2', [
-    {
-        id: 'station-2-1',
-        name: '1号风机',
-        type: 'turbine',
-        status: 'online',
-        power: 2500,
-        windSpeed: 8.5,
-        rpm: 12,
-        lastUpdate: new Date()
-    },
-    {
-        id: 'station-2-2',
-        name: '2号风机',
-        type: 'turbine',
-        status: 'online',
-        power: 2800,
-        windSpeed: 9.2,
-        rpm: 14,
-        lastUpdate: new Date()
-    },
-    {
-        id: 'station-2-3',
-        name: '3号风机',
-        type: 'turbine',
-        status: 'maintenance',
-        power: 0,
-        windSpeed: 8.0,
-        rpm: 0,
-        lastUpdate: new Date(),
-        alert: '计划维护中'
-    }
-]);
-
-// GET - 获取项目下的所有站点/设备
-export async function GET(
-    req: NextRequest,
-    { params }: { params: { id: string } }
-) {
-    const projectId = params.id;
-
-    const stations = stationsDb.get(projectId) || [];
-
-    // 计算汇总数据
-    const summary = {
-        total: stations.length,
-        online: stations.filter(s => s.status === 'online').length,
-        warning: stations.filter(s => s.status === 'warning').length,
-        offline: stations.filter(s => s.status === 'offline' || s.status === 'maintenance').length,
-        totalPower: stations.reduce((sum, s) => sum + (s.power || 0), 0),
-        avgEfficiency: stations.length > 0
-            ? stations.reduce((sum, s) => sum + (s.efficiency || 0), 0) / stations.length
-            : 0
-    };
-
-    return NextResponse.json({
-        success: true,
-        data: {
-            stations,
-            summary
-        }
-    });
+async function currentUser() {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) return null;
+    return prisma.user.findUnique({ where: { id: session.user.id } });
 }
 
-// POST - 添加新站点/设备
-export async function POST(
-    req: NextRequest,
-    { params }: { params: { id: string } }
-) {
-    const projectId = params.id;
-    const body = await req.json();
+function effectivePlan(user: NonNullable<Awaited<ReturnType<typeof currentUser>>>) {
+    if (user.plan === 'FREE') return 'FREE' as const;
+    return user.planExpireAt && user.planExpireAt > new Date() ? user.plan : 'FREE';
+}
 
-    const { name, type } = body;
+export async function GET(_req: NextRequest, { params }: RouteContext) {
+    const user = await currentUser();
+    if (!user) return NextResponse.json({ error: '请先登录' }, { status: 401 });
+    const { id: projectId } = await params;
+    const project = await prisma.project.findFirst({
+        where: { id: projectId, userId: user.id },
+        include: { stations: { orderBy: { createdAt: 'desc' } } },
+    });
+    if (!project) return NextResponse.json({ error: '项目不存在或无权访问' }, { status: 404 });
 
-    if (!name || !type) {
-        return NextResponse.json({ error: 'Missing name or type' }, { status: 400 });
+    const stations = project.stations;
+    const measured = stations.filter(station => station.lastUpdated != null);
+    return NextResponse.json({ success: true, data: {
+        stations,
+        summary: {
+            total: stations.length,
+            normal: stations.filter(station => station.status === 'normal').length,
+            warning: stations.filter(station => station.status === 'warning').length,
+            fault: stations.filter(station => station.status === 'fault').length,
+            maintenance: stations.filter(station => station.status === 'maintenance').length,
+            totalPower: measured.length
+                ? measured.reduce((sum, station) => sum + (station.currentPower ?? 0), 0)
+                : null,
+            measuredStations: measured.length,
+            note: measured.length ? null : '尚无经验证的 SCADA/IoT 测量数据',
+        },
+    } });
+}
+
+export async function POST(req: NextRequest, { params }: RouteContext) {
+    const user = await currentUser();
+    if (!user) return NextResponse.json({ error: '请先登录' }, { status: 401 });
+    const { id: projectId } = await params;
+    const project = await prisma.project.findFirst({ where: { id: projectId, userId: user.id } });
+    if (!project) return NextResponse.json({ error: '项目不存在或无权访问' }, { status: 404 });
+
+    const plan = effectivePlan(user);
+    const limit = USAGE_LIMITS[plan].stations;
+    const used = await prisma.station.count({ where: { userId: user.id } });
+    if (limit !== Infinity && used >= limit) {
+        return NextResponse.json({
+            error: '当前会员等级的电站数量额度已用完，请先升级会员。',
+            code: 'STATION_LIMIT_REACHED', limit, used,
+        }, { status: 403 });
     }
 
-    const newStation = {
-        id: `station-${Date.now()}`,
-        name,
-        type,
-        status: 'online',
-        power: Math.random() * 100,
-        efficiency: 95 + Math.random() * 5,
-        temperature: 35 + Math.random() * 20,
-        lastUpdate: new Date()
-    };
+    const body = await req.json();
+    const name = String(body?.name ?? '').trim();
+    const type = String(body?.type ?? '').trim().toUpperCase();
+    const lat = Number(body?.lat ?? project.lat);
+    const lng = Number(body?.lng ?? project.lng);
+    const capacity = body?.capacity == null ? null : Number(body.capacity);
+    if (!name || !['SOLAR', 'WIND', 'STORAGE'].includes(type) || !Number.isFinite(lat) || !Number.isFinite(lng)) {
+        return NextResponse.json({ error: '名称、类型和经纬度必须完整且有效' }, { status: 400 });
+    }
+    if (capacity != null && (!Number.isFinite(capacity) || capacity <= 0)) {
+        return NextResponse.json({ error: '装机容量必须为正数' }, { status: 400 });
+    }
 
-    const existing = stationsDb.get(projectId) || [];
-    existing.push(newStation);
-    stationsDb.set(projectId, existing);
-
-    return NextResponse.json({
-        success: true,
-        data: newStation
+    const station = await prisma.$transaction(async tx => {
+        const created = await tx.station.create({
+            data: { projectId, userId: user.id, name, type, lat, lng, capacity },
+        });
+        await tx.user.update({ where: { id: user.id }, data: { stationCount: { increment: 1 } } });
+        return created;
     });
+    return NextResponse.json({ success: true, data: station }, { status: 201 });
 }
