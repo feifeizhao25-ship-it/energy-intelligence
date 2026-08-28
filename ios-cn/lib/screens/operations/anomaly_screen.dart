@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/api_service.dart';
 
 class AnomalyScreen extends StatefulWidget {
   const AnomalyScreen({super.key});
@@ -8,421 +9,140 @@ class AnomalyScreen extends StatefulWidget {
 }
 
 class _AnomalyScreenState extends State<AnomalyScreen> {
-  bool _isLoading = false;
-  String _selectedProject = 'proj_001';
-  List<Map<String, dynamic>> _anomalies = [];
-
-  final _projects = [
-    {'id': 'proj_001', 'name': '山东德州100MW光伏'},
-    {'id': 'proj_002', 'name': '内蒙古50MW风电'},
-    {'id': 'proj_003', 'name': '佛山储能项目'},
-  ];
+  bool _isLoading = true;
+  String? _error;
+  List<Map<String, dynamic>> _alerts = [];
 
   @override
   void initState() {
     super.initState();
-    _loadAnomalies();
+    _loadAlerts();
   }
 
-  Future<void> _loadAnomalies() async {
-    setState(() => _isLoading = true);
-    await Future.delayed(Duration(milliseconds: 700));
-
-    // Deterministic mock anomalies based on project
+  Future<void> _loadAlerts() async {
     setState(() {
-      _anomalies = [
-        {
-          'id': 'ano_001',
-          'type': '发电量偏低',
-          'severity': 'high',
-          'location': '逆变器 #3 — 组串 A1-A8',
-          'actual': 245.6,
-          'expected': 312.4,
-          'deviation': -21.4,
-          'estimatedLoss': 18600.0,
-          'time': '2026-03-21 09:30',
-          'status': 'active',
-        },
-        {
-          'id': 'ano_002',
-          'type': '组件温度过高',
-          'severity': 'medium',
-          'location': '第3区块 — B区南侧',
-          'actual': 78.5,
-          'expected': 55.0,
-          'deviation': 42.7,
-          'estimatedLoss': 4200.0,
-          'time': '2026-03-21 11:15',
-          'status': 'active',
-        },
-        {
-          'id': 'ano_003',
-          'type': 'PR值下降',
-          'severity': 'low',
-          'location': '全站平均',
-          'actual': 0.71,
-          'expected': 0.78,
-          'deviation': -9.0,
-          'estimatedLoss': 8900.0,
-          'time': '2026-03-20',
-          'status': 'monitoring',
-        },
-        {
-          'id': 'ano_004',
-          'type': '通信中断',
-          'severity': 'medium',
-          'location': '气象站 #2',
-          'actual': 0.0,
-          'expected': 1.0,
-          'deviation': -100.0,
-          'estimatedLoss': 0.0,
-          'time': '2026-03-21 06:00',
-          'status': 'resolved',
-        },
-      ];
-      _isLoading = false;
+      _isLoading = true;
+      _error = null;
     });
-  }
-
-  Color _severityColor(String severity) {
-    switch (severity) {
-      case 'high':
-        return Color(0xFFDC2626);
-      case 'medium':
-        return Color(0xFFEA580C);
-      case 'low':
-        return Color(0xFFCA8A04);
-      default:
-        return Color(0xFF64748B);
+    try {
+      final alerts = await ApiService.getAlerts();
+      if (!mounted) return;
+      setState(() => _alerts = alerts);
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _alerts = [];
+        _error = error.message;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _alerts = [];
+        _error = '异常数据暂时无法读取，请稍后重试。';
+      });
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  String _severityLabel(String severity) {
-    switch (severity) {
-      case 'high':
-        return '严重';
-      case 'medium':
-        return '中等';
-      case 'low':
-        return '轻微';
-      default:
-        return '未知';
-    }
-  }
-
-  Color _statusColor(String status) {
-    switch (status) {
-      case 'active':
-        return Color(0xFFDC2626);
-      case 'monitoring':
-        return Color(0xFFCA8A04);
-      case 'resolved':
-        return Color(0xFF059669);
-      default:
-        return Color(0xFF64748B);
-    }
-  }
-
-  String _statusLabel(String status) {
-    switch (status) {
-      case 'active':
-        return '待处理';
-      case 'monitoring':
-        return '监测中';
-      case 'resolved':
-        return '已解决';
-      default:
-        return '';
-    }
+  String _text(Map<String, dynamic> alert, String key, String fallback) {
+    final value = alert[key];
+    return value is String && value.trim().isNotEmpty ? value : fallback;
   }
 
   @override
   Widget build(BuildContext context) {
-    final active = _anomalies.where((a) => a['status'] == 'active').length;
-    final monitoring = _anomalies
-        .where((a) => a['status'] == 'monitoring')
-        .length;
-
     return Scaffold(
       appBar: AppBar(
-        title: Text('发电异常检测'),
+        title: const Text('发电异常检测'),
         backgroundColor: const Color(0xFF1D4ED8),
         foregroundColor: Colors.white,
         actions: [
-          IconButton(icon: Icon(Icons.refresh), onPressed: _loadAnomalies),
+          IconButton(
+            tooltip: '刷新',
+            icon: const Icon(Icons.refresh),
+            onPressed: _isLoading ? null : _loadAlerts,
+          ),
         ],
       ),
       body: _isLoading
-          ? Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+          ? const Center(child: CircularProgressIndicator())
+          : RefreshIndicator(
+              onRefresh: _loadAlerts,
+              child: ListView(
+                padding: const EdgeInsets.all(16),
                 children: [
-                  // Project selector
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 12),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Color(0xFFE2E8F0)),
-                      borderRadius: BorderRadius.circular(8),
+                  if (_error != null)
+                    _NoticeCard(
+                      icon: Icons.sensors_off_outlined,
+                      title: '暂无可核验的异常数据',
+                      message: _error!,
+                    )
+                  else if (_alerts.isEmpty)
+                    const _NoticeCard(
+                      icon: Icons.check_circle_outline,
+                      title: '当前没有异常记录',
+                      message: '这里只展示服务器返回且有数据来源的告警，不会生成示例设备、随机指标或虚构损失。',
+                    )
+                  else ...[
+                    Text(
+                      '异常记录（${_alerts.length}）',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                    child: DropdownButton<String>(
-                      value: _selectedProject,
-                      isExpanded: true,
-                      underline: SizedBox(),
-                      onChanged: (v) {
-                        setState(() => _selectedProject = v!);
-                        _loadAnomalies();
-                      },
-                      items: _projects
-                          .map(
-                            (p) => DropdownMenuItem(
-                              value: p['id'],
-                              child: Text(p['name']!),
-                            ),
-                          )
-                          .toList(),
-                    ),
-                  ),
-                  SizedBox(height: 16),
-
-                  // Summary cards
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildSummaryCard(
-                          '待处理异常',
-                          '$active',
-                          Color(0xFFDC2626),
-                          Icons.warning_rounded,
+                    const SizedBox(height: 12),
+                    ..._alerts.map(
+                      (alert) => Card(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        child: ListTile(
+                          leading: const Icon(
+                            Icons.warning_amber_rounded,
+                            color: Color(0xFFDC2626),
+                          ),
+                          title: Text(_text(alert, 'title', '未命名告警')),
+                          subtitle: Text(_text(alert, 'message', '服务器未提供告警说明')),
+                          trailing: Text(_text(alert, 'severity', '未知')),
                         ),
                       ),
-                      SizedBox(width: 12),
-                      Expanded(
-                        child: _buildSummaryCard(
-                          '监测中',
-                          '$monitoring',
-                          Color(0xFFCA8A04),
-                          Icons.visibility,
-                        ),
-                      ),
-                      SizedBox(width: 12),
-                      Expanded(
-                        child: _buildSummaryCard(
-                          '总异常数',
-                          '${_anomalies.length}',
-                          Color(0xFF1D4ED8),
-                          Icons.analytics,
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 24),
-
-                  Text(
-                    '异常详情',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF0F172A),
                     ),
-                  ),
-                  SizedBox(height: 12),
-
-                  ..._anomalies.map((anomaly) => _buildAnomalyCard(anomaly)),
+                  ],
                 ],
               ),
             ),
     );
   }
+}
 
-  Widget _buildSummaryCard(
-    String label,
-    String value,
-    Color color,
-    IconData icon,
-  ) {
-    return Container(
-      padding: EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: color, size: 20),
-          SizedBox(height: 6),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-          ),
-          Text(
-            label,
-            style: TextStyle(fontSize: 10, color: Color(0xFF64748B)),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
+class _NoticeCard extends StatelessWidget {
+  const _NoticeCard({
+    required this.icon,
+    required this.title,
+    required this.message,
+  });
 
-  Widget _buildAnomalyCard(Map<String, dynamic> anomaly) {
-    final sevColor = _severityColor(anomaly['severity'] as String);
-    final statusColor = _statusColor(anomaly['status'] as String);
+  final IconData icon;
+  final String title;
+  final String message;
 
+  @override
+  Widget build(BuildContext context) {
     return Card(
-      margin: EdgeInsets.only(bottom: 12),
-      elevation: 1,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: sevColor.withValues(alpha: 0.3), width: 1),
-      ),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(24),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: sevColor,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    SizedBox(width: 8),
-                    Text(
-                      anomaly['type'] as String,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                      ),
-                    ),
-                  ],
-                ),
-                Row(
-                  children: [
-                    Container(
-                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: sevColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        _severityLabel(anomaly['severity'] as String),
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: sevColor,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 8),
-                    Container(
-                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: statusColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        _statusLabel(anomaly['status'] as String),
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: statusColor,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            SizedBox(height: 10),
-            Row(
-              children: [
-                Icon(Icons.location_on, size: 14, color: Color(0xFF64748B)),
-                SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    anomaly['location'] as String,
-                    style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 8),
-            Row(
-              children: [
-                _buildMetric('实际值', '${anomaly['actual']}'),
-                SizedBox(width: 16),
-                _buildMetric('期望值', '${anomaly['expected']}'),
-                SizedBox(width: 16),
-                _buildMetric(
-                  '偏差',
-                  '${anomaly['deviation'].toStringAsFixed(1)}%',
-                  color: sevColor,
-                ),
-              ],
-            ),
-            if ((anomaly['estimatedLoss'] as double) > 0) ...[
-              SizedBox(height: 8),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Color(0xFFFEF2F2),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.trending_down,
-                      size: 14,
-                      color: Color(0xFFDC2626),
-                    ),
-                    SizedBox(width: 6),
-                    Text(
-                      '估计损失: ${(anomaly['estimatedLoss'] as double) > 0 ? (anomaly['estimatedLoss'] / 10000).toStringAsFixed(2) + ' 万元' : '-'}',
-                      style: TextStyle(fontSize: 12, color: Color(0xFFDC2626)),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-            SizedBox(height: 8),
+            Icon(icon, size: 40, color: const Color(0xFF64748B)),
+            const SizedBox(height: 12),
             Text(
-              anomaly['time'] as String,
-              style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+              title,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
+            const SizedBox(height: 8),
+            Text(message, textAlign: TextAlign.center),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildMetric(String label, String value, {Color? color}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: TextStyle(fontSize: 10, color: Color(0xFF94A3B8))),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.bold,
-            color: color ?? Color(0xFF0F172A),
-          ),
-        ),
-      ],
     );
   }
 }

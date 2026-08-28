@@ -260,6 +260,19 @@ for mobile_root in ("android-global/lib", "ios-global/lib"):
         f"{mobile_root}/screens/operations/anomaly_screen.dart",
         "No synthetic alerts are shown",
     )
+for mobile_root in ("android-cn/lib", "ios-cn/lib"):
+    require(
+        f"{mobile_root}/screens/operations/anomaly_screen.dart",
+        "不会生成示例设备、随机指标或虚构损失",
+    )
+    forbid_tree(
+        mobile_root,
+        (
+            "Deterministic mock anomalies",
+            "山东德州100MW光伏",
+            "estimatedLoss': 18600.0",
+        ),
+    )
 require(
     "runtime/backend/app/api/v1/finance.py",
     "storage-arbitrage-v1.0",
