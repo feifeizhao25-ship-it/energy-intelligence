@@ -286,6 +286,14 @@ require(
     "系统不会返回模拟健康分、告警、发电量或设备状态",
 )
 require(
+    "runtime/backend/app/api/v1/resource.py",
+    "Project.id == project_id, Project.user_id == user_id",
+)
+require(
+    "runtime/backend/app/api/v1/resource.py",
+    "if project_id:",
+)
+require(
     "runtime/web/src/app/(dashboard)/maintenance/page.tsx",
     "redirect('/projects')",
 )

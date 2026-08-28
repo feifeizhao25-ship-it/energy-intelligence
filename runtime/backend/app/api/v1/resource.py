@@ -16,6 +16,22 @@ from app.services.resource_service import fetch_solar_resource, fetch_wind_resou
 router = APIRouter(prefix="/resource")
 
 
+async def _owned_project_id(
+    project_id: str | None,
+    user_id: str,
+    db: AsyncSession,
+) -> str | None:
+    """Return an owned project id, or keep an ad-hoc lookup ephemeral."""
+    if not project_id:
+        return None
+    result = await db.execute(
+        select(Project.id).where(Project.id == project_id, Project.user_id == user_id)
+    )
+    if result.scalar_one_or_none() is None:
+        raise HTTPException(status_code=404, detail="Project not found or access denied")
+    return project_id
+
+
 @router.post("/solar", response_model=SolarResourceResponse)
 async def solar_resource(
     body: SolarResourceRequest,
@@ -24,24 +40,16 @@ async def solar_resource(
 ):
     """Assess solar resource and save to database."""
     result = await fetch_solar_resource(body)
-
-    assessment = ResourceAssessment(
-        id=str(uuid.uuid4()),
-        project_id=body.project_id or None,
-        technology="solar",
-        latitude=body.lat,
-        longitude=body.lng,
-        data_source=result.data_source,
-        ghi=result.ghi,
-        dni=result.dni,
-        dhi=result.dhi,
-        wind_speed=None,
-        resource_class=result.resource_class,
-        score=result.score,
-        created_at=datetime.now(timezone.utc),
-    )
-    db.add(assessment)
-    await db.flush()
+    project_id = await _owned_project_id(body.project_id, user_id, db)
+    if project_id:
+        db.add(ResourceAssessment(
+            id=str(uuid.uuid4()), project_id=project_id, technology="solar",
+            latitude=body.lat, longitude=body.lng, data_source=result.data_source,
+            ghi=result.ghi, dni=result.dni, dhi=result.dhi, wind_speed=None,
+            resource_class=result.resource_class, score=result.score,
+            created_at=datetime.now(timezone.utc),
+        ))
+        await db.flush()
     return result
 
 
@@ -53,24 +61,16 @@ async def wind_resource(
 ):
     """Assess wind resource and save to database."""
     result = await fetch_wind_resource(body)
-
-    assessment = ResourceAssessment(
-        id=str(uuid.uuid4()),
-        project_id=body.project_id or None,
-        technology="wind",
-        latitude=body.lat,
-        longitude=body.lng,
-        data_source="open_meteo",
-        ghi=None,
-        dni=None,
-        dhi=None,
-        wind_speed=result.mean_speed,
-        resource_class=result.resource_class,
-        score=result.score,
-        created_at=datetime.now(timezone.utc),
-    )
-    db.add(assessment)
-    await db.flush()
+    project_id = await _owned_project_id(body.project_id, user_id, db)
+    if project_id:
+        db.add(ResourceAssessment(
+            id=str(uuid.uuid4()), project_id=project_id, technology="wind",
+            latitude=body.lat, longitude=body.lng, data_source="open_meteo",
+            ghi=None, dni=None, dhi=None, wind_speed=result.mean_speed,
+            resource_class=result.resource_class, score=result.score,
+            created_at=datetime.now(timezone.utc),
+        ))
+        await db.flush()
     return result
 
 
@@ -88,12 +88,11 @@ async def get_resource_assessment(
     if not assessment:
         raise HTTPException(status_code=404, detail="Assessment not found")
 
-    if assessment.project_id:
-        proj_result = await db.execute(
-            select(Project).where(Project.id == assessment.project_id, Project.user_id == user_id)
-        )
-        if not proj_result.scalar_one_or_none():
-            raise HTTPException(status_code=403, detail="Access denied")
+    proj_result = await db.execute(
+        select(Project.id).where(Project.id == assessment.project_id, Project.user_id == user_id)
+    )
+    if proj_result.scalar_one_or_none() is None:
+        raise HTTPException(status_code=404, detail="Assessment not found")
 
     return {
         "id": assessment.id,
