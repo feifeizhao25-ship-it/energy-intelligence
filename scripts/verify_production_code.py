@@ -303,6 +303,18 @@ require("runtime/web/src/app/api/projects/unlock/route.ts", "VERIFIED_ENTITLEMEN
 require("runtime/web/src/app/api/projects/[id]/stations/route.ts", "STATION_LIMIT_REACHED")
 require("runtime/web/src/app/api/projects/[id]/stations/route.ts", "尚无经验证的 SCADA/IoT 测量数据")
 require("runtime/web/src/components/dashboard/site-wizard/SiteWizard.tsx", "/pricing?feature=report-export")
+require("runtime/web/src/app/api/projects/report/route.ts", "SERVER_REPORT_EXPORT_REQUIRED")
+for route, destination in (
+    ("runtime/web/src/app/my/achievements/page.tsx", "/achievements"),
+    ("runtime/web/src/app/[locale]/(dashboard)/projects/page.tsx", "/projects"),
+    ("runtime/web/src/app/[locale]/(dashboard)/maintenance/page.tsx", "/projects"),
+    ("runtime/web/src/app/[locale]/(dashboard)/calculator/result/page.tsx", "/calculator"),
+):
+    require(route, f"redirect('{destination}')")
+require(
+    "runtime/web/src/app/(dashboard)/calculator/result/page.tsx",
+    "data.metadata?.calculationId || data.metadata?.snapshotId || '尚未生成'",
+)
 forbid_tree(
     "runtime/backend/app/api/v1",
     (
@@ -319,6 +331,7 @@ forbid_tree(
         "模拟知识图谱数据",
         "reportStatus: 'READY'",
         "power: Math.random()",
+        "BR-{Math.random()",
     ),
 )
 require(

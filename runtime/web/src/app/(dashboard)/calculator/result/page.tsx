@@ -71,7 +71,9 @@ function CalculatorResultPage() {
                                     PRO 分析
                                 </span>
                             </h1>
-                            <p className="text-xs text-slate-500">报告编号: BR-{Math.random().toString(36).substr(2, 9).toUpperCase()}</p>
+                            <p className="text-xs text-slate-500">
+                                审计编号: {data.metadata?.calculationId || data.metadata?.snapshotId || '尚未生成'}
+                            </p>
                         </div>
                     </div>
 
