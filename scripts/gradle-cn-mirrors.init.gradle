@@ -1,0 +1,24 @@
+// CI fallback repositories for transient Maven Central / Gradle Plugin Portal
+// connectivity failures. Official repositories remain as final fallbacks.
+// Source references (verified 2026-08-30):
+// https://developer.aliyun.com/mirror/maven
+// https://support.huaweicloud.com/usermanual-mirrors/mirrors_hlp_0001.html
+
+def configureRepositories = { repositories ->
+    repositories.maven { url = uri('https://maven.aliyun.com/repository/gradle-plugin') }
+    repositories.maven { url = uri('https://maven.aliyun.com/repository/google') }
+    repositories.maven { url = uri('https://maven.aliyun.com/repository/public') }
+    repositories.maven { url = uri('https://repo.huaweicloud.com/repository/maven/') }
+    repositories.google()
+    repositories.mavenCentral()
+    repositories.gradlePluginPortal()
+}
+
+settingsEvaluated { settings ->
+    configureRepositories(settings.pluginManagement.repositories)
+}
+
+gradle.beforeProject { project ->
+    configureRepositories(project.buildscript.repositories)
+    configureRepositories(project.repositories)
+}

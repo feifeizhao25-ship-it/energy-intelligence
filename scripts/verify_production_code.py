@@ -6,6 +6,8 @@ import sys
 
 
 ROOT = Path(__file__).resolve().parents[1]
+
+GRADLE_MIRROR_SCRIPT = ROOT / "scripts" / "gradle-cn-mirrors.init.gradle"
 errors: list[str] = []
 
 
@@ -397,6 +399,18 @@ require(
 require(
     "web-global/src/components/dashboard/personalization-preview.ts",
     "new Set(['john_smith', 'sarah_miller'])",
+)
+require(
+    "scripts/gradle-cn-mirrors.init.gradle",
+    "https://maven.aliyun.com/repository/public",
+)
+require(
+    "scripts/gradle-cn-mirrors.init.gradle",
+    "https://repo.huaweicloud.com/repository/maven/",
+)
+require(
+    ".github/workflows/mobile-quality.yml",
+    "Configure resilient Gradle repositories",
 )
 
 service_dockerfiles = sorted((ROOT / "services").glob("*/Dockerfile"))
