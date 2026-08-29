@@ -3,8 +3,10 @@ Tests for authentication endpoints and security utilities.
 Run with: pytest tests/test_auth.py -v
 """
 import pytest
+from pydantic import ValidationError
 from httpx import AsyncClient, ASGITransport
 
+from app.schemas.auth import RegisterRequest
 from app.main import app
 from app.core.security import (
     hash_password,
@@ -13,6 +15,20 @@ from app.core.security import (
     create_refresh_token,
     decode_token,
 )
+
+
+def test_global_registration_requires_explicit_data_transfer_consent():
+    with pytest.raises(ValidationError, match="data transfer consent"):
+        RegisterRequest(name="Global User", email="global@example.com", password="securepass", market="global")
+
+    request = RegisterRequest(
+        name="Global User",
+        email="global@example.com",
+        password="securepass",
+        market="global",
+        data_transfer_consent=True,
+    )
+    assert request.market == "global"
 
 
 # ── Password hashing ───────────────────────────────────────────────────────────

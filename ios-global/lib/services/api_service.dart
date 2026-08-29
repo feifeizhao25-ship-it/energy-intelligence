@@ -52,6 +52,7 @@ class ApiService {
     required String password,
     String? company,
     String? role,
+    required bool dataTransferConsent,
   }) async {
     final resp = await _post(
       '/api/v1/auth/register',
@@ -61,6 +62,8 @@ class ApiService {
         'password': password,
         if (company != null) 'company': company,
         if (role != null) 'role': role,
+        'market': 'global',
+        'data_transfer_consent': dataTransferConsent,
       },
     );
     final token = resp['access_token'] as String;

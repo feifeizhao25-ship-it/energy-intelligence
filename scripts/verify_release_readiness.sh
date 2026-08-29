@@ -8,7 +8,7 @@ step() { echo; echo "════ $1 ════"; }
 mark() { if [ "$2" -eq 0 ]; then PASS+=("$1"); else FAIL+=("$1"); fi }
 
 step "1/5 国内网站依赖与生产构建"
-( cd runtime/web && pnpm install --frozen-lockfile --offline && pnpm build )
+( cd runtime/web && npm ci && npm run build )
 mark "runtime/web production build" $?
 
 step "2/5 国内后端测试"

@@ -64,7 +64,8 @@ curl -H 'accept: application/dns-json' \
 - `CORS_ORIGINS`、`CN_PUBLIC_API_URL`、`CN_NEXTAUTH_URL`
 - `CN_DOMAIN=xinnengyuan.ai`
 - `INT_DOMAIN=energyiq.tianji-astrology.com`
-- 至少一个可用 AI Provider Key；OpenRouter 为当前推荐主路由
+- 至少一个国内直连 AI Provider Key：DashScope、DeepSeek 或智谱；国内用户不得走 OpenRouter
+- `OPENROUTER_API_KEY` 只用于国际版用户，服务端按已认证用户的 `market` 字段隔离路由
 - 收款启用前的 Stripe/国内支付正式商户配置与 Webhook Secret
 
 生产切换顺序：
@@ -88,4 +89,3 @@ curl -H 'accept: application/dns-json' \
 - RAG 输出携带来源、发布日期、抓取时间、适用地区和置信度；过期来源被门禁阻止。
 - PDF/DOCX 报告经过分页、目录、图表、引用与中英文排版验收。
 - 支付成功必须由已验签 Webhook 驱动，不能由前端跳转页面自行开通权益。
-

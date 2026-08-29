@@ -213,6 +213,12 @@ class Settings(BaseSettings):
     DASHSCOPE_API_KEY: Optional[str] = None
     DEEPSEEK_API_KEY: Optional[str] = None
     GLM_API_KEY: Optional[str] = None
+    DASHSCOPE_BASE_URL: str = "https://dashscope.aliyuncs.com/compatible-mode/v1"
+    DASHSCOPE_MODEL: str = "qwen-plus"
+    DEEPSEEK_BASE_URL: str = "https://api.deepseek.com"
+    DEEPSEEK_MODEL: str = "deepseek-chat"
+    GLM_BASE_URL: str = "https://open.bigmodel.cn/api/paas/v4/"
+    GLM_MODEL: str = "glm-4-flash"
     
     # 国际版
     ANTHROPIC_API_KEY: Optional[str] = None

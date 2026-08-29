@@ -53,10 +53,10 @@ export const authApi = {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     }),
-  register: (data: Record<string, string>) =>
+  register: (data: Record<string, unknown> & { data_transfer_consent: true }) =>
     fetchApi<ApiResponse<{ user: User; token: string }>>('/api/v1/auth/register', {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: JSON.stringify({ ...data, market: 'global' }),
     }),
   logout: () => fetchApi<ApiResponse<void>>('/api/v1/auth/logout', { method: 'POST' }),
 };

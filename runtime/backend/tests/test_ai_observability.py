@@ -18,7 +18,7 @@ async def test_chat_returns_model_token_and_latency_metadata(monkeypatch):
     create = AsyncMock(return_value=response)
     assistant.openai_client = SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(create=create)))
 
-    result = await assistant.chat_openai_with_metadata("问题", "系统指令")
+    result = await assistant.chat_openai_with_metadata("问题", "系统指令", market="global")
 
     assert result["content"] == "可核验的回答"
     assert result["metadata"]["model"] == "deepseek/deepseek-v3.2"
@@ -36,7 +36,7 @@ async def test_chat_rejects_empty_provider_response():
     )
     assistant.openai_client = SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(create=AsyncMock(return_value=response))))
     with pytest.raises(RuntimeError, match="empty content"):
-        await assistant.chat_openai_with_metadata("问题", "系统指令")
+        await assistant.chat_openai_with_metadata("问题", "系统指令", market="global")
 
 
 @pytest.mark.asyncio
@@ -49,11 +49,11 @@ async def test_openrouter_circuit_opens_after_consecutive_failures(monkeypatch):
     assistant.openai_client = SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(create=create)))
 
     with pytest.raises(RuntimeError, match="provider unavailable"):
-        await assistant.chat_openai_with_metadata("问题1", "系统指令")
+        await assistant.chat_openai_with_metadata("问题1", "系统指令", market="global")
     with pytest.raises(RuntimeError, match="provider unavailable"):
-        await assistant.chat_openai_with_metadata("问题2", "系统指令")
+        await assistant.chat_openai_with_metadata("问题2", "系统指令", market="global")
     with pytest.raises(RuntimeError, match="circuit is open"):
-        await assistant.chat_openai_with_metadata("问题3", "系统指令")
+        await assistant.chat_openai_with_metadata("问题3", "系统指令", market="global")
     assert create.await_count == 2
 
 
@@ -68,10 +68,35 @@ async def test_stream_uses_same_openrouter_privacy_routing(monkeypatch):
 
     create = AsyncMock(return_value=chunks())
     assistant.openai_client = SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(create=create)))
-    output = [part async for part in assistant.stream_openai("问题", "系统指令")]
+    output = [part async for part in assistant.stream_openai("问题", "系统指令", market="global")]
     assert output == ["答", "案"]
     request = create.await_args.kwargs
     assert request["extra_body"]["provider"] == {
         "data_collection": "deny", "zdr": True, "require_parameters": True
     }
     assert request["extra_body"]["models"][0] == settings.OPENROUTER_MODEL_FAST
+
+
+@pytest.mark.asyncio
+async def test_cn_market_never_calls_openrouter(monkeypatch):
+    monkeypatch.setattr(settings, "DEEPSEEK_API_KEY", "cn-key")
+    monkeypatch.setattr(settings, "OPENROUTER_API_KEY", "global-key")
+    assistant = AIAssistant()
+    response = SimpleNamespace(
+        model="deepseek-chat",
+        choices=[SimpleNamespace(message=SimpleNamespace(content="国内回答"))],
+        usage=None,
+    )
+    cn_create = AsyncMock(return_value=response)
+    global_create = AsyncMock(return_value=response)
+    assistant.cn_client = SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(create=cn_create)))
+    assistant.cn_provider = "deepseek"
+    assistant.cn_model = "deepseek-chat"
+    assistant.openai_client = SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(create=global_create)))
+
+    result = await assistant.chat_openai_with_metadata("问题", "系统指令", market="cn")
+
+    assert result["metadata"]["provider"] == "deepseek"
+    assert result["metadata"]["market"] == "cn"
+    cn_create.assert_awaited_once()
+    global_create.assert_not_awaited()

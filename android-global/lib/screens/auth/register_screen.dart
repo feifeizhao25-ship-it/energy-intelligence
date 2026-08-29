@@ -48,6 +48,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         password: _passCtrl.text,
         company: _companyCtrl.text.trim(),
         role: _role,
+        dataTransferConsent: _gdprAccepted,
       );
       if (mounted) Navigator.pushReplacementNamed(context, '/main');
     } on ApiException catch (error) {

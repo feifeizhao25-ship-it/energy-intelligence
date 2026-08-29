@@ -21,31 +21,16 @@ export interface AIRequest {
 }
 
 const siliconFlowKey = process.env.SILICONFLOW_API_KEY;
-const openRouterKey = process.env.OPENROUTER_API_KEY;
 
 /**
  * 统一 AI 路由服务
  * 优先使用 SiliconFlow 接入国产模型，支持自动备选切换
  */
 export async function callAI(req: AIRequest) {
-    if (openRouterKey) {
-        const primary = process.env.OPENROUTER_MODEL_QUALITY || 'deepseek/deepseek-v3.2';
-        const fallbacks = (process.env.OPENROUTER_FALLBACK_MODELS || 'qwen/qwen3-30b-a3b-instruct-2507,google/gemini-2.5-flash').split(',').map(item => item.trim()).filter(Boolean);
-        const client = new OpenAI({ apiKey: openRouterKey, baseURL: process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1', defaultHeaders: { 'HTTP-Referer': process.env.OPENROUTER_SITE_URL || 'https://xinnengyuan.ai', 'X-Title': '新能源智库' } });
-        return client.chat.completions.create({
-            model: primary,
-            messages: req.messages,
-            temperature: req.temperature ?? 0.4,
-            max_tokens: Math.min(4096, Math.max(1, req.max_tokens || 2000)),
-            stream: req.stream || false,
-            tools: req.tools,
-            tool_choice: req.tool_choice,
-        }, { body: { models: [primary, ...fallbacks], provider: { data_collection: 'deny', zdr: true, require_parameters: true } } });
-    }
     const model = req.model || 'glm-4-plus';
 
     if (!siliconFlowKey) {
-        throw new Error('OPENROUTER_API_KEY 或 SILICONFLOW_API_KEY 未配置，AI 服务已拒绝生成替代内容');
+        throw new Error('SILICONFLOW_API_KEY 未配置，国内 AI 服务已拒绝生成替代内容');
     }
 
     const client = new OpenAI({
@@ -58,7 +43,7 @@ export async function callAI(req: AIRequest) {
             model: getModelMapping(model),
             messages: req.messages,
             temperature: req.temperature || 0.7,
-            max_tokens: req.max_tokens || 2000,
+            max_tokens: Math.min(4096, Math.max(1, req.max_tokens || 2000)),
             stream: req.stream || false,
             tools: req.tools,
             tool_choice: req.tool_choice,
@@ -121,7 +106,7 @@ function getModelMapping(model: AIModel): string {
         'deepseek-v3': 'deepseek-ai/DeepSeek-V3',
         'deepseek-chat': 'deepseek-ai/DeepSeek-V3',
         // 旧内部标识在 SiliconFlow 路径映射到可用的通用质量模型；
-        // OpenRouter 路径由 OPENROUTER_MODEL_QUALITY 统一选型。
+        // 国内版固定走硅基流动境内端点。
         'claude-sonnet': 'Pro/zai-org/GLM-4.7'
     };
     return mapping[model] || mapping['glm-4-plus'];

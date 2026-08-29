@@ -61,6 +61,7 @@ class ApiService {
         'password': password,
         'company': ?company,
         'role': ?role,
+        'market': 'cn',
       },
     );
     final token = resp['access_token'] as String;

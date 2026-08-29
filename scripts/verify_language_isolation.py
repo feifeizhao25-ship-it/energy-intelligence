@@ -290,6 +290,13 @@ def main() -> int:
         for marker in required:
             if marker not in proxy_text:
                 violations.append(f"[CN-CONTRACT] {cn_proxy.relative_to(ROOT)}: 缺少国内版隔离标记 {marker!r}")
+    cn_web_src = ROOT / "runtime" / "web" / "src"
+    for path in iter_source_files(cn_web_src):
+        text = path.read_text(encoding="utf-8", errors="replace")
+        if "OPENROUTER_API_KEY" in text or "openrouter.ai" in text:
+            violations.append(
+                f"[CN-PROVIDER] {path.relative_to(ROOT)}: 国内 Web 禁止直连 OpenRouter"
+            )
 
     if not checked:
         print("语言隔离检查失败:没有找到任何前端源码目录")

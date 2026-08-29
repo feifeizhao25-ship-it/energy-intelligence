@@ -13,6 +13,7 @@ from app.services.ai_service import ai_assistant
 from app.core.subscription import QuotaExceeded, assert_ai_quota, consume_ai_quota
 from app.services.evidence_envelope import envelope_from_rag
 from app.services.rag_service import RAGService
+from app.models.user import User
 import json
 
 router = APIRouter(prefix="/ai")
@@ -20,10 +21,10 @@ router = APIRouter(prefix="/ai")
 _AI_LIMITATIONS = ["AI 生成内容仅供辅助分析，关键投资与工程决策需人工复核"]
 
 
-def _evidence_for(query: str, answer: str) -> dict:
+def _evidence_for(query: str, answer: str, market: str) -> dict:
     """为 AI 问答构建统一证据封装；检索失败时降级为「无来源」而非报错。"""
     try:
-        hits = RAGService().search(query, top_k=3, market="cn").hits
+        hits = RAGService().search(query, top_k=3, market=market).hits
     except Exception:
         hits = []
     return envelope_from_rag(answer, hits, limitations=_AI_LIMITATIONS)
@@ -37,12 +38,29 @@ You are fluent in solar PV, wind energy, energy storage, and project finance.
 You can call tools to perform resource assessments, financial calculations, and operational diagnostics.
 Respond in the user's language. Always cite data sources and provide confidence levels for estimates."""
 
+CN_SYSTEM_PROMPT = """你是新能源智库的专业分析助手，熟悉中国光伏、风电、储能和项目财务。
+只使用可核验且适用于中国市场的资料，明确数据日期、来源、假设、适用地区和置信度。
+使用通俗中文回答；不得把估算描述为保证，关键投资与工程决策必须提示人工复核。"""
+
+
+async def _market_for_user(user_id: str, db: AsyncSession) -> str:
+    market = await db.scalar(select(User.market).where(User.id == user_id))
+    return "global" if market == "global" else "cn"
+
 
 @router.post("/chat")
-async def chat(message: str, project_id: Optional[str] = None, user_id: str = Depends(get_current_user_id)):
+async def chat(
+    message: str,
+    project_id: Optional[str] = None,
+    user_id: str = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+):
     """Chat with AI assistant (streaming)."""
+    market = await _market_for_user(user_id, db)
+    prompt = SYSTEM_PROMPT if market == "global" else CN_SYSTEM_PROMPT
+
     async def stream():
-        async for chunk in ai_assistant.stream_openai(message, SYSTEM_PROMPT):
+        async for chunk in ai_assistant.stream_openai(message, prompt, market=market):
             yield f"data: {json.dumps({'content': chunk})}\n\n"
         yield "data: [DONE]\n\n"
 
@@ -65,14 +83,16 @@ async def chat_json(
     except QuotaExceeded as error:
         raise HTTPException(status_code=429, detail=str(error)) from error
     try:
-        result = await ai_assistant.chat_openai_with_metadata(body.message, SYSTEM_PROMPT)
+        market = await _market_for_user(user_id, db)
+        prompt = SYSTEM_PROMPT if market == "global" else CN_SYSTEM_PROMPT
+        result = await ai_assistant.chat_openai_with_metadata(body.message, prompt, market=market)
     except RuntimeError as error:
         raise HTTPException(status_code=503, detail="AI service temporarily unavailable") from error
     await consume_ai_quota(user, db)
     return {
         "message": result["content"],
         "ai_metadata": result["metadata"],
-        "evidence": _evidence_for(body.message, result["content"]),
+        "evidence": _evidence_for(body.message, result["content"], market),
     }
 
 
@@ -89,14 +109,16 @@ async def analyze(
     except QuotaExceeded as error:
         raise HTTPException(status_code=429, detail=str(error)) from error
     try:
-        result = await ai_assistant.chat_openai_with_metadata(query, SYSTEM_PROMPT)
+        market = await _market_for_user(user_id, db)
+        prompt = SYSTEM_PROMPT if market == "global" else CN_SYSTEM_PROMPT
+        result = await ai_assistant.chat_openai_with_metadata(query, prompt, market=market)
     except RuntimeError as error:
         raise HTTPException(status_code=503, detail="AI service temporarily unavailable") from error
     await consume_ai_quota(user, db)
     return {
         "analysis": result["content"],
         "ai_metadata": result["metadata"],
-        "evidence": _evidence_for(query, result["content"]),
+        "evidence": _evidence_for(query, result["content"], market),
     }
 
 

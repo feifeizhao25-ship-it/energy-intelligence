@@ -1,5 +1,5 @@
-from pydantic import BaseModel, EmailStr, Field
-from typing import Optional
+from pydantic import BaseModel, EmailStr, Field, model_validator
+from typing import Literal, Optional
 
 
 class RegisterRequest(BaseModel):
@@ -9,6 +9,14 @@ class RegisterRequest(BaseModel):
     company: Optional[str] = None
     role: Optional[str] = None
     country: Optional[str] = None
+    market: Literal["cn", "global"] = "cn"
+    data_transfer_consent: bool = False
+
+    @model_validator(mode="after")
+    def require_global_data_transfer_consent(self):
+        if self.market == "global" and not self.data_transfer_consent:
+            raise ValueError("global registration requires explicit data transfer consent")
+        return self
 
 
 class LoginRequest(BaseModel):

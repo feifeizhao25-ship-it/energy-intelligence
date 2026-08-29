@@ -209,12 +209,20 @@ require(
 require("runtime/web/src/app/api/v1/projects/route.ts", "未返回示例数据")
 require("runtime/web/src/app/api/v1/projects/[id]/route.ts", "userId: keyData.userId")
 require("runtime/web/src/app/api/exports/route.ts", "未生成随机数据")
-require("runtime/web/src/lib/ai/router.ts", "deepseek/deepseek-v3.2")
-require("runtime/web/src/lib/ai/router.ts", "data_collection: 'deny'")
+require("runtime/web/src/lib/ai/router.ts", "https://api.siliconflow.cn/v1")
 require("runtime/web/src/lib/ai/router.ts", "Math.min(4096")
 require("runtime/backend/app/services/ai_service.py", '"zdr": True')
+require("runtime/backend/app/services/ai_service.py", 'market == "global"')
+require("runtime/backend/app/services/ai_service.py", 'market == "cn"')
 require("runtime/backend/app/services/ai_service.py", "chat_openai_with_metadata")
 require("runtime/backend/app/api/v1/ai_assistant.py", '"ai_metadata"')
+require("runtime/backend/app/api/v1/ai_assistant.py", "_market_for_user")
+require("runtime/backend/app/schemas/auth.py", "data_transfer_consent")
+require("android-cn/lib/services/api_service.dart", "'market': 'cn'")
+require("ios-cn/lib/services/api_service.dart", "'market': 'cn'")
+require("android-global/lib/services/api_service.dart", "'market': 'global'")
+require("ios-global/lib/services/api_service.dart", "'market': 'global'")
+forbid_tree("runtime/web/src", ("OPENROUTER_API_KEY", "openrouter.ai"))
 for mobile_root in ("android-global/lib", "ios-global/lib"):
     forbid_tree(
         mobile_root,

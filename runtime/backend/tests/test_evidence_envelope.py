@@ -115,7 +115,8 @@ class TestChatEndpointEvidence:
     async def test_chat_json_includes_evidence_envelope(self, client, auth_headers, monkeypatch):
         from app.api.v1.ai_assistant import ai_assistant
 
-        async def fake_chat(message: str, system_prompt: str) -> dict:
+        async def fake_chat(message: str, system_prompt: str, *, market: str) -> dict:
+            assert market == "cn"
             return {"content": "回答", "metadata": {"provider": "test"}}
 
         monkeypatch.setattr(ai_assistant, "chat_openai_with_metadata", fake_chat)
@@ -141,7 +142,8 @@ class TestChatEndpointEvidence:
     async def test_analyze_includes_evidence_envelope(self, client, auth_headers, monkeypatch):
         from app.api.v1.ai_assistant import ai_assistant
 
-        async def fake_chat(message: str, system_prompt: str) -> dict:
+        async def fake_chat(message: str, system_prompt: str, *, market: str) -> dict:
+            assert market == "cn"
             return {"content": "分析结果", "metadata": {"provider": "test"}}
 
         monkeypatch.setattr(ai_assistant, "chat_openai_with_metadata", fake_chat)

@@ -14,9 +14,10 @@ async def test_mobile_ai_chat_requires_auth(client):
 
 @pytest.mark.asyncio
 async def test_mobile_ai_chat_returns_json(client, auth_headers, monkeypatch):
-    async def fake_chat(message: str, system_prompt: str) -> dict:
+    async def fake_chat(message: str, system_prompt: str, *, market: str) -> dict:
         assert message == "请解释光伏容量因子"
-        assert "Always cite data sources" in system_prompt
+        assert market == "cn"
+        assert "使用通俗中文回答" in system_prompt
         return {"content": "容量因子需结合项目所在地和可核验资源数据计算。", "metadata": {"provider": "test"}}
 
     monkeypatch.setattr(ai_assistant, "chat_openai_with_metadata", fake_chat)
@@ -34,7 +35,7 @@ async def test_mobile_ai_chat_returns_json(client, auth_headers, monkeypatch):
 async def test_mobile_ai_chat_rejects_empty_provider_response(
     client, auth_headers, monkeypatch
 ):
-    async def empty_chat(message: str, system_prompt: str) -> dict:
+    async def empty_chat(message: str, system_prompt: str, *, market: str) -> dict:
         raise RuntimeError("AI provider returned empty content")
 
     monkeypatch.setattr(ai_assistant, "chat_openai_with_metadata", empty_chat)
