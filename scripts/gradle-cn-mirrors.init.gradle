@@ -20,5 +20,4 @@ settingsEvaluated { settings ->
 
 gradle.beforeProject { project ->
     configureRepositories(project.buildscript.repositories)
-    configureRepositories(project.repositories)
 }
