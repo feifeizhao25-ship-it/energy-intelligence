@@ -39,6 +39,13 @@ jobs:
         working-directory: ${{ matrix.edition }}
     steps:
       - uses: actions/checkout@v4
+      - name: Set up Android build JDK
+        if: startsWith(matrix.edition, 'android-')
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.38.5'
@@ -51,7 +58,7 @@ jobs:
         if: startsWith(matrix.edition, 'android-')
         env:
           ALLOW_DEBUG_RELEASE_SIGNING: "true"
-          GRADLE_OPTS: "-Dhttps.protocols=TLSv1.2,TLSv1.3"
+          GRADLE_OPTS: "-Dhttps.protocols=TLSv1.2 -Djdk.tls.client.protocols=TLSv1.2"
         run: |
           for attempt in 1 2 3; do
             flutter build apk --release --no-pub && exit 0
