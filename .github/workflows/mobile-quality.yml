@@ -12,6 +12,7 @@ on:
       - 'android-global/**'
       - 'ios-global/**'
       - 'scripts/verify_language_isolation.py'
+      - 'scripts/gradle-cn-mirrors.init.gradle'
       - '.github/workflows/mobile-quality.yml'
   pull_request:
     paths:
@@ -20,6 +21,8 @@ on:
       - 'android-global/**'
       - 'ios-global/**'
       - 'scripts/verify_language_isolation.py'
+      - 'scripts/gradle-cn-mirrors.init.gradle'
+      - '.github/workflows/mobile-quality.yml'
 
 jobs:
   language:
