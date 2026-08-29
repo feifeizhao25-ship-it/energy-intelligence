@@ -31,10 +31,8 @@ import { TimelineManager } from '@/lib/timeline/manager';
  * 
  * 完整的项目分析流程，展示终极护城河架构
  */
-export async function POST(
-    req: NextRequest,
-    { params }: { params: { id: string } }
-) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     const requestStartedAt = Date.now();
     try {
         const session = await getServerSession(authOptions);
@@ -295,10 +293,8 @@ export async function POST(
  * 
  * 获取项目分析历史和当前状态
  */
-export async function GET(
-    req: NextRequest,
-    { params }: { params: { id: string } }
-) {
+export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     try {
         const session = await getServerSession(authOptions);
         const userId = session?.user?.id;

@@ -3,12 +3,13 @@ import { findBestPdf } from '@/lib/papers/pdf';
 import PaperDetailView from '@/components/papers/PaperDetailView';
 
 interface PageProps {
-    params: {
+    params: Promise<{
         id: string;
-    };
+    }>;
 }
 
-export default async function PaperDetailPage({ params }: PageProps) {
+export default async function PaperDetailPage(props: PageProps) {
+    const params = await props.params;
     const paper = await getPaper(params.id);
     const pdfStatus = await findBestPdf(paper);
 

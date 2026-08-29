@@ -33,13 +33,18 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 
-export default async function RootLayout({
-  children,
-  params,
-}: {
-  children: React.ReactNode
-  params: { locale: string }
-}) {
+export default async function RootLayout(
+  props: {
+    children: React.ReactNode
+    params: Promise<{ locale: string }>
+  }
+) {
+  const params = await props.params;
+
+  const {
+    children
+  } = props;
+
   // locale 白名单守卫：垃圾首段（如 /this-page-does-not-exist）会匹配到
   // [locale] 动态段，这里 fail-closed 渲染中文 404，而不是误渲染首页。
   if (!['zh', 'en'].includes(params.locale)) {

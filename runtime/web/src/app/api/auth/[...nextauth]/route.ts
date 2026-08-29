@@ -19,12 +19,12 @@ function notConfigured() {
     );
 }
 
-export async function GET(req: Request, ctx: { params: { nextauth: string[] } }) {
+export async function GET(req: Request, ctx: { params: Promise<{ nextauth: string[] }> }) {
     if (!isAuthConfigured()) return notConfigured();
-    return handler(req, ctx);
+    return handler(req, { params: await ctx.params });
 }
 
-export async function POST(req: Request, ctx: { params: { nextauth: string[] } }) {
+export async function POST(req: Request, ctx: { params: Promise<{ nextauth: string[] }> }) {
     if (!isAuthConfigured()) return notConfigured();
-    return handler(req, ctx);
+    return handler(req, { params: await ctx.params });
 }

@@ -10,10 +10,8 @@ import { authOptions } from '@/lib/auth/config';
  * GET /api/audit/[id]
  * 获取单个审计记录（用于复现验证）
  */
-export async function GET(
-    request: NextRequest,
-    { params }: { params: { id: string } }
-) {
+export async function GET(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     try {
         // 🏰 护城河核心：审计记录应允许通过 ID 进行公开验证（Read-only）
         // 移除 session 检查，确保第三方机构或合作伙伴可以查验计算真实性

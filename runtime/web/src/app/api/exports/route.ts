@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/auth-options';
-import * as XLSX from 'xlsx';
 
 import { addToExportCache } from '@/lib/exports/cache';
+import { consumeQuota } from '@/lib/audit/quota';
 
 /**
  * 数据导出 API
@@ -20,6 +20,10 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     const { dataType, format = 'csv' } = body;
+
+    if (!['csv', 'json'].includes(format)) {
+        return NextResponse.json({ error: 'UNSUPPORTED_FORMAT', message: '当前安全导出仅支持 CSV 和 JSON 格式' }, { status: 400 });
+    }
 
     try {
         let headers: string[] = [];
@@ -104,12 +108,6 @@ export async function POST(req: NextRequest) {
             // 加 UTF-8 BOM，避免 Excel 打开中文表头乱码
             content = '﻿' + content;
             contentType = 'text/csv; charset=utf-8';
-        } else if (format === 'xlsx') {
-            const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
-            content = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
-            contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
         } else if (format === 'json') {
             const jsonData = rows.map(row => {
                 const obj: any = {};
@@ -120,7 +118,18 @@ export async function POST(req: NextRequest) {
             contentType = 'application/json';
         }
 
-        // 3. 存储到缓存并生成下载链接
+        // 3. 只有在真实数据和文件都成功生成后才扣减额度；额度核验失败时不暴露文件。
+        const quota = await consumeQuota(userId, 'EXPORTS');
+        if (!quota.success) {
+            return NextResponse.json({
+                success: false,
+                error: quota.usage.exceeded ? 'EXPORT_QUOTA_EXCEEDED' : 'EXPORT_QUOTA_UNAVAILABLE',
+                message: quota.usage.exceeded ? '今日导出额度已用尽，请升级套餐或明日再试' : '导出额度暂时无法核验，请稍后重试',
+                usage: quota.usage,
+            }, { status: quota.usage.exceeded ? 429 : 503 });
+        }
+
+        // 4. 存储到缓存并生成下载链接
         addToExportCache(filename, { content, format, contentType });
 
         const downloadUrl = `/api/exports/download/${filename}`;

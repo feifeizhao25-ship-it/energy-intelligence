@@ -137,8 +137,8 @@ require(
     "runtime/web/src/app/(dashboard)/referral/page.tsx",
     "系统不会生成示例邀请码、虚构好友记录或未配置的返现承诺",
 )
-require("runtime/web/src/middleware.ts", "'/terms'")
-require("runtime/web/src/middleware.ts", "'/privacy'")
+require("runtime/web/src/proxy.ts", "'/terms'")
+require("runtime/web/src/proxy.ts", "'/privacy'")
 require(
     "runtime/web/src/app/api/projects/diagnosis/route.ts",
     "NO_VERIFIED_TELEMETRY",

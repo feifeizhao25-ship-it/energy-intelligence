@@ -6,10 +6,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { timelineService } from '@/lib/timeline/service';
 
-export async function GET(
-    req: NextRequest,
-    { params }: { params: { id: string } }
-) {
+export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     try {
         const timeline = await timelineService.getTimeline(params.id);
         const recommendations = await timelineService.recommendNextSteps(params.id);

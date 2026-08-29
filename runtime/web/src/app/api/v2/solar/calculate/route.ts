@@ -190,10 +190,9 @@ export async function POST(req: NextRequest) {
  * 
  * 获取历史计算结果（带完整证据链）
  */
-export async function GET(
-    req: NextRequest,
-    { params }: { params: { id: string } }
-) {
+// 保留旧读取实现仅供后续迁移参考；当前路由本身不含 [id]，不得从不存在的参数读取记录。
+async function getLegacyCalculationById(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     try {
         const session = await getServerSession(authOptions);
         const userId = session?.user?.id;
@@ -260,4 +259,12 @@ export async function GET(
             error: error.message || "Failed to get result"
         }, { status: 500 });
     }
+}
+
+export async function GET() {
+    return NextResponse.json({
+        success: false,
+        error: 'CALCULATION_ID_REQUIRED',
+        message: '该旧接口没有计算记录编号，无法安全读取历史结果。请通过审计记录接口按编号查询。',
+    }, { status: 410 });
 }

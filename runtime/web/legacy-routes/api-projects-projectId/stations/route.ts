@@ -73,10 +73,8 @@ stationsDb.set('demo-2', [
 ]);
 
 // GET - 获取项目下的所有站点/设备
-export async function GET(
-    req: NextRequest,
-    { params }: { params: { projectId: string } }
-) {
+export async function GET(req: NextRequest, props: { params: Promise<{ projectId: string }> }) {
+    const params = await props.params;
     const projectId = params.projectId;
 
     const stations = stationsDb.get(projectId) || [];
@@ -103,10 +101,8 @@ export async function GET(
 }
 
 // POST - 添加新站点/设备
-export async function POST(
-    req: NextRequest,
-    { params }: { params: { projectId: string } }
-) {
+export async function POST(req: NextRequest, props: { params: Promise<{ projectId: string }> }) {
+    const params = await props.params;
     const projectId = params.projectId;
     const body = await req.json();
 

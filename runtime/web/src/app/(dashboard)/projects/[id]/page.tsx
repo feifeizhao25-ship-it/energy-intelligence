@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use } from 'react';
 import Link from 'next/link';
 import {
     ArrowLeft,
@@ -45,12 +45,13 @@ interface DiagnosisResult {
 }
 
 interface ProjectDetailProps {
-    params: {
+    params: Promise<{
         id: string;
-    };
+    }>;
 }
 
-export default function ProjectDetailPage({ params }: ProjectDetailProps) {
+export default function ProjectDetailPage(props: ProjectDetailProps) {
+    const params = use(props.params);
     const [project, setProject] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [chartData, setChartData] = useState<Array<{ time: string; value: number }>>([]);

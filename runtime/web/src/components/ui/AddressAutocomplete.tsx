@@ -34,7 +34,7 @@ export default function AddressAutocomplete({
     const [selectedIndex, setSelectedIndex] = useState(-1);
     const inputRef = useRef<HTMLInputElement>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
-    const debounceRef = useRef<NodeJS.Timeout>();
+    const debounceRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
     // 获取地址建议
     const fetchSuggestions = async (query: string) => {

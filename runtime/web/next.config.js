@@ -19,10 +19,8 @@ const nextConfig = {
     CUSTOM_KEY: 'solarwind-pro',
   },
   transpilePackages: ['@react-pdf/renderer'],
-  experimental: {
-    // pdf-parse 含 pdfjs worker，保持在服务端外部依赖，避免打包期动态依赖告警
-    serverComponentsExternalPackages: ['pdf-parse'],
-  },
+  // pdf-parse 含 pdfjs worker，保持在服务端外部依赖，避免打包期动态依赖告警
+  serverExternalPackages: ['pdf-parse'],
   output: 'standalone',
   async rewrites() {
     const backend = process.env.BACKEND_INTERNAL_URL || 'http://backend:8000';

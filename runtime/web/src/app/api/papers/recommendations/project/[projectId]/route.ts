@@ -7,10 +7,8 @@ import { prisma } from '@/lib/prisma';
  * GET /api/papers/recommendations/project/[projectId]
  * 为特定项目推荐相关文献
  */
-export async function GET(
-    request: NextRequest,
-    { params }: { params: { projectId: string } }
-) {
+export async function GET(request: NextRequest, props: { params: Promise<{ projectId: string }> }) {
+    const params = await props.params;
     try {
         const session = await getServerSession(authOptions);
         if (!session?.user?.id) {

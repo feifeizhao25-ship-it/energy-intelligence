@@ -6,7 +6,7 @@ export default getRequestConfig(async () => {
     let locale = 'zh';
 
     try {
-        const cookieStore = cookies();
+        const cookieStore = await cookies();
         const nextLocale = cookieStore.get('NEXT_LOCALE');
         if (nextLocale?.value && ['en', 'zh'].includes(nextLocale.value)) {
             locale = nextLocale.value;

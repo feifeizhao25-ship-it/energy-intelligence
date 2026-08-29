@@ -78,10 +78,8 @@ maintenanceDb.set('demo-2', [
 ]);
 
 // GET - 获取维护任务列表
-export async function GET(
-    req: NextRequest,
-    { params }: { params: { id: string } }
-) {
+export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     const projectId = params.id;
     const url = new URL(req.url);
     const status = url.searchParams.get('status');
@@ -119,10 +117,8 @@ export async function GET(
 }
 
 // POST - 创建新维护任务
-export async function POST(
-    req: NextRequest,
-    { params }: { params: { id: string } }
-) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     const projectId = params.id;
     const body = await req.json();
 
@@ -153,10 +149,8 @@ export async function POST(
 }
 
 // PATCH - 更新任务状态
-export async function PATCH(
-    req: NextRequest,
-    { params }: { params: { id: string } }
-) {
+export async function PATCH(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     const projectId = params.id;
     const body = await req.json();
     const { taskId, status, notes } = body;

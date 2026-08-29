@@ -50,7 +50,16 @@ function CalculatorResultPage() {
 
     if (!rawData) return <div className="p-20 text-center text-slate-400">未找到计算结果数据</div>;
 
-    const data = JSON.parse(decodeURIComponent(rawData));
+    let data: any;
+    try {
+        data = JSON.parse(decodeURIComponent(rawData));
+    } catch {
+        return <div className="p-20 text-center text-slate-400">计算结果格式无效，请返回重新测算</div>;
+    }
+
+    if (!data?.financial || !data?.energy || !Array.isArray(data.energy.monthly)) {
+        return <div className="p-20 text-center text-slate-400">计算结果不完整，请返回重新测算</div>;
+    }
 
     return (
         <div className="min-h-screen bg-[#020617] text-slate-200 pb-20">
@@ -271,6 +280,8 @@ function Parameter({ label, value }: any) {
 function PDFDownloadButton({ data, type }: { data: any, type: string }) {
     const [isClient, setIsClient] = React.useState(false);
     const [shouldRender, setShouldRender] = React.useState(false);
+    const [reserving, setReserving] = React.useState(false);
+    const [errorMessage, setErrorMessage] = React.useState('');
 
     React.useEffect(() => {
         setIsClient(true);
@@ -280,13 +291,30 @@ function PDFDownloadButton({ data, type }: { data: any, type: string }) {
 
     if (!shouldRender) {
         return (
-            <button
-                onClick={() => setShouldRender(true)}
-                className="px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all flex items-center gap-2 shadow-lg shadow-blue-900/40"
-            >
-                <Download className="w-3.5 h-3.5" />
-                导出详细报表 (PDF)
-            </button>
+            <div className="flex flex-col items-end gap-1">
+                <button
+                    disabled={reserving}
+                    onClick={async () => {
+                        setReserving(true);
+                        setErrorMessage('');
+                        try {
+                            const response = await fetch('/api/exports/reserve', { method: 'POST' });
+                            const payload = await response.json();
+                            if (!response.ok) throw new Error(payload.message || '导出额度核验失败');
+                            setShouldRender(true);
+                        } catch (error) {
+                            setErrorMessage(error instanceof Error ? error.message : '导出额度核验失败');
+                        } finally {
+                            setReserving(false);
+                        }
+                    }}
+                    className="px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all flex items-center gap-2 shadow-lg shadow-blue-900/40 disabled:opacity-50"
+                >
+                    <Download className="w-3.5 h-3.5" />
+                    {reserving ? '正在核验额度...' : '导出详细报表 (PDF)'}
+                </button>
+                {errorMessage && <span className="max-w-64 text-right text-[11px] text-red-400">{errorMessage}</span>}
+            </div>
         );
     }
 

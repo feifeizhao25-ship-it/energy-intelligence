@@ -50,10 +50,8 @@ const defaultConfig = {
 };
 
 // GET - 获取配置
-export async function GET(
-    req: NextRequest,
-    { params }: { params: { id: string } }
-) {
+export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     const projectId = params.id;
     const config = configDb.get(projectId) || { ...defaultConfig };
 
@@ -64,10 +62,8 @@ export async function GET(
 }
 
 // PUT - 更新配置
-export async function PUT(
-    req: NextRequest,
-    { params }: { params: { id: string } }
-) {
+export async function PUT(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     const projectId = params.id;
     const body = await req.json();
 
@@ -91,10 +87,8 @@ export async function PUT(
 }
 
 // POST - 重置为默认配置
-export async function POST(
-    req: NextRequest,
-    { params }: { params: { id: string } }
-) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     const projectId = params.id;
     configDb.set(projectId, { ...defaultConfig });
 

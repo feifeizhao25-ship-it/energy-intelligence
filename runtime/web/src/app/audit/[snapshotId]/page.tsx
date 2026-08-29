@@ -11,7 +11,8 @@ import {
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 
-export default async function AuditPage({ params }: { params: { snapshotId: string } }) {
+export default async function AuditPage(props: { params: Promise<{ snapshotId: string }> }) {
+    const params = await props.params;
     // 🏰 护城河核心：审计链接应该是公开可访问的，以证明其透明度
     // 移除 session 检查，允许外部审计员或未登录用户查阅
 
@@ -21,12 +22,13 @@ export default async function AuditPage({ params }: { params: { snapshotId: stri
         ?? (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined);
     if (!requestUrl) {
         const { headers } = await import('next/headers');
-        const host = headers().get('x-forwarded-host') ?? headers().get('host');
+        const requestHeaders = await headers();
+        const host = requestHeaders.get('x-forwarded-host') ?? requestHeaders.get('host');
         if (!host) {
             // fail-closed：无法确定站点地址时不渲染伪造数据
             throw new Error('无法确定站点地址：请配置 NEXTAUTH_URL 环境变量');
         }
-        const proto = headers().get('x-forwarded-proto') ?? 'https';
+        const proto = requestHeaders.get('x-forwarded-proto') ?? 'https';
         requestUrl = `${proto}://${host}`;
     }
 

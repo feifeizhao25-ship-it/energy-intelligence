@@ -13,11 +13,12 @@ const ERROR_TEXT: Record<string, string> = {
     Verification: '登录链接已失效或已使用，请重新发起登录。',
 };
 
-export default function AuthErrorPage({
-    searchParams,
-}: {
-    searchParams: { error?: string };
-}) {
+export default async function AuthErrorPage(
+    props: {
+        searchParams: Promise<{ error?: string }>;
+    }
+) {
+    const searchParams = await props.searchParams;
     const code = searchParams?.error ?? '';
     const message = ERROR_TEXT[code] ?? '登录过程出现问题，请返回登录页重试。';
 

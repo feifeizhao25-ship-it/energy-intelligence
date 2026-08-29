@@ -11,10 +11,8 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 import { AssetLifecycleManager, DataSourceConnections, AutomationConfig, ProjectLifecycleStage } from '@/lib/asset/lifecycle-manager';
 
-export async function POST(
-    req: NextRequest,
-    { params }: { params: { id: string } }
-) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     try {
         const session = await getServerSession(authOptions);
 
@@ -80,10 +78,8 @@ export async function POST(
  * 获取项目激活状态
  * GET /api/v2/project/[id]/activate
  */
-export async function GET(
-    req: NextRequest,
-    { params }: { params: { id: string } }
-) {
+export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     try {
         const session = await getServerSession(authOptions);
 
@@ -138,10 +134,8 @@ export async function GET(
  * 暂停激活
  * PUT /api/v2/project/[id]/activate/suspend
  */
-export async function PUT(
-    req: NextRequest,
-    { params }: { params: { id: string } }
-) {
+export async function PUT(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     try {
         const session = await getServerSession(authOptions);
 

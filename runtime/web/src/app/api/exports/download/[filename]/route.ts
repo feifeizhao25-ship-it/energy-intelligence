@@ -5,10 +5,8 @@ import { getFromExportCache } from '@/lib/exports/cache';
  * 专用下载接口
  * 根据文件名从缓存中导出的文件并提供下载
  */
-export async function GET(
-    req: NextRequest,
-    { params }: { params: { filename: string } }
-) {
+export async function GET(req: NextRequest, props: { params: Promise<{ filename: string }> }) {
+    const params = await props.params;
     const { filename } = params;
 
     if (!filename) {

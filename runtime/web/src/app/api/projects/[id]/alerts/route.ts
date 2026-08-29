@@ -66,10 +66,8 @@ alertsDb.set('demo-2', [
 ]);
 
 // GET - 获取项目告警列表
-export async function GET(
-    req: NextRequest,
-    { params }: { params: { id: string } }
-) {
+export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     const projectId = params.id;
     const url = new URL(req.url);
     const status = url.searchParams.get('status'); // 'active' | 'resolved' | 'all'
@@ -100,10 +98,8 @@ export async function GET(
 }
 
 // POST - 创建新告警 (通常由监控系统自动触发)
-export async function POST(
-    req: NextRequest,
-    { params }: { params: { id: string } }
-) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     const projectId = params.id;
     const body = await req.json();
 
@@ -132,10 +128,8 @@ export async function POST(
 }
 
 // PATCH - 更新告警状态 (确认/解决)
-export async function PATCH(
-    req: NextRequest,
-    { params }: { params: { id: string } }
-) {
+export async function PATCH(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     const projectId = params.id;
     const body = await req.json();
     const { alertId, status } = body;
