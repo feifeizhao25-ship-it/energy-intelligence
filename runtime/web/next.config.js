@@ -5,6 +5,9 @@ const withNextIntl = require('next-intl/plugin')(
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Playwright CI binds the dev server on localhost and opens it through
+  // 127.0.0.1. Next 16 otherwise blocks its own chunks and renders an empty body.
+  allowedDevOrigins: ['127.0.0.1', 'localhost'],
   poweredByHeader: false,
   compress: true,
   images: {
