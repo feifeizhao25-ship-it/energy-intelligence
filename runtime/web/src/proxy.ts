@@ -17,13 +17,11 @@ function siteUrl(req: NextRequest, path: string): URL {
 }
 
 const intlMiddleware = createIntlMiddleware({
-  // A list of all locales that are supported
-  locales: ['en', 'zh'],
-
-  // Used when no locale matches
-  defaultLocale: process.env.NEXT_PUBLIC_APP_EDITION === 'international' ? 'en' : 'zh',
+  // runtime/web 是国内生产包；国际版由独立 runtime/web-int 提供。
+  locales: ['zh'],
+  defaultLocale: 'zh',
   localePrefix: 'never', // 不使用 URL 前缀，通过 Cookie 处理
-  localeDetection: true // 启用语言检测
+  localeDetection: false
 });
 
 // 公开路径列表（不需要登录）
@@ -123,6 +121,10 @@ const authMiddleware = withAuth(
 
 export default async function proxy(req: NextRequest) {
   const path = req.nextUrl.pathname;
+
+  if (path === '/en' || path.startsWith('/en/')) {
+    return NextResponse.redirect(siteUrl(req, '/'));
+  }
 
   // 排除 API, 静态文件
   if (path.startsWith('/api') ||

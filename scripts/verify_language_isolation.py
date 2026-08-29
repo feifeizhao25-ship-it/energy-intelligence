@@ -276,6 +276,21 @@ def main() -> int:
             checked.append(src.relative_to(ROOT).as_posix())
             violations += check_cn(src, allowlist)
 
+    # 国内生产包必须与国际版物理隔离，且会员权益必须与服务端配额一致。
+    cn_home = ROOT / "runtime" / "web" / "src" / "app" / "page.tsx"
+    cn_proxy = ROOT / "runtime" / "web" / "src" / "proxy.ts"
+    if cn_home.is_file():
+        home_text = cn_home.read_text(encoding="utf-8")
+        for forbidden in ("LanguageSwitcher", "InternationalLanding", "测算与资源查询不限次"):
+            if forbidden in home_text:
+                violations.append(f"[CN-CONTRACT] {cn_home.relative_to(ROOT)}: 禁止出现 {forbidden!r}")
+    if cn_proxy.is_file():
+        proxy_text = cn_proxy.read_text(encoding="utf-8")
+        required = ("locales: ['zh']", "defaultLocale: 'zh'", "path === '/en'", "localeDetection: false")
+        for marker in required:
+            if marker not in proxy_text:
+                violations.append(f"[CN-CONTRACT] {cn_proxy.relative_to(ROOT)}: 缺少国内版隔离标记 {marker!r}")
+
     if not checked:
         print("语言隔离检查失败:没有找到任何前端源码目录")
         return 1

@@ -43,10 +43,8 @@ import {
     Calculator as CalcIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useLocale, useTranslations } from 'next-intl';
-import LanguageSwitcher from '@/components/ui/LanguageSwitcher';
+import { useTranslations } from 'next-intl';
 import AddressAutocomplete from '@/components/ui/AddressAutocomplete';
-import InternationalLanding from '@/components/home/InternationalLanding';
 
 // 快速计算结果展示组件
 function QuickResultCard({ icon: Icon, label, value, unit, color }: any) {
@@ -66,7 +64,6 @@ function QuickResultCard({ icon: Icon, label, value, unit, color }: any) {
 
 export default function HomePage() {
     const t = useTranslations('Index');
-    const locale = useLocale();
     const router = useRouter();
     const [isClient, setIsClient] = useState(false);
     const [location, setLocation] = useState('');
@@ -80,8 +77,6 @@ export default function HomePage() {
     useEffect(() => {
         setIsClient(true);
     }, []);
-
-    if (locale === 'en') return <InternationalLanding />;
 
     const handleQuickCalc = async () => {
         if (!location.trim() || capacity <= 0) return;
@@ -151,7 +146,6 @@ export default function HomePage() {
                         <Link href="/pricing" className="text-slate-600 hover:text-green-600 text-sm font-medium">价格方案</Link>
                     </div>
                     <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
-                        <LanguageSwitcher />
                         <Link href="/login" className="whitespace-nowrap text-slate-600 hover:text-green-600 text-sm font-medium">登录</Link>
                         <Link href="/login" className="whitespace-nowrap px-2.5 sm:px-4 py-2 bg-green-500 text-white text-sm font-bold rounded-xl hover:bg-green-600 transition-colors">
                             <span className="sm:hidden">注册</span><span className="hidden sm:inline">免费注册</span>
@@ -508,7 +502,7 @@ export default function HomePage() {
                     <div className="grid md:grid-cols-3 gap-6">
                         {[
                             { name: '免费版', price: '¥0', features: ['每日2次测算', '最多1个项目', '数据保留7天'] },
-                            { name: '专业版', price: '¥198/月', features: ['测算与资源查询不限次', '文献检索', 'PDF与Word导出'], popular: true },
+                            { name: '专业版', price: '¥198/月', features: ['每日最多100次测算', '文献检索', 'PDF与Word导出'], popular: true },
                             { name: '企业版', price: '¥38,000/年', features: ['企业权限', 'API与SSO', '白标与定制评估'], popular: false },
                         ].map((plan, i) => (
                             <div key={i} className={cn(
