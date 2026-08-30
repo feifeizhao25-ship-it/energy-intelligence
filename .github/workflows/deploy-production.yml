@@ -61,7 +61,10 @@ jobs:
         kustomize-version: '5.5.0'
 
     - name: Verify production code and Kubernetes manifests
-      run: pnpm run verify:production
+      run: |
+        pnpm run verify:production
+        kustomize build k8s/overlays/production > /tmp/energy-production-k8s.yaml
+        python3 scripts/verify_production_k8s_security.py /tmp/energy-production-k8s.yaml
 
     - name: Security audit
       run: pnpm audit --audit-level=high
@@ -168,7 +171,7 @@ jobs:
       run: |
         kubectl create namespace energy-production --dry-run=client -o yaml | kubectl apply -f -
 
-        for secret in database-secrets redis-secrets rabbitmq-secrets security-secrets external-api-secrets sso-secrets messaging-secrets monitoring-secrets monitoring-basic-auth; do
+        for secret in prod-database-secrets prod-redis-secrets prod-rabbitmq-secrets prod-security-secrets prod-external-api-secrets prod-sso-secrets prod-messaging-secrets prod-monitoring-secrets prod-monitoring-basic-auth; do
           kubectl get secret "$secret" -n energy-production >/dev/null
         done
 

@@ -27,6 +27,13 @@ spec:
               port: 16686
             initialDelaySeconds: 10
             periodSeconds: 15
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 16686
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 5
           resources:
             requests:
               cpu: 100m

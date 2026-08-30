@@ -42,6 +42,15 @@ spec:
                 - energy
             initialDelaySeconds: 10
             periodSeconds: 10
+          livenessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - energy
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            timeoutSeconds: 5
           resources:
             requests:
               cpu: 250m
@@ -56,6 +65,16 @@ spec:
           image: prometheuscommunity/postgres-exporter:v0.15.0
           ports:
             - containerPort: 9187
+          readinessProbe:
+            tcpSocket:
+              port: 9187
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          livenessProbe:
+            tcpSocket:
+              port: 9187
+            initialDelaySeconds: 30
+            periodSeconds: 30
           env:
             - name: DATA_SOURCE_NAME
               valueFrom:

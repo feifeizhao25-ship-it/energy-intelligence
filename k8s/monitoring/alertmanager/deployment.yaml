@@ -29,6 +29,13 @@ spec:
               port: 9093
             initialDelaySeconds: 10
             periodSeconds: 15
+          livenessProbe:
+            httpGet:
+              path: /-/healthy
+              port: 9093
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 5
           resources:
             requests:
               cpu: 50m

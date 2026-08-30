@@ -4,13 +4,15 @@ FROM nginx:1.27-alpine AS runtime
 
 ENV NGINX_ENTRYPOINT_QUIET_LOGS=1
 
-RUN rm -f /etc/nginx/conf.d/default.conf \
+RUN addgroup -g 10001 gateway \
+    && adduser -D -H -u 10001 -G gateway gateway \
+    && rm -f /etc/nginx/conf.d/default.conf \
     && mkdir -p /var/cache/nginx/proxy /var/run \
-    && chown -R nginx:nginx /var/cache/nginx /var/run
+    && chown -R gateway:gateway /var/cache/nginx /var/run
 
 COPY nginx.conf /etc/nginx/nginx.conf
 
-USER nginx
+USER 10001:10001
 
 EXPOSE 8080
 

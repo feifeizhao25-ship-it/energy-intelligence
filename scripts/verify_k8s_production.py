@@ -29,13 +29,8 @@ def fail(message: str) -> None:
     raise SystemExit(1)
 
 
-# 没有 kubectl 时原代码直接抛 FileNotFoundError 崩掉。
-# 本脚本刚接进 CI，runner 上不一定装了 kubectl —— 明确跳过并说明，
-# 好过以一个看不懂的 traceback 让流水线红掉。
 if shutil.which("kubectl") is None:
-    print("SKIP: 未找到 kubectl，跳过 K8s manifest 校验")
-    print("      如需在 CI 中启用，请先安装 kubectl（azure/setup-kubectl@v4）")
-    raise SystemExit(0)
+    fail("kubectl is required to render and validate the production overlay")
 
 result = subprocess.run(
     ["kubectl", "kustomize", str(OVERLAY)],
@@ -80,6 +75,16 @@ for document in documents:
     namespace = metadata.get("namespace", "")
     owner = f"{kind}/{metadata.get('name', '<unnamed>')}"
     spec = document.get("spec", {})
+
+    if namespace != "energy-production":
+        errors.append(f"{owner}: expected namespace energy-production, got {namespace!r}")
+
+    if kind == "Ingress":
+        auth_secret = metadata.get("annotations", {}).get(
+            "nginx.ingress.kubernetes.io/auth-secret"
+        )
+        if auth_secret:
+            referenced_external_secrets.add(auth_secret)
 
     pod_spec = None
     if kind in {"Deployment", "StatefulSet", "DaemonSet", "Job"}:

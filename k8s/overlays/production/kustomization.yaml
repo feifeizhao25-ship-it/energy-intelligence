@@ -1,7 +1,7 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-namespace: energy-intelligence
+namespace: energy-production
 
 resources:
   - ../../base
@@ -14,6 +14,351 @@ resources:
 labels:
   - pairs:
       environment: production
+
+# 无状态 Python 服务共用同一套最小权限运行约束。网关和有状态组件因写目录、
+# UID 与服务账号需求不同，在各自清单中单独硬化，避免“一刀切”导致生产不可用。
+patches:
+  - target:
+      kind: Deployment
+      name: "(ai-engine|analytics|auth|billing|diagnostic|financial|knowledge|monetization|notification|project|report|resource|simulation|user)-service"
+    patch: |-
+      - op: add
+        path: /spec/template/spec/automountServiceAccountToken
+        value: false
+      - op: add
+        path: /spec/template/spec/securityContext
+        value:
+          runAsNonRoot: true
+          runAsUser: 10001
+          runAsGroup: 10001
+          fsGroup: 10001
+          seccompProfile:
+            type: RuntimeDefault
+      - op: add
+        path: /spec/template/spec/containers/0/imagePullPolicy
+        value: Always
+      - op: add
+        path: /spec/template/spec/containers/0/securityContext
+        value:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
+      - op: add
+        path: /spec/template/spec/containers/0/volumeMounts
+        value:
+          - name: runtime-tmp
+            mountPath: /tmp
+      - op: add
+        path: /spec/template/spec/volumes
+        value:
+          - name: runtime-tmp
+            emptyDir:
+              sizeLimit: 256Mi
+  - target:
+      kind: Deployment
+      name: gateway-service
+    patch: |-
+      - op: add
+        path: /spec/template/spec/automountServiceAccountToken
+        value: false
+      - op: add
+        path: /spec/template/spec/securityContext
+        value:
+          runAsNonRoot: true
+          runAsUser: 10001
+          runAsGroup: 10001
+          fsGroup: 10001
+          seccompProfile:
+            type: RuntimeDefault
+      - op: add
+        path: /spec/template/spec/containers/0/imagePullPolicy
+        value: Always
+      - op: add
+        path: /spec/template/spec/containers/0/securityContext
+        value:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
+      - op: add
+        path: /spec/template/spec/containers/0/volumeMounts
+        value:
+          - name: nginx-cache
+            mountPath: /var/cache/nginx
+          - name: nginx-run
+            mountPath: /var/run
+          - name: runtime-tmp
+            mountPath: /tmp
+      - op: add
+        path: /spec/template/spec/volumes
+        value:
+          - name: nginx-cache
+            emptyDir:
+              sizeLimit: 128Mi
+          - name: nginx-run
+            emptyDir:
+              sizeLimit: 16Mi
+          - name: runtime-tmp
+            emptyDir:
+              sizeLimit: 64Mi
+  - target:
+      kind: Deployment
+      name: "(alertmanager|grafana|rabbitmq)"
+    patch: |-
+      - op: add
+        path: /spec/template/spec/automountServiceAccountToken
+        value: false
+      - op: add
+        path: /spec/template/spec/securityContext
+        value:
+          runAsNonRoot: true
+          seccompProfile:
+            type: RuntimeDefault
+      - op: add
+        path: /spec/template/spec/containers/0/imagePullPolicy
+        value: Always
+      - op: add
+        path: /spec/template/spec/containers/0/securityContext
+        value:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
+      - op: add
+        path: /spec/template/spec/containers/0/volumeMounts/-
+        value:
+          name: runtime-tmp
+          mountPath: /tmp
+      - op: add
+        path: /spec/template/spec/volumes/-
+        value:
+          name: runtime-tmp
+          emptyDir:
+            sizeLimit: 128Mi
+  - target:
+      kind: Deployment
+      name: jaeger
+    patch: |-
+      - op: add
+        path: /spec/template/spec/automountServiceAccountToken
+        value: false
+      - op: add
+        path: /spec/template/spec/securityContext
+        value:
+          runAsNonRoot: true
+          seccompProfile:
+            type: RuntimeDefault
+      - op: add
+        path: /spec/template/spec/containers/0/imagePullPolicy
+        value: Always
+      - op: add
+        path: /spec/template/spec/containers/0/securityContext
+        value:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
+      - op: add
+        path: /spec/template/spec/containers/0/volumeMounts
+        value:
+          - name: runtime-tmp
+            mountPath: /tmp
+      - op: add
+        path: /spec/template/spec/volumes
+        value:
+          - name: runtime-tmp
+            emptyDir:
+              sizeLimit: 128Mi
+  - target:
+      kind: Deployment
+      name: alertmanager
+    patch: |-
+      - op: add
+        path: /spec/template/spec/securityContext/runAsUser
+        value: 65534
+      - op: add
+        path: /spec/template/spec/securityContext/runAsGroup
+        value: 65534
+      - op: add
+        path: /spec/template/spec/securityContext/fsGroup
+        value: 65534
+  - target:
+      kind: Deployment
+      name: jaeger
+    patch: |-
+      - op: add
+        path: /spec/template/spec/securityContext/runAsUser
+        value: 10001
+      - op: add
+        path: /spec/template/spec/securityContext/runAsGroup
+        value: 10001
+      - op: add
+        path: /spec/template/spec/securityContext/fsGroup
+        value: 10001
+  - target:
+      kind: Deployment
+      name: prometheus
+    patch: |-
+      - op: add
+        path: /spec/template/spec/automountServiceAccountToken
+        value: false
+      - op: add
+        path: /spec/template/spec/securityContext
+        value:
+          runAsNonRoot: true
+          runAsUser: 65534
+          runAsGroup: 65534
+          fsGroup: 65534
+          seccompProfile:
+            type: RuntimeDefault
+      - op: add
+        path: /spec/template/spec/containers/0/imagePullPolicy
+        value: Always
+      - op: add
+        path: /spec/template/spec/containers/0/securityContext
+        value:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: [ALL]
+      - op: add
+        path: /spec/template/spec/containers/0/volumeMounts/-
+        value:
+          name: runtime-tmp
+          mountPath: /tmp
+      - op: add
+        path: /spec/template/spec/volumes/-
+        value:
+          name: runtime-tmp
+          emptyDir:
+            sizeLimit: 128Mi
+  - target:
+      kind: StatefulSet
+      name: postgres
+    patch: |-
+      - op: remove
+        path: /spec/template/spec/initContainers
+      - op: add
+        path: /spec/template/spec/automountServiceAccountToken
+        value: false
+      - op: add
+        path: /spec/template/spec/securityContext
+        value:
+          fsGroup: 999
+          fsGroupChangePolicy: OnRootMismatch
+          seccompProfile:
+            type: RuntimeDefault
+      - op: add
+        path: /spec/template/spec/containers/0/imagePullPolicy
+        value: Always
+      - op: add
+        path: /spec/template/spec/containers/0/securityContext
+        value:
+          runAsNonRoot: true
+          runAsUser: 999
+          runAsGroup: 999
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: [ALL]
+      - op: add
+        path: /spec/template/spec/containers/0/volumeMounts/-
+        value:
+          name: postgres-run
+          mountPath: /var/run/postgresql
+      - op: add
+        path: /spec/template/spec/containers/0/volumeMounts/-
+        value:
+          name: runtime-tmp
+          mountPath: /tmp
+      - op: add
+        path: /spec/template/spec/containers/1/imagePullPolicy
+        value: Always
+      - op: add
+        path: /spec/template/spec/containers/1/securityContext
+        value:
+          runAsNonRoot: true
+          runAsUser: 65534
+          runAsGroup: 65534
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: [ALL]
+      - op: add
+        path: /spec/template/spec/containers/1/volumeMounts
+        value:
+          - name: runtime-tmp
+            mountPath: /tmp
+      - op: add
+        path: /spec/template/spec/volumes
+        value:
+          - name: postgres-run
+            emptyDir:
+              sizeLimit: 16Mi
+          - name: runtime-tmp
+            emptyDir:
+              sizeLimit: 128Mi
+  - target:
+      kind: StatefulSet
+      name: redis
+    patch: |-
+      - op: add
+        path: /spec/template/spec/automountServiceAccountToken
+        value: false
+      - op: add
+        path: /spec/template/spec/securityContext
+        value:
+          fsGroup: 999
+          fsGroupChangePolicy: OnRootMismatch
+          seccompProfile:
+            type: RuntimeDefault
+      - op: add
+        path: /spec/template/spec/containers/0/imagePullPolicy
+        value: Always
+      - op: add
+        path: /spec/template/spec/containers/0/securityContext
+        value:
+          runAsNonRoot: true
+          runAsUser: 999
+          runAsGroup: 999
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: [ALL]
+      - op: add
+        path: /spec/template/spec/containers/0/volumeMounts/-
+        value:
+          name: runtime-tmp
+          mountPath: /tmp
+      - op: add
+        path: /spec/template/spec/containers/1/imagePullPolicy
+        value: Always
+      - op: add
+        path: /spec/template/spec/containers/1/securityContext
+        value:
+          runAsNonRoot: true
+          runAsUser: 59000
+          runAsGroup: 59000
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: [ALL]
+      - op: add
+        path: /spec/template/spec/containers/1/volumeMounts
+        value:
+          - name: runtime-tmp
+            mountPath: /tmp
+      - op: add
+        path: /spec/template/spec/volumes
+        value:
+          - name: runtime-tmp
+            emptyDir:
+              sizeLimit: 128Mi
 
 images:
   - name: energy-intelligence/gateway
