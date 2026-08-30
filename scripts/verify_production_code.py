@@ -92,6 +92,14 @@ require(
     "绝不回退到静态补贴金额或伪造的 /mock 链接",
 )
 require(
+    "web-frontend/src/lib/crawler/policy-crawler.ts",
+    "Never substitute static amounts or invented `/mock` links",
+)
+forbid_tree(
+    "web-frontend/src/lib/crawler",
+    ("getMockPoliciesForRegion", "sourceUrl: 'https://fgw", "sourceUrl: 'https://fzggw"),
+)
+require(
     "runtime/web/src/app/api/papers/search/route.ts",
     "UPSTREAM_UNAVAILABLE",
 )

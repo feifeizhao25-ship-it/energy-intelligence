@@ -156,138 +156,24 @@ ${content.substring(0, 4000)}
      */
     async crawlRegionPolicies(region: string): Promise<PolicyData[]> {
         console.log(`🔍 Crawling policies for ${region}...`);
-
+        const urls = await this.searchPolicyDocuments(region, 'subsidy');
         const allPolicies: PolicyData[] = [];
 
-        // Search for policy documents
-        const urls = await this.searchPolicyDocuments(region, 'subsidy');
-
-        // For demo purposes, we'll use mock data since we can't actually crawl government sites
-        // In production, you would fetch and parse real URLs
-        const mockPolicies = this.getMockPoliciesForRegion(region);
-        allPolicies.push(...mockPolicies);
+        // Fail closed: only facts extracted from a fetched official URL may be
+        // persisted. Never substitute static amounts or invented `/mock` links.
+        for (const sourceUrl of urls) {
+            try {
+                const html = await this.fetchPageContent(sourceUrl);
+                const content = this.extractTextFromHtml(html);
+                if (!content) continue;
+                const policies = await this.parsePolicyWithAI(content, region, sourceUrl);
+                allPolicies.push(...policies);
+            } catch (error) {
+                console.error(`Policy source unavailable: ${sourceUrl}`, error);
+            }
+        }
 
         console.log(`✅ Found ${allPolicies.length} policies for ${region}`);
-
         return allPolicies;
-    }
-
-    /**
-     * Mock data for demonstration (replace with real crawling in production)
-     */
-    private getMockPoliciesForRegion(region: string): PolicyData[] {
-        const mockData: Record<string, PolicyData[]> = {
-            '上海': [
-                {
-                    region: '上海',
-                    type: 'SUBSIDY_KWH',
-                    value: 0.4,
-                    unit: '元/kWh',
-                    conditions: '分布式光伏自发自用部分',
-                    sourceUrl: 'https://fgw.sh.gov.cn/mock',
-                    startDate: new Date('2024-01-01'),
-                    endDate: new Date('2026-12-31'),
-                },
-                {
-                    region: '上海',
-                    type: 'ELECTRICITY_PRICE',
-                    value: 0.52,
-                    unit: '元/kWh',
-                    conditions: '工商业用电峰时电价',
-                    sourceUrl: 'https://fgw.sh.gov.cn/mock',
-                },
-            ],
-            '北京': [
-                {
-                    region: '北京',
-                    type: 'SUBSIDY_KWH',
-                    value: 0.3,
-                    unit: '元/kWh',
-                    conditions: '分布式光伏项目',
-                    sourceUrl: 'https://fgw.beijing.gov.cn/mock',
-                    startDate: new Date('2024-01-01'),
-                    endDate: new Date('2025-12-31'),
-                },
-                {
-                    region: '北京',
-                    type: 'SUBSIDY_ONE_TIME',
-                    value: 0.2,
-                    unit: '元/W',
-                    conditions: '户用光伏一次性补贴',
-                    sourceUrl: 'https://fgw.beijing.gov.cn/mock',
-                },
-            ],
-            '江苏': [
-                {
-                    region: '江苏',
-                    type: 'SUBSIDY_KWH',
-                    value: 0.32,
-                    unit: '元/kWh',
-                    conditions: '分布式光伏自发自用',
-                    sourceUrl: 'https://fgw.jiangsu.gov.cn/mock',
-                    startDate: new Date('2024-01-01'),
-                },
-                {
-                    region: '江苏',
-                    type: 'ELECTRICITY_PRICE',
-                    value: 0.48,
-                    unit: '元/kWh',
-                    conditions: '工商业平段电价',
-                    sourceUrl: 'https://fgw.jiangsu.gov.cn/mock',
-                },
-            ],
-            '浙江': [
-                {
-                    region: '浙江',
-                    type: 'SUBSIDY_KWH',
-                    value: 0.35,
-                    unit: '元/kWh',
-                    conditions: '分布式光伏补贴',
-                    sourceUrl: 'https://fzggw.zj.gov.cn/mock',
-                    startDate: new Date('2024-01-01'),
-                    endDate: new Date('2026-12-31'),
-                },
-            ],
-            '广东': [
-                {
-                    region: '广东',
-                    type: 'SUBSIDY_KWH',
-                    value: 0.25,
-                    unit: '元/kWh',
-                    conditions: '分布式光伏项目',
-                    sourceUrl: 'https://fzggw.gd.gov.cn/mock',
-                },
-                {
-                    region: '广东',
-                    type: 'ELECTRICITY_PRICE',
-                    value: 0.55,
-                    unit: '元/kWh',
-                    conditions: '工商业峰时电价',
-                    sourceUrl: 'https://fzggw.gd.gov.cn/mock',
-                },
-            ],
-            '山东': [
-                {
-                    region: '山东',
-                    type: 'SUBSIDY_KWH',
-                    value: 0.28,
-                    unit: '元/kWh',
-                    conditions: '分布式光伏补贴',
-                    sourceUrl: 'https://fgw.shandong.gov.cn/mock',
-                },
-            ],
-            '河北': [
-                {
-                    region: '河北',
-                    type: 'SUBSIDY_KWH',
-                    value: 0.2,
-                    unit: '元/kWh',
-                    conditions: '分布式光伏项目',
-                    sourceUrl: 'https://fgw.hebei.gov.cn/mock',
-                },
-            ],
-        };
-
-        return mockData[region] || [];
     }
 }
