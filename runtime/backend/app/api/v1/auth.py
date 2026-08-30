@@ -6,12 +6,10 @@ from typing import Dict, List, Optional, Type, Union
 """Auth API — real implementation with SQLAlchemy."""
 import uuid
 import time
-import json
 import logging
 
 logger = logging.getLogger(__name__)
-import urllib.request
-import urllib.parse
+import httpx
 from collections import defaultdict
 from datetime import datetime, timezone, timedelta
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -152,11 +150,7 @@ async def magic_link(body: MagicLinkRequest, db: AsyncSession = Depends(get_db))
         )
     except Exception as e:
         logger.warning("Email delivery failed for password reset: %s", e)  # non-blocking
-    # Development fallback: log the token
-    return success(data={
-        "message": "If the email exists, a magic link has been sent",
-        "_debug_token": magic_token,  # Remove in production
-    })
+    return success(data={"message": "If the email exists, a magic link has been sent"})
 
 
 @router.post("/google")
@@ -170,37 +164,36 @@ async def google_oauth(code: str, db: AsyncSession = Depends(get_db)):
     
     # 1. Exchange code for access token
     try:
-        token_data = urllib.parse.urlencode({
+        token_data = {
             'code': code,
             'client_id': getattr(settings, 'GOOGLE_CLIENT_ID', ''),
             'client_secret': getattr(settings, 'GOOGLE_CLIENT_SECRET', ''),
             'redirect_uri': getattr(settings, 'GOOGLE_REDIRECT_URI', 'http://localhost:3000/auth/google/callback'),
             'grant_type': 'authorization_code',
-        })
-        token_req = urllib.request.Request(
-            'https://oauth2.googleapis.com/token',
-            data=token_data.encode('utf-8'),
-            headers={'Content-Type': 'application/x-www-form-urlencoded'},
-            method='POST'
-        )
-        with urllib.request.urlopen(token_req, timeout=10) as resp:
-            token_response = json.loads(resp.read().decode('utf-8'))
+        }
+        async with httpx.AsyncClient(timeout=10.0, follow_redirects=False) as client:
+            response = await client.post('https://oauth2.googleapis.com/token', data=token_data)
+            response.raise_for_status()
+            token_response = response.json()
         access_token = token_response.get('access_token')
         if not access_token:
             raise HTTPException(status_code=400, detail="Failed to exchange Google code")
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Google token exchange failed: {str(e)}")
+    except (httpx.HTTPError, ValueError) as exc:
+        logger.warning("Google token exchange failed: %s", exc)
+        raise HTTPException(status_code=400, detail="Google token exchange failed") from exc
     
     # 2. Fetch user profile
     try:
-        profile_req = urllib.request.Request(
-            'https://www.googleapis.com/oauth2/v2/userinfo',
-            headers={'Authorization': f'Bearer {access_token}'}
-        )
-        with urllib.request.urlopen(profile_req, timeout=10) as resp:
-            profile = json.loads(resp.read().decode('utf-8'))
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Failed to fetch Google profile: {str(e)}")
+        async with httpx.AsyncClient(timeout=10.0, follow_redirects=False) as client:
+            response = await client.get(
+                'https://www.googleapis.com/oauth2/v2/userinfo',
+                headers={'Authorization': f'Bearer {access_token}'},
+            )
+            response.raise_for_status()
+            profile = response.json()
+    except (httpx.HTTPError, ValueError) as exc:
+        logger.warning("Google profile request failed: %s", exc)
+        raise HTTPException(status_code=400, detail="Failed to fetch Google profile") from exc
     
     google_id = profile.get('id')
     email = profile.get('email')
