@@ -8,6 +8,10 @@ name: Build Pipeline
 permissions:
   contents: read
 
+concurrency:
+  group: energy-build-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
     branches: [main, develop]
@@ -26,6 +30,7 @@ jobs:
   build-backend:
     name: Build Python Backend Image
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'push' }}
     permissions:
       contents: read
@@ -70,6 +75,7 @@ jobs:
   build-apps-api:
     name: Build Node.js API Image
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'push' }}
     permissions:
       contents: read
@@ -114,6 +120,7 @@ jobs:
   build-web-cn:
     name: Build Web CN Image
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'push' }}
     permissions:
       contents: read
@@ -160,6 +167,7 @@ jobs:
   build-web-global:
     name: Build Web Global Image
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'push' }}
     permissions:
       contents: read
@@ -204,6 +212,7 @@ jobs:
   security-scan:
     name: Security Scan
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     needs: [build-backend, build-apps-api, build-web-cn, build-web-global]
     permissions:
       contents: read

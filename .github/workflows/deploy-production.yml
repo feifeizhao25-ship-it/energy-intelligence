@@ -13,7 +13,22 @@ env:
   IMAGE_PREFIX: ${{ github.repository }}
 
 jobs:
+  preflight:
+    name: Validate production deployment credentials
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    steps:
+    - name: Require AWS deployment credentials before building images
+      run: |
+        set -euo pipefail
+        test -n "$AWS_ACCESS_KEY_ID" || { echo 'Missing repository or production-environment secret: AWS_ACCESS_KEY_ID' >&2; exit 1; }
+        test -n "$AWS_SECRET_ACCESS_KEY" || { echo 'Missing repository or production-environment secret: AWS_SECRET_ACCESS_KEY' >&2; exit 1; }
+
   test:
+    needs: preflight
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
