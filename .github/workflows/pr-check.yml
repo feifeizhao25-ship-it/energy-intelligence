@@ -34,9 +34,9 @@ jobs:
 
       - name: Lint Packages
         run: |
-          cd packages/ui-components && npm run lint || true
-          cd ../api-client && npm run lint || true
-          cd ../skills-sdk && npm run lint || true
+          npm --prefix packages/ui-components run lint
+          npm --prefix packages/api-client run lint
+          npm --prefix packages/skills-sdk run lint
 
       - name: Lint Web Global
         run: pnpm --dir web-global lint
@@ -46,7 +46,7 @@ jobs:
         run: |
           cd runtime/web
           npm ci
-          npm run lint || true
+          npm run lint
 
   lint-python:
     name: Lint Python
@@ -69,17 +69,17 @@ jobs:
       - name: Run Black
         run: |
           cd runtime/backend
-          black --check app/ || true
+          black --check app/
 
       - name: Run Flake8
         run: |
           cd runtime/backend
-          flake8 app/ --max-line-length=120 || true
+          flake8 app/ --max-line-length=120
 
       - name: Run MyPy
         run: |
           cd runtime/backend
-          mypy app/ || true
+          mypy app/
 
   lint-flutter:
     name: Lint Flutter
@@ -98,13 +98,13 @@ jobs:
         run: |
           cd ios-global
           flutter pub get
-          flutter analyze --fatal-infos || true
+          flutter analyze --fatal-infos
 
       - name: Analyze Android Global
         run: |
           cd android-global
           flutter pub get
-          flutter analyze --fatal-infos || true
+          flutter analyze --fatal-infos
 
       - name: Check Formatting
         run: |
@@ -155,8 +155,8 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Run npm audit
-        run: npm audit --audit-level=high || true
+      - name: Run dependency audit
+        run: pnpm audit --audit-level=high
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
@@ -239,8 +239,10 @@ jobs:
 
       - name: Build Packages
         run: |
-          cd packages/design-tokens && npm ci && npm run build || true
-          cd ../ui-components && npm ci && npm run build || true
+          npm --prefix packages/design-tokens ci
+          npm --prefix packages/design-tokens run build
+          npm --prefix packages/ui-components ci
+          npm --prefix packages/ui-components run build
 
       - name: Build Web Global
         run: pnpm --dir web-global build

@@ -86,20 +86,11 @@ jobs:
           name: python-coverage
           path: runtime/backend/coverage.xml
 
-  # ── RLS Security Validation ────────────────────────────────────────────
-  rls-validation:
-    name: RLS Security Validation
+  # ── Authorization and market-isolation validation ─────────────────────
+  data-isolation:
+    name: Authorization & Market Isolation
     runs-on: ubuntu-latest
     needs: [python-unit]
-    services:
-      postgres:
-        image: postgis/postgis:16-3.4
-        env:
-          POSTGRES_USER: test
-          POSTGRES_PASSWORD: test
-          POSTGRES_DB: test
-        ports:
-          - 5432:5432
     steps:
       - uses: actions/checkout@v4
 
@@ -114,25 +105,19 @@ jobs:
           pip install -r runtime/backend/requirements.txt
           pip install pytest pytest-asyncio asyncpg
 
-      - name: Run migrations & seed RLS
+      - name: Run ownership, authentication and market-isolation tests
         run: |
           cd runtime/backend
-          alembic upgrade head
+          pytest \
+            tests/test_auth.py \
+            tests/test_report_production_safety.py \
+            tests/test_report_entitlements.py \
+            tests/test_ai_observability.py \
+            tests/test_rag_freshness_language.py \
+            tests/test_all_skills_and_rag.py \
+            -v
         env:
-          DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/test
-
-      - name: Run RLS tests
-        run: |
-          cd runtime/backend
-          pytest tests/test_auth_rls.py -v -k "RLS" || true
-        env:
-          DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/test
           PYTHONPATH: ${{ github.workspace }}/runtime/backend
-
-      - name: Run SQL RLS validation script
-        run: |
-          export PGPASSWORD=test
-          psql -h localhost -U test -d test -f scripts/db_security_test.sql || echo "RLS SQL tests require seed data"
 
   # ── Node.js Unit Tests ─────────────────────────────────────────────────
   node-unit:
@@ -272,7 +257,7 @@ jobs:
   test-summary:
     name: Test Summary
     runs-on: ubuntu-latest
-    needs: [python-unit, node-unit, e2e, rls-validation, coverage-gate, contract-test]
+    needs: [python-unit, node-unit, e2e, data-isolation, coverage-gate, contract-test]
     if: always()
     steps:
       - name: Summarize results
@@ -283,6 +268,6 @@ jobs:
           echo "| Python Unit | ${{ needs.python-unit.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Node Unit | ${{ needs.node-unit.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| E2E | ${{ needs.e2e.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| RLS Validation | ${{ needs.rls-validation.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Authorization & Market Isolation | ${{ needs.data-isolation.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Coverage Gate | ${{ needs.coverage-gate.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Contract Test | ${{ needs.contract-test.result }} |" >> $GITHUB_STEP_SUMMARY

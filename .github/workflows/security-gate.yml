@@ -37,11 +37,8 @@ jobs:
 
       - name: Run Bandit on backend
         run: |
-          bandit -r runtime/backend/app -f sarif -o bandit-results.sarif || true
-          bandit -r runtime/backend/app -f json -o bandit-results.json || true
-          # 同时输出到控制台，任何 HIGH/CRITICAL 即失败
-          bandit -r runtime/backend/app -ll -ii
-        continue-on-error: true
+          # 中高风险且置信度为中高的发现立即阻断；SARIF 仍由后续 always() 步骤上传。
+          bandit -r runtime/backend/app -ll -ii -f sarif -o bandit-results.sarif
 
       - name: Upload Bandit SARIF
         uses: github/codeql-action/upload-sarif@v4
@@ -49,17 +46,6 @@ jobs:
         with:
           sarif_file: bandit-results.sarif
           category: bandit
-
-      - name: Check Bandit severity
-        run: |
-          if [ -f bandit-results.json ]; then
-            HIGH=$(python3 -c "import json,sys; d=json.load(sys.stdin); print(len([r for r in d.get('results',[]) if r['issue_severity'] in ('HIGH','CRITICAL')]))" < bandit-results.json)
-            echo "Bandit HIGH/CRITICAL issues: $HIGH"
-            if [ "$HIGH" -gt 0 ]; then
-              echo "❌ Bandit found $HIGH HIGH/CRITICAL severity issues"
-              exit 1
-            fi
-          fi
 
   # ── Python Dependency Audit (pip-audit) ────────────────────────────────
   pip-audit:
@@ -79,20 +65,13 @@ jobs:
       - name: Run pip-audit
         run: |
           cd runtime/backend
-          pip-audit -r requirements.txt --desc --format=json -o pip-audit.json || true
-          pip-audit -r requirements.txt --desc
-        continue-on-error: true
+          pip-audit -r requirements.txt --desc --format=json -o pip-audit.json
 
-      - name: Check pip-audit severity
+      - name: Enforce zero known Python vulnerabilities
         run: |
-          if [ -f runtime/backend/pip-audit.json ]; then
-            CRITICAL=$(python3 -c "import json,sys; d=json.load(sys.stdin); print(sum(1 for dep in d.get('dependencies',[]) for vuln in dep.get('vulns',[]) if vuln.get('fix_versions')))" < runtime/backend/pip-audit.json)
-            echo "Python dependencies with fixable vulnerabilities: $CRITICAL"
-            if [ "$CRITICAL" -gt 10 ]; then
-              echo "⚠️ $CRITICAL fixable vulnerabilities found (threshold: 10)"
-              exit 1
-            fi
-          fi
+          TOTAL=$(python3 -c "import json,sys; d=json.load(sys.stdin); print(sum(len(dep.get('vulns', [])) for dep in d.get('dependencies', [])))" < runtime/backend/pip-audit.json)
+          echo "Known Python dependency vulnerabilities: $TOTAL"
+          test "$TOTAL" -eq 0
 
   # ── Secret Scanning (TruffleHog) ───────────────────────────────────────
   trufflehog:
@@ -164,7 +143,7 @@ jobs:
         run: |
           if [ -f "${{ matrix.workspace }}/package.json" ]; then
             cd ${{ matrix.workspace }}
-            pnpm audit --audit-level high || true
+            pnpm audit --audit-level high
           fi
 
       - name: Check audit severity
@@ -178,7 +157,6 @@ jobs:
               echo "No package-lock.json, skipping strict audit"
             fi
           fi
-        continue-on-error: true
 
   # ── Container Image Scan (Trivy) ───────────────────────────────────────
   trivy-image:
@@ -205,7 +183,8 @@ jobs:
           image-ref: 'eip-api:scan'
           format: 'sarif'
           output: 'trivy-image-results.sarif'
-        continue-on-error: true
+          exit-code: '1'
+          severity: 'HIGH,CRITICAL'
 
       - name: Upload Trivy SARIF
         uses: github/codeql-action/upload-sarif@v4
@@ -228,7 +207,7 @@ jobs:
           framework: terraform,dockerfile,kubernetes,github_actions
           output_format: sarif
           output_file_path: reports/checkov.sarif
-        continue-on-error: true
+          soft_fail: false
 
       - name: Upload Checkov SARIF
         uses: github/codeql-action/upload-sarif@v4
