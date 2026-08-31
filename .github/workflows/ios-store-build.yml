@@ -1,0 +1,85 @@
+name: iOS Store Build
+on:
+  workflow_dispatch:
+jobs:
+  build-ipa:
+    runs-on: macos-26
+    timeout-minutes: 60
+    env:
+      BUNDLE_ID: com.energyintelligence.global.energyGlobalIos
+      PROFILE_NAME: EQ Store 2026
+      KEYCHAIN_PASS: temp-keychain-pass-2026
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - name: Flutter doctor
+        run: flutter --version
+      - name: Setup signing
+        env:
+          IOS_P12_BASE64: ${{ secrets.IOS_P12_BASE64 }}
+          IOS_PROFILE_BASE64: ${{ secrets.IOS_PROFILE_BASE64 }}
+          IOS_P12_PASSWORD: ${{ secrets.IOS_P12_PASSWORD }}
+        run: |
+          CERT_PATH=$RUNNER_TEMP/dist.p12
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          PROF_DIR="$HOME/Library/MobileDevice/Provisioning Profiles"
+          echo -n "$IOS_P12_BASE64" | base64 -d > "$CERT_PATH"
+          ls -la "$CERT_PATH"
+          mkdir -p "$PROF_DIR"
+          security create-keychain -p "$KEYCHAIN_PASS" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASS" "$KEYCHAIN_PATH"
+          security import "$CERT_PATH" -P "$IOS_P12_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH" -T /usr/bin/codesign
+          security list-keychain -d user -s "$KEYCHAIN_PATH" login.keychain-db
+          security default-keychain -s "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASS" "$KEYCHAIN_PATH" || true
+          PROF_PATH=$RUNNER_TEMP/profile.mobileprovision
+          echo -n "$IOS_PROFILE_BASE64" | base64 -d > "$PROF_PATH"
+          ls -la "$PROF_PATH"
+          security cms -D -i "$PROF_PATH" > "$RUNNER_TEMP/profile.plist"
+          UUID=$(plutil -extract UUID raw -o - "$RUNNER_TEMP/profile.plist")
+          echo "profile UUID: $UUID"
+          cp "$PROF_PATH" "$PROF_DIR/$UUID.mobileprovision"
+          security find-identity -v -p codesigning "$KEYCHAIN_PATH"
+          echo "Signing setup complete"
+      - name: Build IPA
+        working-directory: ios-global
+        run: |
+          cat > ios/ExportOptions.plist <<'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key><string>app-store</string>
+            <key>teamID</key><string>M8H3FG26S9</string>
+            <key>signingStyle</key><string>manual</string>
+            <key>signingCertificate</key><string>iPhone Distribution: feifei zhao (M8H3FG26S9)</string>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>com.energyintelligence.global.energyGlobalIos</key>
+              <string>EQ Store 2026</string>
+            </dict>
+            <key>stripSwiftSymbols</key><true/>
+          </dict>
+          </plist>
+          PLIST
+          flutter pub get
+          # Step 1: unsigned xcarchive (skips flutter dev-cert preflight)
+          export CODE_SIGNING_ALLOWED=NO
+          export CODE_SIGNING_REQUIRED=NO
+          export CODE_SIGN_IDENTITY=""
+          export API_BASE_URL='https://energyiq-api.tianji-astrology.com'
+          flutter build xcarchive --release --no-codesign --dart-define=API_BASE_URL="$API_BASE_URL"
+          unset CODE_SIGNING_ALLOWED CODE_SIGNING_REQUIRED CODE_SIGN_IDENTITY
+          # Step 2: sign + export at xcodebuild level with distribution cert
+          ARCH=$(ls -d build/ios/archive/*.xcarchive | head -1)
+          echo "Archive: $ARCH"
+          xcodebuild -exportArchive -archivePath "$ARCH" -exportPath build/ios/ipa -exportOptionsPlist ios/ExportOptions.plist
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: eq-store-ipa
+          path: ios-global/build/ios/ipa/*.ipa
+          retention-days: 5
