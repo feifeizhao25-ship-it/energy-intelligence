@@ -87,6 +87,9 @@ require(
     "runtime/web/src/lib/papers/search.ts",
     "全部学术数据源暂时不可用，未返回空结果或模拟论文",
 )
+require("runtime/web/src/lib/papers/rag.ts", "validateRagMetadata")
+require("runtime/web/src/lib/papers/rag-metadata.ts", "RAG 来源已过期")
+require("runtime/web/src/lib/papers/rag-metadata.test.ts", "拒绝过期、未来和非法检索日期")
 require(
     "runtime/web/src/lib/crawler/policy-crawler.ts",
     "绝不回退到静态补贴金额或伪造的 /mock 链接",

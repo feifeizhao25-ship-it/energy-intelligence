@@ -2,6 +2,7 @@ import { aiService } from '../ai/unified';
 import { requireSupabaseAdmin } from '../supabase';
 import { PDFParse } from 'pdf-parse';
 import { assertValidPdfBuffer, neutralizePromptInjections } from './pdf-guard';
+import { validateRagMetadata } from './rag-metadata';
 
 /**
  * PDF RAG 处理器
@@ -13,10 +14,7 @@ export const ragProcessor = {
      */
     async indexPdf(buffer: Buffer, documentId: string, metadata: any = {}) {
         try {
-            const required = ['title', 'userId', 'sourceUrl', 'retrievedAt'];
-            const missing = required.filter(key => !metadata?.[key]);
-            if (missing.length) throw new Error(`RAG 来源元数据缺失: ${missing.join(', ')}`);
-            if (!String(metadata.sourceUrl).startsWith('https://')) throw new Error('RAG 来源必须使用 HTTPS');
+            const freshness = validateRagMetadata(metadata);
             // 0. 安全校验：大小限制 + 魔数检查，恶意/超大文件在此被拒绝
             assertValidPdfBuffer(buffer);
 
@@ -44,6 +42,8 @@ export const ragProcessor = {
                 embedding: embeddings[i],
                 metadata: {
                     ...metadata,
+                    retrievedAt: freshness.retrievedAt,
+                    freshness,
                     documentId,
                     chunkIndex: i,
                     totalChunks: chunks.length
@@ -85,12 +85,15 @@ export const ragProcessor = {
 
             if (error) throw error;
 
-            return (data || []).filter((chunk: any) =>
-                chunk?.metadata?.userId === searchFilter.userId &&
-                chunk?.metadata?.title &&
-                chunk?.metadata?.sourceUrl?.startsWith('https://') &&
-                chunk?.metadata?.retrievedAt
-            );
+            return (data || []).filter((chunk: any) => {
+                if (chunk?.metadata?.userId !== searchFilter.userId) return false;
+                try {
+                    validateRagMetadata(chunk.metadata);
+                    return true;
+                } catch {
+                    return false;
+                }
+            });
         } catch (error) {
             console.error('[RAG] Search Error:', error);
             throw error;
