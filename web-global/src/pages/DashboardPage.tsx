@@ -142,10 +142,10 @@ const DashboardPage: React.FC = () => {
         <PersonalizedSection />
 
         {/* ── Header ── */}
-        <header className="flex items-center justify-between">
+        <header className="flex items-start justify-between gap-3">
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-[24px] font-bold text-[var(--text-primary)]">Portfolio Overview</h1>
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-[22px] sm:text-[24px] font-bold text-[var(--text-primary)]">Portfolio Overview</h1>
               <DemoBadge />
             </div>
             <p className="text-[13px] text-[var(--text-secondary)] mt-0.5">
@@ -155,13 +155,13 @@ const DashboardPage: React.FC = () => {
         </header>
 
         {/* ── KPI Ribbon ── */}
-        <KPIRibbon items={KPI_ITEMS} className="grid-cols-4" />
+        <KPIRibbon items={KPI_ITEMS} className="grid-cols-2 lg:grid-cols-4" />
 
         {/* ── Main Grid: 2fr / 1fr ── */}
-        <div className="grid grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
           {/* ═══ LEFT COLUMN (2fr) ═══ */}
-          <div className="col-span-2 space-y-6">
+          <div className="min-w-0 lg:col-span-2 space-y-6">
 
             {/* ── Recent Projects ── */}
             <Card
@@ -177,15 +177,15 @@ const DashboardPage: React.FC = () => {
                 {projectRows.map((p) => (
                   <div
                     key={p.id}
-                    className="flex items-center justify-between p-3 rounded-[var(--radius-md)] border border-[var(--border-default)] hover:border-[var(--border-strong)] hover:bg-[var(--bg-secondary)] transition-all cursor-pointer"
+                    className="grid min-w-0 grid-cols-2 gap-3 p-3 rounded-[var(--radius-md)] border border-[var(--border-default)] hover:border-[var(--border-strong)] hover:bg-[var(--bg-secondary)] transition-all cursor-pointer sm:flex sm:items-center sm:justify-between"
                   >
-                    <div className="flex items-center gap-4">
-                      <div className="flex flex-col">
+                    <div className="min-w-0 sm:flex sm:items-center sm:gap-4">
+                      <div className="flex min-w-0 flex-col">
                         <span className="text-[14px] font-medium text-[var(--text-primary)]">{p.name}</span>
-                        <span className="text-[12px] text-[var(--text-tertiary)]">{p.location}</span>
+                        <span className="text-[12px] text-[var(--text-tertiary)] break-words">{p.location}</span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-6">
+                    <div className="grid min-w-0 grid-cols-2 gap-3 sm:flex sm:items-center sm:gap-6">
                       <div className="text-right">
                         <div className="text-[12px] text-[var(--text-tertiary)]">Capacity</div>
                         <div className="text-[14px] font-mono font-medium text-[var(--text-primary)]">{p.capacityMW} MW</div>
@@ -199,9 +199,9 @@ const DashboardPage: React.FC = () => {
                           {p.irr.toFixed(1)}%
                         </div>
                       </div>
-                      <div className="w-20"><ProjectTypeDot type={p.type} /></div>
-                      <div className="w-28"><StatusBadge status={p.status} /></div>
-                      <span className="text-[11px] text-[var(--text-tertiary)] w-16 text-right">{p.updated}</span>
+                      <div className="hidden w-20 md:block"><ProjectTypeDot type={p.type} /></div>
+                      <div className="col-span-2 min-w-0 sm:w-28"><StatusBadge status={p.status} /></div>
+                      <span className="hidden text-[11px] text-[var(--text-tertiary)] w-16 text-right xl:block">{p.updated}</span>
                     </div>
                   </div>
                 ))}
@@ -210,7 +210,7 @@ const DashboardPage: React.FC = () => {
 
             {/* ── Performance Overview ── */}
             <Card title="Performance Overview" padding="lg">
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Monthly Generation */}
                 <div>
                   <div className="flex items-center justify-between mb-3">
