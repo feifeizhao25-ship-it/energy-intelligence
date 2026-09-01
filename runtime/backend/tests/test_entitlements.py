@@ -71,9 +71,11 @@ async def _add_projects(db_session: AsyncSession, user_id: str, count: int) -> N
 # ── 矩阵完整性 ────────────────────────────────────────────────────────────────
 
 def test_entitlements_matrix_has_all_plans_and_keys():
-    assert set(ENTITLEMENTS.keys()) == {"free", "pro", "enterprise"}
+    assert set(ENTITLEMENTS.keys()) == {
+        "free", "pro", "maintenance", "full", "team", "enterprise"
+    }
     for plan, entitlements in ENTITLEMENTS.items():
-        assert set(entitlements.keys()) == EXPECTED_KEYS, (
+        assert EXPECTED_KEYS.issubset(entitlements.keys()), (
             f"plan {plan} 权益项不完整: {set(entitlements.keys())}"
         )
 
@@ -96,6 +98,9 @@ def test_entitlements_matrix_values():
     assert ENTITLEMENTS["free"]["support_level"] == "community"
     assert ENTITLEMENTS["pro"]["support_level"] == "email"
     assert ENTITLEMENTS["enterprise"]["support_level"] == "dedicated"
+    assert ENTITLEMENTS["maintenance"]["ai_queries_per_day"] == 100
+    assert ENTITLEMENTS["full"]["report_exports_per_month"] == -1
+    assert ENTITLEMENTS["team"]["max_projects"] == -1
 
 
 # ── -1 无限语义 ──────────────────────────────────────────────────────────────

@@ -6,7 +6,9 @@
 并补全残片函数。
 """
 
+import json
 from datetime import datetime, timezone
+from pathlib import Path
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -29,18 +31,17 @@ class QuotaExceeded(Exception):
         )
 
 
+_REGISTRY_PATH = Path(__file__).resolve().parents[2] / "data" / "entitlements.json"
+_REGISTRY = json.loads(_REGISTRY_PATH.read_text(encoding="utf-8"))
 PLAN_QUOTAS = {
-    "free": {"report_exports_per_month": 5, "ai_queries_per_day": 20},
-    "pro": {"report_exports_per_month": 50, "ai_queries_per_day": 200},
-    "enterprise": {"report_exports_per_month": -1, "ai_queries_per_day": -1},
+    plan_id: dict(tier.get("quotas", {}))
+    for plan_id, tier in _REGISTRY.get("tiers", {}).items()
 }
 
 
 # 会员权益单一事实源。数值型权益中 -1 一律表示无限。
-ENTITLEMENTS = {
+_PLAN_DETAILS = {
     "free": {
-        "report_exports_per_month": 5,
-        "ai_queries_per_day": 20,
         "max_projects": 1,
         "data_sources": ["basic"],
         "export_formats": ["pdf"],
@@ -48,23 +49,41 @@ ENTITLEMENTS = {
         "support_level": "community",
     },
     "pro": {
-        "report_exports_per_month": 50,
-        "ai_queries_per_day": 200,
         "max_projects": 10,
         "data_sources": ["basic", "premium_weather", "grid_tariff"],
         "export_formats": ["pdf", "docx"],
         "team_seats": 5,
         "support_level": "email",
     },
+    "maintenance": {
+        "data_sources": ["basic", "premium_weather", "operations"],
+        "export_formats": ["pdf", "docx"],
+        "team_seats": 3,
+        "support_level": "email",
+    },
+    "full": {
+        "data_sources": ["all"],
+        "export_formats": ["pdf", "docx", "xlsx"],
+        "team_seats": 5,
+        "support_level": "priority",
+    },
+    "team": {
+        "data_sources": ["all"],
+        "export_formats": ["pdf", "docx", "xlsx", "api"],
+        "team_seats": 20,
+        "support_level": "priority",
+    },
     "enterprise": {
-        "report_exports_per_month": -1,
-        "ai_queries_per_day": -1,
         "max_projects": -1,
         "data_sources": ["all"],
         "export_formats": ["pdf", "docx", "api"],
         "team_seats": -1,
         "support_level": "dedicated",
     },
+}
+ENTITLEMENTS = {
+    plan_id: {**PLAN_QUOTAS[plan_id], **_PLAN_DETAILS.get(plan_id, {})}
+    for plan_id in PLAN_QUOTAS
 }
 
 

@@ -266,11 +266,13 @@ class Settings(BaseSettings):
 
     # 支付 - 支付宝 (国内)
     ALIPAY_APP_ID: Optional[str] = None
+    ALIPAY_SELLER_ID: Optional[str] = None
     ALIPAY_PRIVATE_KEY: Optional[str] = None
     ALIPAY_PUBLIC_KEY: Optional[str] = None
     ALIPAY_NOTIFY_URL: Optional[str] = None
     ALIPAY_RETURN_URL: Optional[str] = None
     ALIPAY_SANDBOX: bool = True
+    ALIPAY_GATEWAY_URL: Optional[str] = None
 
     # 支付 - 微信支付V3 (国内)
     WECHAT_PAY_MCH_ID: Optional[str] = None

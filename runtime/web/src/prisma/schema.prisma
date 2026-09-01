@@ -100,6 +100,7 @@ model User {
   apiLogs               ApiLog[] // 接口调用日志
   PushSubscription      PushSubscription[]
   UserAchievementDetail UserAchievementDetail[]
+  payments              Payment[]
 
   @@map("users")
 }
@@ -128,18 +129,23 @@ model Subscription {
 // 支付记录表
 model Payment {
   id             String    @id @default(cuid())
-  subscriptionId String
-  amount         Float // 支付金额
+  orderNo        String    @unique
+  userId         String
+  subscriptionId String?
+  plan           Plan
+  billingPeriod  String
+  amount         Decimal   @db.Decimal(12, 2)
   currency       String    @default("CNY")
   status         String // pending/completed/failed/refunded
   paymentMethod  String? // alipay/wechat/credit_card
-  transactionId  String? // 第三方交易ID
+  transactionId  String?   @unique
   description    String? // 支付描述
   paidAt         DateTime?
   createdAt      DateTime  @default(now())
 
   // 关联关系
-  subscription Subscription @relation(fields: [subscriptionId], references: [id])
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id])
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("payments")
 }

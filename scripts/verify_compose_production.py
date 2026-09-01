@@ -115,6 +115,12 @@ if command:
         "OSS_ACCESS_KEY_ID": "validation-key",
         "OSS_ACCESS_KEY_SECRET": "validation-secret",
         "OPENALEX_CONTACT_EMAIL": "ops@example.test",
+        "ALIPAY_APP_ID": "2026000000000001",
+        "ALIPAY_SELLER_ID": "2088000000000001",
+        "ALIPAY_PRIVATE_KEY": "validation-private-key",
+        "ALIPAY_PUBLIC_KEY": "validation-public-key",
+        "ALIPAY_NOTIFY_URL": "https://cn.example.test/api/membership/alipay/notify",
+        "ALIPAY_RETURN_URL": "https://cn.example.test/membership/result",
     }
     result = subprocess.run(command, cwd=ROOT, env=env, text=True, capture_output=True, check=False)
     if result.returncode:

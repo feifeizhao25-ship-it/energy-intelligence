@@ -8,6 +8,7 @@ from .database import (
 )
 from .user import User
 from .alert import AlertRule
+from .payment_order import PaymentOrder
 
 __all__ = [
     "Base",
@@ -17,4 +18,5 @@ __all__ = [
     "FinancialModel",
     "ConsentRecord",
     "AlertRule",
+    "PaymentOrder",
 ]

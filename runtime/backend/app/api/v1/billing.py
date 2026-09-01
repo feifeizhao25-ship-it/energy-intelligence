@@ -1,6 +1,11 @@
 import stripe
 from datetime import datetime, timezone
+from decimal import Decimal, InvalidOperation
+from typing import Literal
+from uuid import uuid4
 from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import PlainTextResponse
+from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -8,11 +13,18 @@ from app.config import settings
 from app.core.dependencies import get_current_user_id
 from app.core.database import get_db
 from app.models.user import User
+from app.models.payment_order import PaymentOrder
+from app.services.alipay_service import alipay_service
 from app.services.stripe_service import stripe_service
 from app.core.subscription import PLAN_QUOTAS
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 router = APIRouter(prefix="/billing")
+
+
+class AlipayCheckoutRequest(BaseModel):
+    plan: str
+    billing_period: Literal["monthly", "yearly"]
 
 
 @router.get("/usage")
@@ -59,6 +71,97 @@ async def create_checkout(
         return {"url": url}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/domestic/alipay/create")
+async def create_alipay_checkout(
+    payload: AlipayCheckoutRequest,
+    user_id: str = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+):
+    """Create a server-priced, persistent Alipay page-pay order."""
+    user = await db.get(User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="用户不存在")
+    if (user.market or "cn") != "cn":
+        raise HTTPException(status_code=400, detail="国际版用户请使用 Stripe 支付")
+    try:
+        amount = alipay_service.price_for(payload.plan, payload.billing_period)
+        order_no = f"ENE{datetime.now(timezone.utc):%Y%m%d%H%M%S}{uuid4().hex[:12].upper()}"
+        order = PaymentOrder(
+            id=str(uuid4()),
+            order_no=order_no,
+            user_id=user_id,
+            provider="alipay",
+            plan=payload.plan,
+            billing_period=payload.billing_period,
+            amount_cny=amount,
+            status="pending",
+        )
+        db.add(order)
+        await db.flush()
+        payment_url = alipay_service.create_page_pay_url(
+            order_no=order_no,
+            plan=payload.plan,
+            billing_period=payload.billing_period,
+            amount=amount,
+        )
+        await db.commit()
+        return {
+            "order_no": order_no,
+            "amount_cny": f"{amount:.2f}",
+            "payment_url": payment_url,
+        }
+    except (ValueError, RuntimeError) as exc:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.post("/domestic/alipay/notify", response_class=PlainTextResponse)
+async def alipay_notify(request: Request, db: AsyncSession = Depends(get_db)):
+    """Verify Alipay RSA2 notification and atomically activate membership."""
+    form = await request.form()
+    params = {str(key): str(value) for key, value in form.multi_items()}
+    if not alipay_service.verify_callback(params):
+        raise HTTPException(status_code=400, detail="支付宝回调验签失败")
+    if params.get("trade_status") not in {"TRADE_SUCCESS", "TRADE_FINISHED"}:
+        return "success"
+    order_no = params.get("out_trade_no", "")
+    trade_no = params.get("trade_no", "")
+    try:
+        paid_amount = Decimal(params.get("total_amount", "")).quantize(Decimal("0.01"))
+    except InvalidOperation as exc:
+        raise HTTPException(status_code=400, detail="支付宝回调金额无效") from exc
+    result = await db.execute(
+        select(PaymentOrder)
+        .where(PaymentOrder.order_no == order_no)
+        .with_for_update()
+    )
+    order = result.scalar_one_or_none()
+    if not order:
+        raise HTTPException(status_code=404, detail="支付订单不存在")
+    if order.provider != "alipay" or paid_amount != order.amount_cny:
+        raise HTTPException(status_code=400, detail="支付订单渠道或金额不匹配")
+    if order.status == "paid":
+        if order.provider_trade_no != trade_no:
+            raise HTTPException(status_code=409, detail="支付流水号冲突")
+        return "success"
+    if not trade_no:
+        raise HTTPException(status_code=400, detail="支付宝交易号缺失")
+    duplicate = await db.execute(
+        select(PaymentOrder.id).where(PaymentOrder.provider_trade_no == trade_no)
+    )
+    if duplicate.scalar_one_or_none() is not None:
+        raise HTTPException(status_code=409, detail="支付宝交易号已使用")
+    user = await db.get(User, order.user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="订单用户不存在")
+    order.status = "paid"
+    order.provider_trade_no = trade_no
+    order.paid_at = datetime.now(timezone.utc)
+    user.subscription_plan = order.plan
+    await db.commit()
+    return "success"
 
 
 @router.post("/webhook")
