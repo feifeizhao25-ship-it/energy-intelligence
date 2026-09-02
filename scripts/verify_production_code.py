@@ -10,6 +10,16 @@ ROOT = Path(__file__).resolve().parents[1]
 GRADLE_MIRROR_SCRIPT = ROOT / "scripts" / "gradle-cn-mirrors.init.gradle"
 errors: list[str] = []
 
+# The supported Python services live under runtime/backend, services/ and 后端/.
+# A former import accidentally committed truncated extraction fragments under
+# top-level backend/; fail if that shadow tree is ever reintroduced.
+legacy_backend = ROOT / "backend"
+if legacy_backend.exists() and any(legacy_backend.rglob("*.py")):
+    errors.append(
+        "backend/: unsupported shadow backend contains Python sources; "
+        "use runtime/backend, services/ or 后端 instead"
+    )
+
 
 def require(path: str, text: str) -> None:
     target = ROOT / path
