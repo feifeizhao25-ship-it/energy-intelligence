@@ -43,7 +43,7 @@
   "devDependencies": {
     "@commitlint/cli": "^18.4.0",
     "@commitlint/config-conventional": "^18.4.0",
-    "@faker-js/faker": "^8.3.0",
+    "@faker-js/faker": "^10.5.0",
     "@jest/globals": "^30.3.0",
     "@playwright/test": "^1.40.0",
     "@types/jest": "^29.5.0",
