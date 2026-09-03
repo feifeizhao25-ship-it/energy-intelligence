@@ -45,11 +45,12 @@ class _SolarResourceScreenState extends State<SolarResourceScreen> {
     } on ApiException catch (error) {
       if (mounted) setState(() => _error = error.message);
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         setState(
           () => _error =
               'Verified solar resource data is temporarily unavailable.',
         );
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -120,8 +121,7 @@ class _SolarResourceScreenState extends State<SolarResourceScreen> {
         if (_result != null) ...[
           const SizedBox(height: 24),
           Text(
-            'Source: ' +
-                (_result?['data_source']?.toString() ?? 'Not supplied'),
+            'Source: ${_result?['data_source']?.toString() ?? 'Not supplied'}',
             style: const TextStyle(color: Color(0xFF475569)),
           ),
           const SizedBox(height: 12),
@@ -136,15 +136,15 @@ class _SolarResourceScreenState extends State<SolarResourceScreen> {
               _Metric('Score', _number('score').toStringAsFixed(1)),
               _Metric(
                 'GHI',
-                _number('ghi').toStringAsFixed(1) + ' kWh/m²/year',
+                '${_number('ghi').toStringAsFixed(1)} kWh/m²/year',
               ),
               _Metric(
                 'DNI',
-                _number('dni').toStringAsFixed(1) + ' kWh/m²/year',
+                '${_number('dni').toStringAsFixed(1)} kWh/m²/year',
               ),
               _Metric(
                 'DHI',
-                _number('dhi').toStringAsFixed(1) + ' kWh/m²/year',
+                '${_number('dhi').toStringAsFixed(1)} kWh/m²/year',
               ),
               _Metric(
                 'Peak sun hours',

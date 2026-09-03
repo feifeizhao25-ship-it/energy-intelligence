@@ -31,7 +31,7 @@ class _CleaningScreenState extends State<CleaningScreen> {
         dailyRevenueUsd: double.parse(_revenueCtrl.text),
         soilingRateFractionPerDay: double.parse(_soilingCtrl.text),
       );
-      if (mounted)
+      if (mounted) {
         setState(
           () => _result = {
             'nOptimal': response['optimal_interval_days'],
@@ -47,8 +47,9 @@ class _CleaningScreenState extends State<CleaningScreen> {
                 response['scenarios'] ?? const <Map<String, dynamic>>[],
           },
         );
+      }
     } catch (error) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -58,6 +59,7 @@ class _CleaningScreenState extends State<CleaningScreen> {
             ),
           ),
         );
+      }
     } finally {
       if (mounted) setState(() => _isCalc = false);
     }

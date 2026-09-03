@@ -28,7 +28,7 @@ class _AnomalyScreenState extends State<AnomalyScreen> {
     try {
       final projects = await ApiService.getProjects();
       final alerts = await ApiService.getAlerts();
-      if (mounted)
+      if (mounted) {
         setState(() {
           _projects = projects;
           _selectedProject ??= projects.isEmpty
@@ -42,12 +42,14 @@ class _AnomalyScreenState extends State<AnomalyScreen> {
               )
               .toList();
         });
+      }
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         setState(
           () => _error =
               'Verified SCADA/IoT anomaly data is not connected. No synthetic alerts are shown.',
         );
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }

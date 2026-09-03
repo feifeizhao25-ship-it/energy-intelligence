@@ -28,8 +28,9 @@ class _CompareScreenState extends State<CompareScreen> {
   void _addSite() {
     if (_nameCtrl.text.isEmpty ||
         _latCtrl.text.isEmpty ||
-        _lonCtrl.text.isEmpty)
+        _lonCtrl.text.isEmpty) {
       return;
+    }
     if (_sites.length >= 10) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Maximum 10 sites for comparison')),
@@ -80,12 +81,13 @@ class _CompareScreenState extends State<CompareScreen> {
       );
       if (mounted) setState(() => _results = rows);
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Verified resource data is temporarily unavailable.'),
           ),
         );
+      }
     } finally {
       if (mounted) setState(() => _isComparing = false);
     }

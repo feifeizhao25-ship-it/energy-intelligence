@@ -55,10 +55,11 @@ class _LoginScreenState extends State<LoginScreen>
       );
       if (mounted) Navigator.pushReplacementNamed(context, '/main');
     } on ApiException catch (error) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(error.message)));
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }

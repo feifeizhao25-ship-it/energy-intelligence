@@ -41,7 +41,7 @@ class _WindFinanceScreenState extends State<WindFinanceScreen> {
         electricityPrice: double.parse(_priceCtrl.text),
         windCapacityFactor: factor,
       );
-      if (mounted)
+      if (mounted) {
         setState(() {
           _result = {
             'irr': (response['irr'] as num).toDouble(),
@@ -56,8 +56,9 @@ class _WindFinanceScreenState extends State<WindFinanceScreen> {
           };
           _currentStep = 3;
         });
+      }
     } catch (error) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -67,6 +68,7 @@ class _WindFinanceScreenState extends State<WindFinanceScreen> {
             ),
           ),
         );
+      }
     } finally {
       if (mounted) setState(() => _isCalc = false);
     }

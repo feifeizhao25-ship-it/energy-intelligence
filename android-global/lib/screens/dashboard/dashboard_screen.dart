@@ -30,8 +30,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     } on ApiException catch (error) {
       if (mounted) setState(() => _error = error.message);
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         setState(() => _error = 'Dashboard data is temporarily unavailable.');
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -100,7 +101,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       title: 'Capacity',
                       value: _capacity == 0
                           ? 'Not provided'
-                          : _capacity.toStringAsFixed(1) + ' MW',
+                          : '${_capacity.toStringAsFixed(1)} MW',
                       icon: Icons.bolt,
                     ),
                   ),

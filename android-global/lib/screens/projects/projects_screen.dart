@@ -29,8 +29,9 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
     } on ApiException catch (error) {
       if (mounted) setState(() => _error = error.message);
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         setState(() => _error = 'Projects are temporarily unavailable.');
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -83,7 +84,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
             : ListView.separated(
                 padding: const EdgeInsets.all(16),
                 itemCount: _projects.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                separatorBuilder: (_, _) => const SizedBox(height: 12),
                 itemBuilder: (context, index) =>
                     _ProjectCard(project: _projects[index]),
               ),
@@ -132,10 +133,7 @@ class _ProjectCard extends StatelessWidget {
           ),
           subtitle: Padding(
             padding: const EdgeInsets.only(top: 6),
-            child: Text(
-              location +
-                  (capacity == null ? '' : '\n' + capacity.toString() + ' MW'),
-            ),
+            child: Text(location + (capacity == null ? '' : '\n$capacity MW')),
           ),
           trailing: Text(
             status,

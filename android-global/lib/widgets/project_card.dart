@@ -5,8 +5,7 @@ class ProjectCard extends StatelessWidget {
   final Project project;
   final VoidCallback? onTap;
 
-  const ProjectCard({Key? key, required this.project, this.onTap})
-    : super(key: key);
+  const ProjectCard({super.key, required this.project, this.onTap});
 
   IconData _getTypeIcon() {
     switch (project.projectType) {

@@ -45,11 +45,12 @@ class _WindResourceScreenState extends State<WindResourceScreen> {
     } on ApiException catch (error) {
       if (mounted) setState(() => _error = error.message);
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         setState(
           () => _error =
               'Verified wind resource data is temporarily unavailable.',
         );
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -136,17 +137,16 @@ class _WindResourceScreenState extends State<WindResourceScreen> {
               _WindMetric('Score', _number('score').toStringAsFixed(1)),
               _WindMetric(
                 'Mean speed',
-                _number('mean_speed').toStringAsFixed(2) + ' m/s',
+                '${_number('mean_speed').toStringAsFixed(2)} m/s',
               ),
               _WindMetric(
                 'Power density',
-                _number('wind_power_density').toStringAsFixed(1) + ' W/m²',
+                '${_number('wind_power_density').toStringAsFixed(1)} W/m²',
               ),
               _WindMetric('Weibull k', _number('weibull_k').toStringAsFixed(2)),
               _WindMetric(
                 'Turbulence',
-                (_number('turbulence_intensity') * 100).toStringAsFixed(1) +
-                    '%',
+                '${(_number('turbulence_intensity') * 100).toStringAsFixed(1)}%',
               ),
             ],
           ),

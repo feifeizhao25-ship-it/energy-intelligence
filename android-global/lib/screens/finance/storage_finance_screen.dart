@@ -41,7 +41,7 @@ class _StorageFinanceScreenState extends State<StorageFinanceScreen> {
         offpeakPricePerMwh: double.parse(_valleyCtrl.text),
         capexPerKwh: double.parse(_capexCtrl.text),
       );
-      if (mounted)
+      if (mounted) {
         setState(
           () => _result = {
             'irr': (response['irr'] as num).toDouble(),
@@ -57,8 +57,9 @@ class _StorageFinanceScreenState extends State<StorageFinanceScreen> {
             'assumptionVersion': response['assumption_version'],
           },
         );
+      }
     } catch (error) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -68,6 +69,7 @@ class _StorageFinanceScreenState extends State<StorageFinanceScreen> {
             ),
           ),
         );
+      }
     } finally {
       if (mounted) setState(() => _isCalc = false);
     }

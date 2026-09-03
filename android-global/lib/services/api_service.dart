@@ -20,7 +20,7 @@ class ApiService {
   static final _client = http.Client();
   static const _secureStorage = FlutterSecureStorage();
   static String? _token;
-  static String _baseUrl = const String.fromEnvironment('API_BASE_URL');
+  static final String _baseUrl = const String.fromEnvironment('API_BASE_URL');
 
   /// Initialize with region — call from main() before runApp
   static Future<void> init({String region = 'CN'}) async {
@@ -60,8 +60,8 @@ class ApiService {
         'name': name,
         'email': email,
         'password': password,
-        if (company != null) 'company': company,
-        if (role != null) 'role': role,
+        'company': ?company,
+        'role': ?role,
         'market': 'global',
         'data_transfer_consent': dataTransferConsent,
       },
@@ -101,14 +101,16 @@ class ApiService {
 
   static Future<List<Map<String, dynamic>>> getProjects() async {
     final resp = await _get('/api/v1/projects');
-    if (resp is List)
+    if (resp is List) {
       return (resp as List)
           .map((e) => Map<String, dynamic>.from(e as Map))
           .toList();
-    if (resp['data'] is List)
+    }
+    if (resp['data'] is List) {
       return (resp['data'] as List)
           .map((e) => Map<String, dynamic>.from(e as Map))
           .toList();
+    }
     return [];
   }
 
@@ -129,12 +131,12 @@ class ApiService {
       '/api/v1/projects',
       body: {
         'name': name,
-        if (description != null) 'description': description,
-        if (technology != null) 'technology': technology,
-        if (latitude != null) 'latitude': latitude,
-        if (longitude != null) 'longitude': longitude,
-        if (capacityMw != null) 'capacity_mw': capacityMw,
-        if (location != null) 'location': location,
+        'description': ?description,
+        'technology': ?technology,
+        'latitude': ?latitude,
+        'longitude': ?longitude,
+        'capacity_mw': ?capacityMw,
+        'location': ?location,
       },
     );
   }
@@ -241,13 +243,13 @@ class ApiService {
         'capex_per_w': capexPerW,
         'opex_per_kw_yr': opexPerKwYr,
         'electricity_price': electricityPrice,
-        if (ghiAnnual != null) 'ghi_annual': ghiAnnual,
-        if (capacityFactor != null) 'capacity_factor': capacityFactor,
+        'ghi_annual': ?ghiAnnual,
+        'capacity_factor': ?capacityFactor,
         'degradation_rate': degradationRate,
-        if (itcRate != null) 'itc_rate': itcRate,
-        if (debtRatio != null) 'debt_ratio': debtRatio,
-        if (interestRate != null) 'interest_rate': interestRate,
-        if (taxRate != null) 'tax_rate': taxRate,
+        'itc_rate': ?itcRate,
+        'debt_ratio': ?debtRatio,
+        'interest_rate': ?interestRate,
+        'tax_rate': ?taxRate,
         'project_life': projectLife,
       },
     );
@@ -365,8 +367,9 @@ class ApiService {
   static Future<List<Map<String, dynamic>>> getAlerts() async {
     final resp = await _get('/api/v1/operations/alerts');
     final rows = resp['data'] ?? resp['alerts'];
-    if (rows is List)
+    if (rows is List) {
       return rows.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+    }
     return [];
   }
 
@@ -387,18 +390,20 @@ class ApiService {
     int pageSize = 20,
   }) async {
     final resp = await _get('/api/v1/research/papers', {
-      if (query != null) 'query': query,
+      'query': ?query,
       'page': page.toString(),
       'pageSize': pageSize.toString(),
     });
-    if (resp['data'] is List)
+    if (resp['data'] is List) {
       return (resp['data'] as List)
           .map((e) => Map<String, dynamic>.from(e as Map))
           .toList();
-    if (resp['papers'] is List)
+    }
+    if (resp['papers'] is List) {
       return (resp['papers'] as List)
           .map((e) => Map<String, dynamic>.from(e as Map))
           .toList();
+    }
     return [];
   }
 
