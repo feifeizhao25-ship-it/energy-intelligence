@@ -54,6 +54,9 @@ jobs:
           flutter-version: '3.38.5'
           channel: stable
           cache: true
+      - name: Configure resilient Gradle repositories
+        if: startsWith(matrix.edition, 'android-')
+        run: echo "GitHub runners use official repositories; China mirrors remain opt-in via USE_CN_MAVEN_MIRRORS=true."
       - run: flutter pub get
       - run: flutter analyze --no-fatal-infos --no-fatal-warnings
       - run: flutter test --no-pub
