@@ -46,7 +46,9 @@ jobs:
         if: startsWith(matrix.edition, 'android-')
         uses: actions/setup-java@v4
         with:
-          distribution: temurin
+          # Azure Zulu avoids the TLS handshake regression observed with the
+          # current hosted Temurin image while resolving Gradle Plugin Portal.
+          distribution: zulu
           java-version: '17'
           cache: gradle
       - uses: subosito/flutter-action@v2
