@@ -27,12 +27,12 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 
 interface DiagnosisResult {
     summary: string;
-    status: 'healthy' | 'warning' | 'critical';
+    status: 'healthy' | 'warning' | 'critical' | 'unknown';
     scores: {
-        overall: number;
-        efficiency: number;
-        maintenance: number;
-        safety: number;
+        overall: number | null;
+        efficiency: number | null;
+        maintenance: number | null;
+        safety: number | null;
     };
     issues: Array<{
         type: 'warning' | 'error' | 'info';
@@ -41,7 +41,7 @@ interface DiagnosisResult {
         recommendation: string;
     }>;
     recommendations: string[];
-    nextMaintenanceDate: string;
+    nextMaintenanceDate: string | null;
 }
 
 interface ProjectDetailProps {
@@ -359,13 +359,13 @@ export default function ProjectDetailPage(props: ProjectDetailProps) {
                                         "p-4 rounded-xl border",
                                         diagnosis.status === 'healthy' ? "bg-emerald-50 border-emerald-200" :
                                             diagnosis.status === 'warning' ? "bg-amber-50 border-amber-200" :
-                                                "bg-red-50 border-red-200"
+                                                diagnosis.status === 'critical' ? "bg-red-50 border-red-200" : "bg-slate-50 border-slate-200"
                                     )}>
                                         <div className={cn(
                                             "text-sm font-bold",
                                             diagnosis.status === 'healthy' ? "text-emerald-700" :
                                                 diagnosis.status === 'warning' ? "text-amber-700" :
-                                                    "text-red-700"
+                                                    diagnosis.status === 'critical' ? "text-red-700" : "text-slate-700"
                                         )}>
                                             {diagnosis.summary}
                                         </div>
@@ -383,7 +383,7 @@ export default function ProjectDetailPage(props: ProjectDetailProps) {
                                                 <score.icon className={cn("w-4 h-4", score.color)} />
                                                 <div>
                                                     <div className="text-[10px] font-bold text-slate-400 uppercase">{score.label}</div>
-                                                    <div className="text-lg font-black text-slate-900">{score.value}</div>
+                                                    <div className="text-lg font-black text-slate-900">{score.value ?? '证据不足'}</div>
                                                 </div>
                                             </div>
                                         ))}
@@ -423,7 +423,7 @@ export default function ProjectDetailPage(props: ProjectDetailProps) {
 
                                     {/* Next Maintenance */}
                                     <div className="text-xs text-slate-500 pt-2 border-t border-slate-100">
-                                        建议下次维护日期: <span className="font-bold text-slate-900">{diagnosis.nextMaintenanceDate}</span>
+                                        建议下次维护日期: <span className="font-bold text-slate-900">{diagnosis.nextMaintenanceDate ?? '待依据设备规程确认'}</span>
                                     </div>
                                 </div>
                             ) : (
