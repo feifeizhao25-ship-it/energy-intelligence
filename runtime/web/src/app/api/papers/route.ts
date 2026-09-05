@@ -5,13 +5,18 @@ import { searchArxiv } from '@/lib/api/arxiv';
 
 export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
-    const query = searchParams.get('query');
+    const query = searchParams.get('query')?.trim();
     const paperId = searchParams.get('id');
     const action = searchParams.get('action') || 'search';
     const source = searchParams.get('source') || 'semantic-scholar';
     const yearFrom = searchParams.get('yearFrom');
     const openAccess = searchParams.get('openAccess') === 'true';
-    const limit = parseInt(searchParams.get('limit') || '10');
+    const limit = Number(searchParams.get('limit') ?? '10');
+    if (!Number.isInteger(limit) || limit < 1 || limit > 100 ||
+        (yearFrom !== null && (!/^\d{4}$/.test(yearFrom) || Number(yearFrom) < 1800 || Number(yearFrom) > new Date().getFullYear())) ||
+        !['semantic-scholar', 'arxiv'].includes(source) || (query && query.length > 2000)) {
+        return NextResponse.json({ error: '检索参数不正确：数量须为 1 至 100，年份须有效，来源须受支持' }, { status: 400 });
+    }
 
     try {
         const startTime = Date.now();
@@ -71,11 +76,10 @@ export async function GET(request: NextRequest) {
             timestamp: new Date().toISOString(),
             duration: Date.now() - startTime
         });
-    } catch (error) {
-        console.error('文献检索错误:', error);
+    } catch {
         return NextResponse.json(
-            { error: error instanceof Error ? error.message : '检索失败' },
-            { status: 500 }
+            { error: '文献数据源暂时不可用，请稍后重试', code: 'UPSTREAM_UNAVAILABLE' },
+            { status: 503 }
         );
     }
 }

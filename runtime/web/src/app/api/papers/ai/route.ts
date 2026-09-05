@@ -2,9 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { generateSummary, extractKeyData, translateText, generateFullTranslation } from '@/lib/papers/ai';
 
 export async function POST(request: NextRequest) {
+    const body = await request.json().catch(() => null);
+    if (!body || !['summary', 'key_data', 'translate', 'full_translation'].includes(body.action)) {
+        return NextResponse.json({ error: '请选择有效的文献处理操作' }, { status: 400 });
+    }
+    const { action, text, title } = body;
+    if (typeof text !== 'string' || !text.trim() || text.length > 200000 ||
+        (title != null && (typeof title !== 'string' || title.length > 2000))) {
+        return NextResponse.json({ error: '请输入有效的文献内容，正文最多 200000 个字符，标题最多 2000 个字符' }, { status: 400 });
+    }
     try {
-        const body = await request.json();
-        const { action, text, title, context } = body;
 
         let result;
 
@@ -22,18 +29,17 @@ export async function POST(request: NextRequest) {
                 result = await generateFullTranslation(text);
                 break;
             default:
-                throw new Error('Invalid action');
+                return NextResponse.json({ error: '请选择有效的文献处理操作' }, { status: 400 });
         }
 
         return NextResponse.json({
             success: true,
             data: result
         });
-    } catch (error) {
-        console.error('Paper AI error:', error);
+    } catch {
         return NextResponse.json(
-            { error: error instanceof Error ? error.message : 'AI Processing failed' },
-            { status: 500 }
+            { error: '文献处理服务暂时不可用，请稍后重试', code: 'UPSTREAM_UNAVAILABLE' },
+            { status: 503 }
         );
     }
 }

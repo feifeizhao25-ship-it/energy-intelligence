@@ -100,7 +100,7 @@ export async function unifiedSearch(
 
 // 辅助函数：标准化标题
 function normalizeTitle(title: string): string {
-    return title.toLowerCase().replace(/[^a-z0-9]/g, '');
+    return title.normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
 }
 
 // AI 优化查询

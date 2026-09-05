@@ -1,0 +1,21 @@
+import { unifiedSearch } from './search';
+import { searchPapers } from '../api/semantic-scholar';
+import { searchArxiv } from '../api/arxiv';
+import { searchOpenAlex } from '../api/openalex';
+jest.mock('../api/semantic-scholar', () => ({ searchPapers: jest.fn() }));
+jest.mock('../api/arxiv', () => ({ searchArxiv: jest.fn() }));
+jest.mock('../api/openalex', () => ({ searchOpenAlex: jest.fn() }));
+jest.mock('../ai/unified', () => ({ simpleChat: jest.fn() }));
+it('不同中文标题不会合并；相同标题忽略空格后去重', async () => {
+ jest.mocked(searchPapers).mockResolvedValue({ total: 1, papers: [{ title: '光伏发电研究' }] } as any);
+ jest.mocked(searchOpenAlex).mockResolvedValue([{ title: '储能技术研究' }, { title: '光伏 发电研究' }] as any);
+ jest.mocked(searchArxiv).mockResolvedValue([]);
+ const result = await unifiedSearch('solar');
+ expect(result.papers.map(p => p.title)).toEqual(['光伏发电研究', '储能技术研究']);
+});
+it('所有数据源失败时不伪造无结果', async () => {
+ jest.mocked(searchPapers).mockRejectedValue(new Error('offline'));
+ jest.mocked(searchOpenAlex).mockRejectedValue(new Error('offline'));
+ jest.mocked(searchArxiv).mockRejectedValue(new Error('offline'));
+ await expect(unifiedSearch('solar')).rejects.toThrow('全部学术数据源暂时不可用');
+});
