@@ -84,21 +84,28 @@ export function generateMorningReport(
 // 生成晚间报告
 export function generateEveningReport(
     stations: StationData[],
-    date: string = new Date().toISOString().split('T')[0]
+    date: string = new Date().toISOString().split('T')[0],
+    yesterdayGeneration?: number,
 ): DailyReport {
     const totalGeneration = stations.reduce((sum, s) => sum + s.todayGeneration, 0);
     const totalRevenue = stations.reduce((sum, s) => sum + s.todayRevenue, 0);
-    const avgEfficiency = stations.reduce((sum, s) => sum + s.efficiency, 0) / stations.length;
-
-    // 对比昨日
-    const yesterdayEstimate = totalGeneration * 0.95; // 模拟昨日数据
-    const trend = ((totalGeneration - yesterdayEstimate) / yesterdayEstimate) * 100;
-    const trendText = trend >= 0 ? `📈 比昨日高 ${trend.toFixed(1)}%` : `📉 比昨日低 ${Math.abs(trend).toFixed(1)}%`;
+    const hasYesterday = typeof yesterdayGeneration === 'number'
+        && Number.isFinite(yesterdayGeneration)
+        && yesterdayGeneration >= 0;
+    let comparisonText = '暂无昨日可比数据';
+    if (hasYesterday && yesterdayGeneration === 0) {
+        comparisonText = totalGeneration === 0 ? '与昨日持平' : '昨日发电量为 0，暂不计算环比';
+    } else if (hasYesterday) {
+        const trend = ((totalGeneration - yesterdayGeneration) / yesterdayGeneration) * 100;
+        comparisonText = trend >= 0
+            ? `📈 比昨日高 ${trend.toFixed(1)}%`
+            : `📉 比昨日低 ${Math.abs(trend).toFixed(1)}%`;
+    }
 
     return {
         type: 'evening',
         title: '📊 今日发电报告',
-        content: `今日发电 ${totalGeneration.toFixed(1)} kWh，收益 ¥${totalRevenue.toFixed(0)}。${trendText}`,
+        content: `今日发电 ${totalGeneration.toFixed(1)} kWh，收益 ¥${totalRevenue.toFixed(0)}。${comparisonText}`,
         summary: {
             generation: totalGeneration,
             revenue: totalRevenue,

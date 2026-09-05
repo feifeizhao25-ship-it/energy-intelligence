@@ -58,7 +58,9 @@ jobs:
           cache: true
       - name: Configure resilient Gradle repositories
         if: startsWith(matrix.edition, 'android-')
-        run: echo "Android builds use the verified Aliyun mirrors first and retain official repositories as fallbacks."
+        run: |
+          mkdir -p "${GRADLE_USER_HOME:-$HOME/.gradle}/init.d"
+          cp ../scripts/gradle-cn-mirrors.init.gradle "${GRADLE_USER_HOME:-$HOME/.gradle}/init.d/energy-ci-mirrors.gradle"
       - run: flutter pub get
       - run: flutter analyze --no-fatal-infos --no-fatal-warnings
       - run: flutter test --no-pub

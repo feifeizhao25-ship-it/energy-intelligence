@@ -14,7 +14,9 @@ def configureRepositories = { repositories ->
     repositories.gradlePluginPortal()
 }
 
-settingsEvaluated { settings ->
+// Apply before settings scripts also in Flutter's included Gradle build.
+// App settings alone cannot configure dependencies of that included build.
+gradle.beforeSettings { settings ->
     configureRepositories(settings.pluginManagement.repositories)
 }
 
