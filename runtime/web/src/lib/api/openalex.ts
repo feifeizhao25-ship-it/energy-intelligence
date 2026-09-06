@@ -5,14 +5,14 @@ const BASE_URL = 'https://api.openalex.org';
 export async function searchOpenAlex(query: string, limit: number = 10): Promise<Paper[]> {
     try {
         const contact = process.env.OPENALEX_CONTACT_EMAIL;
-        if (process.env.NODE_ENV === 'production' && !contact) {
-            throw new Error('OPENALEX_CONTACT_EMAIL is required in production');
-        }
+        const apiKey = process.env.OPENALEX_API_KEY;
         const url = `${BASE_URL}/works?search=${encodeURIComponent(query)}&per-page=${limit}`;
         const response = await fetch(url, {
             headers: {
-                'User-Agent': `EnergyIntelligence/1.0 (${contact || 'development'})`
-            }
+                'User-Agent': `EnergyIntelligence/1.0 (${contact || 'development'})`,
+                ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {})
+            },
+            signal: AbortSignal.timeout(10_000),
         });
 
         if (!response.ok) {
@@ -21,14 +21,16 @@ export async function searchOpenAlex(query: string, limit: number = 10): Promise
 
         const data = await response.json();
 
+        if (!Array.isArray(data.results)) throw new Error('Invalid OpenAlex response');
+
         return data.results.map((work: any) => ({
             id: work.id.replace('https://openalex.org/', ''),
             title: work.title,
-            authors: work.authorships.map((a: any) => a.author.display_name),
+            authors: (work.authorships || []).map((a: any) => a.author?.display_name).filter(Boolean),
             year: work.publication_year,
             abstract: '', // OpenAlex abstract is inverted index, complicated to reconstruct usually
             citationCount: work.cited_by_count,
-            pdfUrl: work.open_access.is_oa ? work.open_access.pdf_url : null,
+            pdfUrl: work.best_oa_location?.is_oa ? work.best_oa_location.pdf_url || undefined : undefined,
             venue: work.primary_location?.source?.display_name || '',
             doi: work.doi ? work.doi.replace('https://doi.org/', '') : undefined,
             sourceProvider: 'OpenAlex',

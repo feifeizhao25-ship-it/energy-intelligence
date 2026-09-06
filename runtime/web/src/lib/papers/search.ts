@@ -52,7 +52,7 @@ export async function unifiedSearch(
     // 如果包含中文且有原始中文词，对于某些可能支持中文的源可以尝试（虽然目前主流源都是英文为主）
     // 为了保证质量，这里我们主要信任英文搜索结果
 
-    if (options.openAccess || true) {
+    {
         searchPromises.push(searchArxiv(finalQuery, { limit }).then(papers => ({ total: papers.length, papers })));
     }
 
@@ -74,7 +74,7 @@ export async function unifiedSearch(
     const openAlexResult = results[1];
     const arxivResult = results[2];
 
-    let allPapers = semanticResult.papers || [];
+    const allPapers = [...(semanticResult.papers || [])];
     const existingTitles = new Set(allPapers.map((p: any) => normalizeTitle(p.title)));
 
     const mergeResults = (targetPapers: any[]) => {

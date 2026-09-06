@@ -19,3 +19,12 @@ it('所有数据源失败时不伪造无结果', async () => {
  jest.mocked(searchArxiv).mockRejectedValue(new Error('offline'));
  await expect(unifiedSearch('solar')).rejects.toThrow('全部学术数据源暂时不可用');
 });
+
+it('合并结果不污染数据源缓存', async () => {
+ const cached = Object.freeze([{ title: 'Solar' }]);
+ jest.mocked(searchPapers).mockResolvedValue({ total: 1, papers: cached } as any);
+ jest.mocked(searchOpenAlex).mockResolvedValue([{ title: 'Battery' }] as any);
+ jest.mocked(searchArxiv).mockResolvedValue([]);
+ expect((await unifiedSearch('solar')).papers).toHaveLength(2);
+ expect(cached).toHaveLength(1);
+});
