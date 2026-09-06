@@ -91,9 +91,15 @@ export async function unifiedSearch(
     mergeResults(openAlexResult?.papers);
     mergeResults(arxivResult?.papers);
 
+    // 无法确认年份或全文链接时，不应让记录通过用户明确指定的筛选。
+    const filtered = allPapers.filter(paper =>
+        (options.yearFrom === undefined || (paper.year !== null && paper.year >= options.yearFrom)) &&
+        (options.yearTo === undefined || (paper.year !== null && paper.year <= options.yearTo)) &&
+        (!options.openAccess || Boolean(paper.pdfUrl))
+    );
     return {
         total: results.reduce((sum, result) => sum + (result.total || 0), 0),
-        papers: allPapers.slice(0, limit),
+        papers: filtered.slice(0, limit),
         providers,
     };
 }

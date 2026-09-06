@@ -213,7 +213,7 @@ export default function LibraryPage() {
                                                     {paper.journal || (paper.source === 'upload' ? 'LOCAL UPLOAD' : 'GLOBAL INDEX')}
                                                 </span>
                                                 <span className="w-1 h-1 bg-slate-200 rounded-full"></span>
-                                                <span className="text-[10px] font-black text-green-600">{paper.year || paper.createdAt.split('T')[0]}</span>
+                                                <span className="text-[10px] font-black text-green-600">{paper.year ?? '年份未提供'}</span>
                                             </div>
                                             <Link href={`/papers/${paper.paperId}`} className="text-lg font-black text-slate-900 hover:text-green-600 transition-colors block leading-snug">
                                                 {paper.title}

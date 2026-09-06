@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
                 journal: paper.venue || paper.journal || null,
                 abstract: paper.abstract || null,
                 pdfUrl: paper.pdfUrl || null,
-                citationCount: paper.citationCount || 0,
+                citationCount: paper.citationCount ?? null,
                 updatedAt: new Date()
             },
             create: {
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
                 journal: paper.venue || paper.journal || null,
                 abstract: paper.abstract || null,
                 pdfUrl: paper.pdfUrl || null,
-                citationCount: paper.citationCount || 0,
+                citationCount: paper.citationCount ?? null,
                 source: paper.source || 'external',
                 status: 'idle'
             }

@@ -27,9 +27,9 @@ export async function searchOpenAlex(query: string, limit: number = 10): Promise
             id: work.id.replace('https://openalex.org/', ''),
             title: work.title,
             authors: (work.authorships || []).map((a: any) => a.author?.display_name).filter(Boolean),
-            year: work.publication_year,
+            year: work.publication_year ?? null,
             abstract: '', // OpenAlex abstract is inverted index, complicated to reconstruct usually
-            citationCount: work.cited_by_count,
+            citationCount: work.cited_by_count ?? null,
             pdfUrl: work.best_oa_location?.is_oa ? work.best_oa_location.pdf_url || undefined : undefined,
             venue: work.primary_location?.source?.display_name || '',
             doi: work.doi ? work.doi.replace('https://doi.org/', '') : undefined,

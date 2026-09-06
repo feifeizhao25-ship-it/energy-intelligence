@@ -44,7 +44,7 @@ export const searchArxiv = withCache(async (
 
     const url = `${BASE_URL}?${params.toString()}`;
 
-    const response = await fetch(url);
+    const response = await fetch(url, { signal: AbortSignal.timeout(10_000) });
     if (!response.ok) {
       throw new Error(`arXiv API请求失败: ${response.status}`);
     }
@@ -89,7 +89,8 @@ function parseArxivXML(xmlText: string): Paper[] {
         const doiMatch = entry.match(/<arxiv:doi>(.*?)<\/arxiv:doi>/);
 
         // 提取PDF链接
-        const pdfMatch = entry.match(/<link.*?href="(.*?\.pdf)".*?\/>/);
+        const pdfLink = (entry.match(/<link\b[^>]*>/g) || []).find(link => /(?:type=["']application\/pdf["']|title=["']pdf["'])/.test(link));
+        const pdfMatch = pdfLink?.match(/href=["']([^"']+)["']/);
 
         // 提取分类
         const categoryMatches = entry.matchAll(/<category.*?term="(.*?)".*?\/>/g);
@@ -97,7 +98,8 @@ function parseArxivXML(xmlText: string): Paper[] {
 
         if (idMatch && titleMatch) {
           const paperId = extractArxivId(idMatch[1]);
-          const year = publishedMatch ? new Date(publishedMatch[1]).getFullYear() : new Date().getFullYear();
+          const parsedYear = publishedMatch ? new Date(publishedMatch[1]).getUTCFullYear() : NaN;
+          const year = Number.isFinite(parsedYear) ? parsedYear : null;
 
           papers.push({
             id: paperId,
@@ -105,7 +107,7 @@ function parseArxivXML(xmlText: string): Paper[] {
             authors,
             year,
             abstract: summaryMatch ? summaryMatch[1].trim().replace(/\n/g, ' ') : '',
-            citationCount: 0, // arXiv不提供引用数
+            citationCount: null, // arXiv不提供引用数，不能当作零引用
             pdfUrl: pdfMatch ? pdfMatch[1] : undefined,
             tldr: undefined,
             venue: `arXiv:${categories[0] || 'general'}`,
@@ -153,7 +155,7 @@ export const searchByCategory = withCache(async (
     });
 
     const url = `${BASE_URL}?${params.toString()}`;
-    const response = await fetch(url);
+    const response = await fetch(url, { signal: AbortSignal.timeout(10_000) });
 
     if (!response.ok) {
       throw new Error(`arXiv分类搜索失败: ${response.status}`);

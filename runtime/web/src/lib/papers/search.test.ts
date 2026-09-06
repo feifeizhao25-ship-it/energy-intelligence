@@ -28,3 +28,14 @@ it('合并结果不污染数据源缓存', async () => {
  expect((await unifiedSearch('solar')).papers).toHaveLength(2);
  expect(cached).toHaveLength(1);
 });
+
+it('所有来源均不能绕过年份与开放全文筛选', async () => {
+ jest.mocked(searchPapers).mockResolvedValue({ total: 1, papers: [{ title: 'Old', year: 2019, pdfUrl: 'https://example.org/a' }] } as any);
+ jest.mocked(searchOpenAlex).mockResolvedValue([
+  { title: 'Closed', year: 2025 }, { title: 'Unknown', year: null, pdfUrl: 'https://example.org/b' },
+  { title: 'Valid', year: 2025, pdfUrl: 'https://example.org/c' }
+ ] as any);
+ jest.mocked(searchArxiv).mockResolvedValue([{ title: 'Future', year: 2027, pdfUrl: 'https://example.org/d' }] as any);
+ const result = await unifiedSearch('solar', { yearFrom: 2024, yearTo: 2026, openAccess: true });
+ expect(result.papers.map(p => p.title)).toEqual(['Valid']);
+});

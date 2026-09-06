@@ -249,13 +249,13 @@ export default function PaperDetailView({ paper, pdfStatus }: PaperDetailViewPro
                                         <div className="space-y-2">
                                             <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">发表年份</div>
                                             <div className="flex items-center gap-2 text-sm font-black text-slate-900">
-                                                <Calendar className="w-4 h-4 text-green-500" /> {paper.year}
+                                                <Calendar className="w-4 h-4 text-green-500" /> {paper.year ?? '年份未提供'}
                                             </div>
                                         </div>
                                         <div className="space-y-2">
                                             <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">引用次数</div>
                                             <div className="flex items-center gap-2 text-sm font-black text-slate-900">
-                                                <Zap className="w-4 h-4 text-amber-500" /> {paper.citationCount}
+                                                <Zap className="w-4 h-4 text-amber-500" /> {paper.citationCount ?? '未提供'}
                                             </div>
                                         </div>
                                     </div>
@@ -306,9 +306,9 @@ export default function PaperDetailView({ paper, pdfStatus }: PaperDetailViewPro
                                             {rec.title}
                                         </div>
                                         <div className="flex items-center gap-3 text-[10px] font-black text-slate-400">
-                                            <span>{rec.year}</span>
+                                            <span>{rec.year ?? '年份未提供'}</span>
                                             <span className="w-1 h-1 bg-slate-200 rounded-full"></span>
-                                            <span className="text-green-600">{rec.citationCount} CITATIONS</span>
+                                            <span className="text-green-600">{rec.citationCount ?? '未提供'} 引用</span>
                                         </div>
                                     </Link>
                                 ))}

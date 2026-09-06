@@ -285,7 +285,7 @@ export default function PapersPage() {
                                             {paper.venue || 'SCIENTIFIC PAPER'}
                                         </span>
                                         <span className="w-1.5 h-1.5 bg-slate-200 rounded-full"></span>
-                                        <span className="text-sm font-bold text-slate-400">{paper.year}</span>
+                                        <span className="text-sm font-bold text-slate-400">{paper.year ?? '年份未提供'}</span>
                                     </div>
 
                                     {/* Title */}
@@ -308,7 +308,7 @@ export default function PapersPage() {
                                     <div className="flex items-center gap-8 text-sm">
                                         <div className="flex items-center gap-2 text-slate-400">
                                             <MessageSquare className="w-4 h-4" />
-                                            <span className="font-bold">{paper.citationCount} 引用</span>
+                                            <span className="font-bold">{paper.citationCount ?? '未提供'} 引用</span>
                                         </div>
                                         {paper.impactFactor && (
                                             <div className="flex items-center gap-2 text-amber-500">

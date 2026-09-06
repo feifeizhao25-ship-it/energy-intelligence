@@ -217,9 +217,9 @@ export interface Paper {
   id: string;
   title: string;
   authors: string[];
-  year: number;
+  year: number | null;
   abstract: string;
-  citationCount: number;
+  citationCount: number | null;
   pdfUrl?: string;
   tldr?: string;
   venue?: string;
