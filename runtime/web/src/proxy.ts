@@ -24,6 +24,12 @@ const intlMiddleware = createIntlMiddleware({
   localeDetection: false
 });
 
+// 仅旧版语言目录中的页面需要语言重写；根目录页面必须保持原路径。
+function domesticRoute(req: NextRequest) {
+  const localizedOnly = ['/education/pitfalls', '/tools/contract-check', '/calculator/compare'];
+  return localizedOnly.includes(req.nextUrl.pathname) ? intlMiddleware(req) : NextResponse.next();
+}
+
 // 公开路径列表（不需要登录）
 const publicPaths = [
   '/',
@@ -99,7 +105,7 @@ const authMiddleware = withAuth(
       }
     }
 
-    return intlMiddleware(req);
+    return domesticRoute(req);
   },
   {
     callbacks: {
@@ -148,7 +154,7 @@ export default async function proxy(req: NextRequest) {
     return NextResponse.next();
   }
   if (isDemoDashboardPreview(path)) {
-    return intlMiddleware(req);
+    return domesticRoute(req);
   }
 
   // fail-closed：next-auth 未配置（缺 NEXTAUTH_SECRET/NEXTAUTH_URL）时，

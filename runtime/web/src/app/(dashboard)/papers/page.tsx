@@ -122,28 +122,49 @@ export default function PapersPage() {
     const [isSearching, setIsSearching] = useState(false);
     const [papers, setPapers] = useState<any[]>([]);
     const [total, setTotal] = useState(0);
+    const [visibleCount, setVisibleCount] = useState(10);
+    const [searchError, setSearchError] = useState('');
+    const [showFilters, setShowFilters] = useState(false);
+    const [yearFrom, setYearFrom] = useState('');
+    const [yearTo, setYearTo] = useState('');
+    const [openAccess, setOpenAccess] = useState(false);
+    const [unavailableSources, setUnavailableSources] = useState<string[]>([]);
     const [bookmarked, setBookmarked] = useState<string[]>([]);
     const [isSaving, setIsSaving] = useState<string | null>(null);
 
     // 初始加载或搜索
     const handleSearch = async (query: string = searchQuery) => {
+        if ((yearFrom && (!/^\d{4}$/.test(yearFrom) || Number(yearFrom) < 1800 || Number(yearFrom) > new Date().getFullYear())) ||
+            (yearTo && (!/^\d{4}$/.test(yearTo) || Number(yearTo) < 1800 || Number(yearTo) > new Date().getFullYear())) ||
+            (yearFrom && yearTo && Number(yearFrom) > Number(yearTo))) {
+            setSearchError('请输入有效的起止年份，开始年份不能晚于结束年份。');
+            return;
+        }
         setIsSearching(true);
+        setSearchError('');
+        setPapers([]);
+        setTotal(0);
+        setVisibleCount(10);
+        setUnavailableSources([]);
         try {
             const res = await fetch('/api/papers/search', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     query: query || 'renewable energy',
-                    options: { limit: 10 }
+                    options: { limit: 100, yearFrom: yearFrom ? Number(yearFrom) : undefined, yearTo: yearTo ? Number(yearTo) : undefined, openAccess }
                 })
             });
             const data = await res.json();
             if (data.success && data.data) {
                 setPapers(data.data.papers);
-                setTotal(data.data.total);
+                setTotal(data.data.papers.length);
+                setUnavailableSources((data.data.providers || []).filter((p: any) => p.status === 'unavailable').map((p: any) => p.name));
+            } else {
+                setSearchError('学术数据源暂时不可用，请稍后重试。');
             }
         } catch (e) {
-            console.error('Search failed', e);
+            setSearchError('检索连接失败，请检查网络后重试。');
         } finally {
             setIsSearching(false);
         }
@@ -185,10 +206,10 @@ export default function PapersPage() {
             {/* Header */}
             <div className="bg-gradient-to-br from-indigo-500 to-purple-600 px-6 py-10 text-white">
                 <div className="max-w-6xl mx-auto">
-                    <div className="flex items-center justify-between mb-8">
+                    <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
                         <div className="flex items-center gap-3">
                             <BookOpen className="w-8 h-8" />
-                            <h1 className="text-3xl font-black tracking-tight">专业文献库</h1>
+                            <h1 className="text-2xl sm:text-3xl font-black tracking-tight">专业文献库</h1>
                         </div>
                         <Link href="/papers/library" className="flex items-center gap-2 px-5 py-2.5 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-2xl transition-all border border-white/10 font-black text-sm">
                             <Bookmark className="w-4 h-4" /> 我的文献库
@@ -207,7 +228,7 @@ export default function PapersPage() {
                         <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-400 group-focus-within:text-green-500 transition-colors" />
                         <input
                             type="text"
-                            placeholder="输入关键词，如 '钙钛矿电池稳定性' 或 'Offshore wind farm wake effect'..."
+                            placeholder="输入关键词，如钙钛矿电池稳定性、海上风电尾流效应"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="w-full pl-14 pr-32 py-5 rounded-[24px] text-slate-900 bg-white border-none shadow-2xl focus:ring-4 focus:ring-green-500/20 text-lg transition-all"
@@ -231,7 +252,7 @@ export default function PapersPage() {
                             key={filter.id}
                             onClick={() => {
                                 setActiveFilter(filter.id);
-                                if (filter.id !== 'all') handleSearch(filter.name);
+                                handleSearch(filter.id === 'all' ? searchQuery : filter.name);
                             }}
                             className={cn(
                                 "px-5 py-2 rounded-full font-bold text-sm whitespace-nowrap transition-all",
@@ -244,7 +265,7 @@ export default function PapersPage() {
                         </button>
                     ))}
                     <div className="ml-auto flex items-center gap-2">
-                        <button className="flex items-center gap-2 px-5 py-2 bg-white border border-slate-200 rounded-full font-bold text-sm hover:bg-slate-50">
+                        <button onClick={() => setShowFilters(value => !value)} aria-expanded={showFilters} className="flex items-center gap-2 px-5 py-2 bg-white border border-slate-200 rounded-full font-bold text-sm hover:bg-slate-50">
                             <Filter className="w-4 h-4" />
                             高级筛选
                         </button>
@@ -252,18 +273,26 @@ export default function PapersPage() {
                 </div>
             </div>
 
+            {showFilters && <div className="max-w-6xl mx-auto flex flex-wrap items-center gap-4 px-6 py-4">
+                <label>开始年份 <input aria-label="开始年份" inputMode="numeric" value={yearFrom} onChange={e => setYearFrom(e.target.value)} className="w-24 border rounded p-2" /></label>
+                <label>结束年份 <input aria-label="结束年份" inputMode="numeric" value={yearTo} onChange={e => setYearTo(e.target.value)} className="w-24 border rounded p-2" /></label>
+                <label className="flex gap-2"><input type="checkbox" checked={openAccess} onChange={e => setOpenAccess(e.target.checked)} />仅显示有开放全文链接的论文</label>
+                <button onClick={() => handleSearch()} disabled={isSearching} className="rounded bg-green-700 text-white px-4 py-2">应用筛选</button>
+            </div>}
             {/* Stats */}
             <div className="px-6 py-6 bg-white border-b border-slate-100">
                 <div className="max-w-6xl mx-auto flex items-center justify-between">
                     <div className="flex items-center gap-6">
                         <div className="flex items-center gap-2">
                             <FileText className="w-5 h-5 text-slate-400" />
-                            <span className="text-sm text-slate-600">找到 <strong className="text-slate-900">{total}</strong> 篇相关论文</span>
+                            <span className="text-sm text-slate-600">本次返回 <strong className="text-slate-900">{total}</strong> 篇论文（最多 100 篇）</span>
                         </div>
                     </div>
                 </div>
             </div>
 
+            {searchError && <p role="alert" className="max-w-6xl mx-auto px-6 py-4 text-red-700">{searchError}</p>}
+            {unavailableSources.length > 0 && <p role="status" className="max-w-6xl mx-auto px-6 py-4 text-amber-800">部分学术来源暂时不可用，本次仅展示可用来源的结果。</p>}
             {/* Papers List */}
             <div className="px-6 py-8">
                 <div className="max-w-6xl mx-auto space-y-4">
@@ -272,7 +301,7 @@ export default function PapersPage() {
                             <div className="w-12 h-12 border-4 border-green-500 border-t-transparent rounded-full animate-spin"></div>
                             <p className="font-black text-slate-400 uppercase tracking-widest text-xs">正在检索全球文献库...</p>
                         </div>
-                    ) : papers.map((paper) => (
+                    ) : papers.length === 0 && !searchError ? <p className="py-8 text-slate-600">本次未检索到匹配论文，可以调整关键词后重试。</p> : papers.slice(0, visibleCount).map((paper) => (
                         <div
                             key={paper.id}
                             className="bg-white rounded-[32px] border border-slate-100 p-8 hover:shadow-2xl hover:shadow-slate-200/50 transition-all group"
@@ -280,9 +309,9 @@ export default function PapersPage() {
                             <div className="flex items-start justify-between gap-8">
                                 <div className="flex-1 min-w-0">
                                     {/* Type & Year */}
-                                    <div className="flex items-center gap-3 mb-4">
+                                    <div className="flex flex-wrap items-center gap-3 mb-4">
                                         <span className={cn("px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest", getTypeColor(paper.type || 'research'))}>
-                                            {paper.venue || 'SCIENTIFIC PAPER'}
+                                            {paper.venue || '学术论文'}
                                         </span>
                                         <span className="w-1.5 h-1.5 bg-slate-200 rounded-full"></span>
                                         <span className="text-sm font-bold text-slate-400">{paper.year ?? '年份未提供'}</span>
@@ -304,7 +333,13 @@ export default function PapersPage() {
                                         {paper.abstract}
                                     </p>
 
-                                    {/* Stats */}
+                                    {showFilters && <div className="max-w-6xl mx-auto flex flex-wrap items-center gap-4 px-6 py-4">
+                <label>开始年份 <input aria-label="开始年份" inputMode="numeric" value={yearFrom} onChange={e => setYearFrom(e.target.value)} className="w-24 border rounded p-2" /></label>
+                <label>结束年份 <input aria-label="结束年份" inputMode="numeric" value={yearTo} onChange={e => setYearTo(e.target.value)} className="w-24 border rounded p-2" /></label>
+                <label className="flex gap-2"><input type="checkbox" checked={openAccess} onChange={e => setOpenAccess(e.target.checked)} />仅显示有开放全文链接的论文</label>
+                <button onClick={() => handleSearch()} disabled={isSearching} className="rounded bg-green-700 text-white px-4 py-2">应用筛选</button>
+            </div>}
+            {/* Stats */}
                                     <div className="flex items-center gap-8 text-sm">
                                         <div className="flex items-center gap-2 text-slate-400">
                                             <MessageSquare className="w-4 h-4" />
@@ -354,11 +389,11 @@ export default function PapersPage() {
             </div>
 
             {/* Load More */}
-            {total > papers.length && (
+            {papers.length > visibleCount && (
                 <div className="px-6 py-8">
                     <div className="max-w-6xl mx-auto text-center">
                         <button
-                            onClick={() => {/* Implement pagination */ }}
+                            onClick={() => setVisibleCount(count => count + 10)}
                             className="px-10 py-5 bg-white border border-slate-100 text-slate-900 font-black rounded-3xl hover:bg-slate-50 transition-all shadow-xl shadow-slate-100/50"
                         >
                             查看更多专业文献

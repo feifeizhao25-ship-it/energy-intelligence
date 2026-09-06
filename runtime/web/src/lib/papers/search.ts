@@ -45,15 +45,15 @@ export async function unifiedSearch(
     const finalQuery = queries[0];
 
     const searchPromises: Promise<{ total: number; papers: Paper[] }>[] = [
-        searchSemantic(finalQuery, options),
-        searchOpenAlex(finalQuery, limit).then(papers => ({ total: papers.length, papers }))
+        searchSemantic(finalQuery, { ...options, limit: 100, offset: 0 }),
+        searchOpenAlex(finalQuery, 100).then(papers => ({ total: papers.length, papers }))
     ];
 
     // 如果包含中文且有原始中文词，对于某些可能支持中文的源可以尝试（虽然目前主流源都是英文为主）
     // 为了保证质量，这里我们主要信任英文搜索结果
 
     {
-        searchPromises.push(searchArxiv(finalQuery, { limit }).then(papers => ({ total: papers.length, papers })));
+        searchPromises.push(searchArxiv(finalQuery, { limit: 100 }).then(papers => ({ total: papers.length, papers })));
     }
 
     const settled = await Promise.allSettled(searchPromises);
@@ -98,8 +98,9 @@ export async function unifiedSearch(
         (!options.openAccess || Boolean(paper.pdfUrl))
     );
     return {
-        total: results.reduce((sum, result) => sum + (result.total || 0), 0),
-        papers: filtered.slice(0, limit),
+        total: filtered.length,
+        totalScope: 'retrieved_window',
+        papers: filtered.slice(options.offset ?? 0, (options.offset ?? 0) + limit),
         providers,
     };
 }

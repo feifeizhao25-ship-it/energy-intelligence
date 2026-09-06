@@ -240,6 +240,7 @@ export interface SearchOptions {
 
 export interface SearchResult {
   total: number;
+  totalScope?: 'retrieved_window';
   papers: Paper[];
   providers?: Array<{
     name: 'Semantic Scholar' | 'OpenAlex' | 'arXiv';

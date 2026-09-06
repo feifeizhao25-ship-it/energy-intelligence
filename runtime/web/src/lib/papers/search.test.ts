@@ -39,3 +39,12 @@ it('所有来源均不能绕过年份与开放全文筛选', async () => {
  const result = await unifiedSearch('solar', { yearFrom: 2024, yearTo: 2026, openAccess: true });
  expect(result.papers.map(p => p.title)).toEqual(['Valid']);
 });
+
+it('总数是去重结果窗口，offset 作用于合并结果而非单个来源', async () => {
+ jest.mocked(searchPapers).mockResolvedValue({ total: 10000, papers: [{ title: 'A' }, { title: 'B' }] } as any);
+ jest.mocked(searchOpenAlex).mockResolvedValue([{ title: 'A' }, { title: 'C' }] as any);
+ jest.mocked(searchArxiv).mockResolvedValue([]);
+ const result = await unifiedSearch('solar', { limit: 1, offset: 2 });
+ expect(result).toMatchObject({ total: 3, totalScope: 'retrieved_window', papers: [{ title: 'C' }] });
+ expect(searchPapers).toHaveBeenLastCalledWith('solar', expect.objectContaining({ limit: 100, offset: 0 }));
+});

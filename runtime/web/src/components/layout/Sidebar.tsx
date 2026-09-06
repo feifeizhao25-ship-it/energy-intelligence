@@ -1,6 +1,13 @@
 'use client';
 
 import Link from 'next/link';
+import { Zap, Menu, X, LogIn, ChevronDown, Bot, Map, BatteryCharging, Wrench, History, Trophy, BookOpen, MessagesSquare, CircleAlert, ShieldCheck, Library, FileText, Building, Terminal, Award } from 'lucide-react';
+
+function NavIcon({ name }: { name: string }) {
+    const icons = { bolt: Zap, smart_toy: Bot, map: Map, battery_charging_full: BatteryCharging, build: Wrench, history: History, emoji_events: Trophy, menu_book: BookOpen, forum: MessagesSquare, error: CircleAlert, verified_user: ShieldCheck, library_books: Library, description: FileText, domain: Building, terminal: Terminal, workspace_premium: Award };
+    const Icon = icons[name as keyof typeof icons] || BookOpen;
+    return <Icon className="w-5 h-5" aria-hidden="true" />;
+}
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
@@ -115,7 +122,7 @@ export default function Sidebar() {
                 {/* Logo */}
                 <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
-                        <span className="material-symbols-outlined text-primary text-xl">bolt</span>
+                        <span className="material-symbols-outlined text-primary text-xl"><Zap className="w-5 h-5" aria-hidden="true" /></span>
                     </div>
                     <span className="font-bold text-sm text-slate-900 dark:text-white">新能源智库</span>
                 </div>
@@ -127,7 +134,7 @@ export default function Sidebar() {
                         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                         className="p-2 text-slate-600 dark:text-white/70 hover:text-slate-900 dark:hover:text-white"
                     >
-                        <span className="material-symbols-outlined">{mobileMenuOpen ? 'close' : 'menu'}</span>
+                        <span className="material-symbols-outlined">{mobileMenuOpen ? <X aria-label="关闭菜单" /> : <Menu aria-label="打开菜单" />}</span>
                     </button>
                 </div>
             </header>
@@ -138,7 +145,7 @@ export default function Sidebar() {
                     <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-2 mb-2">
                             <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
-                                <span className="material-symbols-outlined text-primary text-xl">bolt</span>
+                                <span className="material-symbols-outlined text-primary text-xl"><Zap className="w-5 h-5" aria-hidden="true" /></span>
                             </div>
                             <h1 className="text-slate-900 dark:text-white text-lg font-bold tracking-tight">新能源智库</h1>
                         </div>
@@ -173,14 +180,14 @@ export default function Sidebar() {
                                                         )}
                                                     >
                                                         <span className="material-symbols-outlined text-slate-500 dark:text-white/70">
-                                                            {item.icon}
+                                                            <NavIcon name={item.icon} />
                                                         </span>
                                                         <span className="text-sm font-medium">{item.name}</span>
                                                         <span className={cn(
                                                             "material-symbols-outlined ml-auto text-sm transition-transform",
                                                             isExpanded && "rotate-180"
                                                         )}>
-                                                            expand_more
+                                                            <ChevronDown className="w-4 h-4" aria-hidden="true" />
                                                         </span>
                                                     </button>
                                                     {isExpanded && (
@@ -223,7 +230,7 @@ export default function Sidebar() {
                                                     "material-symbols-outlined transition-colors",
                                                     isActive ? "text-primary fill-current" : "text-slate-500 dark:text-white/70 group-hover:text-primary"
                                                 )}>
-                                                    {item.icon}
+                                                    <NavIcon name={item.icon} />
                                                 </span>
                                                 <span className={cn("text-sm", isActive ? "font-bold" : "font-medium")}>{item.name}</span>
                                                 {(item as any).badge && (
@@ -256,7 +263,7 @@ export default function Sidebar() {
                             href="/login"
                             className="flex items-center justify-center gap-2 w-full py-2.5 bg-primary hover:bg-primary-600 text-white text-sm font-medium rounded-lg transition-colors shadow-lg shadow-primary/20"
                         >
-                            <span className="material-symbols-outlined text-sm">login</span>
+                            <span className="material-symbols-outlined text-sm"><LogIn className="w-5 h-5" aria-hidden="true" /></span>
                             登录账户
                         </Link>
                     )}
@@ -282,7 +289,7 @@ export default function Sidebar() {
                                                 return (
                                                     <div key={item.name} className="flex flex-col gap-1">
                                                         <div className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-bold text-slate-900 dark:text-white bg-slate-50 dark:bg-white/5">
-                                                            <span className="material-symbols-outlined text-xl">{item.icon}</span>
+                                                            <span className="material-symbols-outlined text-xl"><NavIcon name={item.icon} /></span>
                                                             {item.name}
                                                         </div>
                                                         <div className="flex flex-col gap-1 ml-9 pl-4 border-l border-slate-200 dark:border-white/10">
@@ -317,7 +324,7 @@ export default function Sidebar() {
                                                             : "text-slate-600 dark:text-white/70 bg-slate-50 dark:bg-surface-dark"
                                                     )}
                                                 >
-                                                    <span className="material-symbols-outlined text-xl">{item.icon}</span>
+                                                    <span className="material-symbols-outlined text-xl"><NavIcon name={item.icon} /></span>
                                                     {item.name}
                                                     {item.badge && (
                                                         <span className="ml-auto px-1.5 py-0.5 rounded-full bg-red-500 text-white text-[10px] font-bold">
@@ -337,7 +344,7 @@ export default function Sidebar() {
                                 onClick={() => setMobileMenuOpen(false)}
                                 className="flex items-center justify-center gap-3 px-4 py-4 rounded-xl text-sm font-bold bg-primary text-white mt-4 shadow-lg shadow-primary/20"
                             >
-                                <span className="material-symbols-outlined text-xl">login</span>
+                                <span className="material-symbols-outlined text-xl"><LogIn className="w-5 h-5" aria-hidden="true" /></span>
                                 立即登录
                             </Link>
                         )}
