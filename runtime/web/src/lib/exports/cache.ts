@@ -1,56 +1,49 @@
 import fs from 'fs';
 import path from 'path';
 
-// 使用项目根目录下的 .exports 文件夹存储临时文件
 const EXPORT_DIR = path.join(process.cwd(), '.exports');
+const MAX_AGE_MS = 10 * 60 * 1000;
 
-// 确保目录存在
-if (!fs.existsSync(EXPORT_DIR)) {
-    fs.mkdirSync(EXPORT_DIR, { recursive: true });
+function locations(filename: string) {
+    if (!/^[A-Za-z0-9_-]+\.(csv|json)$/.test(filename)) return null;
+    return { filePath: path.join(EXPORT_DIR, filename), metaPath: path.join(EXPORT_DIR, `${filename}.meta.json`) };
 }
 
-/**
- * 添加到磁盘缓存
- */
 export function addToExportCache(
     filename: string,
-    data: { content: Buffer | string; format: string; contentType: string }
+    data: { content: Buffer | string; format: string; contentType: string; ownerId: string }
 ) {
-    const filePath = path.join(EXPORT_DIR, filename);
-    const metaPath = path.join(EXPORT_DIR, `${filename}.meta.json`);
-
-    fs.writeFileSync(filePath, data.content);
-    fs.writeFileSync(metaPath, JSON.stringify({
-        contentType: data.contentType,
-        format: data.format,
-        createdAt: Date.now()
-    }));
-
-    // 10 分钟后自动清理 (简单实现，实际生产环境建议用定时任务)
-    setTimeout(() => {
-        try {
-            if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-            if (fs.existsSync(metaPath)) fs.unlinkSync(metaPath);
-        } catch (e) { }
-    }, 10 * 60 * 1000);
+    const target = locations(filename);
+    if (!target || !data.ownerId) throw new Error('导出文件参数无效');
+    fs.mkdirSync(EXPORT_DIR, { recursive: true, mode: 0o700 });
+    fs.writeFileSync(target.filePath, data.content, { flag: 'wx', mode: 0o600 });
+    try {
+        fs.writeFileSync(target.metaPath, JSON.stringify({
+            ownerId: data.ownerId, contentType: data.contentType,
+            format: data.format, createdAt: Date.now(),
+        }), { flag: 'wx', mode: 0o600 });
+    } catch (error) {
+        fs.unlinkSync(target.filePath);
+        throw error;
+    }
+    const timer = setTimeout(() => {
+        for (const file of [target.filePath, target.metaPath]) {
+            try { fs.unlinkSync(file); } catch { /* Already removed or unavailable. */ }
+        }
+    }, MAX_AGE_MS);
+    timer.unref();
 }
 
-/**
- * 从磁盘缓存获取数据
- */
-export function getFromExportCache(filename: string) {
-    const filePath = path.join(EXPORT_DIR, filename);
-    const metaPath = path.join(EXPORT_DIR, `${filename}.meta.json`);
-
-    if (!fs.existsSync(filePath) || !fs.existsSync(metaPath)) {
+export function getFromExportCache(filename: string, ownerId: string) {
+    const target = locations(filename);
+    if (!target || !ownerId) return null;
+    try {
+        const meta = JSON.parse(fs.readFileSync(target.metaPath, 'utf8'));
+        const age = Date.now() - meta.createdAt;
+        if (meta.ownerId !== ownerId || !Number.isFinite(meta.createdAt) || age < 0 || age >= MAX_AGE_MS) return null;
+        // Authorization and expiry are checked before reading any report content.
+        return { content: fs.readFileSync(target.filePath), contentType: meta.contentType, format: meta.format };
+    } catch {
         return null;
     }
-
-    const content = fs.readFileSync(filePath);
-    const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
-
-    return {
-        content,
-        ...meta
-    };
 }

@@ -1,3 +1,5 @@
+import { randomUUID } from 'crypto';
+import { escapeCsvCell } from '@/lib/exports/csv';
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
@@ -70,7 +72,7 @@ export async function POST(req: NextRequest) {
                         c.id,
                         c.type,
                         JSON.stringify(c.input),
-                        (c.output as any)?.energy?.annualGeneration || 'N/A',
+                        (c.output as any)?.energy?.annualGeneration ?? '暂无数据',
                         c.createdAt.toISOString().split('T')[0]
                     ]);
                 } catch (dbError) {
@@ -89,7 +91,7 @@ export async function POST(req: NextRequest) {
                 }, { status: 400 });
         }
 
-        const filename = `${filenameBase}.${format}`;
+        const filename = `${filenameBase}_${randomUUID()}.${format}`;
         let content: Buffer | string = '';
         let contentType = '';
 
@@ -97,10 +99,6 @@ export async function POST(req: NextRequest) {
         if (format === 'csv') {
             // CSV 转义：含逗号、双引号或换行的字段都要加引号，且内部双引号需翻倍。
             // 此前只处理了逗号，字段里出现引号或换行会把整份 CSV 结构破坏掉。
-            const escapeCsvCell = (cell: any): string => {
-                const s = cell === null || cell === undefined ? '' : String(cell);
-                return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-            };
             content = [
                 headers.map(escapeCsvCell).join(','),
                 ...rows.map(row => row.map(escapeCsvCell).join(','))
@@ -130,7 +128,7 @@ export async function POST(req: NextRequest) {
         }
 
         // 4. 存储到缓存并生成下载链接
-        addToExportCache(filename, { content, format, contentType });
+        addToExportCache(filename, { content, format, contentType, ownerId: userId });
 
         const downloadUrl = `/api/exports/download/${filename}`;
 
@@ -141,7 +139,7 @@ export async function POST(req: NextRequest) {
                 format,
                 downloadUrl,
                 totalRecords: rows.length,
-                size: content.length,
+                size: Buffer.byteLength(content),
                 expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
                 preview: {
                     headers,
