@@ -2,12 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/auth-options';
 import { prisma } from '@/lib/prisma';
+import { SolarCalculatorV2 } from '@/lib/calculator/solar-v2';
+import { saveSolar, SolarAccessError } from '@/lib/calculator/save-solar';
 
 const respond = (status: number, body: object) => NextResponse.json(body, {
     status, headers: { 'Cache-Control': 'private, no-store' },
 });
 
-// V2 原实现使用固定辐照值冒充 NASA 来源，尚未通过计算与证据核验。
+// 仅提供有来源证据的初步估算；不接受客户端指定审计等级。
 export async function POST(req: NextRequest) {
     try {
         const session = await getServerSession(authOptions);
@@ -25,9 +27,17 @@ export async function POST(req: NextRequest) {
             });
             if (!project) return respond(404, { success: false, message: '项目不存在' });
         }
-        return respond(503, { success: false, error: 'SOLAR_DATA_UNAVAILABLE',
-            message: '深度光伏测算暂不可用，辐照数据来源与计算流程正在核验' });
-    } catch {
+        const result = await SolarCalculatorV2.calculate(body);
+        const snapshotId = await saveSolar(session.user.id, body.projectId ?? null, result);
+        return respond(200, { success: true, data: { ...result, snapshotId }, meta: { persisted: true, qualityTag: 'PREVIEW' } });
+    } catch (error) {
+        if (error instanceof SolarAccessError) return respond(error.status, { success: false, message: error.message });
+        if (error instanceof Error && ['INVALID_SOLAR_INPUT', 'INVALID_COORDINATES', 'INVALID_QUALITY_TAG'].includes(error.message)) {
+            return respond(400, { success: false, message: '测算参数无效，请检查位置、容量、成本和电价' });
+        }
+        if (error instanceof Error && error.message === 'AUDIT_GRADE_UNAVAILABLE') return respond(422, {
+            success: false, message: '当前只提供初步估算，暂不支持审计级报告',
+        });
         return respond(503, { success: false, message: '服务暂不可用，请稍后重试' });
     }
 }

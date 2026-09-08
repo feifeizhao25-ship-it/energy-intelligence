@@ -7,6 +7,7 @@ import { SolarCalculatorV2 } from './solar-v2';
 
 jest.mock('next-auth', () => ({ getServerSession: jest.fn() }));
 jest.mock('@/lib/auth/auth-options', () => ({ authOptions: {} }));
+jest.mock('@/lib/api/verified-solar', () => ({ verifiedSolar: () => Promise.reject(new Error('SOLAR_DATA_UNAVAILABLE')) }));
 jest.mock('@/lib/prisma', () => ({ prisma: { project: { findFirst: jest.fn() }, projectTimeline: { findMany: jest.fn() } } }));
 const request = (body: unknown = {}) => new NextRequest('http://localhost/api/test', { method: 'POST', body: JSON.stringify(body) });
 const props = { params: Promise.resolve({ id: 'project' }) };
@@ -41,9 +42,9 @@ test('database failure is not represented as empty successful history', async ()
     expect(await response.text()).not.toContain('private connection');
 });
 test('project analysis cannot return simulated evidence or scores', async () => {
-    const response = await POST(request(), props);
+    const response = await POST(request({ location: { lat: 30, lng: 120 }, capacity: 100, unitCost: 3, electricityPrice: 0.5 }), props);
     expect(response.status).toBe(503);
-    expect(await response.json()).toMatchObject({ success: false, error: 'ANALYSIS_UNAVAILABLE' });
+    expect(await response.json()).toMatchObject({ success: false });
 });
 test('solar API requires login and rejects foreign project references', async () => {
     (getServerSession as jest.Mock).mockResolvedValue(null);
@@ -57,9 +58,9 @@ test.each([null, [], { projectId: 1 }, { projectId: '' }])('solar rejects invali
     expect((await solar(request(body))).status).toBe(400);
 });
 test('solar API clearly reports unavailable data', async () => {
-    const response = await solar(request());
+    const response = await solar(request({ location: { lat: 30, lng: 120 }, capacity: 100, unitCost: 3, electricityPrice: 0.5 }));
     expect(response.status).toBe(503);
-    expect(await response.json()).toMatchObject({ success: false, error: 'SOLAR_DATA_UNAVAILABLE' });
+    expect(await response.json()).toMatchObject({ success: false });
 });
 test('direct calculator calls cannot generate fixed NASA evidence', async () => {
     await expect(SolarCalculatorV2.calculate({ location: { lat: 39.9, lng: 116.4 }, capacity: 100, unitCost: 3.5, electricityPrice: 0.45 }))

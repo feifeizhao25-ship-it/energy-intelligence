@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/auth-options';
 import { prisma } from '@/lib/prisma';
+import { POST as calculateSolar } from '@/app/api/v2/solar/calculate/route';
 
 const respond = (status: number, body: object) => NextResponse.json(body, {
     status, headers: { 'Cache-Control': 'private, no-store' },
@@ -16,13 +17,16 @@ async function owner(projectId: string) {
     return { userId };
 }
 
-// 原链路包含模拟辐照来源、评分与未持久化的里程碑，完成验证前不得输出投资结论。
-export async function POST(_req: NextRequest, props: { params: Promise<{ id: string }> }) {
+// 项目入口复用有证据、配额和持久化的初步估算，不恢复模拟评分。
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
     try {
-        const access = await owner((await props.params).id);
+        const projectId = (await props.params).id;
+        const access = await owner(projectId);
         if (access.error) return access.error;
-        return respond(503, { success: false, error: 'ANALYSIS_UNAVAILABLE',
-            message: '项目深度分析暂不可用，数据来源与计算流程正在核验，请勿据此作出投资决策' });
+        const body = await req.json().catch(() => null);
+        if (!body || typeof body !== 'object' || Array.isArray(body)) return respond(400, { success: false, message: '请求参数无效' });
+        if (body.generateReport) return respond(422, { success: false, message: '当前可保存初步估算，完整报告导出暂未开放' });
+        return calculateSolar(new NextRequest(req.url, { method: 'POST', body: JSON.stringify({ ...body, projectId }) }));
     } catch {
         return respond(503, { success: false, message: '服务暂不可用，请稍后重试' });
     }
