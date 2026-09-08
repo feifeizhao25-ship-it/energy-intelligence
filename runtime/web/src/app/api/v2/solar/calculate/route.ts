@@ -1,270 +1,40 @@
-/**
- * Solar Calculator API v2
- * 
- * 集成终极护城河架构的示例API
- * 展示如何使用新的计算器并返回标准格式
- */
-
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth/config';
-import { SolarCalculatorV2 } from '@/lib/calculator/solar-v2';
-import { ResultValidator, QualityTag } from '@/lib/kernel/calculation-result';
+import { authOptions } from '@/lib/auth/auth-options';
 import { prisma } from '@/lib/prisma';
 
-/**
- * POST /api/v2/solar/calculate
- * 
- * 执行光伏收益计算（v2 - 带证据链）
- */
+const respond = (status: number, body: object) => NextResponse.json(body, {
+    status, headers: { 'Cache-Control': 'private, no-store' },
+});
+
+// V2 原实现使用固定辐照值冒充 NASA 来源，尚未通过计算与证据核验。
 export async function POST(req: NextRequest) {
     try {
         const session = await getServerSession(authOptions);
-        const userId = session?.user?.id;
-
-        // 解析参数
-        const body = await req.json();
-        const {
-            location,
-            capacity,
-            unitCost,
-            electricityPrice,
-            subsidyPrice,
-            projectId,
-            qualityTag = "STANDARD"
-        } = body;
-
-        // 参数验证
-        if (!location || !capacity || !unitCost || !electricityPrice) {
-            return NextResponse.json({
-                success: false,
-                error: "Missing required parameters"
-            }, { status: 400 });
+        if (!session?.user?.id) return respond(401, { success: false, message: '请先登录' });
+        const body = await req.json().catch(() => null);
+        if (!body || typeof body !== 'object' || Array.isArray(body)) {
+            return respond(400, { success: false, message: '请求参数无效' });
         }
-
-        // 验证质量标签
-        if (!["PREVIEW", "STANDARD", "AUDIT_GRADE"].includes(qualityTag)) {
-            return NextResponse.json({
-                success: false,
-                error: "Invalid quality tag"
-            }, { status: 400 });
-        }
-
-        // 根据质量要求检查权限
-        if (qualityTag === "AUDIT_GRADE") {
-            if (!userId) {
-                return NextResponse.json({
-                    success: false,
-                    error: "AUDIT_GRADE requires authentication"
-                }, { status: 401 });
+        if (body.projectId !== undefined && body.projectId !== null) {
+            if (typeof body.projectId !== 'string' || !body.projectId.trim()) {
+                return respond(400, { success: false, message: '项目编号无效' });
             }
-
-            try {
-                // 检查用户是否有审计级权限（Pro或Enterprise用户）
-                const user = await prisma.user.findUnique({
-                    where: { id: userId },
-                    select: { plan: true }
-                });
-
-                if (!user || !['PRO', 'ENTERPRISE', 'FULL'].includes(user.plan)) {
-                    return NextResponse.json({
-                        success: false,
-                        error: "AUDIT_GRADE requires Pro or Enterprise plan",
-                        currentPlan: user?.plan || 'FREE'
-                    }, { status: 403 });
-                }
-            } catch (dbError) {
-                console.error("🏰 Auth DB Error:", dbError);
-                // 数据库不可达时，暂时降级为 STANDARD 等级或报错
-                return NextResponse.json({
-                    success: false,
-                    error: "Database connection failed during permission check. Please try again later.",
-                    code: "DB_CONNECTION_ERROR"
-                }, { status: 503 });
-            }
+            const project = await prisma.project.findFirst({
+                where: { id: body.projectId, userId: session.user.id }, select: { id: true },
+            });
+            if (!project) return respond(404, { success: false, message: '项目不存在' });
         }
-
-        // 执行计算（自动包含证据链）
-        const result = await SolarCalculatorV2.calculate({
-            location,
-            capacity,
-            unitCost,
-            electricityPrice,
-            subsidyPrice,
-            qualityTag: qualityTag as QualityTag
-        });
-
-        // 验证结果完整性
-        const validation = ResultValidator.validate(result);
-        if (!validation.valid) {
-            console.error("Result validation failed:", validation.errors);
-            return NextResponse.json({
-                success: false,
-                error: "Calculation result validation failed",
-                details: validation.errors
-            }, { status: 500 });
-        }
-
-        // 记录警告（但不阻止返回）
-        if (validation.warnings.length > 0) {
-            console.warn("Result validation warnings:", validation.warnings);
-        }
-
-        // 持久化到数据库（🏰 护城河集成：生成受审计的快照）
-        if (userId) {
-            try {
-                const snapshot = await prisma.calculationSnapshot.create({
-                    data: {
-                        userId,
-                        projectId: projectId || null,
-                        calcType: 'SOLAR_REVENUE',
-                        calcVersion: result.auditMeta.version || '2.1.0',
-                        assumptionVersion: result.auditMeta.assumptionVersion || '2024.1',
-                        dataSourceVersion: result.evidence.dataProvenance.solarResource.source || 'NASA',
-                        inputSnapshot: { location, capacity, unitCost, electricityPrice, subsidyPrice } as any,
-                        outputSnapshot: result.result as any,
-                        calculationTrace: result.evidence.calculationMeta as any,
-                        dataEvidence: result.evidence.dataProvenance as any,
-                        conclusion: {
-                            headline: "光伏收益测算完成",
-                            confidence: qualityTag === "AUDIT_GRADE" ? "HIGH" : "MEDIUM",
-                            irr: result.result.irr,
-                            payback: result.result.paybackPeriod
-                        } as any,
-                        risks: result.evidence.uncertaintyAnalysis || [] as any,
-                        nextSteps: [
-                            { priority: 1, action: "导出审计报告", reason: "计算已完成，可生成符合标准的审计文件" }
-                        ] as any
-                    }
-                });
-
-                // 记录到项目时间线 (Workflow OS)
-                if (projectId) {
-                    await prisma.projectEvent.create({
-                        data: {
-                            projectId,
-                            userId,
-                            eventType: 'FEASIBILITY_COMPLETED',
-                            title: '完成光伏收益深度测算',
-                            description: `生成了受审计的计算快照 (ID: ${snapshot.id})，IRR 为 ${result.result.irr.toFixed(2)}%`,
-                            snapshotId: snapshot.id,
-                            importance: 'HIGH'
-                        }
-                    });
-                }
-
-                // 将 snapshotId 返回给前端，用于后续审计跳转
-                (result as any).snapshotId = snapshot.id;
-            } catch (dbError) {
-                console.error("🏰 Moat Persistence Error:", dbError);
-            }
-        }
-
-        // 返回成功结果
-        return NextResponse.json({
-            success: true,
-            data: result,
-            meta: {
-                validation: {
-                    valid: validation.valid,
-                    warnings: validation.warnings
-                },
-                persisted: !!userId,
-                assumptionVersion: result.auditMeta.assumptionVersion,
-                qualityTag: result.auditMeta.qualityTag
-            }
-        });
-
-    } catch (error: any) {
-        console.error("Solar calculation error:", error);
-
-        return NextResponse.json({
-            success: false,
-            error: error.message || "Calculation failed"
-        }, { status: 500 });
-    }
-}
-
-/**
- * GET /api/v2/solar/calculate/[id]
- * 
- * 获取历史计算结果（带完整证据链）
- */
-// 保留旧读取实现仅供后续迁移参考；当前路由本身不含 [id]，不得从不存在的参数读取记录。
-async function getLegacyCalculationById(req: NextRequest, props: { params: Promise<{ id: string }> }) {
-    const params = await props.params;
-    try {
-        const session = await getServerSession(authOptions);
-        const userId = session?.user?.id;
-
-        if (!userId) {
-            return NextResponse.json({
-                success: false,
-                error: "Authentication required"
-            }, { status: 401 });
-        }
-
-        // 查询计算快照 (🏰 护城河集成：获取审计数据)
-        const snapshot = await prisma.calculationSnapshot.findUnique({
-            where: {
-                id: params.id,
-                userId
-            },
-            include: {
-                project: true
-            }
-        });
-
-        if (!snapshot) {
-            return NextResponse.json({
-                success: false,
-                error: "Snapshot not found"
-            }, { status: 404 });
-        }
-
-        // 重构为标准格式，兼容旧版前端组件
-        const standardResult = {
-            result: snapshot.outputSnapshot,
-            auditMeta: {
-                id: snapshot.id,
-                version: snapshot.calcVersion,
-                assumptionVersion: snapshot.assumptionVersion,
-                timestamp: snapshot.createdAt,
-                qualityTag: (snapshot.outputSnapshot as any)?.qualityTag || "STANDARD"
-            },
-            evidence: {
-                dataProvenance: snapshot.dataEvidence,
-                calculationMeta: snapshot.calculationTrace,
-                uncertaintyAnalysis: snapshot.risks
-            },
-            conclusion: snapshot.conclusion,
-            createdAt: snapshot.createdAt
-        };
-
-        return NextResponse.json({
-            success: true,
-            data: standardResult,
-            meta: {
-                qualityTag: standardResult.auditMeta.qualityTag,
-                createdAt: snapshot.createdAt,
-                projectId: snapshot.projectId
-            }
-        });
-
-    } catch (error: any) {
-        console.error("Get result error:", error);
-
-        return NextResponse.json({
-            success: false,
-            error: error.message || "Failed to get result"
-        }, { status: 500 });
+        return respond(503, { success: false, error: 'SOLAR_DATA_UNAVAILABLE',
+            message: '深度光伏测算暂不可用，辐照数据来源与计算流程正在核验' });
+    } catch {
+        return respond(503, { success: false, message: '服务暂不可用，请稍后重试' });
     }
 }
 
 export async function GET() {
-    return NextResponse.json({
-        success: false,
-        error: 'CALCULATION_ID_REQUIRED',
+    return respond(410, {
+        success: false, error: 'CALCULATION_ID_REQUIRED',
         message: '该旧接口没有计算记录编号，无法安全读取历史结果。请通过审计记录接口按编号查询。',
-    }, { status: 410 });
+    });
 }

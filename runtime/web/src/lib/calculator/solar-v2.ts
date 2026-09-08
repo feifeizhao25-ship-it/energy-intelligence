@@ -238,14 +238,8 @@ export class SolarCalculatorV2 {
         timestamp: Date;
         cacheHit: boolean;
     }> {
-        // TODO: 实际调用API
-        // 这里返回模拟数据
-        return {
-            source: "NASA POWER",
-            annualGHI: 1456.7, // kWh/m²/year
-            timestamp: new Date(),
-            cacheHit: false
-        };
+        // 真实数据适配器和来源验证尚未完成，不能用固定值伪造第三方证据。
+        throw new Error('SOLAR_DATA_UNAVAILABLE');
     }
 
     /**
