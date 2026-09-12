@@ -20,7 +20,10 @@ class ApiService {
   static final _client = http.Client();
   static const _secureStorage = FlutterSecureStorage();
   static String? _token;
-  static String _baseUrl = const String.fromEnvironment('API_BASE_URL');
+  static String _baseUrl = const String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'https://energy-iq.app',
+  );
 
   /// Initialize with region — call from main() before runApp
   static Future<void> init({String region = 'CN'}) async {
@@ -433,7 +436,38 @@ class ApiService {
     final resp = await _client
         .delete(_uri(path), headers: _headers)
         .timeout(const Duration(seconds: 15));
-    if (resp.statusCode >= 400) throw ApiException(resp.statusCode, resp.body);
+    if (resp.statusCode >= 400) {
+      throw ApiException(
+        resp.statusCode,
+        _sanitizeServerMessage(resp.body, resp.statusCode),
+      );
+    }
+  }
+
+  // ── i18n guard: never surface raw Chinese backend messages (international build) ──
+  static final RegExp _cjk = RegExp(r'[\u4e00-\u9fff]');
+
+  static String _sanitizeServerMessage(String raw, int statusCode) {
+    final msg = raw.trim();
+    if (msg.isNotEmpty && !_cjk.hasMatch(msg)) return msg;
+    switch (statusCode) {
+      case 400:
+        return 'Invalid request. Please check your input.';
+      case 401:
+        return 'Incorrect email or password.';
+      case 403:
+        return 'Access denied.';
+      case 404:
+        return 'Not found.';
+      case 409:
+        return 'This account already exists.';
+      case 422:
+        return 'Invalid input. Please check and try again.';
+      case 429:
+        return 'Too many attempts. Please try again later.';
+      default:
+        return 'Server error ($statusCode). Please try again later.';
+    }
   }
 
   static Map<String, dynamic> _parse(http.Response resp) {
@@ -447,6 +481,9 @@ class ApiService {
     try {
       msg = jsonDecode(resp.body)['detail'] ?? msg;
     } catch (_) {}
-    throw ApiException(resp.statusCode, msg);
+    throw ApiException(
+      resp.statusCode,
+      _sanitizeServerMessage(msg, resp.statusCode),
+    );
   }
 }

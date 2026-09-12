@@ -20,8 +20,60 @@ import 'services/api_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await ApiService.init(region: 'GLOBAL');
+  try {
+    await ApiService.init(region: 'GLOBAL');
+  } catch (e) {
+    runApp(BootErrorApp(message: e.toString()));
+    return;
+  }
   runApp(const EnergyIntelligenceApp());
+}
+
+/// Branded boot error page — shown instead of a blank/white screen when the
+/// app cannot start (misconfigured API URL or no network at launch).
+class BootErrorApp extends StatelessWidget {
+  final String message;
+  const BootErrorApp({super.key, required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Energy Intelligence',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.buildTheme(),
+      home: Scaffold(
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.cloud_off, size: 64, color: Colors.grey),
+                const SizedBox(height: 24),
+                const Text(
+                  'Connection issue',
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'We could not reach the EnergyIQ service. Check your internet connection and try again.',
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: () {
+                    // Re-run the boot sequence.
+                    main();
+                  },
+                  child: const Text('Tap to retry'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class EnergyIntelligenceApp extends StatelessWidget {

@@ -5,6 +5,6 @@ class RegionConfig {
   static const String language = 'en';
   static const String currency = 'USD';
   static const String currencySymbol = '\$';
-  static const String apiBaseUrl = 'https://energyiq-api.tianji-astrology.com';
+  static const String apiBaseUrl = 'https://energy-iq.app';
   static const String mapProvider = 'mapbox';
 }
