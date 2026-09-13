@@ -1,10 +1,10 @@
 // 硅基流动 AI 服务 - 支持 Qwen, DeepSeek, GLM 等模型 (OpenAI 兼容接口)
 import { Message } from '@/types';
+import { domesticSiliconFlowBaseUrl } from './domestic-endpoint';
 import { AI_TOOLS } from './tools';
 import { executeTool } from './tool-executor';
 
 const SILICONFLOW_API_KEY = process.env.SILICONFLOW_API_KEY;
-const SILICONFLOW_BASE_URL = process.env.SILICONFLOW_BASE_URL || 'https://api.siliconflow.cn/v1';
 
 // 硅基流动支持的模型配置 (按用户指定的最强模型)
 export const AI_MODELS = {
@@ -97,8 +97,9 @@ export async function chat(messages: Message[], model: string = DEFAULT_MODEL): 
     while (keepCalling && iterations < MAX_ITERATIONS) {
         iterations++;
 
-        const response = await fetch(`${SILICONFLOW_BASE_URL}/chat/completions`, {
+        const response = await fetch(`${domesticSiliconFlowBaseUrl()}/chat/completions`, {
             signal: AbortSignal.timeout(60_000),
+            redirect: 'error',
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -116,9 +117,7 @@ export async function chat(messages: Message[], model: string = DEFAULT_MODEL): 
         });
 
         if (!response.ok) {
-            const errorText = await response.text();
-            console.error('SiliconFlow API错误:', response.status, errorText);
-            throw new Error(`SiliconFlow API 调用失败: ${response.status} - ${errorText}`);
+            throw new Error(`国内模型服务暂不可用（状态码 ${response.status}）`);
         }
 
         const data = await response.json();
@@ -208,8 +207,9 @@ export async function* chatStream(
     // 这是一种混合模式，确保前端体验流畅。
 
     // 1. 发起初始请求
-    const response = await fetch(`${SILICONFLOW_BASE_URL}/chat/completions`, {
+    const response = await fetch(`${domesticSiliconFlowBaseUrl()}/chat/completions`, {
         signal: AbortSignal.timeout(60_000),
+            redirect: 'error',
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -227,9 +227,7 @@ export async function* chatStream(
     });
 
     if (!response.ok) {
-        const errorText = await response.text();
-        console.error('SiliconFlow 流式API错误:', response.status, errorText);
-        throw new Error(`SiliconFlow API 调用失败: ${response.status}`);
+        throw new Error(`国内模型服务暂不可用（状态码 ${response.status}）`);
     }
 
     const reader = response.body?.getReader();
@@ -358,8 +356,9 @@ export async function* chatStream(
         console.log('[SiliconFlow] 工具执行完毕，发起后续生成...');
 
         // 重新发起请求
-        const secondResponse = await fetch(`${SILICONFLOW_BASE_URL}/chat/completions`, {
+        const secondResponse = await fetch(`${domesticSiliconFlowBaseUrl()}/chat/completions`, {
             signal: AbortSignal.timeout(60_000),
+            redirect: 'error',
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -376,7 +375,10 @@ export async function* chatStream(
             })
         });
 
-        if (secondResponse.ok && secondResponse.body) {
+        if (!secondResponse.ok || !secondResponse.body) {
+            throw new Error('国内模型后续回答未完成，请稍后重试');
+        }
+        if (secondResponse.body) {
             const reader2 = secondResponse.body.getReader();
             const decoder2 = new TextDecoder();
             let buffer2 = '';
