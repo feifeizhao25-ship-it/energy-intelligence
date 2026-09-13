@@ -15,6 +15,7 @@
 
 from pathlib import Path
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -57,6 +58,18 @@ if missing:
     raise SystemExit("Production Compose gate failed: missing services " + ", ".join(sorted(missing)))
 
 errors: list[str] = []
+# 示例必须覆盖所有 Compose 强制变量，避免部署到最后才发现漏配。
+example = (COMPOSE_FILE.parent.parent / "deploy/env.production.example").read_text()
+declared = set(re.findall(r"^([A-Z][A-Z0-9_]*)=", example, re.MULTILINE))
+required = set(re.findall(r"\$\{([A-Z][A-Z0-9_]*):\?", COMPOSE_FILE.read_text()))
+if required - declared:
+    errors.append("deployment example missing required variable names")
+public_args = services.get("web-cn", {}).get("build", {}).get("args", {})
+for key in ("NEXT_PUBLIC_API_URL", "NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY"):
+    if key not in public_args:
+        errors.append("domestic image missing a public build argument")
+if "SUPABASE_SERVICE_ROLE_KEY" in public_args:
+    errors.append("private service key must not enter image build arguments")
 for name, service in services.items():
     image = service.get("image", "")
     if image.endswith(":latest"):

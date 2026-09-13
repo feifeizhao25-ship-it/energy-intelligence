@@ -19,7 +19,10 @@ ARG DATABASE_URL=postgresql://energy:build-only@postgres:5432/energy_web
 ARG DIRECT_URL=postgresql://energy:build-only@postgres:5432/energy_web
 ARG NEXT_PUBLIC_APP_EDITION=cn
 ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_SUPABASE_URL
+ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
 ARG BACKEND_INTERNAL_URL=http://backend:8000
+ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
 ENV DATABASE_URL=$DATABASE_URL DIRECT_URL=$DIRECT_URL NEXT_PUBLIC_APP_EDITION=$NEXT_PUBLIC_APP_EDITION NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL BACKEND_INTERNAL_URL=$BACKEND_INTERNAL_URL NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -32,7 +35,7 @@ RUN npx prisma generate --schema=src/prisma/schema.prisma
 # Uncomment the following line in case you want to disable telemetry during the build.
 # ENV NEXT_TELEMETRY_DISABLED 1
 
-RUN npm run build && npm prune --omit=dev
+RUN node scripts/validate-public-build-config.mjs && npm run build && npm prune --omit=dev
 
 # 3. Production image, copy all the files and run next
 FROM base AS runner

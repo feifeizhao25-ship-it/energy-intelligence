@@ -79,6 +79,8 @@ services:
       context: ./web
       args:
         NEXT_PUBLIC_APP_EDITION: cn
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:?NEXT_PUBLIC_SUPABASE_URL is required}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY:?NEXT_PUBLIC_SUPABASE_ANON_KEY is required}
         NEXT_PUBLIC_API_URL: ${CN_PUBLIC_API_URL:?CN_PUBLIC_API_URL is required}
         BACKEND_INTERNAL_URL: http://backend:8000
     image: ${IMAGE_REGISTRY:?IMAGE_REGISTRY is required}/energy-web-cn:${IMAGE_TAG:?IMAGE_TAG is required}
