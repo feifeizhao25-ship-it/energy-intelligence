@@ -23,12 +23,12 @@ export default function CalculatorHomePage() {
     {
       id: 'solar',
       title: '分布式光伏',
-      description: '基于25年气象数据与NREL算法，精准预测收益与度电成本。',
+      description: '基于上一完整年的历史辐照与您填写的成本、电价，提供可核对的初步估算。',
       icon: <Sun className="w-8 h-8 text-orange-400" />,
       color: 'from-orange-500/20 to-orange-400/5',
       borderColor: 'group-hover:border-orange-500/50',
       tag: '最受欢迎',
-      stats: { irr: '12%+', payback: '5.2年' },
+      stats: { irr: '需输入后计算', payback: '需输入后计算' },
       path: '/calculator/solar'
     },
     {
