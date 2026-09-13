@@ -224,8 +224,9 @@ export async function verifyAuditRecord(auditId: string): Promise<{
         return { valid: false, reason: '记录不存在' };
     }
 
+    if (!record.checksum) return { valid: false, reason: '记录缺少校验值，无法验证完整性' };
     const expectedChecksum = computeChecksum(record);
-    if (record.checksum && record.checksum !== expectedChecksum) {
+    if (record.checksum !== expectedChecksum) {
         return { valid: false, reason: '校验和不匹配，记录可能被篡改' };
     }
 

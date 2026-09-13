@@ -2,9 +2,9 @@
 // 护城河：提供可审计、可复现的结果查询
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getAuditRecord, verifyAuditRecord, getProjectAuditHistory } from '@/lib/audit';
+import { getAuditRecord, verifyAuditRecord } from '@/lib/audit';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth/config';
+import { authOptions } from '@/lib/auth/auth-options';
 
 /**
  * GET /api/audit/[id]
@@ -13,22 +13,23 @@ import { authOptions } from '@/lib/auth/config';
 export async function GET(request: NextRequest, props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
     try {
-        // 🏰 护城河核心：审计记录应允许通过 ID 进行公开验证（Read-only）
-        // 移除 session 检查，确保第三方机构或合作伙伴可以查验计算真实性
+        const session = await getServerSession(authOptions);
+        if (!session?.user?.id) return respond(401, { error: '请先登录' });
 
         const auditId = params.id;
 
         // 获取审计记录
         const record = await getAuditRecord(auditId);
-        if (!record) {
-            return NextResponse.json({ error: '审计记录不存在' }, { status: 404 });
+        if (!record || record.userId !== session.user.id) {
+            return respond(404, { error: '计算记录不存在或无法访问' });
         }
 
         // 验证完整性
         const verification = await verifyAuditRecord(auditId);
 
-        return NextResponse.json({
-            record,
+        const { ipAddress, userAgent, userId, orgId, ...visibleRecord } = record;
+        return respond(200, {
+            record: visibleRecord,
             verification,
             reproducibilityInfo: {
                 calcVersion: record.versionMeta.calcVersion,
@@ -44,10 +45,10 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
         });
 
     } catch (error) {
-        console.error('Audit API error:', error);
-        return NextResponse.json(
-            { error: 'Failed to fetch audit record' },
-            { status: 500 }
-        );
+        return respond(503, { error: '计算记录暂时无法读取，请稍后重试' });
     }
+}
+
+function respond(status: number, body: object) {
+    return NextResponse.json(body, { status, headers: { 'Cache-Control': 'private, no-store' } });
 }

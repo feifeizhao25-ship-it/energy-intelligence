@@ -75,6 +75,7 @@ export default function SolarCalculatorPage() {
         {result && submitted && <section aria-label="光伏初步估算结果" className="space-y-5 rounded-2xl border border-emerald-200 bg-white p-5 sm:p-7">
             <h2 className="flex items-center gap-2 text-lg font-bold"><CheckCircle2 className="text-emerald-600" size={22} />初步估算已保存</h2>
             <p className="break-all text-xs text-slate-500">计算记录编号：{result.snapshotId}</p>
+            <Link className="inline-block text-sm text-blue-600 underline" href={`/audit/${encodeURIComponent(result.snapshotId)}`}>重新打开已保存的记录</Link>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {[
                     ['初始投资', `${number(result.result.initialInvestment)} 元`],
