@@ -52,7 +52,7 @@ function CalculatorResultPage() {
 
     let data: any;
     try {
-        data = JSON.parse(decodeURIComponent(rawData));
+        data = JSON.parse(rawData);
     } catch {
         return <div className="p-20 text-center text-slate-400">计算结果格式无效，请返回重新测算</div>;
     }
@@ -77,11 +77,11 @@ function CalculatorResultPage() {
                             <h1 className="text-lg font-bold text-white flex items-center gap-2">
                                 测算报告: {data.metadata?.projectName || (type === 'solar' ? '光伏' : type === 'wind' ? '风电' : '储能') + '项目'}
                                 <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 text-[10px] uppercase font-bold border border-blue-500/20 tracking-widest">
-                                    PRO 分析
+                                    初步估算
                                 </span>
                             </h1>
                             <p className="text-xs text-slate-500">
-                                审计编号: {data.metadata?.calculationId || data.metadata?.snapshotId || '尚未生成'}
+                                计算记录编号: {data.metadata?.calculationId || data.metadata?.snapshotId || '尚未生成'}
                             </p>
                         </div>
                     </div>
@@ -108,7 +108,6 @@ function CalculatorResultPage() {
                                 label="项目 IRR"
                                 value={`${data.financial.irr.toFixed(2)}%`}
                                 icon={<TrendingUp className="w-5 h-5 text-emerald-400" />}
-                                trend="+1.2%"
                                 color="border-emerald-500/20"
                             />
                             <MetricCard

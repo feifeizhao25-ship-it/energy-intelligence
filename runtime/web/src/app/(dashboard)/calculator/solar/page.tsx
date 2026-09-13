@@ -31,6 +31,7 @@ export default function SolarCalculatorPage() {
     const searchParams = useSearchParams();
     const [currentStep, setCurrentStep] = useState(1);
     const [isCalculating, setIsCalculating] = useState(false);
+    const [calculationError, setCalculationError] = useState<string | null>(null);
     const [showUpgradeModal, setShowUpgradeModal] = useState(false);
     const { toastState, showLimitToast, hideLimitToast } = useUsageLimitToast();
 
@@ -71,14 +72,8 @@ export default function SolarCalculatorPage() {
     }, [searchParams]);
 
     const handleCalculate = async () => {
-        // 1. 检查限制 (这里简单模拟，实际应从 fetch 获取最新 usage)
-        const canCalculate = true; // 假设通过
-        if (!canCalculate) {
-            showLimitToast('资源测算', 0, 5);
-            setShowUpgradeModal(true);
-            return;
-        }
-
+        if (isCalculating) return;
+        setCalculationError(null);
         setIsCalculating(true);
         try {
             const response = await fetch('/api/calculator/solar', {
@@ -87,12 +82,22 @@ export default function SolarCalculatorPage() {
                 body: JSON.stringify(formData)
             });
             const result = await response.json();
+            if (!response.ok || result.success !== true || !result.data) {
+                if (response.status === 429) {
+                    setCalculationError("今日测算次数已用完，请明天再试。");
+                } else if (response.status === 401) {
+                    setCalculationError("此旧版测算入口尚未接通登录服务，暂时无法提交。请返回项目页面使用光伏初步估算。");
+                } else {
+                    setCalculationError("测算未完成，请核对输入后重试。结果尚未生成。");
+                }
+                return;
+            }
             if (result.success) {
-                // 跳转到结果页，带上结果ID或状态
-                // 模拟存储结果并跳转
+                // 仅在接口明确成功时展示结果。
                 const resultWithMeta = {
                     ...result.data,
                     metadata: {
+                        ...result.metadata,
                         projectName: formData.projectName,
                         province: formData.province,
                         capacity: formData.capacity
@@ -101,7 +106,7 @@ export default function SolarCalculatorPage() {
                 router.push(`/calculator/result?type=solar&data=${encodeURIComponent(JSON.stringify(resultWithMeta))}`);
             }
         } catch (error) {
-            console.error(error);
+            setCalculationError("暂时无法连接测算服务，请稍后重试。结果尚未生成。");
         } finally {
             setIsCalculating(false);
         }
@@ -123,13 +128,13 @@ export default function SolarCalculatorPage() {
                         <div className="w-8 h-8 rounded-lg bg-blue-600/10 flex items-center justify-center">
                             <Zap className="w-4 h-4 text-blue-400" />
                         </div>
-                        <span className="font-bold text-white tracking-tight">分布式光伏测量 2.0</span>
+                        <span className="font-bold text-white tracking-tight">分布式光伏初步估算</span>
                     </div>
 
                     {/* Status Indicator */}
                     <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800/50 border border-slate-700">
-                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">已保存至云端</span>
+                        <div className="w-1.5 h-1.5 rounded-full bg-slate-500" />
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">尚未保存</span>
                     </div>
                 </div>
 
@@ -165,6 +170,7 @@ export default function SolarCalculatorPage() {
             </div>
 
             <main className="max-w-4xl mx-auto px-6 mt-12">
+                {calculationError && <p role="alert" className="mb-6 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">{calculationError}</p>}
                 <AnimatePresence mode="wait">
                     {currentStep === 1 && (
                         <motion.div
