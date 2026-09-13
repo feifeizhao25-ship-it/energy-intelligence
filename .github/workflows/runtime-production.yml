@@ -6,6 +6,8 @@ on:
     paths:
       - 'runtime/**'
       - '.github/workflows/runtime-production.yml'
+      - 'scripts/render_cn_compose.py'
+      - 'scripts/test_cn_compose.py'
   workflow_dispatch:
 
 permissions:
@@ -43,7 +45,11 @@ jobs:
         working-directory: runtime/web-int
         run: npm ci && npm run build
       - name: Validate production Compose contract
-        run: python scripts/verify_compose_production.py
+        run: |
+          pip install PyYAML
+          python scripts/verify_compose_production.py
+          python scripts/render_cn_compose.py --check
+          python scripts/test_cn_compose.py
 
   publish:
     needs: verify
