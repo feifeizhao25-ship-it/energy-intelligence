@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { readCalculationResponse } from '@/lib/calculator/client-response';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, ArrowRight, Wind, MapPin, Settings, PieChart, BarChart3, Calculator, Loader2, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -10,6 +11,7 @@ export default function WindCalculatorPage() {
     const router = useRouter();
     const [currentStep, setCurrentStep] = useState(1);
     const [isCalculating, setIsCalculating] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
 
     const [formData, setFormData] = useState({
         lat: 39.9042,
@@ -26,6 +28,12 @@ export default function WindCalculatorPage() {
     });
 
     const handleCalculate = async () => {
+        if (isCalculating) return;
+        setErrorMessage('');
+        if (!Number.isFinite(formData.capacity) || formData.capacity <= 0 || !Number.isFinite(formData.hubHeight) || formData.hubHeight <= 0) {
+            setErrorMessage('请填写大于零的有效参数。');
+            return;
+        }
         setIsCalculating(true);
         try {
             const response = await fetch('/api/calculator/wind', {
@@ -51,12 +59,12 @@ export default function WindCalculatorPage() {
                     operation: {}
                 })
             });
-            const result = await response.json();
-            if (result.success) {
-                router.push(`/calculator/result?type=wind&data=${encodeURIComponent(JSON.stringify(result.data))}`);
-            }
+            const data = await readCalculationResponse(response);
+            router.push(`/calculator/result?type=wind&data=${encodeURIComponent(JSON.stringify(data))}`);
         } catch (error) {
-            console.error(error);
+            setErrorMessage(error instanceof TypeError
+                ? '网络连接失败，请检查网络后重试。'
+                : error instanceof Error ? error.message : '测算失败，请稍后重试。');
         } finally {
             setIsCalculating(false);
         }
@@ -78,6 +86,7 @@ export default function WindCalculatorPage() {
             </div>
 
             <main className="max-w-4xl mx-auto px-6 mt-12">
+                {errorMessage && <p role="alert" className="mb-6 rounded-xl border border-red-400/40 bg-red-950/40 p-4 text-red-200">{errorMessage}</p>}
                 <AnimatePresence mode="wait">
                     {currentStep === 1 && (
                         <motion.div key="s1" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
