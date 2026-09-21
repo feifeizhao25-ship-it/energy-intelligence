@@ -1,0 +1,15 @@
+{
+  "_note": "国内栈接境外服务的例外清单。每一条都必须写 why——没有理由的例外等于没有门禁。这个文件应该越来越短。",
+  "allow": [
+    {
+      "where": "runtime/web/src/lib/supabase.ts",
+      "what": "@supabase/supabase-js",
+      "why": "过渡期。runtime/web 是国内版专用源码树（web-int 有自己的一份），所以这个文件最终要删掉。但它的 import 方还没有清点完（目录层级太深，需要在仓库里 grep 才能列全），现在先在运行时按 edition 拒绝：NEXT_PUBLIC_APP_EDITION=cn 时 getCurrentUser / requireSupabaseAdmin / verifyLoginCode 一律抛错，并且构建期 validate-public-build-config.mjs 不再接受任何 SUPABASE_* 配置。清点办法：grep -rn \"lib/supabase\" runtime/web/src。清完就删文件、删这条例外。"
+    },
+    {
+      "where": "runtime/web/src/lib/supabase.ts",
+      "what": "supabase.co",
+      "why": "同上，是上面那个文件里的占位地址与注释文本，随文件一起删除。"
+    }
+  ]
+}
