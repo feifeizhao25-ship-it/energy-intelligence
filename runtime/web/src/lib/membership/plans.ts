@@ -257,7 +257,7 @@ export const AI_MODEL_TIERS = {
     },
     ENTERPRISE: {
         defaultModel: 'deepseek-v3',
-        allowedModels: ['glm-4-flash', 'glm-4-plus', 'deepseek-chat', 'deepseek-v3', 'moonshot-v1-auto', 'claude-sonnet'],
+        allowedModels: ['glm-4-flash', 'glm-4-plus', 'deepseek-chat', 'deepseek-v3', 'moonshot-v1-auto'],
         maxTokens: 16384,
     },
 } as const;

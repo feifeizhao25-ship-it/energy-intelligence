@@ -10,6 +10,11 @@
       "where": "runtime/web/src/lib/supabase.ts",
       "what": "supabase.co",
       "why": "同上，是上面那个文件里的占位地址与注释文本，随文件一起删除。"
+    },
+    {
+      "where": "runtime/web/src/lib/ai/router.ts",
+      "what": "openai",
+      "why": "只用 openai 这个 npm 包作为 OpenAI 兼容协议的客户端，baseURL 写死为 https://api.siliconflow.cn/v1（硅基流动境内端点），不连接 OpenAI；lib/ai/domestic-endpoint.ts 另对可配置地址做主机白名单校验。改用其他客户端前保留此例外。"
     }
   ]
 }

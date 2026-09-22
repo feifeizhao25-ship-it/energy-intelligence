@@ -32,7 +32,8 @@ export async function POST(request: Request) {
       if (duplicate) throw new Error('TRADE_CONFLICT');
       const existing = await tx.subscription.findUnique({ where: { userId: payment.userId } });
       const now = new Date();
-      const base = existing?.endDate && existing.endDate > now ? existing.endDate : now;
+      // 只有同一方案才顺延；不同方案（下单时已拦截，这里兜底）从现在起算
+      const base = existing?.endDate && existing.endDate > now && existing.plan === payment.plan ? existing.endDate : now;
       const subscription = await tx.subscription.upsert({
         where: { userId: payment.userId },
         create: { userId: payment.userId, plan: payment.plan, status: 'ACTIVE', startDate: now, endDate: expiryFrom(base, payment.billingPeriod), autoRenew: false },

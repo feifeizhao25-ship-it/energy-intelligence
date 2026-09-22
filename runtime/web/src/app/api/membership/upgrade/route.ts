@@ -22,6 +22,17 @@ export async function POST(request: Request) {
         if (!PAID_PLANS.has(plan) || !['monthly', 'yearly'].includes(billingPeriod)) {
             return NextResponse.json({ success: false, error: 'INVALID_PLAN', message: '会员方案或周期无效' }, { status: 400 });
         }
+        // 有效期内只允许续费同一方案。原来到账时一律「把新方案的时长接在旧到期日之后，
+        // 并立刻切到新方案」：专业版用户买一个月全能版，剩余的专业版时长全部按全能版计；
+        // 全能版用户误买专业版，剩余的全能版立刻降成专业版。
+        const current = await prisma.user.findUnique({ where: { id: session.user.id }, select: { plan: true, planExpireAt: true } });
+        const activePaid = current && current.plan !== 'FREE' && current.planExpireAt && current.planExpireAt > new Date();
+        if (activePaid && current.plan !== plan) {
+            return NextResponse.json({
+                success: false, error: 'PLAN_CHANGE_NOT_SUPPORTED',
+                message: `当前${current.plan}会员有效期至 ${current.planExpireAt!.toISOString().slice(0, 10)}，有效期内暂不支持更换方案；到期后可购买其他方案，或联系客服办理升级`,
+            }, { status: 409 });
+        }
         const amount = canonicalPrice(plan, billingPeriod);
         const orderNo = `ENE${Date.now()}${randomUUID().replaceAll('-', '').slice(0, 10).toUpperCase()}`;
         const paymentUrl = createAlipayPagePayUrl({ orderNo, plan, billingPeriod, amount });
