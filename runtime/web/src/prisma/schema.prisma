@@ -77,6 +77,9 @@ model User {
   streakDays    Int       @default(0) // 连续签到天数
   lastCheckInAt DateTime? // 上次签到时间
 
+  // 注销时间：注销后个人数据删除、账号匿名化；交易记录按财务要求保留
+  deletedAt DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

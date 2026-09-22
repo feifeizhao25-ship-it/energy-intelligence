@@ -2,26 +2,14 @@ import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { randomBytes } from "node:crypto";
 import { prisma } from "@/lib/prisma";
-import { verifySmsCode, type CodeStore } from "./sms-verify";
+import { verifySmsCode } from "./sms-verify";
+import { prismaCodeStore } from "./sms-store";
 import { refreshToken, type AppToken, type DbUser } from "./token-refresh";
 
-const prismaCodeStore: CodeStore = {
-    latestActive: (phone, now) => prisma.verificationCode.findFirst({
-        where: { phone, used: false, expiresAt: { gt: now } },
-        orderBy: { createdAt: 'desc' },
-    }),
-    recordFailure: async (id, attempts, exhausted) => {
-        await prisma.verificationCode.update({ where: { id }, data: { attempts, ...(exhausted ? { used: true } : {}) } });
-    },
-    consume: async (id) => {
-        const { count } = await prisma.verificationCode.updateMany({ where: { id, used: false }, data: { used: true } });
-        return count === 1;
-    },
-};
-
 function loadDbUser(id: string): Promise<DbUser | null> {
-    return prisma.user.findUnique({
-        where: { id },
+    // 已注销的账号视为不存在：会话在下一次刷新时失效
+    return prisma.user.findFirst({
+        where: { id, deletedAt: null },
         select: { id: true, name: true, email: true, phone: true, plan: true, planExpireAt: true, profileCompleted: true },
     });
 }
@@ -43,7 +31,7 @@ export const authOptions: NextAuthOptions = {
                 const result = await verifySmsCode(prismaCodeStore, phone, code);
                 if (!result.ok) throw new Error(result.reason);
 
-                let user = await prisma.user.findFirst({ where: { phone } });
+                let user = await prisma.user.findFirst({ where: { phone, deletedAt: null } });
                 if (!user) {
                     user = await prisma.user.create({
                         data: {

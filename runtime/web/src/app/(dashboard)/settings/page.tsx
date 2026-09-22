@@ -16,6 +16,7 @@ import {
     Crown
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { AccountDataPanel } from '@/components/account/AccountDataPanel';
 
 export default function ProfileSettingsPage() {
     const { data: session, update } = useSession();
@@ -200,18 +201,20 @@ export default function ProfileSettingsPage() {
                             </div>
                             <h3 className="text-xl font-black tracking-tight mb-3">数据隐私保障</h3>
                             <p className="text-slate-400 text-xs leading-relaxed font-medium mb-6">
-                                您的职业信息仅用于增强 AI 诊断的准确性以及生成专业测算报告的署名。我们严格遵守 GDPR 及国内等级保护标准。
+                                职业信息仅用于报告署名与 AI 分析的背景说明，数据存放在境内自建数据库，不向第三方出售或提供。
                             </p>
                             <div className="space-y-4">
-                                <FeatureItem text="端到端加密存储" />
-                                <FeatureItem text="不向第三方披露" />
-                                <FeatureItem text="随时可申请注销" />
+                                <FeatureItem text="数据存放在境内" />
+                                <FeatureItem text="可随时导出全部数据" />
+                                <FeatureItem text="可在本页注销账号" />
                             </div>
                         </div>
                         <div className="absolute top-0 right-0 p-4 opacity-5">
                             <ShieldCheck className="w-32 h-32" />
                         </div>
                     </div>
+
+                    <AccountDataPanel phone={(session?.user as { phone?: string } | undefined)?.phone} />
 
                     <div className="bg-indigo-50 rounded-3xl p-8 border border-indigo-100">
                         <h4 className="text-indigo-900 font-black text-sm mb-4 tracking-tight uppercase flex items-center gap-2">
@@ -225,10 +228,6 @@ export default function ProfileSettingsPage() {
                             <li className="flex items-start gap-3 text-xs text-indigo-800 font-medium">
                                 <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-1 flex-shrink-0" />
                                 优先获得行业白皮书与闭门会议邀请
-                            </li>
-                            <li className="flex items-start gap-3 text-xs text-indigo-800 font-medium">
-                                <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-1 flex-shrink-0" />
-                                解锁每日加赠的 10 次 DeepSeek V3 额度
                             </li>
                         </ul>
                     </div>
