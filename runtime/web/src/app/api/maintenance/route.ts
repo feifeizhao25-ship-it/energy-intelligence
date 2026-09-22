@@ -1,17 +1,28 @@
 // 运维诊断API
 import { NextRequest, NextResponse } from 'next/server';
 import { executeTool } from '@/lib/ai/tool-executor';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth/auth-options';
+import { requireAiQuota } from '@/lib/ai/quota-guard';
 
 export async function POST(request: NextRequest) {
     try {
-        const body = await request.json();
-        const { action, params } = body;
+        const body = await request.json().catch(() => null);
+        const { action, params } = body ?? {};
 
         if (!action || !params) {
             return NextResponse.json(
                 { error: '缺少必要参数' },
                 { status: 400 }
             );
+        }
+
+        // 原来不登录就能调用；「故障诊断」走 deepseek-v3，消耗模型额度。
+        const session = await getServerSession(authOptions);
+        if (!session?.user?.id) return NextResponse.json({ error: '请先登录' }, { status: 401 });
+        if (action === 'fault') {
+            const guard = await requireAiQuota();
+            if (!guard.ok) return guard.response;
         }
 
         const startTime = Date.now();

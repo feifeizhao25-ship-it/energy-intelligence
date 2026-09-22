@@ -12,9 +12,10 @@ export async function POST(request: NextRequest) {
     try {
         // 验证请求（可选：添加 API Key 验证）
         const authHeader = request.headers.get('authorization');
-        const cronSecret = process.env.CRON_SECRET || 'dev-secret-key';
+        // 原来缺 CRON_SECRET 时回落到写死的 'dev-secret-key'：任何人都能触发全国政策抓取。
+        const cronSecret = process.env.CRON_SECRET || (process.env.NODE_ENV === 'production' ? '' : 'dev-secret-key');
 
-        if (authHeader !== `Bearer ${cronSecret}`) {
+        if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
             return NextResponse.json(
                 { error: 'Unauthorized' },
                 { status: 401 }
