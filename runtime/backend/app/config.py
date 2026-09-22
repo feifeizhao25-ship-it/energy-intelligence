@@ -8,7 +8,7 @@ from functools import lru_cache
 from typing import List, Optional, Dict, Union
 
 from pydantic import Field, field_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, EnvSettingsSource, SettingsConfigDict
 
 _DEVELOPMENT_SECRET = "dev-secret-key-must-be-at-least-32-chars-long-for-security"
 _KNOWN_UNSAFE_SECRETS = {
@@ -18,8 +18,23 @@ _KNOWN_UNSAFE_SECRETS = {
 }
 
 
+class _CommaListEnvSource(EnvSettingsSource):
+    """CORS_ORIGINS 是 List[str]：pydantic-settings 会先把环境变量当 JSON 解析，
+    部署示例里的 `https://a,https://b` 在字段校验器运行之前就抛 SettingsError，
+    后端导入即崩溃。这里让逗号分隔写法直接成为列表（JSON 数组写法照旧可用）。"""
+
+    def decode_complex_value(self, field_name, field, value):
+        if field_name == "CORS_ORIGINS" and isinstance(value, str) and not value.lstrip().startswith("["):
+            return [origin.strip() for origin in value.split(",") if origin.strip()]
+        return super().decode_complex_value(field_name, field, value)
+
+
 class Settings(BaseSettings):
     """应用配置"""
+
+    @classmethod
+    def settings_customise_sources(cls, settings_cls, init_settings, env_settings, dotenv_settings, file_secret_settings):
+        return (init_settings, _CommaListEnvSource(settings_cls), dotenv_settings, file_secret_settings)
     
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -240,7 +255,11 @@ class Settings(BaseSettings):
     OPENAI_EMBEDDING_MODEL: str = "text-embedding-3-large"  # 国际
     
     # 向量库
-    VECTOR_STORE_BACKEND: str = "sqlite"
+    # 本后端当前没有任何代码使用向量库（RAG 走 data/rag_sources.json 的登记表）。
+    # 原默认值 "sqlite" 会被生产校验拒绝，而 compose 没有配置这一项——
+    # 结果是按 compose 部署后端导入即崩溃，web-cn 与网关都等不到它就绪。
+    # "none" 表示不启用；真接入向量库时再显式配置为 milvus / pgvector 等。
+    VECTOR_STORE_BACKEND: str = "none"
     VECTOR_STORE_SQLITE_PATH: str = "data/vector_store.db"
     VECTOR_STORE_DATABASE_URL: Optional[str] = None
     VECTOR_STORE_TABLE: str = "vector_embeddings"

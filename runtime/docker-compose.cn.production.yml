@@ -87,14 +87,8 @@ services:
     build:
       context: ./web
       args:
-        # 国内版不接境外托管数据库（2026-09-21 口径）。
-        # 此前这三个 SUPABASE 变量都是 :?required —— 没有 Supabase
-        # 国内栈根本起不来，而 Supabase 托管在境外，用户数据落到境外
-        # 会触发 PIPL 的数据出境规则，不是配个变量能解决的。
-        # 现在 scripts/validate-public-build-config.mjs 反过来拦：
-        # 国内版**出现** Supabase 配置就构建失败。
         NEXT_PUBLIC_APP_EDITION: cn
-        NEXT_PUBLIC_API_URL: ${CN_PUBLIC_API_URL:?CN_PUBLIC_API_URL is required}
+        NEXT_PUBLIC_API_URL: /api/backend
         BACKEND_INTERNAL_URL: http://backend:8000
     image: ${IMAGE_REGISTRY:?IMAGE_REGISTRY is required}/energy-web-cn:${IMAGE_TAG:?IMAGE_TAG
       is required}
@@ -106,6 +100,13 @@ services:
       NEXTAUTH_URL: ${CN_NEXTAUTH_URL:?CN_NEXTAUTH_URL is required}
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:?NEXTAUTH_SECRET is required}
       NEXT_PUBLIC_APP_EDITION: cn
+      ALIYUN_ACCESS_KEY_ID: ${ALIYUN_ACCESS_KEY_ID:?ALIYUN_ACCESS_KEY_ID is required}
+      ALIYUN_ACCESS_KEY_SECRET: ${ALIYUN_ACCESS_KEY_SECRET:?ALIYUN_ACCESS_KEY_SECRET
+        is required}
+      ALIYUN_SMS_SIGN_NAME: ${ALIYUN_SMS_SIGN_NAME:?ALIYUN_SMS_SIGN_NAME is required}
+      ALIYUN_SMS_TEMPLATE_CODE: ${ALIYUN_SMS_TEMPLATE_CODE:?ALIYUN_SMS_TEMPLATE_CODE
+        is required}
+      CRON_SECRET: ${CRON_SECRET:?CRON_SECRET is required}
       OPENALEX_CONTACT_EMAIL: ${OPENALEX_CONTACT_EMAIL:?OPENALEX_CONTACT_EMAIL is
         required}
       SILICONFLOW_API_KEY: ${SILICONFLOW_API_KEY:-}

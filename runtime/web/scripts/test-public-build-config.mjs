@@ -11,4 +11,10 @@ for (const change of [
 ]) assert.throws(() => validatePublicBuildConfig({ ...config, ...change }));
 const anon = `header.${Buffer.from(JSON.stringify({ role: 'anon' })).toString('base64url')}.signature`;
 assert.doesNotThrow(() => validatePublicBuildConfig({ ...config, NEXT_PUBLIC_SUPABASE_ANON_KEY: anon }));
-console.log('9 public build configuration cases passed (synthetic keys; no connectivity validation)');
+// 国内版：浏览器经本站 /api/backend 访问后端（同源），Supabase 仍被拒绝
+const cn = { NEXT_PUBLIC_APP_EDITION: 'cn', NEXT_PUBLIC_API_URL: '/api/backend' };
+assert.doesNotThrow(() => validatePublicBuildConfig(cn));
+assert.throws(() => validatePublicBuildConfig({ ...cn, NEXT_PUBLIC_SUPABASE_URL: 'https://x.supabase.co' }));
+assert.throws(() => validatePublicBuildConfig({ ...cn, NEXT_PUBLIC_API_URL: 'http://localhost/api' }));
+assert.throws(() => validatePublicBuildConfig({ ...cn, NEXT_PUBLIC_API_URL: '/api/other' }));
+console.log('13 public build configuration cases passed (synthetic keys; no connectivity validation)');

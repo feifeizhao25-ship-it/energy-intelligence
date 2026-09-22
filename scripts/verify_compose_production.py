@@ -65,11 +65,16 @@ required = set(re.findall(r"\$\{([A-Z][A-Z0-9_]*):\?", COMPOSE_FILE.read_text())
 if required - declared:
     errors.append("deployment example missing required variable names")
 public_args = services.get("web-cn", {}).get("build", {}).get("args", {})
-for key in ("NEXT_PUBLIC_API_URL", "NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY"):
-    if key not in public_args:
-        errors.append("domestic image missing a public build argument")
-if "SUPABASE_SERVICE_ROLE_KEY" in public_args:
-    errors.append("private service key must not enter image build arguments")
+if "NEXT_PUBLIC_API_URL" not in public_args:
+    errors.append("domestic image missing a public build argument")
+# 国内版不接境外托管数据库：web-cn 的构建参数与运行环境都不得出现 SUPABASE_*。
+web_cn_env = services.get("web-cn", {}).get("environment", {})
+if any("SUPABASE" in key for key in list(public_args) + list(web_cn_env)):
+    errors.append("domestic web must not be configured with Supabase")
+# 登录只有短信验证码一种方式，缺短信配置等于谁都登不进来。
+for key in ("ALIYUN_ACCESS_KEY_ID", "ALIYUN_ACCESS_KEY_SECRET", "ALIYUN_SMS_SIGN_NAME", "ALIYUN_SMS_TEMPLATE_CODE"):
+    if f"${{{key}:?" not in str(web_cn_env.get(key, "")):
+        errors.append(f"web-cn: {key} must be required (SMS is the only login method)")
 for name, service in services.items():
     image = service.get("image", "")
     if image.endswith(":latest"):
@@ -113,12 +118,13 @@ if command:
         "CORS_ORIGINS": "https://cn.example.test,https://global.example.test",
         "CN_NEXTAUTH_URL": "https://cn.example.test",
         "NEXTAUTH_SECRET": "Validation-Only_NextAuth-4m!8q#2Ks-X7p",
-        "NEXT_PUBLIC_SUPABASE_URL": "https://validation.supabase.co",
-        "NEXT_PUBLIC_SUPABASE_ANON_KEY": "validation-anon-key",
-        "SUPABASE_SERVICE_ROLE_KEY": "validation-service-role-key",
+        "ALIYUN_ACCESS_KEY_ID": "validation-key",
+        "ALIYUN_ACCESS_KEY_SECRET": "validation-secret",
+        "ALIYUN_SMS_SIGN_NAME": "validation-sign",
+        "ALIYUN_SMS_TEMPLATE_CODE": "SMS_000000",
+        "CRON_SECRET": "validation-cron-secret",
         "IMAGE_REGISTRY": "registry.example.test/energy",
         "IMAGE_TAG": "validation-sha",
-        "CN_PUBLIC_API_URL": "https://cn.example.test/api/backend",
         "CN_DOMAIN": "cn.example.test",
         "INT_DOMAIN": "global.example.test",
         "TLS_EMAIL": "ops@example.test",
@@ -133,7 +139,7 @@ if command:
         "ALIPAY_PRIVATE_KEY": "validation-private-key",
         "ALIPAY_PUBLIC_KEY": "validation-public-key",
         "ALIPAY_NOTIFY_URL": "https://cn.example.test/api/membership/alipay/notify",
-        "ALIPAY_RETURN_URL": "https://cn.example.test/membership/result",
+        "ALIPAY_RETURN_URL": "https://cn.example.test/membership",
     }
     result = subprocess.run(command, cwd=ROOT, env=env, text=True, capture_output=True, check=False)
     if result.returncode:

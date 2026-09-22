@@ -9,7 +9,9 @@ export function validatePublicBuildConfig(env) {
             if (env[key]) throw new Error(`国内版不得配置 ${key}：境内版本只接自建数据库`);
         }
     }
-    const publicUrlKeys = domestic ? ['NEXT_PUBLIC_API_URL'] : ['NEXT_PUBLIC_API_URL', 'NEXT_PUBLIC_SUPABASE_URL'];
+    // 国内版浏览器经本站 /api/backend 访问后端（同源，网关只需要一个域名）。
+    const sameOriginApi = domestic && env.NEXT_PUBLIC_API_URL === '/api/backend';
+    const publicUrlKeys = domestic ? (sameOriginApi ? [] : ['NEXT_PUBLIC_API_URL']) : ['NEXT_PUBLIC_API_URL', 'NEXT_PUBLIC_SUPABASE_URL'];
     for (const key of publicUrlKeys) {
         let url;
         try { url = new URL(env[key]); } catch { throw new Error(`${key} 必须是有效的生产 HTTPS 地址`); }
