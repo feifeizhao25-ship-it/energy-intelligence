@@ -30,9 +30,9 @@ export interface QuotaUser {
 
 export interface QuotaStore {
   load(userId: string): Promise<QuotaUser | null>;
-  resetAndTake(userId: string, now: Date): Promise<void>;
+  resetAndTake(userId: string, now: Date, previousReset: Date): Promise<boolean>;
   takeIfBelow(userId: string, limit: number): Promise<boolean>;
-  take(userId: string): Promise<void>;
+  take(userId: string): Promise<boolean>;
 }
 
 function sameDay(a: Date, b: Date): boolean {
@@ -46,37 +46,40 @@ export async function consumeAiCall(store: QuotaStore, userId: string, now = new
   const limit = (USAGE_LIMITS[plan] ?? USAGE_LIMITS.FREE).ai_chat;
   if (limit <= 0) return { ok: false, plan, limit, remaining: 0 };
   if (!sameDay(new Date(user.lastResetAt), now)) {
-    await store.resetAndTake(userId, now);
-    return { ok: true, plan, limit, remaining: Number.isFinite(limit) ? limit - 1 : null };
+    const reset = await store.resetAndTake(userId, now, user.lastResetAt);
+    if (reset) return { ok: true, plan, limit, remaining: Number.isFinite(limit) ? limit - 1 : null };
+    // Another request already reset the day. It must still consume its own slot.
   }
   if (!Number.isFinite(limit)) {
-    await store.take(userId);
-    return { ok: true, plan, limit, remaining: null };
+    const taken = await store.take(userId);
+    return { ok: taken, plan, limit, remaining: null };
   }
   const taken = await store.takeIfBelow(userId, limit);
   return { ok: taken, plan, limit, remaining: taken ? Math.max(0, limit - user.dailyAiCalls - 1) : 0 };
 }
 
 export const prismaQuotaStore: QuotaStore = {
-  load: (userId) => prisma.user.findUnique({
-    where: { id: userId },
+  load: (userId) => prisma.user.findFirst({
+    where: { id: userId, deletedAt: null },
     select: { plan: true, planExpireAt: true, dailyAiCalls: true, lastResetAt: true },
   }),
-  resetAndTake: async (userId, now) => {
-    await prisma.user.update({
-      where: { id: userId },
+  resetAndTake: async (userId, now, previousReset) => {
+    const { count } = await prisma.user.updateMany({
+      where: { id: userId, deletedAt: null, lastResetAt: previousReset },
       data: { dailyAiCalls: 1, dailyCalculations: 0, dailyResourceQueries: 0, dailyPaperSearches: 0, dailyDiagnoses: 0, lastResetAt: now },
     });
+    return count === 1;
   },
   takeIfBelow: async (userId, limit) => {
     const { count } = await prisma.user.updateMany({
-      where: { id: userId, dailyAiCalls: { lt: limit } },
+      where: { id: userId, deletedAt: null, dailyAiCalls: { lt: limit } },
       data: { dailyAiCalls: { increment: 1 } },
     });
     return count === 1;
   },
   take: async (userId) => {
-    await prisma.user.update({ where: { id: userId }, data: { dailyAiCalls: { increment: 1 } } });
+    const { count } = await prisma.user.updateMany({ where: { id: userId, deletedAt: null }, data: { dailyAiCalls: { increment: 1 } } });
+    return count === 1;
   },
 };
 

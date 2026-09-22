@@ -35,8 +35,8 @@ export async function incrementUsage(userId: string, feature: IncrementableFeatu
 
     // 检查是否需要跨天重置
     if (shouldResetDailyUsage(user as any)) {
-        await prisma.user.update({
-            where: { id: userId },
+        const reset = await prisma.user.updateMany({
+            where: { id: userId, deletedAt: null, lastResetAt: user.lastResetAt },
             data: {
                 dailyAiCalls: feature === 'ai_chat' ? 1 : 0,
                 dailyCalculations: feature === 'calculation' ? 1 : 0,
@@ -46,10 +46,12 @@ export async function incrementUsage(userId: string, feature: IncrementableFeatu
                 lastResetAt: new Date(),
             }
         });
-    } else {
-        // 正常增加
-        await prisma.user.update({
-            where: { id: userId },
+        if (reset.count === 1) return;
+    }
+    // 正常增加；跨天重置被别的请求完成时，也必须保留本次使用量。
+    {
+        await prisma.user.updateMany({
+            where: { id: userId, deletedAt: null },
             data: {
                 [col]: { increment: 1 }
             }

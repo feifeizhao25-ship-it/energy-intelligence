@@ -9,13 +9,17 @@ function store(user: QuotaUser | null) {
   const state = { user, calls: 0 };
   const s: QuotaStore = {
     load: async () => state.user && { ...state.user },
-    resetAndTake: async (_id, now) => { state.user = { ...state.user!, dailyAiCalls: 1, lastResetAt: now }; },
+    resetAndTake: async (_id, now, previousReset) => {
+      if (state.user!.lastResetAt.getTime() !== previousReset.getTime()) return false;
+      state.user = { ...state.user!, dailyAiCalls: 1, lastResetAt: now };
+      return true;
+    },
     takeIfBelow: async (_id, limit) => {
       if (state.user!.dailyAiCalls >= limit) return false;
       state.user = { ...state.user!, dailyAiCalls: state.user!.dailyAiCalls + 1 };
       return true;
     },
-    take: async () => { state.user = { ...state.user!, dailyAiCalls: state.user!.dailyAiCalls + 1 }; },
+    take: async () => { state.user = { ...state.user!, dailyAiCalls: state.user!.dailyAiCalls + 1 }; return true; },
   };
   return { s, state };
 }
@@ -48,4 +52,12 @@ describe('AI 次数门禁', () => {
       expect([f, readFileSync(join(root, f), 'utf8').includes('await requireAiQuota()')]).toEqual([f, true]);
     }
   });
+});
+
+
+it('跨天 30 个并发请求只放行免费档 3 次，不重复重置', async () => {
+  const { s, state } = store({ plan: 'FREE', planExpireAt: null, dailyAiCalls: 3, lastResetAt: new Date('2026-09-21T10:00:00') });
+  const results = await Promise.all(Array.from({ length: 30 }, () => consumeAiCall(s, 'u', now)));
+  expect(results.filter((r) => r.ok)).toHaveLength(3);
+  expect(state.user!.dailyAiCalls).toBe(3);
 });

@@ -1,0 +1,5 @@
+         orderNo          |     userId      | plan | billingPeriod  | amount |    transactionId    
+--------------------------+-----------------+------+----------------+--------+---------------------
+ legacy-migration-payment | migration-owner | PRO  | legacy_unknown |  18.50 | historical-txn-0922
+(1 row)
+

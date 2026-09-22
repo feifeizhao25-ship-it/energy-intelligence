@@ -1,0 +1,10 @@
+
+> xinnengyuan-ai@1.0.0 test
+> jest --runInBand
+
+
+Test Suites: 39 passed, 39 total
+Tests:       312 passed, 312 total
+Snapshots:   0 total
+Time:        1.219 s, estimated 3 s
+Ran all test suites.

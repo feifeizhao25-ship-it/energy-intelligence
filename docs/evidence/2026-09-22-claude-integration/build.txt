@@ -1,0 +1,170 @@
+
+> xinnengyuan-ai@1.0.0 build
+> next build --webpack
+
+▲ Next.js 16.3.3 (webpack)
+✓ Running next.config.js took 46ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 5.0s
+  Running TypeScript ...
+  Finished TypeScript in 2.1s ...
+  Collecting page data using 9 workers ...
+  Generating static pages using 9 workers (0/98) ...
+  Generating static pages using 9 workers (24/98) 
+  Generating static pages using 9 workers (48/98) 
+  Generating static pages using 9 workers (73/98) 
+✓ Generating static pages using 9 workers (98/98) in 660ms
+  Finalizing page optimization ...
+  Collecting build traces ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /[locale]
+├ ƒ /[locale]/calculator/compare
+├ ƒ /[locale]/calculator/result
+├ ƒ /[locale]/dashboard
+├ ƒ /[locale]/education/pitfalls
+├ ƒ /[locale]/maintenance
+├ ƒ /[locale]/my/stations
+├ ƒ /[locale]/projects
+├ ƒ /[locale]/tools/contract-check
+├ ○ /achievements
+├ ƒ /api/ai/tool
+├ ƒ /api/audit/[id]
+├ ƒ /api/auth/[...nextauth]
+├ ƒ /api/auth/sms
+├ ƒ /api/calculate/comparison
+├ ƒ /api/calculate/solar
+├ ƒ /api/calculate/storage
+├ ƒ /api/calculate/wind
+├ ƒ /api/calculator/analysis
+├ ƒ /api/calculator/quick
+├ ƒ /api/calculator/solar
+├ ƒ /api/calculator/storage
+├ ƒ /api/calculator/wind
+├ ƒ /api/chat
+├ ƒ /api/community/questions
+├ ƒ /api/cron/policies
+├ ƒ /api/dashboard
+├ ƒ /api/demo-requests
+├ ƒ /api/developer/keys
+├ ƒ /api/developer/usage
+├ ƒ /api/exports
+├ ƒ /api/exports/download/[filename]
+├ ƒ /api/exports/reserve
+├ ƒ /api/health
+├ ƒ /api/location
+├ ƒ /api/location/suggestions
+├ ƒ /api/maintenance
+├ ƒ /api/membership/alipay/notify
+├ ƒ /api/membership/me
+├ ƒ /api/membership/plans
+├ ƒ /api/membership/status
+├ ƒ /api/membership/upgrade
+├ ƒ /api/membership/validate-code
+├ ƒ /api/notifications
+├ ƒ /api/orchestrator
+├ ƒ /api/papers
+├ ƒ /api/papers/ai
+├ ƒ /api/papers/analyze-search
+├ ƒ /api/papers/chat
+├ ƒ /api/papers/graph
+├ ƒ /api/papers/index
+├ ƒ /api/papers/link-to-project
+├ ƒ /api/papers/recommendations
+├ ƒ /api/papers/recommendations/project/[projectId]
+├ ƒ /api/papers/research-assistant
+├ ƒ /api/papers/search
+├ ƒ /api/papers/upload
+├ ƒ /api/projects
+├ ƒ /api/projects/[id]
+├ ƒ /api/projects/[id]/alerts
+├ ƒ /api/projects/[id]/analytics
+├ ƒ /api/projects/[id]/batch
+├ ƒ /api/projects/[id]/maintenance
+├ ƒ /api/projects/[id]/monitoring
+├ ƒ /api/projects/[id]/reports
+├ ƒ /api/projects/[id]/stations
+├ ƒ /api/projects/[id]/timeline
+├ ƒ /api/projects/diagnosis
+├ ƒ /api/projects/report
+├ ƒ /api/projects/unlock
+├ ƒ /api/quota
+├ ƒ /api/resource
+├ ƒ /api/resource/map-data
+├ ƒ /api/solar/nrel
+├ ƒ /api/user/account
+├ ƒ /api/user/export
+├ ƒ /api/user/onboarding
+├ ƒ /api/user/papers
+├ ƒ /api/user/papers/save
+├ ƒ /api/user/profile
+├ ƒ /api/v1/calculate/solar
+├ ƒ /api/v1/docs
+├ ƒ /api/v1/openclaw
+├ ƒ /api/v1/papers/search
+├ ƒ /api/v1/projects
+├ ƒ /api/v1/projects/[id]
+├ ƒ /api/v1/projects/[id]/analytics
+├ ƒ /api/v1/projects/[id]/monitoring
+├ ƒ /api/v2/audit/[id]
+├ ƒ /api/v2/project/[id]/activate
+├ ƒ /api/v2/project/[id]/analyze
+├ ƒ /api/v2/project/[id]/dashboard
+├ ƒ /api/v2/project/[id]/timeline
+├ ƒ /api/v2/solar/calculate
+├ ○ /assistant
+├ ƒ /audit
+├ ƒ /audit/[snapshotId]
+├ ƒ /auth/error
+├ ○ /calculator
+├ ○ /calculator/result
+├ ○ /calculator/solar
+├ ○ /calculator/storage
+├ ○ /calculator/wind
+├ ○ /checkout
+├ ○ /community
+├ ○ /dashboard
+├ ○ /demo-request
+├ ○ /developer
+├ ○ /developer/docs
+├ ○ /enterprise
+├ ○ /login
+├ ○ /maintenance
+├ ○ /map
+├ ○ /map/compare
+├ ○ /map/report
+├ ○ /membership
+├ ○ /my/achievements
+├ ○ /my/projects
+├ ○ /my/stations
+├ ○ /onboarding
+├ ○ /papers
+├ ƒ /papers/[id]
+├ ○ /papers/library
+├ ○ /pricing
+├ ○ /privacy
+├ ƒ /project/[id]/dashboard
+├ ○ /projects
+├ ƒ /projects/[id]
+├ ƒ /projects/[id]/compare
+├ ƒ /projects/[id]/om
+├ ○ /projects/timeline
+├ ○ /quick-calc/compare
+├ ƒ /quick-calc/result/[type]
+├ ○ /quick-calc/solar
+├ ○ /quick-calc/storage
+├ ○ /quick-calc/wind
+├ ○ /referral
+├ ○ /resource/map
+├ ○ /settings
+└ ○ /terms
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

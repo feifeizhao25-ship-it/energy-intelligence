@@ -52,3 +52,13 @@ describe('个人数据导出与注销', () => {
     expect(getUser()!.deletedAt).toBeInstanceOf(Date);
   });
 });
+
+
+it('清理失败时保留账号和手机号，允许本人重试', async () => {
+  const { db, getUser } = fakeDb();
+  db.project = { findMany: async () => [], deleteMany: async () => { throw new Error('database unavailable'); } };
+  const result = await eraseUser(db as never, 'u1');
+  expect(result.failed).toContain('Project');
+  expect(getUser()!.phone).toBe('13800000000');
+  expect(getUser()!.deletedAt).toBeUndefined();
+});

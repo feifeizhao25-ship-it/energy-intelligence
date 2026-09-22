@@ -41,8 +41,8 @@ function memoryStore(code: string): CodeStore & { rec: CodeRecord } {
   const rec: CodeRecord = { id: 'c1', code, attempts: 0, used: false, expiresAt: new Date(Date.now() + 600e3) };
   return {
     rec,
-    latestActive: async (_phone, now) => (!rec.used && rec.expiresAt > now ? rec : null),
-    recordFailure: async (_id, attempts, exhausted) => { rec.attempts = attempts; if (exhausted) rec.used = true; },
+    latestActive: async (_phone, now) => (!rec.used && rec.expiresAt > now ? { ...rec } : null),
+    claimAttempt: async () => { if (rec.used || rec.attempts >= MAX_ATTEMPTS) return false; rec.attempts++; return true; },
     consume: async () => { if (rec.used) return false; rec.used = true; return true; },
   };
 }
@@ -67,4 +67,19 @@ describe('短信验证码', () => {
     expect(clientIp('6.6.6.6, 1.2.3.4')).toBe('1.2.3.4');
     expect(clientIp(null, '9.9.9.9')).toBe('9.9.9.9');
   });
+});
+
+
+it('并发猜测不能覆盖尝试次数，正确验证码不能越过已耗尽的限额', async () => {
+  const store = memoryStore('654321');
+  const results = await Promise.all(Array.from({ length: 30 }, () => verifySmsCode(store, '13800000000', '111111')));
+  expect(results.every((r) => !r.ok)).toBe(true);
+  expect(store.rec.attempts).toBe(MAX_ATTEMPTS);
+  expect((await verifySmsCode(store, '13800000000', '654321')).ok).toBe(false);
+});
+
+it('同一验证码并发登录最多成功一次', async () => {
+  const store = memoryStore('654321');
+  const results = await Promise.all(Array.from({ length: 10 }, () => verifySmsCode(store, '13800000000', '654321')));
+  expect(results.filter((r) => r.ok)).toHaveLength(1);
 });

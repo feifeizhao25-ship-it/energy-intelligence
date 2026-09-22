@@ -1,0 +1,23 @@
+Prisma schema loaded from src/prisma/schema.prisma
+Datasource "db": PostgreSQL database "energy_integration_fresh", schema "public" at "127.0.0.1:55492"
+
+4 migrations found in prisma/migrations
+
+Applying migration `202607270001_init`
+Applying migration `202609220001_sms_attempts`
+Applying migration `202609220002_user_deleted_at`
+Applying migration `202609220003_payment_schema_alignment`
+
+The following migration(s) have been applied:
+
+migrations/
+  └─ 202607270001_init/
+    └─ migration.sql
+  └─ 202609220001_sms_attempts/
+    └─ migration.sql
+  └─ 202609220002_user_deleted_at/
+    └─ migration.sql
+  └─ 202609220003_payment_schema_alignment/
+    └─ migration.sql
+      
+All migrations have been successfully applied.

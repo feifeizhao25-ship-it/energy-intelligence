@@ -69,7 +69,7 @@ export async function eraseUser(db: Client, userId: string) {
     const failed: ModelRef[] = [];
     for (const model of pending) {
       const delegate = db[model.delegate] as AnyDelegate | undefined;
-      if (!delegate) continue;
+      if (!delegate) { failed.push(model); continue; }
       try {
         const { count } = await delegate.deleteMany({ where: { userId } });
         if (count) deleted[model.name] = (deleted[model.name] ?? 0) + count;
@@ -80,6 +80,9 @@ export async function eraseUser(db: Client, userId: string) {
     if (failed.length === pending.length) { pending = failed; break; }
     pending = failed;
   }
+  // Keep the account reachable when cleanup is incomplete so the owner can
+  // retry. Do not erase their recovery address or report completed deletion.
+  if (pending.length) return { deleted, retained, failed: pending.map((m) => m.name) };
   if (typeof user.phone === 'string' && user.phone) {
     await db.verificationCode.deleteMany({ where: { phone: user.phone } });
   }

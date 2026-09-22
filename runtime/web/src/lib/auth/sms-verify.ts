@@ -31,8 +31,8 @@ export interface CodeRecord {
 
 export interface CodeStore {
   latestActive(phone: string, now: Date): Promise<CodeRecord | null>;
-  recordFailure(id: string, attempts: number, exhausted: boolean): Promise<void>;
-  consume(id: string): Promise<boolean>;
+  claimAttempt(id: string, now: Date): Promise<boolean>;
+  consume(id: string, now: Date): Promise<boolean>;
 }
 
 export type VerifyResult = { ok: true } | { ok: false; reason: string };
@@ -53,15 +53,16 @@ export async function verifySmsCode(store: CodeStore, phone: string, code: strin
   if (!record || record.used || record.expiresAt <= now || record.attempts >= MAX_ATTEMPTS) {
     return { ok: false, reason: '验证码无效或已过期' };
   }
+  // Reserve an attempt atomically before comparing, including concurrent guesses.
+  if (!await store.claimAttempt(record.id, now)) return { ok: false, reason: '验证码无效或已过期' };
   if (!sameCode(record.code, code)) {
     const attempts = record.attempts + 1;
-    await store.recordFailure(record.id, attempts, attempts >= MAX_ATTEMPTS);
     return {
       ok: false,
       reason: attempts >= MAX_ATTEMPTS ? '验证码错误次数过多，请重新获取' : '验证码错误',
     };
   }
-  const consumed = await store.consume(record.id);
+  const consumed = await store.consume(record.id, now);
   return consumed ? { ok: true } : { ok: false, reason: '验证码无效或已过期' };
 }
 
