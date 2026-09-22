@@ -1,3 +1,4 @@
+import { generateSmsCode } from '@/lib/auth/sms-verify';
 import Core from '@alicloud/pop-core';
 
 const accessKeyId = process.env.ALIYUN_ACCESS_KEY_ID;
@@ -68,5 +69,6 @@ export async function sendVerificationCode(phone: string, code: string) {
  * 生成 6 位随机验证码
  */
 export function generateCode() {
-    return Math.floor(100000 + Math.random() * 900000).toString();
+    // 用密码学安全随机数（原来是 Math.random）
+    return generateSmsCode();
 }

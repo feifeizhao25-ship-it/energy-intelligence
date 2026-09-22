@@ -1,6 +1,30 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import { randomBytes } from "node:crypto";
 import { prisma } from "@/lib/prisma";
+import { verifySmsCode, type CodeStore } from "./sms-verify";
+import { refreshToken, type AppToken, type DbUser } from "./token-refresh";
+
+const prismaCodeStore: CodeStore = {
+    latestActive: (phone, now) => prisma.verificationCode.findFirst({
+        where: { phone, used: false, expiresAt: { gt: now } },
+        orderBy: { createdAt: 'desc' },
+    }),
+    recordFailure: async (id, attempts, exhausted) => {
+        await prisma.verificationCode.update({ where: { id }, data: { attempts, ...(exhausted ? { used: true } : {}) } });
+    },
+    consume: async (id) => {
+        const { count } = await prisma.verificationCode.updateMany({ where: { id, used: false }, data: { used: true } });
+        return count === 1;
+    },
+};
+
+function loadDbUser(id: string): Promise<DbUser | null> {
+    return prisma.user.findUnique({
+        where: { id },
+        select: { id: true, name: true, email: true, phone: true, plan: true, planExpireAt: true, profileCompleted: true },
+    });
+}
 
 export const authOptions: NextAuthOptions = {
     providers: [
@@ -12,80 +36,45 @@ export const authOptions: NextAuthOptions = {
                 code: { label: "Code", type: "text" },
             },
             async authorize(credentials) {
-                if (!credentials?.phone || !credentials?.code) {
-                    throw new Error("请提供手机号和验证码");
+                const phone = String(credentials?.phone || '').trim();
+                const code = String(credentials?.code || '').trim();
+                if (!phone || !code) throw new Error("请提供手机号和验证码");
+
+                const result = await verifySmsCode(prismaCodeStore, phone, code);
+                if (!result.ok) throw new Error(result.reason);
+
+                let user = await prisma.user.findFirst({ where: { phone } });
+                if (!user) {
+                    user = await prisma.user.create({
+                        data: {
+                            phone,
+                            email: `${phone}@xinnengyuan.ai`,
+                            name: `用户_${phone.slice(-4)}`,
+                            plan: 'FREE',
+                            referralCode: `SNY-${randomBytes(4).toString('hex').toUpperCase()}`,
+                        }
+                    });
                 }
-
-                try {
-                    // 验证数据库中未使用且未过期的验证码。
-                    const verification = await prisma.verificationCode.findFirst({
-                        where: {
-                            phone: credentials.phone,
-                            code: credentials.code,
-                            used: false,
-                            expiresAt: { gt: new Date() },
-                        },
-                        orderBy: { createdAt: 'desc' },
-                    });
-
-                    if (!verification) {
-                        throw new Error("验证码无效或已过期");
-                    }
-
-                    // 标记验证码已使用
-                    await prisma.verificationCode.update({
-                        where: { id: verification.id },
-                        data: { used: true },
-                    });
-
-                    // 查找或创建用户。
-                    let user = await prisma.user.findFirst({
-                        where: { phone: credentials.phone }
-                    });
-
-                    if (!user) {
-                        const selfReferralCode = `SNY-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
-                        user = await prisma.user.create({
-                            data: {
-                                phone: credentials.phone,
-                                email: `${credentials.phone}@xinnengyuan.ai`,
-                                name: `用户_${credentials.phone.slice(-4)}`,
-                                plan: 'FREE',
-                                referralCode: selfReferralCode,
-                            }
-                        });
-                    }
-
-                    return {
-                        id: user.id,
-                        name: user.name || '',
-                        email: user.email,
-                        phone: user.phone || '',
-                        plan: user.plan,
-                        profileCompleted: user.profileCompleted
-                    };
-                } catch (error: any) {
-                    console.error('Core Auth Error:', error.message);
-                    throw new Error(error.message || "身份验证暂时不可用");
-                }
+                return {
+                    id: user.id,
+                    name: user.name || '',
+                    email: user.email,
+                    phone: user.phone || '',
+                    plan: user.plan,
+                    profileCompleted: user.profileCompleted
+                };
             },
         }),
     ],
     callbacks: {
-        async jwt({ token, user, trigger, session }) {
-            if (user) {
-                token.id = user.id;
-                token.plan = user.plan;
-                token.phone = user.phone;
-                token.profileCompleted = user.profileCompleted;
-            }
-            if (trigger === "update" && session) {
-                return { ...token, ...session.user };
-            }
-            return token;
+        async jwt({ token, user, trigger }) {
+            // 客户端 update() 传来的内容一律不采信，只重新读库（见 token-refresh.ts）。
+            const next = await refreshToken(token as AppToken, { userId: user?.id, trigger }, loadDbUser);
+            if (!next) return {} as typeof token;
+            return next as typeof token;
         },
         async session({ session, token }) {
-            if (token && session.user) {
+            if (token?.id && session.user) {
                 session.user.id = token.id;
                 session.user.plan = token.plan;
                 session.user.phone = token.phone;
