@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAiQuota } from '@/lib/ai/quota-guard';
 import { simpleChat } from '@/lib/ai/unified';
 
 /**
@@ -7,6 +8,8 @@ import { simpleChat } from '@/lib/ai/unified';
  */
 
 export async function POST(req: NextRequest) {
+    const guard = await requireAiQuota();
+    if (!guard.ok) return guard.response;
     const body = await req.json();
     const { task, papers, query, context } = body;
 

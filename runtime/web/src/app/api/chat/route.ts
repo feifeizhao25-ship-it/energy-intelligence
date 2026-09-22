@@ -1,3 +1,4 @@
+import { requireAiQuota } from '@/lib/ai/quota-guard';
 import { NextRequest } from 'next/server';
 import { aiService } from '@/lib/ai/unified';
 import { Message } from '@/types';
@@ -13,9 +14,10 @@ export const maxDuration = 60;
 export async function POST(request: NextRequest) {
     try {
         const session = await getServerSession(authOptions) as any;
-        const userPlan = (session?.user?.plan as Plan) || Plan.FREE;
-
-        const body = await request.json();
+        const body = await request.json().catch(() => null);
+        if (!body) {
+            return new Response(JSON.stringify({ error: '无效的消息格式' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+        }
         const { messages, provider, model: requestedModel, isAssistant } = body as {
             messages: Message[];
             provider?: string;
@@ -23,12 +25,17 @@ export async function POST(request: NextRequest) {
             isAssistant?: boolean;
         };
 
-        if (!messages || !Array.isArray(messages)) {
+        if (!messages || !Array.isArray(messages) || messages.length === 0 || messages.length > 50) {
             return new Response(
                 JSON.stringify({ error: '无效的消息格式' }),
                 { status: 400, headers: { 'Content-Type': 'application/json' } }
             );
         }
+
+        // 登录 + 按库里的会员档扣减当日 AI 次数（原来不登录也能用，登录后也只事后记一笔）
+        const guard = await requireAiQuota();
+        if (!guard.ok) return guard.response;
+        const userPlan = guard.plan as Plan;
 
         // Determine the actual model based on user plan
         let actualModel = requestedModel;
@@ -57,20 +64,15 @@ export async function POST(request: NextRequest) {
                     })}\n\n`));
 
                     const chatSource = isAssistant
-                        ? assistantChatStream(messages, actualModel, session?.user?.id)
+                        ? assistantChatStream(messages, actualModel, guard.userId)
                         : aiService.chatStream(messages, { provider: currentProvider, model: actualModel } as any);
 
-                    // 如果有登录用户，记录并增加使用量（不阻塞响应）
-                    if (session?.user?.id) {
-                        try {
-                            const { incrementUsage, logUsage } = await import('@/lib/membership/usage');
-                            await Promise.all([
-                                incrementUsage(session.user.id, 'ai_chat'),
-                                logUsage(session.user.id, 'ai_chat', { model: actualModel, isAssistant })
-                            ]);
-                        } catch (usageError) {
-                            console.warn('Usage tracking failed (non-blocking):', usageError);
-                        }
+                    // 次数已在门禁里扣减；这里只记明细日志
+                    try {
+                        const { logUsage } = await import('@/lib/membership/usage');
+                        await logUsage(guard.userId, 'ai_chat', { model: actualModel, isAssistant });
+                    } catch (usageError) {
+                        console.warn('Usage log failed (non-blocking):', usageError);
                     }
 
                     for await (const event of chatSource) {

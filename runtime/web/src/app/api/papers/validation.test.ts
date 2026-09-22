@@ -3,10 +3,12 @@ import { POST as search } from './search/route';
 import { POST as ai } from './ai/route';
 import { unifiedSearch } from '@/lib/papers/search';
 import { generateSummary } from '@/lib/papers/ai';
+jest.mock('@/lib/ai/quota-guard', () => ({ requireAiQuota: jest.fn() }));
+import { requireAiQuota } from '@/lib/ai/quota-guard';
 jest.mock('@/lib/papers/search', () => ({ unifiedSearch: jest.fn() }));
 jest.mock('@/lib/papers/ai', () => ({ generateSummary: jest.fn(), extractKeyData: jest.fn(), translateText: jest.fn(), generateFullTranslation: jest.fn() }));
 const request = (body: unknown) => new NextRequest('http://localhost/api/papers', { method: 'POST', body: JSON.stringify(body) });
-beforeEach(() => jest.resetAllMocks());
+beforeEach(() => { jest.resetAllMocks(); jest.mocked(requireAiQuota).mockResolvedValue({ ok: true, userId: 'u1', plan: 'PRO', remaining: 10 }); });
 it.each([null, {}, { query: 23 }, { query: ' ' }, { query: 'x'.repeat(2001) }, { query: '光伏', options: [] }, { query: 'solar', options: { limit: -1 } }, { query: 'solar', options: { yearFrom: 2025, yearTo: 2020 } }, { query: 'solar', options: { openAccess: 'true' } }])('拒绝无效检索参数 %j', async (body) => {
  expect((await search(request(body))).status).toBe(400);
  expect(unifiedSearch).not.toHaveBeenCalled();

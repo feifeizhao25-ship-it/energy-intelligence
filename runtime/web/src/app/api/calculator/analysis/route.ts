@@ -1,13 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAiQuota } from '@/lib/ai/quota-guard';
 import { simpleChat } from '@/lib/ai/unified';
 
 export async function POST(req: NextRequest) {
     try {
         const { type, data } = await req.json();
 
-        if (!data) {
+        if (!data?.financial) {
             return NextResponse.json({ error: 'Missing data' }, { status: 400 });
         }
+        const guard = await requireAiQuota();
+        if (!guard.ok) return guard.response;
 
         const typeLabel = type === 'solar' ? '分布式光伏' : type === 'wind' ? '分散式风电' : '工商业储能';
         const metrics = data.financial.metrics || data.financial;

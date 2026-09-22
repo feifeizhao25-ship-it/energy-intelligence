@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAiQuota } from '@/lib/ai/quota-guard';
 import { aiService } from '@/lib/ai/unified';
 
 /**
@@ -8,9 +9,11 @@ export async function POST(req: NextRequest) {
     try {
         const { query, papers } = await req.json();
 
-        if (!papers || papers.length === 0) {
+        if (!Array.isArray(papers) || papers.length === 0 || papers.length > 50) {
             return NextResponse.json({ error: '没有提供论文数据' }, { status: 400 });
         }
+        const guard = await requireAiQuota();
+        if (!guard.ok) return guard.response;
 
         const paperContext = papers.map((p: any, i: number) =>
             `${i + 1}. [${p.year}] ${p.title}\n摘要: ${p.tldr || p.abstract || '无'}`

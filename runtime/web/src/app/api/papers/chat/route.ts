@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import { requireAiQuota } from '@/lib/ai/quota-guard';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/auth-options';
 import { ragProcessor } from '@/lib/papers/rag';
@@ -9,9 +10,11 @@ import { aiService } from '@/lib/ai/unified';
  */
 export async function POST(req: NextRequest) {
     const session = await getServerSession(authOptions);
-    if (!session) {
+    if (!session?.user?.id) {
         return new Response(JSON.stringify({ error: '未授权' }), { status: 401 });
     }
+    const guard = await requireAiQuota();
+    if (!guard.ok) return guard.response;
 
     try {
         const { messages, paperId } = await req.json();

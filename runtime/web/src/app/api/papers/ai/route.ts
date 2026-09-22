@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAiQuota } from '@/lib/ai/quota-guard';
 import { generateSummary, extractKeyData, translateText, generateFullTranslation } from '@/lib/papers/ai';
 
 export async function POST(request: NextRequest) {
@@ -11,6 +12,8 @@ export async function POST(request: NextRequest) {
         (title != null && (typeof title !== 'string' || title.length > 2000))) {
         return NextResponse.json({ error: '请输入有效的文献内容，正文最多 200000 个字符，标题最多 2000 个字符' }, { status: 400 });
     }
+    const guard = await requireAiQuota();
+    if (!guard.ok) return guard.response;
     try {
 
         let result;
