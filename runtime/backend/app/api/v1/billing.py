@@ -74,6 +74,8 @@ async def create_checkout(
     user = result.scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    if (user.market or "cn") == "cn":
+        raise HTTPException(status_code=403, detail="国内版请使用国内支付渠道")
     customer_id = user.stripe_customer_id
     try:
         url = stripe_service.create_checkout_session(user_id, plan, customer_id)
@@ -204,7 +206,7 @@ async def stripe_webhook(request: Request, db: AsyncSession = Depends(get_db)):
     if not user and customer_id:
         result = await db.execute(select(User).where(User.stripe_customer_id == customer_id))
         user = result.scalar_one_or_none()
-    if not user:
+    if not user or (user.market or "cn") == "cn":
         return {"status": "ok"}
 
     if event["type"] == "customer.subscription.created":
@@ -239,6 +241,8 @@ async def customer_portal(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
+    if (user.market or "cn") == "cn":
+        raise HTTPException(status_code=403, detail="国内版请在国内会员中心管理订单")
     if not user.stripe_customer_id:
         raise HTTPException(
             status_code=409,
@@ -263,7 +267,7 @@ async def get_subscription(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    if user.stripe_customer_id:
+    if (user.market or "cn") != "cn" and user.stripe_customer_id:
         try:
             subs = stripe.Subscription.list(customer=user.stripe_customer_id, limit=1)
             if subs.data:
@@ -281,7 +285,7 @@ async def get_subscription(
         "plan": user.plan or "free",
         "status": "active",
         "current_period_end": user.subscription_expires_at.isoformat() if user.subscription_expires_at else None,
-        "customer_id": user.stripe_customer_id,
+        "customer_id": None if (user.market or "cn") == "cn" else user.stripe_customer_id,
     }
 
 
@@ -293,7 +297,7 @@ async def list_invoices(
     """Get billing invoices from Stripe."""
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
-    if not user or not user.stripe_customer_id:
+    if not user or (user.market or "cn") == "cn" or not user.stripe_customer_id:
         return {"invoices": []}
 
     try:
