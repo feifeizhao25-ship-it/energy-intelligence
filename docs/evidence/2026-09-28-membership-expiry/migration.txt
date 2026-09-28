@@ -1,0 +1,10 @@
+/Users/feifei00/Documents/CodexWorktrees/energy-production/runtime/backend/app/config.py:340: UserWarning:
+⚠️  WARNING: SECRET_KEY is using the default value. This is insecure and should only be used for local development. Set the SECRET_KEY environment variable before deploying.
+  return Settings()
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+INFO  [alembic.runtime.migration] Running upgrade  -> 0001_initial_schema, Initial schema — aligned with ORM models
+INFO  [alembic.runtime.migration] Running upgrade 0001_initial_schema -> 0002_canonical_user_reports, Canonical user columns + reports/cashflow tables
+INFO  [alembic.runtime.migration] Running upgrade 0002_canonical_user_reports -> 0003_report_compliance, Report compliance columns
+INFO  [alembic.runtime.migration] Running upgrade 0003_report_compliance -> 0004_payment_orders, Add verified domestic payment orders.
+INFO  [alembic.runtime.migration] Running upgrade 0004_payment_orders -> 0005_subscription_expiry, Persist domestic membership expiry without inventing historical periods.

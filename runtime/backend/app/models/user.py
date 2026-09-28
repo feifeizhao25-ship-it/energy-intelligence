@@ -29,6 +29,7 @@ class User(Base):
     market = Column(String(10), default="cn")  # cn | global
     stripe_customer_id = Column(String(255))
     subscription_plan = Column(String(50), default="free")
+    subscription_expires_at = Column(DateTime(timezone=True), nullable=True)
     usage_quota = Column(JSON, default=dict)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at = Column(
@@ -42,6 +43,12 @@ class User(Base):
     @property
     def plan(self) -> str:
         """Public API alias for the canonical subscription_plan column."""
+        expiry = self.subscription_expires_at
+        if expiry is not None:
+            if expiry.tzinfo is None:
+                expiry = expiry.replace(tzinfo=timezone.utc)
+            if expiry <= datetime.now(timezone.utc):
+                return "free"
         return self.subscription_plan or "free"
 
     @plan.setter

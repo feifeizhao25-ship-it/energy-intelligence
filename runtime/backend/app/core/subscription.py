@@ -121,7 +121,7 @@ async def assert_report_quota(user_id: str, db: AsyncSession) -> User:
     requests from consuming a paid entitlement.
     """
     user = await _get_user(user_id, db)
-    plan = user.subscription_plan or "free"
+    plan = user.plan
     limit = PLAN_QUOTAS.get(plan, PLAN_QUOTAS["free"]).get(
         "report_exports_per_month", 5
     )
@@ -135,7 +135,7 @@ async def assert_report_quota(user_id: str, db: AsyncSession) -> User:
 
 async def consume_report_quota(user: User, db: AsyncSession) -> None:
     """Record one accepted report generation request."""
-    plan = user.subscription_plan or "free"
+    plan = user.plan
     limit = PLAN_QUOTAS.get(plan, PLAN_QUOTAS["free"]).get(
         "report_exports_per_month", 5
     )
@@ -159,7 +159,7 @@ async def check_report_quota(user_id: str, db: AsyncSession) -> None:
 async def assert_ai_quota(user_id: str, db: AsyncSession) -> User:
     """校验用户当日 AI 额度，不在模型调用前预扣，避免失败请求消耗会员权益。"""
     user = await _get_user(user_id, db)
-    plan = user.subscription_plan or "free"
+    plan = user.plan
     limit = PLAN_QUOTAS.get(plan, PLAN_QUOTAS["free"])["ai_queries_per_day"]
     day_key = f"daily_{datetime.now(timezone.utc).strftime('%Y-%m-%d')}"
     await _check_quota(user, "ai_calls", "ai_queries_per_day", day_key, limit)
@@ -168,7 +168,7 @@ async def assert_ai_quota(user_id: str, db: AsyncSession) -> User:
 
 async def consume_ai_quota(user: User, db: AsyncSession) -> None:
     """仅在模型成功返回后记录一次 AI 使用。"""
-    plan = user.subscription_plan or "free"
+    plan = user.plan
     limit = PLAN_QUOTAS.get(plan, PLAN_QUOTAS["free"])["ai_queries_per_day"]
     if limit == -1:
         return
@@ -182,7 +182,7 @@ async def consume_ai_quota(user: User, db: AsyncSession) -> None:
 
 
 def _plan_entitlements(user: User) -> dict:
-    plan = user.subscription_plan or "free"
+    plan = user.plan
     return ENTITLEMENTS.get(plan, ENTITLEMENTS["free"])
 
 

@@ -29,7 +29,7 @@ async def get_me(
         "email": user.email,
         "role": user.role,
         "market": user.market or "cn",
-        "subscription_plan": user.subscription_plan or "free",
+        "subscription_plan": user.plan,
     })
 
 

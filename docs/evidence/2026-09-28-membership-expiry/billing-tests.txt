@@ -1,0 +1,9 @@
+...........                                                              [100%]
+=============================== warnings summary ===============================
+app/config.py:340
+  /Users/feifei00/Documents/CodexWorktrees/energy-production/runtime/backend/app/config.py:340: UserWarning:
+  ⚠️  WARNING: SECRET_KEY is using the default value. This is insecure and should only be used for local development. Set the SECRET_KEY environment variable before deploying.
+    return Settings()
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+11 passed, 1 warning in 2.34s

@@ -1,5 +1,6 @@
 import stripe
 from datetime import datetime, timezone
+from calendar import monthrange
 from decimal import Decimal, InvalidOperation
 from typing import Literal
 from uuid import uuid4
@@ -22,6 +23,14 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 router = APIRouter(prefix="/billing")
 
 
+def subscription_period_end(start: datetime, period: str) -> datetime:
+    months = 12 if period == "yearly" else 1
+    target = start.year * 12 + start.month - 1 + months
+    year, month_zero = divmod(target, 12)
+    month = month_zero + 1
+    return start.replace(year=year, month=month, day=min(start.day, monthrange(year, month)[1]))
+
+
 class AlipayCheckoutRequest(BaseModel):
     plan: str
     billing_period: Literal["monthly", "yearly"]
@@ -39,7 +48,7 @@ async def get_usage(
         raise HTTPException(status_code=404, detail="User not found")
     now = datetime.now(timezone.utc)
     usage = dict(user.usage_quota or {})
-    limits = PLAN_QUOTAS.get(user.subscription_plan or "free", PLAN_QUOTAS["free"])
+    limits = PLAN_QUOTAS.get(user.plan, PLAN_QUOTAS["free"])
 
     def usage_item(category: str, used: int, limit: int, period: str):
         ratio = 0 if limit == -1 else used / max(limit, 1)
@@ -48,7 +57,7 @@ async def get_usage(
 
     day_key = f"daily_{now.strftime('%Y-%m-%d')}"
     month_key = f"monthly_{now.strftime('%Y-%m')}"
-    return {"plan": user.subscription_plan or "free", "items": [
+    return {"plan": user.plan, "items": [
         usage_item("ai_queries", int(dict(usage.get("ai_calls", {})).get(day_key, 0) or 0), limits["ai_queries_per_day"], "day"),
         usage_item("report_exports", int(dict(usage.get("report_exports", {})).get(month_key, 0) or 0), limits["report_exports_per_month"], "month"),
     ]}
@@ -146,6 +155,10 @@ async def alipay_notify(request: Request, db: AsyncSession = Depends(get_db)):
         if order.provider_trade_no != trade_no:
             raise HTTPException(status_code=409, detail="支付流水号冲突")
         return "success"
+    if order.status != "pending":
+        raise HTTPException(status_code=409, detail="当前订单状态不允许开通会员")
+    if order.billing_period not in {"monthly", "yearly"} or order.plan not in PLAN_QUOTAS or order.plan == "free":
+        raise HTTPException(status_code=409, detail="订单套餐或账期无效，请核对")
     if not trade_no:
         raise HTTPException(status_code=400, detail="支付宝交易号缺失")
     duplicate = await db.execute(
@@ -153,12 +166,21 @@ async def alipay_notify(request: Request, db: AsyncSession = Depends(get_db)):
     )
     if duplicate.scalar_one_or_none() is not None:
         raise HTTPException(status_code=409, detail="支付宝交易号已使用")
-    user = await db.get(User, order.user_id)
+    user_result = await db.execute(
+        select(User).where(User.id == order.user_id).with_for_update().execution_options(populate_existing=True)
+    )
+    user = user_result.scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=404, detail="订单用户不存在")
     order.status = "paid"
     order.provider_trade_no = trade_no
     order.paid_at = datetime.now(timezone.utc)
+    now = datetime.now(timezone.utc)
+    previous_end = user.subscription_expires_at
+    if previous_end is not None and previous_end.tzinfo is None:
+        previous_end = previous_end.replace(tzinfo=timezone.utc)
+    start = previous_end if user.subscription_plan == order.plan and previous_end and previous_end > now else now
+    user.subscription_expires_at = subscription_period_end(start, order.billing_period)
     user.subscription_plan = order.plan
     await db.commit()
     return "success"
@@ -258,7 +280,7 @@ async def get_subscription(
     return {
         "plan": user.plan or "free",
         "status": "active",
-        "current_period_end": None,
+        "current_period_end": user.subscription_expires_at.isoformat() if user.subscription_expires_at else None,
         "customer_id": user.stripe_customer_id,
     }
 

@@ -132,3 +132,71 @@ async def test_valid_signature_with_wrong_seller_is_rejected(
     response = await client.post("/api/v1/billing/domestic/alipay/notify", data=params)
     assert response.status_code == 400
 
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("status", ["closed", "refunded", "refund_pending"])
+async def test_callback_cannot_reactivate_nonpayable_order(client, auth_headers, db_session, alipay_keys, status):
+    created = await client.post("/api/v1/billing/domestic/alipay/create", json={"plan": "full", "billing_period": "monthly"}, headers=auth_headers)
+    order = (await db_session.execute(select(PaymentOrder).where(PaymentOrder.order_no == created.json()["order_no"]))).scalar_one()
+    order.status = status
+    await db_session.commit()
+    params = {"app_id": settings.ALIPAY_APP_ID, "seller_id": settings.ALIPAY_SELLER_ID,
+              "out_trade_no": order.order_no, "trade_no": "guarded-transaction", "trade_status": "TRADE_SUCCESS",
+              "total_amount": "398.00", "sign_type": "RSA2"}
+    params["sign"] = _sign_callback(alipay_keys, params)
+    response = await client.post("/api/v1/billing/domestic/alipay/notify", data=params)
+    assert response.status_code == 409
+    await db_session.refresh(order)
+    assert order.status == status
+
+
+@pytest.mark.asyncio
+async def test_paid_monthly_renewals_accumulate_and_duplicate_receipt_does_not(client, auth_headers, db_session, alipay_keys):
+    from datetime import datetime, timezone
+    from app.api.v1.billing import subscription_period_end
+    ends = []
+    for index in range(2):
+        created = await client.post("/api/v1/billing/domestic/alipay/create", json={"plan": "full", "billing_period": "monthly"}, headers=auth_headers)
+        order_no = created.json()["order_no"]
+        params = {"app_id": settings.ALIPAY_APP_ID, "seller_id": settings.ALIPAY_SELLER_ID,
+                  "out_trade_no": order_no, "trade_no": f"renewal-{index}", "trade_status": "TRADE_SUCCESS",
+                  "total_amount": "398.00", "sign_type": "RSA2"}
+        params["sign"] = _sign_callback(alipay_keys, params)
+        assert (await client.post("/api/v1/billing/domestic/alipay/notify", data=params)).status_code == 200
+        await db_session.rollback()
+        order = (await db_session.execute(select(PaymentOrder).where(PaymentOrder.order_no == order_no))).scalar_one()
+        user = await db_session.get(User, order.user_id)
+        await db_session.refresh(user)
+        ends.append(user.subscription_expires_at)
+        assert ends[-1].replace(tzinfo=timezone.utc) > datetime.now(timezone.utc)
+        assert (await client.post("/api/v1/billing/domestic/alipay/notify", data=params)).status_code == 200
+        await db_session.refresh(user)
+        assert user.subscription_expires_at == ends[-1]
+    assert ends[1] == subscription_period_end(ends[0], "monthly")
+
+
+@pytest.mark.asyncio
+async def test_postgres_concurrent_renewals_preserve_both_periods(client, auth_headers, db_session, alipay_keys):
+    import asyncio
+    from datetime import datetime, timezone
+    if db_session.bind.dialect.name != "postgresql":
+        pytest.skip("requires real PostgreSQL row locks")
+    requests = []
+    user = None
+    for index in range(2):
+        created = await client.post("/api/v1/billing/domestic/alipay/create", json={"plan": "full", "billing_period": "monthly"}, headers=auth_headers)
+        order = (await db_session.execute(select(PaymentOrder).where(PaymentOrder.order_no == created.json()["order_no"]))).scalar_one()
+        user = await db_session.get(User, order.user_id)
+        params = {"app_id": settings.ALIPAY_APP_ID, "seller_id": settings.ALIPAY_SELLER_ID,
+                  "out_trade_no": order.order_no, "trade_no": f"concurrent-renewal-{index}", "trade_status": "TRADE_SUCCESS",
+                  "total_amount": "398.00", "sign_type": "RSA2"}
+        params["sign"] = _sign_callback(alipay_keys, params)
+        requests.append(params)
+    user.subscription_plan = "full"
+    user.subscription_expires_at = datetime(2030, 1, 15, tzinfo=timezone.utc)
+    await db_session.commit()
+    responses = await asyncio.gather(*(client.post("/api/v1/billing/domestic/alipay/notify", data=params) for params in requests))
+    assert [response.status_code for response in responses] == [200, 200]
+    await db_session.refresh(user)
+    assert user.subscription_expires_at == datetime(2030, 3, 15, tzinfo=timezone.utc)
