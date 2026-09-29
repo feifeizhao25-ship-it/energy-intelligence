@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/auth-options';
 import { prisma } from '@/lib/prisma';
-import { eraseUser } from '@/lib/account/erasure';
+import { eraseUser, TeamHasMembersError } from '@/lib/account/erasure';
 import { verifySmsCode } from '@/lib/auth/sms-verify';
 import { prismaCodeStore } from '@/lib/auth/sms-store';
 
@@ -23,7 +23,16 @@ export async function DELETE(req: NextRequest) {
     const check = await verifySmsCode(prismaCodeStore, user.phone, String(body?.code ?? ''));
     if (!check.ok) return NextResponse.json({ error: check.reason }, { status: 400 });
 
-    const result = await eraseUser(prisma as never, userId);
+    let result;
+    try {
+        result = await eraseUser(prisma as never, userId);
+    } catch (error) {
+        // 团队所有者且团队里还有别人：什么都没动，请先转让团队或移除成员
+        if (error instanceof TeamHasMembersError) {
+            return NextResponse.json({ error: error.message, code: 'TEAM_HAS_MEMBERS' }, { status: 409 });
+        }
+        throw error;
+    }
     if (result.failed.length) {
         console.error('account erasure incomplete', result.failed);
         return NextResponse.json({ error: '部分数据未能删除，请联系客服处理', failed: result.failed }, { status: 500 });
