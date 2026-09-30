@@ -9,7 +9,8 @@ README.md
 LICENSE
 legacy-routes
 docs
-scripts
+scripts/*
+!scripts/validate-public-build-config.mjs
 *.md
 *.log
 **/*.test.ts

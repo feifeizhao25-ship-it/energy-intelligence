@@ -107,8 +107,16 @@ for secret in ("SECRET_KEY", "POSTGRES_PASSWORD", "REDIS_PASSWORD", "CORS_ORIGIN
     if secret in environment_text and f"${{{secret}:?" not in environment_text:
         errors.append(f"backend: {secret} 未使用 `:?` 强制校验，缺失时会静默启动")
 
+# 优先 docker-compose（v1 独立二进制），其次 `docker compose`（v2 插件，不需要守护进程即可做 config 校验）。
+# 都没有时不再悄悄当作通过：下面会打印警告，让「没有真正校验过 compose」在日志里可见。
 compose = shutil.which("docker-compose")
 command = [compose, "-p", "energy", "-f", str(COMPOSE_FILE), "config"] if compose else None
+if command is None and shutil.which("docker"):
+    probe = subprocess.run(["docker", "compose", "version"], capture_output=True, text=True, check=False)
+    if probe.returncode == 0:
+        command = ["docker", "compose", "-p", "energy", "-f", str(COMPOSE_FILE), "config", "-q"]
+if command is None:
+    print("WARNING: 未找到 docker-compose / docker compose，跳过 compose config 实际解析校验", file=sys.stderr)
 if command:
     env = {
         **os.environ,

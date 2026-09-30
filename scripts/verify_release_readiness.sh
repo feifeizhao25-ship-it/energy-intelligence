@@ -24,7 +24,7 @@ mark "production deployment gates" $?
 step "4/5 国内中文隔离与国内栈门禁"
 python3 scripts/verify_language_isolation.py && \
   python3 scripts/check_domestic_stack.py && \
-  ( cd scripts && python3 -m unittest test_check_domestic_stack test_cn_compose )
+  ( cd scripts && python3 -m unittest test_check_domestic_stack test_cn_compose test_web_docker_context )
 mark "language isolation + domestic stack" $?
 
 if [ "${1:-}" = "--with-flutter" ]; then
