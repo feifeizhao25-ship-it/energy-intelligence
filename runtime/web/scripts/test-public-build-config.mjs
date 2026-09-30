@@ -1,20 +1,28 @@
 import assert from 'node:assert/strict';
 import { validatePublicBuildConfig } from './validate-public-build-config.mjs';
-const config = { NEXT_PUBLIC_API_URL: 'https://cn.energy-thinktank.com/api', NEXT_PUBLIC_SUPABASE_URL: 'https://project.supabase.co', NEXT_PUBLIC_SUPABASE_ANON_KEY: 'sb_publishable_fixture' };
-assert.doesNotThrow(() => validatePublicBuildConfig(config));
-for (const change of [
-    { NEXT_PUBLIC_API_URL: '' }, { NEXT_PUBLIC_API_URL: 'http://localhost/api' },
-    { NEXT_PUBLIC_SUPABASE_URL: 'https://placeholder.invalid' },
-    { NEXT_PUBLIC_SUPABASE_URL: 'https://user:secret@project.supabase.co' },
-    { NEXT_PUBLIC_SUPABASE_ANON_KEY: '' }, { NEXT_PUBLIC_SUPABASE_ANON_KEY: 'sb_secret_private' },
-    { NEXT_PUBLIC_SUPABASE_ANON_KEY: `header.${Buffer.from(JSON.stringify({ role: 'service_role' })).toString('base64url')}.signature` },
-]) assert.throws(() => validatePublicBuildConfig({ ...config, ...change }));
-const anon = `header.${Buffer.from(JSON.stringify({ role: 'anon' })).toString('base64url')}.signature`;
-assert.doesNotThrow(() => validatePublicBuildConfig({ ...config, NEXT_PUBLIC_SUPABASE_ANON_KEY: anon }));
-// 国内版：浏览器经本站 /api/backend 访问后端（同源），Supabase 仍被拒绝
+
 const cn = { NEXT_PUBLIC_APP_EDITION: 'cn', NEXT_PUBLIC_API_URL: '/api/backend' };
-assert.doesNotThrow(() => validatePublicBuildConfig(cn));
-assert.throws(() => validatePublicBuildConfig({ ...cn, NEXT_PUBLIC_SUPABASE_URL: 'https://x.supabase.co' }));
-assert.throws(() => validatePublicBuildConfig({ ...cn, NEXT_PUBLIC_API_URL: 'http://localhost/api' }));
-assert.throws(() => validatePublicBuildConfig({ ...cn, NEXT_PUBLIC_API_URL: '/api/other' }));
-console.log('13 public build configuration cases passed (synthetic keys; no connectivity validation)');
+let cases = 0;
+const ok = (env) => { cases++; assert.doesNotThrow(() => validatePublicBuildConfig(env)); };
+const bad = (env, pattern) => { cases++; assert.throws(() => validatePublicBuildConfig(env), pattern); };
+
+// 通过：同源代理、显式生产 HTTPS 地址
+ok(cn);
+ok({ ...cn, NEXT_PUBLIC_API_URL: 'https://cn.energy-thinktank.com/api' });
+
+// 只构建国内版：缺省、国际版、别的值一律拒绝
+bad({ NEXT_PUBLIC_API_URL: '/api/backend' }, /cn/);
+bad({ ...cn, NEXT_PUBLIC_APP_EDITION: 'int' }, /cn/);
+bad({ ...cn, NEXT_PUBLIC_APP_EDITION: 'global' }, /cn/);
+
+// 境外托管数据库配置：三个变量任何一个出现都拒绝
+for (const key of ['NEXT_PUBLIC_SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_ANON_KEY', 'SUPABASE_SERVICE_ROLE_KEY']) {
+    bad({ ...cn, [key]: 'https://x.supabase.co' }, /不得配置/);
+}
+
+// API 地址：本机、占位、带凭据、非 HTTPS、未知相对路径、缺省
+for (const url of ['', 'http://localhost/api', 'https://api.example.com/api', 'https://user:pw@cn.energy-thinktank.com/api',
+    'http://cn.energy-thinktank.com/api', 'https://x.invalid/api', '/api/other', 'https://127.0.0.1/api']) {
+    bad({ ...cn, NEXT_PUBLIC_API_URL: url });
+}
+console.log(`${cases} public build configuration cases passed (synthetic values; no connectivity validation)`);

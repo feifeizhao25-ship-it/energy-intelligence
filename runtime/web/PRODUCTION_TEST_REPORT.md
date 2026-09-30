@@ -64,7 +64,7 @@
   - ✅ **已修复**: 已对关键 API (Solar v2) 增加了 `DB_CONNECTION_ERROR` 503 错误捕获和降级逻辑。
 
 ### 3.4 部署建议 (Recommendation)
-1. **网络白名单**: 生产部署时，请确保服务器可以连通 `db.ovvgjmclcdbxhcdzwcsj.supabase.co`。
+1. **网络白名单**: 国内版数据库为自建 PostgreSQL（compose 内的 postgres 服务），不接境外托管数据库；部署机只需能连通该服务。
 2. **连接池模式**: 推荐在 Vercel 等 Serverless 平台使用 port 6543 并带上 `?pgbouncer=true`，而在稳态服务器（如 Docker）中使用 port 5432 直连。
 3. **SSL 强制**: `.env` 中的 `DATABASE_URL` 必须包含 `sslmode=require` 参数。
 

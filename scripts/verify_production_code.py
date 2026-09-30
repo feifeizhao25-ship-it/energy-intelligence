@@ -117,9 +117,11 @@ require(
     "UPSTREAM_UNAVAILABLE",
 )
 require(
-    "runtime/web/src/lib/supabase.ts",
-    "服务端数据操作已拒绝",
+    "runtime/web/src/lib/papers/rag.ts",
+    "prisma.documentChunk",
 )
+if (ROOT / "runtime/web/src/lib/supabase.ts").exists():
+    errors.append("runtime/web/src/lib/supabase.ts: 国内版不接境外托管数据库，该文件必须删除")
 require(
     "runtime/docker-compose.production.yml",
     "OPENALEX_CONTACT_EMAIL is required",
@@ -215,6 +217,8 @@ forbid_tree(
         "const projectsData = [",
         "const demoNotifications = [",
         "export-mock-1",
+        "@supabase/",
+        "requireSupabaseAdmin",
     ),
 )
 require(
@@ -338,7 +342,7 @@ require(
     "runtime/web/src/app/(dashboard)/maintenance/page.tsx",
     "redirect('/projects')",
 )
-require("runtime/web/src/app/api/dashboard/route.ts", "DASHBOARD_AGGREGATION_UNAVAILABLE")
+require("runtime/web/src/app/api/dashboard/route.ts", "buildPersonalDashboard")
 require("runtime/web/src/app/api/papers/graph/route.ts", "VERIFIED_CITATION_GRAPH_UNAVAILABLE")
 require("runtime/web/src/app/api/projects/unlock/route.ts", "VERIFIED_ENTITLEMENT_REQUIRED")
 require("runtime/web/src/app/api/projects/[id]/stations/route.ts", "STATION_LIMIT_REACHED")
@@ -423,10 +427,8 @@ for mobile_root in ("android-cn/lib", "ios-cn/lib"):
         "await ApiService.calculateCleaningSchedule",
     )
 
-require(
-    "runtime/web/src/app/(dashboard)/dashboard/page.tsx",
-    "new Set(['chen_xin', 'wang_qiang', 'li_na'])",
-)
+# 工作台展示当前登录用户自己的数据（不再是演示人设「陈欣」）
+require("runtime/web/src/app/(dashboard)/dashboard/page.tsx", "/api/dashboard")
 require(
     "web-global/src/components/dashboard/personalization-preview.ts",
     "new Set(['john_smith', 'sarah_miller'])",

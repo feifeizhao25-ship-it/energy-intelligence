@@ -38,6 +38,16 @@ describe('个人数据导出与注销', () => {
     expect(out.tables.Project).toHaveLength(1);
   });
 
+  it('导出不含文献向量（几千维浮点数组，用户读不了，只会把导出文件撑大）', async () => {
+    const { db, tables } = fakeDb();
+    tables.documentChunk[0].embedding = [0.1, 0.2, 0.3];
+    tables.documentChunk[0].content = '光伏';
+    const out = await exportUserData(db as never, 'u1');
+    expect(out.tables.DocumentChunk).toHaveLength(1);
+    expect(out.tables.DocumentChunk[0]).toHaveProperty('content', '光伏');
+    expect(out.tables.DocumentChunk[0]).not.toHaveProperty('embedding');
+  });
+
   it('注销删除本人数据、保留付款与审计记录、账号匿名化', async () => {
     const { db, tables, getUser } = fakeDb();
     const result = await eraseUser(db as never, 'u1');

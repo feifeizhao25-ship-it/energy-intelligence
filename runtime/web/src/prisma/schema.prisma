@@ -104,6 +104,7 @@ model User {
   PushSubscription      PushSubscription[]
   UserAchievementDetail UserAchievementDetail[]
   payments              Payment[]
+  documentChunks        DocumentChunk[]
 
   @@map("users")
 }
@@ -1281,4 +1282,23 @@ model DemoRequest {
 
   @@index([email, createdAt])
   @@map("demo_requests")
+}
+
+// ==================== 文献向量库 ====================
+// 文献 RAG 的文本块与向量，存自建 PostgreSQL（国内版不接境外托管数据库）。
+// 向量以 double precision[] 存放，相似度在应用内计算，不依赖 pgvector 扩展。
+model DocumentChunk {
+  id         String   @id @default(cuid())
+  userId     String
+  documentId String
+  chunkIndex Int
+  content    String
+  embedding  Float[]
+  metadata   Json     @default("{}")
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, documentId])
+  @@map("document_chunks")
 }

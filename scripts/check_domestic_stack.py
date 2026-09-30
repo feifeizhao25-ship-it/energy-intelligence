@@ -25,8 +25,13 @@
 1. compose 里被判定为"国内服务"的，不得出现境外供应商的环境变量名，
    也不得在变量值里出现境外主机名。
 2. 名字标明是国内的 `.env*.example` 同样适用。
-3. `--source-roots` 指定的国内前端/后端源码目录里，不得 import 境外
-   供应商 SDK，也不得出现境外主机名。
+3. 源码目录（默认 `DEFAULT_SOURCE_ROOTS`，也可用 `--source-roots` 追加）里，
+   不得 import 境外供应商 SDK，也不得出现境外主机名。
+4. 源码目录所属的 `package.json` 里，不得声明境外供应商 SDK 依赖
+   （没有被 import 的依赖照样会被装进镜像、留在供应链里）。
+
+**默认必须扫源码。** 第一版 `--source-roots` 默认为空：不带参数运行时只扫 compose / env 样例，
+一行 `import ... from '@supabase/supabase-js'` 都扫不到，却照样打印「✓ 国内栈未接境外服务」。
 
 "国内服务"的判定：服务名以 `-cn` 结尾，或环境里有
 `MARKET_REGION/MARKET/NEXT_PUBLIC_APP_EDITION` 且值为 cn，
@@ -45,7 +50,7 @@
 ## 用法
 
     python3 scripts/check_domestic_stack.py
-    python3 scripts/check_domestic_stack.py --source-roots runtime/web-cn/src
+    python3 scripts/check_domestic_stack.py --source-roots runtime/web/src
 """
 from __future__ import annotations
 
@@ -62,6 +67,9 @@ except ImportError:  # pragma: no cover
 
 REPO = pathlib.Path(__file__).resolve().parent.parent
 ALLOWLIST = REPO / "scripts" / "domestic_stack_allowlist.json"
+
+# 国内版源码目录：不带参数运行也必须扫（见模块文档）
+DEFAULT_SOURCE_ROOTS = ["runtime/web/src"]
 
 SKIP_DIRS = {"node_modules", ".git", ".next", "dist", "build", "vendor-refs", "__pycache__"}
 
@@ -102,6 +110,7 @@ OFFSHORE_HOSTS = [
     "supabase.co", "supabase.in", "firebaseio.com", "googleapis.com",
     "api.stripe.com", "api.airwallex.com", "api.sendgrid.com", "api.twilio.com",
     "amazonaws.com", "planetscale.com", "neon.tech", "upstash.io",
+    "sentry.io",
 ]
 
 # 源码里 import 这些包，同样算
@@ -257,15 +266,41 @@ def check_source_root(root: pathlib.Path, allow: set[tuple[str, str]]) -> list[s
     return problems
 
 
+def check_package_manifest(root: pathlib.Path, allow: set[tuple[str, str]]) -> list[str]:
+    """源码目录（如 runtime/web/src）的上一级 package.json 里不得声明境外 SDK。"""
+    problems: list[str] = []
+    for candidate in (root, *root.parents):
+        manifest = candidate / "package.json"
+        if candidate == REPO.parent:
+            break
+        if manifest.is_file():
+            rel = str(manifest.relative_to(REPO))
+            data = json.loads(manifest.read_text(encoding="utf-8"))
+            declared = {**data.get("dependencies", {}), **data.get("devDependencies", {}),
+                        **data.get("optionalDependencies", {})}
+            for name in sorted(declared):
+                for module in OFFSHORE_MODULES:
+                    if (name == module or (module.endswith("/") and name.startswith(module))
+                            or name.startswith(module + "/")):
+                        if (rel, name) in allow or (rel, module) in allow:
+                            continue
+                        problems.append(f"{rel}: 依赖了境外服务 SDK `{name}`")
+                        break
+            break
+    return problems
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument(
         "--source-roots",
         nargs="*",
-        default=[],
-        help="国内版源码目录（相对仓库根），例如 runtime/web-cn/src",
+        default=None,
+        help="国内版源码目录（相对仓库根）；不传则用 DEFAULT_SOURCE_ROOTS",
     )
     args = ap.parse_args()
+    if args.source_roots is None:
+        args.source_roots = list(DEFAULT_SOURCE_ROOTS)
 
     allow = load_allowlist()
     problems: list[str] = []
@@ -286,6 +321,8 @@ def main() -> int:
 
     for root_name in args.source_roots:
         problems += check_source_root(REPO / root_name, allow)
+        if (REPO / root_name).is_dir():
+            problems += check_package_manifest(REPO / root_name, allow)
 
     if problems:
         print(f"✗ 国内栈接到了境外服务，{len(problems)} 处：\n")

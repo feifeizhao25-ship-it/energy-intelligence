@@ -7,9 +7,9 @@ PASS=(); FAIL=()
 step() { echo; echo "════ $1 ════"; }
 mark() { if [ "$2" -eq 0 ]; then PASS+=("$1"); else FAIL+=("$1"); fi }
 
-step "1/5 国内网站依赖与生产构建"
-( cd runtime/web && npm ci && npm run build )
-mark "runtime/web production build" $?
+step "1/5 国内网站依赖、单元测试与生产构建"
+( cd runtime/web && npm ci && npm test && node scripts/test-public-build-config.mjs && npm run build )
+mark "runtime/web tests + production build" $?
 
 step "2/5 国内后端测试"
 bash scripts/test_runtime_backend.sh
@@ -21,9 +21,11 @@ python3 scripts/verify_production_code.py && \
   python3 scripts/verify_k8s_production.py
 mark "production deployment gates" $?
 
-step "4/5 国内中文隔离"
-python3 scripts/verify_language_isolation.py
-mark "language isolation" $?
+step "4/5 国内中文隔离与国内栈门禁"
+python3 scripts/verify_language_isolation.py && \
+  python3 scripts/check_domestic_stack.py && \
+  ( cd scripts && python3 -m unittest test_check_domestic_stack test_cn_compose )
+mark "language isolation + domestic stack" $?
 
 if [ "${1:-}" = "--with-flutter" ]; then
   step "5/5 国内 Android 发布构建"

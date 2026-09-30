@@ -48,6 +48,8 @@ export const NON_USER_MODELS: Record<string, { how: 'owner' | 'viaParent' | 'ema
   AssumptionSet: { how: 'global', note: '测算假设集，系统预置' },
 };
 const SECRET_FIELD = /(password|keyHash|token|secret|code)$/i;
+// 导出时省略的字段：文献向量是模型内部表示，用户读不了；文本原文（content）仍然导出
+const EXPORT_NOISE_FIELD = /^embedding$/;
 
 export interface ModelRef { name: string; delegate: string }
 
@@ -59,7 +61,7 @@ export function userOwnedModels(): ModelRef[] {
 }
 
 function strip(row: Record<string, unknown>): Record<string, unknown> {
-  return Object.fromEntries(Object.entries(row).filter(([k]) => !SECRET_FIELD.test(k)));
+  return Object.fromEntries(Object.entries(row).filter(([k]) => !SECRET_FIELD.test(k) && !EXPORT_NOISE_FIELD.test(k)));
 }
 
 type AnyDelegate = {
