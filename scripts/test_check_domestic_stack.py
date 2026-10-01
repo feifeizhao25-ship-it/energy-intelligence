@@ -86,6 +86,25 @@ class DomesticStackGateTests(unittest.TestCase):
         self.assertIn("@supabase/supabase-js", out)
         self.assertIn("stripe", out)
 
+    def test_browser_side_offshore_hosts_are_caught(self):
+        # 浏览器直连的境外静态资源/地图/字体，以及同一文件里的多个境外主机，都要逐个报出来；
+        # 第一版门禁只认 SDK 与少数主机，且一个文件只报第一个——unpkg、OSM、NASA 等全是盲区
+        code, out = self._scan_planted(
+            "x.tsx",
+            "const a = 'https://unpkg.com/leaflet/dist/leaflet.js';\n"
+            "const b = 'https://nominatim.openstreetmap.org/search';\n"
+            "const c = 'https://power.larc.nasa.gov/api';\n",
+        )
+        self.assertEqual(code, 1)
+        for host in ("unpkg.com", "openstreetmap.org", "power.larc.nasa.gov"):
+            self.assertIn(host, out)
+
+    def test_every_allowlist_entry_has_a_why_and_points_to_an_existing_file(self):
+        data = json.loads(gate.ALLOWLIST.read_text(encoding="utf-8"))
+        for item in data["allow"]:
+            self.assertTrue(str(item.get("why", "")).strip(), item)
+            self.assertTrue((REPO / item["where"].split("::")[0]).exists(), f"例外指向不存在的文件：{item['where']}")
+
     def test_clean_source_passes(self):
         code, _ = self._scan_planted("x.ts", "export const a = 1;\n")
         self.assertEqual(code, 0)

@@ -111,6 +111,12 @@ OFFSHORE_HOSTS = [
     "api.stripe.com", "api.airwallex.com", "api.sendgrid.com", "api.twilio.com",
     "amazonaws.com", "planetscale.com", "neon.tech", "upstash.io",
     "sentry.io",
+    # 浏览器/服务端直连的境外数据源与静态资源：用户的位置、检索词会随请求发往境外，
+    # 且境内网络下经常不可达。原先不在清单里，门禁对它们是盲的。
+    "unpkg.com", "fonts.gstatic.com", "openstreetmap.org",
+    "power.larc.nasa.gov", "developer.nrel.gov", "open-meteo.com", "api.openweathermap.org",
+    "api.open-elevation.com", "api.semanticscholar.org", "arxiv.org", "openalex.org",
+    "api.crossref.org", "api.unpaywall.org", "api.core.ac.uk",
 ]
 
 # 源码里 import 这些包，同样算
@@ -259,10 +265,11 @@ def check_source_root(root: pathlib.Path, allow: set[tuple[str, str]]) -> list[s
                         continue
                     seen.add(module)
                     problems.append(f"{rel}: 国内源码 import 了境外服务 SDK `{spec}`")
-        for host in OFFSHORE_HOSTS:
+        if ".test." in path.name or ".spec." in path.name:
+            continue  # 测试夹具里的 URL 不会进镜像
+        for host in OFFSHORE_HOSTS:  # 每个主机都报，不能一个文件只报第一个
             if host in text and (rel, host) not in allow:
                 problems.append(f"{rel}: 国内源码里出现境外主机 {host}")
-                break
     return problems
 
 

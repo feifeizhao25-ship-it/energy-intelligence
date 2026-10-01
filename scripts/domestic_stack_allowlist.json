@@ -1,5 +1,5 @@
 {
-  "_note": "国内栈接境外服务的例外清单。每一条都必须写 why——没有理由的例外等于没有门禁。这个文件应该越来越短。",
+  "_note": "国内栈接境外服务的例外清单。每一条都必须写 why——没有理由的例外等于没有门禁。这个文件应该越来越短。标【待决·未修复】的是已知欠债：替换需要外部 Key、字体授权或产品/合规决定，不是认可。",
   "allow": [
     {
       "where": "runtime/web/src/lib/ai/router.ts",
@@ -10,6 +10,101 @@
       "where": "runtime/web/package.json",
       "what": "openai",
       "why": "依赖 openai 这个 npm 包只是为了用它的 OpenAI 兼容协议客户端（见 lib/ai/router.ts 的例外），baseURL 锁定硅基流动境内端点，不连接 OpenAI。"
+    },
+    {
+      "where": "runtime/web/src/app/api/papers/index/route.ts",
+      "what": "arxiv.org",
+      "why": "【待决·未修复】文献检索/元数据来自境外学术数据源 arxiv.org：检索词会发往境外。国内版是否保留、替换成哪个境内数据源（如万方/知网需商务授权）是产品与合规决定，代码层无法替代。"
+    },
+    {
+      "where": "runtime/web/src/app/api/papers/link-to-project/route.ts",
+      "what": "api.semanticscholar.org",
+      "why": "【待决·未修复】文献检索/元数据来自境外学术数据源 api.semanticscholar.org：检索词会发往境外。国内版是否保留、替换成哪个境内数据源（如万方/知网需商务授权）是产品与合规决定，代码层无法替代。"
+    },
+    {
+      "where": "runtime/web/src/app/api/papers/recommendations/project/[projectId]/route.ts",
+      "what": "api.semanticscholar.org",
+      "why": "【待决·未修复】文献检索/元数据来自境外学术数据源 api.semanticscholar.org：检索词会发往境外。国内版是否保留、替换成哪个境内数据源（如万方/知网需商务授权）是产品与合规决定，代码层无法替代。"
+    },
+    {
+      "where": "runtime/web/src/components/calculator/InvestmentReport.tsx",
+      "what": "fonts.gstatic.com",
+      "why": "【待决·未修复】PDF 报告字体从 fonts.gstatic.com 加载：境内常打不开，导出的 PDF 会缺字。需要一份可再分发授权的中文字体自托管到 public/，字体授权由你确认后替换。"
+    },
+    {
+      "where": "runtime/web/src/components/map/ResourceMap.tsx",
+      "what": "unpkg.com",
+      "why": "【待决·未修复】高德 JS Key 缺失时的降级地图用 Leaflet(unpkg.com)：境内常不可达，且查询的地点会发往境外。需要配置高德 JS Key（外部密钥）后删除降级分支。"
+    },
+    {
+      "where": "runtime/web/src/components/map/ResourceMap.tsx",
+      "what": "openstreetmap.org",
+      "why": "【待决·未修复】高德 JS Key 缺失时的降级地图用 Leaflet(OSM 瓦片/Nominatim 地名检索)：境内常不可达，且查询的地点会发往境外。需要配置高德 JS Key（外部密钥）后删除降级分支。"
+    },
+    {
+      "where": "runtime/web/src/lib/api/arxiv.ts",
+      "what": "arxiv.org",
+      "why": "【待决·未修复】文献检索/元数据来自境外学术数据源 arxiv.org：检索词会发往境外。国内版是否保留、替换成哪个境内数据源（如万方/知网需商务授权）是产品与合规决定，代码层无法替代。"
+    },
+    {
+      "where": "runtime/web/src/lib/api/core.ts",
+      "what": "api.core.ac.uk",
+      "why": "【待决·未修复】文献检索/元数据来自境外学术数据源 api.core.ac.uk：检索词会发往境外。国内版是否保留、替换成哪个境内数据源（如万方/知网需商务授权）是产品与合规决定，代码层无法替代。"
+    },
+    {
+      "where": "runtime/web/src/lib/api/crossref.ts",
+      "what": "api.crossref.org",
+      "why": "【待决·未修复】文献检索/元数据来自境外学术数据源 api.crossref.org：检索词会发往境外。国内版是否保留、替换成哪个境内数据源（如万方/知网需商务授权）是产品与合规决定，代码层无法替代。"
+    },
+    {
+      "where": "runtime/web/src/lib/api/elevation.ts",
+      "what": "api.open-elevation.com",
+      "why": "【待决·未修复】气象/辐照/海拔数据来自境外公开数据源 api.open-elevation.com：测算的坐标会发往境外，境内可能不可达。需要决定替换为境内气象数据服务（需申请 Key/授权）或获取离线数据集，代码层无法替代。"
+    },
+    {
+      "where": "runtime/web/src/lib/api/nasa-power.ts",
+      "what": "power.larc.nasa.gov",
+      "why": "【待决·未修复】气象/辐照/海拔数据来自境外公开数据源 power.larc.nasa.gov：测算的坐标会发往境外，境内可能不可达。需要决定替换为境内气象数据服务（需申请 Key/授权）或获取离线数据集，代码层无法替代。"
+    },
+    {
+      "where": "runtime/web/src/lib/api/nrel.ts",
+      "what": "developer.nrel.gov",
+      "why": "【待决·未修复】气象/辐照/海拔数据来自境外公开数据源 developer.nrel.gov：测算的坐标会发往境外，境内可能不可达。需要决定替换为境内气象数据服务（需申请 Key/授权）或获取离线数据集，代码层无法替代。"
+    },
+    {
+      "where": "runtime/web/src/lib/api/open-meteo.ts",
+      "what": "open-meteo.com",
+      "why": "【待决·未修复】气象/辐照/海拔数据来自境外公开数据源 open-meteo.com：测算的坐标会发往境外，境内可能不可达。需要决定替换为境内气象数据服务（需申请 Key/授权）或获取离线数据集，代码层无法替代。"
+    },
+    {
+      "where": "runtime/web/src/lib/api/openalex.ts",
+      "what": "openalex.org",
+      "why": "【待决·未修复】文献检索/元数据来自境外学术数据源 openalex.org：检索词会发往境外。国内版是否保留、替换成哪个境内数据源（如万方/知网需商务授权）是产品与合规决定，代码层无法替代。"
+    },
+    {
+      "where": "runtime/web/src/lib/api/semantic-scholar.ts",
+      "what": "api.semanticscholar.org",
+      "why": "【待决·未修复】文献检索/元数据来自境外学术数据源 api.semanticscholar.org：检索词会发往境外。国内版是否保留、替换成哪个境内数据源（如万方/知网需商务授权）是产品与合规决定，代码层无法替代。"
+    },
+    {
+      "where": "runtime/web/src/lib/api/unpaywall.ts",
+      "what": "api.unpaywall.org",
+      "why": "【待决·未修复】文献检索/元数据来自境外学术数据源 api.unpaywall.org：检索词会发往境外。国内版是否保留、替换成哪个境内数据源（如万方/知网需商务授权）是产品与合规决定，代码层无法替代。"
+    },
+    {
+      "where": "runtime/web/src/lib/api/verified-solar.ts",
+      "what": "power.larc.nasa.gov",
+      "why": "【待决·未修复】气象/辐照/海拔数据来自境外公开数据源 power.larc.nasa.gov：测算的坐标会发往境外，境内可能不可达。需要决定替换为境内气象数据服务（需申请 Key/授权）或获取离线数据集，代码层无法替代。"
+    },
+    {
+      "where": "runtime/web/src/lib/api/weather.ts",
+      "what": "api.openweathermap.org",
+      "why": "【待决·未修复】气象/辐照/海拔数据来自境外公开数据源 api.openweathermap.org：测算的坐标会发往境外，境内可能不可达。需要决定替换为境内气象数据服务（需申请 Key/授权）或获取离线数据集，代码层无法替代。"
+    },
+    {
+      "where": "runtime/web/src/lib/papers/pdf.ts",
+      "what": "arxiv.org",
+      "why": "【待决·未修复】文献检索/元数据来自境外学术数据源 arxiv.org：检索词会发往境外。国内版是否保留、替换成哪个境内数据源（如万方/知网需商务授权）是产品与合规决定，代码层无法替代。"
     }
   ]
 }
