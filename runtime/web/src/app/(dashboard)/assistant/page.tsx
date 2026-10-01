@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { useSession } from 'next-auth/react';
 import { Sparkles, Send, Paperclip, Mic, Settings2, Copy, RefreshCw, Loader2, FileText, Image as ImageIcon, AlertCircle } from 'lucide-react';
 import { safeErrorMessage } from '@/lib/api/safe-error';
+import { AigcLabel } from '@/components/ui/AigcLabel';
 
 interface Message {
     id: string;
@@ -274,7 +275,7 @@ export default function AssistantPage() {
                                 {msg.role === 'assistant' && (
                                     <div className="flex items-center gap-2">
                                         <span className="text-sm font-bold text-white">AI 专家</span>
-                                        <span className="text-xs text-text-secondary bg-surface-dark px-2 py-0.5 rounded">智能分析</span>
+                                        <AigcLabel compact tone="dark" />
                                     </div>
                                 )}
                                 <div className={cn(
@@ -288,6 +289,8 @@ export default function AssistantPage() {
                                         <span className="inline-block w-2 h-4 bg-primary ml-1 animate-pulse" />
                                     )}
                                 </div>
+
+                                {msg.role === 'assistant' && !msg.isStreaming && <AigcLabel tone="dark" />}
 
                                 {/* Action Buttons */}
                                 {msg.role === 'assistant' && !msg.isStreaming && (

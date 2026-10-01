@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAiQuota } from '@/lib/ai/quota-guard';
 import { simpleChat } from '@/lib/ai/unified';
+import { aigcJson } from '@/lib/ai/aigc';
 
 export async function POST(req: NextRequest) {
     try {
@@ -35,7 +36,7 @@ export async function POST(req: NextRequest) {
 
         const analysis = await simpleChat(prompt, 'deepseek-v3');
 
-        return NextResponse.json({ results: analysis });
+        return aigcJson({ results: analysis }, { model: 'deepseek-v3' });
     } catch (error: any) {
         console.error('AI Analysis Error:', error);
         return NextResponse.json({ error: '生成分析失败，请稍后重试' }, { status: 500 });

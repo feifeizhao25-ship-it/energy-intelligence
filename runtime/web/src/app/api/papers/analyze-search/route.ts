@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAiQuota } from '@/lib/ai/quota-guard';
 import { aiService } from '@/lib/ai/unified';
+import { aigcJson } from '@/lib/ai/aigc';
 
 /**
  * 对搜索结果进行 AI 汇总分析
@@ -33,7 +34,7 @@ ${paperContext}`;
             { model: 'glm-4-plus' }
         );
 
-        return NextResponse.json({ success: true, analysis: response.content });
+        return aigcJson({ success: true, analysis: response.content });
 
     } catch (error: any) {
         console.error('[Analyze Search API] Error:', error);

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAiQuota } from '@/lib/ai/quota-guard';
 import { generateSummary, extractKeyData, translateText, generateFullTranslation } from '@/lib/papers/ai';
+import { aigcJson } from '@/lib/ai/aigc';
 
 export async function POST(request: NextRequest) {
     const body = await request.json().catch(() => null);
@@ -35,7 +36,7 @@ export async function POST(request: NextRequest) {
                 return NextResponse.json({ error: '请选择有效的文献处理操作' }, { status: 400 });
         }
 
-        return NextResponse.json({
+        return aigcJson({
             success: true,
             data: result
         });

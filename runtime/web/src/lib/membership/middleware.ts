@@ -66,8 +66,40 @@ export function usageDenied(feature: DailyFeature, limit: number, plan: Plan): N
     );
 }
 
+export type Acquired =
+    | { ok: true; user: Member; /** 业务没成功时调用，把已扣的每日额度还回去 */ refund: () => Promise<void> }
+    | { ok: false; response: NextResponse };
+
 /**
- * 组合：登录 → 功能权限（feature）→ 每日额度（usageType，先扣后做，业务失败则退还）。
+ * 登录 → 功能权限（feature）→ 每日额度（usageType，先扣后做）。
+ * 路由用 withMembershipCheck；服务端动作（server action）没有「响应」可返回，直接用这个。
+ */
+export async function acquireMember(
+    options: { feature?: FeatureKey; usageType?: DailyFeature },
+    deps: { member?: () => Promise<Member | null>; store?: DailyStore } = {},
+): Promise<Acquired> {
+    const user = await (deps.member ?? currentMember)();
+    if (!user) return { ok: false, response: unauthorized() };
+
+    if (options.feature) {
+        const denied = featureDenied(user.plan, options.feature);
+        if (denied) return { ok: false, response: denied };
+    }
+
+    const noRefund = async () => undefined;
+    if (!options.usageType) return { ok: true, user, refund: noRefund };
+
+    const store = deps.store ?? prismaDailyStore;
+    const usageType = options.usageType;
+    const taken = await consumeDaily(usageType, user.id, store);
+    if (!taken.ok) {
+        return { ok: false, response: taken.reason === 'NO_USER' ? unauthorized() : usageDenied(usageType, taken.limit, taken.plan) };
+    }
+    return { ok: true, user, refund: () => refundDaily(usageType, user.id, store).catch(() => undefined) };
+}
+
+/**
+ * 组合：登录 → 功能权限 → 每日额度；业务返回错误（4xx/5xx）或抛异常则退还额度。
  */
 export async function withMembershipCheck(
     req: NextRequest,
@@ -76,30 +108,16 @@ export async function withMembershipCheck(
     deps: { member?: () => Promise<Member | null>; store?: DailyStore } = {},
 ): Promise<NextResponse> {
     void req;
-    const user = await (deps.member ?? currentMember)();
-    if (!user) return unauthorized();
-
-    if (options.feature) {
-        const denied = featureDenied(user.plan, options.feature);
-        if (denied) return denied;
-    }
-
-    if (!options.usageType) return handler(user);
-
-    const store = deps.store ?? prismaDailyStore;
-    const taken = await consumeDaily(options.usageType, user.id, store);
-    if (!taken.ok) {
-        if (taken.reason === 'NO_USER') return unauthorized();
-        return usageDenied(options.usageType, taken.limit, taken.plan);
-    }
+    const got = await acquireMember(options, deps);
+    if (!got.ok) return got.response;
     let response: NextResponse;
     try {
-        response = await handler(user);
+        response = await handler(got.user);
     } catch (e) {
-        await refundDaily(options.usageType, user.id, store).catch(() => undefined);
+        await got.refund();
         throw e;
     }
     // 没有算出结果（4xx/5xx）不占用户额度
-    if (!response.ok) await refundDaily(options.usageType, user.id, store).catch(() => undefined);
+    if (!response.ok) await got.refund();
     return response;
 }

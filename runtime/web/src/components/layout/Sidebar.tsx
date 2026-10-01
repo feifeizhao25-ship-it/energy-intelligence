@@ -53,8 +53,7 @@ export default function Sidebar() {
         {
             label: '资产中心',
             items: [
-                { name: '能源资产', href: '/my/stations', icon: 'battery_charging_full', tier: 'L3', requiresAuth: true },
-                { name: '运维诊断', href: '/maintenance', icon: 'build', tier: 'L3', requiresAuth: true, badge: unresolvedIssuesCount > 0 ? unresolvedIssuesCount : undefined },
+                { name: '我的项目', href: '/projects', icon: 'folder_open', tier: 'L3', requiresAuth: true },
                 { name: '项目日志', href: '/projects/timeline', icon: 'history', tier: 'L3', requiresAuth: true },
                 { name: '荣誉中心', href: '/achievements', icon: 'emoji_events', tier: 'L3', requiresAuth: true },
             ]
@@ -70,28 +69,7 @@ export default function Sidebar() {
         {
             label: '标准与报表',
             items: [
-                { name: '审计记录', href: '/audit', icon: 'verified_user', tier: 'L3', requiresAuth: true },
-                {
-                    name: '标准化工具',
-                    icon: 'library_books',
-                    tier: 'L3',
-                    requiresAuth: true,
-                    subItems: [
-                        { name: '口径词典', href: '/tools/glossary' },
-                        { name: '合同检测', href: '/tools/contract-check' },
-                        { name: '参数假设', href: '/tools/assumptions' },
-                    ]
-                },
-                {
-                    name: '报告管理',
-                    icon: 'description',
-                    tier: 'L3',
-                    requiresAuth: true,
-                    subItems: [
-                        { name: '生成报告', href: '/tools/report-export' },
-                        { name: '模板管理', href: '/tools/report-templates' },
-                    ]
-                }
+                { name: '审计记录', href: '/audit', icon: 'verified_user', tier: 'L3', requiresAuth: true }
             ]
         },
         {

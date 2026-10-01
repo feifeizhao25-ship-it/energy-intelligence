@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth/config';
 import { executeTool } from '@/lib/ai/tool-executor';
 import { isToolAllowed, getToolDefinition } from '@/lib/audit/tool-whitelist';
 import { safeErrorMessage } from '@/lib/api/safe-error';
+import { aigcJson } from '@/lib/ai/aigc';
 
 /**
  * AI 工具统一调用入口。
@@ -78,7 +79,7 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        return NextResponse.json({ output, toolName });
+        return aigcJson({ output, toolName });
     } catch (error) {
         console.error('AI tool execution error:', error);
         return NextResponse.json(

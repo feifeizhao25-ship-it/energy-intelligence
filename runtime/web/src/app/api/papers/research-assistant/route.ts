@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAiQuota } from '@/lib/ai/quota-guard';
 import { simpleChat } from '@/lib/ai/unified';
 import { safeErrorMessage } from '@/lib/api/safe-error';
+import { aigcJson } from '@/lib/ai/aigc';
 
 /**
  * AI 研究助手 API
@@ -169,7 +170,7 @@ ${i + 1}. ${p.title} - ${p.authors?.[0] || 'Unknown'} et al. (${p.year})
                 }, { status: 400 });
         }
 
-        return NextResponse.json({
+        return aigcJson({
             success: true,
             data: result
         });

@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import { AigcLabel } from '@/components/ui/AigcLabel';
 
 interface PaperDetailViewProps {
     paper: Paper;
@@ -420,6 +421,7 @@ export default function PaperDetailView({ paper, pdfStatus }: PaperDetailViewPro
                                             "space-y-12 animate-in fade-in duration-700",
                                             isDualMode && "max-w-none"
                                         )}>
+                                            <AigcLabel />
                                             {fullTranslation.map((item, i) => (
                                                 <div key={i} className={cn(
                                                     "flex flex-col gap-6",
@@ -474,6 +476,7 @@ export default function PaperDetailView({ paper, pdfStatus }: PaperDetailViewPro
                                                 </div>
                                                 <h3 className="text-xl font-black text-slate-900">研究核心深度透视</h3>
                                             </div>
+                                            <AigcLabel />
                                             <div className="text-slate-700 font-medium leading-relaxed space-y-6 text-lg prose-green max-w-none">
                                                 {aiSummary.split('\n').filter(line => line.trim()).map((line, i) => {
                                                     if (line.startsWith('###')) {
@@ -502,9 +505,11 @@ export default function PaperDetailView({ paper, pdfStatus }: PaperDetailViewPro
                                     {!keyData ? (
                                         <div className="py-20 flex flex-col items-center justify-center text-slate-300">
                                             <Loader2 className="w-8 h-8 animate-spin mb-4" />
-                                            <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-1">Ready for &quot;Deep Dive&quot; Analysis</p>
+                                            <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-1">正在生成，请稍候</p>
                                         </div>
                                     ) : (
+                                        <div className="space-y-4">
+                                        <AigcLabel />
                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                             {keyData.map((item, i) => (
                                                 <div key={i} className="bg-white p-6 rounded-[32px] border border-slate-100 hover:border-amber-200 hover:shadow-xl hover:shadow-amber-50 transition-all group">
@@ -515,6 +520,7 @@ export default function PaperDetailView({ paper, pdfStatus }: PaperDetailViewPro
                                                     </div>
                                                 </div>
                                             ))}
+                                        </div>
                                         </div>
                                     )}
                                 </div>
@@ -571,6 +577,7 @@ export default function PaperDetailView({ paper, pdfStatus }: PaperDetailViewPro
                                                                     <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-bounce [animation-delay:0.4s]"></div>
                                                                 </div>
                                                             ) : "")}
+                                                            {msg.role !== 'user' && msg.content && <AigcLabel compact />}
                                                         </div>
                                                     </div>
                                                 ))}

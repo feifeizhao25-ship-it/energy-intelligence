@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth/auth-options';
 import { ragProcessor } from '@/lib/papers/rag';
 import { aiService } from '@/lib/ai/unified';
 import { safeErrorMessage } from '@/lib/api/safe-error';
+import { aigcMeta, AIGC_HEADER } from '@/lib/ai/aigc';
 
 /**
  * 文献 RAG 对话接口
@@ -58,6 +59,7 @@ ${contextText}
         const encoder = new TextEncoder();
         const readableStream = new ReadableStream({
             async start(controller) {
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'aigc', data: aigcMeta() })}\n\n`));
                 for await (const chunk of stream) {
                     controller.enqueue(encoder.encode(`data: ${JSON.stringify(chunk)}\n\n`));
                 }
@@ -70,7 +72,8 @@ ${contextText}
             headers: {
                 'Content-Type': 'text/event-stream',
                 'Cache-Control': 'no-cache',
-                'Connection': 'keep-alive'
+                'Connection': 'keep-alive',
+                [AIGC_HEADER]: '1',
             }
         });
 

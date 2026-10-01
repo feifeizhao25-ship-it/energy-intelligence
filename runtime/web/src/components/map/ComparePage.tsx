@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { Plus, Trash2, Zap, Wind, Thermometer, BarChart2, Layers } from 'lucide-react';
+import { safeErrorMessage } from '@/lib/api/safe-error';
 import { getSolarResource, getWindResource, getClimateData } from '@/lib/api/nasa-power';
 import { calculateSolarScore, calculateWindScore } from '@/lib/resource/analysis';
 import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
@@ -25,22 +26,47 @@ export default function ComparePage() {
     const [loading, setLoading] = useState(false);
     const [input, setInput] = useState('');
 
-    const addLocation = async () => {
-        if (!input) return;
-        // Mock geocoding for simplicity - in real app use geocode tool
-        // Assuming input format "lat,lng" or mock "Location A" logic
-        let lat = 0, lng = 0, name = input;
+    const [error, setError] = useState<string | null>(null);
 
-        if (input.includes(',')) {
-            [lat, lng] = input.split(',').map(Number);
-        } else {
-            // Random mock locations for demo if not coordinates
-            lat = 35 + Math.random() * 10;
-            lng = 100 + Math.random() * 10;
-            name = input + (locations.length + 1);
+    /** 输入「纬度,经度」直接使用；否则按地名走高德地理编码。解析不出就如实告诉用户，不编造位置。 */
+    async function resolveInput(text: string): Promise<{ lat: number; lng: number; name: string } | null> {
+        const parts = text.split(/[,，]/).map((v) => v.trim());
+        if (parts.length === 2 && parts.every((v) => v !== '' && Number.isFinite(Number(v)))) {
+            const [lat, lng] = parts.map(Number);
+            if (Math.abs(lat) <= 90 && Math.abs(lng) <= 180) return { lat, lng, name: text };
+            return null;
         }
+        const res = await fetch(`/api/location?action=geocode&address=${encodeURIComponent(text)}`);
+        const body = await res.json().catch(() => null);
+        if (!res.ok) throw new Error(typeof body?.error === 'string' ? body.error : '地址解析失败，请稍后重试');
+        const hit = body?.data?.[0];
+        const [lng, lat] = String(hit?.location ?? '').split(',').map(Number);
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+        return { lat, lng, name: hit.formatted_address || text };
+    }
 
+    const addLocation = async () => {
+        if (!input.trim()) return;
+        setError(null);
+        if (locations.length >= 2) {
+            setError('雷达图目前最多对比 2 个地点，请先删除一个再添加');
+            return;
+        }
         setLoading(true);
+        let resolved: { lat: number; lng: number; name: string } | null;
+        try {
+            resolved = await resolveInput(input.trim());
+        } catch (e) {
+            setError(safeErrorMessage(e, '地址解析失败，请稍后重试'));
+            setLoading(false);
+            return;
+        }
+        if (!resolved) {
+            setError('未找到该地点，请输入「纬度,经度」或更详细的地址');
+            setLoading(false);
+            return;
+        }
+        const { lat, lng, name } = resolved;
         try {
             const [solar, wind, climate] = await Promise.all([
                 getSolarResource(lat, lng),
@@ -66,20 +92,11 @@ export default function ComparePage() {
             setInput('');
         } catch (e) {
             console.error(e);
-            alert('获取数据失败');
+            setError('获取资源数据失败，请稍后重试');
         } finally {
             setLoading(false);
         }
     };
-
-    const radarData = locations.map(loc => ({
-        subject: loc.name,
-        '光伏评分': loc.scores.solar,
-        '风电评分': loc.scores.wind,
-        '资源稳定': Math.random() * 30 + 70, // Mock
-        '环境适宜': 100 - (Math.abs(loc.climate.annual.temperature - 25) * 2),
-        '开发便利': Math.random() * 40 + 60
-    }));
 
     return (
         <div className="p-6 bg-gray-900 min-h-screen text-white">
@@ -105,6 +122,8 @@ export default function ComparePage() {
                     {loading ? '分析中...' : '添加对比'}
                 </button>
             </div>
+
+            {error && <p role="alert" className="mb-4 text-sm text-red-400">{error}</p>}
 
             {/* 内容区 */}
             {locations.length > 0 ? (

@@ -4,9 +4,19 @@ import { executeTool } from '@/lib/ai/tool-executor';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/auth-options';
 import { requireAiQuota } from '@/lib/ai/quota-guard';
+import { acquireMember } from '@/lib/membership/middleware';
+import { MAINTENANCE_FEATURE } from '@/lib/membership/maintenance-features';
 import { safeErrorMessage } from '@/lib/api/safe-error';
+import { aigcJson } from '@/lib/ai/aigc';
+
+const KNOWN_ACTIONS = new Set([
+    'health', 'fault', 'maintenance-window', 'inspection-plan', 'downtime-loss', 'cleaning', 'strings',
+    'iv-curve', 'work-permit', 'predictive', 'el_detect', 'vibration', 'blade_drone', 'soh', 'thermal',
+    'consistency', 'safety',
+]);
 
 export async function POST(request: NextRequest) {
+    let refund: (() => Promise<void>) | null = null;
     try {
         const body = await request.json().catch(() => null);
         const { action, params } = body ?? {};
@@ -18,12 +28,21 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // 原来不登录就能调用；「故障诊断」走 deepseek-v3，消耗模型额度。
+        if (!KNOWN_ACTIONS.has(action)) {
+            return NextResponse.json({ error: '无效的诊断类型' }, { status: 400 });
+        }
+
+        // 原来只校验登录：免费版（运维诊断额度为 0）和专业版也能无限次调用全部运维诊断，
+        // 会员页上「运维版」「每日诊断次数」都不生效，且这些诊断都会调用模型、消耗站点额度。
+        // 现在：具名的运维功能要求对应会员档，所有动作都按「每日诊断次数」扣减，失败退还。
         const session = await getServerSession(authOptions);
         if (!session?.user?.id) return NextResponse.json({ error: '请先登录' }, { status: 401 });
+        const acquired = await acquireMember({ feature: MAINTENANCE_FEATURE[action], usageType: 'diagnosis' });
+        if (!acquired.ok) return acquired.response;
+        refund = acquired.refund;
         if (action === 'fault') {
             const guard = await requireAiQuota();
-            if (!guard.ok) return guard.response;
+            if (!guard.ok) { await acquired.refund(); return guard.response; }
         }
 
         const startTime = Date.now();
@@ -89,7 +108,7 @@ export async function POST(request: NextRequest) {
                 );
         }
 
-        return NextResponse.json({
+        return aigcJson({
             success: true,
             data: result,
             action,
@@ -97,6 +116,7 @@ export async function POST(request: NextRequest) {
             duration: Date.now() - startTime
         });
     } catch (error) {
+        await refund?.();
         console.error('运维诊断错误:', error);
         return NextResponse.json(
             { error: safeErrorMessage(error, '诊断失败') },

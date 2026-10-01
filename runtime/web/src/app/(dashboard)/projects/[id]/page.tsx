@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { AigcLabel } from '@/components/ui/AigcLabel';
 
 interface DiagnosisResult {
     summary: string;
@@ -410,7 +411,7 @@ export default function ProjectDetailPage(props: ProjectDetailProps) {
 
                                     {/* Recommendations */}
                                     <div className="space-y-2">
-                                        <div className="text-xs font-black text-slate-400 uppercase">AI 建议</div>
+                                        <div className="flex items-center gap-2 text-xs font-black text-slate-400 uppercase">AI 建议 <AigcLabel compact /></div>
                                         <ul className="space-y-1">
                                             {diagnosis.recommendations.map((rec, i) => (
                                                 <li key={i} className="text-sm text-slate-700 flex items-start gap-2">

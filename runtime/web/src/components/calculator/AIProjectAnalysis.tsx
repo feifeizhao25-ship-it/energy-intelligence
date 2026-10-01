@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Sparkles, Loader2, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { AigcLabel } from '@/components/ui/AigcLabel';
 
 interface AIAnalysisProps {
     type: string;
@@ -77,7 +78,7 @@ export default function AIProjectAnalysis({ type, data }: AIAnalysisProps) {
                         </div>
                         <div className="mt-4 flex items-center justify-between">
                             <div className="text-[10px] text-slate-600 font-black uppercase tracking-tighter">Powered by DeepSeek V3</div>
-                            <div className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-500 text-[8px] font-black uppercase">低风险评级</div>
+                            <AigcLabel compact tone="dark" />
                         </div>
                     </motion.div>
                 )}

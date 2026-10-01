@@ -1,6 +1,5 @@
 import Sidebar from '@/components/layout/Sidebar';
 import OnboardingFlow from '@/components/onboarding/OnboardingFlow';
-import { ChatWidget } from '@/components/support/ChatWidget';
 import { OfflineIndicator } from '@/components/network/OfflineIndicator';
 import { StationProvider } from '@/contexts/StationContext';
 import { MilestoneModal } from '@/components/ui/MilestoneModal';
@@ -16,7 +15,6 @@ export default function DashboardLayout({
             <div className="min-h-screen">
                 <Sidebar />
                 <OnboardingFlow />
-                <ChatWidget />
                 <OfflineIndicator />
                 <MilestoneModal />
                 <AccessibilityPanel />

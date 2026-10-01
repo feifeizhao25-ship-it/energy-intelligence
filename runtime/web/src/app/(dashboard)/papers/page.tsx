@@ -161,7 +161,8 @@ export default function PapersPage() {
                 setTotal(data.data.papers.length);
                 setUnavailableSources((data.data.providers || []).filter((p: any) => p.status === 'unavailable').map((p: any) => p.name));
             } else {
-                setSearchError('学术数据源暂时不可用，请稍后重试。');
+                // 401/429 等带有明确中文原因（未登录、今日次数已用完），优先展示
+                setSearchError(typeof data?.message === 'string' && data.message ? data.message : '学术数据源暂时不可用，请稍后重试。');
             }
         } catch (e) {
             setSearchError('检索连接失败，请检查网络后重试。');

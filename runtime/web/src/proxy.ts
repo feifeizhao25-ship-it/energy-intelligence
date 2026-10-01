@@ -26,7 +26,7 @@ const intlMiddleware = createIntlMiddleware({
 
 // 仅旧版语言目录中的页面需要语言重写；根目录页面必须保持原路径。
 function domesticRoute(req: NextRequest) {
-  const localizedOnly = ['/education/pitfalls', '/tools/contract-check', '/calculator/compare'];
+  const localizedOnly = ['/education/pitfalls', '/calculator/compare'];
   return localizedOnly.includes(req.nextUrl.pathname) ? intlMiddleware(req) : NextResponse.next();
 }
 
@@ -69,7 +69,7 @@ const knownSegments = new Set([
   'community', 'dashboard', 'demo-request', 'developer', 'education',
   'enterprise', 'login', 'maintenance', 'map', 'membership', 'my',
   'onboarding', 'papers', 'pricing', 'privacy', 'project', 'projects',
-  'quick-calc', 'referral', 'resource', 'settings', 'terms', 'tools',
+  'quick-calc', 'referral', 'resource', 'settings', 'terms',
 ]);
 
 function firstSegment(pathname: string): string {

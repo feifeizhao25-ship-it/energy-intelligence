@@ -8,6 +8,7 @@ import { authOptions } from "@/lib/auth/auth-options";
 import { getDefaultModel, getAvailableModels } from "@/lib/membership/plans";
 import { Plan } from "@/lib/membership/plans";
 import { safeErrorMessage } from '@/lib/api/safe-error';
+import { aigcMeta, AIGC_HEADER } from '@/lib/ai/aigc';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -60,7 +61,8 @@ export async function POST(request: NextRequest) {
                         data: {
                             provider: isAssistant ? 'agent' : currentProvider,
                             model: actualModel,
-                            plan: userPlan
+                            plan: userPlan,
+                            aigc: aigcMeta(actualModel),
                         }
                     })}\n\n`));
 
@@ -118,7 +120,8 @@ export async function POST(request: NextRequest) {
             headers: {
                 'Content-Type': 'text/event-stream',
                 'Cache-Control': 'no-cache',
-                'Connection': 'keep-alive'
+                'Connection': 'keep-alive',
+                [AIGC_HEADER]: '1',
             }
         });
     } catch (error) {

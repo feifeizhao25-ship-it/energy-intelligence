@@ -35,6 +35,7 @@ jest.mock('@/lib/api/semantic-scholar', () => ({
   getRecommendations: (...a: unknown[]) => upstream('s2', ...a),
 }));
 jest.mock('@/lib/api/arxiv', () => ({ searchArxiv: (...a: unknown[]) => upstream('arxiv', ...a) }));
+jest.mock('@/lib/membership/middleware', () => ({ acquireMember: async () => ({ ok: true, user: { id: 'u', plan: 'PRO' }, refund: async () => undefined }) }));
 jest.mock('@/lib/papers/search', () => ({ unifiedSearch: (...a: unknown[]) => upstream('papers', ...a) }));
 jest.mock('@/lib/calculator/solar', () => ({ calculateSolar: (...a: unknown[]) => upstream('calc', ...a) }));
 jest.mock('@/lib/calculator/wind', () => ({ calculateWind: (...a: unknown[]) => upstream('calc', ...a) }));

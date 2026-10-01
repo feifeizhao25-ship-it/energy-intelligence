@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/auth-options';
 import { prisma } from '@/lib/prisma';
 import { simpleChat } from '@/lib/ai/unified';
+import { aigcJson } from '@/lib/ai/aigc';
 
 type DiagnosisResult = {
     summary: string;
@@ -69,7 +70,7 @@ export async function POST(req: NextRequest) {
         }
         if (!isDiagnosis(diagnosis)) throw new Error('AI 返回的诊断结构未通过校验');
 
-        return NextResponse.json({
+        return aigcJson({
             success: true,
             data: diagnosis,
             evidence: { source: 'daily_analysis', records: evidence.length, latestAt: evidence[0].date },
