@@ -109,7 +109,18 @@ export async function exportUserData(db: Client, userId: string) {
   return { exportedAt: new Date().toISOString(), user: user ? strip(user) : null, tables };
 }
 
-export async function eraseUser(db: Client, userId: string) {
+export class FileCleanupError extends Error {
+  constructor(options?: { cause?: unknown }) {
+    super('文件存储暂时不可用，账号尚未注销，请稍后重试', options);
+    this.name = 'FileCleanupError';
+  }
+}
+
+/**
+ * options.beforeErase：团队等前置检查通过之后、删除任何数据之前执行（用来删对象存储里的文件）。
+ * 它抛错则整体中止、什么都不动，账号保留、可稍后重试。
+ */
+export async function eraseUser(db: Client, userId: string, options: { beforeErase?: () => Promise<void> } = {}) {
   const user = await db.user.findUnique({ where: { id: userId } });
   if (!user) return { deleted: {}, retained: {}, failed: [] as string[] };
   const deleted: Record<string, number> = {};
@@ -122,6 +133,10 @@ export async function eraseUser(db: Client, userId: string) {
       where: { teamId: team.id, id: { not: userId }, deletedAt: null },
     });
     if (others > 0) throw new TeamHasMembersError(others);
+  }
+
+  if (options.beforeErase) {
+    try { await options.beforeErase(); } catch (error) { throw new FileCleanupError({ cause: error }); }
   }
 
   // ProjectComparison 对 Project 的外键没有级联：不先删它，Project 删不掉，

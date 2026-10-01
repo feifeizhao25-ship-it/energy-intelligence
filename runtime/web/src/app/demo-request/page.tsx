@@ -37,7 +37,7 @@ export default function DemoRequestPage() {
             const resp = await fetch('/api/demo-requests', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(form),
+                body: JSON.stringify({ ...form, consent: accepted }),
             });
             const payload = await resp.json().catch(() => ({}));
             if (resp.ok) {

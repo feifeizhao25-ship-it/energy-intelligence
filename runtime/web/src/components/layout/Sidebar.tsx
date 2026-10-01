@@ -55,7 +55,6 @@ export default function Sidebar() {
             items: [
                 { name: '我的项目', href: '/projects', icon: 'folder_open', tier: 'L3', requiresAuth: true },
                 { name: '项目日志', href: '/projects/timeline', icon: 'history', tier: 'L3', requiresAuth: true },
-                { name: '荣誉中心', href: '/achievements', icon: 'emoji_events', tier: 'L3', requiresAuth: true },
             ]
         },
         {

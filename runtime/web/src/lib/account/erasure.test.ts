@@ -1,4 +1,4 @@
-import { eraseUser, exportUserData, userOwnedModels, RETAINED_MODELS } from './erasure';
+import { eraseUser, exportUserData, userOwnedModels, RETAINED_MODELS, FileCleanupError, TeamHasMembersError } from './erasure';
 
 function fakeDb() {
   const tables: Record<string, { userId: string; [k: string]: unknown }[]> = {};
@@ -186,5 +186,35 @@ describe('顺着关系找的数据', () => {
     expect(out.tables.ProjectComparison).toHaveLength(1);
     expect(out.tables.DemoRequest).toHaveLength(1);
     expect(JSON.stringify(out)).not.toMatch(/keyHash|"password"/);
+  });
+});
+
+describe('注销前置步骤（beforeErase）', () => {
+  const baseClient = () => {
+    const calls: string[] = [];
+    const client: any = {
+      user: {
+        findUnique: async () => ({ id: 'u1', email: 'a@x.cn', phone: '13800138000' }),
+        update: async () => { calls.push('update'); },
+        count: async () => 2,
+      },
+      verificationCode: { deleteMany: async () => ({ count: 0 }) },
+      team: { findUnique: async () => null, delete: async () => undefined },
+    };
+    return { client, calls };
+  };
+
+  it('beforeErase 抛错：整体中止（FileCleanupError），用户行没有被匿名化', async () => {
+    const { client, calls } = baseClient();
+    await expect(eraseUser(client, 'u1', { beforeErase: async () => { throw new Error('oss down'); } })).rejects.toBeInstanceOf(FileCleanupError);
+    expect(calls).not.toContain('update');
+  });
+
+  it('团队里还有成员：在 beforeErase 之前就拒绝——被拒绝的注销不会把文件删掉', async () => {
+    const { client } = baseClient();
+    client.team.findUnique = async () => ({ id: 't1' });
+    const before = jest.fn();
+    await expect(eraseUser(client, 'u1', { beforeErase: before })).rejects.toBeInstanceOf(TeamHasMembersError);
+    expect(before).not.toHaveBeenCalled();
   });
 });

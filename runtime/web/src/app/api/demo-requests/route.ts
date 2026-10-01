@@ -22,6 +22,12 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: '请求体必须是合法的 JSON' }, { status: 400 });
     }
 
+    // 收集姓名、邮箱、电话前必须有同意隐私政策的明示：原来只有页面上的勾选框拦着，
+    // 直接调接口可以绕过。同意状态由页面随表单一起提交，服务端核对。
+    if ((body as { consent?: unknown } | null)?.consent !== true) {
+        return NextResponse.json({ error: '请先阅读并同意隐私政策', code: 'CONSENT_REQUIRED' }, { status: 422 });
+    }
+
     const result = validateDemoRequest(body);
     if (!result.ok) {
         return NextResponse.json({ error: '字段校验未通过', details: result.errors }, { status: 422 });

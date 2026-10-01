@@ -212,42 +212,6 @@ export function getNextAchievements(
 }
 
 /**
- * 发放成就奖励
- */
-export async function grantAchievementReward(
-    userId: string,
-    achievement: Achievement
-): Promise<{ success: boolean; message: string }> {
-    if (!achievement.reward) {
-        return { success: true, message: '成就已解锁' };
-    }
-
-    const { type, value } = achievement.reward;
-
-    switch (type) {
-        case 'pro_days':
-            // TODO: 调用会员服务延长Pro天数
-            return {
-                success: true,
-                message: `🎉 恭喜！获得 ${value} 天专业版体验`
-            };
-        case 'discount':
-            // TODO: 生成优惠码
-            return {
-                success: true,
-                message: `🎁 恭喜！获得 ${value}% 折扣券`
-            };
-        case 'badge':
-            return {
-                success: true,
-                message: `🏆 恭喜获得徽章！`
-            };
-        default:
-            return { success: true, message: '成就已解锁' };
-    }
-}
-
-/**
  * 格式化成就进度文本
  */
 export function formatProgressText(

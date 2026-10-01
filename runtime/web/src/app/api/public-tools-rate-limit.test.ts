@@ -114,7 +114,7 @@ const cases: Case[] = [
     build: (ip) => npost('/api/calculate/comparison', { lat: 30, lng: 120, province: '江苏' }, ip) },
   { name: 'POST /api/demo-requests', rule: PUBLIC_RULES.demoRequest,
     load: async () => (await import('./demo-requests/route')).POST as never,
-    build: (ip) => npost('/api/demo-requests', { name: '张三', company: '某能源公司', email: `a${Math.random()}@b.cn` }, ip) },
+    build: (ip) => npost('/api/demo-requests', { name: '张三', company: '某能源公司', email: `a${Math.random()}@b.cn`, consent: true }, ip) },
 ];
 
 describe.each(cases)('$name 按来源限流', (c) => {

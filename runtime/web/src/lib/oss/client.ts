@@ -56,3 +56,37 @@ export async function getSignedUrl(path: string, expires: number = 3600) {
         return null;
     }
 }
+
+/** 用户文件在 OSS 里的统一前缀：uploadToOSS 的调用方必须把用户文件放在这个前缀下，注销时按前缀整体删除。 */
+export function userFilePrefix(userId: string): string {
+    return `users/${userId}/`;
+}
+
+interface OssLike {
+    list(query: { prefix: string; marker?: string; 'max-keys'?: number }, options?: object): Promise<{ objects?: { name: string }[]; isTruncated?: boolean; nextMarker?: string }>;
+    deleteMulti(names: string[], options?: { quiet?: boolean }): Promise<unknown>;
+}
+
+/**
+ * 注销账号时删除该用户在 OSS 里的全部文件（上传的文献 PDF 等）。
+ *
+ * 原来注销只删数据库行，OSS 里用户上传的 PDF 原文件原样留着，与「删除个人信息」的承诺不符。
+ * 未配置 OSS 时（没有存过文件）返回 0；删除失败会抛错，调用方应中止注销、让用户稍后重试，
+ * 而不是先删库再留下无人认领的文件。
+ */
+export async function deleteUserFiles(userId: string, client: OssLike | null = getClient() as unknown as OssLike | null): Promise<number> {
+    if (!client) return 0;
+    const prefix = userFilePrefix(userId);
+    let deleted = 0;
+    let marker: string | undefined;
+    do {
+        const page = await client.list({ prefix, marker, 'max-keys': 1000 });
+        const names = (page.objects ?? []).map((o) => o.name).filter((n) => n.startsWith(prefix));
+        if (names.length) {
+            await client.deleteMulti(names, { quiet: true });
+            deleted += names.length;
+        }
+        marker = page.isTruncated ? page.nextMarker : undefined;
+    } while (marker);
+    return deleted;
+}

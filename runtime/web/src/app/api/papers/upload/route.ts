@@ -5,7 +5,7 @@ import { ragProcessor } from '@/lib/papers/rag';
 import { validatePdfBuffer, PdfValidationError } from '@/lib/papers/pdf-guard';
 import { prisma } from '@/lib/prisma';
 import { enforceStorageLimit } from '@/lib/membership/storage-limits';
-import { uploadToOSS } from '@/lib/oss/client';
+import { uploadToOSS, userFilePrefix } from '@/lib/oss/client';
 import { v4 as uuidv4 } from 'uuid';
 import { safeErrorMessage } from '@/lib/api/safe-error';
 
@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
         }
 
         // 1. 上传到 OSS (可选，用于持久化)
-        const ossPath = `users/${session.user.id}/papers/${uuidv4()}-${file.name}`;
+        const ossPath = `${userFilePrefix(session.user.id)}papers/${uuidv4()}-${file.name.replace(/[\\/]/g, '_')}`;
         const ossResult = await uploadToOSS(ossPath, buffer);
 
         // 2. 存入数据库
