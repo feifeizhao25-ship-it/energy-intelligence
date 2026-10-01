@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { ArrowLeft, Check, Info, ShieldCheck } from 'lucide-react';
 import { useLocale } from 'next-intl';
 import { PLAN_DETAILS, Plan } from '@/lib/membership/plans';
+import { safeErrorMessage } from '@/lib/api/safe-error';
 
 const purchasable = [Plan.PRO, Plan.MAINTENANCE, Plan.FULL] as const;
 type PurchasablePlan = (typeof purchasable)[number];
@@ -38,7 +39,7 @@ export default function CheckoutPage() {
       if (!response.ok || !result.paymentUrl) throw new Error(result.message || '支付订单创建失败');
       window.location.assign(result.paymentUrl);
     } catch (error) {
-      setPaymentError(error instanceof Error ? error.message : '支付订单创建失败，请稍后重试');
+      setPaymentError(safeErrorMessage(error, '支付订单创建失败，请稍后重试'));
       setPaying(false);
     }
   }

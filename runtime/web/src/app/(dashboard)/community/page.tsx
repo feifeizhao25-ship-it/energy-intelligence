@@ -2,6 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { Loader2, MessageSquare, Plus, RefreshCw } from 'lucide-react';
+import { safeErrorMessage } from '@/lib/api/safe-error';
 
 type Question = {
     id: string;
@@ -33,7 +34,7 @@ export default function CommunityPage() {
             setQuestions(Array.isArray(payload.questions) ? payload.questions : []);
         } catch (cause) {
             setQuestions([]);
-            setError(cause instanceof Error ? cause.message : '社区内容加载失败');
+            setError(safeErrorMessage(cause, '社区内容加载失败'));
         } finally {
             setLoading(false);
         }
@@ -60,7 +61,7 @@ export default function CommunityPage() {
             setShowForm(false);
             await loadQuestions();
         } catch (cause) {
-            setError(cause instanceof Error ? cause.message : '问题发布失败');
+            setError(safeErrorMessage(cause, '问题发布失败'));
         } finally {
             setSubmitting(false);
         }

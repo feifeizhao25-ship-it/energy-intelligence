@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft, ArrowRight, Wind, MapPin, Settings, PieChart, BarChart3, Calculator, Loader2, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import LocationPicker from '@/components/map/LocationPicker';
+import { safeErrorMessage } from '@/lib/api/safe-error';
 
 export default function WindCalculatorPage() {
     const router = useRouter();
@@ -64,7 +65,7 @@ export default function WindCalculatorPage() {
         } catch (error) {
             setErrorMessage(error instanceof TypeError
                 ? '网络连接失败，请检查网络后重试。'
-                : error instanceof Error ? error.message : '测算失败，请稍后重试。');
+                : safeErrorMessage(error, '测算失败，请稍后重试。'));
         } finally {
             setIsCalculating(false);
         }

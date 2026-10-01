@@ -9,6 +9,7 @@ import {
 } from '@/lib/api/weather';
 import { getAirQualityIndex } from '@/lib/api/open-meteo'; // Fallback or alternative
 import { enforceRateLimit, PUBLIC_RULES } from '@/lib/security/rate-limit';
+import { safeErrorMessage } from '@/lib/api/safe-error';
 
 export async function GET(request: NextRequest) {
     const limited = await enforceRateLimit(request, PUBLIC_RULES.resource);
@@ -81,7 +82,7 @@ export async function GET(request: NextRequest) {
         console.error('资源查询错误:', error);
         return NextResponse.json(
             {
-                error: error instanceof Error ? error.message : '查询失败',
+                error: safeErrorMessage(error, '查询失败'),
                 location: { lat, lng }
             },
             { status: 500 }

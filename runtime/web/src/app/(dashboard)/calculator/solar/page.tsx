@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Sun, ArrowLeft, CheckCircle2, Loader2 } from 'lucide-react';
 import { requestSolarPreview, type SolarPreview, type SolarPreviewInput } from '@/lib/calculator/solar-preview-client';
+import { safeErrorMessage } from '@/lib/api/safe-error';
 
 const fields = [
     { key: 'lat', label: '项目纬度', unit: '度，南纬为负数', placeholder: '例如 39.90', min: -90, max: 90 },
@@ -31,7 +32,7 @@ export default function SolarCalculatorPage() {
         setBusy(true); setError(''); setResult(null);
         const values = { ...input };
         try { setResult(await requestSolarPreview(values)); setSubmitted(values); }
-        catch (error) { setError(error instanceof Error ? error.message : '测算未完成，请稍后再试。'); }
+        catch (error) { setError(safeErrorMessage(error, '测算未完成，请稍后再试。')); }
         finally { pending.current = false; setBusy(false); }
     }
     return <div className="mx-auto max-w-5xl space-y-6 pb-12 text-slate-800">

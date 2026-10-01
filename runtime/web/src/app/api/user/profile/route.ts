@@ -7,7 +7,7 @@ export async function POST(req: NextRequest) {
     const session = await getServerSession(authOptions);
 
     if (!session || !session.user) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        return NextResponse.json({ error: "请先登录" }, { status: 401 });
     }
 
     try {
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: true, user: updatedUser });
     } catch (error: any) {
         console.error('Profile update error:', error);
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+        return NextResponse.json({ error: "服务器内部错误，请稍后再试" }, { status: 500 });
     }
 }
 
@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
     const session = await getServerSession(authOptions);
 
     if (!session || !session.user) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        return NextResponse.json({ error: "请先登录" }, { status: 401 });
     }
 
     try {
@@ -58,6 +58,6 @@ export async function GET(req: NextRequest) {
 
         return NextResponse.json({ success: true, user });
     } catch (error: any) {
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+        return NextResponse.json({ error: "服务器内部错误，请稍后再试" }, { status: 500 });
     }
 }

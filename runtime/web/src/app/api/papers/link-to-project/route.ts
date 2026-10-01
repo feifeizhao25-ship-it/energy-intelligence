@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 import { prisma } from '@/lib/prisma';
+import { safeErrorMessage } from '@/lib/api/safe-error';
 
 /**
  * POST /api/papers/link-to-project
@@ -12,7 +13,7 @@ export async function POST(request: NextRequest) {
     try {
         const session = await getServerSession(authOptions);
         if (!session?.user?.id) {
-            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+            return NextResponse.json({ success: false, error: '请先登录' }, { status: 401 });
         }
 
         const body = await request.json();
@@ -20,7 +21,7 @@ export async function POST(request: NextRequest) {
 
         if (!projectId) {
             return NextResponse.json(
-                { success: false, error: 'Project ID is required' },
+                { success: false, error: '缺少项目 ID' },
                 { status: 400 }
             );
         }
@@ -41,7 +42,7 @@ export async function POST(request: NextRequest) {
 
         if (!project) {
             return NextResponse.json(
-                { success: false, error: 'Project not found' },
+                { success: false, error: '项目不存在或无权访问' },
                 { status: 404 }
             );
         }
@@ -59,7 +60,7 @@ export async function POST(request: NextRequest) {
 
             if (!paper) {
                 return NextResponse.json(
-                    { success: false, error: 'Saved paper not found' },
+                    { success: false, error: '未找到已收藏的文献' },
                     { status: 404 }
                 );
             }
@@ -122,7 +123,7 @@ export async function POST(request: NextRequest) {
                     data: {
                         savedPaper: updated,
                         aiInsights,
-                        message: 'Paper already saved, updated project link',
+                        message: '文献已收藏，已更新项目关联',
                     },
                 });
             }
@@ -132,7 +133,7 @@ export async function POST(request: NextRequest) {
 
             if (!paperDetails) {
                 return NextResponse.json(
-                    { success: false, error: 'Paper details not found' },
+                    { success: false, error: '未找到文献详情' },
                     { status: 404 }
                 );
             }
@@ -173,13 +174,13 @@ export async function POST(request: NextRequest) {
         }
 
         return NextResponse.json(
-            { success: false, error: 'Either savedPaperId or paperId is required' },
+            { success: false, error: '请提供 savedPaperId 或 paperId' },
             { status: 400 }
         );
     } catch (error: any) {
         console.error('Error linking paper to project:', error);
         return NextResponse.json(
-            { success: false, error: error.message },
+            { success: false, error: safeErrorMessage(error, '关联文献失败，请稍后重试') },
             { status: 500 }
         );
     }

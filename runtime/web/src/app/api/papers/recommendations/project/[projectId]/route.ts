@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 import { prisma } from '@/lib/prisma';
+import { safeErrorMessage } from '@/lib/api/safe-error';
 
 /**
  * GET /api/papers/recommendations/project/[projectId]
@@ -12,7 +13,7 @@ export async function GET(request: NextRequest, props: { params: Promise<{ proje
     try {
         const session = await getServerSession(authOptions);
         if (!session?.user?.id) {
-            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+            return NextResponse.json({ success: false, error: '请先登录' }, { status: 401 });
         }
 
         const { projectId } = params;
@@ -35,7 +36,7 @@ export async function GET(request: NextRequest, props: { params: Promise<{ proje
 
         if (!project) {
             return NextResponse.json(
-                { success: false, error: 'Project not found' },
+                { success: false, error: '项目不存在或无权访问' },
                 { status: 404 }
             );
         }
@@ -94,7 +95,7 @@ export async function GET(request: NextRequest, props: { params: Promise<{ proje
     } catch (error: any) {
         console.error('Error generating paper recommendations:', error);
         return NextResponse.json(
-            { success: false, error: error.message },
+            { success: false, error: safeErrorMessage(error, '生成文献推荐失败，请稍后重试') },
             { status: 500 }
         );
     }

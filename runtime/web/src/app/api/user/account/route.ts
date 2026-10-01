@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { eraseUser, TeamHasMembersError } from '@/lib/account/erasure';
 import { verifySmsCode } from '@/lib/auth/sms-verify';
 import { prismaCodeStore } from '@/lib/auth/sms-store';
+import { safeErrorMessage } from '@/lib/api/safe-error';
 
 /**
  * 注销账号。需要本人手机号的新验证码（防止会话被他人拿到后直接注销），并输入「确认注销」。
@@ -29,7 +30,7 @@ export async function DELETE(req: NextRequest) {
     } catch (error) {
         // 团队所有者且团队里还有别人：什么都没动，请先转让团队或移除成员
         if (error instanceof TeamHasMembersError) {
-            return NextResponse.json({ error: error.message, code: 'TEAM_HAS_MEMBERS' }, { status: 409 });
+            return NextResponse.json({ error: safeErrorMessage(error, '团队里还有其他成员，请先转让团队或移除成员，再注销账号'), code: 'TEAM_HAS_MEMBERS' }, { status: 409 });
         }
         throw error;
     }

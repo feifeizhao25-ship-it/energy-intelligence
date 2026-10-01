@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { useSession } from 'next-auth/react';
 import { Sparkles, Send, Paperclip, Mic, Settings2, Copy, RefreshCw, Loader2, FileText, Image as ImageIcon, AlertCircle } from 'lucide-react';
+import { safeErrorMessage } from '@/lib/api/safe-error';
 
 interface Message {
     id: string;
@@ -157,7 +158,7 @@ export default function AssistantPage() {
         } catch (err: any) {
             if (err.name === 'AbortError') return;
 
-            setError(err.message || 'AI 响应失败');
+            setError(safeErrorMessage(err, 'AI 响应失败'));
             setMessages(prev => prev.filter(m => m.id !== aiMessageId));
         } finally {
             setIsLoading(false);

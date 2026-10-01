@@ -17,7 +17,7 @@ import { withOpenApi } from '@/lib/api/open-api-middleware';
 async function handleGetAnalytics(_req: NextRequest, _keyData: unknown) {
     return NextResponse.json({
         success: false,
-        error: { code: 'VERIFIED_ANALYTICS_UNAVAILABLE', message: 'Verified telemetry and benchmark data are not connected; synthetic analytics are disabled.' },
+        error: { code: 'VERIFIED_ANALYTICS_UNAVAILABLE', message: '尚未接入经验证的遥测与基准数据，系统不提供合成（模拟）的分析结果。' },
     }, { status: 503 });
 }
 

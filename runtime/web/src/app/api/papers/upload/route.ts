@@ -7,6 +7,7 @@ import { prisma } from '@/lib/prisma';
 import { enforceStorageLimit } from '@/lib/membership/storage-limits';
 import { uploadToOSS } from '@/lib/oss/client';
 import { v4 as uuidv4 } from 'uuid';
+import { safeErrorMessage } from '@/lib/api/safe-error';
 
 /**
  * 上传并索引本地 PDF
@@ -78,12 +79,12 @@ export async function POST(req: NextRequest) {
     } catch (error: any) {
         console.error('[Upload API] Failed:', error);
         if (error instanceof PdfValidationError) {
-            return NextResponse.json({ error: error.message }, { status: error.status });
+            return NextResponse.json({ error: safeErrorMessage(error, '文件校验未通过') }, { status: error.status });
         }
         // 解析失败等已知客户端错误返回 422，不向客户端泄露内部异常细节；
         // 其余（OSS/数据库等）按服务端错误处理。
         if (typeof error?.message === 'string' && error.message.startsWith('PDF ')) {
-            return NextResponse.json({ error: error.message }, { status: 422 });
+            return NextResponse.json({ error: safeErrorMessage(error, 'PDF 解析失败') }, { status: 422 });
         }
         return NextResponse.json({ error: '上传失败' }, { status: 500 });
     }

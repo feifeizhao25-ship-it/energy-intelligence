@@ -9,6 +9,7 @@ import { getSolarResource } from '@/lib/api/nasa-power';
 import { getPriceConfig } from '@/lib/policy/electricity-price';
 import { calculateWind } from './wind';
 import { PolicyService } from '@/lib/services/policy-service';
+import { safeErrorMessage } from '@/lib/api/safe-error';
 
 // 光伏组件配置
 interface ModuleConfig {
@@ -175,7 +176,7 @@ export async function calculateSolar(input: SolarCalculationInput): Promise<Sola
 
   } catch (error) {
     console.error('光伏计算失败:', error);
-    throw new Error(`光伏计算失败: ${error instanceof Error ? error.message : '未知错误'}`);
+    throw new Error(`光伏计算失败: ${safeErrorMessage(error, '未知错误')}`);
   }
 }
 

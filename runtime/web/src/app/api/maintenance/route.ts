@@ -4,6 +4,7 @@ import { executeTool } from '@/lib/ai/tool-executor';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/auth-options';
 import { requireAiQuota } from '@/lib/ai/quota-guard';
+import { safeErrorMessage } from '@/lib/api/safe-error';
 
 export async function POST(request: NextRequest) {
     try {
@@ -98,7 +99,7 @@ export async function POST(request: NextRequest) {
     } catch (error) {
         console.error('运维诊断错误:', error);
         return NextResponse.json(
-            { error: error instanceof Error ? error.message : '诊断失败' },
+            { error: safeErrorMessage(error, '诊断失败') },
             { status: 500 }
         );
     }

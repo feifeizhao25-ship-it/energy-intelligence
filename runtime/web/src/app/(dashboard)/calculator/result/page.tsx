@@ -19,6 +19,7 @@ import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
 import InvestmentReport from '@/components/calculator/InvestmentReport';
 import AIProjectAnalysis from '@/components/calculator/AIProjectAnalysis';
+import { safeErrorMessage } from '@/lib/api/safe-error';
 
 const PDFDownloadLink = dynamic(
     () => import('@react-pdf/renderer').then((mod) => mod.PDFDownloadLink),
@@ -302,7 +303,7 @@ function PDFDownloadButton({ data, type }: { data: any, type: string }) {
                             if (!response.ok) throw new Error(payload.message || '导出额度核验失败');
                             setShouldRender(true);
                         } catch (error) {
-                            setErrorMessage(error instanceof Error ? error.message : '导出额度核验失败');
+                            setErrorMessage(safeErrorMessage(error, '导出额度核验失败'));
                         } finally {
                             setReserving(false);
                         }

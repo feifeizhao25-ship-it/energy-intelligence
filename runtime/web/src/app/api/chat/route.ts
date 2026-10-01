@@ -7,6 +7,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth/auth-options";
 import { getDefaultModel, getAvailableModels } from "@/lib/membership/plans";
 import { Plan } from "@/lib/membership/plans";
+import { safeErrorMessage } from '@/lib/api/safe-error';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -105,7 +106,7 @@ export async function POST(request: NextRequest) {
                     console.error('流处理错误:', error);
                     const errorData = JSON.stringify({
                         type: 'error',
-                        data: { message: error instanceof Error ? error.message : '未知错误' }
+                        data: { message: safeErrorMessage(error, '未知错误') }
                     });
                     controller.enqueue(encoder.encode(`data: ${errorData}\n\n`));
                     controller.close();
@@ -124,7 +125,7 @@ export async function POST(request: NextRequest) {
         console.error('Chat API错误:', error);
         return new Response(
             JSON.stringify({
-                error: error instanceof Error ? error.message : '服务器错误'
+                error: safeErrorMessage(error, '服务器错误')
             }),
             { status: 500, headers: { 'Content-Type': 'application/json' } }
         );
@@ -151,7 +152,7 @@ export async function GET() {
         return new Response(
             JSON.stringify({
                 message: '新能源智库 AI 对话API',
-                error: error instanceof Error ? error.message : '未配置AI服务'
+                error: safeErrorMessage(error, '未配置AI服务')
             }),
             { headers: { 'Content-Type': 'application/json' } }
         );

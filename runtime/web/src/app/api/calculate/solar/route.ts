@@ -55,7 +55,6 @@ export async function POST(req: Request) {
                     success: false,
                     error: `暂无「${province}」的电价数据，无法测算`,
                     code: 'PRICE_UNAVAILABLE',
-                    detail: e instanceof Error ? e.message : String(e),
                 },
                 { status: 422 },
             );

@@ -14,7 +14,7 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
     try {
         const session = await getServerSession(authOptions);
         if (!session?.user?.id) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+            return NextResponse.json({ error: '请先登录' }, { status: 401 });
         }
 
         const projectId = params.id;
@@ -41,7 +41,7 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
     } catch (error) {
         console.error('Timeline API error:', error);
         return NextResponse.json(
-            { error: 'Failed to fetch timeline' },
+            { error: '获取项目时间线失败，请稍后重试' },
             { status: 500 }
         );
     }

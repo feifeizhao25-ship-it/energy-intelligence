@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth/auth-options';
 import { prisma } from '@/lib/prisma';
 import { SolarCalculatorV2 } from '@/lib/calculator/solar-v2';
 import { saveSolar, SolarAccessError } from '@/lib/calculator/save-solar';
+import { safeErrorMessage } from '@/lib/api/safe-error';
 
 const respond = (status: number, body: object) => NextResponse.json(body, {
     status, headers: { 'Cache-Control': 'private, no-store' },
@@ -31,7 +32,7 @@ export async function POST(req: NextRequest) {
         const snapshotId = await saveSolar(session.user.id, body.projectId ?? null, result);
         return respond(200, { success: true, data: { ...result, snapshotId }, meta: { persisted: true, qualityTag: 'PREVIEW' } });
     } catch (error) {
-        if (error instanceof SolarAccessError) return respond(error.status, { success: false, message: error.message });
+        if (error instanceof SolarAccessError) return respond(error.status, { success: false, message: safeErrorMessage(error, '测算失败，请稍后重试') });
         if (error instanceof Error && ['INVALID_SOLAR_INPUT', 'INVALID_COORDINATES', 'INVALID_QUALITY_TAG'].includes(error.message)) {
             return respond(400, { success: false, message: '测算参数无效，请检查位置、容量、成本和电价' });
         }

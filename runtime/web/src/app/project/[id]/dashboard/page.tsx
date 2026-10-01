@@ -18,6 +18,7 @@ import TrendChart from '@/components/dashboard/TrendChart';
 import AlertList from '@/components/dashboard/AlertList';
 import MaintenanceTasks from '@/components/dashboard/MaintenanceTasks';
 import HealthScore from '@/components/dashboard/HealthScore';
+import { safeErrorMessage } from '@/lib/api/safe-error';
 
 interface DashboardData {
     today: {
@@ -115,7 +116,7 @@ export default function ProjectDashboard() {
             }
         } catch (err: any) {
             console.error('获取Dashboard数据失败:', err);
-            setError(err.message);
+            setError(safeErrorMessage(err, '获取数据失败，请稍后重试'));
         } finally {
             setLoading(false);
         }

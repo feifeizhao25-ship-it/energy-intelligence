@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { calculateWind } from '@/lib/calculator/wind';
 import { withMembershipCheck } from '@/lib/membership/middleware';
 import { prisma } from '@/lib/prisma';
+import { safeErrorMessage } from '@/lib/api/safe-error';
 
 export async function POST(req: NextRequest) {
     return withMembershipCheck(
@@ -29,7 +30,7 @@ export async function POST(req: NextRequest) {
                 return NextResponse.json({ success: true, data: result });
             } catch (error) {
                 return NextResponse.json(
-                    { error: 'CALCULATION_ERROR', message: error instanceof Error ? error.message : '计算失败' },
+                    { error: 'CALCULATION_ERROR', message: safeErrorMessage(error, '计算失败') },
                     { status: 500 }
                 );
             }

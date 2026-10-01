@@ -43,7 +43,12 @@ export async function POST(request: Request) {
         } });
         return NextResponse.json({ success: true, orderNo, amount: amount.toFixed(2), paymentUrl });
     } catch (error) {
-        const message = error instanceof Error ? error.message : '支付订单创建失败';
-        return NextResponse.json({ success: false, error: 'PAYMENT_CREATE_FAILED', message }, { status: 503 });
+        // 原来把 error.message 原样返回：缺配置时用户会看到「支付宝商户配置缺失：ALIPAY_PRIVATE_KEY」，
+        // 把环境变量名、内部校验和数据库连接信息都暴露给浏览器。细节只写服务端日志。
+        console.error('[membership/upgrade] 创建支付订单失败：', error);
+        return NextResponse.json({
+            success: false, error: 'PAYMENT_CREATE_FAILED',
+            message: '支付通道暂时不可用，请稍后再试；如持续失败请联系客服',
+        }, { status: 503 });
     }
 }

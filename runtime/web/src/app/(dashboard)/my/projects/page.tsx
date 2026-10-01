@@ -85,7 +85,7 @@ export default function MyProjectsPage() {
                             <h1 className="text-4xl md:text-6xl font-black text-white tracking-tighter">
                                 我的 <span className="text-green-500">动力资产</span>
                             </h1>
-                            <p className="text-slate-400 font-bold text-lg">My Energy Assets & Stations</p>
+                            <p className="text-slate-400 font-bold text-lg">我的能源资产与电站</p>
                         </div>
                         <div className="flex gap-4">
                             <Link href="/quick-calc/solar" className="bg-green-500 hover:bg-green-400 text-slate-900 px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-xl shadow-green-500/20 flex items-center gap-2">

@@ -7,7 +7,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
     const params = await props.params;
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        return NextResponse.json({ error: '请先登录' }, { status: 401 });
     }
     const projectId = params.id;
 
@@ -22,13 +22,13 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
         });
 
         if (!project) {
-            return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+            return NextResponse.json({ error: '项目不存在或无权访问' }, { status: 404 });
         }
 
         return NextResponse.json({ success: true, data: project });
     } catch (error) {
         console.error('Failed to fetch project:', error);
-        return NextResponse.json({ error: 'Project service unavailable' }, { status: 503 });
+        return NextResponse.json({ error: '项目服务暂时不可用，请稍后再试' }, { status: 503 });
     }
 }
 
@@ -36,7 +36,7 @@ export async function DELETE(req: NextRequest, props: { params: Promise<{ id: st
     const params = await props.params;
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        return NextResponse.json({ error: '请先登录' }, { status: 401 });
     }
     const userId = session.user.id;
 
@@ -51,6 +51,6 @@ export async function DELETE(req: NextRequest, props: { params: Promise<{ id: st
         return NextResponse.json({ success: true });
     } catch (error) {
         console.error('Failed to delete project:', error);
-        return NextResponse.json({ error: 'Failed to delete project' }, { status: 500 });
+        return NextResponse.json({ error: '删除项目失败，请稍后重试' }, { status: 500 });
     }
 }

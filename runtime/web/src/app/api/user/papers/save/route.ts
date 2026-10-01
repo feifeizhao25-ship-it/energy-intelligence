@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/auth-options';
 import { prisma } from '@/lib/prisma';
 import { enforceStorageLimit } from '@/lib/membership/storage-limits';
+import { safeErrorMessage } from '@/lib/api/safe-error';
 
 /**
  * 保存文献到用户的个人库
@@ -71,7 +72,7 @@ export async function POST(req: NextRequest) {
     } catch (error: any) {
         console.error('[Save Paper API] Error:', error);
         return NextResponse.json({
-            error: error.message || '保存文献失败'
+            error: safeErrorMessage(error, '保存文献失败')
         }, { status: 500 });
     }
 }

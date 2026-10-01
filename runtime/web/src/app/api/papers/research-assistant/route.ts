@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAiQuota } from '@/lib/ai/quota-guard';
 import { simpleChat } from '@/lib/ai/unified';
+import { safeErrorMessage } from '@/lib/api/safe-error';
 
 /**
  * AI 研究助手 API
@@ -164,7 +165,7 @@ ${i + 1}. ${p.title} - ${p.authors?.[0] || 'Unknown'} et al. (${p.year})
             default:
                 return NextResponse.json({
                     success: false,
-                    error: `Unknown task: ${task}`
+                    error: `不支持的任务类型：${task}`
                 }, { status: 400 });
         }
 
@@ -177,7 +178,7 @@ ${i + 1}. ${p.title} - ${p.authors?.[0] || 'Unknown'} et al. (${p.year})
         console.error('Research assistant error:', error);
         return NextResponse.json({
             success: false,
-            error: error.message || 'Failed to process request'
+            error: safeErrorMessage(error, '处理请求失败，请稍后重试')
         }, { status: 500 });
     }
 }

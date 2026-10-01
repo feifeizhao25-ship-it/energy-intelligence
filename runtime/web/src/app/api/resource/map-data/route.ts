@@ -118,7 +118,7 @@ export async function GET(request: NextRequest) {
     } catch {
         console.error('Resource map generation failed');
         return NextResponse.json(
-            { success: false, error: 'Failed to generate resource data' },
+            { success: false, error: '生成资源数据失败，请稍后重试' },
             { status: 500 }
         );
     }

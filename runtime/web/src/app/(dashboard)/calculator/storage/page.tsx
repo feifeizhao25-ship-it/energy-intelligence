@@ -5,6 +5,7 @@ import { readCalculationResponse } from '@/lib/calculator/client-response';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, ArrowRight, Battery, Settings, PieChart, Calculator, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { safeErrorMessage } from '@/lib/api/safe-error';
 
 export default function StorageCalculatorPage() {
     const router = useRouter();
@@ -45,7 +46,7 @@ export default function StorageCalculatorPage() {
         } catch (error) {
             setErrorMessage(error instanceof TypeError
                 ? '网络连接失败，请检查网络后重试。'
-                : error instanceof Error ? error.message : '测算失败，请稍后重试。');
+                : safeErrorMessage(error, '测算失败，请稍后重试。'));
         } finally {
             setIsCalculating(false);
         }

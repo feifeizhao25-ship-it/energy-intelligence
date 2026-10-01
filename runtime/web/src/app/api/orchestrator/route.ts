@@ -2,6 +2,7 @@
 // GET /api/orchestrator?projectId=xxx
 
 import { NextRequest, NextResponse } from 'next/server';
+import { safeErrorMessage } from '@/lib/api/safe-error';
 export const dynamic = 'force-dynamic';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
@@ -13,7 +14,7 @@ export async function GET(request: NextRequest) {
         const session = await getServerSession(authOptions);
         if (!session?.user?.id) {
             return NextResponse.json(
-                { error: 'Unauthorized', message: '请先登录' },
+                { error: '请先登录', message: '请先登录' },
                 { status: 401 }
             );
         }
@@ -27,7 +28,7 @@ export async function GET(request: NextRequest) {
         const rawProjectId = request.nextUrl.searchParams.get('projectId');
         if (!rawProjectId) {
             return NextResponse.json(
-                { error: 'Bad Request', message: '缺少 projectId 参数' },
+                { error: '请求参数有误', message: '缺少 projectId 参数' },
                 { status: 400 }
             );
         }
@@ -50,7 +51,7 @@ export async function GET(request: NextRequest) {
                 } else {
                     await prisma.$disconnect();
                     return NextResponse.json(
-                        { error: 'Not Found', message: '当前账号还没有项目，请先创建项目' },
+                        { error: '未找到相关内容', message: '当前账号还没有项目，请先创建项目' },
                         { status: 404 }
                     );
                 }
@@ -59,7 +60,7 @@ export async function GET(request: NextRequest) {
             } catch (err) {
                 console.error('Error fetching user project:', err);
                 return NextResponse.json(
-                    { error: 'Service Unavailable', message: '项目数据暂时不可用' },
+                    { error: '服务暂时不可用，请稍后再试', message: '项目数据暂时不可用' },
                     { status: 503 }
                 );
             }
@@ -76,8 +77,8 @@ export async function GET(request: NextRequest) {
         console.error('Orchestrator API error:', error);
         return NextResponse.json(
             {
-                error: 'Internal Server Error',
-                message: error instanceof Error ? error.message : '服务器内部错误'
+                error: '服务器内部错误，请稍后再试',
+                message: safeErrorMessage(error, '服务器内部错误')
             },
             { status: 500 }
         );

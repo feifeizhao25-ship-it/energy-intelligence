@@ -161,7 +161,7 @@ export default function WorkPermitGeneratorView() {
                         <div className="bg-white border-2 border-slate-200 rounded-sm p-8 shadow-2xl mb-8 relative">
                             {/* Watermark */}
                             <div className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-[0.03] overflow-hidden">
-                                <div className="text-[12rem] font-black transform -rotate-45 whitespace-nowrap">WORK PERMIT</div>
+                                <div className="text-[12rem] font-black transform -rotate-45 whitespace-nowrap">工作票</div>
                             </div>
 
                             <div className="text-center border-b-2 border-slate-800 pb-4 mb-6">

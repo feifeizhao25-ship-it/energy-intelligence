@@ -7,6 +7,7 @@ import {
     getLocationSuggestions
 } from '@/lib/api/amap';
 import { enforceRateLimit, PUBLIC_RULES } from '@/lib/security/rate-limit';
+import { safeErrorMessage } from '@/lib/api/safe-error';
 
 export async function GET(request: NextRequest) {
     const limited = await enforceRateLimit(request, PUBLIC_RULES.amap);
@@ -68,7 +69,7 @@ export async function GET(request: NextRequest) {
     } catch (error) {
         console.error('Location API Error:', error);
         return NextResponse.json(
-            { error: error instanceof Error ? error.message : '位置服务出错' },
+            { error: safeErrorMessage(error, '位置服务出错') },
             { status: 500 }
         );
     }

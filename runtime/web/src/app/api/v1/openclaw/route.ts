@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
         const authHeader = request.headers.get('Authorization');
         if (!authHeader?.startsWith('Bearer ')) {
             return NextResponse.json(
-                { error: 'Missing or invalid Authorization header' },
+                { error: '缺少或无效的 Authorization 请求头' },
                 { status: 401 }
             );
         }
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
 
         if (!capability) {
             return NextResponse.json(
-                { error: 'Missing capability parameter' },
+                { error: '缺少 capability 参数' },
                 { status: 400 }
             );
         }
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
         if (!validCapabilities.includes(capability)) {
             return NextResponse.json(
                 {
-                    error: `Unknown capability: ${capability}`,
+                    error: `不支持的能力：${capability}`,
                     available: validCapabilities,
                 },
                 { status: 400 }
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
     } catch (error) {
         console.error('OpenClaw API error:', error);
         return NextResponse.json(
-            { error: 'Internal server error' },
+            { error: '服务器内部错误，请稍后再试' },
             { status: 500 }
         );
     }

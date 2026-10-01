@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/auth-options';
 import { ragProcessor } from '@/lib/papers/rag';
 import { aiService } from '@/lib/ai/unified';
+import { safeErrorMessage } from '@/lib/api/safe-error';
 
 /**
  * 文献 RAG 对话接口
@@ -75,6 +76,6 @@ ${contextText}
 
     } catch (error: any) {
         console.error('[RAG API] Chat failed:', error);
-        return new Response(JSON.stringify({ error: error.message || '对话失败' }), { status: 500 });
+        return new Response(JSON.stringify({ error: safeErrorMessage(error, '对话失败') }), { status: 500 });
     }
 }

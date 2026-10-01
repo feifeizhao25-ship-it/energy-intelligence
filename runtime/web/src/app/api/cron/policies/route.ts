@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PolicyCrawler } from '@/lib/crawler/policy-crawler';
 import { PolicyService } from '@/lib/services/policy-service';
+import { safeErrorMessage } from '@/lib/api/safe-error';
 
 // 主要省份列表
 const MAJOR_PROVINCES = [
@@ -17,7 +18,7 @@ export async function POST(request: NextRequest) {
 
         if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
             return NextResponse.json(
-                { error: 'Unauthorized' },
+                { error: '请先登录' },
                 { status: 401 }
             );
         }
@@ -64,7 +65,7 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json({
             success: true,
-            message: `Updated ${results.totalPolicies} policies`,
+            message: `已更新 ${results.totalPolicies} 条政策`,
             results,
             timestamp: new Date().toISOString(),
         });
@@ -73,8 +74,8 @@ export async function POST(request: NextRequest) {
         console.error('Policy update error:', error);
         return NextResponse.json(
             {
-                error: 'Failed to update policies',
-                details: error instanceof Error ? error.message : 'Unknown error',
+                error: '更新政策失败',
+                details: safeErrorMessage(error, '未知错误'),
             },
             { status: 500 }
         );
@@ -86,7 +87,7 @@ export async function GET(request: NextRequest) {
     // Only allow in development
     if (process.env.NODE_ENV === 'production') {
         return NextResponse.json(
-            { error: 'Use POST method with authentication' },
+            { error: '请使用 POST 方法并携带认证信息' },
             { status: 405 }
         );
     }
@@ -114,8 +115,8 @@ export async function GET(request: NextRequest) {
     } catch (error) {
         return NextResponse.json(
             {
-                error: 'Failed to crawl policies',
-                details: error instanceof Error ? error.message : 'Unknown error',
+                error: '抓取政策失败',
+                details: safeErrorMessage(error, '未知错误'),
             },
             { status: 500 }
         );

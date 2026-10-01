@@ -17,7 +17,7 @@ async function currentUserId() {
 
 export async function GET() {
     const userId = await currentUserId();
-    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!userId) return NextResponse.json({ error: '请先登录' }, { status: 401 });
     const records = await prisma.apiKey.findMany({
         where: { userId },
         orderBy: { createdAt: 'desc' },
@@ -44,19 +44,19 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
     const userId = await currentUserId();
-    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!userId) return NextResponse.json({ error: '请先登录' }, { status: 401 });
     const { name, permissions, expiresInDays } = await req.json();
     if (!name || String(name).trim().length > 80) {
-        return NextResponse.json({ error: 'API Key name is required and must be at most 80 characters' }, { status: 400 });
+        return NextResponse.json({ error: '请填写 API 密钥名称，且不超过 80 个字符' }, { status: 400 });
     }
     if (await prisma.apiKey.count({ where: { userId, status: 'ACTIVE' } }) >= 5) {
-        return NextResponse.json({ error: 'Maximum API keys limit reached' }, { status: 409 });
+        return NextResponse.json({ error: 'API 密钥数量已达上限' }, { status: 409 });
     }
     const selectedPermissions = Array.isArray(permissions)
         ? [...new Set(permissions.filter((value: unknown): value is string => typeof value === 'string' && allowedPermissions.has(value)))]
         : [];
     if (Array.isArray(permissions) && selectedPermissions.length !== permissions.length) {
-        return NextResponse.json({ error: 'One or more API permissions are invalid' }, { status: 400 });
+        return NextResponse.json({ error: '存在无效的 API 权限项' }, { status: 400 });
     }
     const rawKey = `xny_${crypto.randomBytes(32).toString('base64url')}`;
     const apiKey = await prisma.apiKey.create({
@@ -80,13 +80,13 @@ export async function POST(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
     const userId = await currentUserId();
-    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!userId) return NextResponse.json({ error: '请先登录' }, { status: 401 });
     const id = req.nextUrl.searchParams.get('id');
-    if (!id) return NextResponse.json({ error: 'API Key ID is required' }, { status: 400 });
+    if (!id) return NextResponse.json({ error: '缺少 API 密钥 ID' }, { status: 400 });
     const result = await prisma.apiKey.updateMany({
         where: { id, userId, status: 'ACTIVE' },
         data: { status: 'REVOKED' },
     });
-    if (!result.count) return NextResponse.json({ error: 'API Key not found' }, { status: 404 });
+    if (!result.count) return NextResponse.json({ error: '未找到该 API 密钥' }, { status: 404 });
     return NextResponse.json({ success: true });
 }

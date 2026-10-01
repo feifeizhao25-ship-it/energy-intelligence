@@ -21,6 +21,6 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
             recommendations
         });
     } catch (error) {
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+        return NextResponse.json({ error: '服务器内部错误，请稍后再试' }, { status: 500 });
     }
 }

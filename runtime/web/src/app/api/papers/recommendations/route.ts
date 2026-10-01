@@ -10,13 +10,13 @@ export async function GET(request: NextRequest) {
     const id = searchParams.get('id');
 
     if (!id) {
-        return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+        return NextResponse.json({ error: '缺少 ID' }, { status: 400 });
     }
 
     try {
         const data = await getRecommendations(id);
         return NextResponse.json({ success: true, data });
     } catch (error) {
-        return NextResponse.json({ error: 'Failed to fetch recommendations' }, { status: 500 });
+        return NextResponse.json({ error: '获取文献推荐失败，请稍后重试' }, { status: 500 });
     }
 }

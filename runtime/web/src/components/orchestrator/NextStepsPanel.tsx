@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import type { OrchestratorResponse, ActionCard, ChecklistItem } from '@/lib/orchestrator/types';
+import { safeErrorMessage } from '@/lib/api/safe-error';
 
 interface NextStepsPanelProps {
     projectId: string;
@@ -38,7 +39,7 @@ export function NextStepsPanel({ projectId, className = '', compact = false }: N
                 const json = await res.json();
                 setData(json);
             } catch (err) {
-                setError(err instanceof Error ? err.message : '加载失败');
+                setError(safeErrorMessage(err, '加载失败'));
             } finally {
                 setLoading(false);
             }

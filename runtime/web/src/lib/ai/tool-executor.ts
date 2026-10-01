@@ -37,6 +37,7 @@ import {
 // import { compareSiteEnergies } from '@/lib/calculator/aggregator'; // Removed in Phase 1 Refinement
 import { ragProcessor } from '../papers/rag';
 import { simpleChat } from '@/lib/ai/unified';
+import { safeErrorMessage } from '@/lib/api/safe-error';
 
 // 碳排放强度数据（各电网）
 const CARBON_INTENSITY: Record<string, number> = {
@@ -612,7 +613,7 @@ export async function executeTool(toolName: string, toolInput: Record<string, un
     } catch (error) {
         console.error(`工具执行错误 [${toolName}]:`, error);
         return {
-            error: `工具执行失败: ${error instanceof Error ? error.message : '未知错误'}`,
+            error: `工具执行失败: ${safeErrorMessage(error, '未知错误')}`,
             toolName
         };
     }

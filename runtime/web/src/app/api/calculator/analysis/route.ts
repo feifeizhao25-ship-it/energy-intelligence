@@ -7,7 +7,7 @@ export async function POST(req: NextRequest) {
         const { type, data } = await req.json();
 
         if (!data?.financial) {
-            return NextResponse.json({ error: 'Missing data' }, { status: 400 });
+            return NextResponse.json({ error: '缺少必要的数据' }, { status: 400 });
         }
         const guard = await requireAiQuota();
         if (!guard.ok) return guard.response;
@@ -38,6 +38,6 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ results: analysis });
     } catch (error: any) {
         console.error('AI Analysis Error:', error);
-        return NextResponse.json({ error: 'Failed to generate analysis' }, { status: 500 });
+        return NextResponse.json({ error: '生成分析失败，请稍后重试' }, { status: 500 });
     }
 }

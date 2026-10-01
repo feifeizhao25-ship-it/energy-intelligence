@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/auth-options';
 import { prisma } from '@/lib/prisma';
+import { safeErrorMessage } from '@/lib/api/safe-error';
 
 /**
  * 获取用户的文献库
@@ -51,8 +52,7 @@ export async function GET(req: NextRequest) {
                 papers: [],
                 folders: []
             },
-            _warning: 'Database connection failed, showing empty library.',
-            _error: error.message
+            _warning: '文献库暂时无法读取，当前显示为空，请稍后刷新',
         });
     }
 }

@@ -7,6 +7,7 @@ import { authOptions } from '@/lib/auth/auth-options';
 
 import { addToExportCache } from '@/lib/exports/cache';
 import { consumeQuota } from '@/lib/audit/quota';
+import { safeErrorMessage } from '@/lib/api/safe-error';
 
 /**
  * 数据导出 API
@@ -87,7 +88,7 @@ export async function POST(req: NextRequest) {
             default:
                 return NextResponse.json({
                     success: false,
-                    error: `Unsupported data type: ${dataType}`
+                    error: `不支持的数据类型：${dataType}`
                 }, { status: 400 });
         }
 
@@ -152,7 +153,7 @@ export async function POST(req: NextRequest) {
         console.error('Export failed:', error);
         return NextResponse.json({
             success: false,
-            error: error.message || 'Export failed'
+            error: safeErrorMessage(error, '导出失败，请稍后重试')
         }, { status: 500 });
     }
 }

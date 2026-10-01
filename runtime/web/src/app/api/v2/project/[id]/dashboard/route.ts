@@ -17,6 +17,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 import { prisma } from '@/lib/prisma';
+import { safeErrorMessage } from '@/lib/api/safe-error';
 
 function formatLabel(d: Date): string {
     return `${d.getMonth() + 1}月${d.getDate()}日`;
@@ -170,7 +171,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
 
         return NextResponse.json({
             success: false,
-            error: error.message || "获取Dashboard数据失败"
+            error: safeErrorMessage(error, "获取Dashboard数据失败")
         }, { status: 500 });
     }
 }

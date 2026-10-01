@@ -5,7 +5,7 @@ async function handleGetMonitoring(_req: NextRequest, _keyData: unknown) {
     return NextResponse.json({
         success: false,
         error: 'TELEMETRY_NOT_CONNECTED',
-        message: 'Verified SCADA/IoT telemetry is not connected; synthetic monitoring data is disabled.',
+        message: '尚未接入经验证的 SCADA/IoT 遥测数据，系统不提供合成（模拟）的监测数据。',
     }, { status: 503 });
 }
 

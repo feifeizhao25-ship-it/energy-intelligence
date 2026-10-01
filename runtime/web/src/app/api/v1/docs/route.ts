@@ -11,7 +11,7 @@ function isEnglish(req: NextRequest) {
 export async function GET(req: NextRequest) {
     const en = isEnglish(req);
     const t = en ? {
-        title: 'Renewable Energy Intelligence Open API', description: 'Auditable project, literature, and calculation endpoints. Send X-API-Key. Availability depends on key permissions and plan entitlements. Synthetic telemetry and analytics are disabled.', current: 'Current origin',
+        title: 'Renewable Energy Intelligence Open API', description: '提供可审计的项目、文献与测算接口。请在请求头携带 X-API-Key；可用范围取决于密钥权限与会员权益。系统不提供合成（模拟）的监测与分析数据。', current: 'Current origin',
         projects: 'List projects owned by the API-key user', project: 'Read an accessible project', papers: 'Search Semantic Scholar literature', solar: 'Run an auditable solar-return calculation', monitoring: 'Telemetry is unavailable until a verified SCADA or IoT source is connected', analytics: 'Analytics are unavailable until verified telemetry and benchmark data are connected',
         ok: 'Successful response', unavailable: 'Verified source is not connected', unauthorized: 'Missing or invalid API key', forbidden: 'The key lacks the required permission', limited: 'Rate limit exceeded', notFound: 'Resource not found',
     } : {

@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { checkApiKey, logApiCall } from '@/lib/api/middleware';
 import { calculationEngine, CalcType } from '@/lib/calculation/auditable-engine';
+import { safeErrorMessage } from '@/lib/api/safe-error';
 
 export async function POST(req: NextRequest) {
     const start = Date.now();
@@ -13,7 +14,7 @@ export async function POST(req: NextRequest) {
     // 1. 鉴权
     const auth = await checkApiKey(req);
     if (!auth.valid) {
-        return NextResponse.json({ error: 'Invalid or missing API Key' }, { status: 401 });
+        return NextResponse.json({ error: 'API 密钥无效或缺失' }, { status: 401 });
     }
 
     try {
@@ -48,6 +49,7 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json(response);
     } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        console.error('[v1/calculate/solar] 测算失败：', error);
+        return NextResponse.json({ error: safeErrorMessage(error, '测算失败，请稍后重试') }, { status: 500 });
     }
 }

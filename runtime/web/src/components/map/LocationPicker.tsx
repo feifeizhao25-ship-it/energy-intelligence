@@ -3,6 +3,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { MapPin, Search, X, Crosshair, Loader2, AlertTriangle } from 'lucide-react';
+import { safeErrorMessage } from '@/lib/api/safe-error';
 
 interface LocationData {
     lat: number;
@@ -112,7 +113,7 @@ export default function LocationPicker({ value, onChange, placeholder = "点击�
 
             } catch (error: any) {
                 console.error("地图加载失败", error);
-                setMapError(error.message || "地图加载失败，请检查网络连接");
+                setMapError(safeErrorMessage(error, "地图加载失败，请检查网络连接"));
                 setIsLoading(false);
             }
         };

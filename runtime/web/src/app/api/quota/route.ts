@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     try {
         const session = await getServerSession(authOptions);
         if (!session?.user?.id) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+            return NextResponse.json({ error: '请先登录' }, { status: 401 });
         }
 
         const userId = session.user.id;
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     } catch (error) {
         console.error('Quota API error:', error);
         return NextResponse.json(
-            { error: 'Failed to fetch quota' },
+            { error: '获取额度信息失败，请稍后重试' },
             { status: 500 }
         );
     }
@@ -43,14 +43,14 @@ export async function POST(request: NextRequest) {
     try {
         const session = await getServerSession(authOptions);
         if (!session?.user?.id) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+            return NextResponse.json({ error: '请先登录' }, { status: 401 });
         }
 
         const body = await request.json();
         const { quotaType, amount = 1 } = body;
 
         if (!quotaType) {
-            return NextResponse.json({ error: 'Missing quotaType' }, { status: 400 });
+            return NextResponse.json({ error: '缺少额度类型' }, { status: 400 });
         }
 
         const result = await checkQuota(session.user.id, quotaType as QuotaType, amount);
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
     } catch (error) {
         console.error('Quota check error:', error);
         return NextResponse.json(
-            { error: 'Failed to check quota' },
+            { error: '检查额度失败，请稍后重试' },
             { status: 500 }
         );
     }

@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPVWattsData, calculateSolarOutput } from '@/lib/api/nrel';
 import { enforceRateLimit, PUBLIC_RULES } from '@/lib/security/rate-limit';
+import { safeErrorMessage } from '@/lib/api/safe-error';
 
 export async function GET(request: NextRequest) {
     const limited = await enforceRateLimit(request, PUBLIC_RULES.nrel);
@@ -57,7 +58,7 @@ export async function GET(request: NextRequest) {
     } catch (error) {
         console.error('Solar NREL API Error:', error);
         return NextResponse.json(
-            { error: error instanceof Error ? error.message : '光伏计算出错' },
+            { error: safeErrorMessage(error, '光伏计算出错') },
             { status: 500 }
         );
     }

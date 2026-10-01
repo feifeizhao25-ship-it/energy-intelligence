@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { calculateSolar } from '@/lib/calculator/solar';
 import { withMembershipCheck } from '@/lib/membership/middleware';
 import { prisma } from '@/lib/prisma';
+import { safeErrorMessage } from '@/lib/api/safe-error';
 
 export async function POST(req: NextRequest) {
     return withMembershipCheck(
@@ -84,15 +85,11 @@ export async function POST(req: NextRequest) {
                     }
                 });
             } catch (error: any) {
-                console.error('Solar calculation error details:', {
-                    message: error.message,
-                    stack: error.stack,
-                    input: input
-                });
+                console.error('Solar calculation error details:', error, { input });
                 return NextResponse.json(
                     {
                         error: 'CALCULATION_ERROR',
-                        message: error instanceof Error ? error.message : '计算失败',
+                        message: safeErrorMessage(error, '计算失败'),
                     },
                     { status: 500 }
                 );

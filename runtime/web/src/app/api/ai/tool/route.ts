@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 import { executeTool } from '@/lib/ai/tool-executor';
 import { isToolAllowed, getToolDefinition } from '@/lib/audit/tool-whitelist';
+import { safeErrorMessage } from '@/lib/api/safe-error';
 
 /**
  * AI 工具统一调用入口。
@@ -81,7 +82,7 @@ export async function POST(request: NextRequest) {
     } catch (error) {
         console.error('AI tool execution error:', error);
         return NextResponse.json(
-            { error: error instanceof Error ? error.message : '工具执行失败' },
+            { error: safeErrorMessage(error, '工具执行失败') },
             { status: 500 },
         );
     }

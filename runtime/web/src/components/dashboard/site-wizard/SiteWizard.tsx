@@ -17,6 +17,7 @@ import { RecommendationCard } from './RecommendationCard';
 import { UpgradeModal } from './UpgradeModal';
 // import { UpgradeModal } from './UpgradeModal'; // Keep import
 import { SiteComparisonOutput, EnergyResult } from '@/types/comparison';
+import { safeErrorMessage } from '@/lib/api/safe-error';
 
 interface SiteWizardProps {
     onComplete?: (result: SiteComparisonOutput) => void;
@@ -68,7 +69,7 @@ export const SiteWizard: React.FC<SiteWizardProps> = ({ onComplete }) => {
             // AI tool output is now object { output: { summary, reasons... } } or just output
             setAiExplanation(aiData.output || aiData);
         } catch (err: any) {
-            setError(err.message);
+            setError(safeErrorMessage(err, 'AI 解读失败，请稍后重试'));
             setStep('select');
         } finally {
             setIsExplaining(false);
@@ -110,7 +111,7 @@ export const SiteWizard: React.FC<SiteWizardProps> = ({ onComplete }) => {
                 throw new Error('未能找到该地址，请尝试更详细的描述（如：xx省xx市xx区xx路）');
             }
         } catch (err: any) {
-            setError(err.message);
+            setError(safeErrorMessage(err, '地址解析失败，请稍后重试'));
         } finally {
             setIsSearching(false);
         }
