@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/auth-options';
 import { prisma } from '@/lib/prisma';
+import { enforceStorageLimit } from '@/lib/membership/storage-limits';
 
 /**
  * 保存文献到用户的个人库
@@ -17,6 +18,16 @@ export async function POST(req: NextRequest) {
 
         if (!paper || !paper.id || !paper.title) {
             return NextResponse.json({ error: '无效的文献数据' }, { status: 400 });
+        }
+
+        // 已收藏的再次保存只是更新，不占新名额
+        const existing = await prisma.savedPaper.findUnique({
+            where: { userId_paperId: { userId: session.user.id, paperId: paper.id } },
+            select: { id: true },
+        });
+        if (!existing) {
+            const full = await enforceStorageLimit(session.user.id, 'saved_papers');
+            if (full) return full;
         }
 
         // 使用 upsert 确保不会重复保存，并更新最新信息

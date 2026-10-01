@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth/auth-options';
 import { prisma } from '@/lib/prisma';
 import { USAGE_LIMITS } from '@/lib/membership/plans';
 import { effectivePlan } from '@/lib/auth/token-refresh';
+import { sameShanghaiDay } from '@/lib/membership/day';
 import { buildPersonalDashboard } from '@/lib/dashboard/personal-summary';
 
 export const dynamic = 'force-dynamic';
@@ -35,7 +36,7 @@ export async function GET() {
     ]);
 
     const now = new Date();
-    const sameDay = user.lastResetAt && new Date(user.lastResetAt).toDateString() === now.toDateString();
+    const sameDay = user.lastResetAt && sameShanghaiDay(new Date(user.lastResetAt), now);
     const plan = effectivePlan(user.plan, user.planExpireAt, now) as keyof typeof USAGE_LIMITS;
     const limits = USAGE_LIMITS[plan] ?? USAGE_LIMITS.FREE;
     const usageToday: Record<string, number> = sameDay ? {

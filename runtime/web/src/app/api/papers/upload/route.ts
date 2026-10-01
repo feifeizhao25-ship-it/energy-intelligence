@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth/auth-options';
 import { ragProcessor } from '@/lib/papers/rag';
 import { validatePdfBuffer, PdfValidationError } from '@/lib/papers/pdf-guard';
 import { prisma } from '@/lib/prisma';
+import { enforceStorageLimit } from '@/lib/membership/storage-limits';
 import { uploadToOSS } from '@/lib/oss/client';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -17,6 +18,9 @@ export async function POST(req: NextRequest) {
     }
 
     try {
+        const full = await enforceStorageLimit(session.user.id, 'saved_papers');
+        if (full) return full;
+
         const formData = await req.formData();
         const file = formData.get('file') as File | null;
 

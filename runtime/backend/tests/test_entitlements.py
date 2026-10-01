@@ -82,7 +82,8 @@ def test_entitlements_matrix_has_all_plans_and_keys():
 
 def test_entitlements_matrix_values():
     assert ENTITLEMENTS["free"]["max_projects"] == 1
-    assert ENTITLEMENTS["pro"]["max_projects"] == 10
+    # 与 web 实际执行的 USAGE_LIMITS 一致（web 端 quota-consistency.test.ts 逐项比对）
+    assert ENTITLEMENTS["pro"]["max_projects"] == 50
     assert ENTITLEMENTS["enterprise"]["max_projects"] == -1
     assert ENTITLEMENTS["free"]["data_sources"] == ["basic"]
     assert ENTITLEMENTS["pro"]["data_sources"] == [
@@ -100,7 +101,7 @@ def test_entitlements_matrix_values():
     assert ENTITLEMENTS["enterprise"]["support_level"] == "dedicated"
     assert ENTITLEMENTS["maintenance"]["ai_queries_per_day"] == 100
     assert ENTITLEMENTS["full"]["report_exports_per_month"] == -1
-    assert ENTITLEMENTS["team"]["max_projects"] == -1
+    assert ENTITLEMENTS["team"]["max_projects"] == 500
 
 
 # ── -1 无限语义 ──────────────────────────────────────────────────────────────
@@ -220,14 +221,14 @@ async def test_assert_project_quota_pro_limit(
     persisted_user, db_session: AsyncSession
 ):
     user = await persisted_user("pro")
-    await _add_projects(db_session, str(user.id), 9)
-    await assert_project_quota(str(user.id), db_session)  # 9 < 10，允许
+    await _add_projects(db_session, str(user.id), 49)
+    await assert_project_quota(str(user.id), db_session)  # 49 < 50，允许
 
     await _add_projects(db_session, str(user.id), 1)
     with pytest.raises(QuotaExceeded) as error:
         await assert_project_quota(str(user.id), db_session)
-    assert error.value.limit == 10
-    assert error.value.current_count == 10
+    assert error.value.limit == 50
+    assert error.value.current_count == 50
 
 
 @pytest.mark.asyncio

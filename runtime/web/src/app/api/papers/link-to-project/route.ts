@@ -1,3 +1,4 @@
+import { enforceStorageLimit } from '@/lib/membership/storage-limits';
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
@@ -141,6 +142,10 @@ export async function POST(request: NextRequest) {
                 paperDetails,
                 project
             );
+
+            // 新收藏要占名额
+            const full = await enforceStorageLimit(session.user.id, 'saved_papers');
+            if (full) return full;
 
             // 创建新的savedPaper记录
             const newPaper = await prisma.savedPaper.create({

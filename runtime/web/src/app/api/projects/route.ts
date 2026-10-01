@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/auth-options';
+import { enforceStorageLimit } from '@/lib/membership/storage-limits';
 
 async function currentUserId() {
     const session = await getServerSession(authOptions);
@@ -27,6 +28,8 @@ export async function POST(req: NextRequest) {
     const userId = await currentUserId();
     if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     try {
+        const full = await enforceStorageLimit(userId, 'projects');
+        if (full) return full;
         const { name, type, capacity, location, lat, lng } = await req.json();
         const numericCapacity = Number(capacity);
         if (!name || !type || !Number.isFinite(numericCapacity) || numericCapacity <= 0) {

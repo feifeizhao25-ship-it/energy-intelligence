@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth/auth-options';
 import { prisma } from '@/lib/prisma';
 import { USAGE_LIMITS } from '@/lib/membership/plans';
 import { effectivePlan } from '@/lib/auth/token-refresh';
+import { sameShanghaiDay } from '@/lib/membership/day';
 
 /**
  * 调用模型前的统一门禁：必须登录，并按服务端记录的会员档扣减每日 AI 次数。
@@ -35,9 +36,8 @@ export interface QuotaStore {
   take(userId: string): Promise<boolean>;
 }
 
-function sameDay(a: Date, b: Date): boolean {
-  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
-}
+// 一天按北京时间算（容器没设 TZ 时服务器是 UTC，按本地日期会晚 8 小时重置）
+const sameDay = sameShanghaiDay;
 
 export async function consumeAiCall(store: QuotaStore, userId: string, now = new Date()): Promise<{ ok: boolean; plan: string; limit: number; remaining: number | null }> {
   const user = await store.load(userId);

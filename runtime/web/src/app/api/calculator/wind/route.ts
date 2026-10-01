@@ -7,7 +7,7 @@ import { prisma } from '@/lib/prisma';
 export async function POST(req: NextRequest) {
     return withMembershipCheck(
         req,
-        { usageType: 'calculation' },
+        { feature: 'wind_calculation', usageType: 'calculation' },
         async (user) => {
             try {
                 const input = await req.json();

@@ -11,7 +11,7 @@
       "description_en": "Validate one project workflow before procurement.",
       "price": { "monthly_cny": 0, "yearly_cny": 0 },
       "quotas": {
-        "ai_queries_per_day": 20,
+        "ai_queries_per_day": 3,
         "resource_queries_per_day": 2,
         "calculations_per_day": 2,
         "max_projects": 1,
@@ -49,11 +49,13 @@
       "description_en": "For analysts developing reviewable investment cases.",
       "price": { "monthly_cny": 198, "yearly_cny": 1980 },
       "quotas": {
-        "ai_queries_per_day": 200,
+        "ai_queries_per_day": 100,
         "resource_queries_per_day": -1,
         "calculations_per_day": -1,
-        "max_projects": 10,
-        "report_exports_per_month": 50
+        "max_projects": 50,
+        "report_exports_per_month": 50,
+        "diagnoses_per_day": 3,
+        "max_stations": 0
       },
       "knowledge": {
         "data_sources": ["basic", "premium_weather", "grid_tariff"],
@@ -170,8 +172,10 @@
         "ai_queries_per_day": 500,
         "resource_queries_per_day": -1,
         "calculations_per_day": -1,
-        "max_projects": -1,
-        "report_exports_per_month": 200
+        "max_projects": 500,
+        "report_exports_per_month": 200,
+        "diagnoses_per_day": -1,
+        "max_stations": 100
       },
       "knowledge": {
         "data_sources": ["basic", "premium_weather", "grid_tariff"],
@@ -209,7 +213,9 @@
         "resource_queries_per_day": -1,
         "calculations_per_day": -1,
         "max_projects": -1,
-        "report_exports_per_month": -1
+        "report_exports_per_month": -1,
+        "diagnoses_per_day": -1,
+        "max_stations": -1
       },
       "knowledge": {
         "data_sources": ["all"],

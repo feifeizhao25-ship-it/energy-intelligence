@@ -1,6 +1,7 @@
 // 会员权限检查和使用限额管理
 
 import { Plan, USAGE_LIMITS, FEATURE_ACCESS, MULTI_COMPARE_LIMITS } from './plans';
+import { nextShanghaiMidnight, sameShanghaiDay } from './day';
 
 export interface UsageCheckResult {
     allowed: boolean;
@@ -113,9 +114,7 @@ export function checkUsageLimit(
     const allowed = limit === Infinity || currentUsage < limit;
 
     // 计算重置时间（次日0点）
-    const resetAt = new Date();
-    resetAt.setDate(resetAt.getDate() + 1);
-    resetAt.setHours(0, 0, 0, 0);
+    const resetAt = nextShanghaiMidnight(new Date());
 
     return {
         allowed,
@@ -157,15 +156,7 @@ export function checkMultiCompareLimit(user: User, requestedPoints: number): Usa
  * 检查是否需要重置每日使用量
  */
 export function shouldResetDailyUsage(user: User): boolean {
-    const lastReset = new Date(user.lastResetAt);
-    const now = new Date();
-
-    // 判断是否跨天
-    return (
-        lastReset.getDate() !== now.getDate() ||
-        lastReset.getMonth() !== now.getMonth() ||
-        lastReset.getFullYear() !== now.getFullYear()
-    );
+    return !sameShanghaiDay(new Date(user.lastResetAt), new Date());
 }
 
 /**

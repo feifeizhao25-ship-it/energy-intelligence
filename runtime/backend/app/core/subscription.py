@@ -40,16 +40,16 @@ PLAN_QUOTAS = {
 
 
 # 会员权益单一事实源。数值型权益中 -1 一律表示无限。
+# 数量/次数类额度（quotas）只从 data/entitlements.json 来，这里不得再写一份：
+# 原来这里的 max_projects 覆盖了注册表，造成注册表写一个数、后端执行另一个数。
 _PLAN_DETAILS = {
     "free": {
-        "max_projects": 1,
         "data_sources": ["basic"],
         "export_formats": ["pdf"],
         "team_seats": 1,
         "support_level": "community",
     },
     "pro": {
-        "max_projects": 10,
         "data_sources": ["basic", "premium_weather", "grid_tariff"],
         "export_formats": ["pdf", "docx"],
         "team_seats": 5,
@@ -74,7 +74,6 @@ _PLAN_DETAILS = {
         "support_level": "priority",
     },
     "enterprise": {
-        "max_projects": -1,
         "data_sources": ["all"],
         "export_formats": ["pdf", "docx", "api"],
         "team_seats": -1,
