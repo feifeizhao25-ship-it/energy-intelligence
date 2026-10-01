@@ -2,11 +2,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
 import { getLocationSuggestions } from '@/lib/api/amap';
+import { enforceRateLimit, PUBLIC_RULES } from '@/lib/security/rate-limit';
 
 /**
  * 获取地址输入建议
  */
 export async function GET(req: NextRequest) {
+    const limited = await enforceRateLimit(req, PUBLIC_RULES.amap);
+    if (limited) return limited;
+
     try {
         const { searchParams } = new URL(req.url);
         const query = searchParams.get('query');

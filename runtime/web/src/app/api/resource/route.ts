@@ -8,8 +8,12 @@ import {
     getUVIndex
 } from '@/lib/api/weather';
 import { getAirQualityIndex } from '@/lib/api/open-meteo'; // Fallback or alternative
+import { enforceRateLimit, PUBLIC_RULES } from '@/lib/security/rate-limit';
 
 export async function GET(request: NextRequest) {
+    const limited = await enforceRateLimit(request, PUBLIC_RULES.resource);
+    if (limited) return limited;
+
     const searchParams = request.nextUrl.searchParams;
     const lat = parseFloat(searchParams.get('lat') || '');
     const lng = parseFloat(searchParams.get('lng') || '');

@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getRecommendations } from '@/lib/api/semantic-scholar';
+import { enforceRateLimit, PUBLIC_RULES } from '@/lib/security/rate-limit';
 
 export async function GET(request: NextRequest) {
+    const limited = await enforceRateLimit(request, PUBLIC_RULES.papers);
+    if (limited) return limited;
+
     const searchParams = request.nextUrl.searchParams;
     const id = searchParams.get('id');
 

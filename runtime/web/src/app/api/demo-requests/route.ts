@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { validateDemoRequest, isDuplicateRequest } from '@/lib/demo-requests/validation';
+import { enforceRateLimit, PUBLIC_RULES } from '@/lib/security/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,6 +12,9 @@ export const dynamic = 'force-dynamic';
  * 数据库不可用时返回 503（fail-closed），不静默假成功。
  */
 export async function POST(req: NextRequest) {
+    const limited = await enforceRateLimit(req, PUBLIC_RULES.demoRequest);
+    if (limited) return limited;
+
     let body: unknown;
     try {
         body = await req.json();

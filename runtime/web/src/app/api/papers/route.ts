@@ -2,8 +2,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { searchPapers, getPaper, getRecommendations } from '@/lib/api/semantic-scholar';
 import { searchArxiv } from '@/lib/api/arxiv';
+import { enforceRateLimit, PUBLIC_RULES } from '@/lib/security/rate-limit';
 
 export async function GET(request: NextRequest) {
+    const limited = await enforceRateLimit(request, PUBLIC_RULES.papers);
+    if (limited) return limited;
+
     const searchParams = request.nextUrl.searchParams;
     const query = searchParams.get('query')?.trim();
     const paperId = searchParams.get('id');

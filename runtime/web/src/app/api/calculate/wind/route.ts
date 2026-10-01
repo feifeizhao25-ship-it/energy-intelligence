@@ -1,8 +1,12 @@
 import { NextResponse } from 'next/server';
 import { calculateWind } from '@/lib/calculator/wind';
 import { WindCalculationInput } from '@/types';
+import { enforceRateLimit, PUBLIC_RULES } from '@/lib/security/rate-limit';
 
 export async function POST(req: Request) {
+    const limited = await enforceRateLimit(req, PUBLIC_RULES.calculators);
+    if (limited) return limited;
+
     try {
         const body = await req.json();
 

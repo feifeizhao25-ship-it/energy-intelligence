@@ -1,8 +1,12 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getPVWattsData, calculateSolarOutput } from '@/lib/api/nrel';
+import { enforceRateLimit, PUBLIC_RULES } from '@/lib/security/rate-limit';
 
 export async function GET(request: NextRequest) {
+    const limited = await enforceRateLimit(request, PUBLIC_RULES.nrel);
+    if (limited) return limited;
+
     const searchParams = request.nextUrl.searchParams;
     const lat = parseFloat(searchParams.get('lat') || '');
     const lng = parseFloat(searchParams.get('lng') || '');

@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { compareSiteEnergies } from '@/lib/calculator/site-compare';
+import { enforceRateLimit, PUBLIC_RULES } from '@/lib/security/rate-limit';
 
 export async function POST(request: NextRequest) {
+    const limited = await enforceRateLimit(request, PUBLIC_RULES.calculators);
+    if (limited) return limited;
+
     try {
         const body = await request.json();
         const { lat, lng, province, address } = body;

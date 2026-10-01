@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { calculateSolar } from '@/lib/calculator/solar';
 import { getLatestPrice } from '@/lib/crawler/price-crawler';
 import { SolarCalculationInput } from '@/types';
+import { enforceRateLimit, PUBLIC_RULES } from '@/lib/security/rate-limit';
 
 /**
  * 光伏收益测算。
@@ -22,6 +23,9 @@ import { SolarCalculationInput } from '@/types';
  */
 
 export async function POST(req: Request) {
+    const limited = await enforceRateLimit(req, PUBLIC_RULES.calculators);
+    if (limited) return limited;
+
     try {
         const body = await req.json();
 

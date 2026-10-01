@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { unifiedSearch } from '@/lib/papers/search';
+import { enforceRateLimit, PUBLIC_RULES } from '@/lib/security/rate-limit';
 
 export async function POST(request: NextRequest) {
+    const limited = await enforceRateLimit(request, PUBLIC_RULES.papers);
+    if (limited) return limited;
+
     const body = await request.json().catch(() => null);
     if (!body || typeof body.query !== 'string' || !body.query.trim() || body.query.length > 2000) {
         return NextResponse.json({ error: '请输入有效的检索词，最多 2000 个字符' }, { status: 400 });

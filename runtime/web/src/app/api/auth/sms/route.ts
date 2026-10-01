@@ -1,18 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendVerificationCode } from "@/lib/sms/aliyun";
-import { clientIp, generateSmsCode, DAILY_LIMIT_PER_PHONE, PHONE_PATTERN, CODE_TTL_MS, RESEND_INTERVAL_MS } from "@/lib/auth/sms-verify";
+import { generateSmsCode, DAILY_LIMIT_PER_PHONE, PHONE_PATTERN, CODE_TTL_MS, RESEND_INTERVAL_MS } from "@/lib/auth/sms-verify";
 
-import { rateLimit, getRateLimitResponse } from "@/lib/security/rate-limit";
+import { enforceRateLimit, PUBLIC_RULES } from "@/lib/security/rate-limit";
 
 export async function POST(req: NextRequest) {
     try {
-        // 0. API 限流保护 (单IP 每分钟限制3次)
-        const ip = clientIp(req.headers.get("x-forwarded-for"), req.headers.get("x-real-ip"));
-        const limiter = rateLimit(ip, 3);
-        if (limiter.isLimited) {
-            return getRateLimitResponse();
-        }
+        // 0. 按来源限流：每条短信都花钱，也能被拿去轰炸别人。
+        //    分钟级（防脚本连发）+ 小时级（防分散在不同分钟慢慢刷）；再往下还有按手机号的 60 秒 / 每日上限。
+        const burst = await enforceRateLimit(req, PUBLIC_RULES.smsBurst);
+        if (burst) return burst;
+        const hourly = await enforceRateLimit(req, PUBLIC_RULES.smsHourly);
+        if (hourly) return hourly;
 
         const { phone } = await req.json().catch(() => ({ phone: '' }));
 

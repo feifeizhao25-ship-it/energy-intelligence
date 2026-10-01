@@ -6,8 +6,12 @@ import {
     searchNearbyPOIs,
     getLocationSuggestions
 } from '@/lib/api/amap';
+import { enforceRateLimit, PUBLIC_RULES } from '@/lib/security/rate-limit';
 
 export async function GET(request: NextRequest) {
+    const limited = await enforceRateLimit(request, PUBLIC_RULES.amap);
+    if (limited) return limited;
+
     const searchParams = request.nextUrl.searchParams;
     const action = searchParams.get('action');
     const lat = parseFloat(searchParams.get('lat') || '');
