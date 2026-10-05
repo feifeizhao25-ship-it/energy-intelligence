@@ -1,4 +1,7 @@
 import { randomInt, timingSafeEqual } from 'node:crypto';
+import { PHONE_PATTERN } from './phone';
+
+export { PHONE_PATTERN };
 
 /**
  * 短信验证码的生成与校验（与数据库解耦，便于测试）。
@@ -15,7 +18,6 @@ export const CODE_TTL_MS = 10 * 60 * 1000;
 export const RESEND_INTERVAL_MS = 60 * 1000;
 export const MAX_ATTEMPTS = 5;
 export const DAILY_LIMIT_PER_PHONE = 10;
-export const PHONE_PATTERN = /^1[3-9]\d{9}$/;
 
 export function generateSmsCode(): string {
   return String(randomInt(100000, 1000000));

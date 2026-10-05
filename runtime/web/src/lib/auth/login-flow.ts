@@ -1,4 +1,4 @@
-import { PHONE_PATTERN } from './sms-verify';
+import { PHONE_PATTERN } from './phone';
 import { safeErrorMessage } from '@/lib/api/safe-error';
 
 /** 登录页用到的纯逻辑（与界面分开，便于测试）。 */
