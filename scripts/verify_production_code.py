@@ -347,7 +347,7 @@ require("runtime/web/src/app/api/papers/graph/route.ts", "VERIFIED_CITATION_GRAP
 require("runtime/web/src/app/api/projects/unlock/route.ts", "VERIFIED_ENTITLEMENT_REQUIRED")
 require("runtime/web/src/app/api/projects/[id]/stations/route.ts", "STATION_LIMIT_REACHED")
 require("runtime/web/src/app/api/projects/[id]/stations/route.ts", "尚无经验证的 SCADA/IoT 测量数据")
-require("runtime/web/src/components/dashboard/site-wizard/SiteWizard.tsx", "/pricing?feature=report-export")
+# SiteWizard（假的选址向导，展示编造的测算）已删除；不再要求它存在。
 require("runtime/web/src/app/api/projects/report/route.ts", "SERVER_REPORT_EXPORT_REQUIRED")
 for route, destination in (
     ("runtime/web/src/app/my/achievements/page.tsx", "/achievements"),
