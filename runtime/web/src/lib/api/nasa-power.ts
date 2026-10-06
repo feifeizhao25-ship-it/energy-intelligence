@@ -2,6 +2,12 @@
 import { SolarResource, WindResource } from '@/types';
 
 import { withCache } from '@/lib/cache';
+import { extrapolateWindSpeed } from '@/lib/calculator/wind-shear';
+
+/** NASA POWER 用 -999 表示缺测；缺测或非数值一律按 0 处理，不能当真实风速。 */
+function validSpeed(value: unknown): number {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : 0;
+}
 
 export interface NASAApiParams {
   lat: number;
@@ -111,23 +117,26 @@ export const getWindResource = withCache('nasa:wind', async (lat: number, lng: n
     const data = await response.json();
     const properties = data.properties;
 
-    // 处理月度数据
-    const monthly = Object.entries(properties.parameter.WS10M).map(([month, speed10m]: [string, any]) => {
+    // 处理月度数据。50 米风速直接用 NASA POWER 的 WS50M；此前误把 WS10M 当 50 米风速，
+    // 再从「50 米」往上外推，轮毂高度风速被系统性低估。
+    const ws50 = properties.parameter.WS50M || {};
+    const monthly = Object.entries(properties.parameter.WS10M).map(([month, speed10mRaw]: [string, any]) => {
       let monthNum = parseInt(month);
       if (monthNum > 100) monthNum = monthNum % 100;
-      const speed50m = speed10m || 0;
-      // 使用对数律外推100m风速：v100 = v50 × (100/50)^0.14
-      const speed100m = speed50m * Math.pow(100 / 50, 0.14);
+      const speed10m = validSpeed(speed10mRaw);
+      const speed50m = validSpeed(ws50[month]);
+      // 100 米风速由 50 米按对数律外推（与 wind.ts 外推到轮毂高度用同一函数）
+      const speed100m = extrapolateWindSpeed(speed50m, 50, 100);
 
       return {
         month: monthNum,
-        speed10m: speed10m || 0,
+        speed10m,
         speed50m,
         speed100m,
         // NASA POWER does not provide direction for this request. Do not invent it.
         direction: null
       };
-    }).sort((a, b) => a.month - b.month);
+    }).filter(m => m.month >= 1 && m.month <= 12).sort((a, b) => a.month - b.month);
 
     // 计算年度数据
     const avgSpeed10m = monthly.reduce((sum, m) => sum + m.speed10m, 0) / 12;

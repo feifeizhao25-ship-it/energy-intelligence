@@ -2,11 +2,7 @@
 import { getWindResource } from '@/lib/api/nasa-power';
 import { WindCalculationInput } from '@/types';
 import { DEFAULT_DISCOUNT_RATE, discountedLcoe } from './project-finance';
-
-// 辅助函数：外推风速
-function extrapolateWindSpeed(vRef: number, hRef: number, hTarget: number, z0: number = 0.03): number {
-  return vRef * (Math.log(hTarget / z0) / Math.log(hRef / z0));
-}
+import { extrapolateWindSpeed } from './wind-shear';
 
 // 辅助函数：估算容量因子
 function estimateCapacityFactor(vAvg: number, vIn: number, vRated: number, vOut: number): number {
@@ -23,8 +19,7 @@ export async function calculateWind(input: WindCalculationInput) {
   const windResource = await getWindResource(input.lat, input.lng);
   const totalCapacityKW = input.turbine.capacity * input.turbine.count * 1000;
 
-  const hubHeightSpeed = extrapolateWindSpeed(windResource.annual.avgSpeed, 100, input.turbine.hubHeight);
-
+  // 轮毂高度风速：由 NASA POWER 的 50 米风速（WS50M）按对数律外推
   const monthlyGeneration = windResource.monthly.map(m => {
     const vHub = extrapolateWindSpeed(m.speed50m, 50, input.turbine.hubHeight);
     const cf = estimateCapacityFactor(vHub, input.turbine.cutInSpeed, input.turbine.ratedSpeed, input.turbine.cutOutSpeed);

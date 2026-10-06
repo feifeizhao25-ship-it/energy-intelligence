@@ -37,7 +37,7 @@ export interface WindResource {
     direction: number | null; // 主导风向（度）；数据源未提供时为 null
   }[];
   annual: {
-    avgSpeed: number; // 年平均风速 (m/s)
+    avgSpeed: number; // 100 米高度年平均风速 (m/s)，由 NASA POWER WS50M 按对数律外推
     powerDensity: number; // 风功率密度 (W/m²)
     equivalentHours: number; // 等效满发小时数 (h)
     resourceClass: 'I' | 'II' | 'III' | 'IV' | 'V' | 'VI' | 'VII'; // 资源等级
