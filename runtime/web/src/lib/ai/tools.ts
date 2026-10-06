@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/prisma';
 import { lookupTariff, NO_PROVINCE_DATA } from '@/lib/pricing/tariffs';
+import { safeErrorMessage } from '@/lib/api/safe-error';
 
 // 工具定义
 export const AI_TOOLS = {
@@ -53,6 +54,8 @@ export const AI_TOOLS = {
         // 查询数据库中的政策
         const policies = await prisma.policy.findMany({
           where: {
+            // 只回答人工审核通过的政策
+            reviewStatus: 'APPROVED',
             region: { contains: params.region },
             ...(params.type && params.type !== 'all' ? { type: params.type } : {}),
             OR: [
@@ -67,7 +70,7 @@ export const AI_TOOLS = {
         if (policies.length === 0) {
           return {
             success: true,
-            message: `未找到${params.region}的最新政策信息，建议咨询当地发改委或电网公司。`,
+            message: `未找到${params.region}已审核的政策信息，建议咨询当地发改委或电网公司。`,
             policies: [],
           };
         }
@@ -81,12 +84,18 @@ export const AI_TOOLS = {
             unit: p.unit,
             conditions: p.conditions,
             endDate: p.endDate,
+            // 引用必须带来源与日期
+            sourceTitle: p.sourceTitle,
+            docNumber: p.docNumber,
+            sourceUrl: p.sourceUrl,
+            publishedAt: p.publishedAt,
+            reviewedAt: p.reviewedAt,
           })),
         };
       } catch (error) {
         return {
           success: false,
-          error: '查询失败：' + (error as Error).message,
+          error: safeErrorMessage(error, '政策查询失败，请稍后再试'),
         };
       }
     },

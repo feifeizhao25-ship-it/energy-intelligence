@@ -1,5 +1,6 @@
 import { simpleChat } from '@/lib/ai/unified';
 import * as cheerio from 'cheerio';
+import { PoliteFetcher } from './robots';
 
 export interface PolicyData {
     region: string;
@@ -10,6 +11,8 @@ export interface PolicyData {
     sourceUrl: string;
     startDate?: Date;
     endDate?: Date;
+    /** 抓取时间；写库后状态为 PENDING，须人工审核通过才进入测算 */
+    fetchedAt?: Date;
 }
 
 export class PolicyCrawler {
@@ -46,16 +49,15 @@ export class PolicyCrawler {
         return knownSources[region] || [];
     }
 
+    /** 抓取器：真实 UA、先查 robots.txt、同站限速（见 lib/crawler/robots.ts） */
+    constructor(private readonly polite: PoliteFetcher = new PoliteFetcher()) {}
+
     /**
-     * Fetch webpage content
+     * Fetch webpage content。不再伪装成浏览器；robots.txt 不允许的页面不抓。
      */
     async fetchPageContent(url: string): Promise<string> {
         try {
-            const response = await fetch(url, {
-                headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                },
-            });
+            const response = await this.polite.get(url);
 
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -141,6 +143,7 @@ ${content.substring(0, 4000)}
                 unit: p.unit,
                 conditions: p.conditions,
                 sourceUrl,
+                fetchedAt: new Date(),
                 startDate: p.startDate ? new Date(p.startDate) : undefined,
                 endDate: p.endDate ? new Date(p.endDate) : undefined,
             })).filter(p => p.value > 0); // Filter out invalid entries

@@ -579,8 +579,24 @@ model Policy {
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
+  // 来源与人工审核：大模型从网页抽取的条目一律先为 PENDING，只有 APPROVED 的补贴才进入测算和 AI 回答
+  publishedAt  DateTime? // 政策文件发布日期
+  fetchedAt    DateTime? // 抓取时间
+  reviewStatus PolicyReviewStatus @default(PENDING)
+  reviewer     String? // 审核人
+  reviewedAt   DateTime?
+  sourceTitle  String? // 文件标题
+  docNumber    String? // 文号，如「发改价格〔2025〕136号」
+
   @@index([region, type])
+  @@index([reviewStatus, region])
   @@map("policies")
+}
+
+enum PolicyReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 // 使用日志表
