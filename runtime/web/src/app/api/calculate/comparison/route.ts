@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { compareSiteEnergies } from '@/lib/calculator/site-compare';
 import { enforceRateLimit, PUBLIC_RULES } from '@/lib/security/rate-limit';
+import { TariffUnavailableError } from '@/lib/pricing/tariffs';
 
 export async function POST(request: NextRequest) {
     const limited = await enforceRateLimit(request, PUBLIC_RULES.calculators);
@@ -33,6 +34,12 @@ export async function POST(request: NextRequest) {
         });
 
     } catch (error) {
+        if (error instanceof TariffUnavailableError) {
+            return NextResponse.json(
+                { error: error.lookup.message, code: error.lookup.status === 'market' ? 'MARKET_TOU' : 'PRICE_UNAVAILABLE' },
+                { status: 422 }
+            );
+        }
         console.error('多能种对比API错误:', error);
         return NextResponse.json(
             { error: '对比计算失败，请稍后重试' },

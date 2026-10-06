@@ -4,6 +4,7 @@ import { calculateSolar, normalizeSelfUseRatio } from '@/lib/calculator/solar';
 import { withMembershipCheck } from '@/lib/membership/middleware';
 import { prisma } from '@/lib/prisma';
 import { safeErrorMessage } from '@/lib/api/safe-error';
+import { TariffUnavailableError } from '@/lib/pricing/tariffs';
 
 export async function POST(req: NextRequest) {
     return withMembershipCheck(
@@ -33,7 +34,7 @@ export async function POST(req: NextRequest) {
 
                 // 2. 价格补全 (如果用户没填，自动抓取对应省份参考价)
                 // 补全失败必须让用户知道——静默跳过会让后续测算基于缺失电价出结果。
-                let priceMeta: { source: string; stale: boolean; updatedAt: string } | null = null;
+                let priceMeta: { source: string; asOfLabel: string; stale: boolean; staleNote: string | null; updatedAt: string } | null = null;
                 if (!input.electricityPrice && input.province) {
                     try {
                         const { getLatestPrice, calculateAveragePrice } = await import('@/lib/crawler/price-crawler');
@@ -42,16 +43,20 @@ export async function POST(req: NextRequest) {
                         // 这里若再按自用比例混合一次，上网部分会被重复折算。
                         input.electricityPrice = calculateAveragePrice(provincePrice, 1);
                         priceMeta = {
-                            source: provincePrice.source,
+                            source: provincePrice.sourceDoc,
+                            asOfLabel: provincePrice.asOfLabel,
                             stale: provincePrice.stale,
+                            staleNote: provincePrice.staleNote,
                             updatedAt: provincePrice.updatedAt,
                         };
-                    } catch {
+                    } catch (priceError) {
                         console.warn('Price auto-fill failed');
                         return NextResponse.json(
                             {
                                 error: 'ELECTRICITY_PRICE_UNAVAILABLE',
-                                message: `暂无「${input.province}」的电价数据，请手动填写电价后重新测算。`,
+                                message: priceError instanceof TariffUnavailableError
+                                    ? `${priceError.lookup.message}。请手动填写电价后重新测算。`
+                                    : `暂无「${input.province}」的电价数据，请手动填写电价后重新测算。`,
                             },
                             { status: 422 }
                         );

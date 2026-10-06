@@ -2,6 +2,13 @@
  * 电价数据抓取与同步服务
  */
 import axios from 'axios';
+import {
+    lookupTariff,
+    tariffFreshness,
+    TariffUnavailableError,
+    NO_PROVINCE_DATA,
+    PRICE_STALE_DAYS,
+} from '@/lib/pricing/tariffs';
 
 export interface ElectricityPrice {
     province: string;
@@ -12,29 +19,19 @@ export interface ElectricityPrice {
     updatedAt: string;
 }
 
-// 静态备份数据 (2025年Q4参考值)
-const STATIC_PRICES: Record<string, ElectricityPrice> = {
-    '江苏': { province: '江苏', valley: 0.31, flat: 0.64, peak: 1.08, sharp: 1.25, updatedAt: '2025-12-01' },
-    '浙江': { province: '浙江', valley: 0.28, flat: 0.62, peak: 1.12, sharp: 1.35, updatedAt: '2025-12-05' },
-    '广东': { province: '广东', valley: 0.25, flat: 0.68, peak: 1.20, sharp: 1.45, updatedAt: '2025-12-10' },
-    '北京': { province: '北京', valley: 0.35, flat: 0.72, peak: 1.15, updatedAt: '2025-11-20' },
-    '上海': { province: '上海', valley: 0.32, flat: 0.70, peak: 1.18, sharp: 1.30, updatedAt: '2025-12-08' },
-};
-
-/** 静态备份数据的有效期（天）。超期即视为不可信。 */
-const STATIC_PRICE_MAX_AGE_DAYS = 90;
+// 静态数据只来自 lib/pricing/tariffs.ts（全站唯一电价表），这里不再自带数字。
 
 export interface PriceResult extends ElectricityPrice {
-    /** 数据来源：live=实时抓取，static=静态备份，fallback=跨省兜底 */
-    source: 'live' | 'static' | 'fallback';
-    /** 数据是否已超出有效期，UI 应据此提示用户 */
+    /** 数据来源：live=实时接口，static=全站电价表 */
+    source: 'live' | 'static';
+    /** 数据是否已超出 90 天，UI 应据此提示用户 */
     stale: boolean;
-}
-
-function _ageInDays(updatedAt: string): number {
-    const t = Date.parse(updatedAt);
-    if (Number.isNaN(t)) return Number.POSITIVE_INFINITY;
-    return (Date.now() - t) / 86400000;
+    /** 依据文件；未核实的为「来源待核实（…）」 */
+    sourceDoc: string;
+    /** 「电价数据截至 2025-12」 */
+    asOfLabel: string;
+    /** 超期时为「可能已变化，请以最新文件为准」 */
+    staleNote: string | null;
 }
 
 /**
@@ -58,7 +55,11 @@ export async function getLatestPrice(province: string): Promise<PriceResult> {
             });
             const data = resp.data as ElectricityPrice;
             if (data && typeof data.flat === 'number') {
-                return { ...data, source: 'live', stale: false };
+                const freshness = tariffFreshness(data.updatedAt);
+                return {
+                    ...data, source: 'live', stale: freshness.stale,
+                    sourceDoc: '电价接口（ELECTRICITY_PRICE_API_URL）', asOfLabel: freshness.label, staleNote: freshness.staleNote,
+                };
             }
             console.warn(`Price API returned unusable payload for ${province}`);
         } catch (error) {
@@ -66,23 +67,29 @@ export async function getLatestPrice(province: string): Promise<PriceResult> {
         }
     }
 
-    const price = STATIC_PRICES[province];
-    if (price) {
-        const stale = _ageInDays(price.updatedAt) > STATIC_PRICE_MAX_AGE_DAYS;
-        if (stale) {
-            console.warn(
-                `Electricity price for ${province} is from ${price.updatedAt} ` +
-                `(> ${STATIC_PRICE_MAX_AGE_DAYS} days old) — results should be labelled as estimates.`
-            );
-        }
-        return { ...price, source: 'static', stale };
+    // 查表：未收录或已取消固定分时的省份抛出 TariffUnavailableError（中文 message），绝不按其他省份兜底。
+    const found = lookupTariff(province);
+    if (found.status !== 'ok') throw new TariffUnavailableError(found);
+    const t = found.tariff;
+    if (typeof t.flat !== 'number' || typeof t.peak !== 'number' || typeof t.valley !== 'number') {
+        throw new TariffUnavailableError({ status: 'missing', province: found.province, message: NO_PROVINCE_DATA });
     }
-
-    // 未收录的省份不再兜底成江苏电价——那会让测算结果错得毫无察觉。
-    throw new Error(
-        `ELECTRICITY_PRICE_UNAVAILABLE: no price data for province "${province}". ` +
-        `Configure ELECTRICITY_PRICE_API_URL or add the province to STATIC_PRICES.`
-    );
+    if (found.freshness.stale) {
+        console.warn(`Electricity price for ${found.province} is as of ${t.asOf} (> ${PRICE_STALE_DAYS} days old)`);
+    }
+    return {
+        province: found.province,
+        valley: t.valley,
+        flat: t.flat,
+        peak: t.peak,
+        sharp: t.sharp,
+        updatedAt: t.asOf ?? '',
+        source: 'static',
+        stale: found.freshness.stale,
+        sourceDoc: t.source,
+        asOfLabel: found.freshness.label,
+        staleNote: found.freshness.staleNote,
+    };
 }
 
 /**

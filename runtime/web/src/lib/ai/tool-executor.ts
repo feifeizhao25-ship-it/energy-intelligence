@@ -905,8 +905,13 @@ async function calculateDowntimeLoss(input: Record<string, unknown>) {
     const end = new Date(endTime);
     const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
 
-    // 获取电价配置
-    const pricing = getPriceConfig(province);
+    // 获取电价配置（查不到或已取消固定分时时，直接把中文提示返回给模型，不按其他省份兜底）
+    let pricing;
+    try {
+        pricing = getPriceConfig(province);
+    } catch (error) {
+        return { success: false, error: safeErrorMessage(error, '暂无该省数据') };
+    }
     let estimatedGeneration = 0;
 
     if (projectType === 'wind') {

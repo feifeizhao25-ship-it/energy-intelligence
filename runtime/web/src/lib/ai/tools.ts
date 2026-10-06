@@ -1,6 +1,7 @@
 // AI助手工具定义
 
 import { prisma } from '@/lib/prisma';
+import { lookupTariff, NO_PROVINCE_DATA } from '@/lib/pricing/tariffs';
 
 // 工具定义
 export const AI_TOOLS = {
@@ -104,27 +105,31 @@ export const AI_TOOLS = {
       required: ['region'],
     },
     handler: async (params: { region: string; type?: string }) => {
-      // 这里应该查询电价数据库
-      // 模拟返回
-      const prices: Record<string, any> = {
-        '北京': {
-          residential: { peak: 0.4883, valley: 0.2883, flat: 0.3883 },
-          commercial: { peak: 1.2, valley: 0.6, flat: 0.9 },
-        },
-        '上海': {
-          residential: { peak: 0.617, valley: 0.307, flat: 0.462 },
-          commercial: { peak: 1.1, valley: 0.55, flat: 0.825 },
-        },
-      };
-
-      const regionPrices = prices[params.region] || prices['北京'];
-      const typePrices = params.type ? regionPrices[params.type] : regionPrices;
-
+      // 读全站唯一电价表 lib/pricing/tariffs.ts；查不到返回「暂无该省数据」，不再一律按北京。
+      const found = lookupTariff(params.region);
+      if (found.status === 'missing') {
+        return { success: false, region: params.region, message: NO_PROVINCE_DATA };
+      }
+      if (found.status === 'market') {
+        return { success: true, region: found.province, touStatus: 'market', message: found.message, source: found.tariff.source };
+      }
+      const t = found.tariff;
+      const commercial = { peak: t.peak, flat: t.flat, valley: t.valley, sharp: t.sharp, average: found.retailPrice };
+      const prices = params.type === 'residential'
+        ? (t.residential ?? null)
+        : params.type ? commercial : { commercial, residential: t.residential ?? null };
       return {
         success: true,
-        region: params.region,
+        region: found.province,
         type: params.type || 'all',
-        prices: typePrices,
+        prices,
+        peaks: t.peaks ?? [],
+        valleys: t.valleys ?? [],
+        source: t.source,
+        sourceVerified: t.sourceVerified,
+        asOf: t.asOf,
+        asOfLabel: found.freshness.label,
+        staleNote: found.freshness.staleNote,
         note: '以上价格为参考值，实际电价以电网公司公布为准',
       };
     },

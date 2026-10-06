@@ -1,125 +1,47 @@
-// 电价政策测试
-import { getPriceConfig, PROVINCE_PRICES, ElectricityPriceConfig } from './electricity-price';
+// 测算用电价配置：只读 lib/pricing/tariffs.ts 一张表
+import { getPriceConfig } from './electricity-price';
+import { getLatestPrice } from '@/lib/crawler/price-crawler';
+import { TARIFFS, TariffUnavailableError } from '@/lib/pricing/tariffs';
 
-describe('Electricity Price Policy', () => {
-    describe('getPriceConfig', () => {
-        it('should return correct config for known provinces', () => {
-            const beijingConfig = getPriceConfig('北京');
+const NOW = new Date('2026-10-06T00:00:00Z');
 
-            expect(beijingConfig.province).toBe('北京');
-            expect(beijingConfig.retailPrice).toBe(0.85);
-            expect(beijingConfig.feedInTariff).toBe(0.3533);
-            expect(beijingConfig.peakValleySupport).toBe(true);
-            expect(beijingConfig.peakPrice).toBe(1.25);
-            expect(beijingConfig.valleyPrice).toBe(0.28);
-        });
-
-        it('should return config for Shanghai', () => {
-            const config = getPriceConfig('上海');
-
-            expect(config.province).toBe('上海');
-            expect(config.retailPrice).toBe(0.92);
-            expect(config.peakPrice).toBe(1.35);
-        });
-
-        it('should return config for Jiangsu', () => {
-            const config = getPriceConfig('江苏');
-
-            expect(config.province).toBe('江苏');
-            expect(config.retailPrice).toBe(0.78);
-            expect(config.peakValleySupport).toBe(true);
-        });
-
-        it('should return config for Zhejiang', () => {
-            const config = getPriceConfig('浙江');
-
-            expect(config.province).toBe('浙江');
-            expect(config.retailPrice).toBe(0.82);
-        });
-
-        it('should return config for Guangdong', () => {
-            const config = getPriceConfig('广东');
-
-            expect(config.province).toBe('广东');
-            expect(config.retailPrice).toBe(0.88);
-        });
-
-        it('should return config for Shandong', () => {
-            const config = getPriceConfig('山东');
-
-            expect(config.province).toBe('山东');
-            expect(config.retailPrice).toBe(0.72);
-            // 山东中午深谷特点
-            expect(config.valleys).toEqual([{ start: 11, end: 14 }]);
-        });
-
-        it('should return config for Hebei', () => {
-            const config = getPriceConfig('河北');
-
-            expect(config.province).toBe('河北');
-            expect(config.retailPrice).toBe(0.68);
-        });
-
-        it('should return default config for unknown province', () => {
-            const config = getPriceConfig('未知省份');
-
-            expect(config.province).toBe('通用');
-            expect(config.retailPrice).toBe(0.75);
-            expect(config.feedInTariff).toBe(0.4);
-            expect(config.peakValleySupport).toBe(false);
-            expect(config.peaks).toEqual([]);
-            expect(config.valleys).toEqual([]);
-        });
+describe('getPriceConfig 读统一电价表', () => {
+    it('江苏：峰谷价与 getLatestPrice 一致（此前两张表的谷价 0.25 与 0.31 矛盾）', async () => {
+        const config = getPriceConfig('江苏', NOW);
+        const latest = await getLatestPrice('江苏');
+        expect(config.valleyPrice).toBe(0.31);
+        expect(latest.valley).toBe(config.valleyPrice);
+        expect(latest.peak).toBe(config.peakPrice);
+        expect(config.valleyPrice).toBe(TARIFFS['江苏'].valley);
+        // 手算平均电价：(1.08×4 + 0.64×8 + 0.31×12) ÷ 24 = 13.16 ÷ 24 = 0.5483
+        expect(config.retailPrice).toBeCloseTo(0.5483, 4);
     });
 
-    describe('PROVINCE_PRICES data integrity', () => {
-        it('should have valid price data for all provinces', () => {
-            Object.entries(PROVINCE_PRICES).forEach(([province, config]) => {
-                expect(config.province).toBe(province);
-                expect(config.retailPrice).toBeGreaterThan(0);
-                expect(config.retailPrice).toBeLessThan(2);
-                expect(config.feedInTariff).toBeGreaterThan(0);
-                expect(config.feedInTariff).toBeLessThan(1);
-            });
-        });
-
-        it('should have peak price higher than valley price when peak-valley supported', () => {
-            Object.values(PROVINCE_PRICES).forEach(config => {
-                if (config.peakValleySupport && config.peakPrice && config.valleyPrice) {
-                    expect(config.peakPrice).toBeGreaterThan(config.valleyPrice);
-                }
-            });
-        });
-
-        it('should have valid time periods for peaks and valleys', () => {
-            Object.values(PROVINCE_PRICES).forEach(config => {
-                config.peaks.forEach(peak => {
-                    expect(peak.start).toBeGreaterThanOrEqual(0);
-                    expect(peak.start).toBeLessThanOrEqual(24);
-                    expect(peak.end).toBeGreaterThanOrEqual(0);
-                    expect(peak.end).toBeLessThanOrEqual(24);
-                });
-
-                config.valleys.forEach(valley => {
-                    expect(valley.start).toBeGreaterThanOrEqual(0);
-                    expect(valley.start).toBeLessThanOrEqual(24);
-                    expect(valley.end).toBeGreaterThanOrEqual(0);
-                    expect(valley.end).toBeLessThanOrEqual(24);
-                });
-            });
-        });
+    it('带来源与数据截至；2025-12 的数据在 2026-10 已超过 90 天', () => {
+        const config = getPriceConfig('浙江', NOW);
+        expect(config.source).toContain('来源待核实');
+        expect(config.asOf).toBe('2025-12-05');
+        expect(config.freshness.label).toBe('电价数据截至 2025-12');
+        expect(config.freshness.stale).toBe(true);
+        expect(config.freshness.staleNote).toBe('可能已变化，请以最新文件为准');
     });
 
-    describe('Peak-Valley Price Spread', () => {
-        it('should have reasonable peak-valley spread for arbitrage', () => {
-            const minSpread = 0.5; // 最小价差应该大于0.5元才有套利空间
+    it('「江苏省」也能查到', () => {
+        expect(getPriceConfig('江苏省', NOW).province).toBe('江苏');
+    });
 
-            Object.values(PROVINCE_PRICES).forEach(config => {
-                if (config.peakValleySupport && config.peakPrice && config.valleyPrice) {
-                    const spread = config.peakPrice - config.valleyPrice;
-                    expect(spread).toBeGreaterThan(minSpread);
-                }
-            });
-        });
+    it('查不到的省份抛出「暂无该省数据」，不再按通用 0.75 元或北京兜底', () => {
+        expect(() => getPriceConfig('西藏', NOW)).toThrow(TariffUnavailableError);
+        expect(() => getPriceConfig('西藏', NOW)).toThrow('暂无该省数据');
+    });
+
+    it('已取消固定分时的省份（含河北）不出写死时段，提示输入合同电价', () => {
+        expect(() => getPriceConfig('河北', NOW)).toThrow('已取消固定分时，按市场化交易价格测算，请输入合同电价');
+        expect(() => getPriceConfig('河南', NOW)).toThrow('1656');
+    });
+
+    it('getLatestPrice 对已取消固定分时的省份同样拒绝', async () => {
+        await expect(getLatestPrice('湖北')).rejects.toThrow('请输入合同电价');
+        await expect(getLatestPrice('西藏')).rejects.toThrow('暂无该省数据');
     });
 });

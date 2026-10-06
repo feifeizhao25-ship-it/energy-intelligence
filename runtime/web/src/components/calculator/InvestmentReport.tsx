@@ -9,6 +9,7 @@ import {
     Image,
 } from '@react-pdf/renderer';
 import { co2AvoidedTonnes, EMISSION_FACTOR_NOTE, GRID_EMISSION_FACTOR } from '@/lib/standards/emission-factor';
+import { priceAsOfText } from '@/lib/pricing/tariffs';
 
 // 注册中文字体 - 使用更可靠的 CDN 源
 Font.register({
@@ -300,8 +301,11 @@ const InvestmentReport: React.FC<InvestmentReportProps> = ({ data, type }) => {
                     </View>
                 </View>
 
-                <Text style={{ fontSize: 8, color: '#64748b', marginTop: -10, marginBottom: 10 }}>
+                <Text style={{ fontSize: 8, color: '#64748b', marginTop: -10, marginBottom: 4 }}>
                     {EMISSION_FACTOR_NOTE}（来源：{GRID_EMISSION_FACTOR.source}）
+                </Text>
+                <Text style={{ fontSize: 8, color: '#64748b', marginBottom: 10 }}>
+                    {priceAsOfText(data.metadata?.pricing)}
                 </Text>
 
                 {/* 结论 */}

@@ -21,6 +21,7 @@ import InvestmentReport from '@/components/calculator/InvestmentReport';
 import AIProjectAnalysis from '@/components/calculator/AIProjectAnalysis';
 import { safeErrorMessage } from '@/lib/api/safe-error';
 import { co2AvoidedTonnes, EMISSION_FACTOR_NOTE } from '@/lib/standards/emission-factor';
+import { priceAsOfText } from '@/lib/pricing/tariffs';
 
 const PDFDownloadLink = dynamic(
     () => import('@react-pdf/renderer').then((mod) => mod.PDFDownloadLink),
@@ -99,6 +100,12 @@ function CalculatorResultPage() {
             </div>
 
             <main className="max-w-6xl mx-auto px-6 mt-10">
+                <p
+                    data-testid="price-as-of"
+                    className={`mb-6 rounded-xl border px-4 py-3 text-xs leading-6 ${data.metadata?.pricing?.stale ? 'border-amber-500/30 bg-amber-500/10 text-amber-200' : 'border-slate-800 bg-slate-900 text-slate-400'}`}
+                >
+                    {priceAsOfText(data.metadata?.pricing)}
+                </p>
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
                     {/* Main Dashboard */}

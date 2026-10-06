@@ -7,7 +7,9 @@ jest.mock('@/lib/policy/electricity-price', () => ({
         retailPrice: 1.0,
         feedInTariff: 0.4,
         peakPrice: 1.5,
-        valleyPrice: 0.4
+        valleyPrice: 0.4,
+        source: '来源待核实',
+        freshness: { label: '电价数据截至 2025-12', stale: true, staleNote: '可能已变化，请以最新文件为准' },
     }))
 }));
 

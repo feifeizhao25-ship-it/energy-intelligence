@@ -185,11 +185,22 @@ export default function ConversationalWizard({ type, config }: ConversationalWiz
                     metadata: {
                         projectName: calculationData.projectName,
                         province: result.pricing.province,
-                        capacity: calculationData.capacity
+                        capacity: calculationData.capacity,
+                        // 电价来源与「数据截至」，结果页和报告据此显示
+                        pricing: result.pricing
                     }
                 };
                 // Redirect to dashboard calculator result page with data
                 router.push(`/calculator/result?type=solar&data=${encodeURIComponent(JSON.stringify(resultWithMeta))}`);
+            } else {
+                // 例如「暂无该省数据」「已取消固定分时，请输入合同电价」——直接告诉用户，不再静默跳走
+                setMessages(prev => [...prev, {
+                    id: 'bot-error',
+                    type: 'bot',
+                    content: typeof result.error === 'string' ? result.error : '测算未完成，请稍后再试。'
+                }]);
+                setIsTyping(false);
+                return;
             }
         } catch (error) {
             console.error('Calculation error:', error);

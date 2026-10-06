@@ -104,7 +104,7 @@ export async function compareSiteEnergies(input: {
         hybrid,
         recommendation,
         metadata: {
-            dataSources: ['NASA POWER', 'Local Utility Rates (2024)', '新能源智库计算引擎 V1'],
+            dataSources: ['NASA POWER 公开气象数据', `省级电价参考表（${priceConfig.source}；${priceConfig.freshness.label}）`, '新能源智库计算引擎 V1'],
             calculationVersion: '1.0.0-prod',
             timestamp: new Date().toISOString()
         },

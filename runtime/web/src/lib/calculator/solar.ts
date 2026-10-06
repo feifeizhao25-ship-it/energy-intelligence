@@ -7,6 +7,7 @@ import {
 } from '@/types';
 import { getSolarResource } from '@/lib/api/nasa-power';
 import { getPriceConfig } from '@/lib/policy/electricity-price';
+import { TariffUnavailableError } from '@/lib/pricing/tariffs';
 import { calculateWind } from './wind';
 import { PolicyService } from '@/lib/services/policy-service';
 import { safeErrorMessage } from '@/lib/api/safe-error';
@@ -163,9 +164,10 @@ export async function calculateSolar(input: SolarCalculationInput): Promise<Sola
     }
 
     // 3. 获取电价配置和最新政策
-    const pricingConfig = getPriceConfig(input.province);
-    let electricityPrice = input.electricityPrice || pricingConfig.retailPrice;
-    let feedInPrice = input.feedInTariff || pricingConfig.feedInTariff;
+    // 只有用户没填电价时才查省级电价表；查不到/已取消固定分时会抛出中文提示，不按其他省份兜底
+    const pricingConfig = input.electricityPrice && input.feedInTariff ? null : getPriceConfig(input.province);
+    let electricityPrice = input.electricityPrice || pricingConfig!.retailPrice;
+    let feedInPrice = input.feedInTariff || pricingConfig!.feedInTariff;
     let subsidies = 0; // 元/kWh 补贴
     let oneTimeSubsidy = 0; // 元/W 一次性补贴
 
@@ -256,6 +258,7 @@ export async function calculateSolar(input: SolarCalculationInput): Promise<Sola
 
   } catch (error) {
     console.error('光伏计算失败:', error);
+    if (error instanceof TariffUnavailableError) throw error;
     throw new Error(`光伏计算失败: ${safeErrorMessage(error, '未知错误')}`);
   }
 }

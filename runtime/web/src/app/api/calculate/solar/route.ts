@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { calculateSolar, normalizeSelfUseRatio } from '@/lib/calculator/solar';
-import { getLatestPrice } from '@/lib/crawler/price-crawler';
+import { getLatestPrice, calculateAveragePrice } from '@/lib/crawler/price-crawler';
+import { lookupTariff, TariffUnavailableError } from '@/lib/pricing/tariffs';
 import { SolarCalculationInput } from '@/types';
 import { enforceRateLimit, PUBLIC_RULES } from '@/lib/security/rate-limit';
 
@@ -44,20 +45,54 @@ export async function POST(req: Request) {
             );
         }
 
+        // 已取消固定分时的省份：必须由用户输入合同电价（contractPrice，元/kWh），否则不测算。
+        const tariff = lookupTariff(province);
+        const contractPrice = Number(body.contractPrice);
+        if (tariff.status === 'market') {
+            if (!(contractPrice > 0)) {
+                return NextResponse.json(
+                    { success: false, error: tariff.message, code: 'MARKET_TOU' },
+                    { status: 422 },
+                );
+            }
+        }
+
         // 取真实电价。`getLatestPrice` 对未收录省份会抛错而非静默套用邻省价格
         // （否则收益测算会整体算错却看不出来）。这里把它翻译成可读提示。
-        let pricing;
-        try {
-            pricing = await getLatestPrice(province);
-        } catch (e) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    error: `暂无「${province}」的电价数据，无法测算`,
-                    code: 'PRICE_UNAVAILABLE',
-                },
-                { status: 422 },
-            );
+        let pricing: {
+            province: string; selfUsePrice: number; feedInTariff: number;
+            sourceDoc: string; asOfLabel: string; stale: boolean; staleNote: string | null; updatedAt: string | null;
+        };
+        if (tariff.status === 'market') {
+            pricing = {
+                province, selfUsePrice: contractPrice, feedInTariff: contractPrice,
+                sourceDoc: '用户输入的合同电价', asOfLabel: '电价为用户输入的合同电价', stale: false, staleNote: null, updatedAt: null,
+            };
+        } else {
+            try {
+                const price = await getLatestPrice(province);
+                const feedIn = tariff.status === 'ok' ? tariff.tariff.feedInTariff : undefined;
+                pricing = {
+                    province: price.province,
+                    // 自用电价按 峰4:平8:谷12 加权（与 /api/calculator/solar 同一口径）
+                    selfUsePrice: calculateAveragePrice(price, 1),
+                    feedInTariff: feedIn ?? price.valley,
+                    sourceDoc: price.sourceDoc,
+                    asOfLabel: price.asOfLabel,
+                    stale: price.stale,
+                    staleNote: price.staleNote,
+                    updatedAt: price.updatedAt || null,
+                };
+            } catch (e) {
+                return NextResponse.json(
+                    {
+                        success: false,
+                        error: e instanceof TariffUnavailableError ? `${e.lookup.message}，无法测算` : `暂无「${province}」的电价数据，无法测算`,
+                        code: 'PRICE_UNAVAILABLE',
+                    },
+                    { status: 422 },
+                );
+            }
         }
 
         // 前端按百分比传（70 表示 70%），计算器要的是 0–1 小数
@@ -72,9 +107,9 @@ export async function POST(req: Request) {
             tilt: body.tilt !== undefined ? Number(body.tilt) : undefined,
             azimuth: body.azimuth !== undefined ? Number(body.azimuth) : undefined,
             selfUseRatio,
-            // 以真实电价为准，前端传的只是占位默认值
-            electricityPrice: pricing.flat,
-            feedInTariff: Number(body.feedInTariff) || pricing.flat,
+            // 以电价表为准，前端传的只是占位默认值
+            electricityPrice: pricing.selfUsePrice,
+            feedInTariff: pricing.feedInTariff,
             unitCost: body.unitCost !== undefined ? Number(body.unitCost) : undefined,
             province,
         };
@@ -85,11 +120,14 @@ export async function POST(req: Request) {
             success: true,
             data: result,
             pricing: {
-                province,
-                flat: pricing.flat,
-                // 让 UI 能提示「此结果基于 X 天前的电价备份」
-                source: pricing.source,
+                province: pricing.province,
+                selfUsePrice: pricing.selfUsePrice,
+                feedInTariff: pricing.feedInTariff,
+                // 让 UI 能提示「电价数据截至 2025-12，可能已变化，请以最新文件为准」
+                source: pricing.sourceDoc,
+                asOfLabel: pricing.asOfLabel,
                 stale: pricing.stale,
+                staleNote: pricing.staleNote,
                 updatedAt: pricing.updatedAt,
             },
         });
