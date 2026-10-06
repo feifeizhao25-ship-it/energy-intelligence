@@ -76,6 +76,44 @@ const INSTALLATION_FACTORS: Record<string, InstallationFactor> = {
 };
 
 /**
+ * 系统损耗中安装形式之外的部分（GB 50797 系统效率分项里常见的取值）：
+ * - soilingLoss：灰尘/积雪遮挡 2%
+ * - acLoss：交流线损与升压变损耗 1.5%
+ * - cellTempRise：组件工作温度相对环境温度的平均温升（按辐照加权，约 20°C；NOCT 45°C 时 800 W/m² 下温升 25°C）
+ * - tempCoefficient：功率温度系数 0.4%/°C（25°C 以上计损失）
+ * 此前只用环境温度、不计灰尘和交流损耗，PR 修正单位后地面电站会超过 90%，与实测不符。
+ */
+export const LOSS_ASSUMPTIONS = {
+  soilingLoss: 0.02,
+  acLoss: 0.015,
+  cellTempRise: 20,
+  tempCoefficient: 0.004,
+} as const;
+
+/** STC 辐照度 1 kW/m²：装机容量(kW) × 倾斜面辐照(kWh/m²) ÷ 1 kW/m² = 理论发电量(kWh) */
+const G_STC_KW_PER_M2 = 1;
+
+/**
+ * 按「倾斜面年辐照 × 装机容量 × 系统效率」计算年发电量（kWh）。
+ * 例：1000 kW × 1500 kWh/m² ÷ 1 kW/m² × 0.8 = 1,200,000 kWh。
+ */
+export function annualEnergyKWh(capacityKw: number, planeIrradiationKWhPerM2: number, systemEfficiency: number): number {
+  return capacityKw * (planeIrradiationKWhPerM2 / G_STC_KW_PER_M2) * systemEfficiency;
+}
+
+/**
+ * 系统性能比 PR（口径库 STANDARDS.PR，IEC 61724-1）：
+ *   PR = E_actual / (P_stc × H_poa / G_stc)
+ * capacityKw 为 kWp，planeIrradiationKWhPerM2 为组件平面**年累计**辐照（kWh/m²/年），返回 0–1 小数。
+ * 注意：H_poa 已是年累计值，不能再乘 365（此前的写法把分母放大了 365 倍，页面上 PR≈0.3%）。
+ */
+export function performanceRatio(energyKWh: number, capacityKw: number, planeIrradiationKWhPerM2: number): number {
+  const reference = capacityKw * (planeIrradiationKWhPerM2 / G_STC_KW_PER_M2);
+  if (!(reference > 0)) return 0;
+  return energyKWh / reference;
+}
+
+/**
  * 计算光伏项目收益
  */
 export async function calculateSolar(input: SolarCalculationInput): Promise<SolarCalculationOutput> {
@@ -126,7 +164,7 @@ export async function calculateSolar(input: SolarCalculationInput): Promise<Sola
     const effectiveSelfUsePrice = electricityPrice + subsidies; // 自用部分通常也享受度电补贴（视具体政策而定，这里假设全额度电补贴）
 
     // 4. 计算月度发电量
-    const monthlyGeneration = calculateMonthlyGeneration(
+    const { monthlyGeneration, planeIrradiation } = calculateMonthlyGeneration(
       solarResource,
       input.capacity,
       moduleConfig,
@@ -167,7 +205,8 @@ export async function calculateSolar(input: SolarCalculationInput): Promise<Sola
         lifetime: lifetimeGeneration.total,
         specificYield: year1Generation / input.capacity,
         equivalentHours: year1Generation / input.capacity,
-        pr: calculatePerformanceRatio(solarResource, monthlyGeneration, input.capacity),
+        planeIrradiation,
+        pr: performanceRatio(year1Generation, input.capacity, planeIrradiation),
         degradation: lifetimeGeneration.degradation
       },
       financial,
@@ -190,16 +229,18 @@ function calculateMonthlyGeneration(
   installationFactor: InstallationFactor,
   tilt: number,
   azimuth: number
-): number[] {
+): { monthlyGeneration: number[]; planeIrradiation: number } {
   const monthlyGeneration: number[] = [];
+  let planeIrradiation = 0; // 组件平面年累计辐照 (kWh/m²/年)
 
-  // 系统效率综合系数 (PR)
-  // 不再包含组件效率，因为容量已经是kWp
+  // 系统效率（不含温度，温度逐月计）。不包含组件效率，因为容量已经是 kWp。
   const systemEfficiency =
     (1 - installationFactor.shadingLoss) *
     (1 - installationFactor.mismatchLoss) *
     (1 - installationFactor.dcLoss) *
-    installationFactor.inverterEfficiency;
+    installationFactor.inverterEfficiency *
+    (1 - LOSS_ASSUMPTIONS.soilingLoss) *
+    (1 - LOSS_ASSUMPTIONS.acLoss);
 
   // 倾角修正系数
   const tiltFactor = calculateTiltFactor(solarResource.annual.optimalTilt, tilt);
@@ -208,28 +249,24 @@ function calculateMonthlyGeneration(
   const azimuthFactor = 1 - Math.abs(azimuth - 180) * 0.0003; // 每度偏差0.03%损失
 
   solarResource.monthly.filter(m => m.month <= 12).forEach(monthData => {
-    // 温度修正系数
-    const tempFactor = 1 - Math.max(0, (monthData.temperature - 25) * 0.004);
+    // 温度修正：按组件工作温度（环境温度 + 平均温升）计，25°C 以上每度损失 0.4%
+    const cellTemperature = monthData.temperature + LOSS_ASSUMPTIONS.cellTempRise;
+    const tempFactor = 1 - Math.max(0, (cellTemperature - 25) * LOSS_ASSUMPTIONS.tempCoefficient);
 
-    // 月度发电量计算
-    // 发电量(kWh) = 辐照量(kWh/m²) × 容量(kW) × 天数 × 系统效率 × 倾角修正 × 方位角修正 × 温度修正
     const daysInMonth = new Date(2024, monthData.month, 0).getDate();
 
-    // 综合系统效率 PR (Performance Ratio)
-    // 典型的PR在 75%-85% 之间。systemEfficiency 已经包含了大部分。
-    const generation =
-      monthData.ghi *
-      capacity *
-      daysInMonth *
-      systemEfficiency *
-      tiltFactor *
-      azimuthFactor *
-      tempFactor;
+    // 组件平面月辐照 (kWh/m²) = 水平面日均辐照 × 天数 × 倾角修正 × 方位角修正
+    // 说明：这里没有直射/散射分解与倾斜面换算，倾角只做折减，是对 POA 的近似。
+    const monthPlane = monthData.ghi * daysInMonth * tiltFactor * azimuthFactor;
+    planeIrradiation += monthPlane;
+
+    // 月发电量(kWh) = 容量(kW) × 组件平面月辐照(kWh/m²) ÷ 1 kW/m² × 系统效率 × 温度修正
+    const generation = annualEnergyKWh(capacity, monthPlane, systemEfficiency * tempFactor);
 
     monthlyGeneration.push(Math.round(generation));
   });
 
-  return monthlyGeneration;
+  return { monthlyGeneration, planeIrradiation };
 }
 
 /**
@@ -338,24 +375,6 @@ function calculateFinancial(
     lcoe,
     cashFlow: annualCashFlows
   };
-}
-
-/**
- * 计算性能比（PR）
- */
-function calculatePerformanceRatio(
-  solarResource: SolarResource,
-  monthlyGeneration: number[],
-  capacity: number
-): number {
-  const totalGeneration = monthlyGeneration.reduce((sum, gen) => sum + gen, 0);
-  const expectedGeneration =
-    solarResource.annual.ghi *
-    capacity *
-    365 *
-    0.85; // 理论发电量（考虑各种损失）
-
-  return (totalGeneration / expectedGeneration) * 100;
 }
 
 /**

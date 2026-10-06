@@ -127,11 +127,21 @@ describe('Solar Calculator', () => {
     });
 
     describe('Performance Ratio', () => {
-        it('should have realistic PR values (60-90%)', async () => {
-            const result = await calculateSolar(baseInput);
+        // PR 为 0–1 小数。此前断言只要求 0<PR<150，抓不到分母多乘 365 的错误（当时 PR≈0.003）。
+        it.each(['roof', 'ground', 'carport', 'bifacial'] as const)('%s 安装的 PR 落在 0.70–0.90', async (installationType) => {
+            const result = await calculateSolar({ ...baseInput, installationType });
 
-            expect(result.energy.pr).toBeGreaterThan(0);
-            expect(result.energy.pr).toBeLessThan(150); // PR should be realistic
+            expect(result.energy.pr).toBeGreaterThanOrEqual(0.70);
+            expect(result.energy.pr).toBeLessThanOrEqual(0.90);
+        });
+
+        it('PR 的分母是组件平面年累计辐照（kWh/m²/年），与发电量自洽', async () => {
+            const result = await calculateSolar(baseInput);
+            const plane = result.energy.planeIrradiation!;
+            // 年累计辐照应在几百到两千多 kWh/m²，而不是乘了 365 的几十万
+            expect(plane).toBeGreaterThan(500);
+            expect(plane).toBeLessThan(2600);
+            expect(result.energy.pr).toBeCloseTo(result.energy.year1 / (baseInput.capacity * plane), 6);
         });
     });
 });

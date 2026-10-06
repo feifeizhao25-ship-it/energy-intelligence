@@ -21,7 +21,7 @@ export interface SolarResource {
     temperature: number; // 月平均气温 (°C)
   }[];
   annual: {
-    ghi: number; // 年总辐照度 (kWh/m²/year)
+    ghi: number; // 年累计水平面辐照 (kWh/m²/年)，已是全年合计——不要再乘 365
     peakSunHours: number; // 峰值日照小时数
     optimalTilt: number; // 最佳倾角 (度)
     resourceClass: 'I' | 'II' | 'III' | 'IV' | 'V'; // 资源等级
@@ -86,7 +86,8 @@ export interface SolarCalculationOutput {
     lifetime: number; // 25年总发电量 (kWh)
     specificYield: number; // 比发电量 (kWh/kWp/year)
     equivalentHours: number; // 等效满发小时数 (h)
-    pr: number; // 性能比 (%)
+    planeIrradiation?: number; // 组件平面年累计辐照 (kWh/m²/年)，PR 的分母
+    pr: number; // 性能比，0–1 小数（典型 0.70–0.90），= 首年发电量 / (装机 kWp × 组件平面年辐照 ÷ 1 kW/m²)
     degradation: number[]; // 年度衰减率数组
   };
   financial: {
