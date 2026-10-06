@@ -34,7 +34,6 @@ import {
     analyzeConsistency,
     searchSafetyRegulations
 } from '@/lib/maintenance';
-// import { compareSiteEnergies } from '@/lib/calculator/aggregator'; // Removed in Phase 1 Refinement
 import { ragProcessor } from '../papers/rag';
 import { simpleChat } from '@/lib/ai/unified';
 import { safeErrorMessage } from '@/lib/api/safe-error';

@@ -3,7 +3,11 @@ import { calculateWind } from './wind';
 import { calculateStorage } from './storage';
 import { getPriceConfig } from '@/lib/policy/electricity-price';
 import { getSolarResource, getWindResource } from '@/lib/api/nasa-power';
-import { SiteComparisonOutput, EnergyResult, Recommendation, RiskLevel, ConfidenceLevel } from '@/types/comparison';
+import { SiteComparisonOutput, EnergyResult, Recommendation, RiskLevel } from '@/types/comparison';
+import { solveIrr, paybackPeriodOf } from './project-finance';
+
+const UNASSESSED_BASIS = '未评估：未做资源年际波动、电价与政策变化、设备故障等风险分析';
+export const RISK_LABEL: Record<RiskLevel, string> = { low: '低', medium: '中', high: '高', unassessed: '未评估' };
 
 export async function compareSiteEnergies(input: {
     lat: number;
@@ -85,7 +89,7 @@ export async function compareSiteEnergies(input: {
     const wind = transformToEnergyResult('WIND', results[1], { windResource });
     const storage = transformToEnergyResult('STORAGE', results[2], { priceConfig });
 
-    // 4. 计算混合方案 (简化估算)
+    // 4. 计算混合方案：合并逐年现金流后重新求 IRR
     const hybrid = calculateHybrid(solar, storage);
 
     // 5. 确定性推荐逻辑
@@ -119,7 +123,8 @@ function transformToEnergyResult(type: EnergyResult['type'], settled: PromiseSet
             paybackYears: null,
             annualRevenue: null,
             capex: 0,
-            riskLevel: 'high',
+            riskLevel: 'unassessed',
+            riskBasis: '测算未完成，无法评估',
             assumptions: {},
             confidence: 'low',
             score: 0,
@@ -132,7 +137,9 @@ function transformToEnergyResult(type: EnergyResult['type'], settled: PromiseSet
     let payback = 0;
     let revenue = 0;
     let capex = 0;
-    let risk: RiskLevel = 'low';
+    // 风险等级必须有依据；没有依据就标「未评估」，不再一律写死为低风险。
+    let risk: RiskLevel = 'unassessed';
+    let riskBasis = UNASSESSED_BASIS;
 
     if (type === 'SOLAR') {
         irr = data.financial.irr;
@@ -144,7 +151,9 @@ function transformToEnergyResult(type: EnergyResult['type'], settled: PromiseSet
         payback = data.financial.paybackYears;
         revenue = data.financial.year1Revenue;
         capex = data.financial.investment;
-        risk = meta.windResource.annual.avgSpeed < 5 ? 'high' : 'medium';
+        const avgSpeed = meta.windResource.annual.avgSpeed;
+        risk = avgSpeed < 5 ? 'high' : 'medium';
+        riskBasis = `仅按资源判断：100 米年均风速 ${Number(avgSpeed).toFixed(1)} m/s，低于 5 m/s 判为高、否则为中；未评估电价与政策风险`;
     } else if (type === 'STORAGE') {
         irr = data.financial.metrics.irr;
         payback = data.financial.metrics.paybackYears;
@@ -159,78 +168,84 @@ function transformToEnergyResult(type: EnergyResult['type'], settled: PromiseSet
         annualRevenue: revenue,
         capex,
         riskLevel: risk,
-        assumptions: type === 'SOLAR' ? { '屋顶面积': 100, '自用比例': 80 } : {},
+        riskBasis,
+        assumptions: type === 'SOLAR' ? { '装机容量(kWp)': 15, '自用比例(%)': 80 } : {},
         confidence: 'high',
-        score: calculateScore(irr, type),
+        score: calculateScore(irr),
         details: data
     };
 }
 
-function calculateHybrid(solar: EnergyResult, storage: EnergyResult): EnergyResult {
-    if (!solar.irr || !storage.irr) {
-        return { ...solar, type: 'HYBRID', irr: null, confidence: 'low' };
+/**
+ * 光储一体：把两边逐年现金流按年相加后重新求 IRR 和回收期（共用 project-finance 的求解器），
+ * 不再按 0.7/0.3 加权两个 IRR、也不再给混合方案额外加分。
+ * 光伏 25 年；储能 10 年，之后既不计收益也不计更换投资（假设写在 assumptions 里）。
+ */
+export function calculateHybrid(solar: EnergyResult, storage: EnergyResult): EnergyResult {
+    const solarFlows: number[] | undefined = solar.details?.financial?.cashFlow;
+    const storageFlows: number[] | undefined = storage.details?.financial?.cashFlows;
+    if (!Array.isArray(solarFlows) || !Array.isArray(storageFlows) || !solar.capex || !storage.capex) {
+        return {
+            type: 'HYBRID', irr: null, paybackYears: null, annualRevenue: null, capex: solar.capex + storage.capex,
+            riskLevel: 'unassessed', riskBasis: '缺少逐年现金流，无法合并测算', assumptions: {},
+            confidence: 'low', score: 0, details: null,
+        };
     }
     const totalCapex = solar.capex + storage.capex;
-    const totalRevenue = (solar.annualRevenue || 0) + (storage.annualRevenue || 0);
-    const weightedIrr = (solar.irr * 0.7 + storage.irr * 0.3);
+    const years = Math.max(solarFlows.length, storageFlows.length - 1);
+    const combined = [-totalCapex];
+    for (let t = 1; t <= years; t++) {
+        combined.push((solarFlows[t - 1] ?? 0) + (storageFlows[t] ?? 0));
+    }
+    const irrFraction = solveIrr(combined);
+    const irr = irrFraction === null ? null : irrFraction * 100;
 
     return {
         type: 'HYBRID',
-        irr: weightedIrr,
-        paybackYears: ((solar.paybackYears || 10) + (storage.paybackYears || 10)) / 2,
-        annualRevenue: totalRevenue,
+        irr,
+        paybackYears: paybackPeriodOf(totalCapex, combined.slice(1)),
+        annualRevenue: (solar.annualRevenue || 0) + (storage.annualRevenue || 0),
         capex: totalCapex,
-        riskLevel: 'low',
-        assumptions: { '混合消纳率': 95 },
+        riskLevel: 'unassessed',
+        riskBasis: UNASSESSED_BASIS,
+        assumptions: { '光伏寿命(年)': solarFlows.length, '储能寿命(年)': storageFlows.length - 1 },
         confidence: 'medium',
-        score: calculateScore(weightedIrr, 'HYBRID'),
-        details: { solar: solar.details, storage: storage.details }
+        score: irr === null ? 0 : calculateScore(irr),
+        details: { solar: solar.details, storage: storage.details, cashFlows: combined }
     };
 }
 
-function calculateScore(irr: number, type: string): number {
+/** 评分只看 IRR（基准 8%），各方案同一口径，不对任何方案额外加分。 */
+function calculateScore(irr: number): number {
     const base = 60;
     const bonus = (irr - 8) * 4;
-    let final = base + bonus;
-    if (type === 'HYBRID') final += 5; // 稳定性加分
-    return Math.min(99, Math.max(0, final));
+    return Math.min(99, Math.max(0, base + bonus));
 }
 
 function determineRecommendation(solutions: EnergyResult[]): Recommendation {
     // 过滤有数值的方案
     const valid = solutions.filter(s => s.irr !== null && s.paybackYears !== null);
 
-    // 优先级排序：
-    // 1. IRR > 8% 且回收期最短
-    // 2. 风险等级最低
-    // 3. 混合方案优先
-
+    // 排序：先看 IRR 是否高于 8% 基准，再按 IRR 高低。
+    // 风险等级多数为「未评估」，不参与排序；也不再「混合方案优先」。
     const sorted = [...valid].sort((a, b) => {
-        // 1. 风险优先级
-        const riskOrder = { low: 0, medium: 1, high: 2 };
-        if (riskOrder[a.riskLevel] !== riskOrder[b.riskLevel]) {
-            return riskOrder[a.riskLevel] - riskOrder[b.riskLevel];
-        }
-
-        // 2. IRR 阈值 (8%)
         const aHighIrr = (a.irr || 0) > 8;
         const bHighIrr = (b.irr || 0) > 8;
         if (aHighIrr && !bHighIrr) return -1;
         if (!aHighIrr && bHighIrr) return 1;
-
-        // 3. 混合方案优先 (若 IRR 差距不大，< 1%)
-        if (a.type === 'HYBRID' && Math.abs((a.irr || 0) - (b.irr || 0)) < 1) return -1;
-        if (b.type === 'HYBRID' && Math.abs((a.irr || 0) - (b.irr || 0)) < 1) return 1;
-
-        // 4. IRR 绝对值
         return (b.irr || 0) - (a.irr || 0);
     });
 
     const best = sorted[0];
+    if (!best) {
+        return { type: 'SOLAR', reasonSummary: ['各方案均未得到可确认的测算结果，暂不推荐。'], riskLevel: 'unassessed' };
+    }
     const reasons = [
-        `IRR 预计可达 ${best.irr?.toFixed(1)}%，经济表现优异。`,
-        `投资回收期约 ${best.paybackYears?.toFixed(1)} 年，资金流动性较好。`,
-        `风险评级为“${best.riskLevel === 'low' ? '低' : (best.riskLevel === 'medium' ? '中' : '高')}”，适合${best.riskLevel === 'low' ? '稳健型' : '成长型'}投资人。`
+        `按当前假设，IRR 约 ${best.irr?.toFixed(1)}%（测算结果仅供参考）。`,
+        `静态回收期约 ${best.paybackYears?.toFixed(1)} 年。`,
+        best.riskLevel === 'unassessed'
+            ? '风险等级：未评估（未分析资源年际波动、电价与政策变化）。'
+            : `风险等级：${RISK_LABEL[best.riskLevel]}（${best.riskBasis}）。`,
     ];
 
     return {

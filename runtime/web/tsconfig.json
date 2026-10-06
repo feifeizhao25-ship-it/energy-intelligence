@@ -41,7 +41,6 @@
     "legacy-routes",
     "src/test-*.ts",
     "scripts",
-    "src/lib/calculator/aggregator.ts",
     "**/*.spec.ts",
     "**/*.test.ts",
     "**/*.test.tsx"

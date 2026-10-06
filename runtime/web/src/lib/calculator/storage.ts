@@ -76,7 +76,9 @@ export async function calculateStorage(input: StorageCalculationInput) {
             investment: {
                 total: totalInvestment,
                 unitCost: input.investment.unitCost
-            }
+            },
+            /** 逐年现金流，cashFlows[0] 为第 0 年（负的初始投资），第 1–10 年为净收入 */
+            cashFlows
         }
     };
 }
