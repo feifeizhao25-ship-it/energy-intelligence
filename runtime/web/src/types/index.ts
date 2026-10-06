@@ -72,7 +72,7 @@ export interface SolarCalculationInput {
   moduleType: 'economy' | 'standard' | 'premium';
   tilt?: number; // 倾角 (度)
   azimuth?: number; // 方位角 (度)
-  selfUseRatio: number; // 自用比例 (0-1)
+  selfUseRatio: number; // 自用比例，0–1 小数（0.8 = 80%）；不接受百分数，接口层用 normalizeSelfUseRatio 换算
   electricityPrice: number; // 自用电价 (元/kWh)
   feedInTariff: number; // 上网电价 (元/kWh)
   unitCost?: number; // 单位成本 (元/kW)
@@ -92,6 +92,8 @@ export interface SolarCalculationOutput {
   };
   financial: {
     investment: number; // 总投资 (元)
+    selfUseEnergy?: number; // 首年自用电量 (kWh) = 首年发电量 × 自用比例
+    exportEnergy?: number; // 首年上网电量 (kWh)
     year1Revenue: number; // 首年收益 (元)
     paybackYears: number; // 回本年限
     irr: number; // 内部收益率 (%)

@@ -35,7 +35,7 @@ describe('Solar Calculator', () => {
         capacity: 100, // 100kW
         installationType: 'roof',
         moduleType: 'standard',
-        selfUseRatio: 70,
+        selfUseRatio: 0.7, // 0–1 小数
         electricityPrice: 0.82,
         feedInTariff: 0.4,
         province: '浙江'
@@ -98,7 +98,7 @@ describe('Solar Calculator', () => {
         });
 
         it('should handle full self-use (100% self consumption)', async () => {
-            const result = await calculateSolar({ ...baseInput, selfUseRatio: 100 });
+            const result = await calculateSolar({ ...baseInput, selfUseRatio: 1 });
 
             expect(result.financial.year1Revenue).toBeGreaterThan(0);
         });

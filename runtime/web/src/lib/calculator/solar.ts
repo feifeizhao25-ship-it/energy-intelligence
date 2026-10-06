@@ -114,6 +114,18 @@ export function performanceRatio(energyKWh: number, capacityKw: number, planeIrr
 }
 
 /**
+ * 自用比例统一口径：**0–1 小数**（0.8 表示 80% 自用）。calculateSolar 只接受小数，
+ * 传入百分数（如 80）会直接报错，避免再出现「传 0.8 又除以 100」只按 0.8% 自用算的错误。
+ * 接口层若收到百分数，用本函数换算：大于 1 的值视为百分数（80 → 0.8），结果截断到 [0, 1]。
+ */
+export function normalizeSelfUseRatio(raw: unknown, fallback: number): number {
+  const value = typeof raw === 'number' ? raw : raw === undefined || raw === null || raw === '' ? NaN : Number(raw);
+  if (!Number.isFinite(value)) return fallback;
+  const ratio = value > 1 ? value / 100 : value;
+  return Math.min(1, Math.max(0, ratio));
+}
+
+/**
  * 计算光伏项目收益
  */
 export async function calculateSolar(input: SolarCalculationInput): Promise<SolarCalculationOutput> {
@@ -125,6 +137,9 @@ export async function calculateSolar(input: SolarCalculationInput): Promise<Sola
     const moduleConfig = MODULE_CONFIGS[input.moduleType];
     if (!moduleConfig) {
       throw new Error(`未知的组件类型: ${input.moduleType}`);
+    }
+    if (!Number.isFinite(input.selfUseRatio) || input.selfUseRatio < 0 || input.selfUseRatio > 1) {
+      throw new Error('自用比例须为 0–1 的小数（例如 0.8 表示 80%）');
     }
 
     // 3. 获取电价配置和最新政策
@@ -192,7 +207,7 @@ export async function calculateSolar(input: SolarCalculationInput): Promise<Sola
       year1Generation,
       effectiveSelfUsePrice, // 使用含补贴的电价计算收益
       effectiveFeedInPrice,  // 使用含补贴的上网价计算收益
-      input.selfUseRatio / 100
+      input.selfUseRatio // 0–1 小数，见 normalizeSelfUseRatio
     );
 
     // 7. 环境效益计算
@@ -320,7 +335,7 @@ function calculateFinancial(
   year1Generation: number,
   electricityPrice: number,
   feedInPrice: number,
-  selfUseRatio: number
+  selfUseRatio: number // 0–1 小数
 ) {
   // 1. 投资成本计算
   // unitCost 是 元/kW
@@ -368,6 +383,8 @@ function calculateFinancial(
 
   return {
     investment: totalInvestment,
+    selfUseEnergy: selfUseGeneration,
+    exportEnergy: feedInGeneration,
     year1Revenue: totalRevenue,
     paybackYears,
     irr,
@@ -479,7 +496,7 @@ export async function compareSolarAndWind(
     capacity,
     installationType: 'ground',
     moduleType: 'standard',
-    selfUseRatio: 100, // 全额自用（对比最大收益潜力）
+    selfUseRatio: 1, // 全额自用（对比最大收益潜力），0–1 小数
     electricityPrice: 0.6, // 假设电价
     feedInTariff: 0.4,
     province

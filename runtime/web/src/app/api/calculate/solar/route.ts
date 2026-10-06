@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { calculateSolar } from '@/lib/calculator/solar';
+import { calculateSolar, normalizeSelfUseRatio } from '@/lib/calculator/solar';
 import { getLatestPrice } from '@/lib/crawler/price-crawler';
 import { SolarCalculationInput } from '@/types';
 import { enforceRateLimit, PUBLIC_RULES } from '@/lib/security/rate-limit';
@@ -60,9 +60,8 @@ export async function POST(req: Request) {
             );
         }
 
-        const selfUseRatioRaw = Number(body.selfUseRatio ?? 0);
-        // 前端按百分比传（70 表示 70%），计算器要的是 0–1
-        const selfUseRatio = selfUseRatioRaw > 1 ? selfUseRatioRaw / 100 : selfUseRatioRaw;
+        // 前端按百分比传（70 表示 70%），计算器要的是 0–1 小数
+        const selfUseRatio = normalizeSelfUseRatio(body.selfUseRatio, 0);
 
         const input: SolarCalculationInput = {
             lat: Number(body.lat),
@@ -72,7 +71,7 @@ export async function POST(req: Request) {
             moduleType: (body.moduleType as SolarCalculationInput['moduleType']) || 'standard',
             tilt: body.tilt !== undefined ? Number(body.tilt) : undefined,
             azimuth: body.azimuth !== undefined ? Number(body.azimuth) : undefined,
-            selfUseRatio: Math.min(Math.max(selfUseRatio, 0), 1),
+            selfUseRatio,
             // 以真实电价为准，前端传的只是占位默认值
             electricityPrice: pricing.flat,
             feedInTariff: Number(body.feedInTariff) || pricing.flat,

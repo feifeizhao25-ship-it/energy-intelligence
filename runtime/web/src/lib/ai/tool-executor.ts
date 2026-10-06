@@ -12,7 +12,7 @@ import { getCitation } from '@/lib/api/crossref';
 import { geocodeAddress, reverseGeocode, searchNearbyPOIs } from '@/lib/api/amap';
 import { getAirQualityIndex } from '@/lib/api/open-meteo';
 import { getPVWattsData, calculateSolarOutput } from '@/lib/api/nrel';
-import { calculateSolar } from '@/lib/calculator/solar';
+import { calculateSolar, normalizeSelfUseRatio } from '@/lib/calculator/solar';
 import { compareSolarAndWind } from '@/lib/calculator/solar';
 import { calculateWind } from '@/lib/calculator/wind';
 import { calculateStorage } from '@/lib/calculator/storage';
@@ -255,7 +255,7 @@ export async function executeTool(toolName: string, toolInput: Record<string, un
                     capacity: toolInput.capacity as number,
                     installationType: toolInput.installationType as 'roof' | 'ground' | 'carport' | 'bifacial',
                     moduleType: toolInput.moduleType as 'economy' | 'standard' | 'premium',
-                    selfUseRatio: toolInput.selfUseRatio as number,
+                    selfUseRatio: normalizeSelfUseRatio(toolInput.selfUseRatio, 0.7),
                     electricityPrice: toolInput.electricityPrice as number,
                     feedInTariff: toolInput.feedInTariff as number,
                     province: toolInput.province as string
