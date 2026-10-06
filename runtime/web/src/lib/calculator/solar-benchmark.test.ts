@@ -123,3 +123,13 @@ describe('手算基准：LCOE 折现口径', () => {
         expect(degradationFactor(1, 1.5, 0.45)).toBe(1);
     });
 });
+
+describe('碳减排：统一排放因子', () => {
+    it('首年减排 = 首年发电量 × 0.5306 kg/kWh，结果带因子年份与来源', async () => {
+        const result = await calculateSolar(benchmarkInput);
+        // 手算：1,342,212 kWh × 0.5306 ≈ 712,178 kg
+        expectWithin2Percent(result.environmental.co2Year1, 712_178);
+        expect(result.environmental.emissionFactorYear).toBe(2023);
+        expect(result.environmental.emissionFactorSource).toContain('2025 年第 47 号');
+    });
+});

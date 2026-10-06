@@ -9,9 +9,10 @@ import {
     usageAchievements,
     communityAchievements,
 } from './achievements';
+import { GRID_EMISSION_FACTOR } from '@/lib/standards/emission-factor';
 
-// CO2减排系数：每kWh发电减排约0.5839kg
-const CO2_FACTOR = 0.5839 / 1000; // 吨/kWh
+// CO2 减排系数：统一取 2023 年全国电力平均排放因子（lib/standards/emission-factor.ts）
+const CO2_FACTOR = GRID_EMISSION_FACTOR.value / 1000; // 吨/kWh
 
 export interface UserStats {
     totalGeneration: number;      // 累计发电量 kWh

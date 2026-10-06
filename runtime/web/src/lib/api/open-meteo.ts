@@ -2,6 +2,7 @@
 import { WeatherData, PVForecast } from '@/types';
 
 import { withCache } from '@/lib/cache';
+import { GRID_EMISSION_FACTOR } from '@/lib/standards/emission-factor';
 
 /**
  * 获取天气预报（包含100m高度风速）
@@ -152,11 +153,14 @@ export const getCarbonIntensity = withCache('meteo:carbon', async (country: stri
 
     const data = await response.json();
 
+    // 接口没有给出数值时，回退到 2023 年全国电力平均排放因子，并在 source 里写明是回退值
+    const fromApi = typeof data.carbon_intensity === 'number';
     return {
       country: data.country,
       zone: data.zone,
-      intensity: data.carbon_intensity || 550, // gCO2/kWh，中国电网平均
+      intensity: fromApi ? data.carbon_intensity : GRID_EMISSION_FACTOR.value * 1000, // gCO2/kWh
       unit: 'gCO2/kWh',
+      source: fromApi ? 'Open-Meteo' : `${GRID_EMISSION_FACTOR.source}（${GRID_EMISSION_FACTOR.year} 年全国电力平均）`,
       updatedAt: data.updated_at
     };
 

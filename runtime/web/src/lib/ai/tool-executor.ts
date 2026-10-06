@@ -37,17 +37,9 @@ import {
 import { ragProcessor } from '../papers/rag';
 import { simpleChat } from '@/lib/ai/unified';
 import { safeErrorMessage } from '@/lib/api/safe-error';
+import { GRID_EMISSION_FACTOR, EMISSION_FACTOR_NOTE } from '@/lib/standards/emission-factor';
 
-// 碳排放强度数据（各电网）
-const CARBON_INTENSITY: Record<string, number> = {
-    '华北': 0.8843,
-    '东北': 0.8179,
-    '华东': 0.7035,
-    '华中': 0.5257,
-    '西北': 0.8922,
-    '南方': 0.5271,
-    '默认': 0.7850
-};
+// 碳排放强度：原区域电网表没有来源年份，已删除；统一用 2023 年全国电力平均排放因子。
 
 // 工具执行主函数
 export async function executeTool(toolName: string, toolInput: Record<string, unknown>): Promise<unknown> {
@@ -123,9 +115,11 @@ export async function executeTool(toolName: string, toolInput: Record<string, un
                 const region = toolInput.region as string;
                 return {
                     region,
-                    carbonIntensity: CARBON_INTENSITY[region] || CARBON_INTENSITY['默认'],
-                    unit: 'kgCO2/kWh',
-                    source: '中国电网碳排放因子数据库'
+                    carbonIntensity: GRID_EMISSION_FACTOR.value,
+                    unit: GRID_EMISSION_FACTOR.unit,
+                    year: GRID_EMISSION_FACTOR.year,
+                    source: GRID_EMISSION_FACTOR.source,
+                    note: `${EMISSION_FACTOR_NOTE}；区域电网因子未收录，各区域均按全国平均值`,
                 };
 
             case 'get_air_quality':

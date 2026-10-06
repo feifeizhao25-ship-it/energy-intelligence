@@ -1,6 +1,7 @@
 // API: 快速计算（无需登录）- 用于首页快速估算
 // 使用本地太阳辐照数据，无需调用外部API，确保即时响应
 import { NextRequest, NextResponse } from 'next/server';
+import { co2AvoidedKg } from '@/lib/standards/emission-factor';
 
 // 中国主要城市太阳辐照数据 (年均GHI kWh/m²/day, 等效峰值日照小时数)
 // 数据来源：NASA POWER API 历史平均值
@@ -97,8 +98,8 @@ export async function POST(req: NextRequest) {
         const monthlyRevenue = Math.round(annualRevenue / 12);
 
         // 碳减排计算
-        const co2Factor = 0.785; // kgCO2/kWh
-        const co2Reduction = Math.round(annualGeneration * co2Factor);
+        // 排放因子统一取 2023 年全国电力平均（lib/standards/emission-factor.ts）
+        const co2Reduction = Math.round(co2AvoidedKg(annualGeneration));
         const treesEquivalent = Math.round(co2Reduction / 22);
 
         // 投资估算

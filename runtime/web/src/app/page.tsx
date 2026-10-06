@@ -45,6 +45,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useTranslations } from 'next-intl';
 import AddressAutocomplete from '@/components/ui/AddressAutocomplete';
+import { EMISSION_FACTOR_NOTE } from '@/lib/standards/emission-factor';
 
 // 快速计算结果展示组件
 function QuickResultCard({ icon: Icon, label, value, unit, color }: any) {
@@ -326,6 +327,8 @@ export default function HomePage() {
                                             color={{ bg: 'bg-purple-100', text: 'text-purple-600' }}
                                         />
                                     </div>
+
+                                    <p className="text-[11px] text-slate-400">年减碳{EMISSION_FACTOR_NOTE}</p>
 
                                     <div className="bg-slate-50 rounded-xl p-4">
                                         <div className="flex items-center justify-between mb-2">

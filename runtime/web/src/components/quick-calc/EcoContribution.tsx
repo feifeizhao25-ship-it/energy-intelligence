@@ -3,6 +3,7 @@
 import React from 'react';
 import { Leaf, TreePine, Car, Factory } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { GRID_EMISSION_FACTOR, EMISSION_FACTOR_NOTE } from '@/lib/standards/emission-factor';
 
 interface EcoContributionProps {
     annualGeneration: number;  // 年发电量 kWh
@@ -10,8 +11,8 @@ interface EcoContributionProps {
     energyType?: 'solar' | 'wind' | 'storage';
 }
 
-// CO2减排系数：每kWh发电减排约0.5839kg CO2（中国电网平均）
-const CO2_FACTOR = 0.5839;
+// CO2 减排系数：统一取 2023 年全国电力平均排放因子（lib/standards/emission-factor.ts）
+const CO2_FACTOR = GRID_EMISSION_FACTOR.value;
 // 一棵成年树年吸收CO2约18kg
 const TREE_ABSORPTION = 18;
 // 汽车每公里排放约0.25kg CO2
@@ -113,6 +114,9 @@ export default function EcoContribution({
             <div className="mt-4 text-center text-xs text-slate-500 italic">
                 💡 这相当于一片 {Math.round(trees / 100)} 亩的森林一年的碳吸收量
             </div>
+            <p className="mt-2 text-center text-[11px] text-slate-400">
+                {EMISSION_FACTOR_NOTE}（来源：{GRID_EMISSION_FACTOR.source}）
+            </p>
         </div>
     );
 }

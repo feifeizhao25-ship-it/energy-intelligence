@@ -8,6 +8,7 @@ import {
     Font,
     Image,
 } from '@react-pdf/renderer';
+import { co2AvoidedTonnes, EMISSION_FACTOR_NOTE, GRID_EMISSION_FACTOR } from '@/lib/standards/emission-factor';
 
 // 注册中文字体 - 使用更可靠的 CDN 源
 Font.register({
@@ -287,17 +288,21 @@ const InvestmentReport: React.FC<InvestmentReportProps> = ({ data, type }) => {
                         <View style={[styles.metricCard, { width: '48%', backgroundColor: '#ecfdf5' }]}>
                             <Text style={styles.metricLabel}>年减排二氧化碳 (CO2)</Text>
                             <Text style={[styles.metricValue, { color: '#059669' }]}>
-                                {data.environmental?.co2Year1 ? (data.environmental.co2Year1 / 1000).toFixed(1) : (data.energy.year1 * 0.785 / 1000).toFixed(1)} 吨
+                                {co2AvoidedTonnes(data.energy.year1 || 0).toFixed(1)} 吨
                             </Text>
                         </View>
                         <View style={[styles.metricCard, { width: '48%', backgroundColor: '#ecfdf5' }]}>
                             <Text style={styles.metricLabel}>生命周期等效植树</Text>
                             <Text style={[styles.metricValue, { color: '#059669' }]}>
-                                {data.environmental?.treesEquivalent || Math.round(data.energy.year1 * 25 * 0.785 / 22)} 棵
+                                {Math.round(co2AvoidedTonnes(data.energy.lifetime || (data.energy.year1 || 0) * 25) * 1000 / 22)} 棵
                             </Text>
                         </View>
                     </View>
                 </View>
+
+                <Text style={{ fontSize: 8, color: '#64748b', marginTop: -10, marginBottom: 10 }}>
+                    {EMISSION_FACTOR_NOTE}（来源：{GRID_EMISSION_FACTOR.source}）
+                </Text>
 
                 {/* 结论 */}
                 <View style={styles.section}>

@@ -11,6 +11,7 @@ import { calculateWind } from './wind';
 import { PolicyService } from '@/lib/services/policy-service';
 import { safeErrorMessage } from '@/lib/api/safe-error';
 import { DEFAULT_DISCOUNT_RATE, discountedLcoe } from './project-finance';
+import { co2AvoidedKg, GRID_EMISSION_FACTOR } from '@/lib/standards/emission-factor';
 
 // 光伏组件配置
 interface ModuleConfig {
@@ -231,7 +232,7 @@ export async function calculateSolar(input: SolarCalculationInput): Promise<Sola
     );
 
     // 7. 环境效益计算
-    const environmental = calculateEnvironmentalBenefit(year1Generation);
+    const environmental = calculateEnvironmentalBenefit(year1Generation, lifetimeGeneration.total);
 
     return {
       energy: {
@@ -479,11 +480,10 @@ function calculatePaybackPeriod(initialInvestment: number, annualCashFlows: numb
 /**
  * 计算环境效益
  */
-function calculateEnvironmentalBenefit(year1Generation: number) {
-  // 中国电网平均CO2排放因子：0.785 kgCO2/kWh
-  const co2Factor = 0.785;
-  const co2Year1 = year1Generation * co2Factor;
-  const co2Lifetime = co2Year1 * 25; // 简化为25倍，暂不计算衰减后的精确值
+function calculateEnvironmentalBenefit(year1Generation: number, lifetimeGenerationKWh: number) {
+  // 排放因子统一取 lib/standards/emission-factor.ts（2023 年全国电力平均）
+  const co2Year1 = co2AvoidedKg(year1Generation);
+  const co2Lifetime = co2AvoidedKg(lifetimeGenerationKWh); // 按含衰减的全生命周期发电量
 
   // 1棵树每年吸收约22kg CO2
   const treesEquivalent = Math.round(co2Lifetime / 22);
@@ -491,7 +491,10 @@ function calculateEnvironmentalBenefit(year1Generation: number) {
   return {
     co2Year1,
     co2Lifetime,
-    treesEquivalent
+    treesEquivalent,
+    emissionFactor: GRID_EMISSION_FACTOR.value,
+    emissionFactorYear: GRID_EMISSION_FACTOR.year,
+    emissionFactorSource: GRID_EMISSION_FACTOR.source,
   };
 }
 
