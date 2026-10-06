@@ -98,13 +98,23 @@ export interface SolarCalculationOutput {
     paybackYears: number; // 回本年限
     irr: number; // 内部收益率 (%)
     npv: number; // 净现值 (元)
-    lcoe: number; // 平准化度电成本 (元/kWh)
-    cashFlow: number[]; // 25年现金流数组
+    lcoe: number; // 平准化度电成本 (元/kWh)，按折现率折现（口径库 STANDARDS.LCOE）
+    cashFlow: number[]; // 逐年净现金流（收入 − 运维），不含第 0 年投资
+    revenue?: number[]; // 逐年收入（未扣运维）
   };
   environmental: {
     co2Year1: number; // 首年CO2减排 (kg)
     co2Lifetime: number; // 25年CO2减排 (kg)
     treesEquivalent: number; // 等效植树 (棵)
+  };
+  /** 测算假设，报告与结果页的文字说明从这里取 */
+  assumptions?: {
+    lifetimeYears: number;
+    discountRate: number; // 小数
+    omCostRatio: number; // 小数
+    omEscalation: number; // 小数
+    firstYearDegradation: number; // %
+    annualDegradation: number; // %
   };
 }
 

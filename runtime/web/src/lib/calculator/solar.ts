@@ -10,6 +10,7 @@ import { getPriceConfig } from '@/lib/policy/electricity-price';
 import { calculateWind } from './wind';
 import { PolicyService } from '@/lib/services/policy-service';
 import { safeErrorMessage } from '@/lib/api/safe-error';
+import { DEFAULT_DISCOUNT_RATE, discountedLcoe } from './project-finance';
 
 // 光伏组件配置
 interface ModuleConfig {
@@ -89,6 +90,24 @@ export const LOSS_ASSUMPTIONS = {
   cellTempRise: 20,
   tempCoefficient: 0.004,
 } as const;
+
+/** 财务假设（结果里通过 assumptions 原样返回，报告文字从这里取，不再另写一套）。 */
+export const FINANCE_ASSUMPTIONS = {
+  lifetimeYears: 25,
+  discountRate: DEFAULT_DISCOUNT_RATE, // NPV 与 LCOE 共用
+  omCostRatio: 0.01, // 年运维费 = 初始投资 × 1%
+  omEscalation: 0.02, // 运维费每年上涨 2%
+} as const;
+
+/**
+ * 第 year 年（从 1 起）的发电量相对首年的系数：
+ *   第 1 年 = 1；第 n 年（n ≥ 2）= (1 − 首年衰减) × (1 − 年衰减)^(n−2)
+ * 发电量序列、现金流、LCOE 都用这一个函数，报告里的衰减描述也按它写。
+ */
+export function degradationFactor(year: number, firstYearDegradationPct: number, annualDegradationPct: number): number {
+  if (year <= 1) return 1;
+  return (1 - firstYearDegradationPct / 100) * Math.pow(1 - annualDegradationPct / 100, year - 2);
+}
 
 /** STC 辐照度 1 kW/m²：装机容量(kW) × 倾斜面辐照(kWh/m²) ÷ 1 kW/m² = 理论发电量(kWh) */
 const G_STC_KW_PER_M2 = 1;
@@ -195,6 +214,7 @@ export async function calculateSolar(input: SolarCalculationInput): Promise<Sola
       moduleConfig.firstYearDegradation,
       moduleConfig.annualDegradation
     );
+    const annualGeneration = lifetimeGeneration.monthly.map(year => year.reduce((a, b) => a + b, 0));
 
     // 6. 财务分析
     // 初始投资减去一次性补贴
@@ -204,7 +224,7 @@ export async function calculateSolar(input: SolarCalculationInput): Promise<Sola
     const financial = calculateFinancial(
       input.capacity,
       effectiveUnitCost,
-      year1Generation,
+      annualGeneration,
       effectiveSelfUsePrice, // 使用含补贴的电价计算收益
       effectiveFeedInPrice,  // 使用含补贴的上网价计算收益
       input.selfUseRatio // 0–1 小数，见 normalizeSelfUseRatio
@@ -225,7 +245,12 @@ export async function calculateSolar(input: SolarCalculationInput): Promise<Sola
         degradation: lifetimeGeneration.degradation
       },
       financial,
-      environmental
+      environmental,
+      assumptions: {
+        ...FINANCE_ASSUMPTIONS,
+        firstYearDegradation: moduleConfig.firstYearDegradation,
+        annualDegradation: moduleConfig.annualDegradation,
+      },
     };
 
   } catch (error) {
@@ -301,15 +326,12 @@ function calculateLifetimeGeneration(
   firstYearDegradation: number,
   annualDegradation: number
 ) {
-  const years = 25;
+  const years = FINANCE_ASSUMPTIONS.lifetimeYears;
   const monthlyData: number[][] = [];
   const degradation: number[] = [];
 
-  for (let year = 0; year < years; year++) {
-    const yearFactor =
-      year === 0 ?
-        (1 - firstYearDegradation / 100) :
-        Math.pow(1 - annualDegradation / 100, year);
+  for (let year = 1; year <= years; year++) {
+    const yearFactor = degradationFactor(year, firstYearDegradation, annualDegradation);
 
     degradation.push((1 - yearFactor) * 100);
 
@@ -332,7 +354,7 @@ function calculateLifetimeGeneration(
 function calculateFinancial(
   capacity: number,
   unitCost: number,
-  year1Generation: number,
+  annualGeneration: number[], // 逐年发电量（已含衰减），第 0 项为第 1 年
   electricityPrice: number,
   feedInPrice: number,
   selfUseRatio: number // 0–1 小数
@@ -341,45 +363,39 @@ function calculateFinancial(
   // unitCost 是 元/kW
   const totalInvestment = capacity * unitCost;
 
-  // 2. 年收益计算
+  // 2. 首年收益：自用部分按自用电价，上网部分按上网电价
+  const year1Generation = annualGeneration[0];
   const selfUseGeneration = year1Generation * selfUseRatio;
   const feedInGeneration = year1Generation * (1 - selfUseRatio);
+  const blendedPrice = electricityPrice * selfUseRatio + feedInPrice * (1 - selfUseRatio);
+  const totalRevenue = year1Generation * blendedPrice;
 
-  const selfUseRevenue = selfUseGeneration * electricityPrice;
-  const feedInRevenue = feedInGeneration * feedInPrice;
-  const totalRevenue = selfUseRevenue + feedInRevenue;
+  // 3. 运维成本：首年为初始投资的 1%，此后每年上涨 2%
+  const omCost = totalInvestment * FINANCE_ASSUMPTIONS.omCostRatio;
+  const annualOmCosts = annualGeneration.map((_, i) => omCost * Math.pow(1 + FINANCE_ASSUMPTIONS.omEscalation, i));
 
-  // 3. 运维成本（年）
-  const omCost = totalInvestment * 0.01; // 1% 年运维成本 (修正为更合理的1%)
-
-  // 4. 现金流计算
-  const annualCashFlows: number[] = [];
-
-  for (let year = 1; year <= 25; year++) {
-    // 考虑组件衰减 (0.5% - 1.0% 每月/年)
-    const yearFactor = Math.pow(0.992, year - 1);
-    const yearRevenue = totalRevenue * yearFactor;
-
-    // 年度运维成本 (随通胀微增 2%)
-    const currentOmCost = omCost * Math.pow(1.02, year - 1);
-
-    const annualProfit = yearRevenue - currentOmCost;
-    annualCashFlows.push(annualProfit);
-  }
+  // 4. 现金流：逐年发电量与发电量序列同一套衰减（degradationFactor），不再另用 0.992^n
+  const annualRevenues = annualGeneration.map(gen => gen * blendedPrice);
+  const annualCashFlows = annualRevenues.map((revenue, i) => revenue - annualOmCosts[i]);
 
   // 5. 计算IRR（内部收益率）
   const irr = calculateIRR(-totalInvestment, annualCashFlows);
 
   // 6. 计算NPV（净现值）
-  const npv = calculateNPV(-totalInvestment, annualCashFlows, 0.08); // 8%折现率
+  const npv = calculateNPV(-totalInvestment, annualCashFlows, FINANCE_ASSUMPTIONS.discountRate);
 
   // 7. 计算回收期
   const paybackYears = calculatePaybackPeriod(totalInvestment, annualCashFlows);
 
-  // 8. 计算LCOE（平准化度电成本）
-  const totalGeneration = year1Generation * 25 * 0.995 ** 12.5; // 平均衰减
-  const totalCost = totalInvestment + omCost * 25;
-  const lcoe = totalCost / totalGeneration;
+  // 8. LCOE（口径库 STANDARDS.LCOE）：
+  //    [初始投资 + Σ 运维_t/(1+r)^t] / Σ [发电量_t/(1+r)^t]，r = 8%，t = 1..25
+  //    此前直接「总成本 ÷ 总发电量」不折现，比折现口径低约一半。
+  const lcoe = discountedLcoe({
+    initialInvestment: totalInvestment,
+    annualCosts: annualOmCosts,
+    annualGeneration,
+    discountRate: FINANCE_ASSUMPTIONS.discountRate,
+  });
 
   return {
     investment: totalInvestment,
@@ -390,7 +406,8 @@ function calculateFinancial(
     irr,
     npv,
     lcoe,
-    cashFlow: annualCashFlows
+    cashFlow: annualCashFlows, // 逐年净现金流（收入 − 运维），不含第 0 年投资
+    revenue: annualRevenues // 逐年收入（未扣运维）
   };
 }
 

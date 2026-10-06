@@ -1,6 +1,7 @@
 // 分散式风电收益计算引擎
 import { getWindResource } from '@/lib/api/nasa-power';
 import { WindCalculationInput } from '@/types';
+import { DEFAULT_DISCOUNT_RATE, discountedLcoe } from './project-finance';
 
 // 辅助函数：外推风速
 function extrapolateWindSpeed(vRef: number, hRef: number, hTarget: number, z0: number = 0.03): number {
@@ -48,6 +49,8 @@ export async function calculateWind(input: WindCalculationInput) {
   const calcInvestment = input.investment.totalInvestment ?? totalCapacityKW * (input.investment.unitCost ?? 5500);
 
   const cashFlows: number[] = [-calcInvestment];
+  const annualRevenues: number[] = [];
+  const annualCosts: number[] = []; // 运维 + 保险（计入 LCOE）
   for (let year = 1; year <= years; year++) {
     const gen = lifetimeGeneration[year - 1];
     let revenue = 0;
@@ -69,8 +72,19 @@ export async function calculateWind(input: WindCalculationInput) {
       villageShare = revenue * (input.businessModel.cooperation?.revenueShareRatio ?? 5) / 100;
     }
 
+    annualRevenues.push(revenue);
+    annualCosts.push(omCost + insurance);
     cashFlows.push(revenue - omCost - insurance - villageShare);
   }
+
+  // LCOE（口径库 STANDARDS.LCOE）：[投资 + Σ (运维+保险)_t/(1+r)^t] / Σ [发电量_t/(1+r)^t]，r = 8%。
+  // 此前只算「投资 ÷ 总发电量」，既没计运维也没折现。村集体分成属于收益分配，不计入度电成本。
+  const lcoe = discountedLcoe({
+    initialInvestment: calcInvestment,
+    annualCosts,
+    annualGeneration: lifetimeGeneration,
+    discountRate: DEFAULT_DISCOUNT_RATE,
+  });
 
   return {
     energy: {
@@ -82,10 +96,11 @@ export async function calculateWind(input: WindCalculationInput) {
     },
     financial: {
       investment: calcInvestment,
-      year1Revenue: cashFlows[1] + (calcInvestment * (input.operation.insuranceRate ?? 0.003)), // Gross revenue roughly
+      year1Revenue: annualRevenues[0], // 首年售电/自用收入（未扣运维、保险）
       irr: calculateIRR(cashFlows) * 100,
       paybackYears: calculatePaybackPeriod(calcInvestment, cashFlows.slice(1)),
-      lcoe: calcInvestment / lifetimeGeneration.reduce((a, b) => a + b, 0)
+      lcoe,
+      discountRate: DEFAULT_DISCOUNT_RATE
     }
   };
 }

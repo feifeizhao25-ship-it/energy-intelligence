@@ -2,7 +2,8 @@
  * 光伏测算手算基准。每个用例都写明手算过程；引擎结果与手算偏差超过 ±2% 即失败。
  * 资源数据用固定值 mock，避免依赖网络。
  */
-import { calculateSolar, annualEnergyKWh, performanceRatio, LOSS_ASSUMPTIONS, normalizeSelfUseRatio } from './solar';
+import { calculateSolar, annualEnergyKWh, performanceRatio, LOSS_ASSUMPTIONS, normalizeSelfUseRatio, degradationFactor } from './solar';
+import { discountedLcoe } from './project-finance';
 import { SolarCalculationInput } from '@/types';
 
 const daysIn2024 = (month: number) => new Date(2024, month, 0).getDate();
@@ -81,5 +82,44 @@ describe('自用比例口径：0–1 小数', () => {
         expect(normalizeSelfUseRatio(undefined, 0.7)).toBe(0.7);
         expect(normalizeSelfUseRatio(150, 0)).toBe(1);
         expect(normalizeSelfUseRatio(-3, 0)).toBe(0);
+    });
+});
+
+describe('手算基准：LCOE 折现口径', () => {
+    it('固定参数：投资 350 万、运维 3.5 万/年、发电 120 万 kWh/年、r=8%、25 年 → 0.3024 元/kWh', () => {
+        // 手算：年金系数 A = (1 − 1.08^−25) ÷ 0.08 = 10.6748
+        //   分子 = 3,500,000 + 35,000 × 10.6748 = 3,873,617
+        //   分母 = 1,200,000 × 10.6748 = 12,809,731
+        //   LCOE = 3,873,617 ÷ 12,809,731 = 0.3024 元/kWh
+        // 不折现的错误口径 = (3,500,000 + 875,000) ÷ 30,000,000 = 0.1458，只有一半
+        const lcoe = discountedLcoe({
+            initialInvestment: 3_500_000,
+            annualCosts: Array(25).fill(35_000),
+            annualGeneration: Array(25).fill(1_200_000),
+            discountRate: 0.08,
+        });
+        expectWithin2Percent(lcoe, 0.3024);
+        expect(lcoe).toBeGreaterThan(0.1458 * 1.5);
+    });
+
+    it('引擎端到端：地面 1000 kW、3500 元/kW，LCOE 与手算一致', async () => {
+        const result = await calculateSolar(benchmarkInput);
+        // 手算：投资 I0 = 1000 × 3500 = 3,500,000 元
+        //   运维现值 = 35,000 × Σ 1.02^(t−1)/1.08^t = 35,000 × (1/1.08) × (1 − (1.02/1.08)^25)/(1 − 1.02/1.08)
+        //            = 35,000 × 12.674 = 443,591
+        //   发电现值（标准组件：首年衰减 1.5%，此后 0.45%/年）
+        //            = E1 × [1/1.08 + 0.985/1.08² × Σ_{k=0}^{23} (0.9955/1.08)^k] = E1 × 10.1917
+        //            = 1,342,212 × 10.1917 ≈ 13,679,500
+        //   LCOE = (3,500,000 + 443,591) ÷ 13,679,500 ≈ 0.2883 元/kWh
+        expectWithin2Percent(result.financial.lcoe, 0.2883);
+        expect(result.assumptions).toMatchObject({ discountRate: 0.08, firstYearDegradation: 1.5, annualDegradation: 0.45 });
+    });
+
+    it('逐年发电量、现金流使用同一衰减：第 2 年 = 首年 × 0.985，第 3 年再 × 0.9955', async () => {
+        const result = await calculateSolar({ ...benchmarkInput, selfUseRatio: 1 });
+        const rev = result.financial.revenue!;
+        expect(rev[1] / rev[0]).toBeCloseTo(0.985, 3);
+        expect(rev[2] / rev[1]).toBeCloseTo(0.9955, 3);
+        expect(degradationFactor(1, 1.5, 0.45)).toBe(1);
     });
 });
