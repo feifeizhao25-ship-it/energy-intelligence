@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { getLocale } from 'next-intl/server';
 
 const privacyCopy = {
   zh: {
@@ -13,20 +12,9 @@ const privacyCopy = {
       ['发布前必填信息', '运营主体名称、注册地址、隐私负责人联系方式、备案编号、第三方共享清单和数据保存期限必须在正式上线前填写并经法律顾问审核。'],
     ],
   },
-  en: {
-    title: 'Privacy Policy', date: 'Effective date: August 22, 2026', back: 'Back to sign in',
-    sections: [
-      ['Information we process', 'We may process registration and authentication details, project inputs you submit, product usage records, payment status, and the minimum logs required for security and audit. We do not ask for sensitive information unrelated to an assessment.'],
-      ['Why we process it', 'We use information to provide calculations, reports, personalization, account security, membership entitlements, and support. Personalized results explain why they appear and can be disabled or reset.'],
-      ['Sources and service providers', 'External data and AI services are identified in the relevant output. Transfers to payment, messaging, mapping, hosting, or AI providers follow data-minimization requirements and applicable data-processing terms.'],
-      ['Retention and security', 'Each data category must have a defined retention period. We use access controls, encryption in transit, audit logs, backups, and incident-response procedures, and delete or de-identify data when it is no longer required.'],
-      ['Your choices and rights', 'Subject to applicable law, you may request access, correction, export, or deletion; withdraw consent; disable personalization; or close your account. Legally required transaction and audit records are handled separately.'],
-      ['Required operator details', 'The legal entity, registered address, privacy contact, service-provider list, regional transfer terms, and final retention schedule must be completed and reviewed by counsel before public launch.'],
-    ],
-  },
 } as const;
 
 export default async function PrivacyPage() {
-  const content = (await getLocale()) === 'en' ? privacyCopy.en : privacyCopy.zh;
+  const content = privacyCopy.zh;
   return <main className="min-h-screen bg-slate-50 px-4 py-12 text-slate-700"><article className="mx-auto max-w-3xl rounded-3xl bg-white p-8 shadow-sm"><h1 className="text-3xl font-black text-slate-900">{content.title}</h1><p className="mt-2 text-sm text-slate-500">{content.date}</p><div className="mt-8 space-y-6 leading-7">{content.sections.map(([title, body]) => <section key={title}><h2 className="font-bold text-slate-900">{title}</h2><p>{body}</p></section>)}</div><Link href="/login" className="mt-8 inline-block font-bold text-green-600">{content.back}</Link></article></main>;
 }

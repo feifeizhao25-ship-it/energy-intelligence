@@ -1,20 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-function isEnglish(req: NextRequest) {
-    const requested = req.nextUrl.searchParams.get('locale');
-    if (requested) return requested.toLowerCase().startsWith('en');
-    const cookie = req.cookies.get('NEXT_LOCALE')?.value;
-    if (cookie) return cookie === 'en';
-    return req.headers.get('accept-language')?.toLowerCase().startsWith('en') ?? false;
-}
-
-export async function GET(req: NextRequest) {
-    const en = isEnglish(req);
-    const t = en ? {
-        title: 'Renewable Energy Intelligence Open API', description: '提供可审计的项目、文献与测算接口。请在请求头携带 X-API-Key；可用范围取决于密钥权限与会员权益。系统不提供合成（模拟）的监测与分析数据。', current: 'Current origin',
-        projects: 'List projects owned by the API-key user', project: 'Read an accessible project', papers: 'Search Semantic Scholar literature', solar: 'Run an auditable solar-return calculation', monitoring: 'Telemetry is unavailable until a verified SCADA or IoT source is connected', analytics: 'Analytics are unavailable until verified telemetry and benchmark data are connected',
-        ok: 'Successful response', unavailable: 'Verified source is not connected', unauthorized: 'Missing or invalid API key', forbidden: 'The key lacks the required permission', limited: 'Rate limit exceeded', notFound: 'Resource not found',
-    } : {
+export async function GET(_req: NextRequest) {
+    // 国内版只提供中文文档
+    const t = {
         title: '新能源智库开放 API', description: '提供可审计的项目、文献和计算接口。请求须携带 X-API-Key，实际能力取决于密钥权限和会员权益；系统禁止生成虚假遥测与分析数据。', current: '当前站点',
         projects: '分页读取 API Key 所属用户的项目', project: '读取有权访问的单个项目', papers: '通过 Semantic Scholar 检索文献', solar: '执行带审计快照的光伏收益计算', monitoring: '接入经验证的 SCADA 或 IoT 数据前返回不可用', analytics: '接入经验证的遥测与基准数据前返回不可用',
         ok: '请求成功', unavailable: '尚未接入经验证的数据源', unauthorized: 'API Key 缺失或无效', forbidden: '密钥缺少所需权限', limited: '请求频率超限', notFound: '资源不存在',
@@ -37,5 +25,5 @@ export async function GET(req: NextRequest) {
         },
         components: { securitySchemes: { ApiKeyAuth: { type: 'apiKey', in: 'header', name: 'X-API-Key' } }, schemas: { ErrorResponse: { type: 'object', required: ['success', 'error'], properties: { success: { type: 'boolean', enum: [false] }, error: { type: 'object', properties: { code: { type: 'string' }, message: { type: 'string' } } } } } } },
     };
-    return NextResponse.json(spec, { headers: { 'Cache-Control': 'public, max-age=300', 'Content-Language': en ? 'en' : 'zh-CN', Vary: 'Cookie, Accept-Language' } });
+    return NextResponse.json(spec, { headers: { 'Cache-Control': 'public, max-age=300', 'Content-Language': 'zh-CN' } });
 }

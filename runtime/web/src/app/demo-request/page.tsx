@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, CheckCircle2, Loader2 } from 'lucide-react';
-import { useLocale } from 'next-intl';
 
 type SubmitState =
     | { kind: 'idle' }
@@ -12,11 +11,7 @@ type SubmitState =
     | { kind: 'error'; message: string };
 
 export default function DemoRequestPage() {
-    const isEnglish = useLocale() === 'en';
-    const copy = isEnglish ? {
-        back: 'Back to plans', title: 'Request a commercial review', intro: 'Tell us the minimum information needed to scope regional terms, data residency, integrations, and support. Do not submit confidential project files.',
-        success: 'Request received', successBody: 'The team will use the contact details you provided to confirm scope and scheduling.', name: 'Name *', namePlaceholder: 'Your name', company: 'Organization *', companyPlaceholder: 'Organization name', email: 'Work email *', phone: 'Phone (optional)', phonePlaceholder: 'Include country code', message: 'Requirements (optional)', messagePlaceholder: 'Region, organization size, required integrations, and preferred timing', submit: 'Submit request', submitting: 'Submitting…', consent: 'I agree to the Privacy Policy and consent to the use of these details to respond to this request.', consentError: 'Accept the Privacy Policy before submitting.', duplicate: 'A pending request already exists for this email.', validation: 'Check the required fields and try again.', failed: 'The request could not be submitted. Please try again.', network: 'Network error. Please try again.',
-    } : {
+    const copy = {
         back: '返回价格方案', title: '预约企业方案沟通', intro: '请填写评估方案所需的最少信息，不要在首次申请中提交项目机密文件。',
         success: '申请已提交', successBody: '我们会使用您提供的联系方式确认需求范围和沟通时间。', name: '姓名 *', namePlaceholder: '您的称呼', company: '公司名称 *', companyPlaceholder: '贵公司全称', email: '工作邮箱 *', phone: '联系电话（选填）', phonePlaceholder: '便于确认时间', message: '需求说明（选填）', messagePlaceholder: '例如：项目规模、所需接口和期望沟通时间', submit: '提交申请', submitting: '提交中…', consent: '我同意隐私政策，并同意平台使用上述联系方式回复本次申请。', consentError: '请先阅读并同意隐私政策。', duplicate: '该邮箱已有待处理申请，请勿重复提交。', validation: '请检查必填字段后重试。', failed: '提交失败，请稍后重试。', network: '网络异常，请稍后重试。',
     };
@@ -43,11 +38,11 @@ export default function DemoRequestPage() {
             if (resp.ok) {
                 setState({ kind: 'success' });
             } else if (resp.status === 409) {
-                setState({ kind: 'error', message: isEnglish ? copy.duplicate : (payload.error || copy.duplicate) });
+                setState({ kind: 'error', message: payload.error || copy.duplicate });
             } else if (resp.status === 422 && Array.isArray(payload.details)) {
-                setState({ kind: 'error', message: isEnglish ? copy.validation : payload.details.join('；') });
+                setState({ kind: 'error', message: payload.details.join('；') });
             } else {
-                setState({ kind: 'error', message: isEnglish ? copy.failed : (payload.error || copy.failed) });
+                setState({ kind: 'error', message: payload.error || copy.failed });
             }
         } catch {
             setState({ kind: 'error', message: copy.network });
@@ -115,7 +110,7 @@ export default function DemoRequestPage() {
                             />
                         </div>
 
-                        <label className="flex items-start gap-3 text-xs leading-5 text-slate-600"><input type="checkbox" checked={accepted} onChange={(event) => { setAccepted(event.target.checked); if (event.target.checked && state.kind === 'error') setState({ kind: 'idle' }); }} className="mt-1 h-4 w-4 accent-green-600" /><span>{copy.consent} <Link href="/privacy" target="_blank" className="font-bold text-green-700">{isEnglish ? 'Privacy Policy' : '查看隐私政策'}</Link></span></label>
+                        <label className="flex items-start gap-3 text-xs leading-5 text-slate-600"><input type="checkbox" checked={accepted} onChange={(event) => { setAccepted(event.target.checked); if (event.target.checked && state.kind === 'error') setState({ kind: 'idle' }); }} className="mt-1 h-4 w-4 accent-green-600" /><span>{copy.consent} <Link href="/privacy" target="_blank" className="font-bold text-green-700">查看隐私政策</Link></span></label>
 
                         {state.kind === 'error' && (
                             <p className="text-sm text-red-500 font-medium">{state.message}</p>
