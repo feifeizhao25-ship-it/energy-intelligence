@@ -27,11 +27,6 @@
       "why": "【待决·未修复】文献检索/元数据来自境外学术数据源 api.semanticscholar.org：检索词会发往境外。国内版是否保留、替换成哪个境内数据源（如万方/知网需商务授权）是产品与合规决定，代码层无法替代。"
     },
     {
-      "where": "runtime/web/src/components/calculator/InvestmentReport.tsx",
-      "what": "fonts.gstatic.com",
-      "why": "【待决·未修复】PDF 报告字体从 fonts.gstatic.com 加载：境内常打不开，导出的 PDF 会缺字。需要一份可再分发授权的中文字体自托管到 public/，字体授权由你确认后替换。"
-    },
-    {
       "where": "runtime/web/src/components/map/ResourceMap.tsx",
       "what": "unpkg.com",
       "why": "【待决·未修复】高德 JS Key 缺失时的降级地图用 Leaflet(unpkg.com)：境内常不可达，且查询的地点会发往境外。需要配置高德 JS Key（外部密钥）后删除降级分支。"

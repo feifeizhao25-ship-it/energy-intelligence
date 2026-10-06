@@ -6,30 +6,40 @@ import {
     Document,
     StyleSheet,
     Font,
-    Image,
 } from '@react-pdf/renderer';
 import { co2AvoidedTonnes, EMISSION_FACTOR_NOTE, GRID_EMISSION_FACTOR } from '@/lib/standards/emission-factor';
+import {
+    PDF_FONT_FILES, REPORT_TITLE, REPORT_DISCLAIMER, NOT_FILLED,
+    reportConclusion, reportNumber, degradationText, displayOrNotFilled,
+} from '@/lib/reports/calculation-report';
 import { priceAsOfText } from '@/lib/pricing/tariffs';
 
-// 注册中文字体 - 使用更可靠的 CDN 源
-Font.register({
-    family: 'Noto Sans SC',
-    fonts: [
-        {
-            src: 'https://fonts.gstatic.com/s/notosanssc/v36/k3kCo84MPvpLmixcA63oeAL7Iqp5IZJF9bmaG9_EnYxNbPzS5HE.ttf',
-            fontWeight: 'normal',
-        },
-        {
-            src: 'https://fonts.gstatic.com/s/notosanssc/v36/k3kCo84MPvpLmixcA63oeAL7Iqp5IZJF9bmaG9_EnYxNbPzS5HE.ttf',
-            fontWeight: 'bold',
-        },
-    ],
-});
+// 中文字体自托管在 public/fonts（Noto Sans SC，SIL OFL 1.1），不再请求境外字体 CDN。
+// 浏览器里按当前站点地址取；在 Node 里（测试/服务端渲染）由调用方传入解析函数。
+export function registerReportFonts(resolve: (publicPath: string) => string = defaultFontUrl) {
+    Font.register({
+        family: 'Noto Sans SC',
+        fonts: [
+            { src: resolve(PDF_FONT_FILES.regular), fontWeight: 'normal' },
+            { src: resolve(PDF_FONT_FILES.bold), fontWeight: 'bold' },
+        ],
+    });
+    // 中文不按空格断行：逐字可断，并在每个字后插入空片段，避免断行处被补上连字符「-」
+    Font.registerHyphenationCallback(word => (/[\u4e00-\u9fff]/.test(word) ? Array.from(word).flatMap(ch => [ch, '']) : [word]));
+}
+
+function defaultFontUrl(publicPath: string): string {
+    return new URL(publicPath, window.location.origin).href;
+}
+
+// 只在浏览器里自动注册（报告只在浏览器端生成）；Node 环境由调用方用本地文件路径注册。
+if (typeof window !== 'undefined') registerReportFonts();
 
 // 定义样式
 const styles = StyleSheet.create({
     page: {
         padding: 40,
+        paddingBottom: 70, // 给固定页脚留位置，正文不压页脚
         fontFamily: 'Noto Sans SC',
         backgroundColor: '#ffffff',
     },
@@ -57,7 +67,8 @@ const styles = StyleSheet.create({
     },
     mainTitle: {
         fontSize: 24,
-        fontFamily: 'Noto Sans SC Bold',
+        fontFamily: 'Noto Sans SC',
+        fontWeight: 'bold',
         color: '#0f172a',
         marginBottom: 8,
     },
@@ -70,7 +81,8 @@ const styles = StyleSheet.create({
     },
     sectionTitle: {
         fontSize: 14,
-        fontFamily: 'Noto Sans SC Bold',
+        fontFamily: 'Noto Sans SC',
+        fontWeight: 'bold',
         color: '#1e293b',
         backgroundColor: '#f8fafc',
         padding: 6,
@@ -97,7 +109,8 @@ const styles = StyleSheet.create({
     },
     metricValue: {
         fontSize: 12,
-        fontFamily: 'Noto Sans SC Bold',
+        fontFamily: 'Noto Sans SC',
+        fontWeight: 'bold',
         color: '#0f172a',
     },
     table: {
@@ -133,7 +146,8 @@ const styles = StyleSheet.create({
     },
     tableCellHeader: {
         fontSize: 9,
-        fontFamily: 'Noto Sans SC Bold',
+        fontFamily: 'Noto Sans SC',
+        fontWeight: 'bold',
         textAlign: 'center',
     },
     tableCell: {
@@ -165,53 +179,83 @@ const styles = StyleSheet.create({
 interface InvestmentReportProps {
     data: any;
     type: string;
+    /** AI 辅助生成的分析文字（可选）。有内容时报告会显式标注「AI 辅助生成」并写入文档元数据。 */
+    aiAnalysis?: string | null;
+    /** 测算日期，缺省为当前时间（编号与日期由它决定） */
+    generatedAt?: Date;
 }
 
-const InvestmentReport: React.FC<InvestmentReportProps> = ({ data, type }) => {
+const fmtMoney = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? Math.round(v).toLocaleString('zh-CN') : '—');
+
+const InvestmentReport: React.FC<InvestmentReportProps> = ({ data, type, aiAnalysis, generatedAt }) => {
     const typeLabel = type === 'solar' ? '分布式光伏' : type === 'wind' ? '分散式风电' : '工商业储能';
-    const reportId = `BR-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-    const dateStr = new Date().toLocaleDateString('zh-CN');
+    const now = generatedAt ?? new Date();
+    const reportId = reportNumber(data, now);
+    const dateStr = now.toLocaleDateString('zh-CN', { timeZone: 'Asia/Shanghai' });
+    const financial = data?.financial ?? {};
+    const energy = data?.energy ?? {};
+    const assumptions = data?.assumptions ?? null;
+    const irr: number | null = typeof financial.irr === 'number' ? financial.irr : (typeof financial.metrics?.irr === 'number' ? financial.metrics.irr : null);
+    const payback: number | null = typeof financial.paybackYears === 'number' ? financial.paybackYears : (typeof financial.metrics?.paybackYears === 'number' ? financial.metrics.paybackYears : null);
+    const lcoe: number | null = typeof financial.lcoe === 'number' ? financial.lcoe : (typeof financial.metrics?.lcos === 'number' ? financial.metrics.lcos : null);
+    // 投资额：没有就写「未填写」，不再按 300 万元兜底
+    const investment: number | null = typeof financial.investment === 'number' ? financial.investment
+        : (typeof financial.investment?.total === 'number' ? financial.investment.total : null);
+    const lifetime: number = assumptions?.lifetimeYears ?? 25;
+    const cashFlow: number[] | null = Array.isArray(financial.cashFlow) ? financial.cashFlow : null;
+    const revenue: number[] | null = Array.isArray(financial.revenue) ? financial.revenue : null;
+    const discountRate: number | null = assumptions?.discountRate ?? financial.discountRate ?? null;
+    const hasAi = typeof aiAnalysis === 'string' && aiAnalysis.trim().length > 0;
+    const capacity = data?.metadata?.capacity;
 
     return (
-        <Document>
+        <Document
+            title={`${typeLabel}${REPORT_TITLE} ${reportId}`}
+            author="新能源智库"
+            subject={REPORT_TITLE}
+            creator="新能源智库"
+            producer="新能源智库"
+            keywords={hasAi ? `${REPORT_TITLE},AI辅助生成,编号 ${reportId}` : `${REPORT_TITLE},规则引擎测算,编号 ${reportId}`}
+        >
             <Page size="A4" style={styles.page}>
                 {/* 页眉 */}
                 <View style={styles.header}>
                     <View>
-                        <Text style={styles.logo}>新能源智库 Pro</Text>
-                        <Text style={styles.subtitle}>专业级新能源投融资辅助分析平台</Text>
+                        <Text style={styles.logo}>新能源智库</Text>
+                        <Text style={styles.subtitle}>新能源项目初步测算</Text>
                     </View>
                     <View style={{ textAlign: 'right' }}>
-                        <Text style={styles.reportTitle}>投资建议书 / {typeLabel}</Text>
+                        <Text style={styles.reportTitle}>{REPORT_TITLE} / {typeLabel}</Text>
                         <Text style={styles.subtitle}>编号: {reportId}</Text>
                     </View>
                 </View>
 
                 {/* 封面标题 */}
                 <View style={styles.titleSection}>
-                    <Text style={styles.mainTitle}>{data.metadata?.projectName || `${typeLabel}项目投资测算报告`}</Text>
-                    <Text style={styles.subtitle}>项目所在地: {data.metadata?.province || '苏州'} | 测算日期: {dateStr} | 模型版本: V2.4 Standard</Text>
+                    <Text style={styles.mainTitle}>{data?.metadata?.projectName || `${typeLabel}项目${REPORT_TITLE}`}</Text>
+                    <Text style={styles.subtitle}>项目所在地: {displayOrNotFilled(data?.metadata?.province)} | 测算日期: {dateStr}</Text>
+                    <Text style={[styles.subtitle, { marginTop: 4 }]}>{REPORT_DISCLAIMER}</Text>
                 </View>
 
                 {/* 核心指标看板 */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>核心投资指标摘要</Text>
+                    <Text style={styles.sectionTitle}>核心测算指标</Text>
                     <View style={styles.grid}>
                         <View style={styles.metricCard}>
-                            <Text style={styles.metricLabel}>项目 IRR</Text>
-                            <Text style={styles.metricValue}>{data.financial.irr?.toFixed(2) || (data.financial.metrics?.irr?.toFixed(2))}%</Text>
+                            <Text style={styles.metricLabel}>内部收益率 IRR</Text>
+                            <Text style={styles.metricValue}>{irr === null ? '无法确认' : `${irr.toFixed(2)}%`}</Text>
                         </View>
                         <View style={styles.metricCard}>
                             <Text style={styles.metricLabel}>静态回收期</Text>
-                            <Text style={styles.metricValue}>{data.financial.paybackYears?.toFixed(1) || (data.financial.metrics?.paybackYears?.toFixed(1))}年</Text>
+                            <Text style={styles.metricValue}>{payback === null || payback >= lifetime ? '估算期内未回本' : `${payback.toFixed(1)}年`}</Text>
                         </View>
                         <View style={styles.metricCard}>
-                            <Text style={styles.metricLabel}>度电成本 (LCOE)</Text>
-                            <Text style={styles.metricValue}>¥{data.financial.lcoe?.toFixed(3) || (data.financial.metrics?.lcos?.toFixed(3))}</Text>
+                            <Text style={styles.metricLabel}>度电成本 LCOE（折现）</Text>
+                            <Text style={styles.metricValue}>{lcoe === null ? '—' : `¥${lcoe.toFixed(3)}`}</Text>
                         </View>
                         <View style={styles.metricCard}>
-                            <Text style={styles.metricLabel}>总投资规模</Text>
-                            <Text style={styles.metricValue}>¥{((data.financial.investment || data.financial.investment?.total) / 10000).toFixed(1)}万</Text>
+                            <Text style={styles.metricLabel}>总投资</Text>
+                            <Text style={styles.metricValue}>{investment === null ? NOT_FILLED : `¥${(investment / 10000).toFixed(1)}万`}</Text>
                         </View>
                     </View>
                 </View>
@@ -220,9 +264,10 @@ const InvestmentReport: React.FC<InvestmentReportProps> = ({ data, type }) => {
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>资源基础与发电分析</Text>
                     <Text style={{ fontSize: 9, marginBottom: 10, color: '#334155' }}>
-                        装机规模：{data.metadata?.capacity || (data.energy?.year1 / (data.energy?.equivalentHours || data.energy?.specificYield || 1)).toFixed(1)} kWp |
-                        首年计划发电量：{Math.round(data.energy?.year1 || 0).toLocaleString()} kWh |
-                        等效利用小时数：{Math.round(data.energy?.equivalentHours || data.energy?.specificYield || 0).toLocaleString()} h
+                        装机规模：{capacity ? `${capacity} kWp` : NOT_FILLED} |
+                        首年发电量：{Math.round(energy.year1 || 0).toLocaleString('zh-CN')} kWh |
+                        等效利用小时数：{Math.round(energy.equivalentHours || energy.specificYield || 0).toLocaleString('zh-CN')} h
+                        {typeof energy.pr === 'number' ? ` | 系统性能比 PR：${(energy.pr * 100).toFixed(1)}%` : ''}
                     </Text>
 
                     {/* 表格：月度发电分布 */}
@@ -236,9 +281,9 @@ const InvestmentReport: React.FC<InvestmentReportProps> = ({ data, type }) => {
                         {[...Array(6)].map((_, i) => (
                             <View style={styles.tableRow} key={i}>
                                 <View style={styles.tableCol}><Text style={styles.tableCell}>{i + 1}月</Text></View>
-                                <View style={styles.tableCol}><Text style={styles.tableCell}>{Math.round(data.energy.monthly[i] || 0).toLocaleString()}</Text></View>
+                                <View style={styles.tableCol}><Text style={styles.tableCell}>{fmtMoney(energy.monthly?.[i])}</Text></View>
                                 <View style={styles.tableCol}><Text style={styles.tableCell}>{i + 7}月</Text></View>
-                                <View style={styles.tableCol}><Text style={styles.tableCell}>{Math.round(data.energy.monthly[i + 6] || 0).toLocaleString()}</Text></View>
+                                <View style={styles.tableCol}><Text style={styles.tableCell}>{fmtMoney(energy.monthly?.[i + 6])}</Text></View>
                             </View>
                         ))}
                     </View>
@@ -246,40 +291,42 @@ const InvestmentReport: React.FC<InvestmentReportProps> = ({ data, type }) => {
 
                 {/* 财务收益分析 */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>全生命周期财务收益预测</Text>
+                    <Text style={styles.sectionTitle}>全生命周期现金流</Text>
                     <View style={{ marginBottom: 15 }}>
-                        <Text style={{ fontSize: 9, color: '#475569', marginBottom: 5 }}>主要收益曲线说明：</Text>
-                        <Text style={{ fontSize: 8, color: '#64748b' }}>• 考虑年度衰减系数 (首年 1.5%，后续每年 0.5%)</Text>
-                        <Text style={{ fontSize: 8, color: '#64748b' }}>• 考虑年度运维费用 (初始投资额的 1%，每年增长 2%)</Text>
-                        <Text style={{ fontSize: 8, color: '#64748b' }}>• 折现率按业界标准 8.0% 计取</Text>
+                        <Text style={{ fontSize: 9, color: '#475569', marginBottom: 5 }}>主要假设（取自本次测算引擎）：</Text>
+                        <Text style={{ fontSize: 8, color: '#64748b' }}>• {degradationText(assumptions)}</Text>
+                        {typeof assumptions?.omCostRatio === 'number' && (
+                            <Text style={{ fontSize: 8, color: '#64748b' }}>• 年度运维费：初始投资的 {(assumptions.omCostRatio * 100).toFixed(1)}%，每年增长 {((assumptions.omEscalation ?? 0) * 100).toFixed(1)}%</Text>
+                        )}
+                        <Text style={{ fontSize: 8, color: '#64748b' }}>• 折现率：{discountRate === null ? '未返回' : `${(discountRate * 100).toFixed(1)}%（NPV 与 LCOE 共用）`}</Text>
                     </View>
 
-                    {/* 25年现金流关键节点 */}
-                    <View style={styles.table}>
-                        <View style={styles.tableRow}>
-                            <View style={styles.tableColHeader}><Text style={styles.tableCellHeader}>运营年份</Text></View>
-                            <View style={styles.tableColHeader}><Text style={styles.tableCellHeader}>年度收益(元)</Text></View>
-                            <View style={styles.tableColHeader}><Text style={styles.tableCellHeader}>现金流(元)</Text></View>
-                            <View style={styles.tableColHeader}><Text style={styles.tableCellHeader}>累计现金流(元)</Text></View>
+                    {cashFlow ? (
+                        <View style={styles.table} wrap={false}>
+                            <View style={styles.tableRow}>
+                                <View style={styles.tableColHeader}><Text style={styles.tableCellHeader}>运营年份</Text></View>
+                                <View style={styles.tableColHeader}><Text style={styles.tableCellHeader}>年度收入(元)</Text></View>
+                                <View style={styles.tableColHeader}><Text style={styles.tableCellHeader}>净现金流(元)</Text></View>
+                                <View style={styles.tableColHeader}><Text style={styles.tableCellHeader}>累计现金流(元)</Text></View>
+                            </View>
+                            {[1, 5, 10, 20, 25].filter(year => year <= cashFlow.length).map((year) => {
+                                const accum = investment === null
+                                    ? null
+                                    : cashFlow.slice(0, year).reduce((sum, v) => sum + v, -investment);
+                                return (
+                                    <View style={styles.tableRow} key={year}>
+                                        <View style={styles.tableCol}><Text style={styles.tableCell}>第 {year} 年</Text></View>
+                                        <View style={styles.tableCol}><Text style={styles.tableCell}>{revenue ? fmtMoney(revenue[year - 1]) : '—'}</Text></View>
+                                        <View style={styles.tableCol}><Text style={styles.tableCell}>{fmtMoney(cashFlow[year - 1])}</Text></View>
+                                        <View style={styles.tableCol}><Text style={styles.tableCell}>{accum === null ? NOT_FILLED : fmtMoney(accum)}</Text></View>
+                                    </View>
+                                );
+                            })}
                         </View>
-                        {[1, 5, 10, 20, 25].map((year) => {
-                            const cashflow = data.financial.cashFlow ? data.financial.cashFlow[year - 1] : 0;
-                            // 简化计算累计现金流
-                            let accum = -(data.financial.investment || 3000000);
-                            if (data.financial.cashFlow) {
-                                for (let i = 0; i < year; i++) accum += data.financial.cashFlow[i];
-                            }
-
-                            return (
-                                <View style={styles.tableRow} key={year}>
-                                    <View style={styles.tableCol}><Text style={styles.tableCell}>第 {year} 年</Text></View>
-                                    <View style={styles.tableCol}><Text style={styles.tableCell}>{Math.round(cashflow).toLocaleString()}</Text></View>
-                                    <View style={styles.tableCol}><Text style={styles.tableCell}>{Math.round(cashflow).toLocaleString()}</Text></View>
-                                    <View style={styles.tableCol}><Text style={styles.tableCell}>{Math.round(accum).toLocaleString()}</Text></View>
-                                </View>
-                            );
-                        })}
-                    </View>
+                    ) : (
+                        <Text style={{ fontSize: 8, color: '#64748b' }}>本类型测算未返回逐年现金流。</Text>
+                    )}
+                    <Text style={{ fontSize: 7, color: '#94a3b8', marginTop: 4 }}>年度收入为售电与自用节省的电费合计；净现金流 = 年度收入 − 运维费用；累计现金流自第 0 年初始投资起算。</Text>
                 </View>
 
                 {/* 环境效益 */}
@@ -289,39 +336,46 @@ const InvestmentReport: React.FC<InvestmentReportProps> = ({ data, type }) => {
                         <View style={[styles.metricCard, { width: '48%', backgroundColor: '#ecfdf5' }]}>
                             <Text style={styles.metricLabel}>年减排二氧化碳 (CO2)</Text>
                             <Text style={[styles.metricValue, { color: '#059669' }]}>
-                                {co2AvoidedTonnes(data.energy.year1 || 0).toFixed(1)} 吨
+                                {co2AvoidedTonnes(energy.year1 || 0).toFixed(1)} 吨
                             </Text>
                         </View>
                         <View style={[styles.metricCard, { width: '48%', backgroundColor: '#ecfdf5' }]}>
                             <Text style={styles.metricLabel}>生命周期等效植树</Text>
                             <Text style={[styles.metricValue, { color: '#059669' }]}>
-                                {Math.round(co2AvoidedTonnes(data.energy.lifetime || (data.energy.year1 || 0) * 25) * 1000 / 22)} 棵
+                                {Math.round(co2AvoidedTonnes(energy.lifetime || (energy.year1 || 0) * 25) * 1000 / 22)} 棵
                             </Text>
                         </View>
                     </View>
                 </View>
-
                 <Text style={{ fontSize: 8, color: '#64748b', marginTop: -10, marginBottom: 4 }}>
                     {EMISSION_FACTOR_NOTE}（来源：{GRID_EMISSION_FACTOR.source}）
                 </Text>
                 <Text style={{ fontSize: 8, color: '#64748b', marginBottom: 10 }}>
-                    {priceAsOfText(data.metadata?.pricing)}
+                    {priceAsOfText(data?.metadata?.pricing)}
                 </Text>
+
+                {hasAi && (
+                    <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>AI 辅助分析</Text>
+                        <Text style={{ fontSize: 8, color: '#b45309', marginBottom: 4 }}>【AI 辅助生成】本节文字由人工智能生成，可能存在错误，请核实后使用。</Text>
+                        <Text style={{ fontSize: 9, color: '#334155', lineHeight: 1.5 }}>{aiAnalysis}</Text>
+                    </View>
+                )}
 
                 {/* 结论 */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>投资结论与专业评价</Text>
-                    <View style={{ padding: 10, backgroundColor: '#fff7ed', borderRadius: 4, border: '1px solid #ffedd5' }}>
-                        <Text style={{ fontSize: 9, color: '#9a3412', lineHeight: 1.5 }}>
-                            【分析结论】经系统模拟测算，该项目具有较强的财务可行性。其 IRR 指标 {(data.financial.irr || data.financial.metrics?.irr)?.toFixed(2)}% 显著高于同行业基准水平(8%)。考虑到资源条件稳定且具备成熟的并网环境，建议尽快推动立项开发。
+                    <Text style={styles.sectionTitle}>测算结论</Text>
+                    <View style={{ padding: 10, backgroundColor: '#f8fafc', borderRadius: 4, border: '1px solid #e2e8f0' }}>
+                        <Text style={{ fontSize: 9, color: '#334155', lineHeight: 1.5 }}>
+                            {reportConclusion(irr, payback, lifetime)}
                         </Text>
                     </View>
                 </View>
 
                 {/* 页脚 */}
-                <View style={styles.footer}>
-                    <Text>© 2026 新能源智库 | AI 智能测算模块</Text>
-                    <Text>本报告仅供参考，不作为最终投资决策依据</Text>
+                <View style={styles.footer} fixed>
+                    <Text>© {now.getFullYear()} 新能源智库 | {hasAi ? '含 AI 辅助生成内容（已标注）' : '规则引擎测算，未含 AI 生成文字'}</Text>
+                    <Text>{REPORT_DISCLAIMER}</Text>
                     <Text render={({ pageNumber, totalPages }) => `第 ${pageNumber} / ${totalPages} 页`} />
                 </View>
             </Page>

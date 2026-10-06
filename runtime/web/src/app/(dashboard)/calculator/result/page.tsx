@@ -330,7 +330,7 @@ function PDFDownloadButton({ data, type }: { data: any, type: string }) {
     return (
         <PDFDownloadLink
             document={<InvestmentReport data={data} type={type} />}
-            fileName={`investment_report_${type}_${new Date().getTime()}.pdf`}
+            fileName={`测算报告_${type}_${new Date().getTime()}.pdf`}
         >
             {({ loading, error }) => (
                 <button
