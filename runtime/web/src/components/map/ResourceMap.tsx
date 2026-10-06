@@ -19,91 +19,30 @@ interface ResourceMapProps {
 }
 
 /**
- * Leaflet Fallback Map Component (OpenStreetMap)
- * 这是一个备用方案，当高德地图由于网络或其他原因无法加载时使用。
- * 它提供了一个“普通地图”外观和基本的交互功能。
+ * 高德地图加载失败时的提示。国内版不再自动切换到境外地图与地名服务（OSM 瓦片、境外 CDN 上的 Leaflet、Nominatim）：
+ * 这些服务境内常不可达，而且会把用户查询的位置发往境外。这里只提示「地图服务暂不可用」，并允许手动输入经纬度继续。
  */
-const LeafletFallbackMap = ({ onSelect }: { onSelect: any }) => {
-    const mapRef = useRef<HTMLDivElement>(null);
-    const [isLeafletLoaded, setIsLeafletLoaded] = useState(false);
+export const MAP_UNAVAILABLE_TEXT = '地图服务暂不可用';
 
-    useEffect(() => {
-        // 动态加载 Leaflet JS 和 CSS
-        if (!document.getElementById('leaflet-css')) {
-            const link = document.createElement('link');
-            link.id = 'leaflet-css';
-            link.rel = 'stylesheet';
-            link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-            document.head.appendChild(link);
-        }
-
-        if (!(window as any).L) {
-            const script = document.createElement('script');
-            script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-            script.onload = () => setIsLeafletLoaded(true);
-            document.head.appendChild(script);
-        } else {
-            setIsLeafletLoaded(true);
-        }
-        // 地图 SDK 只初始化一次；加载状态和父回调不应触发实例销毁重建。
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-
-    useEffect(() => {
-        if (!isLeafletLoaded || !mapRef.current) return;
-
-        const L = (window as any).L;
-        const map = L.map(mapRef.current).setView([39.9, 116.4], 4);
-
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
-
-        let marker: any = null;
-
-        map.on('click', async (e: any) => {
-            const { lat, lng } = e.latlng;
-
-            if (marker) map.removeLayer(marker);
-            marker = L.marker([lat, lng]).addTo(map);
-
-            // 使用 Nominatim 进行逆地理编码以获取地址（免费服务）
-            try {
-                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=zh`);
-                const data = await res.json();
-                const address = data.display_name || `选定位置 (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
-
-                onSelect({
-                    lat,
-                    lng,
-                    name: address
-                });
-            } catch (err) {
-                onSelect({
-                    lat,
-                    lng,
-                    name: `选定位置 (${lat.toFixed(4)}, ${lng.toFixed(4)})`
-                });
-            }
-        });
-
-        // 添加定位功能
-        map.locate({ setView: true, maxZoom: 10 });
-        map.on('locationfound', (e: any) => {
-            L.circle(e.latlng, e.accuracy).addTo(map);
-            L.marker(e.latlng).addTo(map).bindPopup("你在这里").openPopup();
-        });
-
-        return () => {
-            map.remove();
-        };
-    }, [isLeafletLoaded, onSelect]);
-
+const MapUnavailable = ({ onSelect }: { onSelect: (location: { lat: number; lng: number; name: string }) => void }) => {
+    const [lat, setLat] = useState('');
+    const [lng, setLng] = useState('');
+    const latNum = Number(lat);
+    const lngNum = Number(lng);
+    const valid = lat !== '' && lng !== '' && Number.isFinite(latNum) && Number.isFinite(lngNum)
+        && Math.abs(latNum) <= 90 && Math.abs(lngNum) <= 180;
     return (
-        <div className="w-full h-full relative">
-            <div ref={mapRef} className="w-full h-full bg-slate-100" />
-            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] bg-white/90 backdrop-blur-md border border-slate-200 px-4 py-2 rounded-full shadow-lg text-sm font-medium text-slate-700">
-                🌐 由于高德接口受限，已切换至全球通用地图 (OpenStreetMap)
+        <div role="status" className="flex h-full w-full items-center justify-center bg-slate-100 p-6">
+            <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-lg">
+                <p className="text-base font-bold text-slate-800">{MAP_UNAVAILABLE_TEXT}</p>
+                <p className="mt-2 text-sm leading-6 text-slate-500">请稍后刷新重试，或直接输入项目经纬度继续查询。</p>
+                <div className="mt-4 grid grid-cols-2 gap-2 text-left text-xs text-slate-600">
+                    <label>纬度<input value={lat} onChange={e => setLat(e.target.value)} inputMode="decimal" placeholder="例如 32.06" className="mt-1 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm" /></label>
+                    <label>经度<input value={lng} onChange={e => setLng(e.target.value)} inputMode="decimal" placeholder="例如 118.79" className="mt-1 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm" /></label>
+                </div>
+                <button type="button" disabled={!valid}
+                    onClick={() => onSelect({ lat: latNum, lng: lngNum, name: `位置 (${latNum.toFixed(4)}, ${lngNum.toFixed(4)})` })}
+                    className="mt-4 w-full rounded-xl bg-blue-600 px-4 py-2 text-sm font-bold text-white disabled:opacity-50">按经纬度查询</button>
             </div>
         </div>
     );
@@ -123,10 +62,10 @@ export default function ResourceMap({ layer, mapStyle, onSelectLocation }: Resou
         let mapInstance: any = null;
 
         const initMap = async () => {
-            // 设置 5 秒超时，如果加载不出来则切换到备用地图
+            // 设置 5 秒超时，加载不出来则提示「地图服务暂不可用」
             const timeoutId = setTimeout(() => {
                 if (isLoading && isMounted) {
-                    console.warn('高德地图加载超时，切换至备用地图');
+                    console.warn('高德地图加载超时');
                     setIsLoading(false);
                     setIsMock(true);
                 }
@@ -251,61 +190,17 @@ export default function ResourceMap({ layer, mapStyle, onSelectLocation }: Resou
                         if (status === 'complete' && result.regeocode) {
                             setAddress(result.regeocode.formattedAddress);
                         } else {
-                            // Fallback to Nominatim (OpenStreetMap)
-                            try {
-                                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, {
-                                    headers: { 'Accept-Language': 'zh-CN,zh;q=0.9' }
-                                });
-                                const data = await response.json();
-                                if (data && data.display_name) {
-                                    setAddress(data.display_name);
-                                } else {
-                                    setAddress(`位置 (${lat.toFixed(4)}, ${lng.toFixed(4)})`);
-                                }
-                            } catch (error) {
-                                // console.error('Nominatim fallback failed:', error);
-                                setAddress(`位置 (${lat.toFixed(4)}, ${lng.toFixed(4)})`);
-                            }
+                            // 高德逆地理编码失败时只显示坐标，不再请求境外 Nominatim
+                            setAddress(`位置 (${lat.toFixed(4)}, ${lng.toFixed(4)})`);
                         }
                     });
                 });
 
                 // 处理搜索框回车键作为备选方案
                 const searchInput = document.getElementById('map-search-input') as HTMLInputElement;
-                const handleSearch = async (e: KeyboardEvent) => {
-                    if (e.key === 'Enter' && searchInput.value) {
-                        try {
-                            const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchInput.value)}&limit=1`, {
-                                headers: { 'Accept-Language': 'zh-CN,zh;q=0.9' }
-                            });
-                            const data = await response.json();
-                            if (data && data.length > 0) {
-                                const { lat, lon, display_name } = data[0];
-                                const lngNum = parseFloat(lon);
-                                const latNum = parseFloat(lat);
-
-                                if (mapInstance) {
-                                    mapInstance.setCenter([lngNum, latNum]);
-                                    mapInstance.setZoom(12);
-
-                                    if (selectionMarkerRef.current) mapInstance.remove(selectionMarkerRef.current);
-                                    const marker = new AMapNamespace.Marker({
-                                        position: [lngNum, latNum],
-                                        icon: new AMapNamespace.Icon({
-                                            size: new AMapNamespace.Size(25, 34),
-                                            image: '//a.amap.com/jsapi_demos/static/demo-center/icons/poi-marker-default.png',
-                                            imageSize: new AMapNamespace.Size(25, 34)
-                                        })
-                                    });
-                                    mapInstance.add(marker);
-                                    selectionMarkerRef.current = marker;
-                                }
-                                onSelectLocation({ lat: latNum, lng: lngNum, name: display_name });
-                            }
-                        } catch (error) {
-                            console.error('Manual search failed:', error);
-                        }
-                    }
+                // 回车搜索：用高德 PlaceSearch，不再请求境外 Nominatim
+                const handleSearch = (e: KeyboardEvent) => {
+                    if (e.key === 'Enter' && searchInput.value) placeSearch.search(searchInput.value);
                 };
 
                 if (searchInput) {
@@ -345,7 +240,7 @@ export default function ResourceMap({ layer, mapStyle, onSelectLocation }: Resou
     }, []);
 
     if (isMock) {
-        return <LeafletFallbackMap onSelect={onSelectLocation} />;
+        return <MapUnavailable onSelect={onSelectLocation} />;
     }
 
     return (

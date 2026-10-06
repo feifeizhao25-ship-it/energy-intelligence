@@ -60,7 +60,7 @@ export default function UpgradeModal({
             case 'limit_reached':
                 return '升级会员，享受无限制使用体验';
             default:
-                return '新能源行业专业人士的效率神器';
+                return '面向新能源从业者的测算与资料工具';
         }
     };
 

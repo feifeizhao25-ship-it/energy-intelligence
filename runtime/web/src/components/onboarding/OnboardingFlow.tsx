@@ -21,7 +21,7 @@ const steps = [
     },
     {
         title: "精准的资源评估",
-        description: "点击'资源地图'，获取全球任意经纬度 40 年间的 NASA 历史气象数据，为选址提供坚实基础。",
+        description: "点击'资源地图'，查询任意经纬度的公开历史气象数据，作为选址的参考。",
         icon: <Target className="w-8 h-8 text-emerald-500" />,
         color: "bg-emerald-50"
     },

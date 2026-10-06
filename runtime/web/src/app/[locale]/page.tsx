@@ -48,6 +48,7 @@ import { cn } from '@/lib/utils';
 import { useTranslations } from 'next-intl';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import AddressAutocomplete from '@/components/ui/AddressAutocomplete';
+import { provincesWithPrices } from '@/lib/pricing/tariffs';
 
 // 快速计算结果展示组件
 function QuickResultCard({ icon: Icon, label, value, unit, color }: any) {
@@ -145,7 +146,6 @@ export default function HomePage() {
                     <div className="hidden md:flex items-center gap-8">
                         <Link href="#features" className="text-slate-600 dark:text-slate-300 hover:text-green-600 dark:hover:text-green-400 text-sm font-medium">功能介绍</Link>
                         <Link href="#calculator" className="text-slate-600 dark:text-slate-300 hover:text-green-600 dark:hover:text-green-400 text-sm font-medium">在线计算</Link>
-                        <Link href="#cases" className="text-slate-600 dark:text-slate-300 hover:text-green-600 dark:hover:text-green-400 text-sm font-medium">客户案例</Link>
                         <Link href="/pricing" className="text-slate-600 dark:text-slate-300 hover:text-green-600 dark:hover:text-green-400 text-sm font-medium">价格方案</Link>
                     </div>
                     <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
@@ -177,7 +177,7 @@ export default function HomePage() {
                             </h1>
 
                             <p className="text-xl text-slate-300 mb-8">
-                                基于NASA气象数据和AI深度分析，为您提供专业级的光伏/风电项目投资决策报告
+                                基于公开气象数据与透明的测算假设，初步估算光伏、风电、储能项目的发电量与收益
                             </p>
 
                             <div className="flex flex-wrap gap-4">
@@ -375,7 +375,7 @@ export default function HomePage() {
                         {[
                             { value: '假设可见', label: '关键参数可调整', icon: Building2 },
                             { value: '来源可溯', label: '数据出处与时间记录', icon: Zap },
-                            { value: '31', label: '覆盖省市', icon: MapPin },
+                            { value: `${provincesWithPrices().length} 省市`, label: '已收录参考电价', icon: MapPin },
                             { value: '人工复核', label: '结论导出前确认', icon: Star },
                         ].map((stat, i) => (
                             <div key={i} className="text-center">
@@ -403,7 +403,7 @@ export default function HomePage() {
                             {
                                 icon: Sun,
                                 title: '光伏发电计算',
-                                description: '基于NASA辐射数据，精确计算25年发电量和投资回报',
+                                description: '基于公开气象数据，估算 25 年发电量与现金流',
                                 color: 'amber',
                                 link: '/calculator/solar'
                             },
@@ -424,7 +424,7 @@ export default function HomePage() {
                             {
                                 icon: FileText,
                                 title: '专业报告生成',
-                                description: '一键生成PDF投资分析报告，可用于立项审批',
+                                description: '导出 PDF 测算报告，注明假设与数据来源，仅供参考',
                                 color: 'purple',
                                 link: '/my/stations'
                             },
@@ -438,7 +438,7 @@ export default function HomePage() {
                             {
                                 icon: Leaf,
                                 title: '碳减排计算',
-                                description: '量化环境贡献，生成碳中和证书',
+                                description: '按 2023 年全国电力平均排放因子估算减排量',
                                 color: 'green',
                                 link: '/achievements'
                             }

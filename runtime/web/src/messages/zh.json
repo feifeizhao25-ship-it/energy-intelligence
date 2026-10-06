@@ -3,16 +3,16 @@
         "title": "首页",
         "hero": {
             "title": "新能源智库",
-            "subtitle": "光伏风电从业者的效率神器",
+            "subtitle": "光伏、风电、储能项目的初步测算工具",
             "cta": "立即计算",
-            "description": "基于NASA气象数据和AI深度分析，为您提供专业级的光伏/风电项目投资决策报告"
+            "description": "基于公开气象数据与透明的测算假设，初步估算光伏、风电、储能项目的发电量与收益"
         },
         "features": {
             "title": "核心功能",
             "subtitle": "专业级的新能源项目分析工具",
             "solar": {
                 "title": "光伏发电计算",
-                "description": "基于NASA辐射数据，精确计算25年发电量和投资回报"
+                "description": "基于公开气象数据，估算 25 年发电量与现金流"
             },
             "wind": {
                 "title": "风电效益分析",
@@ -24,7 +24,7 @@
             },
             "report": {
                 "title": "专业报告生成",
-                "description": "一键生成PDF投资分析报告，可用于立项审批"
+                "description": "导出 PDF 测算报告，注明假设与数据来源，仅供参考"
             },
             "ai": {
                 "title": "AI智能问答",
@@ -32,18 +32,18 @@
             },
             "carbon": {
                 "title": "碳减排计算",
-                "description": "量化环境贡献，生成碳中和证书"
+                "description": "按 2023 年全国电力平均排放因子估算减排量"
             }
         },
         "stats": {
             "projects": "已分析项目",
             "generation": "累计发电量(kWh)",
-            "provinces": "覆盖省市",
+            "provinces": "已收录参考电价的省市",
             "satisfaction": "用户满意度"
         },
         "dataSources": {
             "title": "权威数据源",
-            "subtitle": "集成国际权威数据，确保分析结果专业可靠"
+            "subtitle": "使用公开数据源，分析假设与来源全程可见"
         },
         "pricing": {
             "title": "价格方案",

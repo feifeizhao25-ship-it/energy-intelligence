@@ -79,7 +79,7 @@ export default function CalculatorHomePage() {
               </span>
             </h1>
             <p className="text-slate-400 text-lg max-w-2xl mx-auto">
-              集成NASA实时气象API、最新分省电价政策与专业级工程算法，为您提供零门槛的一键式投资决策分析。
+              基于公开气象数据与省级参考电价表（标注来源与数据截至日期）做初步测算，结果仅供参考，不构成投资建议。
             </p>
           </motion.div>
 
@@ -132,7 +132,7 @@ export default function CalculatorHomePage() {
           {/* Features / Social Proof */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 py-12 border-y border-slate-800/50">
             {[
-              { icon: <TrendingUp className="w-5 h-5" />, title: '动态政策库', desc: '实时同步31省电价政策' },
+              { icon: <TrendingUp className="w-5 h-5" />, title: '动态政策库', desc: '电价标注来源与数据截至日期' },
               { icon: <ShieldCheck className="w-5 h-5" />, title: '工程级精度', desc: '误差控制在 ±3.5% 以内' },
               { icon: <FileText className="w-5 h-5" />, title: '专业报告', desc: '一键导出 PDF/Word 报告' },
               { icon: <Share2 className="w-5 h-5" />, title: '团队协作', desc: '多端同步与多人对比' }

@@ -146,7 +146,7 @@ export default function ConversationalWizard({ type, config }: ConversationalWiz
         setMessages(prev => [...prev, {
             id: 'bot-final',
             type: 'bot',
-            content: '太好了！我正在为您从 NASA 数据库调取 40 年间的历史气象数据，并计算最优方案...'
+            content: '好的，正在调取公开气象数据并按您的参数测算…'
         }]);
 
         await new Promise(r => setTimeout(r, 2000));
