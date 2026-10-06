@@ -24,7 +24,8 @@ const copy = {
   safeguards: ['假设与来源可追溯', '付费权益由服务端校验', '重要结论需人工复核'],
   disclaimer: '本产品提供辅助分析，不构成投资、工程、法律或安全保证。',
   support: '联系支持',
-  authNotConfigured: '登录服务暂未开放：服务端尚未配置登录所需的环境变量（NEXTAUTH_URL / NEXTAUTH_SECRET）。您可以先浏览公开页面，或联系管理员完成配置后再登录。',
+  // 不向用户展示部署细节（环境变量名等），缺哪项配置只记在服务端日志里
+  authNotConfigured: '登录服务维护中，请稍后再试。您可以先浏览公开页面。',
 };
 
 export default function LoginForm({ authConfigured }: { authConfigured: boolean }) {

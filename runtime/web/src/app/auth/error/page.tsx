@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 };
 
 const ERROR_TEXT: Record<string, string> = {
-    Configuration: '登录服务配置不完整：服务端缺少 NEXTAUTH_URL 或 NEXTAUTH_SECRET 环境变量。请联系管理员完成部署配置。',
+    Configuration: '登录服务维护中，请稍后再试。',
     AccessDenied: '本次登录未获授权。如有疑问请联系支持。',
     Verification: '登录链接已失效或已使用，请重新发起登录。',
 };

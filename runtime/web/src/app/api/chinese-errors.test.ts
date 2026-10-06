@@ -52,6 +52,28 @@ export function rawErrorMessages(path: string, src: string): string[] {
   return out;
 }
 
+/** 形如 NEXTAUTH_SECRET、AMAP_WEB_SERVICE_KEY、DATABASE_URL 的环境变量名 */
+const ENV_NAME = /\b[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*_(?:SECRET|KEY|URL)\b/;
+/** 一行里的字符串字面量（'…'、"…"、`…`）与 JSX 文本（>…<） */
+const LITERAL = /'((?:[^'\\]|\\.)*)'|"((?:[^"\\]|\\.)*)"|`((?:[^`\\]|\\.)*)`|>([^<>{}]+)</g;
+
+/**
+ * 页面静态文案与接口提示里出现的环境变量名。process.env.X 这种代码引用不算，只看给人看的字符串和 JSX 文本。
+ */
+export function envNamesInCopy(path: string, src: string): string[] {
+  const out: string[] = [];
+  src.split('\n').forEach((line, i) => {
+    if (/^\s*(\/\/|\*|\/\*)/.test(line) || /console\.(error|warn|log|info)/.test(line)) return;
+    const code = line.replace(/\b(?:process\.)?env\.[A-Z0-9_]+/g, '');
+    for (const m of code.matchAll(LITERAL)) {
+      const text = m[1] ?? m[2] ?? m[3] ?? m[4] ?? '';
+      const hit = text.match(ENV_NAME);
+      if (hit) out.push(`${path}:${i + 1} ${hit[0]}`);
+    }
+  });
+  return out;
+}
+
 describe('接口提示全中文', () => {
   const all = files(API).map((p) => ({ path: p.slice(API.length), src: readFileSync(p, 'utf8') }));
 
@@ -80,6 +102,28 @@ describe('接口提示全中文', () => {
       /\bset\w*\(\s*(?:error|err|e|cause)\.message\s*\)|\{\s*(?:error|err|e|cause)\.message\s*\}/.test(line) && !/console\./.test(line) ? [`${p.slice(SRC.length)}:${i + 1}`] : []));
     expect(ui.length).toBeGreaterThan(50);
     expect(bad).toEqual([]);
+  });
+
+  it('页面静态文案和接口提示里不出现环境变量名（如 NEXTAUTH_SECRET）', () => {
+    const SRC = join(__dirname, '..', '..');
+    const walk = (dir: string): string[] => readdirSync(dir).flatMap((n) => {
+      const p = join(dir, n);
+      if (statSync(p).isDirectory()) return n === 'node_modules' ? [] : walk(p);
+      return /\.(tsx|ts)$/.test(n) && !/\.(test|spec)\./.test(n) && !/\.d\.ts$/.test(n) ? [p] : [];
+    });
+    const targets = [...walk(join(SRC, 'app')), ...walk(join(SRC, 'components'))];
+    expect(targets.length).toBeGreaterThan(100);
+    const bad = targets.flatMap((p) => envNamesInCopy(p.slice(SRC.length), readFileSync(p, 'utf8')));
+    expect(bad).toEqual([]);
+  });
+
+  it('门禁自检：能抓出文案里的环境变量名，放过代码引用和普通常量名', () => {
+    expect(envNamesInCopy('/x', "authNotConfigured: '缺少环境变量（NEXTAUTH_URL / NEXTAUTH_SECRET）',")).toHaveLength(1);
+    expect(envNamesInCopy('/x', '<p>请配置 AMAP_WEB_SERVICE_KEY 后重试</p>')).toHaveLength(1);
+    expect(envNamesInCopy('/x', 'message: `缺少 ${name}：ALIPAY_PRIVATE_KEY`')).toHaveLength(1);
+    expect(envNamesInCopy('/x', "const key = process.env.AMAP_WEB_SERVICE_KEY || '';")).toEqual([]);
+    expect(envNamesInCopy('/x', "localStorage.setItem(MILESTONE_STORAGE_KEY, 'true');")).toEqual([]);
+    expect(envNamesInCopy('/x', "authNotConfigured: '登录服务维护中，请稍后再试。',")).toEqual([]);
   });
 
   it('门禁自检：能抓出英文提示和原样回传', () => {
