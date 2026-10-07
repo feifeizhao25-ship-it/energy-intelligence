@@ -4,6 +4,7 @@ import { calculateWind } from '@/lib/calculator/wind';
 import { withMembershipCheck } from '@/lib/membership/middleware';
 import { prisma } from '@/lib/prisma';
 import { safeErrorMessage } from '@/lib/api/safe-error';
+import { resolveWindPrices, PriceInputError } from '@/lib/pricing/tariff-defaults';
 
 export async function POST(req: NextRequest) {
     return withMembershipCheck(
@@ -12,7 +13,22 @@ export async function POST(req: NextRequest) {
         async (user) => {
             try {
                 const input = await req.json();
-                const result = await calculateWind(input);
+                // 电价：页面填写的优先，没填的按所选省份的电价表取（上网电价参考燃煤发电基准价）；引擎不再默认 0.4 / 0.6
+                const businessModel = input?.businessModel ?? {};
+                const mode = businessModel.mode === 'self_use_export' ? 'self_use_export' : 'full_export';
+                let prices: ReturnType<typeof resolveWindPrices>;
+                try {
+                    prices = resolveWindPrices(input?.province, {
+                        feedInTariff: businessModel.feedInTariff, electricityPrice: businessModel.electricityPrice,
+                    }, mode);
+                } catch (e) {
+                    if (e instanceof PriceInputError) {
+                        return NextResponse.json({ error: e.code, message: safeErrorMessage(e, '电价输入不完整，请检查后重试') }, { status: 422 });
+                    }
+                    throw e;
+                }
+                input.businessModel = { ...businessModel, mode, feedInTariff: prices.feedInTariff, electricityPrice: prices.electricityPrice };
+                const result = { ...(await calculateWind(input)), pricing: prices.pricing };
 
                 try {
                     await prisma.calculation.create({

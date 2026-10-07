@@ -29,8 +29,12 @@ export interface ProvinceTariff {
     sharp?: number;
     /** 工商业平均购电电价（元/kWh）。仅当原表直接给出时才有；否则由分时价按 峰4:平8:谷12 小时加权得出 */
     retailPrice?: number;
-    /** 上网电价参考（元/kWh），原表标注为「脱硫煤标杆上网电价」 */
-    feedInTariff?: number;
+    /**
+     * 燃煤发电基准价（元/kWh），原表标为「脱硫煤标杆上网电价」——该叫法 2020 年起已改为「燃煤发电基准价」。
+     * 数值沿用原表、来源待核实。它不是新能源的上网电价：发改价格〔2025〕136 号后新能源上网电价走市场化，
+     * 这里只作为存量项目机制电价的参考上限，见 NEW_ENERGY_FEED_IN_BASIS。
+     */
+    coalBenchmarkPrice?: number;
     /** 固定分时时段（小时），仅 touStatus = fixed 时有 */
     peaks?: TimeWindow[];
     valleys?: TimeWindow[];
@@ -54,7 +58,19 @@ export const PRICE_STALE_NOTE = '可能已变化，请以最新文件为准';
 
 const UNVERIFIED_Q4_2025 = '来源待核实（原 price-crawler 静态表，注明「2025 年 Q4 参考值」，未附文件）';
 const UNVERIFIED_2024 = '来源待核实（原 electricity-price 表，注明「2024 年」参考电价，未附文件）';
-const FEED_IN_NOTE = '上网电价取原表「脱硫煤标杆上网电价」，来源待核实；发改价格〔2025〕136 号后新能源上网电价已市场化，需按机制电价/市场电价复核';
+const FEED_IN_NOTE = '燃煤发电基准价沿用原表数值（原表名为「脱硫煤标杆上网电价」，2020 年起改称燃煤发电基准价），来源待核实';
+
+/**
+ * 新能源上网电价说明（发改价格〔2025〕136 号）：新能源上网电量原则上全部进入电力市场，上网电价由市场交易形成；
+ * 同时建立「机制电价」差价结算：存量项目机制电价衔接现行政策、不高于当地燃煤发电基准价，增量项目机制电价由各省竞价确定。
+ * 本表没有收录各省机制电价与市场成交价，测算里的「上网电价」默认取燃煤发电基准价作参考，用户应按实际（机制电价或合同/市场价）填写。
+ */
+export const NEW_ENERGY_FEED_IN_BASIS = '发改价格〔2025〕136 号后新能源上网电价走市场化：上网电量参与市场交易，另按「机制电价」差价结算（存量项目不高于当地燃煤发电基准价，增量项目由各省竞价确定）。本站未收录各省机制电价，默认值取燃煤发电基准价作参考，请按你的机制电价或合同价填写。';
+
+/** 「来源待核实」等状态，用于页面原样显示 */
+export function sourceStatusLabel(t: Pick<ProvinceTariff, 'sourceVerified'>): string {
+    return t.sourceVerified ? '来源已核实' : '来源待核实';
+}
 
 function marketProvince(province: string, note?: string): ProvinceTariff {
     return {
@@ -71,28 +87,28 @@ function marketProvince(province: string, note?: string): ProvinceTariff {
 export const TARIFFS: Record<string, ProvinceTariff> = {
     '江苏': {
         province: '江苏', touStatus: 'fixed',
-        valley: 0.31, flat: 0.64, peak: 1.08, sharp: 1.25, feedInTariff: 0.391,
+        valley: 0.31, flat: 0.64, peak: 1.08, sharp: 1.25, coalBenchmarkPrice: 0.391,
         peaks: [{ start: 8, end: 11 }, { start: 17, end: 22 }], valleys: [{ start: 0, end: 8 }],
         source: UNVERIFIED_Q4_2025, sourceVerified: false, effectiveDate: null, asOf: '2025-12-01',
         note: `峰谷时段沿用原 2024 年表，来源待核实。${FEED_IN_NOTE}`,
     },
     '浙江': {
         province: '浙江', touStatus: 'fixed',
-        valley: 0.28, flat: 0.62, peak: 1.12, sharp: 1.35, feedInTariff: 0.4153,
+        valley: 0.28, flat: 0.62, peak: 1.12, sharp: 1.35, coalBenchmarkPrice: 0.4153,
         peaks: [{ start: 9, end: 11 }, { start: 15, end: 17 }, { start: 19, end: 21 }], valleys: [{ start: 0, end: 8 }],
         source: UNVERIFIED_Q4_2025, sourceVerified: false, effectiveDate: null, asOf: '2025-12-05',
         note: `峰谷时段沿用原 2024 年表，来源待核实。${FEED_IN_NOTE}`,
     },
     '广东': {
         province: '广东', touStatus: 'fixed',
-        valley: 0.25, flat: 0.68, peak: 1.20, sharp: 1.45, feedInTariff: 0.453,
+        valley: 0.25, flat: 0.68, peak: 1.20, sharp: 1.45, coalBenchmarkPrice: 0.453,
         peaks: [{ start: 10, end: 12 }, { start: 14, end: 19 }], valleys: [{ start: 0, end: 8 }],
         source: UNVERIFIED_Q4_2025, sourceVerified: false, effectiveDate: null, asOf: '2025-12-10',
         note: `峰谷时段沿用原 2024 年表，来源待核实。${FEED_IN_NOTE}`,
     },
     '北京': {
         province: '北京', touStatus: 'fixed',
-        valley: 0.35, flat: 0.72, peak: 1.15, feedInTariff: 0.3533,
+        valley: 0.35, flat: 0.72, peak: 1.15, coalBenchmarkPrice: 0.3533,
         peaks: [{ start: 10, end: 15 }, { start: 18, end: 21 }], valleys: [{ start: 23, end: 7 }],
         residential: { peak: 0.4883, flat: 0.3883, valley: 0.2883 },
         source: UNVERIFIED_Q4_2025, sourceVerified: false, effectiveDate: null, asOf: '2025-11-20',
@@ -100,7 +116,7 @@ export const TARIFFS: Record<string, ProvinceTariff> = {
     },
     '上海': {
         province: '上海', touStatus: 'fixed',
-        valley: 0.32, flat: 0.70, peak: 1.18, sharp: 1.30, feedInTariff: 0.4155,
+        valley: 0.32, flat: 0.70, peak: 1.18, sharp: 1.30, coalBenchmarkPrice: 0.4155,
         peaks: [{ start: 8, end: 11 }, { start: 18, end: 21 }], valleys: [{ start: 22, end: 6 }],
         residential: { peak: 0.617, flat: 0.462, valley: 0.307 },
         source: UNVERIFIED_Q4_2025, sourceVerified: false, effectiveDate: null, asOf: '2025-12-08',
@@ -108,7 +124,7 @@ export const TARIFFS: Record<string, ProvinceTariff> = {
     },
     '山东': {
         province: '山东', touStatus: 'fixed',
-        retailPrice: 0.72, peak: 1.05, valley: 0.15, feedInTariff: 0.3949,
+        retailPrice: 0.72, peak: 1.05, valley: 0.15, coalBenchmarkPrice: 0.3949,
         peaks: [{ start: 18, end: 22 }], valleys: [{ start: 11, end: 14 }], // 午间深谷
         source: UNVERIFIED_2024, sourceVerified: false, effectiveDate: null, asOf: '2024',
         note: FEED_IN_NOTE,
@@ -116,7 +132,7 @@ export const TARIFFS: Record<string, ProvinceTariff> = {
     // 河北：河北南网已取消固定分时；原表的峰谷时段（谷段 11–16 点）与政策冲突，已删除。
     // 冀北电网是否同样取消未核实，表里只有一个「河北」条目，统一按市场化处理。
     '河北': {
-        ...marketProvince('河北', '河北南网已取消固定分时；冀北电网未核实。原表工商业平均电价 0.68、上网电价 0.3644 元/kWh（2024 年，来源待核实）仅供参考，不参与测算'),
+        ...marketProvince('河北', '河北南网已取消固定分时；冀北电网未核实。原表工商业平均电价 0.68、燃煤发电基准价 0.3644 元/kWh（2024 年，来源待核实）仅供参考，不参与测算'),
     },
     '贵州': marketProvince('贵州'),
     '湖北': marketProvince('湖北'),

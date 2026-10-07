@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { calculateSolar, normalizeSelfUseRatio } from '@/lib/calculator/solar';
 import { getLatestPrice, calculateAveragePrice } from '@/lib/crawler/price-crawler';
-import { lookupTariff, TariffUnavailableError } from '@/lib/pricing/tariffs';
+import { lookupTariff, TariffUnavailableError, NEW_ENERGY_FEED_IN_BASIS } from '@/lib/pricing/tariffs';
 import { SolarCalculationInput } from '@/types';
 import { enforceRateLimit, PUBLIC_RULES } from '@/lib/security/rate-limit';
 
@@ -71,7 +71,8 @@ export async function POST(req: Request) {
         } else {
             try {
                 const price = await getLatestPrice(province);
-                const feedIn = tariff.status === 'ok' ? tariff.tariff.feedInTariff : undefined;
+                // 上网电价参考：燃煤发电基准价（136 号文后新能源上网电价走市场化，见 feedInBasis）
+                const feedIn = tariff.status === 'ok' ? tariff.tariff.coalBenchmarkPrice : undefined;
                 pricing = {
                     province: price.province,
                     // 自用电价按 峰4:平8:谷12 加权（与 /api/calculator/solar 同一口径）
@@ -129,6 +130,7 @@ export async function POST(req: Request) {
                 stale: pricing.stale,
                 staleNote: pricing.staleNote,
                 updatedAt: pricing.updatedAt,
+                feedInBasis: NEW_ENERGY_FEED_IN_BASIS,
             },
         });
     } catch {

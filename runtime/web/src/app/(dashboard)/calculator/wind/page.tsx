@@ -7,6 +7,8 @@ import { ArrowLeft, ArrowRight, Wind, MapPin, Settings, PieChart, BarChart3, Cal
 import { motion, AnimatePresence } from 'framer-motion';
 import LocationPicker from '@/components/map/LocationPicker';
 import { safeErrorMessage } from '@/lib/api/safe-error';
+import TariffPriceFields, { TARIFF_PROVINCES } from '@/components/calculator/TariffPriceFields';
+import { normalizeProvince } from '@/lib/pricing/tariffs';
 
 export default function WindCalculatorPage() {
     const router = useRouter();
@@ -27,6 +29,8 @@ export default function WindCalculatorPage() {
         cooperationMode: 'rental',
         unitCost: 6500, // 元/kW
     });
+    // 上网电价：留空 = 按所选省份电价表的燃煤发电基准价参考；填了 = 用你的机制电价或合同价
+    const [feedInTariff, setFeedInTariff] = useState('');
 
     const handleCalculate = async () => {
         if (isCalculating) return;
@@ -54,7 +58,8 @@ export default function WindCalculatorPage() {
                     },
                     businessModel: {
                         mode: formData.businessMode,
-                        cooperationMode: formData.cooperationMode
+                        cooperationMode: formData.cooperationMode,
+                        ...(feedInTariff.trim() ? { feedInTariff: Number(feedInTariff) } : {})
                     },
                     investment: { unitCost: formData.unitCost },
                     operation: {}
@@ -117,6 +122,25 @@ export default function WindCalculatorPage() {
                                         <input type="number" className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white" value={formData.hubHeight} onChange={e => setFormData({ ...formData, hubHeight: parseInt(e.target.value) })} />
                                     </div>
                                 </div>
+                            </div>
+                            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 space-y-4">
+                                <h2 className="text-xl font-bold text-white">上网电价</h2>
+                                <label className="block space-y-2 text-sm">
+                                    <span className="block text-xs font-bold text-slate-400">电价按哪个省份取</span>
+                                    <select value={TARIFF_PROVINCES.includes(normalizeProvince(formData.province)) ? normalizeProvince(formData.province) : '其他'}
+                                        onChange={e => setFormData({ ...formData, province: e.target.value })}
+                                        className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white">
+                                        {TARIFF_PROVINCES.map(p => <option key={p} value={p}>{p}</option>)}
+                                        <option value="其他">其他省份（自己填写电价）</option>
+                                    </select>
+                                </label>
+                                <TariffPriceFields
+                                    province={normalizeProvince(formData.province)}
+                                    fields={[{ key: 'coalBenchmarkPrice', label: '上网电价（机制电价或合同价）' }]}
+                                    values={{ coalBenchmarkPrice: feedInTariff }}
+                                    onChange={(_, value) => setFeedInTariff(value)}
+                                    showFeedInBasis
+                                />
                             </div>
                         </motion.div>
                     )}

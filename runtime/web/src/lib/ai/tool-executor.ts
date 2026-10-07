@@ -17,6 +17,7 @@ import { compareSolarAndWind } from '@/lib/calculator/solar';
 import { calculateWind } from '@/lib/calculator/wind';
 import { calculateStorage } from '@/lib/calculator/storage';
 import { getPriceConfig } from '@/lib/policy/electricity-price';
+import { resolveWindPrices, PriceInputError } from '@/lib/pricing/tariff-defaults';
 import {
     analyzePR,
     recommendCleaning,
@@ -254,8 +255,20 @@ export async function executeTool(toolName: string, toolInput: Record<string, un
                     province: toolInput.province as string
                 });
 
-            case 'calculate_wind':
-                return await calculateWind({
+            case 'calculate_wind': {
+                // 电价按省级电价表取默认值（上网电价参考燃煤发电基准价），AI 给出的电价优先；不再写死 0.4 元/度
+                const windMode = toolInput.businessModel === 'self_use_export' ? 'self_use_export' : 'full_export';
+                let windPrices: ReturnType<typeof resolveWindPrices>;
+                try {
+                    windPrices = resolveWindPrices(toolInput.province as string, {
+                        feedInTariff: toolInput.feedInTariff ?? (windMode === 'full_export' ? toolInput.electricityPrice : undefined),
+                        electricityPrice: toolInput.electricityPrice,
+                    }, windMode);
+                } catch (e) {
+                    if (e instanceof PriceInputError) return { success: false, error: e.message };
+                    throw e;
+                }
+                const windResult = await calculateWind({
                     lat: toolInput.lat as number,
                     lng: toolInput.lng as number,
                     province: toolInput.province as string || '默认',
@@ -271,8 +284,9 @@ export async function executeTool(toolName: string, toolInput: Record<string, un
                         cutOutSpeed: 25
                     },
                     businessModel: {
-                        mode: (toolInput.businessModel as any) || 'full_export',
-                        electricityPrice: toolInput.electricityPrice as number,
+                        mode: windMode,
+                        electricityPrice: windPrices.electricityPrice,
+                        feedInTariff: windPrices.feedInTariff,
                         cooperationMode: (toolInput.cooperationMode as any) || 'none'
                     },
                     investment: {
@@ -282,6 +296,8 @@ export async function executeTool(toolName: string, toolInput: Record<string, un
                         operationYears: 20
                     }
                 });
+                return { ...windResult, pricing: windPrices.pricing };
+            }
 
             case 'calculate_storage':
                 return calculateStorage({

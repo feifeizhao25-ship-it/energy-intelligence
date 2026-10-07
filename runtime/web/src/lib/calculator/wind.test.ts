@@ -48,6 +48,11 @@ describe('Wind Calculator', () => {
     };
 
     describe('calculateWind', () => {
+        it('没有上网电价时报错，不再按写死的 0.4 元/度计算', async () => {
+            await expect(calculateWind({ ...baseInput, businessModel: { mode: 'full_export' } })).rejects.toThrow('缺少上网电价');
+            await expect(calculateWind({ ...baseInput, businessModel: { mode: 'self_use_export', feedInTariff: 0.4 } })).rejects.toThrow('缺少自用电价');
+        });
+
         it('should calculate energy generation correctly', async () => {
             const result = await calculateWind(baseInput);
 

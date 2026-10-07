@@ -562,6 +562,8 @@ export async function compareSolarAndWind(
 ) {
   // 统一比较基准：1MW (1000kW)
   const capacity = 1000;
+  // 电价取省级电价表（原来写死自用 0.6、上网 0.4 元/度）；已取消固定分时或未收录的省份抛出中文提示
+  const priceConfig = getPriceConfig(province);
 
   // 1. 计算光伏
   const solarInput: SolarCalculationInput = {
@@ -571,8 +573,8 @@ export async function compareSolarAndWind(
     installationType: 'ground',
     moduleType: 'standard',
     selfUseRatio: 1, // 全额自用（对比最大收益潜力），0–1 小数
-    electricityPrice: 0.6, // 假设电价
-    feedInTariff: 0.4,
+    electricityPrice: priceConfig.retailPrice,
+    feedInTariff: priceConfig.feedInTariff,
     province
   };
 
@@ -596,7 +598,8 @@ export async function compareSolarAndWind(
     },
     businessModel: {
       mode: 'full_export',
-      feedInTariff: 0.4
+      // 上网电价参考燃煤发电基准价（来源待核实）；136 号文后新能源上网电价走市场化，见 priceConfig.feedInBasis
+      feedInTariff: priceConfig.feedInTariff
     },
     investment: { unitCost: 8000 },
     operation: {}

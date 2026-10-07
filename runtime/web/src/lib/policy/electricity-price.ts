@@ -8,12 +8,15 @@ import {
   TariffUnavailableError,
   type TimeWindow,
   type TariffFreshness,
+  NEW_ENERGY_FEED_IN_BASIS,
 } from '@/lib/pricing/tariffs';
 
 export interface ElectricityPriceConfig {
   province: string;
   retailPrice: number; // 工商业平均购电电价 (元/kWh)，见 averageRetailPrice
-  feedInTariff: number; // 上网电价参考 (元/kWh)，来源待核实
+  feedInTariff: number; // 上网电价参考 (元/kWh)：取燃煤发电基准价（来源待核实），见 feedInBasis
+  /** 136 号文后新能源上网电价市场化 / 机制电价说明 */
+  feedInBasis: string;
   peakValleySupport: boolean;
   peaks: TimeWindow[];
   valleys: TimeWindow[];
@@ -30,13 +33,14 @@ export function getPriceConfig(province: string, now: Date = new Date()): Electr
   const found = lookupTariff(province, now);
   if (found.status !== 'ok') throw new TariffUnavailableError(found);
   const t = found.tariff;
-  if (typeof t.feedInTariff !== 'number') {
-    throw new TariffUnavailableError({ status: 'missing', province: found.province, message: '暂无该省上网电价数据' });
+  if (typeof t.coalBenchmarkPrice !== 'number') {
+    throw new TariffUnavailableError({ status: 'missing', province: found.province, message: '暂无该省燃煤发电基准价数据，请填写上网电价' });
   }
   return {
     province: found.province,
     retailPrice: found.retailPrice,
-    feedInTariff: t.feedInTariff,
+    feedInTariff: t.coalBenchmarkPrice,
+    feedInBasis: NEW_ENERGY_FEED_IN_BASIS,
     peakValleySupport: (t.peaks?.length ?? 0) > 0,
     peaks: t.peaks ?? [],
     valleys: t.valleys ?? [],

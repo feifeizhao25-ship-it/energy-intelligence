@@ -6,11 +6,13 @@ export async function readCalculationResponse(response: Response): Promise<unkno
             401: '请先登录，再提交测算。',
             403: '当前账户暂不能使用此测算，请检查会员权益。',
             429: '请求过于频繁或测算额度已用完，请稍后重试或查看会员权益。',
+            422: '测算参数不完整，请检查电价等输入后重试。',
         };
         const generic = messages[response.status] ?? '测算服务暂不可用，未取得结果，请稍后再试。';
         // 会员权益/额度类拒绝（403/429）服务端会给出具体中文原因（「今日收益测算次数已用完（2 次）……」），
         // 比泛泛的「额度已用完」有用；其余状态仍不透传响应体。safeErrorMessage 会挡掉英文和内部报错。
-        if (response.status === 403 || response.status === 429) {
+        // 422：缺电价/电价无效等可由用户自己改正的问题（「河北已取消固定分时……请填写峰、平、谷电价」），同样给出原因
+        if (response.status === 403 || response.status === 429 || response.status === 422) {
             const body = await response.clone().json().catch(() => null);
             throw new Error(safeErrorMessage(typeof body?.message === 'string' ? new Error(body.message) : null, generic));
         }

@@ -16,6 +16,17 @@ function estimateCapacityFactor(vAvg: number, vIn: number, vRated: number, vOut:
 }
 
 export async function calculateWind(input: WindCalculationInput) {
+  // 电价不再写死（原来上网 0.4、自用 0.6 元/度）：由接口层按省级电价表或用户输入给出（lib/pricing/tariff-defaults.ts）
+  const fitInput = input.businessModel.feedInTariff;
+  if (typeof fitInput !== 'number' || !Number.isFinite(fitInput) || fitInput < 0) {
+    throw new Error('缺少上网电价，请选择省份或填写上网电价（机制电价或合同价）');
+  }
+  if (input.businessModel.mode !== 'full_export') {
+    const selfPrice = input.businessModel.electricityPrice;
+    if (typeof selfPrice !== 'number' || !Number.isFinite(selfPrice) || selfPrice < 0) {
+      throw new Error('缺少自用电价，请选择省份或填写自用电价');
+    }
+  }
   const windResource = await getWindResource(input.lat, input.lng);
   const totalCapacityKW = input.turbine.capacity * input.turbine.count * 1000;
 
@@ -49,8 +60,8 @@ export async function calculateWind(input: WindCalculationInput) {
   for (let year = 1; year <= years; year++) {
     const gen = lifetimeGeneration[year - 1];
     let revenue = 0;
-    const price = input.businessModel.electricityPrice ?? 0.6;
-    const fit = input.businessModel.feedInTariff ?? 0.4;
+    const price = input.businessModel.electricityPrice as number;
+    const fit = input.businessModel.feedInTariff as number;
 
     if (input.businessModel.mode === 'full_export') {
       revenue = gen * fit;

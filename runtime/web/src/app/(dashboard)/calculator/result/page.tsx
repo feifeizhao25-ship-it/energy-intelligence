@@ -103,9 +103,11 @@ function CalculatorResultPage() {
             <main className="max-w-6xl mx-auto px-6 mt-10">
                 <p
                     data-testid="price-as-of"
-                    className={`mb-6 rounded-xl border px-4 py-3 text-xs leading-6 ${data.metadata?.pricing?.stale ? 'border-amber-500/30 bg-amber-500/10 text-amber-200' : 'border-slate-800 bg-slate-900 text-slate-400'}`}
+                    className={`mb-6 rounded-xl border px-4 py-3 text-xs leading-6 ${(data.metadata?.pricing ?? data.pricing)?.stale ? 'border-amber-500/30 bg-amber-500/10 text-amber-200' : 'border-slate-800 bg-slate-900 text-slate-400'}`}
                 >
-                    {priceAsOfText(data.metadata?.pricing)}
+                    {/* 光伏快速测算把电价信息放在 metadata.pricing，风电接口直接返回 pricing */}
+                    {priceAsOfText(data.metadata?.pricing ?? data.pricing)}
+                    {(data.metadata?.pricing ?? data.pricing)?.feedInBasis && <span className="mt-1 block">{(data.metadata?.pricing ?? data.pricing).feedInBasis}</span>}
                 </p>
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
