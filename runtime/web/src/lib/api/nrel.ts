@@ -1,3 +1,6 @@
+import { loadSolarResource } from '@/lib/calculator/solar-resource';
+import { simulateSolar } from '@/lib/calculator/solar';
+
 type PvWattsResult = {
   annualEnergyKwh: number;
   monthlyEnergyKwh: number[];
@@ -46,27 +49,42 @@ export async function getPVWattsData(
   };
 }
 
-export function calculateSolarOutput(
+/**
+ * 未配置 NREL 或调用失败时的估算兜底。原来是「1350 小时 × 纬度系数」的第三套粗估，
+ * 现在改为调用统一光伏模型（lib/calculator/solar.ts simulateSolar），与快速测算同一资源数据、同一口径：
+ * 地面电站、标准组件、最佳倾角、正南，全部电量按 electricityPrice 计价。
+ */
+export async function calculateSolarOutput(
   lat: number,
   lng: number,
   capacityKw: number,
   electricityPrice = 0.5,
   investment?: number,
 ) {
-  const latitudeFactor = Math.max(0.72, 1 - Math.abs(lat - 30) * 0.008);
-  const annualEnergyKwh = Math.round(capacityKw * 1350 * latitudeFactor);
-  const weights = [0.065, 0.07, 0.085, 0.095, 0.105, 0.11, 0.11, 0.105, 0.09, 0.075, 0.05, 0.04];
+  const resource = await loadSolarResource(lat, lng);
+  const model = simulateSolar(resource, {
+    capacity: capacityKw,
+    installationType: 'ground',
+    moduleType: 'standard',
+    selfUsePrice: electricityPrice,
+    feedInPrice: electricityPrice,
+    selfUseRatio: 1,
+    // 投资只用于静态回收期；未提供时按组件档位缺省，不进入返回值
+    unitCost: investment && investment > 0 ? investment / capacityKw : undefined,
+  });
+  const annualEnergyKwh = Math.round(model.energy.year1);
   const annualRevenue = annualEnergyKwh * electricityPrice;
   return {
     annualEnergyKwh,
-    monthlyEnergyKwh: weights.map((weight) => Math.round(annualEnergyKwh * weight)),
+    monthlyEnergyKwh: model.energy.monthly,
     annualRevenue: Math.round(annualRevenue),
     simplePaybackYears: investment && annualRevenue > 0
       ? Number((investment / annualRevenue).toFixed(1))
       : null,
     capacityFactorPercent: Number(((annualEnergyKwh / (capacityKw * 8760)) * 100).toFixed(2)),
+    performanceRatio: Number(model.energy.pr.toFixed(4)),
     coordinates: { lat, lng },
-    source: 'conservative-estimate',
+    source: '统一光伏模型（NASA POWER 上一完整年辐照与气温）',
     warning: '估算结果仅供初筛，投资决策前应使用现场或权威长期数据复核。',
   };
 }

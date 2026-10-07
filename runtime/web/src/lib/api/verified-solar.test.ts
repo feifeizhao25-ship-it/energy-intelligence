@@ -2,8 +2,10 @@ import { verifiedSolar } from './verified-solar';
 import { SolarCalculatorV2 } from '../calculator/solar-v2';
 const now = new Date('2025-06-01T00:00:00Z');
 function fixture(year = 2024, lat = 0, lng = 0) {
-    return { geometry: { coordinates: [lng, lat] }, parameters: { ALLSKY_SFC_SW_DWN: { units: 'kW-hr/m^2/day' } }, header: { fill_value: -999, start: `${year}0101`, end: `${year}1231`, time_standard: 'UTC' },
-        properties: { parameter: { ALLSKY_SFC_SW_DWN: Object.fromEntries(Array.from({ length: 12 }, (_, i) => [String(year) + String(i + 1).padStart(2, '0'), 4])) } } };
+    const months = (value: number) => Object.fromEntries(Array.from({ length: 12 }, (_, i) => [String(year) + String(i + 1).padStart(2, '0'), value]));
+    // 统一光伏模型按气温计温度损失，资料须同时带 T2M（月均气温，°C）
+    return { geometry: { coordinates: [lng, lat] }, parameters: { ALLSKY_SFC_SW_DWN: { units: 'kW-hr/m^2/day' }, T2M: { units: 'C' } }, header: { fill_value: -999, start: `${year}0101`, end: `${year}1231`, time_standard: 'UTC' },
+        properties: { parameter: { ALLSKY_SFC_SW_DWN: months(4), T2M: months(15) } } };
 }
 afterEach(() => jest.restoreAllMocks());
 test('complete leap year uses exact day counts and retains source evidence', async () => {
@@ -14,14 +16,19 @@ test('complete leap year uses exact day counts and retains source evidence', asy
     expect(result.rawResponse).toBe(raw);
     expect(result.responseSha256).toMatch(/^[a-f0-9]{64}$/);
     expect(result.requestUrl).toContain('start=2024');
+    expect(result.requestUrl).toContain('T2M');
+    expect(result.monthly[6].temperature).toBe(15);
     expect(fetcher).toHaveBeenCalledTimes(1);
 });
-test.each(['missing', 'fill', 'unit', 'string'])('rejects %s response without fallback', async kind => {
+test.each(['missing', 'fill', 'unit', 'string', 'temperature-missing', 'temperature-fill', 'temperature-unit'])('rejects %s response without fallback', async kind => {
     const data = fixture(2024, 30, 120);
     if (kind === 'missing') delete data.properties.parameter.ALLSKY_SFC_SW_DWN['202402'];
     if (kind === 'fill') data.properties.parameter.ALLSKY_SFC_SW_DWN['202402'] = -999;
     if (kind === 'unit') data.parameters.ALLSKY_SFC_SW_DWN.units = 'W/m²';
     if (kind === 'string') (data.properties.parameter.ALLSKY_SFC_SW_DWN as any)['202402'] = '4';
+    if (kind === 'temperature-missing') delete (data.properties.parameter.T2M as any)['202407'];
+    if (kind === 'temperature-fill') data.properties.parameter.T2M['202407'] = -999;
+    if (kind === 'temperature-unit') data.parameters.T2M.units = 'K';
     jest.spyOn(global, 'fetch').mockResolvedValue(new Response(JSON.stringify(data)));
     await expect(verifiedSolar(30, 120, now)).rejects.toThrow();
 });

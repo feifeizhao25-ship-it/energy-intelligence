@@ -170,7 +170,7 @@ export async function executeTool(toolName: string, toolInput: Record<string, un
                     );
                 } catch (e) {
                     // Fallback to estimation if API fails or no key
-                    return calculateSolarOutput(
+                    return await calculateSolarOutput(
                         toolInput.lat as number,
                         toolInput.lng as number,
                         (toolInput.capacity as number) || 10,

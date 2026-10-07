@@ -15,10 +15,11 @@ export interface MonthlyData {
 export interface SolarResource {
   monthly: {
     month: number;
-    ghi: number; // 全球水平辐照度 (kWh/m²/day)
-    dni: number; // 法向直射辐照度 (kWh/m²/day)
-    dhi: number; // 水平散射辐照度 (kWh/m²/day)
+    ghi: number; // 全球水平辐照度 (kWh/m²/day)，月内日均值
+    dni?: number; // 法向直射辐照度 (kWh/m²/day)；数据源未请求时为空
+    dhi?: number; // 水平散射辐照度 (kWh/m²/day)；数据源未请求时为空
     temperature: number; // 月平均气温 (°C)
+    days?: number; // 该月天数（数据所属年份的实际天数）；缺省时按 2024 年（闰年）天数
   }[];
   annual: {
     ghi: number; // 年累计水平面辐照 (kWh/m²/年)，已是全年合计——不要再乘 365
@@ -89,6 +90,7 @@ export interface SolarCalculationOutput {
     planeIrradiation?: number; // 组件平面年累计辐照 (kWh/m²/年)，PR 的分母
     pr: number; // 性能比，0–1 小数（典型 0.70–0.90），= 首年发电量 / (装机 kWp × 组件平面年辐照 ÷ 1 kW/m²)
     degradation: number[]; // 年度衰减率数组
+    annual?: number[]; // 逐年发电量（含衰减，kWh），第 0 项为第 1 年
   };
   financial: {
     investment: number; // 总投资 (元)

@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
         }
 
         // Fallback to estimation
-        const estimatedData = calculateSolarOutput(
+        const estimatedData = await calculateSolarOutput(
             lat,
             lng,
             capacity,
@@ -50,8 +50,8 @@ export async function GET(request: NextRequest) {
 
         return NextResponse.json({
             success: true,
-            source: 'Estimation (Manual)',
-            note: '由于NREL API未配置或调用失败，返回估算数据',
+            source: '统一光伏模型估算',
+            note: 'NREL 接口未配置或调用失败，返回本站统一光伏模型的估算结果',
             data: estimatedData
         });
 

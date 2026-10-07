@@ -9,8 +9,9 @@ import { SolarCalculationInput } from '@/types';
 const daysIn2024 = (month: number) => new Date(2024, month, 0).getDate();
 
 // 每月组件平面辐照固定 125 kWh/m² → 全年 1500 kWh/m²；气温 0°C → 组件温度 20°C < 25°C，不计温度损失。
-jest.mock('@/lib/api/nasa-power', () => ({
-    getSolarResource: jest.fn(async () => ({
+// 统一光伏模型的资源数据入口（原先 mock 的是 nasa-power.getSolarResource，测算已改为从 solar-resource 取数）
+jest.mock('@/lib/calculator/solar-resource', () => ({
+    loadSolarResource: jest.fn(async () => ({
         annual: { ghi: 1500, peakSunHours: 1500, optimalTilt: 30, resourceClass: 'III' },
         monthly: Array.from({ length: 12 }, (_, i) => ({
             month: i + 1,

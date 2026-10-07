@@ -3,8 +3,9 @@ import { calculateSolar } from './solar';
 import { SolarCalculationInput } from '@/types';
 
 // Mock dependencies
-jest.mock('@/lib/api/nasa-power', () => ({
-    getSolarResource: jest.fn(async () => ({
+// 统一光伏模型的资源数据入口（原先 mock 的是 nasa-power.getSolarResource，测算已改为从 solar-resource 取数）
+jest.mock('@/lib/calculator/solar-resource', () => ({
+    loadSolarResource: jest.fn(async () => ({
         annual: { ghi: 1500, dni: 1800, optimalTilt: 25, resourceClass: 'B' },
         monthly: Array.from({ length: 12 }, (_, i) => ({
             month: i + 1,

@@ -16,7 +16,8 @@ export interface SolarPreview {
     snapshotId: string;
     result: { initialInvestment: number; annualGeneration: number; irr: number | null; paybackPeriod: number | null; npv: number; lcoe: number };
     source: { start: string; end: string; fetchedAt: string; hash: string };
-    assumptions: { lifetime: number; performanceRatio: number; annualOperatingCostRatio: number; degradationRate: number; discountRate: number };
+    assumptions: { lifetime: number; performanceRatio: number; annualOperatingCostRatio: number; degradationRate: number; discountRate: number;
+        firstYearDegradationRate?: number; operatingCostEscalation?: number };
     limitations: string[];
 }
 

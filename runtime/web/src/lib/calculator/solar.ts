@@ -5,13 +5,13 @@ import {
   SolarResource,
   WindCalculationInput
 } from '@/types';
-import { getSolarResource } from '@/lib/api/nasa-power';
+import { loadSolarResource } from './solar-resource';
 import { getPriceConfig } from '@/lib/policy/electricity-price';
 import { TariffUnavailableError } from '@/lib/pricing/tariffs';
 import { calculateWind } from './wind';
 import { PolicyService } from '@/lib/services/policy-service';
 import { safeErrorMessage } from '@/lib/api/safe-error';
-import { DEFAULT_DISCOUNT_RATE, discountedLcoe } from './project-finance';
+import { DEFAULT_DISCOUNT_RATE, discountedLcoe, solveIrr } from './project-finance';
 import { co2AvoidedKg, GRID_EMISSION_FACTOR } from '@/lib/standards/emission-factor';
 
 // 光伏组件配置
@@ -147,114 +147,163 @@ export function normalizeSelfUseRatio(raw: unknown, fallback: number): number {
 }
 
 /**
- * 计算光伏项目收益
+ * 统一光伏模型的输入（除资源数据外）。所有光伏测算入口最终都调用 simulateSolar：
+ * - /api/calculate/solar、/api/calculator/solar、AI 工具、方案对比 → calculateSolar → simulateSolar
+ * - /api/v2/solar/calculate（带证据链、可保存的初步估算）→ SolarCalculatorV2 → simulateSolar
+ * - /api/solar/nrel 未配置 NREL 时的估算兜底 → calculateSolarOutput → simulateSolar
+ * 此前 v2 另用「水平面年辐照 × 固定综合效率 0.8」，同一地点比本模型低约 2.7%，且不计温度和倾角。
+ */
+export interface SolarModelParams {
+  capacity: number; // kWp
+  installationType: SolarCalculationInput['installationType'];
+  moduleType: SolarCalculationInput['moduleType'];
+  tilt?: number;
+  azimuth?: number;
+  /** 单位投资（元/kW），已扣除一次性补贴；缺省按组件档位估算 */
+  unitCost?: number;
+  /** 自用部分电价（元/kWh），已含度电补贴 */
+  selfUsePrice: number;
+  /** 上网部分电价（元/kWh），已含度电补贴 */
+  feedInPrice: number;
+  /** 自用比例，0–1 小数 */
+  selfUseRatio: number;
+}
+
+/** 组件档位缺省单位投资（元/kW）：组件元/W × 1000 + 500 元/kW 其他费用 */
+export function defaultUnitCost(moduleType: SolarCalculationInput['moduleType']): number {
+  const moduleConfig = MODULE_CONFIGS[moduleType];
+  if (!moduleConfig) throw new Error(`未知的组件类型: ${moduleType}`);
+  return moduleConfig.costPerWatt * 1000 + 500;
+}
+
+/**
+ * 统一光伏模型（纯函数，不联网）：同一资源数据 + 同一参数 → 同一结果。
+ * 发电量按「组件平面月辐照 × 装机 × 分项系统效率 × 温度修正」逐月计算，衰减、运维、折现口径见 FINANCE_ASSUMPTIONS。
+ */
+export function simulateSolar(solarResource: SolarResource, params: SolarModelParams): SolarCalculationOutput {
+  const moduleConfig = MODULE_CONFIGS[params.moduleType];
+  if (!moduleConfig) {
+    throw new Error(`未知的组件类型: ${params.moduleType}`);
+  }
+  const installationFactor = INSTALLATION_FACTORS[params.installationType];
+  if (!installationFactor) {
+    throw new Error(`未知的安装形式: ${params.installationType}`);
+  }
+  if (!Number.isFinite(params.selfUseRatio) || params.selfUseRatio < 0 || params.selfUseRatio > 1) {
+    throw new Error('自用比例须为 0–1 的小数（例如 0.8 表示 80%）');
+  }
+
+  // 1. 月度发电量
+  const { monthlyGeneration, planeIrradiation } = calculateMonthlyGeneration(
+    solarResource,
+    params.capacity,
+    installationFactor,
+    params.tilt || solarResource.annual.optimalTilt,
+    params.azimuth || 180
+  );
+
+  // 2. 25 年发电量（含衰减）
+  const year1Generation = monthlyGeneration.reduce((sum, m) => sum + m, 0);
+  const lifetimeGeneration = calculateLifetimeGeneration(
+    monthlyGeneration,
+    moduleConfig.firstYearDegradation,
+    moduleConfig.annualDegradation
+  );
+  const annualGeneration = lifetimeGeneration.monthly.map(year => year.reduce((a, b) => a + b, 0));
+
+  // 3. 财务分析
+  const financial = calculateFinancial(
+    params.capacity,
+    params.unitCost || defaultUnitCost(params.moduleType),
+    annualGeneration,
+    params.selfUsePrice,
+    params.feedInPrice,
+    params.selfUseRatio
+  );
+
+  // 4. 环境效益
+  const environmental = calculateEnvironmentalBenefit(year1Generation, lifetimeGeneration.total);
+
+  return {
+    energy: {
+      year1: year1Generation,
+      monthly: monthlyGeneration,
+      lifetime: lifetimeGeneration.total,
+      specificYield: year1Generation / params.capacity,
+      equivalentHours: year1Generation / params.capacity,
+      planeIrradiation,
+      pr: performanceRatio(year1Generation, params.capacity, planeIrradiation),
+      degradation: lifetimeGeneration.degradation,
+      annual: annualGeneration
+    },
+    financial,
+    environmental,
+    assumptions: {
+      ...FINANCE_ASSUMPTIONS,
+      firstYearDegradation: moduleConfig.firstYearDegradation,
+      annualDegradation: moduleConfig.annualDegradation,
+    },
+  };
+}
+
+/**
+ * 计算光伏项目收益：取资源数据、省级电价（用户没填时）和已审核的补贴政策，再交给 simulateSolar。
  */
 export async function calculateSolar(input: SolarCalculationInput): Promise<SolarCalculationOutput> {
   try {
-    // 1. 获取太阳能资源数据
-    const solarResource = await getSolarResource(input.lat, input.lng);
-
-    // 2. 获取组件配置
-    const moduleConfig = MODULE_CONFIGS[input.moduleType];
-    if (!moduleConfig) {
+    if (!MODULE_CONFIGS[input.moduleType]) {
       throw new Error(`未知的组件类型: ${input.moduleType}`);
     }
     if (!Number.isFinite(input.selfUseRatio) || input.selfUseRatio < 0 || input.selfUseRatio > 1) {
       throw new Error('自用比例须为 0–1 的小数（例如 0.8 表示 80%）');
     }
 
-    // 3. 获取电价配置和最新政策
+    // 1. 获取太阳能资源数据（与 v2 初步估算同一来源、同一年份）
+    const solarResource = await loadSolarResource(input.lat, input.lng);
+
+    // 2. 获取电价配置和最新政策
     // 只有用户没填电价时才查省级电价表；查不到/已取消固定分时会抛出中文提示，不按其他省份兜底
     const pricingConfig = input.electricityPrice && input.feedInTariff ? null : getPriceConfig(input.province);
-    let electricityPrice = input.electricityPrice || pricingConfig!.retailPrice;
-    let feedInPrice = input.feedInTariff || pricingConfig!.feedInTariff;
+    const electricityPrice = input.electricityPrice || pricingConfig!.retailPrice;
+    const feedInPrice = input.feedInTariff || pricingConfig!.feedInTariff;
     let subsidies = 0; // 元/kWh 补贴
     let oneTimeSubsidy = 0; // 元/W 一次性补贴
 
-    // 尝试获取动态政策
+    // 只取人工审核通过（APPROVED）的政策
     try {
       const activePolicies = await PolicyService.getActivePolicies(input.province);
 
       for (const policy of activePolicies) {
         if (policy.type === 'SUBSIDY_KWH') {
           subsidies += policy.value; // 累加度电补贴
-          console.log(`[Policy] Applied kWh subsidy: ${policy.value}元/kWh (${input.province})`);
         } else if (policy.type === 'SUBSIDY_ONE_TIME') {
-          // 假设一次性补贴单位是 元/W 或者 元/kW
           if (policy.unit === '元/W') {
             oneTimeSubsidy += policy.value;
           } else if (policy.unit === '元/kW') {
             oneTimeSubsidy += policy.value / 1000;
           }
-          console.log(`[Policy] Applied one-time subsidy: ${policy.value}${policy.unit} (${input.province})`);
-        } else if (policy.type === 'ELECTRICITY_PRICE') {
-          // 如果政策中有明确电价，覆盖默认值（谨慎使用）
-          // electricityPrice = policy.value;
         }
       }
     } catch (e) {
       console.warn('Failed to fetch active policies, using defaults', e);
     }
 
-    // 叠加度电补贴
-    const effectiveFeedInPrice = feedInPrice + subsidies;
-    const effectiveSelfUsePrice = electricityPrice + subsidies; // 自用部分通常也享受度电补贴（视具体政策而定，这里假设全额度电补贴）
-
-    // 4. 计算月度发电量
-    const { monthlyGeneration, planeIrradiation } = calculateMonthlyGeneration(
-      solarResource,
-      input.capacity,
-      moduleConfig,
-      INSTALLATION_FACTORS[input.installationType],
-      input.tilt || solarResource.annual.optimalTilt,
-      input.azimuth || 180
-    );
-
-    // 5. 计算25年发电量（含衰减）
-    const year1Generation = monthlyGeneration.reduce((sum, m) => sum + m, 0);
-    const lifetimeGeneration = calculateLifetimeGeneration(
-      monthlyGeneration,
-      moduleConfig.firstYearDegradation,
-      moduleConfig.annualDegradation
-    );
-    const annualGeneration = lifetimeGeneration.monthly.map(year => year.reduce((a, b) => a + b, 0));
-
-    // 6. 财务分析
-    // 初始投资减去一次性补贴
-    const initialInvestmentCost = input.unitCost || (moduleConfig.costPerWatt * 1000 + 500);
+    // 3. 初始投资减去一次性补贴
+    const initialInvestmentCost = input.unitCost || defaultUnitCost(input.moduleType);
     const effectiveUnitCost = Math.max(0, initialInvestmentCost - (oneTimeSubsidy * 1000));
 
-    const financial = calculateFinancial(
-      input.capacity,
-      effectiveUnitCost,
-      annualGeneration,
-      effectiveSelfUsePrice, // 使用含补贴的电价计算收益
-      effectiveFeedInPrice,  // 使用含补贴的上网价计算收益
-      input.selfUseRatio // 0–1 小数，见 normalizeSelfUseRatio
-    );
-
-    // 7. 环境效益计算
-    const environmental = calculateEnvironmentalBenefit(year1Generation, lifetimeGeneration.total);
-
-    return {
-      energy: {
-        year1: year1Generation,
-        monthly: monthlyGeneration,
-        lifetime: lifetimeGeneration.total,
-        specificYield: year1Generation / input.capacity,
-        equivalentHours: year1Generation / input.capacity,
-        planeIrradiation,
-        pr: performanceRatio(year1Generation, input.capacity, planeIrradiation),
-        degradation: lifetimeGeneration.degradation
-      },
-      financial,
-      environmental,
-      assumptions: {
-        ...FINANCE_ASSUMPTIONS,
-        firstYearDegradation: moduleConfig.firstYearDegradation,
-        annualDegradation: moduleConfig.annualDegradation,
-      },
-    };
+    return simulateSolar(solarResource, {
+      capacity: input.capacity,
+      installationType: input.installationType,
+      moduleType: input.moduleType,
+      tilt: input.tilt,
+      azimuth: input.azimuth,
+      unitCost: effectiveUnitCost,
+      // 度电补贴自用、上网两部分都计（视具体政策而定，这里假设全额度电补贴）
+      selfUsePrice: electricityPrice + subsidies,
+      feedInPrice: feedInPrice + subsidies,
+      selfUseRatio: input.selfUseRatio, // 0–1 小数，见 normalizeSelfUseRatio
+    });
 
   } catch (error) {
     console.error('光伏计算失败:', error);
@@ -269,7 +318,6 @@ export async function calculateSolar(input: SolarCalculationInput): Promise<Sola
 function calculateMonthlyGeneration(
   solarResource: SolarResource,
   capacity: number,
-  moduleConfig: ModuleConfig,
   installationFactor: InstallationFactor,
   tilt: number,
   azimuth: number
@@ -297,7 +345,8 @@ function calculateMonthlyGeneration(
     const cellTemperature = monthData.temperature + LOSS_ASSUMPTIONS.cellTempRise;
     const tempFactor = 1 - Math.max(0, (cellTemperature - 25) * LOSS_ASSUMPTIONS.tempCoefficient);
 
-    const daysInMonth = new Date(2024, monthData.month, 0).getDate();
+    // 优先用数据所属年份的实际天数；未提供时按 2024 年（闰年）天数
+    const daysInMonth = monthData.days ?? new Date(2024, monthData.month, 0).getDate();
 
     // 组件平面月辐照 (kWh/m²) = 水平面日均辐照 × 天数 × 倾角修正 × 方位角修正
     // 说明：这里没有直射/散射分解与倾斜面换算，倾角只做折减，是对 POA 的近似。
@@ -382,8 +431,10 @@ function calculateFinancial(
   const annualRevenues = annualGeneration.map(gen => gen * blendedPrice);
   const annualCashFlows = annualRevenues.map((revenue, i) => revenue - annualOmCosts[i]);
 
-  // 5. 计算IRR（内部收益率）
-  const irr = calculateIRR(-totalInvestment, annualCashFlows);
+  // 5. 计算IRR（内部收益率）：与 v2 初步估算同一解法（二分法，现金流只变号一次时有唯一解）；
+  //    无唯一解时才退回牛顿迭代，保持旧接口「irr 为数字」的约定
+  const uniqueIrr = solveIrr([-totalInvestment, ...annualCashFlows]);
+  const irr = uniqueIrr === null ? calculateIRR(-totalInvestment, annualCashFlows) : uniqueIrr * 100;
 
   // 6. 计算NPV（净现值）
   const npv = calculateNPV(-totalInvestment, annualCashFlows, FINANCE_ASSUMPTIONS.discountRate);
@@ -554,7 +605,7 @@ export async function compareSolarAndWind(
   const windResult = await calculateWind(windInput);
 
   // 3. 获取资源数据用于分析
-  const solarResource = await getSolarResource(lat, lng);
+  const solarResource = await loadSolarResource(lat, lng);
 
   // 4. 生成建议
   const recommendations = generateComparisonRecommendations(

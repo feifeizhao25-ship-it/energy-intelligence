@@ -66,11 +66,11 @@ export default function SolarCalculatorPage() {
             <aside className="rounded-2xl border border-slate-200 bg-slate-50 p-6">
                 <h2 className="font-bold">这次估算能告诉您什么</h2>
                 <ul className="mt-4 space-y-4 text-sm leading-6 text-slate-600">
-                    <li>首年发电量：根据历史水平面辐照和综合效率估算。</li>
+                    <li>首年发电量：根据历史辐照、气温和各项系统损耗逐月估算（与快速测算同一套模型）。</li>
                     <li>回收可能：结合初始投入、运维费和逐年衰减计算。</li>
                     <li>核对依据：结果列出资料覆盖期、获取日期与假设。</li>
                 </ul>
-                <p className="mt-5 border-t border-slate-200 pt-4 text-xs leading-6 text-slate-500">暂不模拟贷款、税费、组件倾角、设备更换与储能。需要更细的工程方案时，请补充现场勘察和专业设计。</p>
+                <p className="mt-5 border-t border-slate-200 pt-4 text-xs leading-6 text-slate-500">暂不模拟贷款、税费、自定义倾角与朝向、设备更换与储能。需要更细的工程方案时，请补充现场勘察和专业设计。</p>
             </aside>
         </div>
         {result && submitted && <section aria-label="光伏初步估算结果" className="space-y-5 rounded-2xl border border-emerald-200 bg-white p-5 sm:p-7">
@@ -94,7 +94,7 @@ export default function SolarCalculatorPage() {
                 <p>位置：纬度 {submitted.lat}、经度 {submitted.lng}；装机 {submitted.capacity} 千瓦；单位投资 {submitted.unitCost} 元／千瓦；电价 {submitted.electricityPrice} 元／度（用户输入，未核验政策）。</p>
                 <p className="break-all text-xs">来源数据校验值：{result.source.hash}</p>
             </div>
-            <p className="text-sm leading-7 text-slate-600">估算期 {result.assumptions.lifetime} 年；综合效率 {number(result.assumptions.performanceRatio * 100)}%；年运维费为初始投资的 {number(result.assumptions.annualOperatingCostRatio * 100)}%；年衰减 {number(result.assumptions.degradationRate * 100)}%；折现率 {number(result.assumptions.discountRate * 100)}%。</p>
+            <p className="text-sm leading-7 text-slate-600">估算期 {result.assumptions.lifetime} 年；按屋顶安装、标准组件、最佳倾角、正南朝向；综合效率（首年系统性能比，含各项损耗与温度影响）{number(result.assumptions.performanceRatio * 100)}%；年运维费为初始投资的 {number(result.assumptions.annualOperatingCostRatio * 100)}%{result.assumptions.operatingCostEscalation ? `，此后每年上涨 ${number(result.assumptions.operatingCostEscalation * 100)}%` : ''}；{result.assumptions.firstYearDegradationRate !== undefined ? `首年衰减 ${number(result.assumptions.firstYearDegradationRate * 100)}%，此后每年 ` : '年衰减 '}{number(result.assumptions.degradationRate * 100)}%；折现率 {number(result.assumptions.discountRate * 100)}%。</p>
             <ul className="list-disc space-y-2 pl-5 text-sm leading-6 text-slate-600">{result.limitations.map(item => <li key={item}>{item}</li>)}</ul>
         </section>}
     </div>;
