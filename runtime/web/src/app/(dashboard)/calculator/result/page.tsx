@@ -18,6 +18,7 @@ import {
 import dynamic from 'next/dynamic';
 import InvestmentReport from '@/components/calculator/InvestmentReport';
 import MonthlyGenerationBarChart from '@/components/charts/MonthlyGenerationBarChart';
+import CostBreakdownEditor from '@/components/calculator/CostBreakdownEditor';
 import AIProjectAnalysis from '@/components/calculator/AIProjectAnalysis';
 import { safeErrorMessage } from '@/lib/api/safe-error';
 import { co2AvoidedTonnes, EMISSION_FACTOR_NOTE } from '@/lib/standards/emission-factor';
@@ -162,12 +163,8 @@ function CalculatorResultPage() {
                         {/* Financial Analysis Grid */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8">
-                                <h3 className="text-lg font-bold text-white mb-6">成本构成分析</h3>
-                                <div className="space-y-4">
-                                    <CostRow label="工程建设费用" value={(data.financial.investment * 0.85).toLocaleString()} percentage={85} />
-                                    <CostRow label="并网及相关费用" value={(data.financial.investment * 0.1).toLocaleString()} percentage={10} />
-                                    <CostRow label="前期开发及不可预见" value={(data.financial.investment * 0.05).toLocaleString()} percentage={5} />
-                                </div>
+                                <h3 className="text-lg font-bold text-white mb-6">成本构成（按你的报价填写）</h3>
+                                <CostBreakdownEditor investment={data.financial.investment} />
                             </div>
 
                             <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8">
@@ -239,20 +236,6 @@ function MetricCard({ label, value, unit, icon, trend, color }: any) {
             </div>
             <div className="absolute -right-2 -top-2 p-4 opacity-20">
                 {icon}
-            </div>
-        </div>
-    );
-}
-
-function CostRow({ label, value, percentage }: any) {
-    return (
-        <div className="space-y-1.5">
-            <div className="flex justify-between text-xs">
-                <span className="text-slate-400">{label}</span>
-                <span className="text-white font-mono">¥{value}</span>
-            </div>
-            <div className="h-1 bg-slate-800 rounded-full overflow-hidden">
-                <div className={`h-full bg-blue-500`} style={{ width: `${percentage}%` }} />
             </div>
         </div>
     );

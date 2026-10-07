@@ -62,5 +62,8 @@ describe('测算结果页', () => {
         const heights = barHeights(html);
         expect(heights).toHaveLength(12);
         expect(heights.every(h => h > 0)).toBe(true);
+        // 成本构成不再写死 85/10/5：只作为可编辑输入的示例值，并标注「示例比例，请按实际报价填写」
+        expect(html).toContain('示例比例，请按实际报价填写');
+        expect(html).toContain('id="cost-construction"');
     });
 });
