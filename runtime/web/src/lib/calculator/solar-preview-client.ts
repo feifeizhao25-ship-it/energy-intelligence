@@ -14,7 +14,7 @@ export function solarPreviewPayload(input: SolarPreviewInput) {
 
 export interface SolarPreview {
     snapshotId: string;
-    result: { initialInvestment: number; annualGeneration: number; irr: number | null; paybackPeriod: number | null; npv: number; lcoe: number };
+    result: { initialInvestment: number; annualGeneration: number; irr: number | null; paybackPeriod: number | null; npv: number; lcoe: number; monthlyGeneration?: number[] };
     source: { start: string; end: string; fetchedAt: string; hash: string };
     assumptions: { lifetime: number; performanceRatio: number; annualOperatingCostRatio: number; degradationRate: number; discountRate: number;
         firstYearDegradationRate?: number; operatingCostEscalation?: number };

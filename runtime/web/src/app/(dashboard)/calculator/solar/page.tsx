@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Sun, ArrowLeft, CheckCircle2, Loader2 } from 'lucide-react';
 import { requestSolarPreview, type SolarPreview, type SolarPreviewInput } from '@/lib/calculator/solar-preview-client';
 import { safeErrorMessage } from '@/lib/api/safe-error';
+import MonthlyGenerationBarChart from '@/components/charts/MonthlyGenerationBarChart';
 
 const fields = [
     { key: 'lat', label: '项目纬度', unit: '度，南纬为负数', placeholder: '例如 39.90', min: -90, max: 90 },
@@ -87,6 +88,10 @@ export default function SolarCalculatorPage() {
                     ['平准化度电成本', `${number(result.result.lcoe, 3)} 元／度`],
                 ].map(([label, value]) => <div key={label} className="rounded-xl bg-slate-50 p-4"><div className="text-xs text-slate-500">{label}</div><div className="mt-2 break-words font-semibold">{value}</div></div>)}
             </div>
+            {Array.isArray(result.result.monthlyGeneration) && <div className="rounded-xl border border-slate-200 p-4">
+                <h3 className="mb-3 text-sm font-semibold">首年月度发电量</h3>
+                <MonthlyGenerationBarChart data={result.result.monthlyGeneration} />
+            </div>}
             <p className="text-sm leading-7 text-slate-600">内部收益率用于比较这组现金流的收益水平；净现值为按假设折现率折算后的净收益，可能为负。度电成本为折现后的成本与发电量之比。</p>
             <div className="rounded-xl bg-blue-50 p-4 text-sm leading-7 text-slate-700">
                 <h3 className="font-semibold">数据与输入依据</h3>

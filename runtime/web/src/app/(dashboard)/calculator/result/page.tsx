@@ -15,9 +15,9 @@ import {
     BarChart3,
     ChevronDown
 } from 'lucide-react';
-import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
 import InvestmentReport from '@/components/calculator/InvestmentReport';
+import MonthlyGenerationBarChart from '@/components/charts/MonthlyGenerationBarChart';
 import AIProjectAnalysis from '@/components/calculator/AIProjectAnalysis';
 import { safeErrorMessage } from '@/lib/api/safe-error';
 import { co2AvoidedTonnes, EMISSION_FACTOR_NOTE } from '@/lib/standards/emission-factor';
@@ -145,7 +145,7 @@ function CalculatorResultPage() {
                             <div className="flex items-center justify-between mb-8">
                                 <h3 className="text-xl font-bold text-white flex items-center gap-2">
                                     <BarChart3 className="w-5 h-5 text-blue-400" />
-                                    月度发电分布预测
+                                    月度发电量（估算）
                                 </h3>
                                 <div className="flex gap-2">
                                     <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
@@ -154,27 +154,8 @@ function CalculatorResultPage() {
                                 </div>
                             </div>
 
-                            <div className="h-[240px] flex items-end justify-between gap-1 mt-4">
-                                {data.energy.monthly.map((val: number, i: number) => {
-                                    const max = Math.max(...data.energy.monthly);
-                                    const height = (val / max) * 100;
-                                    return (
-                                        <div key={i} className="flex-1 flex flex-col items-center gap-2 group">
-                                            <div className="w-full relative">
-                                                <motion.div
-                                                    initial={{ height: 0 }}
-                                                    animate={{ height: `${height}%` }}
-                                                    className="bg-gradient-to-t from-blue-600 to-blue-400 rounded-t-sm group-hover:from-blue-500 group-hover:to-cyan-400 transition-colors relative"
-                                                >
-                                                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-[10px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap border border-slate-700 z-10">
-                                                        {val.toLocaleString()}
-                                                    </div>
-                                                </motion.div>
-                                            </div>
-                                            <span className="text-[10px] text-slate-600 font-bold">{i + 1}月</span>
-                                        </div>
-                                    );
-                                })}
+                            <div className="mt-4" data-testid="monthly-generation">
+                                <MonthlyGenerationBarChart data={data.energy} theme="dark" barAreaPx={200} />
                             </div>
                         </div>
 
