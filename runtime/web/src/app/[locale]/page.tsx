@@ -215,7 +215,7 @@ export default function HomePage() {
                             <div className="mt-10 flex items-center gap-6">
                                 <div className="flex items-center gap-2">
                                     <Shield className="w-5 h-5 text-green-400" />
-                                    <span className="text-sm text-slate-400">数据权威</span>
+                                    <span className="text-sm text-slate-400">来源可查</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <Clock className="w-5 h-5 text-green-400" />
@@ -223,7 +223,7 @@ export default function HomePage() {
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <Star className="w-5 h-5 text-green-400" />
-                                    <span className="text-sm text-slate-400">专业可靠</span>
+                                    <span className="text-sm text-slate-400">假设透明</span>
                                 </div>
                             </div>
                         </div>
@@ -395,7 +395,7 @@ export default function HomePage() {
                 <div className="max-w-6xl mx-auto">
                     <div className="text-center mb-12">
                         <h2 className="text-3xl font-black text-slate-900 dark:text-white mb-4">核心功能</h2>
-                        <p className="text-lg text-slate-500 dark:text-slate-400">专业级的新能源项目分析工具</p>
+                        <p className="text-lg text-slate-500 dark:text-slate-400">光伏、风电、储能项目的初步测算工具，结果仅供参考</p>
                     </div>
 
                     <div className="grid md:grid-cols-3 gap-6">
@@ -410,14 +410,14 @@ export default function HomePage() {
                             {
                                 icon: Wind,
                                 title: '风电效益分析',
-                                description: '分散式风电项目评估，智能推荐最优装机方案',
+                                description: '估算分散式风电发电量、收益与度电成本',
                                 color: 'cyan',
                                 link: '/calculator/wind'
                             },
                             {
                                 icon: Battery,
                                 title: '储能收益计算',
-                                description: '峰谷套利分析，优化储能系统配置',
+                                description: '按省级分时电价估算峰谷套利收益，电价可自行修改',
                                 color: 'emerald',
                                 link: '/calculator/storage'
                             },
@@ -431,7 +431,7 @@ export default function HomePage() {
                             {
                                 icon: Sparkles,
                                 title: 'AI智能问答',
-                                description: '新能源领域专家，解答所有技术政策问题',
+                                description: 'AI 辅助解答新能源技术与政策问题，回答注明来源，仅供参考',
                                 color: 'pink',
                                 link: '/assistant'
                             },
@@ -478,15 +478,15 @@ export default function HomePage() {
             {/* Data Sources Section */}
             <section className="py-16 px-4 bg-slate-900 text-white">
                 <div className="max-w-4xl mx-auto text-center">
-                    <h2 className="text-3xl font-black mb-4">权威数据源</h2>
-                    <p className="text-lg text-slate-400 mb-12">集成国际公开数据源，分析假设与来源全程可见</p>
+                    <h2 className="text-3xl font-black mb-4">数据来源</h2>
+                    <p className="text-lg text-slate-400 mb-12">测算用到的公开数据与站内资料；每次结果都写明来源与数据截至日期</p>
 
                     <div className="grid md:grid-cols-4 gap-6">
                         {[
-                            { name: 'NASA POWER', desc: '气象辐射数据' },
-                            { name: 'NREL', desc: '光伏发电标准' },
-                            { name: 'Open-Meteo', desc: '天气预报数据' },
-                            { name: '高德地图', desc: '地理信息数据' },
+                            { name: 'NASA POWER', desc: '历史辐照、气温、风速（测算使用）' },
+                            { name: '省级电价表', desc: '部分条目来源待核实，可自行修改' },
+                            { name: '生态环境部', desc: '2023 年全国电力平均排放因子' },
+                            { name: '高德地图', desc: '地址与位置查询' },
                         ].map((source, i) => (
                             <div key={i} className="bg-white/10 rounded-2xl p-6 backdrop-blur-sm">
                                 <div className="text-xl font-bold mb-2">{source.name}</div>
@@ -506,7 +506,7 @@ export default function HomePage() {
                     <div className="grid md:grid-cols-3 gap-6">
                         {[
                             { name: '免费版', price: '¥0', features: ['每日2次测算', '最多1个项目', '数据保留7天'] },
-                            { name: '专业版', price: '¥198/月', features: ['测算与资源查询不限次', '文献检索', 'PDF与Word导出'], popular: true },
+                            { name: '专业版', price: '¥198/月', features: ['测算不限次，每日 100 次 AI 对话', '文献检索', 'PDF与Word导出'], popular: true },
                             { name: '企业版', price: '¥38,000/年', features: ['企业权限', 'API与SSO', '白标与定制评估'], popular: false },
                         ].map((plan, i) => (
                             <div key={i} className={cn(
@@ -515,7 +515,7 @@ export default function HomePage() {
                             )}>
                                 {plan.popular && (
                                     <div className="bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full -mt-8 mb-4 inline-block">
-                                        最受欢迎
+                                        适合个人从业者
                                     </div>
                                 )}
                                 <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{plan.name}</h3>

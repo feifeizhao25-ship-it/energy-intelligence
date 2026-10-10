@@ -27,30 +27,30 @@ export default function CalculatorHomePage() {
       icon: <Sun className="w-8 h-8 text-orange-400" />,
       color: 'from-orange-500/20 to-orange-400/5',
       borderColor: 'group-hover:border-orange-500/50',
-      tag: '最受欢迎',
+      tag: '初步估算',
       stats: { irr: '需输入后计算', payback: '需输入后计算' },
       path: '/calculator/solar'
     },
     {
       id: 'wind',
       title: '分散式风电',
-      description: '支持轮毂高度外推、村企合作收益分配及威布尔风速分布模型。',
+      description: '按历史风速外推到轮毂高度，估算发电量、收益与度电成本；上网电价可按省级电价表或自行填写。',
       icon: <Wind className="w-8 h-8 text-blue-400" />,
       color: 'from-blue-500/20 to-blue-400/5',
       borderColor: 'group-hover:border-blue-500/50',
-      tag: '高精度',
-      stats: { irr: '10%+', payback: '8.5年' },
+      tag: '初步估算',
+      stats: { irr: '需输入后计算', payback: '需输入后计算' },
       path: '/calculator/wind'
     },
     {
       id: 'storage',
       title: '能源存储系统',
-      description: '模拟峰谷套利、需量管理及电池循环衰减对LCOS的影响。',
+      description: '按省级分时电价（可自行修改）估算峰谷套利收益与度电储能成本。',
       icon: <Battery className="w-8 h-8 text-emerald-400" />,
       color: 'from-emerald-500/20 to-emerald-400/5',
       borderColor: 'group-hover:border-emerald-500/50',
-      tag: '新趋势',
-      stats: { irr: '8.5%+', payback: '6.5年' },
+      tag: '初步估算',
+      stats: { irr: '需输入后计算', payback: '需输入后计算' },
       path: '/calculator/storage'
     }
   ];
@@ -133,9 +133,9 @@ export default function CalculatorHomePage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 py-12 border-y border-slate-800/50">
             {[
               { icon: <TrendingUp className="w-5 h-5" />, title: '动态政策库', desc: '电价标注来源与数据截至日期' },
-              { icon: <ShieldCheck className="w-5 h-5" />, title: '工程级精度', desc: '误差控制在 ±3.5% 以内' },
+              { icon: <ShieldCheck className="w-5 h-5" />, title: '假设透明', desc: '损耗、衰减、折现率等假设逐项列出' },
               { icon: <FileText className="w-5 h-5" />, title: '专业报告', desc: '一键导出 PDF/Word 报告' },
-              { icon: <Share2 className="w-5 h-5" />, title: '团队协作', desc: '多端同步与多人对比' }
+              { icon: <Share2 className="w-5 h-5" />, title: '项目对比', desc: '保存为项目后可对比不同方案' }
             ].map((feature, i) => (
               <div key={i} className="flex gap-4 items-start">
                 <div className="text-blue-400 mt-1">{feature.icon}</div>

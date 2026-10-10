@@ -94,7 +94,7 @@ export default function ProfileSettingsPage() {
         <div className="max-w-4xl mx-auto space-y-8">
             <div>
                 <h1 className="text-3xl font-black text-slate-900 tracking-tight mb-2">个人资料与专家档案</h1>
-                <p className="text-slate-500 text-sm">完善您的职业背景信息，系统将为您提供更精准的行业洞察和报告定制。</p>
+                <p className="text-slate-500 text-sm">完善您的职业背景信息，便于工作台和报告按您的情况展示相关内容。</p>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

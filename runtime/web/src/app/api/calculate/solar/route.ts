@@ -10,7 +10,7 @@ import { enforceRateLimit, PUBLIC_RULES } from '@/lib/security/rate-limit';
  *
  * 这个路由此前**不存在** —— `calculate/wind`、`calculate/storage`、
  * `calculate/comparison` 三个兄弟都在，唯独 solar 缺席，
- * 而 `components/quick-calc/ConversationalWizard.tsx` 一直在打它。
+ * 而当时的问答式入口 ConversationalWizard（已删除）一直在打它。
  * 请求 404 后被 catch 吞掉，静默跳回旧结果页，用户看到的是过时的静态页面
  * 而不是真实测算 —— 表现成「功能怪怪的」，而非「接口不存在」。
  *

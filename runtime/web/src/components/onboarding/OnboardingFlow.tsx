@@ -15,25 +15,25 @@ import {
 const steps = [
     {
         title: "欢迎来到新能源智库",
-        description: "您的人工智能新能源智库。在这里，我们将复杂的工程计算转化为精准的商业决策。",
+        description: "您的人工智能新能源智库。在这里，这里把发电量、收益测算的假设和数据来源都摆在明面上，帮你做初步判断。",
         icon: <Zap className="w-8 h-8 text-blue-500" />,
         color: "bg-blue-50"
     },
     {
-        title: "精准的资源评估",
+        title: "资源查询",
         description: "点击'资源地图'，查询任意经纬度的公开历史气象数据，作为选址的参考。",
         icon: <Target className="w-8 h-8 text-emerald-500" />,
         color: "bg-emerald-50"
     },
     {
-        title: "工程级财务建模",
-        description: "使用'收益测算'工具。只需 3 分钟，即可获得包含 IRR、NPV 和 LCOE 的导出级专业报告。",
+        title: "收益测算",
+        description: "使用'收益测算'工具。填写位置、装机和电价，得到包含内部收益率、净现值和度电成本的初步测算，可导出报告。",
         icon: <BarChart3 className="w-8 h-8 text-blue-600" />,
         color: "bg-blue-50"
     },
     {
         title: "AI 运维诊断",
-        description: "遇到电站异常？上传数据或 IV 曲线，我们的 AI 2.0 引擎将为您提供专家级修复指南。",
+        description: "遇到电站异常？上传数据或 IV 曲线，AI 会给出排查建议（仅供参考，处理前请由专业人员确认）。",
         icon: <ShieldCheck className="w-8 h-8 text-indigo-500" />,
         color: "bg-indigo-50"
     }

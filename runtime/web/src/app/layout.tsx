@@ -5,7 +5,7 @@ import { isAuthConfigured } from '@/lib/auth/availability'
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: '新能源智库 - AI 能源专家',
+    title: '新能源智库 - 新能源项目测算与政策查询',
     description: '算清收益 · 做对决策 · 省心赚钱。面向中国新能源从业者的智能决策系统，基于公开气象数据与 AI 辅助分析。',
     manifest: '/manifest.json',
     appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: '新能源智库' },

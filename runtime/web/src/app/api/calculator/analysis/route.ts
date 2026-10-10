@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
         const metrics = data.financial.metrics || data.financial;
 
         const prompt = `
-    请作为专业的新能源投资顾问，分析以下${typeLabel}项目的测算指标，并给出3条精准的评价建议。
+    请作为专业的新能源投资顾问，分析以下${typeLabel}项目的测算指标，并给出3条评价建议（只依据下列数据，不编造未提供的信息）。
     
     指标数据：
     - IRR: ${metrics.irr?.toFixed(2)}%

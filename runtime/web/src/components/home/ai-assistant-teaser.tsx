@@ -66,7 +66,7 @@ export function AIAssistantTeaser({
                         </div>
                         <div>
                             <p className="font-medium text-gray-900">新能源智库AI助手</p>
-                            <p className="text-xs text-gray-500">基于专业知识库，精准回答</p>
+                            <p className="text-xs text-gray-500">回答注明来源，仅供参考</p>
                         </div>
                     </div>
 

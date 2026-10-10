@@ -25,7 +25,7 @@ const UPGRADE_BENEFITS = {
     FULL: [
         '每日300次AI对话',
         '全部运维诊断工具',
-        'DeepSeek-V3 顶级AI模型',
+        'DeepSeek-V3 模型',
         '最多10点资源对比',
         '无水印报告导出',
         '优先客服响应',
