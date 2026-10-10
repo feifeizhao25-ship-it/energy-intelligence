@@ -6,6 +6,7 @@ import { USAGE_LIMITS } from '@/lib/membership/plans';
 import { effectivePlan } from '@/lib/auth/token-refresh';
 import { sameShanghaiDay } from '@/lib/membership/day';
 import { buildPersonalDashboard } from '@/lib/dashboard/personal-summary';
+import { buildPersonalization, parsePreferences, PREFERENCE_LOG_TYPES } from '@/lib/dashboard/personalization';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,15 +25,24 @@ export async function GET() {
     });
     if (!user) return NextResponse.json({ error: '请先登录' }, { status: 401 });
 
-    const [projects, projectCount, calculationCount, savedPaperCount, stations] = await Promise.all([
+    const [projects, projectCount, calculationCount, savedPaperCount, stations, prefLog, policies] = await Promise.all([
         prisma.project.findMany({
             where: { userId }, orderBy: { updatedAt: 'desc' }, take: 5,
-            select: { id: true, name: true, type: true, capacity: true, reportStatus: true, updatedAt: true },
+            select: { id: true, name: true, type: true, capacity: true, reportStatus: true, updatedAt: true, location: true },
         }),
         prisma.project.count({ where: { userId } }),
         prisma.calculation.count({ where: { userId } }),
         prisma.savedPaper.count({ where: { userId } }),
         prisma.station.findMany({ where: { userId }, select: { id: true, name: true, status: true, lastUpdated: true } }),
+        // 个性化偏好：设置页或引导页保存的最新一条
+        prisma.usageLog.findFirst({
+            where: { userId, type: { in: [...PREFERENCE_LOG_TYPES] } }, orderBy: { date: 'desc' }, select: { metadata: true },
+        }),
+        // 只用人工审核通过的政策（省份过滤在 buildPersonalization 里做）
+        prisma.policy.findMany({
+            where: { reviewStatus: 'APPROVED' }, orderBy: { updatedAt: 'desc' }, take: 200,
+            select: { id: true, region: true, type: true, value: true, unit: true, sourceTitle: true, docNumber: true, sourceUrl: true, publishedAt: true, startDate: true, endDate: true },
+        }),
     ]);
 
     const now = new Date();
@@ -44,17 +54,25 @@ export async function GET() {
         '文献检索': user.dailyPaperSearches, '资源查询': user.dailyResourceQueries,
     } : {};
 
-    return NextResponse.json({
-        success: true,
-        data: buildPersonalDashboard({
+    const dashboard = buildPersonalDashboard({
             user: { name: user.name, plan: user.plan, planExpireAt: user.planExpireAt },
-            projects, projectCount, calculationCount, savedPaperCount, stations,
+            projects: projects.map(({ location: _location, ...p }) => p), projectCount, calculationCount, savedPaperCount, stations,
             usageToday,
             limits: {
                 'AI 对话': limits.ai_chat, '收益测算': limits.calculation,
                 '文献检索': limits.paper_search, '资源查询': limits.resource_query,
             },
             now,
-        }),
+        });
+    // 个性化对免费用户同样生效（不按会员档区分）
+    const personalization = buildPersonalization({
+        prefs: prefLog ? parsePreferences(prefLog.metadata) : null,
+        projectLocations: projects.map(p => p.location),
+        projectTypes: projects.map(p => p.type),
+        hasStationAlerts: dashboard.stationAlerts.length > 0,
+        policies,
+        now,
     });
+
+    return NextResponse.json({ success: true, data: { ...dashboard, personalization } });
 }

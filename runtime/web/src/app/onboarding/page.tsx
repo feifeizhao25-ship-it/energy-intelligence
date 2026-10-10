@@ -20,6 +20,7 @@ import {
     Gift
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { PROVINCES } from '@/lib/dashboard/personalization';
 
 // 引导步骤
 interface OnboardingOption {
@@ -68,7 +69,15 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
             { id: 'owner', label: '电站业主', desc: '管理自有电站资产' },
             { id: 'engineer', label: '工程师/技术人员', desc: '技术研究与项目设计' },
             { id: 'researcher', label: '研究人员/学生', desc: '学术研究与学习' },
+            { id: 'government', label: '政府/园区', desc: '规划、政策与园区能源管理' },
         ]
+    },
+    {
+        id: 'province',
+        title: '您的项目主要在哪个省份？',
+        subtitle: '电价、分时规则和补贴都按省份执行，工作台会显示该省的电价与已审核政策（可跳过，之后在设置里改）',
+        icon: Map,
+        options: PROVINCES.map(p => ({ id: p, label: p, desc: '' })),
     },
     {
         id: 'goal',
@@ -78,7 +87,7 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
         options: [
             { id: 'calculate', label: '项目收益测算', desc: '评估光伏/风电项目收益', icon: Calculator, path: '/calculator' },
             { id: 'assistant', label: 'AI智能对话', desc: '向AI专家咨询问题', icon: MessageSquare, path: '/assistant' },
-            { id: 'map', label: '资源地图', desc: '查看全球辐照/风速', icon: Map, path: '/map' },
+            { id: 'map', label: '资源地图', desc: '查看历史辐照/风速', icon: Map, path: '/map' },
             { id: 'papers', label: '专业文献', desc: '查找行业研究报告', icon: FileText, path: '/papers' },
         ]
     },
@@ -127,7 +136,7 @@ export default function OnboardingPage() {
                 });
 
                 // 跳转到用户选择的目标页面
-                const goalOption = ONBOARDING_STEPS[3].options?.find(o => o.id === selections.goal);
+                const goalOption = ONBOARDING_STEPS.find(s => s.id === 'goal')?.options?.find(o => o.id === selections.goal);
                 const targetPath = goalOption?.path || '/dashboard';
                 router.push(targetPath);
             } catch (error) {
@@ -143,7 +152,8 @@ export default function OnboardingPage() {
         router.push('/dashboard');
     };
 
-    const canProceed = step.options ? !!selections[step.id] : true;
+    // 省份可以跳过（之后在设置里填），其余选项步骤需要先选
+    const canProceed = step.options && step.id !== 'province' ? !!selections[step.id] : true;
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
@@ -189,7 +199,7 @@ export default function OnboardingPage() {
 
                     {/* Options */}
                     {step.options && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                        <div className={cn('grid gap-4 mb-8', step.id === 'province' ? 'grid-cols-4 sm:grid-cols-6 gap-2 max-h-[50vh] overflow-y-auto' : 'grid-cols-1 md:grid-cols-2')}>
                             {step.options.map((option) => {
                                 const isSelected = selections[step.id] === option.id;
                                 const IconComponent = option.icon;
@@ -199,7 +209,7 @@ export default function OnboardingPage() {
                                         key={option.id}
                                         onClick={() => handleSelect(option.id)}
                                         className={cn(
-                                            "p-4 rounded-2xl border-2 text-left transition-all",
+                                            step.id === 'province' ? "px-2 py-2 rounded-xl border-2 text-center text-sm transition-all" : "p-4 rounded-2xl border-2 text-left transition-all",
                                             isSelected
                                                 ? "border-green-500 bg-green-500/10"
                                                 : "border-slate-700 hover:border-slate-600 bg-slate-800/50"

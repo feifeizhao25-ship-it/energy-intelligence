@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { AccountDataPanel } from '@/components/account/AccountDataPanel';
+import PersonalizationSettings from '@/components/dashboard/PersonalizationSettings';
 
 export default function ProfileSettingsPage() {
     const { data: session, update } = useSession();
@@ -190,6 +191,7 @@ export default function ProfileSettingsPage() {
                             </button>
                         </div>
                     </form>
+                    <PersonalizationSettings />
                 </div>
 
                 {/* Right Info Sidebar */}

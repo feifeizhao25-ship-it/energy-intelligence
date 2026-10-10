@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useCallback, useEffect, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
     Zap,
@@ -28,6 +28,7 @@ import {
     BadgeAlert
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import type { Personalization, ModuleId } from '@/lib/dashboard/personalization';
 
 // ---------------------------------------------------------------------------
 // 数据来源：GET /api/dashboard —— 只包含当前登录用户自己的项目、测算、电站、额度。
@@ -43,6 +44,7 @@ interface PersonalDashboard {
     stationAlerts: { id: string; name: string; status: string; lastUpdated: string | null }[];
     usage: { type: string; used: number; limit: number }[];
     nextActions: { id: string; title: string; reason: string; href: string }[];
+    personalization?: Personalization;
 }
 
 const PLAN_NAMES: Record<string, string> = {
@@ -57,6 +59,88 @@ const quickActions = [
     { id: 'storage', title: '储能测算', titleEn: 'Storage calc', icon: Battery, color: 'emerald', link: '/calculator/storage' },
     { id: 'report', title: '生成报告', titleEn: 'Reports', icon: FileText, color: 'purple', link: '/my/stations' },
 ];
+
+function orderQuickActions(order?: string[]) {
+    if (!order) return quickActions;
+    return [...quickActions].sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
+}
+
+function FocusCardView({ focus, roleLabel }: { focus: NonNullable<Personalization['focus']>; roleLabel: string | null }) {
+    return (
+        <Link href={focus.href} data-testid="focus-card" className="block bg-gradient-to-br from-green-600 to-emerald-600 rounded-2xl p-4 text-white shadow-sm">
+            <div className="text-[11px] text-white/70 mb-1">为{roleLabel ?? '你'}推荐</div>
+            <div className="font-bold">{focus.title}</div>
+            <div className="text-xs text-white/80 mt-1">{focus.reason}</div>
+        </Link>
+    );
+}
+
+function TariffCard({ tariff, provinceSource }: { tariff: NonNullable<Personalization['tariff']>; provinceSource: Personalization['provinceSource'] }) {
+    return (
+        <div id="tariff" data-testid="tariff-card" className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+            <div className="flex items-center gap-2 font-bold text-slate-900 mb-1"><Plug className="w-4 h-4 text-green-600" />{tariff.province}电价</div>
+            <p className="text-[11px] text-slate-400 mb-2">{provinceSource === '项目所在地' ? '省份根据你最近项目的所在地推断，可在设置中修改' : '省份来自你的设置'}</p>
+            {tariff.status === 'ok' ? (
+                <>
+                    <div className="grid grid-cols-3 gap-2 text-center">
+                        {[['峰', tariff.peak], ['平', tariff.flat], ['谷', tariff.valley]].map(([label, value]) => (
+                            <div key={label as string} className="rounded-xl bg-slate-50 py-2">
+                                <div className="text-[11px] text-slate-400">{label}时</div>
+                                <div className="font-bold tabular-nums text-slate-800">{typeof value === 'number' ? value : '—'}</div>
+                            </div>
+                        ))}
+                    </div>
+                    <p className="mt-2 text-[11px] leading-5 text-slate-500">
+                        单位：元/度。{tariff.coalBenchmarkPrice !== null && `燃煤发电基准价 ${tariff.coalBenchmarkPrice}（新能源上网电价已市场化，仅作参考）。`}
+                        {tariff.sourceStatus}，{tariff.asOfLabel}{tariff.staleNote ? `，${tariff.staleNote}` : ''}。
+                    </p>
+                </>
+            ) : (
+                <p className="text-sm text-slate-600">{tariff.message}</p>
+            )}
+        </div>
+    );
+}
+
+function PolicyCard({ p }: { p: Personalization }) {
+    return (
+        <div id="policies" data-testid="policy-card" className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+            <div className="flex items-center gap-2 font-bold text-slate-900 mb-1"><Landmark className="w-4 h-4 text-green-600" />{p.province}政策</div>
+            <p className="text-[11px] text-slate-400 mb-2">只显示经人工审核通过的政策</p>
+            {p.milestones.length > 0 && (
+                <div className="mb-2">
+                    <div className="flex items-center gap-1 text-xs font-bold text-slate-700 mb-1"><Calendar className="w-3.5 h-3.5" />近期政策节点</div>
+                    {p.milestones.map(m => (
+                        <div key={`${m.policyId}-${m.kind}`} className="flex justify-between gap-2 py-1 text-xs">
+                            <span className="text-slate-700">{m.title}{m.docNumber ? `（${m.docNumber}）` : ''}</span>
+                            <span className={cn('whitespace-nowrap font-bold', m.daysFromNow >= 0 ? 'text-green-700' : 'text-slate-400')}>
+                                {m.date} {m.kind}{m.daysFromNow > 0 ? `（${m.daysFromNow} 天后）` : m.daysFromNow === 0 ? '（今天）' : ''}
+                            </span>
+                        </div>
+                    ))}
+                </div>
+            )}
+            {p.policies.length === 0 ? (
+                <p className="text-xs text-slate-500">政策库里还没有{p.province}已审核通过的政策。</p>
+            ) : p.policies.map(item => (
+                <div key={item.id} className="py-1 text-xs text-slate-600">
+                    {item.sourceUrl ? <a href={item.sourceUrl} target="_blank" rel="noreferrer" className="underline">{item.title}</a> : item.title}
+                    {item.docNumber ? `（${item.docNumber}）` : ''}
+                </div>
+            ))}
+        </div>
+    );
+}
+
+function PersonalizationNote({ p }: { p: Personalization }) {
+    return (
+        <details className="rounded-2xl bg-white/60 px-4 py-3 text-[11px] text-slate-500 border border-slate-100">
+            <summary className="cursor-pointer font-bold text-slate-600">{p.personalized ? '为什么这样展示' : '个性化已关闭'}</summary>
+            <ul className="mt-2 list-disc pl-4 space-y-1">{p.reasons.map(r => <li key={r}>{r}</li>)}</ul>
+            <Link href="/settings#personalization" className="mt-2 inline-block text-green-700 underline">在设置中修改角色、省份或关闭个性化</Link>
+        </details>
+    );
+}
 
 function DashboardContent() {
     const [data, setData] = useState<PersonalDashboard | null>(null);
@@ -159,6 +243,11 @@ function DashboardContent() {
                     </div>
                 ) : (
                     <>
+                        {(() => {
+                            const p = data.personalization;
+                            const modules: Record<ModuleId, React.ReactNode> = {
+                                focus: p?.focus ? <FocusCardView key="focus" focus={p.focus} roleLabel={p.roleLabel} /> : null,
+                                nextActions: (<>
                         {data.nextActions.length > 0 && (
                             <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
                                 <div className="font-bold text-slate-900 mb-1">接下来可以做</div>
@@ -176,7 +265,8 @@ function DashboardContent() {
                                 </div>
                             </div>
                         )}
-
+                                </>),
+                                stationAlerts: (<>
                         {data.stationAlerts.length > 0 && (
                             <div className="bg-white rounded-2xl p-4 shadow-sm border border-rose-100">
                                 <div className="flex items-center gap-2 font-bold text-slate-900 mb-2"><Bell className="w-4 h-4 text-rose-500" />电站告警</div>
@@ -188,7 +278,8 @@ function DashboardContent() {
                                 ))}
                             </div>
                         )}
-
+                                </>),
+                                projects: (<>
                         <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
                             <div className="flex items-center justify-between mb-2">
                                 <span className="font-bold text-slate-900">最近的项目</span>
@@ -203,7 +294,8 @@ function DashboardContent() {
                                 </Link>
                             ))}
                         </div>
-
+                                </>),
+                                usage: (<>
                         {data.usage.length > 0 && (
                             <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
                                 <div className="flex items-center gap-2 font-bold text-slate-900 mb-2"><Gauge className="w-4 h-4 text-green-600" />今日额度</div>
@@ -215,6 +307,16 @@ function DashboardContent() {
                                 ))}
                             </div>
                         )}
+                                </>),
+                                tariff: p?.tariff ? <TariffCard key="tariff" tariff={p.tariff} provinceSource={p.provinceSource} /> : null,
+                                policies: p?.personalized && p.province ? <PolicyCard key="policies" p={p} /> : null,
+                            };
+                            const order: ModuleId[] = p?.moduleOrder ?? ['nextActions', 'stationAlerts', 'projects', 'usage'];
+                            return <>
+                                {order.map(id => <div key={id} data-module={id} className="empty:hidden">{modules[id]}</div>)}
+                                {p && <PersonalizationNote p={p} />}
+                            </>;
+                        })()}
                     </>
                 )}
 
@@ -228,7 +330,7 @@ function DashboardContent() {
                         </Link>
                     </div>
                     <div className="grid grid-cols-4 gap-2">
-                        {quickActions.map(action => (
+                        {orderQuickActions(data?.personalization?.quickActionOrder).map(action => (
                             <Link
                                 key={action.id}
                                 href={action.link}
