@@ -52,7 +52,7 @@ export default function PolicyReviewPage() {
         setBusyId(id);
         setMessage('');
         try {
-            const res = await fetch(`/api/admin/policies/${encodeURIComponent(id)}/review`, {
+            const res = await fetch(`/api/admin/policies/${id}/review`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ decision }),
             });
             const body = await res.json().catch(() => ({}));
