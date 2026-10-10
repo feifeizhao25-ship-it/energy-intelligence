@@ -208,14 +208,15 @@ export const MULTI_COMPARE_LIMITS = {
     ENTERPRISE: Infinity,
 } as const;
 
-// 报告导出格式权限
+// 报告导出格式权限：PDF（浏览器生成）与 Word（lib/reports/calculation-docx.ts），由 /api/exports/reserve 核验
 export const EXPORT_FORMATS = {
     FREE: [],
     PRO: ['PDF', 'Word'],
     MAINTENANCE: ['PDF'],
-    FULL: ['PDF', 'Word', 'Excel'],
-    TEAM: ['PDF', 'Word', 'Excel'],
-    ENTERPRISE: ['PDF', 'Word', 'Excel', 'White_Label'],
+    // Excel 导出没有实现，已从权益中撤下（原来写着 Excel 却没有任何导出入口）
+    FULL: ['PDF', 'Word'],
+    TEAM: ['PDF', 'Word'],
+    ENTERPRISE: ['PDF', 'Word', 'White_Label'],
 } as const;
 
 // 历史数据保留时间（天）

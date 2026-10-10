@@ -95,6 +95,7 @@ function CalculatorResultPage() {
                             <Share2 className="w-3.5 h-3.5" /> 分享
                         </button>
 
+                        <WordDownloadButton data={data} type={type || 'solar'} />
                         <PDFDownloadButton data={data} type={type || 'solar'} />
                     </div>
                 </div>
@@ -273,7 +274,7 @@ function PDFDownloadButton({ data, type }: { data: any, type: string }) {
                         setReserving(true);
                         setErrorMessage('');
                         try {
-                            const response = await fetch('/api/exports/reserve', { method: 'POST' });
+                            const response = await fetch('/api/exports/reserve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ format: 'pdf' }) });
                             const payload = await response.json();
                             if (!response.ok) throw new Error(payload.message || '导出额度核验失败');
                             setShouldRender(true);
@@ -308,5 +309,46 @@ function PDFDownloadButton({ data, type }: { data: any, type: string }) {
                 </button>
             )}
         </PDFDownloadLink>
+    );
+}
+
+/** Word（.docx）导出：先向服务端核验套餐是否含 Word 并扣一次导出额度，再在浏览器生成文件。内容与 PDF 报告同一来源。 */
+function WordDownloadButton({ data, type }: { data: any, type: string }) {
+    const [busy, setBusy] = React.useState(false);
+    const [errorMessage, setErrorMessage] = React.useState('');
+    return (
+        <div className="flex flex-col items-end gap-1">
+            <button
+                disabled={busy}
+                onClick={async () => {
+                    setBusy(true);
+                    setErrorMessage('');
+                    try {
+                        const response = await fetch('/api/exports/reserve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ format: 'docx' }) });
+                        const payload = await response.json().catch(() => ({}));
+                        if (!response.ok) throw new Error(payload.message || '导出额度核验失败');
+                        const { calculationDocxBlob } = await import('@/lib/reports/calculation-docx');
+                        const blob = await calculationDocxBlob(data, type);
+                        const url = URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = `测算报告_${type}_${Date.now()}.docx`;
+                        document.body.appendChild(link);
+                        link.click();
+                        link.remove();
+                        setTimeout(() => URL.revokeObjectURL(url), 1000);
+                    } catch (error) {
+                        setErrorMessage(safeErrorMessage(error, 'Word 报告生成失败，请稍后重试'));
+                    } finally {
+                        setBusy(false);
+                    }
+                }}
+                className="px-4 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs font-bold hover:bg-slate-700 transition-all flex items-center gap-2 disabled:opacity-50"
+            >
+                <FileText className="w-3.5 h-3.5" />
+                {busy ? '正在生成…' : '导出 Word'}
+            </button>
+            {errorMessage && <span className="max-w-64 text-right text-[11px] text-red-400">{errorMessage}</span>}
+        </div>
     );
 }

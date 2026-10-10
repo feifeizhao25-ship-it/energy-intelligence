@@ -134,7 +134,7 @@ export default function CalculatorHomePage() {
             {[
               { icon: <TrendingUp className="w-5 h-5" />, title: '动态政策库', desc: '电价标注来源与数据截至日期' },
               { icon: <ShieldCheck className="w-5 h-5" />, title: '假设透明', desc: '损耗、衰减、折现率等假设逐项列出' },
-              { icon: <FileText className="w-5 h-5" />, title: '专业报告', desc: '一键导出 PDF/Word 报告' },
+              { icon: <FileText className="w-5 h-5" />, title: '专业报告', desc: '导出 PDF / Word 测算报告（Word 需专业版及以上）' },
               { icon: <Share2 className="w-5 h-5" />, title: '项目对比', desc: '保存为项目后可对比不同方案' }
             ].map((feature, i) => (
               <div key={i} className="flex gap-4 items-start">

@@ -80,3 +80,46 @@ export function displayOrNotFilled(value: unknown): string {
     const text = String(value).trim();
     return text ? text : NOT_FILLED;
 }
+
+/**
+ * 报告用到的数字统一从这里取（PDF 与 Word 两种导出共用，避免两份报告各算各的）。
+ * 光伏/风电结果是 financial.irr 等；储能结果在 financial.metrics 里。缺失一律为 null，不兜底。
+ */
+export function extractReportFigures(data: any) {
+    const financial = data?.financial ?? {};
+    const energy = data?.energy ?? {};
+    const assumptions = data?.assumptions ?? null;
+    const pick = (...values: unknown[]): number | null => {
+        for (const v of values) if (finite(v)) return v;
+        return null;
+    };
+    const cashFlow: number[] | null = Array.isArray(financial.cashFlow) ? financial.cashFlow : null;
+    return {
+        irr: pick(financial.irr, financial.metrics?.irr),
+        payback: pick(financial.paybackYears, financial.metrics?.paybackYears),
+        lcoe: pick(financial.lcoe, financial.metrics?.lcos),
+        // 投资额：没有就写「未填写」，不再按 300 万元兜底
+        investment: pick(financial.investment, financial.investment?.total),
+        lifetime: (finite(assumptions?.lifetimeYears) ? assumptions.lifetimeYears : 25) as number,
+        cashFlow,
+        revenue: Array.isArray(financial.revenue) ? (financial.revenue as number[]) : null,
+        discountRate: pick(assumptions?.discountRate, financial.discountRate),
+        assumptions,
+        energy: {
+            year1: pick(energy.year1),
+            lifetime: pick(energy.lifetime),
+            equivalentHours: pick(energy.equivalentHours, energy.specificYield),
+            pr: pick(energy.pr),
+            monthly: Array.isArray(energy.monthly) ? (energy.monthly as unknown[]).slice(0, 12).map(v => (finite(v) ? v : null)) : null,
+        },
+        capacity: data?.metadata?.capacity ?? null,
+        projectName: data?.metadata?.projectName ?? null,
+        province: data?.metadata?.province ?? null,
+        /** 光伏快速测算放在 metadata.pricing，风电/储能接口直接返回 pricing */
+        pricing: data?.metadata?.pricing ?? data?.pricing ?? null,
+    };
+}
+
+export function typeLabelOf(type: string): string {
+    return type === 'solar' ? '分布式光伏' : type === 'wind' ? '分散式风电' : '工商业储能';
+}

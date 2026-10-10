@@ -148,7 +148,7 @@
         "recommendation_reasons": true
       },
       "export": {
-        "formats": ["pdf", "docx", "xlsx"],
+        "formats": ["pdf", "docx"],
         "citation_export": true
       },
       "collaboration": {
@@ -159,8 +159,8 @@
         "support_level": "priority",
         "data_retention_days": 730
       },
-      "features_zh": ["专业版与运维版全部功能", "最多 200 个项目与 50 个电站", "PDF、Word 与 Excel 导出", "优先响应"],
-      "features_en": ["Professional and Operations capabilities", "Up to 200 projects and 50 stations", "PDF, Word, and Excel export", "Priority response"]
+      "features_zh": ["专业版与运维版全部功能", "最多 200 个项目与 50 个电站", "PDF 与 Word 导出", "优先响应"],
+      "features_en": ["Professional and Operations capabilities", "Up to 200 projects and 50 stations", "PDF and Word export", "Priority response"]
     },
     "team": {
       "name": "团队版",
@@ -188,7 +188,7 @@
         "recommendation_reasons": true
       },
       "export": {
-        "formats": ["pdf", "docx", "xlsx"],
+        "formats": ["pdf", "docx"],
         "citation_export": true
       },
       "collaboration": {
@@ -199,8 +199,8 @@
         "support_level": "priority",
         "data_retention_days": 730
       },
-      "features_zh": ["5 个团队账号", "共享项目与协作空间", "团队级使用额度", "PDF、Word 与 Excel 导出"],
-      "features_en": ["5 team accounts", "Shared projects and review workflow", "Team-level usage allocation", "PDF, Word, and Excel export"]
+      "features_zh": ["5 个团队账号", "共享项目与协作空间", "团队级使用额度", "PDF 与 Word 导出"],
+      "features_en": ["5 team accounts", "Shared projects and review workflow", "Team-level usage allocation", "PDF and Word export"]
     },
     "enterprise": {
       "name": "企业版",
@@ -228,7 +228,7 @@
         "recommendation_reasons": true
       },
       "export": {
-        "formats": ["pdf", "docx", "xlsx", "api"],
+        "formats": ["pdf", "docx", "api"],
         "citation_export": true
       },
       "collaboration": {

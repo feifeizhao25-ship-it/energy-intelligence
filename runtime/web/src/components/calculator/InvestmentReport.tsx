@@ -10,7 +10,7 @@ import {
 import { co2AvoidedTonnes, EMISSION_FACTOR_NOTE, GRID_EMISSION_FACTOR } from '@/lib/standards/emission-factor';
 import {
     PDF_FONT_FILES, REPORT_TITLE, REPORT_DISCLAIMER, NOT_FILLED,
-    reportConclusion, reportNumber, degradationText, displayOrNotFilled,
+    reportConclusion, reportNumber, degradationText, displayOrNotFilled, extractReportFigures,
 } from '@/lib/reports/calculation-report';
 import { priceAsOfText } from '@/lib/pricing/tariffs';
 
@@ -192,19 +192,10 @@ const InvestmentReport: React.FC<InvestmentReportProps> = ({ data, type, aiAnaly
     const now = generatedAt ?? new Date();
     const reportId = reportNumber(data, now);
     const dateStr = now.toLocaleDateString('zh-CN', { timeZone: 'Asia/Shanghai' });
-    const financial = data?.financial ?? {};
+    // 数字统一由 extractReportFigures 取（与 Word 导出同一份）
+    const figures = extractReportFigures(data);
     const energy = data?.energy ?? {};
-    const assumptions = data?.assumptions ?? null;
-    const irr: number | null = typeof financial.irr === 'number' ? financial.irr : (typeof financial.metrics?.irr === 'number' ? financial.metrics.irr : null);
-    const payback: number | null = typeof financial.paybackYears === 'number' ? financial.paybackYears : (typeof financial.metrics?.paybackYears === 'number' ? financial.metrics.paybackYears : null);
-    const lcoe: number | null = typeof financial.lcoe === 'number' ? financial.lcoe : (typeof financial.metrics?.lcos === 'number' ? financial.metrics.lcos : null);
-    // 投资额：没有就写「未填写」，不再按 300 万元兜底
-    const investment: number | null = typeof financial.investment === 'number' ? financial.investment
-        : (typeof financial.investment?.total === 'number' ? financial.investment.total : null);
-    const lifetime: number = assumptions?.lifetimeYears ?? 25;
-    const cashFlow: number[] | null = Array.isArray(financial.cashFlow) ? financial.cashFlow : null;
-    const revenue: number[] | null = Array.isArray(financial.revenue) ? financial.revenue : null;
-    const discountRate: number | null = assumptions?.discountRate ?? financial.discountRate ?? null;
+    const { assumptions, irr, payback, lcoe, investment, lifetime, cashFlow, revenue, discountRate } = figures;
     const hasAi = typeof aiAnalysis === 'string' && aiAnalysis.trim().length > 0;
     const capacity = data?.metadata?.capacity;
 
@@ -351,7 +342,7 @@ const InvestmentReport: React.FC<InvestmentReportProps> = ({ data, type, aiAnaly
                     {EMISSION_FACTOR_NOTE}（来源：{GRID_EMISSION_FACTOR.source}）
                 </Text>
                 <Text style={{ fontSize: 8, color: '#64748b', marginBottom: 10 }}>
-                    {priceAsOfText(data?.metadata?.pricing)}
+                    {priceAsOfText(figures.pricing)}
                 </Text>
 
                 {hasAi && (
