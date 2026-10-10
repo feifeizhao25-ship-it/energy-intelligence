@@ -1,184 +1,131 @@
-// API: 快速计算（无需登录）- 用于首页快速估算
-// 使用本地太阳辐照数据，无需调用外部API，确保即时响应
+// API: 首页快速估算（无需登录）
+//
+// 原来这里是第三套光伏口径：城市表里写死「年等效峰值小时数」（与同表的日均辐照对不上，北京 4.35×365=1588 却写 1450），
+// 年发电 = 峰值小时 × 容量 × 0.82，电价写死 0.6 元/度，IRR 用「总收益年化」粗估；没匹配到城市就按「中国平均」编一个结果；
+// 首页还另按 0.5 元/度算「预计年收益」。现在城市表只提供坐标，发电量与财务一律调用统一光伏模型 simulateSolar，
+// 电价取省级电价表（工商业平均电价，标注来源状态与数据截至）；电价表没有的省份不给收益数字。
 import { NextRequest, NextResponse } from 'next/server';
 import { co2AvoidedKg } from '@/lib/standards/emission-factor';
+import { loadSolarResource } from '@/lib/calculator/solar-resource';
+import { simulateSolar } from '@/lib/calculator/solar';
+import { paybackPeriodOf } from '@/lib/calculator/project-finance';
+import { lookupTariff, sourceStatusLabel } from '@/lib/pricing/tariffs';
+import { enforceRateLimit, PUBLIC_RULES } from '@/lib/security/rate-limit';
 
-// 中国主要城市太阳辐照数据 (年均GHI kWh/m²/day, 等效峰值日照小时数)
-// 数据来源：NASA POWER API 历史平均值
-const CITY_SOLAR_DATA: Record<string, {
-    lat: number;
-    lng: number;
-    province: string;
-    ghi: number;        // 年均日辐照量 kWh/m²/day
-    peakHours: number;  // 年等效峰值日照小时数
-}> = {
-    '北京': { lat: 39.9042, lng: 116.4074, province: '北京市', ghi: 4.35, peakHours: 1450 },
-    '上海': { lat: 31.2304, lng: 121.4737, province: '上海市', ghi: 3.89, peakHours: 1200 },
-    '广州': { lat: 23.1291, lng: 113.2644, province: '广东省', ghi: 4.12, peakHours: 1150 },
-    '深圳': { lat: 22.5431, lng: 114.0579, province: '广东省', ghi: 4.08, peakHours: 1130 },
-    '杭州': { lat: 30.2741, lng: 120.1551, province: '浙江省', ghi: 3.92, peakHours: 1180 },
-    '成都': { lat: 30.5728, lng: 104.0668, province: '四川省', ghi: 3.45, peakHours: 950 },
-    '武汉': { lat: 30.5928, lng: 114.3055, province: '湖北省', ghi: 3.85, peakHours: 1120 },
-    '西安': { lat: 34.3416, lng: 108.9398, province: '陕西省', ghi: 4.12, peakHours: 1280 },
-    '南京': { lat: 32.0603, lng: 118.7969, province: '江苏省', ghi: 3.95, peakHours: 1200 },
-    '天津': { lat: 39.1422, lng: 117.1767, province: '天津市', ghi: 4.28, peakHours: 1420 },
-    '苏州': { lat: 31.2989, lng: 120.5853, province: '江苏省', ghi: 3.88, peakHours: 1180 },
-    '重庆': { lat: 29.4316, lng: 106.9123, province: '重庆市', ghi: 3.25, peakHours: 900 },
-    '郑州': { lat: 34.7466, lng: 113.6254, province: '河南省', ghi: 4.05, peakHours: 1280 },
-    '长沙': { lat: 28.2282, lng: 112.9388, province: '湖南省', ghi: 3.68, peakHours: 1050 },
-    '青岛': { lat: 36.0671, lng: 120.3826, province: '山东省', ghi: 4.22, peakHours: 1380 },
-    '大连': { lat: 38.9140, lng: 121.6147, province: '辽宁省', ghi: 4.35, peakHours: 1420 },
-    '厦门': { lat: 24.4798, lng: 118.0894, province: '福建省', ghi: 4.05, peakHours: 1180 },
-    '合肥': { lat: 31.8206, lng: 117.2272, province: '安徽省', ghi: 3.92, peakHours: 1200 },
-    '济南': { lat: 36.6512, lng: 117.1201, province: '山东省', ghi: 4.18, peakHours: 1350 },
-    '福州': { lat: 26.0745, lng: 119.2965, province: '福建省', ghi: 3.95, peakHours: 1150 },
-    '海口': { lat: 20.0442, lng: 110.1999, province: '海南省', ghi: 4.55, peakHours: 1450 },
-    '昆明': { lat: 25.0389, lng: 102.7183, province: '云南省', ghi: 5.02, peakHours: 1650 },
-    '呼和浩特': { lat: 40.8414, lng: 111.7519, province: '内蒙古', ghi: 4.85, peakHours: 1580 },
-    '乌鲁木齐': { lat: 43.8256, lng: 87.6168, province: '新疆', ghi: 4.95, peakHours: 1620 },
-    '拉萨': { lat: 29.6500, lng: 91.1000, province: '西藏', ghi: 6.25, peakHours: 2100 },
-    '银川': { lat: 38.4872, lng: 106.2309, province: '宁夏', ghi: 5.15, peakHours: 1680 },
-    '西宁': { lat: 36.6171, lng: 101.7782, province: '青海省', ghi: 5.35, peakHours: 1750 },
-    '兰州': { lat: 36.0611, lng: 103.8343, province: '甘肃省', ghi: 4.85, peakHours: 1580 },
-    '太原': { lat: 37.8706, lng: 112.5489, province: '山西省', ghi: 4.38, peakHours: 1420 },
-    '石家庄': { lat: 38.0428, lng: 114.5149, province: '河北省', ghi: 4.25, peakHours: 1380 },
-    '沈阳': { lat: 41.8057, lng: 123.4315, province: '辽宁省', ghi: 4.15, peakHours: 1350 },
-    '长春': { lat: 43.8171, lng: 125.3235, province: '吉林省', ghi: 4.05, peakHours: 1320 },
-    '哈尔滨': { lat: 45.8038, lng: 126.5350, province: '黑龙江', ghi: 3.95, peakHours: 1280 },
-    '南昌': { lat: 28.6820, lng: 115.8579, province: '江西省', ghi: 3.85, peakHours: 1120 },
-    '贵阳': { lat: 26.6470, lng: 106.6302, province: '贵州省', ghi: 3.45, peakHours: 950 },
-    '南宁': { lat: 22.8170, lng: 108.3665, province: '广西', ghi: 4.02, peakHours: 1150 },
+/** 首页估算用的单位造价（元/kW），只用于回收期与 IRR，页面上写明 */
+const QUICK_UNIT_COST = 3500;
+
+// 城市坐标（只用于定位取 NASA POWER 资源数据与省级电价）
+const CITY_COORDINATES: Record<string, { lat: number; lng: number; province: string }> = {
+    '北京': { lat: 39.9042, lng: 116.4074, province: '北京市' },
+    '上海': { lat: 31.2304, lng: 121.4737, province: '上海市' },
+    '广州': { lat: 23.1291, lng: 113.2644, province: '广东省' },
+    '深圳': { lat: 22.5431, lng: 114.0579, province: '广东省' },
+    '杭州': { lat: 30.2741, lng: 120.1551, province: '浙江省' },
+    '成都': { lat: 30.5728, lng: 104.0668, province: '四川省' },
+    '武汉': { lat: 30.5928, lng: 114.3055, province: '湖北省' },
+    '西安': { lat: 34.3416, lng: 108.9398, province: '陕西省' },
+    '南京': { lat: 32.0603, lng: 118.7969, province: '江苏省' },
+    '天津': { lat: 39.1422, lng: 117.1767, province: '天津市' },
+    '苏州': { lat: 31.2989, lng: 120.5853, province: '江苏省' },
+    '重庆': { lat: 29.4316, lng: 106.9123, province: '重庆市' },
+    '郑州': { lat: 34.7466, lng: 113.6254, province: '河南省' },
+    '长沙': { lat: 28.2282, lng: 112.9388, province: '湖南省' },
+    '青岛': { lat: 36.0671, lng: 120.3826, province: '山东省' },
+    '大连': { lat: 38.9140, lng: 121.6147, province: '辽宁省' },
+    '厦门': { lat: 24.4798, lng: 118.0894, province: '福建省' },
+    '合肥': { lat: 31.8206, lng: 117.2272, province: '安徽省' },
+    '济南': { lat: 36.6512, lng: 117.1201, province: '山东省' },
+    '福州': { lat: 26.0745, lng: 119.2965, province: '福建省' },
+    '海口': { lat: 20.0442, lng: 110.1999, province: '海南省' },
+    '昆明': { lat: 25.0389, lng: 102.7183, province: '云南省' },
+    '呼和浩特': { lat: 40.8414, lng: 111.7519, province: '内蒙古' },
+    '乌鲁木齐': { lat: 43.8256, lng: 87.6168, province: '新疆' },
+    '拉萨': { lat: 29.6500, lng: 91.1000, province: '西藏' },
+    '银川': { lat: 38.4872, lng: 106.2309, province: '宁夏' },
+    '西宁': { lat: 36.6171, lng: 101.7782, province: '青海省' },
+    '兰州': { lat: 36.0611, lng: 103.8343, province: '甘肃省' },
+    '太原': { lat: 37.8706, lng: 112.5489, province: '山西省' },
+    '石家庄': { lat: 38.0428, lng: 114.5149, province: '河北省' },
+    '沈阳': { lat: 41.8057, lng: 123.4315, province: '辽宁省' },
+    '长春': { lat: 43.8171, lng: 125.3235, province: '吉林省' },
+    '哈尔滨': { lat: 45.8038, lng: 126.5350, province: '黑龙江' },
+    '南昌': { lat: 28.6820, lng: 115.8579, province: '江西省' },
+    '贵阳': { lat: 26.6470, lng: 106.6302, province: '贵州省' },
+    '南宁': { lat: 22.8170, lng: 108.3665, province: '广西' },
 };
 
-// 默认值（中国平均）
-const DEFAULT_SOLAR = { ghi: 4.2, peakHours: 1300, lat: 35.0, lng: 105.0, province: '中国' };
-
-/**
- * 快速光伏发电量估算 - 无需登录
- * 使用本地预设数据，确保即时响应
- */
 export async function POST(req: NextRequest) {
+    const limited = await enforceRateLimit(req, PUBLIC_RULES.calculators);
+    if (limited) return limited;
     try {
-        const { location, capacity } = await req.json();
-
-        if (!location || !capacity) {
-            return NextResponse.json(
-                { error: 'INVALID_INPUT', message: '缺少地址或容量参数' },
-                { status: 400 }
-            );
+        const { location, capacity: rawCapacity } = await req.json();
+        const capacity = Number(rawCapacity);
+        if (!location || typeof location !== 'string' || !(capacity > 0) || capacity > 1_000_000) {
+            return NextResponse.json({ error: 'INVALID_INPUT', message: '请输入城市和大于 0 的装机容量' }, { status: 400 });
         }
 
-        // 1. 查找匹配的城市
-        const matchedCity = Object.keys(CITY_SOLAR_DATA).find(city =>
-            location.includes(city)
-        );
-
-        let solarData;
-        if (matchedCity) {
-            solarData = CITY_SOLAR_DATA[matchedCity];
-        } else {
-            // 使用默认中国平均值
-            solarData = { ...DEFAULT_SOLAR };
+        const matchedCity = Object.keys(CITY_COORDINATES).find(city => location.includes(city));
+        if (!matchedCity) {
+            // 不再按「中国平均」编一个结果
+            return NextResponse.json({
+                error: 'CITY_NOT_SUPPORTED',
+                message: `首页快速估算暂只支持 ${Object.keys(CITY_COORDINATES).length} 个主要城市（如南京、济南、广州），请输入城市名；其他地点请在光伏测算里填写经纬度`,
+            }, { status: 422 });
         }
+        const { lat, lng, province } = CITY_COORDINATES[matchedCity];
 
-        const { lat, lng, province, ghi, peakHours } = solarData;
+        // 电价：省级电价表的工商业平均电价；已取消固定分时或未收录的省份不估算收益
+        const tariff = lookupTariff(province);
+        const price = tariff.status === 'ok' ? tariff.retailPrice : null;
 
-        // 2. 快速计算
-        // 年发电量 = 等效峰值日照小时数 × 容量 × 系统效率(~0.82)
-        const systemEfficiency = 0.82;
-        const annualGeneration = Math.round(peakHours * capacity * systemEfficiency);
-
-        // 日均和月均发电量
-        const dailyGeneration = Math.round(annualGeneration / 365);
-        const monthlyGeneration = Math.round(annualGeneration / 12);
-
-        // 收益估算 - 假设自用价格0.6元/kWh
-        const electricityPrice = 0.6;
-        const annualRevenue = Math.round(annualGeneration * electricityPrice);
-        const monthlyRevenue = Math.round(annualRevenue / 12);
-
-        // 碳减排计算
-        // 排放因子统一取 2023 年全国电力平均（lib/standards/emission-factor.ts）
+        const resource = await loadSolarResource(lat, lng);
+        const model = simulateSolar(resource, {
+            capacity,
+            installationType: 'roof',
+            moduleType: 'standard',
+            unitCost: QUICK_UNIT_COST,
+            selfUsePrice: price ?? 0,
+            feedInPrice: price ?? 0,
+            selfUseRatio: 1,
+        });
+        const annualGeneration = Math.round(model.energy.year1);
+        const annualRevenue = price === null ? null : Math.round(model.financial.year1Revenue);
         const co2Reduction = Math.round(co2AvoidedKg(annualGeneration));
-        const treesEquivalent = Math.round(co2Reduction / 22);
-
-        // 投资估算
-        const unitCost = 3500; // 元/kW 当前市场价格
-        const totalInvestment = capacity * unitCost;
-        const simplePayback = totalInvestment / annualRevenue;
-
-        // IRR 估算 (简化版)
-        const estimatedIRR = calculateSimpleIRR(totalInvestment, annualRevenue);
+        const payback = price === null ? null : paybackPeriodOf(model.financial.investment, model.financial.cashFlow);
 
         return NextResponse.json({
             success: true,
             data: {
-                location: {
-                    address: location,
-                    city: matchedCity || '未知城市',
-                    province,
-                    lat,
-                    lng
-                },
-                resource: {
-                    ghi: ghi,
-                    peakHours: peakHours,
-                    equivalentHours: Math.round(peakHours * systemEfficiency)
-                },
+                location: { address: location, city: matchedCity, province, lat, lng },
+                resource: { annualGhi: Math.round(resource.annual.ghi), pr: Number(model.energy.pr.toFixed(3)) },
                 energy: {
                     annualGeneration,
-                    dailyGeneration,
-                    monthlyGeneration
+                    dailyGeneration: Math.round(annualGeneration / 365),
+                    monthly: model.energy.monthly,
                 },
                 financial: {
                     annualRevenue,
-                    monthlyRevenue,
-                    totalInvestment,
-                    paybackYears: Math.round(simplePayback * 10) / 10,
-                    irr: Math.round(estimatedIRR * 10) / 10
+                    monthlyRevenue: annualRevenue === null ? null : Math.round(annualRevenue / 12),
+                    totalInvestment: model.financial.investment,
+                    paybackYears: payback === null ? null : Math.round(payback * 10) / 10,
+                    irr: price === null ? null : Math.round(model.financial.irr * 10) / 10,
                 },
-                environmental: {
-                    co2Reduction,
-                    treesEquivalent
-                }
+                environmental: { co2Reduction, treesEquivalent: Math.round(co2Reduction / 22) },
+                pricing: tariff.status === 'ok'
+                    ? { price, label: `${province}工商业平均电价 ${price} 元/度（${sourceStatusLabel(tariff.tariff)}，${tariff.freshness.label}${tariff.freshness.staleNote ? `，${tariff.freshness.staleNote}` : ''}）` }
+                    : { price: null, label: `${tariff.message}，未估算收益` },
+                assumptions: `屋顶安装、标准组件、最佳倾角朝南；单位造价按 ${QUICK_UNIT_COST} 元/kW；全部电量按工商业平均电价计；统一光伏模型（与完整测算同一套）`,
             },
             metadata: {
                 type: 'quick_estimate',
-                dataSource: matchedCity ? 'city_database' : 'china_average',
-                disclaimer: '此为快速估算结果，详细分析请登录使用完整计算器',
-                timestamp: new Date().toISOString()
-            }
+                dataSource: 'NASA POWER 上一完整年辐照与气温',
+                disclaimer: '此为快速估算结果，仅供参考；详细分析请登录使用完整计算器',
+                timestamp: new Date().toISOString(),
+            },
         });
-
     } catch (error: unknown) {
         console.error('Quick calculation error:', error);
-        return NextResponse.json(
-            { error: 'CALCULATION_ERROR', message: '计算失败，请稍后重试' },
-            { status: 500 }
-        );
+        return NextResponse.json({ error: 'CALCULATION_ERROR', message: '计算失败，请稍后重试' }, { status: 500 });
     }
-}
-
-/**
- * 简化IRR计算
- */
-function calculateSimpleIRR(investment: number, annualRevenue: number): number {
-    // 使用简化公式估算25年项目IRR
-    // 考虑0.5%年衰减和1%运维成本
-    const years = 25;
-    const degradation = 0.005;
-    const omRate = 0.01;
-
-    let totalRevenue = 0;
-    for (let y = 0; y < years; y++) {
-        const yearRevenue = annualRevenue * Math.pow(1 - degradation, y);
-        const omCost = investment * omRate * Math.pow(1.02, y);
-        totalRevenue += yearRevenue - omCost;
-    }
-
-    // 简化IRR估算
-    const roi = (totalRevenue - investment) / investment;
-    const annualizedROI = Math.pow(1 + roi, 1 / years) - 1;
-
-    return annualizedROI * 100;
 }

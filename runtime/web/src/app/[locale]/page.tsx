@@ -101,12 +101,14 @@ export default function HomePage() {
                 setResult({
                     annualGeneration: data.data.energy.annualGeneration,
                     dailyGeneration: data.data.energy.dailyGeneration,
-                    monthlyRevenue: data.data.financial.monthlyRevenue,
+                    annualRevenue: data.data.financial.annualRevenue,
                     co2Reduction: data.data.environmental.co2Reduction,
                     trees: data.data.environmental.treesEquivalent,
                     payback: data.data.financial.paybackYears,
                     irr: data.data.financial.irr,
-                    province: data.data.location.province
+                    province: data.data.location.province,
+                    pricingLabel: data.data.pricing?.label,
+                    assumptions: data.data.assumptions,
                 });
                 setShowResult(true);
             } else {
@@ -311,7 +313,7 @@ export default function HomePage() {
                                         <QuickResultCard
                                             icon={Coins}
                                             label="预计年收益"
-                                            value={`¥${Math.round(result.annualGeneration * 0.5).toLocaleString()}`}
+                                            value={result.annualRevenue === null ? '需填写电价' : `¥${result.annualRevenue.toLocaleString()}`}
                                             unit="元"
                                             color={{ bg: 'bg-green-100', text: 'text-green-600' }}
                                         />
@@ -325,24 +327,27 @@ export default function HomePage() {
                                         <QuickResultCard
                                             icon={Target}
                                             label="投资回收期"
-                                            value={result.payback}
-                                            unit="年"
+                                            value={result.payback === null ? '—' : result.payback}
+                                            unit={result.payback === null ? '' : '年'}
                                             color={{ bg: 'bg-purple-100', text: 'text-purple-600' }}
                                         />
                                     </div>
 
-                                    <div className="bg-slate-50 rounded-xl p-4">
-                                        <div className="flex items-center justify-between mb-2">
-                                            <span className="text-sm text-slate-600">内部收益率 (IRR)</span>
-                                            <span className="font-bold text-green-600">{result.irr}%</span>
+                                    {result.irr !== null && (
+                                        <div className="bg-slate-50 rounded-xl p-4">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <span className="text-sm text-slate-600">内部收益率 (IRR)</span>
+                                                <span className="font-bold text-green-600">{result.irr}%</span>
+                                            </div>
+                                            <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+                                                <div
+                                                    className="h-full bg-gradient-to-r from-green-500 to-emerald-500 rounded-full"
+                                                    style={{ width: `${Math.min(Math.max(Number(result.irr), 0) * 5, 100)}%` }}
+                                                />
+                                            </div>
                                         </div>
-                                        <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
-                                            <div
-                                                className="h-full bg-gradient-to-r from-green-500 to-emerald-500 rounded-full"
-                                                style={{ width: `${Math.min(Number(result.irr) * 5, 100)}%` }}
-                                            />
-                                        </div>
-                                    </div>
+                                    )}
+                                    <p data-testid="quick-assumptions" className="text-[11px] leading-5 text-slate-400">{result.pricingLabel}；{result.assumptions}。结果仅供参考。</p>
 
                                     <button
                                         onClick={handleSaveAndContinue}
@@ -376,7 +381,7 @@ export default function HomePage() {
                             { value: '假设可见', label: '关键参数可调整', icon: Building2 },
                             { value: '来源可溯', label: '数据出处与时间记录', icon: Zap },
                             { value: `${provincesWithPrices().length} 省市`, label: '已收录参考电价', icon: MapPin },
-                            { value: '人工复核', label: '结论导出前确认', icon: Star },
+                            { value: '仅供参考', label: '结论不构成投资建议', icon: Star },
                         ].map((stat, i) => (
                             <div key={i} className="text-center">
                                 <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-2xl flex items-center justify-center mx-auto mb-3">
