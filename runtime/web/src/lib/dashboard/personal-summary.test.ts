@@ -54,3 +54,15 @@ describe('部署拓扑', () => {
   });
 
 });
+
+describe('会员到期日', () => {
+  it('工作台返回北京时间的到期日 expiresOn，页面用它显示，不再截 UTC 时间', () => {
+    const d = buildPersonalDashboard({ ...base, user: { name: null, plan: 'TEAM', planExpireAt: new Date('2027-06-30T00:00:00+08:00') } });
+    expect(d.plan.expiresOn).toBe('2027-06-30');
+    const page = readFileSync(join(ROOT, 'src/app/(dashboard)/dashboard/page.tsx'), 'utf8');
+    expect(page).toContain('data.plan.expiresOn');
+    expect(page).not.toContain('expiresAt.slice(0, 10)');
+    const soon = buildPersonalDashboard({ ...base, now: new Date('2026-10-10T01:00:00Z'), user: { name: null, plan: 'PRO', planExpireAt: new Date('2026-10-13T00:00:00+08:00') } });
+    expect(soon.nextActions.find(a => a.id === 'renew')!.reason).toContain('2026-10-13');
+  });
+});

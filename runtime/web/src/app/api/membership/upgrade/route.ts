@@ -1,3 +1,4 @@
+import { shanghaiDate } from '@/lib/membership/day';
 import { randomUUID } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
@@ -30,7 +31,7 @@ export async function POST(request: Request) {
         if (activePaid && current.plan !== plan) {
             return NextResponse.json({
                 success: false, error: 'PLAN_CHANGE_NOT_SUPPORTED',
-                message: `当前${current.plan}会员有效期至 ${current.planExpireAt!.toISOString().slice(0, 10)}，有效期内暂不支持更换方案；到期后可购买其他方案，或联系客服办理升级`,
+                message: `当前${current.plan}会员有效期至 ${shanghaiDate(current.planExpireAt!)}，有效期内暂不支持更换方案；到期后可购买其他方案，或联系客服办理升级`,
             }, { status: 409 });
         }
         const amount = canonicalPrice(plan, billingPeriod);

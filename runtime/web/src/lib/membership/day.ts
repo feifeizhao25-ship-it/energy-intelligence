@@ -24,3 +24,8 @@ export function startOfShanghaiDay(now: Date): Date {
 export function nextShanghaiMidnight(now: Date): Date {
   return new Date(startOfShanghaiDay(now).getTime() + DAY_MS);
 }
+
+/** 按北京时间显示日期（YYYY-MM-DD）。toISOString 是 UTC：北京时间 0 点的到期时刻会显示成前一天。 */
+export function shanghaiDate(d: Date): string {
+  return new Date(d.getTime() + OFFSET_MS).toISOString().slice(0, 10);
+}

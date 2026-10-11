@@ -60,7 +60,7 @@ export default function MembershipCenterPage() {
                             <span className="text-5xl" aria-hidden>{effectiveDetails.icon}</span>
                             <div>
                                 <h2 className="text-2xl md:text-3xl font-bold">{effectiveDetails.name}</h2>
-                                <p className="text-indigo-100 mt-1">{expiry ? `有效期至 ${new Date(expiry).toLocaleDateString('zh-CN')}` : '无固定到期日'}</p>
+                                <p className="text-indigo-100 mt-1">{expiry ? `有效期至 ${new Date(expiry).toLocaleDateString('zh-CN', { timeZone: 'Asia/Shanghai' })}` : '无固定到期日'}</p>
                             </div>
                         </div>
                         <Link href="/pricing" className="rounded-xl bg-white px-5 py-3 text-center font-semibold text-indigo-700 hover:bg-indigo-50">查看升级方案</Link>

@@ -39,7 +39,7 @@ import { DISMISSIBLE_TIPS as DISMISSIBLE } from '@/lib/dashboard/personal-summar
 
 interface PersonalDashboard {
     greeting: string;
-    plan: { code: string; expiresAt: string | null; expiringSoon: boolean };
+    plan: { code: string; expiresAt: string | null; expiresOn: string | null; expiringSoon: boolean };
     counts: { projects: number; calculations: number; savedPapers: number; stations: number };
     recentProjects: { id: string; name: string; type: string; capacity: number | null; reportStatus: string; updatedAt: string }[];
     stationAlerts: { id: string; name: string; status: string; lastUpdated: string | null }[];
@@ -197,7 +197,7 @@ function DashboardContent() {
                                 {data && (
                                     <div className="text-slate-400 text-xs">
                                         {PLAN_NAMES[data.plan.code] ?? data.plan.code}
-                                        {data.plan.expiresAt && ` · ${data.plan.expiresAt.slice(0, 10)} 到期`}
+                                        {data.plan.expiresOn && ` · ${data.plan.expiresOn} 到期`}
                                     </div>
                                 )}
                             </div>

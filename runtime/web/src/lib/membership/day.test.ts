@@ -17,3 +17,12 @@ describe('每日额度的一天按北京时间算', () => {
     expect(nextShanghaiMidnight(new Date('2026-09-30T10:00:00Z')).toISOString()).toBe('2026-09-30T16:00:00.000Z');
   });
 });
+
+describe('到期日按北京时间显示', () => {
+  it('北京时间 2027-06-30 00:00 到期显示为 2027-06-30（UTC 截取会显示成 06-29）', () => {
+    const { shanghaiDate } = require('./day');
+    const expire = new Date('2027-06-30T00:00:00+08:00');
+    expect(expire.toISOString().slice(0, 10)).toBe('2027-06-29');
+    expect(shanghaiDate(expire)).toBe('2027-06-30');
+  });
+});

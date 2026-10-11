@@ -1,3 +1,5 @@
+import { shanghaiDate } from '@/lib/membership/day';
+
 /**
  * 个人工作台：只由当前用户自己的数据生成（免费档同样有）。
  *
@@ -45,7 +47,8 @@ export interface NextAction {
 
 export interface PersonalDashboard {
   greeting: string;
-  plan: { code: string; expiresAt: string | null; expiringSoon: boolean };
+  /** expiresOn 为北京时间的到期日（YYYY-MM-DD），页面直接显示它，不要截 expiresAt 的前 10 位（那是 UTC） */
+  plan: { code: string; expiresAt: string | null; expiresOn: string | null; expiringSoon: boolean };
   counts: { projects: number; calculations: number; savedPapers: number; stations: number };
   recentProjects: { id: string; name: string; type: string; capacity: number | null; reportStatus: string; updatedAt: string }[];
   stationAlerts: { id: string; name: string; status: string; lastUpdated: string | null }[];
@@ -107,14 +110,14 @@ export function buildPersonalDashboard(input: SummaryInput): PersonalDashboard {
     });
   }
   if (expiringSoon) {
-    actions.push({ id: 'renew', title: '会员即将到期', reason: `到期时间 ${expires!.toISOString().slice(0, 10)}`, href: '/membership' });
+    actions.push({ id: 'renew', title: '会员即将到期', reason: `到期日 ${shanghaiDate(expires!)}（北京时间）`, href: '/membership' });
   }
   const dismissed = new Set(input.dismissedTips ?? []);
   const visible = actions.filter((a) => !(dismissed.has(a.id) && (DISMISSIBLE_TIPS as readonly string[]).includes(a.id)));
 
   return {
     greeting: input.user.name ? `你好，${input.user.name}` : '你好',
-    plan: { code: plan, expiresAt: paid && expires ? expires.toISOString() : null, expiringSoon },
+    plan: { code: plan, expiresAt: paid && expires ? expires.toISOString() : null, expiresOn: paid && expires ? shanghaiDate(expires) : null, expiringSoon },
     counts: {
       projects: input.projectCount,
       calculations: input.calculationCount,
