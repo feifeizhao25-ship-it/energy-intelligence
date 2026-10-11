@@ -114,11 +114,11 @@ export default function WindCalculatorPage() {
                                 <h2 className="text-xl font-bold text-white mb-6">风机参数配置</h2>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="space-y-2">
-                                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">单机容量 (MW)</label>
+                                        <label className="text-xs font-bold text-slate-400">单机容量（兆瓦）</label>
                                         <input type="number" step="0.5" className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white" value={formData.capacity} onChange={e => setFormData({ ...formData, capacity: parseFloat(e.target.value) })} />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">轮毂高度 (m)</label>
+                                        <label className="text-xs font-bold text-slate-400">轮毂高度（米）</label>
                                         <input type="number" className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white" value={formData.hubHeight} onChange={e => setFormData({ ...formData, hubHeight: parseInt(e.target.value) })} />
                                     </div>
                                 </div>

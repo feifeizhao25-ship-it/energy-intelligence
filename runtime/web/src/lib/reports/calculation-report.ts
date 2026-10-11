@@ -120,6 +120,11 @@ export function extractReportFigures(data: any) {
     };
 }
 
+/** 光伏装机按组件峰值功率 kWp，风电、储能按额定功率 kW */
+export function capacityUnitOf(type: string): string {
+    return type === 'solar' ? 'kWp' : 'kW';
+}
+
 export function typeLabelOf(type: string): string {
     return type === 'solar' ? '分布式光伏' : type === 'wind' ? '分散式风电' : '工商业储能';
 }

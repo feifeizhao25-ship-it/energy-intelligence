@@ -49,7 +49,9 @@ describe('统一电价表', () => {
         expect(tariffFreshness('2024', new Date('2025-02-01T00:00:00Z'))).toEqual({ label: '电价数据截至 2024 年', stale: false, staleNote: null });
         expect(tariffFreshness(null).label).toBe('电价数据截至：未标注');
         expect(priceAsOfText({ asOfLabel: '电价数据截至 2025-12', staleNote: '可能已变化，请以最新文件为准', source: '来源待核实' }))
-            .toBe('电价数据截至 2025-12，可能已变化，请以最新文件为准（来源：来源待核实）');
+            .toBe('电价数据截至 2025-12，可能已变化，请以最新文件为准（来源待核实）');
+        // 来源不是「来源待核实」开头时才加「来源：」前缀
+        expect(priceAsOfText({ asOfLabel: '电价数据截至 2025-12', source: '某省发改委文件' })).toBe('电价数据截至 2025-12（来源：某省发改委文件）');
     });
 
     it('AI 工具 get_electricity_price 读同一张表：江苏谷价 0.31；查不到不再按北京返回', async () => {

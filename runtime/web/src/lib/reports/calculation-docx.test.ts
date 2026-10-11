@@ -32,7 +32,10 @@ describe('Word 测算报告', () => {
         expect(plain).toContain('9.1 年');
         expect(plain).toContain('0.312 元/度');
         expect(plain).toContain('14,500'); // 5 月发电量
-        expect(plain).toContain('电价数据截至 2025-12，可能已变化，请以最新文件为准（来源：来源待核实）');
+        expect(plain).toContain('电价数据截至 2025-12，可能已变化，请以最新文件为准（来源待核实）');
+        expect(plain).toContain('内部收益率（IRR）');
+        expect(plain).toContain('平准化度电成本（LCOE，折现）');
+        expect(plain).toContain('100 kWp');
         expect(plain).toContain(reportConclusion(8.23, 9.1, 25));
         // 不含 AI 文字时如实写明，并写进文档属性
         expect(plain).toContain('规则引擎测算，未含 AI 生成文字');
@@ -59,5 +62,9 @@ describe('Word 测算报告', () => {
         expect(plain).toContain('0.410 元/度');
         expect(plain).toContain('未填写');
         expect(plain).toContain('收益偏低');
+        // 风电装机单位是 kW，不是 kWp
+        const wind = await open(await calculationDocxBuffer({ ...data, metadata: { ...data.metadata, capacity: 3000 } }, 'wind', { generatedAt: at }));
+        expect(wind.plain).toContain('3000 kW；');
+        expect(wind.plain).not.toContain('kWp');
     });
 });

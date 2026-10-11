@@ -11,7 +11,7 @@ import {
 } from 'docx';
 import {
     REPORT_TITLE, REPORT_DISCLAIMER, NOT_FILLED,
-    reportConclusion, reportNumber, degradationText, displayOrNotFilled, extractReportFigures, typeLabelOf,
+    reportConclusion, reportNumber, degradationText, displayOrNotFilled, extractReportFigures, typeLabelOf, capacityUnitOf,
 } from './calculation-report';
 import { co2AvoidedTonnes, EMISSION_FACTOR_NOTE, GRID_EMISSION_FACTOR } from '@/lib/standards/emission-factor';
 import { priceAsOfText } from '@/lib/pricing/tariffs';
@@ -65,9 +65,9 @@ export function buildCalculationDocx(data: any, type: string, options: DocxRepor
         heading('核心测算指标'),
         table([
             ['指标', '数值'],
-            ['内部收益率 IRR', f.irr === null ? '无法确认' : `${f.irr.toFixed(2)}%`],
+            ['内部收益率（IRR）', f.irr === null ? '无法确认' : `${f.irr.toFixed(2)}%`],
             ['静态回收期', f.payback === null || f.payback >= f.lifetime ? '估算期内未回本' : `${f.payback.toFixed(1)} 年`],
-            [type === 'storage' ? '度电储能成本（LCOS）' : '度电成本 LCOE（折现）', f.lcoe === null ? '—' : `${f.lcoe.toFixed(3)} 元/度`],
+            [type === 'storage' ? '平准化储能成本（LCOS）' : '平准化度电成本（LCOE，折现）', f.lcoe === null ? '—' : `${f.lcoe.toFixed(3)} 元/度`],
             ['总投资', f.investment === null ? NOT_FILLED : `${money(f.investment)} 元`],
         ]),
     ];
@@ -75,7 +75,7 @@ export function buildCalculationDocx(data: any, type: string, options: DocxRepor
     if (type !== 'storage') {
         children.push(
             heading('资源基础与发电分析'),
-            para(`装机规模：${f.capacity ? `${f.capacity} kWp` : NOT_FILLED}；首年发电量：${money(f.energy.year1)} kWh；等效利用小时数：${money(f.energy.equivalentHours)} h${f.energy.pr !== null ? `；系统性能比 PR：${(f.energy.pr * 100).toFixed(1)}%` : ''}`),
+            para(`装机规模：${f.capacity ? `${f.capacity} ${capacityUnitOf(type)}` : NOT_FILLED}；首年发电量：${money(f.energy.year1)} kWh；等效利用小时数：${money(f.energy.equivalentHours)} h${f.energy.pr !== null ? `；系统性能比（PR）：${(f.energy.pr * 100).toFixed(1)}%` : ''}`),
         );
         if (f.energy.monthly) {
             children.push(table([
@@ -89,7 +89,7 @@ export function buildCalculationDocx(data: any, type: string, options: DocxRepor
     if (typeof f.assumptions?.omCostRatio === 'number') {
         children.push(para(`年度运维费：初始投资的 ${(f.assumptions.omCostRatio * 100).toFixed(1)}%，每年增长 ${((f.assumptions.omEscalation ?? 0) * 100).toFixed(1)}%`, { size: 19 }));
     }
-    children.push(para(`折现率：${f.discountRate === null ? '未返回' : `${(f.discountRate * 100).toFixed(1)}%（NPV 与 LCOE 共用）`}`, { size: 19 }));
+    children.push(para(`折现率：${f.discountRate === null ? '未返回' : `${(f.discountRate * 100).toFixed(1)}%（净现值与平准化度电成本共用）`}`, { size: 19 }));
     if (f.cashFlow) {
         const cashFlow = f.cashFlow;
         children.push(table([

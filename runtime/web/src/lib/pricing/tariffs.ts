@@ -56,8 +56,9 @@ export const NO_PROVINCE_DATA = '暂无该省数据';
 export const PRICE_STALE_DAYS = 90;
 export const PRICE_STALE_NOTE = '可能已变化，请以最新文件为准';
 
-const UNVERIFIED_Q4_2025 = '来源待核实（原 price-crawler 静态表，注明「2025 年 Q4 参考值」，未附文件）';
-const UNVERIFIED_2024 = '来源待核实（原 electricity-price 表，注明「2024 年」参考电价，未附文件）';
+// 用户会看到这两句（结果页、报告），不写内部程序名
+const UNVERIFIED_Q4_2025 = '来源待核实：原参考电价表注明为 2025 年第四季度参考值，未附依据文件';
+const UNVERIFIED_2024 = '来源待核实：原参考电价表注明为 2024 年参考电价，未附依据文件';
 const FEED_IN_NOTE = '燃煤发电基准价沿用原表数值（原表名为「脱硫煤标杆上网电价」，2020 年起改称燃煤发电基准价），来源待核实';
 
 /**
@@ -222,6 +223,8 @@ export class TariffUnavailableError extends Error {
 export function priceAsOfText(pricing?: { asOfLabel?: string | null; staleNote?: string | null; source?: string | null } | null): string {
     if (!pricing || !pricing.asOfLabel) return '电价：用户输入或测算默认值，未使用省级电价表';
     const stale = pricing.staleNote ? `，${pricing.staleNote}` : '';
-    const source = pricing.source ? `（来源：${pricing.source}）` : '';
+    // 来源本身以「来源待核实」开头时不再前缀「来源：」，避免「来源：来源待核实」
+    const src = pricing.source?.trim();
+    const source = src ? (src.startsWith('来源') ? `（${src}）` : `（来源：${src}）`) : '';
     return `${pricing.asOfLabel}${stale}${source}`;
 }

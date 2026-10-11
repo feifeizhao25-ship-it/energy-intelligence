@@ -10,7 +10,7 @@ import {
 import { co2AvoidedTonnes, EMISSION_FACTOR_NOTE, GRID_EMISSION_FACTOR } from '@/lib/standards/emission-factor';
 import {
     PDF_FONT_FILES, REPORT_TITLE, REPORT_DISCLAIMER, NOT_FILLED,
-    reportConclusion, reportNumber, degradationText, displayOrNotFilled, extractReportFigures,
+    reportConclusion, reportNumber, degradationText, displayOrNotFilled, extractReportFigures, capacityUnitOf,
 } from '@/lib/reports/calculation-report';
 import { priceAsOfText } from '@/lib/pricing/tariffs';
 
@@ -233,7 +233,7 @@ const InvestmentReport: React.FC<InvestmentReportProps> = ({ data, type, aiAnaly
                     <Text style={styles.sectionTitle}>核心测算指标</Text>
                     <View style={styles.grid}>
                         <View style={styles.metricCard}>
-                            <Text style={styles.metricLabel}>内部收益率 IRR</Text>
+                            <Text style={styles.metricLabel}>内部收益率（IRR）</Text>
                             <Text style={styles.metricValue}>{irr === null ? '无法确认' : `${irr.toFixed(2)}%`}</Text>
                         </View>
                         <View style={styles.metricCard}>
@@ -241,7 +241,7 @@ const InvestmentReport: React.FC<InvestmentReportProps> = ({ data, type, aiAnaly
                             <Text style={styles.metricValue}>{payback === null || payback >= lifetime ? '估算期内未回本' : `${payback.toFixed(1)}年`}</Text>
                         </View>
                         <View style={styles.metricCard}>
-                            <Text style={styles.metricLabel}>度电成本 LCOE（折现）</Text>
+                            <Text style={styles.metricLabel}>平准化度电成本（LCOE，折现）</Text>
                             <Text style={styles.metricValue}>{lcoe === null ? '—' : `¥${lcoe.toFixed(3)}`}</Text>
                         </View>
                         <View style={styles.metricCard}>
@@ -255,10 +255,10 @@ const InvestmentReport: React.FC<InvestmentReportProps> = ({ data, type, aiAnaly
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>资源基础与发电分析</Text>
                     <Text style={{ fontSize: 9, marginBottom: 10, color: '#334155' }}>
-                        装机规模：{capacity ? `${capacity} kWp` : NOT_FILLED} |
+                        装机规模：{capacity ? `${capacity} ${capacityUnitOf(type)}` : NOT_FILLED} |
                         首年发电量：{Math.round(energy.year1 || 0).toLocaleString('zh-CN')} kWh |
                         等效利用小时数：{Math.round(energy.equivalentHours || energy.specificYield || 0).toLocaleString('zh-CN')} h
-                        {typeof energy.pr === 'number' ? ` | 系统性能比 PR：${(energy.pr * 100).toFixed(1)}%` : ''}
+                        {typeof energy.pr === 'number' ? ` | 系统性能比（PR）：${(energy.pr * 100).toFixed(1)}%` : ''}
                     </Text>
 
                     {/* 表格：月度发电分布 */}
@@ -289,7 +289,7 @@ const InvestmentReport: React.FC<InvestmentReportProps> = ({ data, type, aiAnaly
                         {typeof assumptions?.omCostRatio === 'number' && (
                             <Text style={{ fontSize: 8, color: '#64748b' }}>• 年度运维费：初始投资的 {(assumptions.omCostRatio * 100).toFixed(1)}%，每年增长 {((assumptions.omEscalation ?? 0) * 100).toFixed(1)}%</Text>
                         )}
-                        <Text style={{ fontSize: 8, color: '#64748b' }}>• 折现率：{discountRate === null ? '未返回' : `${(discountRate * 100).toFixed(1)}%（NPV 与 LCOE 共用）`}</Text>
+                        <Text style={{ fontSize: 8, color: '#64748b' }}>• 折现率：{discountRate === null ? '未返回' : `${(discountRate * 100).toFixed(1)}%（净现值与平准化度电成本共用）`}</Text>
                     </View>
 
                     {cashFlow ? (

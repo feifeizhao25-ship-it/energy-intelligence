@@ -114,7 +114,7 @@ function CalculatorResultPage() {
                         {/* Key Metrics Grid */}
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             <MetricCard
-                                label="项目 IRR"
+                                label="内部收益率（IRR）"
                                 value={`${data.financial.irr.toFixed(2)}%`}
                                 icon={<TrendingUp className="w-5 h-5 text-emerald-400" />}
                                 color="border-emerald-500/20"
@@ -126,7 +126,7 @@ function CalculatorResultPage() {
                                 color="border-blue-500/20"
                             />
                             <MetricCard
-                                label="LCOE 度电成本"
+                                label="平准化度电成本（LCOE）"
                                 value={`¥${data.financial.lcoe.toFixed(3)}`}
                                 icon={<DollarSign className="w-5 h-5 text-orange-400" />}
                                 color="border-orange-500/20"
@@ -185,7 +185,7 @@ function CalculatorResultPage() {
                         <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-5 sm:p-8">
                             <h3 className="text-lg font-bold text-white mb-4">核心参数回顾</h3>
                             <div className="space-y-4">
-                                <Parameter label="装机规模" value={`${data.metadata?.capacity || (data.energy?.year1 / (data.energy?.equivalentHours || data.energy?.specificYield || 1)).toFixed(1)} kWp`} />
+                                <Parameter label="装机规模" value={`${data.metadata?.capacity || (data.energy?.year1 / (data.energy?.equivalentHours || data.energy?.specificYield || 1)).toFixed(1)} ${capacityUnit(type)}`} />
                                 <Parameter label="省份" value={data.metadata?.province || '未知'} />
                                 <Parameter label="利用小时数" value={`${Math.round(data.energy?.equivalentHours || data.energy?.specificYield || 0)} h`} />
                                 <Parameter label="25年总发电量" value={`${(data.energy?.lifetime / 10000).toFixed(0)}万 kWh`} />
@@ -233,6 +233,11 @@ function MetricCard({ label, value, unit, icon, trend, color }: any) {
             </div>
         </div>
     );
+}
+
+/** 光伏装机按组件峰值功率 kWp，风电、储能按额定功率 kW */
+function capacityUnit(type: string | null): string {
+    return type === 'solar' || !type ? 'kWp' : 'kW';
 }
 
 function Parameter({ label, value }: any) {
