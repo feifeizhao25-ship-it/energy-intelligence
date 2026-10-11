@@ -50,6 +50,8 @@ function CalculatorResultPage() {
     const router = useRouter();
     const type = searchParams.get('type');
     const rawData = searchParams.get('data');
+    // 从测算页（往往已滚到页面下方）跳过来时，回到页面顶部，标题不被站点顶栏挡住
+    React.useEffect(() => { window.scrollTo(0, 0); }, [rawData]);
 
     if (!rawData) return <div className="p-20 text-center text-slate-400">未找到计算结果数据</div>;
 
