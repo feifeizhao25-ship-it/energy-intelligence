@@ -149,7 +149,7 @@ export default function StorageCalculatorPage() {
                                 ['年收益（按 330 天）', `${fmt(result.financial.metrics.annualRevenue)} 元`],
                                 ['内部收益率', `${fmt(result.financial.metrics.irr, 2)}%`],
                                 ['静态回收期', `${fmt(result.financial.metrics.paybackYears, 1)} 年`],
-                                ['度电储能成本', `${fmt(result.financial.metrics.lcos, 3)} 元/度`],
+                                ['平准化储能成本（LCOS）', `${fmt(result.financial.metrics.lcos, 3)} 元/度`],
                             ].map(([label, value]) => (
                                 <div key={label} className="rounded-xl bg-slate-800/60 p-4">
                                     <div className="text-xs text-slate-400">{label}</div>
