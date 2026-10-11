@@ -223,11 +223,21 @@ export class TariffUnavailableError extends Error {
 }
 
 /** 结果页、报告统一的电价时效说明 */
-export function priceAsOfText(pricing?: { asOfLabel?: string | null; staleNote?: string | null; source?: string | null } | null): string {
-    if (!pricing || !pricing.asOfLabel) return '电价：用户输入或测算默认值，未使用省级电价表';
+export function priceAsOfText(pricing?: {
+    asOfLabel?: string | null; staleNote?: string | null; source?: string | null;
+    /** 风电/储能接口返回：本次实际用的电价、来源状态 */
+    values?: Record<string, number> | null; sourceStatus?: string | null; province?: string | null;
+} | null): string {
+    const used = pricing?.values && Object.keys(pricing.values).length
+        ? Object.entries(pricing.values).map(([k, v]) => `${k} ${v} 元/度`).join('、')
+        : '';
+    if (!pricing || !pricing.asOfLabel) {
+        if (used && pricing?.sourceStatus === '用户输入') return `电价：${used}（你填写的数值${pricing.province ? `，省份：${pricing.province}` : ''}）`;
+        return '电价：用户输入或测算默认值，未使用省级电价表';
+    }
     const stale = pricing.staleNote ? `，${pricing.staleNote}` : '';
-    // 来源本身以「来源待核实」开头时不再前缀「来源：」，避免「来源：来源待核实」
+    // 来源本身以「来源」开头时不再前缀「来源：」，避免「来源：来源待核实」
     const src = pricing.source?.trim();
     const source = src ? (src.startsWith('来源') ? `（${src}）` : `（来源：${src}）`) : '';
-    return `${pricing.asOfLabel}${stale}${source}`;
+    return `${used ? `电价：${used}；` : ''}${pricing.asOfLabel}${stale}${source}`;
 }

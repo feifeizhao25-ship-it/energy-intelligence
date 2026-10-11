@@ -33,6 +33,8 @@ export type PricingInfo = {
     userProvided: string[];
     /** 上网电价说明（136 号文后市场化 / 机制电价）；只在涉及上网电价时有 */
     feedInBasis?: string;
+    /** 本次测算实际用的电价（元/度），键为中文名称，例如 { 上网电价: 0.391 } */
+    values: Record<string, number>;
 };
 
 export interface TariffDefaults {
@@ -115,7 +117,7 @@ function readOverride(raw: unknown, label: string): number | undefined {
     return value;
 }
 
-function pricingInfo(defaults: TariffDefaults, userProvided: string[], allUser: boolean, withFeedIn: boolean): PricingInfo {
+function pricingInfo(defaults: TariffDefaults, userProvided: string[], allUser: boolean, withFeedIn: boolean, values: Record<string, number>): PricingInfo {
     const fromTable = !allUser;
     return {
         province: defaults.province,
@@ -125,6 +127,7 @@ function pricingInfo(defaults: TariffDefaults, userProvided: string[], allUser: 
         stale: fromTable ? defaults.stale : false,
         staleNote: fromTable ? defaults.staleNote : null,
         userProvided,
+        values,
         ...(withFeedIn ? { feedInBasis: NEW_ENERGY_FEED_IN_BASIS } : {}),
     };
 }
@@ -165,7 +168,9 @@ export function resolveStoragePrices(
     const flatPrice = options.needsFlat
         ? pick(user.flatPrice, defaults.flat, '平时电价')
         : user.flatPrice ?? (allUser ? undefined : defaults.flat ?? undefined);
-    return { peakPrice, valleyPrice, flatPrice, pricing: pricingInfo(defaults, userProvided, allUser, false) };
+    const values: Record<string, number> = { 峰时电价: peakPrice, 谷时电价: valleyPrice };
+    if (flatPrice !== undefined) values['平时电价'] = flatPrice;
+    return { peakPrice, valleyPrice, flatPrice, pricing: pricingInfo(defaults, userProvided, allUser, false, values) };
 }
 
 /** 风电电价：上网电价（全额上网/余电上网部分），自用电价（自发自用部分）。 */
@@ -198,5 +203,7 @@ export function resolveWindPrices(
         electricityPrice = user.electricityPrice ?? defaults.averageRetail ?? undefined;
         if (electricityPrice === undefined) throw new PriceInputError(`电价表里没有${defaults.province}的工商业电价，请填写自用电价`, 'PRICE_REQUIRED');
     }
-    return { feedInTariff, electricityPrice, pricing: pricingInfo(defaults, userProvided, allUser, true) };
+    const values: Record<string, number> = { 上网电价: feedInTariff };
+    if (electricityPrice !== undefined) values['自用电价'] = electricityPrice;
+    return { feedInTariff, electricityPrice, pricing: pricingInfo(defaults, userProvided, allUser, true, values) };
 }

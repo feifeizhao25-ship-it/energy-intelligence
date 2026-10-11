@@ -38,10 +38,11 @@ export function describeDefault(defaults: TariffDefaults | null, key: PriceKey):
 /** 测算结果里的电价来源一句话 */
 export function describePricing(pricing: PricingInfo | null | undefined): string {
     if (!pricing) return '电价来源未返回';
-    if (pricing.sourceStatus === '用户输入') return '电价：全部为你填写的数值';
+    const used = Object.entries(pricing.values ?? {}).map(([k, v]) => `${k} ${v} 元/度`).join('、');
+    if (pricing.sourceStatus === '用户输入') return `电价：${used || '全部'}为你填写的数值`;
     const own = pricing.userProvided.length ? `；其中 ${pricing.userProvided.length} 项为你填写` : '';
     const stale = pricing.staleNote ? `，${pricing.staleNote}` : '';
-    return `电价：${pricing.province}省级电价表（${pricing.sourceStatus}${pricing.asOfLabel ? `，${pricing.asOfLabel}` : ''}${stale}）${own}`;
+    return `电价：${used ? `${used}，` : ''}${pricing.province}省级电价表（${pricing.sourceStatus}${pricing.asOfLabel ? `，${pricing.asOfLabel}` : ''}${stale}）${own}`;
 }
 
 export function useTariffDefaults(province: string): TariffDefaults | null {

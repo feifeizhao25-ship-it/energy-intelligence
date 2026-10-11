@@ -65,8 +65,19 @@ export default function WindCalculatorPage() {
                     operation: {}
                 })
             });
-            const data = await readCalculationResponse(response);
-            router.push(`/calculator/result?type=wind&data=${encodeURIComponent(JSON.stringify(data))}`);
+            const data = await readCalculationResponse(response) as Record<string, any>;
+            // 结果页「核心参数回顾」与电价说明读 metadata：省份、装机（kW）、电价来源都带过去
+            const province = normalizeProvince(formData.province) || formData.province;
+            const withMeta = {
+                ...data,
+                metadata: {
+                    projectName: `${province}分散式风电项目`,
+                    province,
+                    capacity: Math.round(formData.capacity * formData.count * 1000),
+                    pricing: data.pricing,
+                },
+            };
+            router.push(`/calculator/result?type=wind&data=${encodeURIComponent(JSON.stringify(withMeta))}`);
         } catch (error) {
             setErrorMessage(error instanceof TypeError
                 ? '网络连接失败，请检查网络后重试。'
