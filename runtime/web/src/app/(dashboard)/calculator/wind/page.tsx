@@ -109,12 +109,16 @@ export default function WindCalculatorPage() {
                         <motion.div key="s1" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
                             <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8">
                                 <h2 className="text-xl font-bold text-white mb-6">位置与省份选择</h2>
-                                <div className="h-[400px] rounded-2xl overflow-hidden mb-6 border border-slate-700">
+                                <div className="mb-4">
                                     <LocationPicker
                                         value={{ lat: formData.lat.toString(), lng: formData.lng.toString(), province: formData.province }}
                                         onChange={v => setFormData({ ...formData, lat: v.lat, lng: v.lng, province: v.province || formData.province })}
                                     />
                                 </div>
+                                <p data-testid="wind-location-summary" className="text-sm leading-6 text-slate-300">
+                                    当前位置：纬度 {Number(formData.lat).toFixed(4)}，经度 {Number(formData.lng).toFixed(4)}；省份：{formData.province || '未选择'}
+                                </p>
+                                <p className="mt-1 text-xs leading-5 text-slate-500">位置用于读取历史风速；省份用于下一步的上网电价参考，可在下一步修改。</p>
                             </div>
                         </motion.div>
                     )}

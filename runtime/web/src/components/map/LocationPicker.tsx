@@ -253,13 +253,14 @@ export default function LocationPicker({ value, onChange, placeholder = "点击�
             <button
                 type="button"
                 onClick={() => setIsMapOpen(true)}
-                className="w-full flex items-center gap-2 px-4 py-3 border border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors text-left group"
+                className="w-full flex items-center gap-2 px-4 py-3 bg-white border border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors text-left group"
             >
                 <MapPin className="w-5 h-5 text-blue-600 group-hover:text-blue-700" />
-                <span className={`flex-1 ${selectedLocation || (value?.lat && value?.lng) ? 'text-gray-900' : 'text-gray-500'}`}>
+                {/* 按钮自带白底：放在深色卡片里（风电测算第 1 步）文字也看得清 */}
+                <span className={`flex-1 min-w-0 break-words ${selectedLocation || (value?.lat && value?.lng) ? 'text-gray-900' : 'text-gray-500'}`}>
                     {displayText}
                 </span>
-                <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded">
+                <span className="shrink-0 text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded">
                     点击选择
                 </span>
             </button>
