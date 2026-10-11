@@ -43,9 +43,9 @@ export default function CostBreakdownEditor({ investment }: { investment: number
             </p>
             {rows.map(row => (
                 <div key={row.key} className="space-y-1.5">
-                    <div className="flex items-center justify-between gap-2 text-xs">
-                        <label htmlFor={`cost-${row.key}`} className="text-slate-400">{row.label}</label>
-                        <span className="flex items-center gap-1">
+                    <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 text-xs">
+                        <label htmlFor={`cost-${row.key}`} className="whitespace-nowrap text-slate-400">{row.label}</label>
+                        <span className="ml-auto flex items-center gap-1">
                             <input
                                 id={`cost-${row.key}`}
                                 type="number"
@@ -58,7 +58,7 @@ export default function CostBreakdownEditor({ investment }: { investment: number
                                 className="w-16 rounded-md border border-slate-700 bg-slate-800 px-2 py-1 text-right text-white"
                             />
                             <span className="text-slate-500">%</span>
-                            <span className="ml-2 min-w-[7rem] text-right font-mono text-white">¥{Math.round(row.amount).toLocaleString('zh-CN')}</span>
+                            <span className="ml-2 min-w-[6.5rem] text-right font-mono text-white">¥{Math.round(row.amount).toLocaleString('zh-CN')}</span>
                         </span>
                     </div>
                     <div className="h-1 overflow-hidden rounded-full bg-slate-800">

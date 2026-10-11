@@ -5,7 +5,6 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import {
     ArrowLeft,
     Download,
-    Share2,
     TrendingUp,
     Calendar,
     DollarSign,
@@ -67,41 +66,38 @@ function CalculatorResultPage() {
 
     return (
         <div className="min-h-screen bg-[#020617] text-slate-200 pb-20">
-            {/* Result Header */}
+            {/* Result Header：手机上标题与按钮分两行，标题正常换行，按钮可折行，不再撑出屏幕 */}
             <div className="bg-slate-900/50 border-b border-slate-800 sticky top-0 z-40 backdrop-blur-md">
-                <div className="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
+                <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex min-w-0 items-start gap-3">
                         <button
                             onClick={() => router.back()}
-                            className="p-2 rounded-lg bg-slate-800 border border-slate-700 hover:bg-slate-700 transition-colors"
+                            aria-label="返回"
+                            className="shrink-0 p-2 rounded-lg bg-slate-800 border border-slate-700 hover:bg-slate-700 transition-colors"
                         >
                             <ArrowLeft className="w-4 h-4" />
                         </button>
-                        <div>
-                            <h1 className="text-lg font-bold text-white flex items-center gap-2">
-                                测算报告: {data.metadata?.projectName || (type === 'solar' ? '光伏' : type === 'wind' ? '风电' : '储能') + '项目'}
-                                <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 text-[10px] uppercase font-bold border border-blue-500/20 tracking-widest">
+                        <div className="min-w-0">
+                            <h1 className="text-base sm:text-lg font-bold text-white leading-snug break-words">
+                                测算报告：{data.metadata?.projectName || (type === 'solar' ? '光伏' : type === 'wind' ? '风电' : '储能') + '项目'}
+                                <span className="ml-2 inline-block whitespace-nowrap align-middle px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 text-[10px] font-bold border border-blue-500/20">
                                     初步估算
                                 </span>
                             </h1>
-                            <p className="text-xs text-slate-500">
-                                计算记录编号: {data.metadata?.calculationId || data.metadata?.snapshotId || '尚未生成'}
+                            <p className="mt-0.5 text-xs text-slate-500 break-all">
+                                计算记录编号：{data.metadata?.calculationId || data.metadata?.snapshotId || '尚未生成'}
                             </p>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-3">
-                        <button className="px-4 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs font-bold hover:bg-slate-700 transition-all flex items-center gap-2">
-                            <Share2 className="w-3.5 h-3.5" /> 分享
-                        </button>
-
+                    <div className="flex flex-wrap items-start gap-2 sm:justify-end">
                         <WordDownloadButton data={data} type={type || 'solar'} />
                         <PDFDownloadButton data={data} type={type || 'solar'} />
                     </div>
                 </div>
             </div>
 
-            <main className="max-w-6xl mx-auto px-6 mt-10">
+            <main className="max-w-6xl mx-auto px-4 sm:px-6 mt-6 sm:mt-10">
                 <p
                     data-testid="price-as-of"
                     className={`mb-6 rounded-xl border px-4 py-3 text-xs leading-6 ${(data.metadata?.pricing ?? data.pricing)?.stale ? 'border-amber-500/30 bg-amber-500/10 text-amber-200' : 'border-slate-800 bg-slate-900 text-slate-400'}`}
@@ -110,7 +106,7 @@ function CalculatorResultPage() {
                     {priceAsOfText(data.metadata?.pricing ?? data.pricing)}
                     {(data.metadata?.pricing ?? data.pricing)?.feedInBasis && <span className="mt-1 block">{(data.metadata?.pricing ?? data.pricing).feedInBasis}</span>}
                 </p>
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
 
                     {/* Main Dashboard */}
                     <div className="lg:col-span-2 space-y-8">
@@ -145,17 +141,12 @@ function CalculatorResultPage() {
                         </div>
 
                         {/* Monthly Generation Analysis */}
-                        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8">
-                            <div className="flex items-center justify-between mb-8">
-                                <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-8">
+                            <div className="mb-4 sm:mb-8">
+                                <h3 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
                                     <BarChart3 className="w-5 h-5 text-blue-400" />
                                     月度发电量（估算）
                                 </h3>
-                                <div className="flex gap-2">
-                                    <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
-                                        <div className="w-2 h-2 rounded-full bg-blue-500" /> 发电量 (kWh)
-                                    </div>
-                                </div>
                             </div>
 
                             <div className="mt-4" data-testid="monthly-generation">
@@ -165,12 +156,12 @@ function CalculatorResultPage() {
 
                         {/* Financial Analysis Grid */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8">
+                            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-8">
                                 <h3 className="text-lg font-bold text-white mb-6">成本构成（按你的报价填写）</h3>
                                 <CostBreakdownEditor investment={data.financial.investment} />
                             </div>
 
-                            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8">
+                            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-8">
                                 <h3 className="text-lg font-bold text-white mb-6">环境效益分析</h3>
                                 <div className="grid grid-cols-2 gap-6">
                                     <div className="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 text-center">
@@ -191,7 +182,7 @@ function CalculatorResultPage() {
 
                     {/* Sidebar Info */}
                     <div className="space-y-6">
-                        <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-8">
+                        <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-5 sm:p-8">
                             <h3 className="text-lg font-bold text-white mb-4">核心参数回顾</h3>
                             <div className="space-y-4">
                                 <Parameter label="装机规模" value={`${data.metadata?.capacity || (data.energy?.year1 / (data.energy?.equivalentHours || data.energy?.specificYield || 1)).toFixed(1)} kWp`} />
@@ -203,7 +194,7 @@ function CalculatorResultPage() {
                             <AIProjectAnalysis type={type || 'solar'} data={data} />
                         </div>
 
-                        <div className="bg-gradient-to-br from-indigo-600 to-purple-600 rounded-3xl p-8 relative overflow-hidden group transition-all hover:scale-[1.02]">
+                        <div className="bg-gradient-to-br from-indigo-600 to-purple-600 rounded-3xl p-5 sm:p-8 relative overflow-hidden group transition-all hover:scale-[1.02]">
                             <div className="absolute top-0 right-0 p-4 opacity-10">
                                 <TrendingUp className="w-24 h-24" />
                             </div>
@@ -224,11 +215,11 @@ function CalculatorResultPage() {
 
 function MetricCard({ label, value, unit, icon, trend, color }: any) {
     return (
-        <div className={`p-6 rounded-3xl bg-slate-900 border ${color} relative overflow-hidden`}>
+        <div className={`p-4 sm:p-6 rounded-3xl bg-slate-900 border ${color} relative overflow-hidden min-w-0`}>
             <div className="flex flex-col gap-1 relative z-10">
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{label}</span>
+                <span className="text-[11px] font-bold text-slate-400 leading-4">{label}</span>
                 <div className="flex items-baseline gap-1">
-                    <span className="text-2xl font-bold text-white tracking-tight">{value}</span>
+                    <span className="text-xl sm:text-2xl font-bold text-white tracking-tight break-all">{value}</span>
                     {unit && <span className="text-xs text-slate-500">{unit}</span>}
                 </div>
                 {trend && (
@@ -267,7 +258,7 @@ function PDFDownloadButton({ data, type }: { data: any, type: string }) {
 
     if (!shouldRender) {
         return (
-            <div className="flex flex-col items-end gap-1">
+            <div className="flex flex-col items-start gap-1 sm:items-end">
                 <button
                     disabled={reserving}
                     onClick={async () => {
@@ -284,12 +275,12 @@ function PDFDownloadButton({ data, type }: { data: any, type: string }) {
                             setReserving(false);
                         }
                     }}
-                    className="px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all flex items-center gap-2 shadow-lg shadow-blue-900/40 disabled:opacity-50"
+                    className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all flex items-center gap-2 shadow-lg shadow-blue-900/40 disabled:opacity-50"
                 >
                     <Download className="w-3.5 h-3.5" />
-                    {reserving ? '正在核验额度...' : '导出详细报表 (PDF)'}
+                    {reserving ? '正在核验额度…' : '导出 PDF'}
                 </button>
-                {errorMessage && <span className="max-w-64 text-right text-[11px] text-red-400">{errorMessage}</span>}
+                {errorMessage && <span className="max-w-64 text-[11px] text-red-400 sm:text-right">{errorMessage}</span>}
             </div>
         );
     }
@@ -302,7 +293,7 @@ function PDFDownloadButton({ data, type }: { data: any, type: string }) {
             {({ loading, error }) => (
                 <button
                     disabled={loading}
-                    className="px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all flex items-center gap-2 shadow-lg shadow-blue-900/40 disabled:opacity-50"
+                    className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all flex items-center gap-2 shadow-lg shadow-blue-900/40 disabled:opacity-50"
                 >
                     <Download className="w-3.5 h-3.5" />
                     {loading ? '正在准备...' : error ? '生成失败，请重试' : '点击下载'}
@@ -317,7 +308,7 @@ function WordDownloadButton({ data, type }: { data: any, type: string }) {
     const [busy, setBusy] = React.useState(false);
     const [errorMessage, setErrorMessage] = React.useState('');
     return (
-        <div className="flex flex-col items-end gap-1">
+        <div className="flex flex-col items-start gap-1 sm:items-end">
             <button
                 disabled={busy}
                 onClick={async () => {
@@ -348,7 +339,7 @@ function WordDownloadButton({ data, type }: { data: any, type: string }) {
                 <FileText className="w-3.5 h-3.5" />
                 {busy ? '正在生成…' : '导出 Word'}
             </button>
-            {errorMessage && <span className="max-w-64 text-right text-[11px] text-red-400">{errorMessage}</span>}
+            {errorMessage && <span className="max-w-64 text-[11px] text-red-400 sm:text-right">{errorMessage}</span>}
         </div>
     );
 }
