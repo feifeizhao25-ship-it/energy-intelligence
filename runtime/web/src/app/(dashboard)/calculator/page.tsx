@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import {
@@ -147,53 +149,12 @@ export default function CalculatorHomePage() {
             ))}
           </div>
 
-          {/* Quick Recent Section */}
-          <div className="mt-20">
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-2xl font-bold text-white">最近的项目测算</h2>
-              <button className="text-sm text-slate-400 hover:text-white transition-colors flex items-center gap-1">
-                查看全部项目 <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="bg-slate-800/30 rounded-3xl border border-slate-700/50 overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead>
-                    <tr className="border-b border-slate-700/50">
-                      <th className="px-8 py-4 text-xs font-bold text-slate-500 uppercase">项目名称</th>
-                      <th className="px-8 py-4 text-xs font-bold text-slate-500 uppercase">类型</th>
-                      <th className="px-8 py-4 text-xs font-bold text-slate-500 uppercase">IRR</th>
-                      <th className="px-8 py-4 text-xs font-bold text-slate-500 uppercase">回收期</th>
-                      <th className="px-8 py-4 text-xs font-bold text-slate-500 uppercase">日期</th>
-                      <th className="px-8 py-4 text-xs font-bold text-slate-500 uppercase">操作</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-700/30">
-                    {[
-                      { name: '河北保定分布式光伏 1MW', type: '光伏', irr: '18.5%', pb: '4.8年', date: '2024-01-05' },
-                      { name: '山东德州分散式风电 5MW', type: '风电', irr: '12.3%', pb: '7.2年', date: '2024-01-03' },
-                      { name: '江苏盐城储能电站 10MWh', type: '储能', irr: '9.2%', pb: '6.5年', date: '2024-01-01' }
-                    ].map((row, i) => (
-                      <tr key={i} className="hover:bg-white/[0.02] transition-colors">
-                        <td className="px-8 py-6 font-medium text-white">{row.name}</td>
-                        <td className="px-8 py-6 text-slate-400">{row.type}</td>
-                        <td className="px-8 py-6">
-                          <span className="text-emerald-400 font-bold">{row.irr}</span>
-                        </td>
-                        <td className="px-8 py-6 text-slate-300">{row.pb}</td>
-                        <td className="px-8 py-6 text-slate-500">{row.date}</td>
-                        <td className="px-8 py-6">
-                          <button className="p-2 rounded-lg bg-slate-700/50 hover:bg-blue-600 transition-all text-white">
-                            <ArrowRight className="w-4 h-4" />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+          {/* 原来这里是写死的「最近的项目测算」表（河北保定光伏 IRR 18.5%、山东德州风电、江苏盐城储能），
+              每个用户看到的都是同样的虚构项目，已删除；用户自己的项目在「我的项目」页。 */}
+          <div className="mt-12 text-center">
+            <Link href="/projects" className="inline-flex items-center gap-1 text-sm text-slate-400 hover:text-white">
+              查看我的项目 <ChevronRight className="w-4 h-4" />
+            </Link>
           </div>
         </div>
       </section>
