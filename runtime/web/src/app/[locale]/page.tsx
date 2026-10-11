@@ -45,6 +45,7 @@ import {
     Calculator as CalcIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { homePricingPreview } from '@/lib/entitlements/preview';
 import { useTranslations } from 'next-intl';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import AddressAutocomplete from '@/components/ui/AddressAutocomplete';
@@ -168,7 +169,7 @@ export default function HomePage() {
                         <div>
                             <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-500/20 rounded-full mb-6">
                                 <Sparkles className="w-4 h-4 text-green-400" />
-                                <span className="text-sm font-bold text-green-400">AI驱动的智能决策系统</span>
+                                <span className="text-sm font-bold text-green-400">光伏 · 风电 · 储能 初步测算</span>
                             </div>
 
                             <h1 className="text-4xl md:text-5xl font-black mb-6 leading-tight dark:text-white">
@@ -195,7 +196,7 @@ export default function HomePage() {
                                     className="flex items-center gap-2 px-6 py-3 bg-white/10 text-white font-bold rounded-xl hover:bg-white/20 transition-colors"
                                 >
                                     <FileText className="w-5 h-5" />
-                                    查看API文档
+                                    开放接口说明
                                 </Link>
                             </div>
 
@@ -506,14 +507,10 @@ export default function HomePage() {
             <section className="py-16 px-4 bg-green-50 dark:bg-slate-950/50">
                 <div className="max-w-4xl mx-auto text-center">
                     <h2 className="text-3xl font-black text-slate-900 dark:text-white mb-4">价格方案</h2>
-                    <p className="text-lg text-slate-500 dark:text-slate-400 mb-8">从个人投资到企业级应用，满足不同规模需求</p>
+                    <p className="text-lg text-slate-500 dark:text-slate-400 mb-8">各档权益与定价页一致，以价格方案页为准</p>
 
                     <div className="grid md:grid-cols-3 gap-6">
-                        {[
-                            { name: '免费版', price: '¥0', features: ['每日2次测算', '最多1个项目', '数据保留7天'] },
-                            { name: '专业版', price: '¥198/月', features: ['测算不限次，每日 100 次 AI 对话', '文献检索', 'PDF与Word导出'], popular: true },
-                            { name: '企业版', price: '¥38,000/年', features: ['企业权限', 'API与SSO', '白标与定制评估'], popular: false },
-                        ].map((plan, i) => (
+                        {homePricingPreview().map((plan, i) => (
                             <div key={i} className={cn(
                                 "bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border-2",
                                 plan.popular ? "border-green-500" : "border-slate-100 dark:border-slate-700"
@@ -553,14 +550,14 @@ export default function HomePage() {
             {/* CTA Section */}
             <section className="py-16 px-4 bg-gradient-to-br from-green-500 to-emerald-600 text-white">
                 <div className="max-w-3xl mx-auto text-center">
-                    <h2 className="text-3xl font-black mb-4">立即开始您的智能投资分析</h2>
+                    <h2 className="text-3xl font-black mb-4">开始一次项目测算</h2>
                     <p className="text-lg text-green-100 mb-8">免费版可体验基础测算；完整额度与会员权益以价格方案页为准</p>
                     <div className="flex flex-wrap justify-center gap-4">
                         <Link
                             href="/login"
                             className="flex items-center gap-2 px-8 py-4 bg-white text-green-600 font-bold rounded-2xl hover:bg-green-50 transition-colors shadow-lg"
                         >
-                            <span>免费注册体验</span>
+                            <span>免费注册</span>
                             <ArrowRight className="w-5 h-5" />
                         </Link>
                         <a
@@ -585,7 +582,7 @@ export default function HomePage() {
                                 </div>
                                 <span className="font-bold text-white">新能源智库</span>
                             </div>
-                            <p className="text-sm">AI驱动的新能源项目智能决策系统</p>
+                            <p className="text-sm">新能源项目初步测算与政策查询</p>
                         </div>
                         <div>
                             <h4 className="font-bold text-white mb-4">产品</h4>
@@ -598,7 +595,7 @@ export default function HomePage() {
                         <div>
                             <h4 className="font-bold text-white mb-4">资源</h4>
                             <ul className="space-y-2 text-sm">
-                                <li><Link href="/developer/docs" className="hover:text-green-400">API文档</Link></li>
+                                <li><Link href="/developer/docs" className="hover:text-green-400">开放接口说明</Link></li>
                                 <li><Link href="/papers" className="hover:text-green-400">文献检索</Link></li>
                                 <li><Link href="/assistant" className="hover:text-green-400">AI助手</Link></li>
                             </ul>

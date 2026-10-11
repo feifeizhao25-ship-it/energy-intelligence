@@ -6,14 +6,12 @@ import {
     User,
     Building,
     Briefcase,
-    Globe,
     FileText,
     Save,
     ShieldCheck,
     CheckCircle2,
     AlertCircle,
-    Loader2,
-    Crown
+    Loader2
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { AccountDataPanel } from '@/components/account/AccountDataPanel';
@@ -70,7 +68,7 @@ export default function ProfileSettingsPage() {
 
             const result = await res.json();
             if (result.success) {
-                setStatus({ type: 'success', message: '资料已成功更新，专家档案已激活' });
+                setStatus({ type: 'success', message: '资料已保存' });
                 // Optional: Trigger session update if next-auth is configured to handle it
                 await update();
             } else {
@@ -94,7 +92,7 @@ export default function ProfileSettingsPage() {
     return (
         <div className="max-w-4xl mx-auto space-y-8">
             <div>
-                <h1 className="text-3xl font-black text-slate-900 tracking-tight mb-2">个人资料与专家档案</h1>
+                <h1 className="text-3xl font-black text-slate-900 tracking-tight mb-2">个人资料</h1>
                 <p className="text-slate-500 text-sm">完善您的职业背景信息，便于工作台和报告按您的情况展示相关内容。</p>
             </div>
 
@@ -140,24 +138,7 @@ export default function ProfileSettingsPage() {
                                         className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm font-medium"
                                     />
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                                        <Globe className="w-3.5 h-3.5" /> 业务领域
-                                    </label>
-                                    <select
-                                        value={formData.industry}
-                                        onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
-                                        className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm font-medium"
-                                    >
-                                        <option value="">请选择领域</option>
-                                        <option value="solar">光伏发电</option>
-                                        <option value="wind">风力发电</option>
-                                        <option value="storage">储能系统</option>
-                                        <option value="grid">智能电网</option>
-                                        <option value="finance">新能源投融资</option>
-                                        <option value="policy">政策研究</option>
-                                    </select>
-                                </div>
+                                {/* 「业务领域」已并入下方「工作台个性化 · 关注领域」，避免两处重复填写 */}
                             </div>
 
                             <div className="space-y-2">
@@ -218,21 +199,6 @@ export default function ProfileSettingsPage() {
 
                     <AccountDataPanel phone={(session?.user as { phone?: string } | undefined)?.phone} />
 
-                    <div className="bg-indigo-50 rounded-3xl p-8 border border-indigo-100">
-                        <h4 className="text-indigo-900 font-black text-sm mb-4 tracking-tight uppercase flex items-center gap-2">
-                            <Crown className="w-4 h-4 text-indigo-600" /> 专家权益
-                        </h4>
-                        <ul className="space-y-3">
-                            <li className="flex items-start gap-3 text-xs text-indigo-800 font-medium">
-                                <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-1 flex-shrink-0" />
-                                测算报告自动生成中英文专家署名
-                            </li>
-                            <li className="flex items-start gap-3 text-xs text-indigo-800 font-medium">
-                                <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-1 flex-shrink-0" />
-                                优先获得行业白皮书与闭门会议邀请
-                            </li>
-                        </ul>
-                    </div>
                 </div>
             </div>
         </div>

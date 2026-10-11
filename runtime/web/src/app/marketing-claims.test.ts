@@ -8,7 +8,9 @@ import { join, relative } from 'node:path';
 
 const ROOT = join(__dirname, '..', '..');
 const DIRS = [join(ROOT, 'src/app'), join(ROOT, 'src/components')];
-const BANNED = ['权威', '解答所有', '最受欢迎', '顶级', '误差控制在', '银行理财的', '最优装机', '精准', '专家级', '全网', '国家级', '被动收入'];
+const BANNED = ['权威', '解答所有', '最受欢迎', '顶级', '误差控制在', '银行理财的', '最优装机', '精准', '专家级', '全网', '国家级', '被动收入',
+    // 第二轮截图发现：夸张或中英混杂的说法
+    '智能决策系统', '智能投资分析', '专家档案', '专家权益', 'API文档', '这里，这里'];
 
 function walk(dir: string): string[] {
     return readdirSync(dir).flatMap(name => {
@@ -29,5 +31,21 @@ describe('营销与页面文案：不用绝对化、无依据的说法', () => {
             });
         }
         expect(hits).toEqual([]);
+    });
+});
+
+describe('首页价格预览与权益注册表一致', () => {
+    it('预览直接取 entitlements.json，专业版含「PDF 与 Word 报告导出」，没有写死的套餐数组', () => {
+        const { homePricingPreview } = require('@/lib/entitlements/preview');
+        const registry = require('@/lib/entitlements/entitlements.json');
+        const preview = homePricingPreview();
+        expect(preview.map((p: any) => p.name)).toEqual(['免费版', '专业版', '企业版']);
+        expect(preview[1].features).toEqual(registry.tiers.pro.features_zh.slice(0, 4));
+        expect(preview[2].price).toBe('¥38,000/年');
+        for (const page of ['src/app/page.tsx', 'src/app/[locale]/page.tsx']) {
+            const src = readFileSync(join(ROOT, page), 'utf8');
+            expect(src).toContain('homePricingPreview()');
+            expect(src).not.toContain("'PDF与Word导出'");
+        }
     });
 });

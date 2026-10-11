@@ -15,7 +15,7 @@ import {
 const steps = [
     {
         title: "欢迎来到新能源智库",
-        description: "您的人工智能新能源智库。在这里，这里把发电量、收益测算的假设和数据来源都摆在明面上，帮你做初步判断。",
+        description: "在这里，发电量与收益测算的假设和数据来源都会列清楚，帮你做初步判断；结果仅供参考。",
         icon: <Zap className="w-8 h-8 text-blue-500" />,
         color: "bg-blue-50"
     },
