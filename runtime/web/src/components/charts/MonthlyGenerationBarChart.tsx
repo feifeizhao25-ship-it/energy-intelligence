@@ -56,7 +56,7 @@ export default function MonthlyGenerationBarChart({ data, theme = 'light', barAr
     return (
         <figure>
             <div
-                className="grid grid-cols-12 items-end gap-1 sm:gap-2"
+                className="grid grid-cols-12 items-end gap-0.5 sm:gap-2"
                 role="img"
                 aria-label={`月度发电量柱状图：${values.map((v, i) => `${MONTH_LABELS[i]} ${Math.round(v)} 千瓦时`).join('，')}`}
             >
@@ -69,7 +69,8 @@ export default function MonthlyGenerationBarChart({ data, theme = 'light', barAr
                             style={{ height: `${heights[index]}px` }}
                             title={`${MONTH_LABELS[index]}：${missing[index] ? '缺数据' : `${Math.round(value).toLocaleString('zh-CN')} 千瓦时`}`}
                         />
-                        <span className={`text-[10px] ${muted}`}>{MONTH_LABELS[index]}</span>
+                        {/* 月份标签固定一行高、不换行：「10月」等折成两行会把柱子底边抬高 */}
+                        <span className={`block h-4 whitespace-nowrap text-[9px] leading-4 sm:text-[10px] ${muted}`}>{MONTH_LABELS[index]}</span>
                     </div>
                 ))}
             </div>

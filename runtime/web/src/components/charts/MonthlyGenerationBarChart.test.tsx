@@ -39,6 +39,16 @@ describe('月度发电量柱状图', () => {
         expect(Math.max(...heights)).toBe(200); // 5 月最大
         expect(html).not.toMatch(/height:\s*\d+(\.\d+)?%/);
     });
+
+    it('月份标签固定一行（不换行、同高），10–12 月的柱子底边与其他月份对齐', () => {
+        const html = renderToStaticMarkup(<MonthlyGenerationBarChart data={{ monthly }} />);
+        const labels = [...html.matchAll(/<span class="([^"]*)">(\d+月)<\/span>/g)];
+        expect(labels.map(m => m[2])).toEqual(['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']);
+        for (const [, cls] of labels) {
+            expect(cls).toContain('whitespace-nowrap');
+            expect(cls).toContain('h-4');
+        }
+    });
 });
 
 // ---- 整页：/calculator/result 用 URL 里的 data 渲染图表 ----
