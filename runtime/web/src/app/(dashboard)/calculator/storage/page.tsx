@@ -87,7 +87,8 @@ export default function StorageCalculatorPage() {
 
     return (
         <div className="min-h-screen bg-slate-950 text-slate-200 pb-20">
-            <div className="sticky top-0 z-50 bg-slate-900/80 backdrop-blur-xl border-b border-slate-800">
+            {/* 手机上不吸顶：站点顶栏已固定在上方，两条吸顶栏会叠在一起挡住内容 */}
+            <div className="sm:sticky sm:top-0 z-30 bg-slate-900/80 backdrop-blur-xl border-b border-slate-800">
                 <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
                     <button onClick={() => router.back()} className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-sm">
                         <ArrowLeft className="w-4 h-4" /> 返回
@@ -101,7 +102,6 @@ export default function StorageCalculatorPage() {
             </div>
 
             <main className="max-w-4xl mx-auto px-4 sm:px-6 mt-8 sm:mt-12 space-y-6">
-                {errorMessage && <p role="alert" className="rounded-xl border border-red-400/40 bg-red-950/40 p-4 text-red-200">{errorMessage}</p>}
                 <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-8 space-y-8">
                     <h2 className="text-xl font-bold text-white">系统规格</h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -132,6 +132,7 @@ export default function StorageCalculatorPage() {
                         <p className="text-[11px] leading-5 text-slate-500">按每天一次「谷时充电、峰时放电」估算（充放电效率 88%），未考虑各省现货价格波动与需量电费；实际充放电窗口请按当地现行分时文件或合同确认。</p>
                     </div>
 
+                    {errorMessage && <p role="alert" className="rounded-xl border border-red-400/40 bg-red-950/40 p-4 text-sm leading-6 text-red-200">{errorMessage}</p>}
                     <button onClick={handleCalculate} disabled={isCalculating} className="w-full py-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold flex items-center justify-center gap-2">
                         {isCalculating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Calculator className="w-4 h-4" />}
                         执行测算

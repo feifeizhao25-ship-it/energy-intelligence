@@ -89,7 +89,8 @@ export default function WindCalculatorPage() {
 
     return (
         <div className="min-h-screen bg-slate-950 text-slate-200 pb-20">
-            <div className="sticky top-0 z-50 bg-slate-900/80 backdrop-blur-xl border-b border-slate-800">
+            {/* 手机上不吸顶：站点顶栏已固定在上方，两条吸顶栏会叠在一起挡住内容 */}
+            <div className="sm:sticky sm:top-0 z-30 bg-slate-900/80 backdrop-blur-xl border-b border-slate-800">
                 <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
                     <button onClick={() => router.back()} className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-sm">
                         <ArrowLeft className="w-4 h-4" /> 返回
@@ -103,7 +104,6 @@ export default function WindCalculatorPage() {
             </div>
 
             <main className="max-w-4xl mx-auto px-6 mt-12">
-                {errorMessage && <p role="alert" className="mb-6 rounded-xl border border-red-400/40 bg-red-950/40 p-4 text-red-200">{errorMessage}</p>}
                 <AnimatePresence mode="wait">
                     {currentStep === 1 && (
                         <motion.div key="s1" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
@@ -161,7 +161,9 @@ export default function WindCalculatorPage() {
                     )}
                 </AnimatePresence>
 
-                <div className="mt-12 flex justify-between">
+                {/* 报错放在「执行计算」按钮旁边：点完按钮就能看到原因，不用滚回页面顶部 */}
+                {errorMessage && <p role="alert" className="mt-6 rounded-xl border border-red-400/40 bg-red-950/40 p-4 text-sm leading-6 text-red-200">{errorMessage}</p>}
+                <div className="mt-6 sm:mt-12 flex justify-between">
                     <button onClick={() => setCurrentStep(prev => prev - 1)} className={`px-8 py-3 rounded-xl border border-slate-700 text-slate-400 ${currentStep === 1 ? 'invisible' : ''}`}>上一步</button>
                     {currentStep < 2 ? (
                         <button onClick={() => setCurrentStep(prev => prev + 1)} className="px-8 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold flex items-center gap-2">下一步 <ArrowRight className="w-4 h-4" /></button>
