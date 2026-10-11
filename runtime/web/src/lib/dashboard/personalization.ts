@@ -156,7 +156,7 @@ export const ROLE_MODULE_ORDER: Record<Role | 'default', ModuleId[]> = {
 
 export interface FocusCard { title: string; reason: string; href: string }
 
-function focusCard(role: Role, province: string | null, interest: Interest | null, tariff: TariffDefaults | null, milestoneCount: number): FocusCard {
+function focusCard(role: Role, province: string | null, interest: Interest | null, tariff: TariffDefaults | null, milestoneCount: number, noPolicies = false): FocusCard {
     const where = province ? `${province}` : '你的项目所在省份';
     const calc = interest === 'wind' ? '/calculator/wind' : interest === 'storage' ? '/calculator/storage' : '/calculator/solar';
     const calcName = interest === 'wind' ? '风电' : interest === 'storage' ? '储能' : '光伏';
@@ -174,8 +174,19 @@ function focusCard(role: Role, province: string | null, interest: Interest | nul
         case 'government':
             return milestoneCount > 0
                 ? { title: `${where}近期有 ${milestoneCount} 个政策节点`, reason: '你是政府/园区用户：政策与电价规则变化排在最前', href: '#policies' }
-                : { title: `${where}的电价规则与已审核政策`, reason: '你是政府/园区用户：政策与电价规则变化排在最前', href: '#tariff' };
+                : noPolicies
+                    ? { title: `${where}的电价规则`, reason: '你是政府/园区用户：政策库暂无该省已审核通过的政策，先看电价与分时规则', href: '#tariff' }
+                    : { title: `${where}的电价规则与已审核政策`, reason: '你是政府/园区用户：政策与电价规则变化排在最前', href: '#tariff' };
     }
+}
+
+/**
+ * 合并工作台：同一件事只出现一次——「接下来可以做」里与主卡指向同一页面的条目去掉（例如研究人员主卡「检索与收藏相关文献」
+ * 与「收藏与你项目相关的文献」）。
+ */
+export function dedupeNextActions<T extends { href: string }>(actions: T[], focus: FocusCard | null): T[] {
+    if (!focus) return actions;
+    return actions.filter(a => a.href !== focus.href);
 }
 
 const QUICK_ACTION_IDS = ['calc', 'wind', 'storage', 'report'] as const;
@@ -246,6 +257,12 @@ export function buildPersonalization(input: {
     if (role) reasons.push(`模块顺序按你的角色「${ROLE_LABELS[role]}」调整`);
     else reasons.push('还没有设置角色：在「设置」选择角色后，工作台会按角色调整模块顺序');
     if (!role) moduleOrder = moduleOrder.filter(m => m !== 'focus');
+    // 政策库里没有本省已审核政策时，不把空卡排在前面（政府角色也一样），降到最后并给出说明
+    const noPolicies = related.length === 0;
+    if (noPolicies) {
+        moduleOrder = [...moduleOrder.filter(m => m !== 'policies'), 'policies'];
+        if (province) reasons.push(`政策库暂无${province}已审核通过的政策，政策区排在最后`);
+    }
     // 告警有内容时始终置顶（安全优先）
     if (input.hasStationAlerts) moduleOrder = ['stationAlerts', ...moduleOrder.filter(m => m !== 'stationAlerts')];
 
@@ -264,7 +281,7 @@ export function buildPersonalization(input: {
         provinceSource,
         interest,
         moduleOrder,
-        focus: role ? focusCard(role, province, interest, tariff, milestones.length) : null,
+        focus: role ? focusCard(role, province, interest, tariff, milestones.length, noPolicies) : null,
         quickActionOrder: interest ? order[interest] : [...QUICK_ACTION_IDS],
         tariff,
         policies: related.slice(0, 3).map(p => ({ id: p.id, title: policyTitle(p), docNumber: p.docNumber, sourceUrl: p.sourceUrl, value: p.value, unit: p.unit, region: p.region })),

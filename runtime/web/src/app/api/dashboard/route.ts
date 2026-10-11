@@ -6,7 +6,8 @@ import { USAGE_LIMITS } from '@/lib/membership/plans';
 import { effectivePlan } from '@/lib/auth/token-refresh';
 import { sameShanghaiDay } from '@/lib/membership/day';
 import { buildPersonalDashboard } from '@/lib/dashboard/personal-summary';
-import { buildPersonalization, parsePreferences, PREFERENCE_LOG_TYPES } from '@/lib/dashboard/personalization';
+import { buildPersonalization, parsePreferences, PREFERENCE_LOG_TYPES, dedupeNextActions } from '@/lib/dashboard/personalization';
+import { TIP_DISMISS_DAYS, TIP_DISMISSED_TYPE } from '@/lib/dashboard/tips';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,7 +26,8 @@ export async function GET() {
     });
     if (!user) return NextResponse.json({ error: '请先登录' }, { status: 401 });
 
-    const [projects, projectCount, calculationCount, savedPaperCount, stations, prefLog, policies] = await Promise.all([
+    const now = new Date();
+    const [projects, projectCount, calculationCount, savedPaperCount, stations, prefLog, policies, dismissedLogs] = await Promise.all([
         prisma.project.findMany({
             where: { userId }, orderBy: { updatedAt: 'desc' }, take: 5,
             select: { id: true, name: true, type: true, capacity: true, reportStatus: true, updatedAt: true, location: true },
@@ -43,9 +45,14 @@ export async function GET() {
             where: { reviewStatus: 'APPROVED' }, orderBy: { updatedAt: 'desc' }, take: 200,
             select: { id: true, region: true, type: true, value: true, unit: true, sourceTitle: true, docNumber: true, sourceUrl: true, publishedAt: true, startDate: true, endDate: true },
         }),
+        // 用户点过「不再提示」的提示（30 天内不再出现）
+        prisma.usageLog.findMany({
+            where: { userId, type: TIP_DISMISSED_TYPE, date: { gte: new Date(now.getTime() - TIP_DISMISS_DAYS * 86_400_000) } },
+            select: { metadata: true },
+        }),
     ]);
+    const dismissedTips = dismissedLogs.map(l => (l.metadata as { tipId?: unknown } | null)?.tipId).filter((v): v is string => typeof v === 'string');
 
-    const now = new Date();
     const sameDay = user.lastResetAt && sameShanghaiDay(new Date(user.lastResetAt), now);
     const plan = effectivePlan(user.plan, user.planExpireAt, now) as keyof typeof USAGE_LIMITS;
     const limits = USAGE_LIMITS[plan] ?? USAGE_LIMITS.FREE;
@@ -63,6 +70,8 @@ export async function GET() {
                 '文献检索': limits.paper_search, '资源查询': limits.resource_query,
             },
             now,
+            dismissedTips,
+            userId,
         });
     // 个性化对免费用户同样生效（不按会员档区分）
     const personalization = buildPersonalization({
@@ -74,5 +83,8 @@ export async function GET() {
         now,
     });
 
-    return NextResponse.json({ success: true, data: { ...dashboard, personalization } });
+    return NextResponse.json({
+        success: true,
+        data: { ...dashboard, nextActions: dedupeNextActions(dashboard.nextActions, personalization.focus), personalization },
+    });
 }

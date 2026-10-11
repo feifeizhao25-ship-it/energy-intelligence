@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Personalization, ModuleId } from '@/lib/dashboard/personalization';
+import { DISMISSIBLE_TIPS as DISMISSIBLE } from '@/lib/dashboard/personal-summary';
 
 // ---------------------------------------------------------------------------
 // 数据来源：GET /api/dashboard —— 只包含当前登录用户自己的项目、测算、电站、额度。
@@ -121,7 +122,10 @@ function PolicyCard({ p }: { p: Personalization }) {
                 </div>
             )}
             {p.policies.length === 0 ? (
-                <p className="text-xs text-slate-500">政策库里还没有{p.province}已审核通过的政策。</p>
+                <p className="text-xs leading-5 text-slate-500">
+                    政策库里暂时没有{p.province}审核通过的政策。新抓取的政策要由审核员对照原文核对后才会显示在这里，也才会计入测算；
+                    在此之前可先看上方的{p.province}电价与分时规则。
+                </p>
             ) : p.policies.map(item => (
                 <div key={item.id} className="py-1 text-xs text-slate-600">
                     {item.sourceUrl ? <a href={item.sourceUrl} target="_blank" rel="noreferrer" className="underline">{item.title}</a> : item.title}
@@ -161,6 +165,13 @@ function DashboardContent() {
     }, []);
 
     useEffect(() => { load(); }, [load]);
+
+    // 「不再提示」：先在页面上隐藏，再告诉服务端（30 天内不再出现）；失败也不影响使用
+    const [hidden, setHidden] = useState<string[]>([]);
+    const dismissTip = useCallback((id: string) => {
+        setHidden(h => [...h, id]);
+        fetch('/api/dashboard/tips', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) }).catch(() => undefined);
+    }, []);
 
     if (status === 'loading') {
         return (
@@ -253,14 +264,23 @@ function DashboardContent() {
                                 <div className="font-bold text-slate-900 mb-1">接下来可以做</div>
                                 <p className="text-[11px] text-slate-400 mb-2">根据你自己的项目、测算与额度生成</p>
                                 <div className="divide-y divide-slate-100">
-                                    {data.nextActions.map(action => (
-                                        <Link key={action.id} href={action.href} className="flex items-center justify-between py-3 hover:bg-slate-50 -mx-2 px-2 rounded-lg transition-colors">
-                                            <div>
-                                                <div className="text-sm text-slate-800 font-bold">{action.title}</div>
-                                                <div className="text-xs text-slate-400">{action.reason}</div>
-                                            </div>
-                                            <ChevronRight className="w-4 h-4 text-slate-300 flex-shrink-0" />
-                                        </Link>
+                                    {data.nextActions.filter(a => !hidden.includes(a.id)).map(action => (
+                                        <div key={action.id} className="flex items-center gap-1 -mx-2">
+                                            <Link href={action.href} className="flex flex-1 min-w-0 items-center justify-between py-3 hover:bg-slate-50 px-2 rounded-lg transition-colors">
+                                                <div className="min-w-0">
+                                                    <div className="text-sm text-slate-800 font-bold">{action.title}</div>
+                                                    <div className="text-xs text-slate-400">{action.reason}</div>
+                                                </div>
+                                                <ChevronRight className="w-4 h-4 text-slate-300 flex-shrink-0" />
+                                            </Link>
+                                            {(DISMISSIBLE as readonly string[]).includes(action.id) && (
+                                                <button type="button" aria-label={`不再提示：${action.title}`} title="30 天内不再提示"
+                                                    onClick={() => dismissTip(action.id)}
+                                                    className="shrink-0 rounded-lg px-2 py-1 text-[11px] text-slate-400 hover:bg-slate-100 hover:text-slate-600">
+                                                    不再提示
+                                                </button>
+                                            )}
+                                        </div>
                                     ))}
                                 </div>
                             </div>

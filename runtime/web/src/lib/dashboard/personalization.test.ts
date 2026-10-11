@@ -15,7 +15,9 @@ const base = { projectLocations: [], projectTypes: [], hasStationAlerts: false, 
 
 describe('5 种角色同一天的工作台各不相同', () => {
     it('模块顺序与主卡片两两不同', () => {
-        const views = ROLES.map(role => buildPersonalization({ ...base, prefs: prefs({ role, province: '江苏' }) }));
+        // 库里有一条江苏已审核政策（政策区为空时会统一降到最后，见 recommendations.test.ts）
+        const policies = [policy({ id: 'js', sourceTitle: '江苏某政策' })];
+        const views = ROLES.map(role => buildPersonalization({ ...base, policies, prefs: prefs({ role, province: '江苏' }) }));
         const orders = views.map(v => v.moduleOrder.join(','));
         expect(new Set(orders).size).toBe(5);
         const focus = views.map(v => v.focus!.title);

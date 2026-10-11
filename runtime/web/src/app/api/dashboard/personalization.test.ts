@@ -21,6 +21,7 @@ jest.mock('@/lib/prisma', () => ({
         station: { findMany: jest.fn(async () => []) },
         usageLog: {
             findFirst: jest.fn(async () => (db.prefMeta ? { metadata: db.prefMeta } : null)),
+            findMany: jest.fn(async () => []),
             create: jest.fn(async ({ data }: any) => { db.created.push(data); return data; }),
         },
         policy: { findMany: jest.fn(async ({ where }: any) => { db.policyWhere = where; return []; }) },
@@ -33,11 +34,12 @@ import { GET as getPrefs, PUT as putPrefs } from '@/app/api/user/preferences/rou
 describe('工作台个性化接口', () => {
     beforeEach(() => { db.prefMeta = null; db.created = []; });
 
-    it('免费用户（政府角色、河北）：政策模块排第一，显示河北已取消固定分时；只查 APPROVED 政策', async () => {
+    it('免费用户（政府角色、河北）：库里没有河北已审核政策时政策区降到最后，主卡看电价规则；只查 APPROVED 政策', async () => {
         db.prefMeta = { preferences: { role: 'government', province: '河北' } };
         const { data } = await (await dashboard()).json();
         expect(data.plan.code).toBe('FREE');
-        expect(data.personalization.moduleOrder[0]).toBe('policies');
+        expect(data.personalization.moduleOrder[0]).toBe('focus');
+        expect(data.personalization.moduleOrder.at(-1)).toBe('policies');
         expect(data.personalization.tariff.status).toBe('market');
         expect(data.personalization.tariff.message).toContain('已取消固定分时');
         expect(db.policyWhere).toEqual({ reviewStatus: 'APPROVED' });
