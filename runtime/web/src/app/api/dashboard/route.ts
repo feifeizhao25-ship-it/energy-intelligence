@@ -81,6 +81,7 @@ export async function GET() {
         hasStationAlerts: dashboard.stationAlerts.length > 0,
         policies,
         now,
+        calcQuotaExhausted: dashboard.usage.some(u => u.type === '收益测算' && u.used >= u.limit),
     });
 
     return NextResponse.json({

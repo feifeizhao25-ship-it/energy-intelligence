@@ -1,5 +1,6 @@
 /**
- * 工作台推荐：政策区空时不把空卡排最前；同一件事只出现一次、低优先级提示有频率控制且可关闭。
+ * 工作台推荐的三个问题：政策区空时不把空卡排最前；同一件事只出现一次、低优先级提示有频率控制且可关闭；
+ * 免费额度用完时不再推荐去测算。
  */
 import { buildPersonalDashboard, type SummaryInput } from './personal-summary';
 import { buildPersonalization, dedupeNextActions, type Preferences } from './personalization';
@@ -62,3 +63,20 @@ describe('同类提示只出现一次，有频率控制，可关闭', () => {
     });
 });
 
+describe('免费额度用完时不再推荐测算', () => {
+    it('「收益测算」2/2：不推荐「做第一次收益测算」，额度提示写明明天 0 点重置', () => {
+        const d = buildPersonalDashboard({ ...base, calculationCount: 2, usageToday: { '收益测算': 2 } });
+        expect(d.nextActions.map(a => a.id)).not.toContain('first-project');
+        const upgrade = d.nextActions.find(a => a.id === 'upgrade')!;
+        expect(upgrade.title).toBe('今日「收益测算」次数已用完');
+        expect(upgrade.reason).toContain('明天 0 点重置');
+    });
+    it('工程师主卡原本指向测算页，额度用完后改为额度说明并指向电价卡', () => {
+        const v = buildPersonalization({ ...pBase, calcQuotaExhausted: true, prefs: prefs({ role: 'engineer', province: '河北' }) });
+        expect(v.focus).toMatchObject({ title: '今天的测算次数已用完', href: '#tariff' });
+        const notExhausted = buildPersonalization({ ...pBase, prefs: prefs({ role: 'engineer', province: '河北' }) });
+        expect(notExhausted.focus!.href).toBe('/calculator/solar');
+        // 不指向测算页的主卡不受影响
+        expect(buildPersonalization({ ...pBase, calcQuotaExhausted: true, prefs: prefs({ role: 'owner' }) }).focus!.href).toBe('/my/stations');
+    });
+});

@@ -180,6 +180,17 @@ function focusCard(role: Role, province: string | null, interest: Interest | nul
     }
 }
 
+/** 今日测算次数已用完时，原本指向测算页的主卡改为提示额度与可做的事 */
+function adjustFocusForQuota(focus: FocusCard, exhausted: boolean, province: string | null, reasons: string[]): FocusCard {
+    if (!exhausted || !focus.href.startsWith('/calculator')) return focus;
+    reasons.push('今日测算次数已用完，推荐改为不消耗测算次数的内容');
+    return {
+        title: '今天的测算次数已用完',
+        reason: `北京时间明天 0 点重置；今天可以先看${province ? `${province}的` : ''}电价与政策，或整理已有的测算结果`,
+        href: province ? '#tariff' : '/projects',
+    };
+}
+
 /**
  * 合并工作台：同一件事只出现一次——「接下来可以做」里与主卡指向同一页面的条目去掉（例如研究人员主卡「检索与收藏相关文献」
  * 与「收藏与你项目相关的文献」）。
@@ -217,6 +228,8 @@ export function buildPersonalization(input: {
     hasStationAlerts: boolean;
     policies: PolicyRow[];
     now: Date;
+    /** 今日测算次数已用完：不再把用户往测算页推 */
+    calcQuotaExhausted?: boolean;
 }): Personalization {
     const prefs = input.prefs ?? { role: null, province: null, interest: null, personalized: true };
     if (!prefs.personalized) {
@@ -281,7 +294,7 @@ export function buildPersonalization(input: {
         provinceSource,
         interest,
         moduleOrder,
-        focus: role ? focusCard(role, province, interest, tariff, milestones.length, noPolicies) : null,
+        focus: role ? adjustFocusForQuota(focusCard(role, province, interest, tariff, milestones.length, noPolicies), Boolean(input.calcQuotaExhausted), province, reasons) : null,
         quickActionOrder: interest ? order[interest] : [...QUICK_ACTION_IDS],
         tariff,
         policies: related.slice(0, 3).map(p => ({ id: p.id, title: policyTitle(p), docNumber: p.docNumber, sourceUrl: p.sourceUrl, value: p.value, unit: p.unit, region: p.region })),

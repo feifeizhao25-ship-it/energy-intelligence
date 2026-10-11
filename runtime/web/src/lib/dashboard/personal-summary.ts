@@ -78,7 +78,10 @@ export function buildPersonalDashboard(input: SummaryInput): PersonalDashboard {
   if (stationAlerts.length) {
     actions.push({ id: 'station-alert', title: `处理 ${stationAlerts.length} 个电站的告警`, reason: '你的电站有告警或故障状态', href: '/my/stations' });
   }
-  if (input.projectCount === 0) {
+  // 今日测算额度已用完时，不再推荐去测算（推荐要考虑额度）
+  const calcUsage = usage.find((u) => u.type === '收益测算');
+  const calcExhausted = Boolean(calcUsage && calcUsage.used >= calcUsage.limit);
+  if (input.projectCount === 0 && !calcExhausted) {
     actions.push({
       id: 'first-project',
       title: input.calculationCount ? '把测算结果保存为项目' : '做第一次收益测算',
@@ -96,7 +99,12 @@ export function buildPersonalDashboard(input: SummaryInput): PersonalDashboard {
   }
   const nearLimit = usage.find((u) => u.used >= u.limit);
   if (!paid && nearLimit) {
-    actions.push({ id: 'upgrade', title: '今日免费额度已用完', reason: `「${nearLimit.type}」已用 ${nearLimit.used}/${nearLimit.limit}`, href: '/pricing' });
+    actions.push({
+      id: 'upgrade',
+      title: `今日「${nearLimit.type}」次数已用完`,
+      reason: `已用 ${nearLimit.used}/${nearLimit.limit}，北京时间明天 0 点重置；升级可提高额度`,
+      href: '/pricing',
+    });
   }
   if (expiringSoon) {
     actions.push({ id: 'renew', title: '会员即将到期', reason: `到期时间 ${expires!.toISOString().slice(0, 10)}`, href: '/membership' });
