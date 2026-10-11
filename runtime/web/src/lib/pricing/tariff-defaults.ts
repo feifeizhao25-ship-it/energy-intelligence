@@ -16,6 +16,7 @@ import {
     NEW_ENERGY_FEED_IN_BASIS,
     NO_PROVINCE_DATA,
     MARKET_TOU_NOTICE,
+    COAL_BENCHMARK_NOTE,
     type ProvinceTariff,
 } from './tariffs';
 
@@ -48,6 +49,10 @@ export interface TariffDefaults {
     /** 燃煤发电基准价（原表数值，来源待核实），作新能源上网电价参考 */
     coalBenchmarkPrice: number | null;
     feedInBasis: string;
+    /** 燃煤发电基准价的来源说明；表里没有该价时为 null */
+    coalBenchmarkNote: string | null;
+    /** 没有可用的上网电价参考时给用户看的说明（与分时电价无关） */
+    feedInMessage: string | null;
     source: string | null;
     sourceStatus: string | null;
     asOfLabel: string | null;
@@ -70,23 +75,36 @@ export function tariffDefaults(provinceName: string | null | undefined, now: Dat
     const found = lookupTariff(provinceName, now);
     const base = {
         province: found.province, peak: null, flat: null, valley: null, sharp: null, averageRetail: null,
-        coalBenchmarkPrice: null, feedInBasis: NEW_ENERGY_FEED_IN_BASIS,
+        coalBenchmarkPrice: null, feedInBasis: NEW_ENERGY_FEED_IN_BASIS, coalBenchmarkNote: null,
+        feedInMessage: noFeedInMessage(found.province),
         source: null, sourceStatus: null, asOfLabel: null, stale: false, staleNote: null, note: null,
     };
     if (found.status === 'missing') {
         return { ...base, status: 'missing', message: found.province ? `${found.province}${NO_PROVINCE_DATA}，请按你的电费单或合同填写电价` : '请选择省份，或直接填写电价' };
     }
     const t: ProvinceTariff = found.tariff;
-    const meta = { source: t.source, sourceStatus: sourceStatusLabel(t), note: t.note ?? null };
+    // 上网电价参考（燃煤发电基准价）与分时电价是两回事：已取消固定分时的省份只要表里有基准价也照样给出
+    const coal = num(t.coalBenchmarkPrice);
+    const meta = {
+        source: t.source, sourceStatus: sourceStatusLabel(t), note: t.note ?? null,
+        coalBenchmarkPrice: coal, coalBenchmarkNote: coal === null ? null : COAL_BENCHMARK_NOTE,
+        feedInMessage: coal === null ? noFeedInMessage(found.province) : null,
+    };
     if (found.status === 'market') {
-        return { ...base, ...meta, status: 'market', message: `${found.message}。储能请填写你的充电、放电电价（合同价或市场价）；风电请填写机制电价或合同价` };
+        return { ...base, ...meta, status: 'market', message: `${found.message}。储能请填写你的充电、放电电价（合同价或市场价）` };
     }
     return {
         ...base, ...meta, status: 'ok', message: null,
         peak: num(t.peak), flat: num(t.flat), valley: num(t.valley), sharp: num(t.sharp),
-        averageRetail: found.retailPrice, coalBenchmarkPrice: num(t.coalBenchmarkPrice),
+        averageRetail: found.retailPrice,
         asOfLabel: found.freshness.label, stale: found.freshness.stale, staleNote: found.freshness.staleNote,
     };
+}
+
+/** 没有可用上网电价参考时的提示：讲上网电价本身的原因（136 号文），不扯分时电价 */
+function noFeedInMessage(province: string): string {
+    const who = province ? `电价表里没有${province}可用的上网电价参考` : '请选择省份';
+    return `${who}。新能源上网电价按发改价格〔2025〕136 号执行机制电价与市场化交易，请填写你的机制电价或合同价`;
 }
 
 /** 用户输入：空、null 视为没填；填了但不是 ≥0 的数字则报错（不静默改成默认值）。 */
@@ -165,14 +183,18 @@ export function resolveWindPrices(
     const userProvided = Object.entries(user).filter(([, v]) => v !== undefined).map(([k]) => k);
     const defaults = tariffDefaults(province, now);
     const allUser = userProvided.length === needed;
-    if (!allUser) requireTable(defaults, mode === 'self_use_export' ? '上网电价和自用电价' : '上网电价（机制电价或合同价）');
     let feedInTariff = user.feedInTariff;
     if (feedInTariff === undefined) {
-        if (defaults.coalBenchmarkPrice === null) throw new PriceInputError(`电价表里没有${defaults.province}的燃煤发电基准价，请填写上网电价`, 'PRICE_REQUIRED');
+        // 上网电价与分时电价脱钩：只看表里有没有燃煤发电基准价参考
+        if (defaults.coalBenchmarkPrice === null) {
+            throw new PriceInputError(defaults.feedInMessage ?? '请填写上网电价（机制电价或合同价）', 'PRICE_REQUIRED');
+        }
         feedInTariff = defaults.coalBenchmarkPrice;
     }
     let electricityPrice: number | undefined;
     if (mode === 'self_use_export') {
+        // 自发自用部分抵扣的是用户侧电价，这里才和分时电价表有关
+        if (user.electricityPrice === undefined) requireTable(defaults, '自用电价');
         electricityPrice = user.electricityPrice ?? defaults.averageRetail ?? undefined;
         if (electricityPrice === undefined) throw new PriceInputError(`电价表里没有${defaults.province}的工商业电价，请填写自用电价`, 'PRICE_REQUIRED');
     }

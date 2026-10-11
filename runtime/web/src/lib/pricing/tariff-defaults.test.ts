@@ -19,10 +19,9 @@ describe('电价表：上网电价改称燃煤发电基准价，并说明 136 �
     it('表里不再有「上网电价」字段，原数值改为 coalBenchmarkPrice（来源待核实）', () => {
         for (const t of Object.values(TARIFFS)) {
             expect('feedInTariff' in t).toBe(false);
-            if (t.coalBenchmarkPrice !== undefined) {
-                expect(t.sourceVerified).toBe(false);
-                expect(t.note).toContain('燃煤发电基准价');
-            }
+            if (t.coalBenchmarkPrice !== undefined) expect(t.sourceVerified).toBe(false);
+            // 省份备注只讲分时/用户侧电价；燃煤发电基准价的说明另放，储能页不会看到「上网电价」相关备注
+            expect(t.note ?? '').not.toMatch(/脱硫煤|上网电价|燃煤/);
         }
         expect(NEW_ENERGY_FEED_IN_BASIS).toContain('发改价格〔2025〕136 号');
         expect(NEW_ENERGY_FEED_IN_BASIS).toContain('机制电价');
@@ -84,8 +83,12 @@ describe('风电电价', () => {
         expect(r.electricityPrice).toBe(0.7);
     });
 
-    it('河北：没有机制电价/合同价就不测算', () => {
-        expect(() => resolveWindPrices('河北', {}, 'full_export', NOW)).toThrow('上网电价');
+    it('河北：没有可用的上网电价参考就请用户填写——原因讲 136 号文，不说「已取消固定分时」（分时是用户侧规则）', () => {
+        let message = '';
+        try { resolveWindPrices('河北', {}, 'full_export', NOW); } catch (e) { message = (e as Error).message; }
+        expect(message).toContain('上网电价');
+        expect(message).toContain('136');
+        expect(message).not.toContain('分时');
         expect(resolveWindPrices('河北', { feedInTariff: 0.3644 }, 'full_export', NOW).feedInTariff).toBe(0.3644);
     });
 });
@@ -124,9 +127,28 @@ describe('/api/calculate/storage、/api/calculate/wind 不再写死电价', () =
         expect(calculateWind.mock.calls[1][0].businessModel.feedInTariff).toBe(0.35);
     });
 
+    it('风电：河北不填上网电价返回 422，提示讲上网电价原因而不是「已取消固定分时」', async () => {
+        const res = await post(windPost, { province: '河北' });
+        expect(res.status).toBe(422);
+        const { error } = await res.json();
+        expect(error).toContain('机制电价');
+        expect(error).not.toContain('分时');
+    });
+
     it('风电：未收录省份且没填电价，返回 422，不按 0.4 兜底', async () => {
         const res = await post(windPost, { province: '新疆' });
         expect(res.status).toBe(422);
         expect(calculateWind).not.toHaveBeenCalled();
+    });
+});
+
+describe('电价输入框说明', () => {
+    it('上网电价框：有基准价显示参考值；没有时讲 136 号文；储能分时框才显示分时备注', () => {
+        const { describeDefault } = require('@/components/calculator/TariffPriceFields');
+        expect(describeDefault(tariffDefaults('江苏', NOW), 'coalBenchmarkPrice')).toContain('燃煤发电基准价 0.391');
+        const hebei = describeDefault(tariffDefaults('河北', NOW), 'coalBenchmarkPrice');
+        expect(hebei).toContain('机制电价');
+        expect(hebei).not.toContain('分时');
+        expect(describeDefault(tariffDefaults('河北', NOW), 'peak')).toContain('已取消固定分时');
     });
 });
