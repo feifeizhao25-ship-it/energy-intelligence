@@ -100,3 +100,9 @@ async def test_cn_market_never_calls_openrouter(monkeypatch):
     assert result["metadata"]["market"] == "cn"
     cn_create.assert_awaited_once()
     global_create.assert_not_awaited()
+
+
+def test_default_deepseek_model_is_not_retired_name():
+    """DeepSeek 官方已于 2026-07-24 停用 deepseek-chat / deepseek-reasoner；不配 DEEPSEEK_MODEL 时不能再用旧名。"""
+    from app.config import Settings
+    assert Settings.model_fields["DEEPSEEK_MODEL"].default == "deepseek-flash"

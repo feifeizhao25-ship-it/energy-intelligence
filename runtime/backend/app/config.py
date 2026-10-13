@@ -231,7 +231,9 @@ class Settings(BaseSettings):
     DASHSCOPE_BASE_URL: str = "https://dashscope.aliyuncs.com/compatible-mode/v1"
     DASHSCOPE_MODEL: str = "qwen-plus"
     DEEPSEEK_BASE_URL: str = "https://api.deepseek.com"
-    DEEPSEEK_MODEL: str = "deepseek-chat"
+    # DeepSeek 官方更新日志（2026-04-24）：旧模型名 deepseek-chat / deepseek-reasoner 于 2026-07-24 停止使用；
+    # 现行定价页（2026-10-13 核对 https://api-docs.deepseek.com/zh-cn/quick_start/pricing/）列出 deepseek-flash（V4.1-Flash）。
+    DEEPSEEK_MODEL: str = "deepseek-flash"
     GLM_BASE_URL: str = "https://open.bigmodel.cn/api/paas/v4/"
     GLM_MODEL: str = "glm-4-flash"
     
