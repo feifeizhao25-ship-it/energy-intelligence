@@ -11,7 +11,7 @@ const fields = [
     { key: 'lat', label: '项目纬度', unit: '度，南纬为负数', placeholder: '例如 39.90', min: -90, max: 90 },
     { key: 'lng', label: '项目经度', unit: '度，西经为负数', placeholder: '例如 116.40', min: -180, max: 180 },
     { key: 'capacity', label: '装机容量', unit: '千瓦', placeholder: '例如 100', min: 0.001 },
-    { key: 'unitCost', label: '单位投资', unit: '元／千瓦，含安装', placeholder: '例如 3500', min: 0.001 },
+    { key: 'unitCost', label: '单位投资', unit: '元／千瓦，含安装', placeholder: '例如 3000', min: 0.001 },
     { key: 'electricityPrice', label: '每度电的平均价值', unit: '元／度', placeholder: '例如 0.65', min: 0 },
 ] as const;
 const number = (value: number, digits = 2) => value.toLocaleString('zh-CN', { maximumFractionDigits: digits });

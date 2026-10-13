@@ -2,7 +2,7 @@
  * 光伏测算手算基准。每个用例都写明手算过程；引擎结果与手算偏差超过 ±2% 即失败。
  * 资源数据用固定值 mock，避免依赖网络。
  */
-import { calculateSolar, annualEnergyKWh, performanceRatio, LOSS_ASSUMPTIONS, normalizeSelfUseRatio, degradationFactor } from './solar';
+import { calculateSolar, annualEnergyKWh, performanceRatio, LOSS_ASSUMPTIONS, normalizeSelfUseRatio, degradationFactor, defaultUnitCost, DEFAULT_SYSTEM_COST_PER_KW } from './solar';
 import { discountedLcoe } from './project-finance';
 import { SolarCalculationInput } from '@/types';
 
@@ -132,5 +132,14 @@ describe('碳减排：统一排放因子', () => {
         expectWithin2Percent(result.environmental.co2Year1, 712_178);
         expect(result.environmental.emissionFactorYear).toBe(2023);
         expect(result.environmental.emissionFactorSource).toContain('2025 年第 47 号');
+    });
+});
+
+describe('不填单位投资时的默认系统造价', () => {
+    it('标准组件 3,000 元/kW（含安装并网的全部初始投资），经济型 / 高效组件按组件单价差额浮动，不再是只够买组件的 1,500 元/kW', () => {
+        expect(DEFAULT_SYSTEM_COST_PER_KW).toBe(3000);
+        expect(defaultUnitCost('standard')).toBe(3000);
+        expect(defaultUnitCost('economy')).toBe(2850);
+        expect(defaultUnitCost('premium')).toBe(3200);
     });
 });

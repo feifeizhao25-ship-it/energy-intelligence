@@ -7,13 +7,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { co2AvoidedKg } from '@/lib/standards/emission-factor';
 import { loadSolarResource } from '@/lib/calculator/solar-resource';
-import { simulateSolar } from '@/lib/calculator/solar';
+import { simulateSolar, defaultUnitCost } from '@/lib/calculator/solar';
 import { paybackPeriodOf } from '@/lib/calculator/project-finance';
 import { lookupTariff, sourceStatusLabel } from '@/lib/pricing/tariffs';
 import { enforceRateLimit, PUBLIC_RULES } from '@/lib/security/rate-limit';
 
-/** 首页估算用的单位造价（元/kW），只用于回收期与 IRR，页面上写明 */
-const QUICK_UNIT_COST = 3500;
+/** 首页估算用的单位造价（元/kW），只用于回收期与 IRR，页面上写明；与完整测算的默认值同一来源（标准组件） */
+const QUICK_UNIT_COST = defaultUnitCost('standard');
 
 // 城市坐标（只用于定位取 NASA POWER 资源数据与省级电价）
 const CITY_COORDINATES: Record<string, { lat: number; lng: number; province: string }> = {

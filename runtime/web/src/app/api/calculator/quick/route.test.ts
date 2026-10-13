@@ -34,12 +34,12 @@ describe('首页快速估算', () => {
         const { data } = await res.json();
         const price = (lookupTariff('江苏') as any).retailPrice;
         const full = await calculateSolar({ lat: 32.0603, lng: 118.7969, capacity: 100, installationType: 'roof', moduleType: 'standard',
-            selfUseRatio: 1, electricityPrice: price, feedInTariff: price, unitCost: 3500, province: '江苏' });
+            selfUseRatio: 1, electricityPrice: price, feedInTariff: price, unitCost: 3000, province: '江苏' });
         expect(data.energy.annualGeneration).toBe(Math.round(full.energy.year1));
         expect(data.financial.annualRevenue).toBe(Math.round(full.financial.year1Revenue));
         expect(data.financial.irr).toBeCloseTo(Math.round(full.financial.irr * 10) / 10, 10);
         expect(data.pricing.label).toContain('来源待核实');
-        expect(data.assumptions).toContain('3500 元/kW');
+        expect(data.assumptions).toContain('3000 元/kW');
     });
 
     it('未收录电价/已取消固定分时的省份（石家庄）：只给发电量，不编收益', async () => {

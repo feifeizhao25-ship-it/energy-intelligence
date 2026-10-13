@@ -170,10 +170,20 @@ export interface SolarModelParams {
 }
 
 /** 组件档位缺省单位投资（元/kW）：组件元/W × 1000 + 500 元/kW 其他费用 */
+/**
+ * 用户没填单位投资时的系统造价默认值（元/kW，含组件、逆变器、支架、电缆、安装、并网等全部初始投资）。
+ * 标准组件取 3,000 元/kW（3.0 元/W）：公开资料里 2024–2025 年工商业分布式光伏多在 2.5–2.7 元/W
+ * （如 2025-10《山东省新型电力系统系列研究：分布式光伏高质量发展》模型参数取 2.5 元/W），
+ * 这里留出屋顶加固、并网接入等因项目而异的余量，宁可偏保守，不让默认 IRR 虚高。
+ * 经济型 / 高效组件按组件单价差额（0.85 / 1.2 元/W，对比标准 1.0 元/W）上下浮动。
+ * 这是测算默认值，不是报价；页面会提示用户按实际报价填写。
+ */
+export const DEFAULT_SYSTEM_COST_PER_KW = 3000;
+
 export function defaultUnitCost(moduleType: SolarCalculationInput['moduleType']): number {
   const moduleConfig = MODULE_CONFIGS[moduleType];
   if (!moduleConfig) throw new Error(`未知的组件类型: ${moduleType}`);
-  return moduleConfig.costPerWatt * 1000 + 500;
+  return Math.round(DEFAULT_SYSTEM_COST_PER_KW + (moduleConfig.costPerWatt - MODULE_CONFIGS.standard.costPerWatt) * 1000);
 }
 
 /**
