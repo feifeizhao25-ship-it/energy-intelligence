@@ -55,7 +55,7 @@ export async function POST(req: Request) {
                 mode,
                 feedInTariff: prices.feedInTariff,
                 electricityPrice: prices.electricityPrice,
-                selfUseRatio: Number(body.selfUseRatio) || 0.8
+                selfUseRatio: body.selfUseRatio === undefined ? 0.8 : body.selfUseRatio
             },
             investment: {
                 unitCost: Number(body.unitCost) || 5500

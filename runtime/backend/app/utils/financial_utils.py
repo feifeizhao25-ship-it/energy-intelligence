@@ -46,7 +46,11 @@ def calc_lcoe(
     project_life: int = 25,
     degradation_rate: float = 0.005,
 ) -> float:
-    """Levelized Cost of Energy ($/kWh) — scaled to avoid overflow."""
+    """Levelized Cost of Energy, in currency per kWh (元/kWh when inputs are 元).
+
+    LCOE = [capex + Σ opex/(1+r)^t] / Σ [E1·(1-d)^(t-1)/(1+r)^t], t = 1..N,
+    end-of-year discounting. Year 1 is undegraded, matching build_solar_cashflows.
+    """
     # Work in millions to avoid overflow
     scale = 1_000_000.0  # work in USD millions
     capex_m = capex / scale
@@ -58,7 +62,7 @@ def calc_lcoe(
     for t in range(1, project_life + 1):
         divisor *= (1 + discount_rate)
         pv_cost += opex_m / divisor
-        energy = annual_generation_kwh * (1 - degradation_rate) ** t
+        energy = annual_generation_kwh * (1 - degradation_rate) ** (t - 1)
         pv_energy += energy / divisor
 
     return round((pv_cost * scale) / pv_energy, 4) if pv_energy > 0 else 0.0

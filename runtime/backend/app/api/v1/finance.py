@@ -97,7 +97,10 @@ async def solar_finance(
     annual_gen = body.capacity_mw * 1000 * 8760 * body.capacity_factor
     capex_total = body.capacity_mw * 1_000_000 * body.capex_per_w
     opex_total = body.capacity_mw * 1000 * body.opex_per_kw_yr
-    lcoe = calc_lcoe(capex_total, opex_total, annual_gen)
+    lcoe = calc_lcoe(
+        capex_total, opex_total, annual_gen,
+        degradation_rate=body.degradation_rate, project_life=body.project_life,
+    )
     payback = next((i for i, cf in enumerate(cashflows) if sum(cashflows[:i+1]) > 0), 99)
 
     return FinancialModelResponse(
@@ -194,7 +197,10 @@ async def compare_scenarios(
             annual_gen = req.capacity_mw * 1000 * 8760 * req.capacity_factor
             capex_total = req.capacity_mw * 1_000_000 * req.capex_per_w
             opex_total = req.capacity_mw * 1000 * req.opex_per_kw_yr
-            lcoe = calc_lcoe(capex_total, opex_total, annual_gen)
+            lcoe = calc_lcoe(
+                capex_total, opex_total, annual_gen,
+                degradation_rate=req.degradation_rate, project_life=req.project_life,
+            )
             payback = next((j for j, cf in enumerate(cashflows) if sum(cashflows[:j+1]) > 0), 99)
             results.append({
                 "scenario_id": i + 1,
@@ -300,7 +306,10 @@ async def save_financial_model(
         capex_total = body.capacity_mw * 1_000_000 * body.capex_per_w
         opex_total = body.capacity_mw * 1000 * body.opex_per_kw_yr
         annual_gen = body.capacity_mw * 1000 * 8760 * body.capacity_factor
-        lcoe = calc_lcoe(capex_total, opex_total, annual_gen)
+        lcoe = calc_lcoe(
+            capex_total, opex_total, annual_gen,
+            degradation_rate=body.degradation_rate, project_life=body.project_life,
+        )
         payback = next((i for i, cf in enumerate(cashflows) if sum(cashflows[:i+1]) > 0), 99)
     else:
         req: WindFinanceRequest = body

@@ -44,7 +44,10 @@ async def analyze_solar_project(
     annual_gen = capacity_mw * 1000 * 8760 * capacity_factor
     capex_total = capacity_mw * 1_000_000 * capex_per_w
     opex_total = capacity_mw * 1000 * opex_per_kw_yr
-    lcoe = calc_lcoe(capex_total, opex_total, annual_gen)
+    lcoe = calc_lcoe(
+        capex_total, opex_total, annual_gen,
+        degradation_rate=degradation_rate, project_life=project_life,
+    )
     payback = next((i for i, cf in enumerate(cashflows) if sum(cashflows[:i+1]) > 0), 99)
 
     return {

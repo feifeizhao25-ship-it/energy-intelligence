@@ -15,6 +15,13 @@ function estimateCapacityFactor(vAvg: number, vIn: number, vRated: number, vOut:
   return (pAboveIn - pAboveRated) * 0.45 + (pAboveRated - pAboveOut);
 }
 
+export function windSelfUseRatio(raw: unknown, fallback = 0.8): number {
+  const value = typeof raw === 'number' ? raw : raw === undefined || raw === null || raw === '' ? NaN : Number(raw);
+  if (!Number.isFinite(value)) return fallback;
+  const ratio = value > 1 ? value / 100 : value;
+  return Math.min(1, Math.max(0, ratio));
+}
+
 export async function calculateWind(input: WindCalculationInput) {
   // 电价不再写死（原来上网 0.4、自用 0.6 元/度）：由接口层按省级电价表或用户输入给出（lib/pricing/tariff-defaults.ts）
   const fitInput = input.businessModel.feedInTariff;
@@ -46,6 +53,10 @@ export async function calculateWind(input: WindCalculationInput) {
   });
 
   const year1Generation = monthlyGeneration.reduce((sum, m) => sum + m.generation, 0);
+  if (!(year1Generation > 0)) {
+    // 此前发电量为 0 时在 LCOE 处抛出看不懂的 INVALID_LCOE_INPUT
+    throw new Error('轮毂高度月均风速均低于切入风速，测算发电量为 0，请检查风机参数或轮毂高度');
+  }
   const equivalentHours = year1Generation / totalCapacityKW;
   const years = input.operation.operationYears ?? 20;
   const lifetimeGeneration = Array.from({ length: years }, (_, i) => year1Generation * Math.pow(0.998, i));
@@ -54,6 +65,9 @@ export async function calculateWind(input: WindCalculationInput) {
   // Wait, unit cost is usually Yuan/kW.
   const calcInvestment = input.investment.totalInvestment ?? totalCapacityKW * (input.investment.unitCost ?? 5500);
 
+  // 自用比例统一为 0–1 小数：>1 视为百分数（80 → 0.8），截断到 [0, 1]。
+  // 此前 /api/calculate/wind 直接传入 80，自用电量 = 80 × 发电量、上网电量为负。
+  const selfUseRatio = windSelfUseRatio(input.businessModel.selfUseRatio);
   const cashFlows: number[] = [-calcInvestment];
   const annualRevenues: number[] = [];
   const annualCosts: number[] = []; // 运维 + 保险（计入 LCOE）
@@ -66,7 +80,7 @@ export async function calculateWind(input: WindCalculationInput) {
     if (input.businessModel.mode === 'full_export') {
       revenue = gen * fit;
     } else {
-      const selfUse = gen * (input.businessModel.selfUseRatio ?? 0.8);
+      const selfUse = gen * selfUseRatio;
       revenue = selfUse * price + (gen - selfUse) * fit;
     }
 

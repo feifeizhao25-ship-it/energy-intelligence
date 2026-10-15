@@ -43,8 +43,12 @@ class NASAPowerService:
                 
                 if ghi_data:
                     # 计算年均值
-                    daily_values = list(ghi_data.values())
-                    annual_ghi = sum(daily_values) / len(daily_values) * 365 / 1000  # 转换为kWh/m²
+                    # ALLSKY_SFC_SW_DWN（daily 接口）单位已是 kWh/m²/day；-999 为缺测填充值。
+                    # 日均 × 365 即年累计 kWh/m²，不能再 ÷1000（此前结果约 1.6 而非 ~1600）。
+                    daily_values = [v for v in ghi_data.values() if isinstance(v, (int, float)) and v >= 0]
+                    if not daily_values:
+                        raise RuntimeError("NASA POWER returned no valid solar observations")
+                    annual_ghi = sum(daily_values) / len(daily_values) * 365
                     
                     return {
                         "ghi_annual": round(annual_ghi, 1),
