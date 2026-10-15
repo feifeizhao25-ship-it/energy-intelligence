@@ -78,6 +78,24 @@ def _report_file(report_id: str, extension: str) -> str:
     report_dir = _reports_dir()
     return os.path.join(report_dir, f"{safe_id}.{extension}")
 
+
+def _existing_report_file(report_id: str) -> Optional[tuple]:
+    """Locate a generated file for a server UUID under REPORTS_DIR; None if absent."""
+    for ext in ("pdf", "docx"):
+        filepath = _report_file(report_id, ext)
+        if os.path.isfile(filepath):
+            return filepath, ext
+    return None
+
+
+def _content_disposition(title: str, ext: str, report_id: str) -> str:
+    """ASCII fallback filename + RFC 5987 UTF-8 filename (titles are usually Chinese)."""
+    from urllib.parse import quote
+
+    ascii_name = f"report-{report_id}.{ext}"
+    utf8_name = quote(f"{title}.{ext}", safe="")
+    return f'attachment; filename="{ascii_name}"; filename*=UTF-8\'\'{utf8_name}'
+
 # ═══════════════════════════════════════════════════════════════
 # 1. 常量 & 枚举
 # ═══════════════════════════════════════════════════════════════
@@ -2410,28 +2428,47 @@ async def get_report_status(
     """
     获取报告状态 / 下载信息
     """
-    # 先查内存
-    await _assert_report_owner(report_id, user_id, db)
+    report = await _assert_report_owner(report_id, user_id, db)
+    # 进程内状态（含实时进度）优先；重启后内存清空，回落到数据库记录 + 磁盘文件。
     if report_id in _report_store:
-        info = _report_store[report_id]
-        return {"data": info}
+        return {"data": _report_store[report_id]}
 
-    # 查文件系统
-    for ext in ["pdf", "docx"]:
-        filepath = _report_file(report_id, ext)
-        if os.path.exists(filepath):
-            return {
-                "data": {
-                    "report_id": report_id,
-                    "status": "completed",
-                    "progress": 100,
-                    "size": os.path.getsize(filepath),
-                    "download_url": f"/api/v1/reports/{report_id}/file",
-                    "file_path": filepath,
-                }
+    found = _existing_report_file(report_id)
+    if found:
+        filepath, ext = found
+        return {
+            "data": {
+                "report_id": report_id,
+                "title": report.title,
+                "report_type": report.report_type,
+                "format": ext,
+                "status": "completed",
+                "progress": 100,
+                "size": os.path.getsize(filepath),
+                "download_url": f"/api/v1/reports/{report_id}/file",
+                "project_id": report.project_id,
             }
+        }
 
-    raise HTTPException(status_code=404, detail=f"报告 {report_id} 不存在")
+    status_value = report.status or "unknown"
+    if status_value == "completed":
+        # 记录说已完成但文件不在（旧容器内文件/卷丢失）：如实返回，不伪造下载地址。
+        raise HTTPException(status_code=404, detail="报告文件不存在，请重新生成")
+    data: Dict[str, Any] = {
+        "report_id": report_id,
+        "title": report.title,
+        "report_type": report.report_type,
+        "status": status_value,
+        "progress": 0,
+        "project_id": report.project_id,
+    }
+    if status_value == "generating":
+        # 生成中的后台任务随进程重启而丢失，无法继续。
+        data["status"] = "failed"
+        data["error"] = "报告生成被服务重启中断，请重新生成"
+    elif status_value == "failed":
+        data["error"] = report.content or "报告生成失败"
+    return {"data": data}
 
 
 @router.get("/{report_id}/file")
@@ -2443,27 +2480,23 @@ async def download_report_file(
     """
     下载已生成的报告文件
     """
-    await _assert_report_owner(report_id, user_id, db)
-    # 查文件系统
-    for ext in ["pdf", "docx"]:
-        filepath = _report_file(report_id, ext)
-        if os.path.exists(filepath):
-            mime = (
-                "application/pdf" if ext == "pdf"
-                else "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-            )
-            with open(filepath, "rb") as f:
-                content = f.read()
-            filename = _report_store.get(report_id, {}).get("title", report_id)
-            return StreamingResponse(
-                io.BytesIO(content),
-                media_type=mime,
-                headers={
-                    "Content-Disposition": f'attachment; filename="{filename}.{ext}"',
-                },
-            )
-
-    raise HTTPException(status_code=404, detail=f"报告文件 {report_id} 不存在")
+    report = await _assert_report_owner(report_id, user_id, db)
+    found = _existing_report_file(report_id)
+    if not found:
+        raise HTTPException(status_code=404, detail="报告文件不存在，请重新生成")
+    filepath, ext = found
+    mime = (
+        "application/pdf" if ext == "pdf"
+        else "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    )
+    with open(filepath, "rb") as f:
+        content = f.read()
+    title = report.title or _report_store.get(report_id, {}).get("title") or report_id
+    return StreamingResponse(
+        io.BytesIO(content),
+        media_type=mime,
+        headers={"Content-Disposition": _content_disposition(title, ext, report_id)},
+    )
 
 
 # ── 兼容旧接口 ──────────────────────────────────────────────────
@@ -2484,12 +2517,29 @@ async def list_reports_compat(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     user_id: str = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
 ):
-    """列出报告 (兼容接口)"""
-    items = [
-        item for item in _report_store.values()
-        if item.get("user_id") == user_id
-    ]
+    """列出报告 (兼容接口)；以数据库为准，重启后仍可见。"""
+    result = await db.execute(
+        select(Report).where(Report.user_id == user_id).order_by(Report.created_at.desc())
+    )
+    items = []
+    for report in result.scalars().all():
+        live = _report_store.get(report.id)
+        if live:
+            items.append(live)
+            continue
+        found = _existing_report_file(report.id)
+        items.append({
+            "report_id": report.id,
+            "title": report.title,
+            "report_type": report.report_type,
+            "status": "completed" if found else (report.status or "unknown"),
+            "format": found[1] if found else None,
+            "download_url": f"/api/v1/reports/{report.id}/file" if found else None,
+            "project_id": report.project_id,
+            "created_at": report.created_at.isoformat() if report.created_at else None,
+        })
     total = len(items)
     start = (page - 1) * page_size
     end = start + page_size
@@ -2517,12 +2567,15 @@ async def delete_report(
     db: AsyncSession = Depends(get_db),
 ):
     """删除报告"""
-    await _assert_report_owner(report_id, user_id, db)
+    report = await _assert_report_owner(report_id, user_id, db)
 
-    info = _report_store.pop(report_id, {})
-    filepath = info.get("file_path")
-    if filepath and os.path.exists(filepath):
-        os.remove(filepath)
+    _report_store.pop(report_id, None)
+    # 文件路径一律由 UUID 推导，不信任存储的 file_path（旧部署路径可能已失效）。
+    found = _existing_report_file(report_id)
+    if found:
+        os.remove(found[0])
+    await db.delete(report)
+    await db.commit()
 
     return {"data": {"message": "报告已删除", "report_id": report_id}}
 
