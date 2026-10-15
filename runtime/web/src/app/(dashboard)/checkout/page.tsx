@@ -7,7 +7,8 @@ import { ArrowLeft, Check, Info, ShieldCheck } from 'lucide-react';
 import { PLAN_DETAILS, Plan } from '@/lib/membership/plans';
 import { safeErrorMessage } from '@/lib/api/safe-error';
 
-const purchasable = [Plan.PRO, Plan.MAINTENANCE, Plan.FULL] as const;
+// 自助结算只开放专业版与专家版；团队版、企业版走销售（MAINTENANCE 已停售）
+const purchasable = [Plan.PRO, Plan.FULL] as const;
 type PurchasablePlan = (typeof purchasable)[number];
 
 export default function CheckoutPage() {

@@ -27,17 +27,17 @@ function store(user: QuotaUser | null) {
 const now = new Date('2026-09-22T10:00:00');
 
 describe('AI 次数门禁', () => {
-  it('免费档每天 3 次，第 4 次被拒', async () => {
+  it('免费档每天 5 次，第 6 次被拒', async () => {
     const { s } = store({ plan: 'FREE', planExpireAt: null, dailyAiCalls: 0, lastResetAt: now });
     const results = [];
-    for (let i = 0; i < 4; i++) results.push((await consumeAiCall(s, 'u', now)).ok);
-    expect(results).toEqual([true, true, true, false]);
+    for (let i = 0; i < 6; i++) results.push((await consumeAiCall(s, 'u', now)).ok);
+    expect(results).toEqual([true, true, true, true, true, false]);
   });
 
   it('跨天重置；过期会员按免费档', async () => {
     const { s, state } = store({ plan: 'FULL', planExpireAt: new Date('2026-09-01'), dailyAiCalls: 3, lastResetAt: new Date('2026-09-21T10:00:00') });
     const r = await consumeAiCall(s, 'u', now);
-    expect(r).toMatchObject({ ok: true, plan: 'FREE', limit: 3 });
+    expect(r).toMatchObject({ ok: true, plan: 'FREE', limit: 5 });
     expect(state.user!.dailyAiCalls).toBe(1);
   });
 
@@ -55,9 +55,9 @@ describe('AI 次数门禁', () => {
 });
 
 
-it('跨天 30 个并发请求只放行免费档 3 次，不重复重置', async () => {
+it('跨天 30 个并发请求只放行免费档 5 次，不重复重置', async () => {
   const { s, state } = store({ plan: 'FREE', planExpireAt: null, dailyAiCalls: 3, lastResetAt: new Date('2026-09-21T10:00:00') });
   const results = await Promise.all(Array.from({ length: 30 }, () => consumeAiCall(s, 'u', now)));
-  expect(results.filter((r) => r.ok)).toHaveLength(3);
-  expect(state.user!.dailyAiCalls).toBe(3);
+  expect(results.filter((r) => r.ok)).toHaveLength(5);
+  expect(state.user!.dailyAiCalls).toBe(5);
 });

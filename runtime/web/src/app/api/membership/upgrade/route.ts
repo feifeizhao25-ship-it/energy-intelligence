@@ -4,12 +4,11 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/auth-options';
 import { prisma } from '@/lib/prisma';
-import { Plan } from '@/lib/membership/plans';
+import { Plan, PURCHASABLE_PLANS } from '@/lib/membership/plans';
 import { BillingPeriod, canonicalPrice, createAlipayPagePayUrl } from '@/lib/payments/alipay';
 
-const PAID_PLANS: ReadonlySet<Plan> = new Set<Plan>(
-    Object.values(Plan).filter((plan) => plan !== Plan.FREE),
-);
+// 只允许购买在售档位；MAINTENANCE（运维版）已停售，不能新购
+const PAID_PLANS: ReadonlySet<Plan> = new Set<Plan>(PURCHASABLE_PLANS);
 
 export async function POST(request: Request) {
     const session = await getServerSession(authOptions);

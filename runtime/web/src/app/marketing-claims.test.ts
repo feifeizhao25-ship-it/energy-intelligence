@@ -41,7 +41,7 @@ describe('首页价格预览与权益注册表一致', () => {
         const preview = homePricingPreview();
         expect(preview.map((p: any) => p.name)).toEqual(['免费版', '专业版', '企业版']);
         expect(preview[1].features).toEqual(registry.tiers.pro.features_zh.slice(0, 4));
-        expect(preview[2].price).toBe('¥38,000/年');
+        expect(preview[2].price).toBe('¥33,000/年');
         for (const page of ['src/app/page.tsx', 'src/app/[locale]/page.tsx']) {
             const src = readFileSync(join(ROOT, page), 'utf8');
             expect(src).toContain('homePricingPreview()');

@@ -22,15 +22,15 @@ beforeAll(() => {
 });
 
 test('page-pay URL carries canonical server price and independently valid RSA2 signature', () => {
-  expect(canonicalPrice(Plan.FULL, 'monthly')).toBe(398);
+  expect(canonicalPrice(Plan.FULL, 'monthly')).toBe(580);
   const url = createAlipayPagePayUrl({
-    orderNo: 'ENE20260902001', plan: Plan.FULL, billingPeriod: 'monthly', amount: 398,
+    orderNo: 'ENE20260902001', plan: Plan.FULL, billingPeriod: 'monthly', amount: 580,
   });
   const query = Object.fromEntries(new URL(url).searchParams.entries());
   const verifier = createVerify('RSA-SHA256');
   verifier.update(canonicalAlipayParams(query), 'utf8');
   expect(verifier.verify(publicKey, query.sign, 'base64')).toBe(true);
-  expect(JSON.parse(query.biz_content).total_amount).toBe('398.00');
+  expect(JSON.parse(query.biz_content).total_amount).toBe('580.00');
 });
 
 test('callback verification excludes sign_type and rejects amount tampering', () => {

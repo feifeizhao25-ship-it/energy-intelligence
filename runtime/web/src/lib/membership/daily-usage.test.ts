@@ -19,12 +19,11 @@ const NOW = new Date('2026-09-30T04:00:00Z'); // 北京 12:00
 const today = new Date('2026-09-30T01:00:00Z');
 
 describe('每日额度扣减', () => {
-  it('免费版每天 2 次测算：第 3 次被拒', async () => {
+  it('免费版每天 3 次测算：第 4 次被拒', async () => {
     const { store } = fakeStore({ plan: 'FREE', planExpireAt: null, lastResetAt: today });
-    expect((await consumeDaily('calculation', 'u', store, NOW)).ok).toBe(true);
-    expect((await consumeDaily('calculation', 'u', store, NOW)).ok).toBe(true);
-    const third = await consumeDaily('calculation', 'u', store, NOW);
-    expect(third).toMatchObject({ ok: false, limit: 2, reason: 'LIMIT' });
+    for (let i = 0; i < 3; i++) expect((await consumeDaily('calculation', 'u', store, NOW)).ok).toBe(true);
+    const fourth = await consumeDaily('calculation', 'u', store, NOW);
+    expect(fourth).toMatchObject({ ok: false, limit: 3, reason: 'LIMIT' });
   });
 
   it('专业版测算不限次', async () => {
@@ -39,7 +38,7 @@ describe('每日额度扣减', () => {
   it('会员已过期按免费版算（库里 plan 还写着 PRO 也一样）', async () => {
     const { store } = fakeStore(
       { plan: 'PRO', planExpireAt: new Date('2026-09-01T00:00:00Z'), lastResetAt: today },
-      { dailyCalculations: 2 },
+      { dailyCalculations: 3 },
     );
     expect(await consumeDaily('calculation', 'u', store, NOW)).toMatchObject({ ok: false, plan: 'FREE' });
   });

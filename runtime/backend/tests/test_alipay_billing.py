@@ -68,7 +68,7 @@ def test_callback_signature_rejects_tampering(alipay_keys):
         "out_trade_no": "ENE202609020002",
         "trade_no": "2026090222001",
         "trade_status": "TRADE_SUCCESS",
-        "total_amount": "398.00",
+        "total_amount": "580.00",
         "sign_type": "RSA2",
     }
     params["sign"] = _sign_callback(alipay_keys, params)
@@ -88,14 +88,14 @@ async def test_verified_callback_activates_once(
     )
     assert created.status_code == 200, created.text
     body = created.json()
-    assert body["amount_cny"] == "398.00"
+    assert body["amount_cny"] == "580.00"
     params = {
         "app_id": settings.ALIPAY_APP_ID,
         "seller_id": settings.ALIPAY_SELLER_ID,
         "out_trade_no": body["order_no"],
         "trade_no": "20260902220000000001",
         "trade_status": "TRADE_SUCCESS",
-        "total_amount": "398.00",
+        "total_amount": "580.00",
         "sign_type": "RSA2",
     }
     params["sign"] = _sign_callback(alipay_keys, params)
@@ -143,7 +143,7 @@ async def test_callback_cannot_reactivate_nonpayable_order(client, auth_headers,
     await db_session.commit()
     params = {"app_id": settings.ALIPAY_APP_ID, "seller_id": settings.ALIPAY_SELLER_ID,
               "out_trade_no": order.order_no, "trade_no": "guarded-transaction", "trade_status": "TRADE_SUCCESS",
-              "total_amount": "398.00", "sign_type": "RSA2"}
+              "total_amount": "580.00", "sign_type": "RSA2"}
     params["sign"] = _sign_callback(alipay_keys, params)
     response = await client.post("/api/v1/billing/domestic/alipay/notify", data=params)
     assert response.status_code == 409
@@ -161,7 +161,7 @@ async def test_paid_monthly_renewals_accumulate_and_duplicate_receipt_does_not(c
         order_no = created.json()["order_no"]
         params = {"app_id": settings.ALIPAY_APP_ID, "seller_id": settings.ALIPAY_SELLER_ID,
                   "out_trade_no": order_no, "trade_no": f"renewal-{index}", "trade_status": "TRADE_SUCCESS",
-                  "total_amount": "398.00", "sign_type": "RSA2"}
+                  "total_amount": "580.00", "sign_type": "RSA2"}
         params["sign"] = _sign_callback(alipay_keys, params)
         assert (await client.post("/api/v1/billing/domestic/alipay/notify", data=params)).status_code == 200
         await db_session.rollback()
@@ -190,7 +190,7 @@ async def test_postgres_concurrent_renewals_preserve_both_periods(client, auth_h
         user = await db_session.get(User, order.user_id)
         params = {"app_id": settings.ALIPAY_APP_ID, "seller_id": settings.ALIPAY_SELLER_ID,
                   "out_trade_no": order.order_no, "trade_no": f"concurrent-renewal-{index}", "trade_status": "TRADE_SUCCESS",
-                  "total_amount": "398.00", "sign_type": "RSA2"}
+                  "total_amount": "580.00", "sign_type": "RSA2"}
         params["sign"] = _sign_callback(alipay_keys, params)
         requests.append(params)
     user.subscription_plan = "full"

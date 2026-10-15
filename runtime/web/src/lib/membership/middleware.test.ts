@@ -75,12 +75,12 @@ describe('withMembershipCheck：真实会话接入（原来 getCurrentUser 写�
 
   it('额度用完：429 中文提示，含重置时间，业务不执行', async () => {
     const member = async () => ({ id: 'u4', plan: Plan.FREE });
-    const { s } = store({ n: 2 }, 'FREE');
+    const { s } = store({ n: 3 }, 'FREE');
     const handler = jest.fn();
     const res = await withMembershipCheck(req(), { usageType: 'calculation' }, handler, { member, store: s });
     expect(res.status).toBe(429);
     const body = await res.json();
-    expect(body.message).toMatch(/今日收益测算次数已用完（2 次）/);
+    expect(body.message).toMatch(/今日收益测算次数已用完（3 次）/);
     expect(new Date(body.resetAt).getTime()).toBeGreaterThan(Date.now());
     expect(handler).not.toHaveBeenCalled();
   });

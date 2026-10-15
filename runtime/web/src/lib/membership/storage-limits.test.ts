@@ -15,10 +15,10 @@ describe('保存类额度', () => {
     expect(body.message).toBe('项目数量已达当前会员档上限（1），请升级会员或删除不用的项目');
   });
 
-  it('没满放行；专业版 50 个项目内放行，满 50 拒绝', async () => {
+  it('没满放行；专业版 30 个项目内放行，满 30 拒绝', async () => {
     expect(await enforceStorageLimit('u', 'projects', deps('FREE', 0, null))).toBeNull();
-    expect(await enforceStorageLimit('u', 'projects', deps('PRO', 49))).toBeNull();
-    expect((await enforceStorageLimit('u', 'projects', deps('PRO', 50)))!.status).toBe(403);
+    expect(await enforceStorageLimit('u', 'projects', deps('PRO', 29))).toBeNull();
+    expect((await enforceStorageLimit('u', 'projects', deps('PRO', 30)))!.status).toBe(403);
   });
 
   it('过期的专业版按免费版限额', async () => {

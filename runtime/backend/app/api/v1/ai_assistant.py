@@ -91,7 +91,23 @@ async def chat(
     user_id: str = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db),
 ):
-    """Chat with AI assistant (streaming)."""
+    """Chat with AI assistant (streaming).
+
+    与 /chat-json、/analyze 同一套配额：开始前校验，流式成功结束后才扣减一次
+    （模型中途失败不扣）。原来流式接口完全不校验配额，免费用户可无限调用。
+    """
+    try:
+        user = await assert_ai_quota(user_id, db)
+    except QuotaExceeded as error:
+        raise HTTPException(
+            status_code=429,
+            detail={
+                "error": "AI_QUOTA_EXCEEDED",
+                "message": f"今日 AI 对话次数已用完（{error.limit} 次/日），可明日再试或升级会员获取更多次数。",
+                "upgrade_url": "/pricing",
+                "limit": error.limit,
+            },
+        ) from error
     market = await _market_for_user(user_id, db)
     hits = _retrieve(message, market)
     prompt = _grounded_prompt(SYSTEM_PROMPT if market == "global" else CN_SYSTEM_PROMPT, hits, market)
@@ -100,8 +116,12 @@ async def chat(
     async def stream():
         # 先下发本次回答所依据的来源，前端可按 [S1] 编号渲染引用
         yield f"data: {json.dumps({'sources': sources}, ensure_ascii=False)}\n\n"
+        produced = False
         async for chunk in ai_assistant.stream_openai(message, prompt, market=market):
+            produced = produced or bool(chunk)
             yield f"data: {json.dumps({'content': chunk})}\n\n"
+        if produced:
+            await consume_ai_quota(user, db)
         yield "data: [DONE]\n\n"
 
     return StreamingResponse(

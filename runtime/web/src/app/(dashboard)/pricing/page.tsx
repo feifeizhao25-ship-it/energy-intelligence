@@ -29,7 +29,7 @@ interface EntitlementsRegistry {
 
 const registry = bundledRegistry as unknown as EntitlementsRegistry;
 
-const planOrder = [Plan.FREE, Plan.PRO, Plan.MAINTENANCE, Plan.FULL, Plan.TEAM, Plan.ENTERPRISE] as const;
+const planOrder = [Plan.FREE, Plan.PRO, Plan.FULL, Plan.TEAM, Plan.ENTERPRISE] as const;
 
 function tierKey(plan: Plan): string {
   return plan.toLowerCase();

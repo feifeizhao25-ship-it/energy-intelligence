@@ -65,8 +65,8 @@ class AlipayService:
             raise ValueError("billing_period must be monthly or yearly")
         registry = json.loads(_ENTITLEMENTS_PATH.read_text(encoding="utf-8"))
         tier = registry.get("tiers", {}).get(plan)
-        if not tier or plan == "free":
-            raise ValueError("不支持的会员套餐")
+        if not tier or plan == "free" or tier.get("purchasable") is False:
+            raise ValueError("不支持的会员套餐")  # 已停售的旧档位（maintenance）不能新购
         value = tier.get("price", {}).get(f"{billing_period}_cny")
         amount = Decimal(str(value or 0)).quantize(Decimal("0.01"))
         if amount <= 0:

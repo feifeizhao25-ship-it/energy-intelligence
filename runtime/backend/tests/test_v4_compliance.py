@@ -27,7 +27,7 @@ def test_all_plan_quota_remaining_is_unlimited_or_non_negative():
 
 
 def test_free_plan_has_finite_report_quota():
-    assert PLAN_QUOTAS["free"]["report_exports_per_month"] == 5
+    assert PLAN_QUOTAS["free"]["report_exports_per_month"] == 3
 
 
 def test_enterprise_plan_is_unlimited():

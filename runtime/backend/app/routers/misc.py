@@ -46,8 +46,10 @@ async def get_settings(
 
 _PLAN_META = {
     "free": {"name": "免费版", "price_cents": 0},
-    "pro": {"name": "专业版", "price_cents": 19900},
-    "enterprise": {"name": "企业版", "price_cents": None},
+    "pro": {"name": "专业版", "price_cents": 198000},
+    "full": {"name": "专家版", "price_cents": 580000},
+    "team": {"name": "团队版", "price_cents": 1680000},
+    "enterprise": {"name": "企业版", "price_cents": 3300000},
 }
 
 

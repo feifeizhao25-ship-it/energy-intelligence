@@ -36,7 +36,7 @@ test('success writes snapshot, timeline and usage in the same transaction', asyn
 });
 test('expired paid plan cannot bypass free quota', async () => {
     tx.user.findUnique.mockResolvedValue({ plan: 'PRO', planExpireAt: new Date(0) });
-    tx.quotaUsage.findUnique.mockResolvedValue({ count: 2 });
+    tx.quotaUsage.findUnique.mockResolvedValue({ count: 3 });
     await expect(saveSolar('owner', null, result)).rejects.toMatchObject({ status: 429 });
     expect(tx.calculationSnapshot.create).not.toHaveBeenCalled();
 });

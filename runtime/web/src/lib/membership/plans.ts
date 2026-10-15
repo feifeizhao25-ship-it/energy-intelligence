@@ -9,6 +9,10 @@ export enum Plan {
     ENTERPRISE = 'ENTERPRISE',
 }
 
+// 在售档位（五档）；MAINTENANCE 为旧版，不可新购
+export const PURCHASABLE_PLANS: readonly Plan[] = [Plan.PRO, Plan.FULL, Plan.TEAM, Plan.ENTERPRISE];
+export const PLAN_ORDER: readonly Plan[] = [Plan.FREE, Plan.PRO, Plan.FULL, Plan.TEAM, Plan.ENTERPRISE];
+
 // 会员计划详情
 export const PLAN_DETAILS = {
     FREE: {
@@ -30,8 +34,10 @@ export const PLAN_DETAILS = {
         color: 'blue',
         popular: true,
     },
+    // 旧版方案：已停售，仅为存量用户保留（数据库枚举不变）；不出现在定价页与结算页
     MAINTENANCE: {
-        name: '运维版',
+        name: '运维版（已停售）',
+        legacy: true,
         price: 2980,
         monthlyPrice: 298,
         yearlyPrice: 2980,
@@ -40,31 +46,31 @@ export const PLAN_DETAILS = {
         color: 'green',
     },
     FULL: {
-        name: '全能版',
-        price: 3980,
-        monthlyPrice: 398,
-        yearlyPrice: 3980,
+        name: '专家版',
+        price: 5800,
+        monthlyPrice: 580,
+        yearlyPrice: 5800,
         icon: '💎',
-        description: '全部功能无限制',
+        description: '专业版全部功能 + 运维诊断',
         color: 'purple',
         recommended: true,
     },
     TEAM: {
         name: '团队版',
-        price: 9800,
+        price: 16800,
         monthlyPrice: 0,
-        yearlyPrice: 9800,
+        yearlyPrice: 16800,
         icon: '👥',
         description: '5账号+协作功能',
         color: 'orange',
     },
     ENTERPRISE: {
         name: '企业版',
-        price: 38000,
+        price: 33000,
         monthlyPrice: 0,
-        yearlyPrice: 38000,
+        yearlyPrice: 33000,
         icon: '🏢',
-        description: '无限账号+API+定制',
+        description: '20 账号起+API+定制',
         color: 'red',
     },
 } as const;
@@ -72,9 +78,9 @@ export const PLAN_DETAILS = {
 // 每日使用限额配置
 export const USAGE_LIMITS = {
     FREE: {
-        ai_chat: 3,           // 降低至3次/天
-        resource_query: 2,    // 降低至2次
-        calculation: 2,       // 降低至2次
+        ai_chat: 5,
+        resource_query: 3,
+        calculation: 3,
         paper_search: 3,      // 降低至3次
         diagnosis: 0,         // 免费用户无诊断权限
         saved_papers: 5,      // 降低至5篇
@@ -91,7 +97,7 @@ export const USAGE_LIMITS = {
         diagnosis: 3,
         saved_papers: 500,
         saved_locations: 50,
-        projects: 50,
+        projects: 30,
         stations: 0,
         folders: 20,
     },
@@ -120,7 +126,7 @@ export const USAGE_LIMITS = {
         folders: 50,
     },
     TEAM: {
-        ai_chat: 500, // 共享
+        ai_chat: 1500, // 团队共享
         resource_query: Infinity,
         calculation: Infinity,
         paper_search: Infinity,
@@ -224,8 +230,8 @@ export const DATA_RETENTION = {
     FREE: 7,
     PRO: 365,
     MAINTENANCE: 365,
-    FULL: Infinity,
-    TEAM: Infinity,
+    FULL: 730,
+    TEAM: 1095,
     ENTERPRISE: Infinity,
 } as const;
 

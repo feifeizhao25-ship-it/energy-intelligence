@@ -83,7 +83,7 @@ def test_entitlements_matrix_has_all_plans_and_keys():
 def test_entitlements_matrix_values():
     assert ENTITLEMENTS["free"]["max_projects"] == 1
     # 与 web 实际执行的 USAGE_LIMITS 一致（web 端 quota-consistency.test.ts 逐项比对）
-    assert ENTITLEMENTS["pro"]["max_projects"] == 50
+    assert ENTITLEMENTS["pro"]["max_projects"] == 30
     assert ENTITLEMENTS["enterprise"]["max_projects"] == -1
     assert ENTITLEMENTS["free"]["data_sources"] == ["basic"]
     assert ENTITLEMENTS["pro"]["data_sources"] == [
@@ -94,7 +94,7 @@ def test_entitlements_matrix_values():
     assert ENTITLEMENTS["pro"]["export_formats"] == ["pdf", "docx"]
     assert ENTITLEMENTS["enterprise"]["export_formats"] == ["pdf", "docx", "api"]
     assert ENTITLEMENTS["free"]["team_seats"] == 1
-    assert ENTITLEMENTS["pro"]["team_seats"] == 5
+    assert ENTITLEMENTS["pro"]["team_seats"] == 1
     assert ENTITLEMENTS["enterprise"]["team_seats"] == -1
     assert ENTITLEMENTS["free"]["support_level"] == "community"
     assert ENTITLEMENTS["pro"]["support_level"] == "email"
@@ -221,14 +221,14 @@ async def test_assert_project_quota_pro_limit(
     persisted_user, db_session: AsyncSession
 ):
     user = await persisted_user("pro")
-    await _add_projects(db_session, str(user.id), 49)
-    await assert_project_quota(str(user.id), db_session)  # 49 < 50，允许
+    await _add_projects(db_session, str(user.id), 29)
+    await assert_project_quota(str(user.id), db_session)  # 29 < 30，允许
 
     await _add_projects(db_session, str(user.id), 1)
     with pytest.raises(QuotaExceeded) as error:
         await assert_project_quota(str(user.id), db_session)
-    assert error.value.limit == 50
-    assert error.value.current_count == 50
+    assert error.value.limit == 30
+    assert error.value.current_count == 30
 
 
 @pytest.mark.asyncio
@@ -255,7 +255,7 @@ async def test_billing_plans_endpoint_reflects_entitlements(client):
     body = response.json()
     assert body["code"] == 0
     plans = body["data"]["plans"]
-    assert [p["id"] for p in plans] == ["free", "pro", "enterprise"]
+    assert [p["id"] for p in plans] == ["free", "pro", "full", "team", "enterprise"]
 
     for plan in plans:
         assert plan["entitlements"] == ENTITLEMENTS[plan["id"]]

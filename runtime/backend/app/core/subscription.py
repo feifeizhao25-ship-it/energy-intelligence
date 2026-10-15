@@ -39,46 +39,26 @@ PLAN_QUOTAS = {
 }
 
 
-# 会员权益单一事实源。数值型权益中 -1 一律表示无限。
-# 数量/次数类额度（quotas）只从 data/entitlements.json 来，这里不得再写一份：
-# 原来这里的 max_projects 覆盖了注册表，造成注册表写一个数、后端执行另一个数。
+# 会员权益单一事实源：data/entitlements.json（前端 web/src/lib/entitlements/entitlements.json 为同内容副本）。
+# 数值型权益中 -1 一律表示无限。原来这里另写了一份 _PLAN_DETAILS（全能/团队含 xlsx、席位 5/20），
+# 与注册表、定价页互相矛盾；现在全部从注册表派生，不再手写。
+TIER_ORDER = list(_REGISTRY.get("tier_order", []))  # 在售档位
+LEGACY_TIERS = list(_REGISTRY.get("legacy_tiers", []))  # 已停售、仅老用户有效
+
+
+def _details_from_registry(tier: dict) -> dict:
+    return {
+        "data_sources": list(tier.get("knowledge", {}).get("data_sources", ["basic"])),
+        "export_formats": list(tier.get("export", {}).get("formats", ["pdf"])),
+        "team_seats": tier.get("collaboration", {}).get("team_seats", 1),
+        "support_level": tier.get("service", {}).get("support_level", "community"),
+        "data_retention_days": tier.get("service", {}).get("data_retention_days", 7),
+    }
+
+
 _PLAN_DETAILS = {
-    "free": {
-        "data_sources": ["basic"],
-        "export_formats": ["pdf"],
-        "team_seats": 1,
-        "support_level": "community",
-    },
-    "pro": {
-        "data_sources": ["basic", "premium_weather", "grid_tariff"],
-        "export_formats": ["pdf", "docx"],
-        "team_seats": 5,
-        "support_level": "email",
-    },
-    "maintenance": {
-        "data_sources": ["basic", "premium_weather", "operations"],
-        "export_formats": ["pdf", "docx"],
-        "team_seats": 3,
-        "support_level": "email",
-    },
-    "full": {
-        "data_sources": ["all"],
-        "export_formats": ["pdf", "docx", "xlsx"],
-        "team_seats": 5,
-        "support_level": "priority",
-    },
-    "team": {
-        "data_sources": ["all"],
-        "export_formats": ["pdf", "docx", "xlsx", "api"],
-        "team_seats": 20,
-        "support_level": "priority",
-    },
-    "enterprise": {
-        "data_sources": ["all"],
-        "export_formats": ["pdf", "docx", "api"],
-        "team_seats": -1,
-        "support_level": "dedicated",
-    },
+    plan_id: _details_from_registry(tier)
+    for plan_id, tier in _REGISTRY.get("tiers", {}).items()
 }
 ENTITLEMENTS = {
     plan_id: {**PLAN_QUOTAS[plan_id], **_PLAN_DETAILS.get(plan_id, {})}

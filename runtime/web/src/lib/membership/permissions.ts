@@ -174,12 +174,8 @@ export function getUpgradeSuggestion(user: User, blockedFeature: string): {
     if (blockedFeature.includes('维护') || blockedFeature.includes('诊断')) {
         if (currentPlan === 'FREE' || currentPlan === 'PRO') {
             suggestions.push({
-                plan: Plan.MAINTENANCE,
-                reason: '解锁全部运维诊断功能',
-            });
-            suggestions.push({
                 plan: Plan.FULL,
-                reason: '包含运维功能+专业版全部功能',
+                reason: '专家版：运维诊断 + 专业版全部功能',
             });
         }
     } else if (blockedFeature.includes('资源') || blockedFeature.includes('计算')) {
@@ -197,7 +193,7 @@ export function getUpgradeSuggestion(user: User, blockedFeature: string): {
         }
     }
 
-    // 默认推荐全能版
+    // 默认推荐专家版
     if (suggestions.length === 0) {
         suggestions.push({
             plan: Plan.FULL,
