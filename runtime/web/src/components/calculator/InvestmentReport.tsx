@@ -7,7 +7,7 @@ import {
     StyleSheet,
     Font,
 } from '@react-pdf/renderer';
-import { co2AvoidedTonnes, EMISSION_FACTOR_NOTE, GRID_EMISSION_FACTOR } from '@/lib/standards/emission-factor';
+import { co2AvoidedTonnesForProvince, emissionFactorNoteFor, GRID_EMISSION_FACTOR } from '@/lib/standards/emission-factor';
 import {
     PDF_FONT_FILES, REPORT_TITLE, REPORT_DISCLAIMER, NOT_FILLED,
     reportConclusion, reportNumber, degradationText, displayOrNotFilled, extractReportFigures, capacityUnitOf,
@@ -327,19 +327,19 @@ const InvestmentReport: React.FC<InvestmentReportProps> = ({ data, type, aiAnaly
                         <View style={[styles.metricCard, { width: '48%', backgroundColor: '#ecfdf5' }]}>
                             <Text style={styles.metricLabel}>年减排二氧化碳 (CO2)</Text>
                             <Text style={[styles.metricValue, { color: '#059669' }]}>
-                                {co2AvoidedTonnes(energy.year1 || 0).toFixed(1)} 吨
+                                {co2AvoidedTonnesForProvince(energy.year1 || 0, data?.metadata?.province).toFixed(1)} 吨
                             </Text>
                         </View>
                         <View style={[styles.metricCard, { width: '48%', backgroundColor: '#ecfdf5' }]}>
                             <Text style={styles.metricLabel}>生命周期等效植树</Text>
                             <Text style={[styles.metricValue, { color: '#059669' }]}>
-                                {Math.round(co2AvoidedTonnes(energy.lifetime || (energy.year1 || 0) * 25) * 1000 / 22)} 棵
+                                {Math.round(co2AvoidedTonnesForProvince(energy.lifetime || (energy.year1 || 0) * 25, data?.metadata?.province) * 1000 / 22)} 棵
                             </Text>
                         </View>
                     </View>
                 </View>
                 <Text style={{ fontSize: 8, color: '#64748b', marginTop: -10, marginBottom: 4 }}>
-                    {EMISSION_FACTOR_NOTE}（来源：{GRID_EMISSION_FACTOR.source}）
+                    {emissionFactorNoteFor(data?.metadata?.province)}（来源：{GRID_EMISSION_FACTOR.source}）
                 </Text>
                 <Text style={{ fontSize: 8, color: '#64748b', marginBottom: 10 }}>
                     {priceAsOfText(figures.pricing)}

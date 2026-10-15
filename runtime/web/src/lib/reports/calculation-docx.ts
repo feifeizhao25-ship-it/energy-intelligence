@@ -13,7 +13,8 @@ import {
     REPORT_TITLE, REPORT_DISCLAIMER, NOT_FILLED,
     reportConclusion, reportNumber, degradationText, displayOrNotFilled, extractReportFigures, typeLabelOf, capacityUnitOf,
 } from './calculation-report';
-import { co2AvoidedTonnes, EMISSION_FACTOR_NOTE, GRID_EMISSION_FACTOR } from '@/lib/standards/emission-factor';
+import { co2AvoidedTonnesForProvince, emissionFactorNoteFor, GRID_EMISSION_FACTOR } from '@/lib/standards/emission-factor';
+import { proportionalRange, uncertaintySection } from '@/lib/calculator/ranges';
 import { priceAsOfText } from '@/lib/pricing/tariffs';
 
 export const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
@@ -109,7 +110,18 @@ export function buildCalculationDocx(data: any, type: string, options: DocxRepor
     if (type !== 'storage' && f.energy.year1 !== null) {
         children.push(
             heading('环境效益与减排贡献'),
-            para(`年减排二氧化碳约 ${co2AvoidedTonnes(f.energy.year1).toFixed(1)} 吨；${EMISSION_FACTOR_NOTE}（来源：${GRID_EMISSION_FACTOR.source}）`, { size: 19 }),
+            para(`年减排二氧化碳约 ${co2AvoidedTonnesForProvince(f.energy.year1, f.province).toFixed(1)} 吨；${emissionFactorNoteFor(f.province)}（来源：${GRID_EMISSION_FACTOR.source}）`, { size: 19 }),
+        );
+    }
+
+    // 审计 3-2：报告自动生成“不确定性”小节（区间 + 中值）
+    if (type === 'solar' && f.energy.year1 !== null) {
+        children.push(
+            heading('不确定性'),
+            ...uncertaintySection([
+                { label: '首年发电量', range: proportionalRange(f.energy.year1), unit: 'kWh' },
+                { label: '年减排二氧化碳', range: proportionalRange(co2AvoidedTonnesForProvince(f.energy.year1, f.province)), unit: '吨', decimals: 1 },
+            ]).map(line => para(line, { size: 19 })),
         );
     }
 

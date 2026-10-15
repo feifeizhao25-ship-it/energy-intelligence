@@ -83,3 +83,14 @@ export function resolveEmissionFactor(province?: string | null): ResolvedEmissio
 export function co2AvoidedKgForProvince(kwh: number, province?: string | null): number {
     return kwh * resolveEmissionFactor(province).value;
 }
+
+/** 报告/页面统一口径说明：按项目所在省（或全国平均）因子，例如“按 2023 年江苏省级电力平均二氧化碳排放因子 0.5827 kg/kWh 计算” */
+export function emissionFactorNoteFor(province?: string | null): string {
+    const f = resolveEmissionFactor(province);
+    return `按 ${f.year} 年${f.scope} ${f.value} kg/kWh 计算`;
+}
+
+/** 按省份计算减排量（吨 CO2） */
+export function co2AvoidedTonnesForProvince(kwh: number, province?: string | null): number {
+    return co2AvoidedKgForProvince(kwh, province) / 1000;
+}

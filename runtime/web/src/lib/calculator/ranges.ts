@@ -32,15 +32,19 @@ export function inverseRange(median: number, u = SOLAR_GENERATION_REL_UNCERTAINT
   return { low: median / (1 + u), median, high: median / (1 - u), relUncertainty: u, note };
 }
 
-function fmtWan(n: number): string {
-  const w = n / 10000;
-  return w >= 100 ? String(Math.round(w)) : w.toFixed(w >= 10 ? 0 : 1);
+/** 精度按中值的量级统一决定，保证区间两端与中值位数一致 */
+function wanDecimals(median: number): number {
+  const w = Math.abs(median) / 10000;
+  return w >= 100 ? 0 : w >= 10 ? 1 : 2;
 }
 
 /** 格式化：≥1 万时以“万”为单位，例如“约 108–126 万度（中值 118 万）” */
 export function formatRange(r: ValueRange, unit: string, opts: { decimals?: number } = {}): string {
   if (Math.abs(r.median) >= 10000) {
-    return `约 ${fmtWan(r.low)}–${fmtWan(r.high)} 万${unit}（中值 ${fmtWan(r.median)} 万）`;
+    const d = wanDecimals(r.median);
+    const w = (n: number) => (n / 10000).toFixed(d);
+    const u = /^[A-Za-z]/.test(unit) ? ` ${unit}` : unit;
+    return `约 ${w(r.low)}–${w(r.high)} 万${u}（中值 ${w(r.median)} 万）`;
   }
   const d = opts.decimals ?? 0;
   const f = (n: number) => n.toLocaleString('zh-CN', { minimumFractionDigits: d, maximumFractionDigits: d });

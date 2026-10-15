@@ -20,7 +20,7 @@ import MonthlyGenerationBarChart from '@/components/charts/MonthlyGenerationBarC
 import CostBreakdownEditor from '@/components/calculator/CostBreakdownEditor';
 import AIProjectAnalysis from '@/components/calculator/AIProjectAnalysis';
 import { safeErrorMessage } from '@/lib/api/safe-error';
-import { co2AvoidedTonnes, EMISSION_FACTOR_NOTE } from '@/lib/standards/emission-factor';
+import { co2AvoidedTonnesForProvince, emissionFactorNoteFor } from '@/lib/standards/emission-factor';
 import { priceAsOfText } from '@/lib/pricing/tariffs';
 
 const PDFDownloadLink = dynamic(
@@ -168,16 +168,16 @@ function CalculatorResultPage() {
                                 <div className="grid grid-cols-2 gap-6">
                                     <div className="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 text-center">
                                         <Leaf className="w-6 h-6 text-emerald-500 mx-auto mb-2" />
-                                        <div className="text-emerald-500 font-bold text-lg">{co2AvoidedTonnes(data.energy.year1).toFixed(1)}t</div>
+                                        <div className="text-emerald-500 font-bold text-lg">{co2AvoidedTonnesForProvince(data.energy.year1, data.metadata?.province).toFixed(1)}t</div>
                                         <div className="text-slate-500 text-[10px] uppercase font-bold">年减排二氧化碳</div>
                                     </div>
                                     <div className="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 text-center">
                                         <div className="text-2xl mb-1">🌳</div>
-                                        <div className="text-emerald-500 font-bold text-lg">{Math.round(co2AvoidedTonnes(data.energy.lifetime || data.energy.year1 * 25) / 0.022)}</div>
+                                        <div className="text-emerald-500 font-bold text-lg">{Math.round(co2AvoidedTonnesForProvince(data.energy.lifetime || data.energy.year1 * 25, data.metadata?.province) / 0.022)}</div>
                                         <div className="text-slate-500 text-[10px] uppercase font-bold">25年等效植树</div>
                                     </div>
                                 </div>
-                                <p className="mt-4 text-[11px] text-slate-500">{EMISSION_FACTOR_NOTE}</p>
+                                <p className="mt-4 text-[11px] text-slate-500">{emissionFactorNoteFor(data.metadata?.province)}</p>
                             </div>
                         </div>
                     </div>
