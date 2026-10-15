@@ -436,10 +436,10 @@ function calculateFinancial(
   const annualRevenues = annualGeneration.map(gen => gen * blendedPrice);
   const annualCashFlows = annualRevenues.map((revenue, i) => revenue - annualOmCosts[i]);
 
-  // 5. 计算IRR（内部收益率）：与 v2 初步估算同一解法（二分法，现金流只变号一次时有唯一解）；
-  //    无唯一解时才退回牛顿迭代，保持旧接口「irr 为数字」的约定
+  // 5. 计算IRR（内部收益率）：区间二分法，现金流只变号一次时才有唯一解；
+  //    无解或多解返回 null（界面显示「无法确认唯一的内部收益率」），不再用未收敛的牛顿迭代结果冒充
   const uniqueIrr = solveIrr([-totalInvestment, ...annualCashFlows]);
-  const irr = uniqueIrr === null ? calculateIRR(-totalInvestment, annualCashFlows) : uniqueIrr * 100;
+  const irr = uniqueIrr === null ? null : uniqueIrr * 100;
 
   // 6. 计算NPV（净现值）
   const npv = calculateNPV(-totalInvestment, annualCashFlows, FINANCE_ASSUMPTIONS.discountRate);
@@ -469,38 +469,6 @@ function calculateFinancial(
     cashFlow: annualCashFlows, // 逐年净现金流（收入 − 运维），不含第 0 年投资
     revenue: annualRevenues // 逐年收入（未扣运维）
   };
-}
-
-/**
- * 计算IRR
- */
-function calculateIRR(initialInvestment: number, cashFlow: number[]): number {
-  // 简化IRR计算（牛顿法）
-  let rate = 0.1; // 初始猜测10%
-  const tolerance = 0.0001;
-  const maxIterations = 100;
-
-  for (let i = 0; i < maxIterations; i++) {
-    let npv = initialInvestment;
-    let derivative = 0;
-
-    for (let year = 0; year < cashFlow.length; year++) {
-      const factor = Math.pow(1 + rate, year + 1);
-      npv += cashFlow[year] / factor;
-      derivative -= (year + 1) * cashFlow[year] / Math.pow(1 + rate, year + 2);
-    }
-
-    if (Math.abs(npv) < tolerance) {
-      return rate * 100;
-    }
-
-    rate = rate - npv / derivative;
-
-    if (rate < -0.99) rate = -0.99; // 防止负利率过低
-    if (rate > 10) rate = 10; // 防止利率过高
-  }
-
-  return rate * 100;
 }
 
 /**
@@ -649,27 +617,31 @@ function generateComparisonRecommendations(
 ): string[] {
   const recommendations: string[] = [];
 
-  // 基于IRR比较
-  if (solarResult.financial.irr > windResult.financial.irr + 2) {
-    recommendations.push('光伏项目IRR更高，投资回报更优');
-  } else if (windResult.financial.irr > solarResult.financial.irr + 2) {
-    recommendations.push('风电项目IRR更高，投资回报更优');
+  // 基于IRR比较：只陈述测算结果，不给投资结论（底线②）
+  const sIrr = solarResult.financial.irr;
+  const wIrr = windResult.financial.irr;
+  if (sIrr === null || wIrr === null) {
+    recommendations.push('至少一个方案的现金流无法确认唯一的内部收益率，请改看净现值与回收期');
+  } else if (sIrr > wIrr + 2) {
+    recommendations.push(`按当前假设，光伏测算 IRR（${sIrr.toFixed(1)}%）高于风电（${wIrr.toFixed(1)}%），差异取决于电价与成本假设`);
+  } else if (wIrr > sIrr + 2) {
+    recommendations.push(`按当前假设，风电测算 IRR（${wIrr.toFixed(1)}%）高于光伏（${sIrr.toFixed(1)}%），差异取决于电价与成本假设`);
   } else {
-    recommendations.push('光伏和风电IRR相近，可根据其他因素选择');
+    recommendations.push('按当前假设，两者测算 IRR 相差不到 2 个百分点');
   }
 
   // 基于资源条件
   if (solarResource.annual.ghi > 1600) {
-    recommendations.push('太阳能资源丰富，适合发展光伏项目');
+    recommendations.push('年水平面总辐照高于 1600 kWh/m²');
   }
 
   if (solarResource.annual.ghi < 1200) {
-    recommendations.push('太阳能资源一般，建议考虑风电或其他方案');
+    recommendations.push('年水平面总辐照低于 1200 kWh/m²，光伏发电量偏低');
   }
 
   // 基于投资规模
   if (solarResult.financial.investment < windResult.financial.investment) {
-    recommendations.push('光伏项目投资门槛较低，适合中小型投资');
+    recommendations.push('按当前假设，光伏总投资低于风电');
   }
 
   return recommendations;

@@ -117,7 +117,7 @@ function CalculatorResultPage() {
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             <MetricCard
                                 label="内部收益率（IRR）"
-                                value={`${data.financial.irr.toFixed(2)}%`}
+                                value={data.financial.irr === null || data.financial.irr === undefined ? '无法确认' : `${data.financial.irr.toFixed(2)}%`}
                                 icon={<TrendingUp className="w-5 h-5 text-emerald-400" />}
                                 color="border-emerald-500/20"
                             />

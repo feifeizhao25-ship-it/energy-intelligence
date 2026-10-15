@@ -1,7 +1,7 @@
 // 分散式风电收益计算引擎
 import { getWindResource } from '@/lib/api/nasa-power';
 import { WindCalculationInput } from '@/types';
-import { DEFAULT_DISCOUNT_RATE, discountedLcoe } from './project-finance';
+import { solveIrr, DEFAULT_DISCOUNT_RATE, discountedLcoe } from './project-finance';
 import { extrapolateWindSpeed } from './wind-shear';
 
 // 辅助函数：估算容量因子
@@ -117,28 +117,12 @@ export async function calculateWind(input: WindCalculationInput) {
     financial: {
       investment: calcInvestment,
       year1Revenue: annualRevenues[0], // 首年售电/自用收入（未扣运维、保险）
-      irr: calculateIRR(cashFlows) * 100,
+      irr: irrPercent(cashFlows),
       paybackYears: calculatePaybackPeriod(calcInvestment, cashFlows.slice(1)),
       lcoe,
       discountRate: DEFAULT_DISCOUNT_RATE
     }
   };
-}
-
-function calculateIRR(cashFlows: number[]): number {
-  let irr = 0.1;
-  for (let i = 0; i < 100; i++) {
-    let npv = 0;
-    let dnpv = 0;
-    for (let t = 0; t < cashFlows.length; t++) {
-      npv += cashFlows[t] / Math.pow(1 + irr, t);
-      dnpv -= t * cashFlows[t] / Math.pow(1 + irr, t + 1);
-    }
-    const newIrr = irr - npv / dnpv;
-    if (Math.abs(newIrr - irr) < 0.0001) return newIrr;
-    irr = newIrr;
-  }
-  return irr;
 }
 
 function calculatePaybackPeriod(initialInvestment: number, annualCashFlows: number[]): number {
@@ -148,4 +132,10 @@ function calculatePaybackPeriod(initialInvestment: number, annualCashFlows: numb
     if (remaining <= 0) return year + 1 + remaining / annualCashFlows[year];
   }
   return 20;
+}
+
+/** 唯一 IRR（%）；无解/多解返回 null，不伪造数值 */
+function irrPercent(cashFlows: number[]): number | null {
+  const r = solveIrr(cashFlows);
+  return r === null ? null : r * 100;
 }

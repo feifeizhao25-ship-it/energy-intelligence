@@ -285,7 +285,10 @@ class TestIrrNpvOracle:
         )
         assert len(result["cashflows"]) == 21
         assert result["engine"] == "financial_utils.build_solar_cashflows"
-        assert result["irr_pct"] is not None
+        # electricity_price 按 $/MWh 计，0.4 时每年净现金流都为负、从不变号 → 不存在 IRR。
+        # 旧断言 "is not None" 依赖牛顿法不收敛时仍返回的数，属于把缺陷写进了测试。
+        assert all(cf < 0 for cf in result["cashflows"])
+        assert result["irr_pct"] is None
 
 
 # ── 注册表发现与执行 ─────────────────────────────────────────────────────────

@@ -40,10 +40,10 @@ export function parseV1SolarInput(body: any): SolarCalculationInput {
 export function describeSolarOutput(o: SolarCalculationOutput) {
     const f = o.financial;
     return {
-        headline: `按所给输入测算：首年发电量 ${Math.round(o.energy.year1)} kWh，性能比 ${(o.energy.pr * 100).toFixed(1)}%，内部收益率 ${f.irr.toFixed(2)}%（测算值，随电价与成本假设变化）。`,
+        headline: `按所给输入测算：首年发电量 ${Math.round(o.energy.year1)} kWh，性能比 ${(o.energy.pr * 100).toFixed(1)}%，内部收益率 ${f.irr === null ? '无法确认唯一的内部收益率' : `${f.irr.toFixed(2)}%（测算值，随电价与成本假设变化）`}。`,
         keyMetrics: [
             { name: '首年发电量', value: o.energy.year1.toFixed(0), unit: 'kWh' },
-            { name: '内部收益率', value: f.irr.toFixed(2), unit: '%' },
+            { name: '内部收益率', value: f.irr === null ? '无法确认唯一的内部收益率' : f.irr.toFixed(2), unit: f.irr === null ? '' : '%' },
             { name: '静态回收期', value: Number.isFinite(f.paybackYears) ? f.paybackYears.toFixed(1) : '寿命期内未回收', unit: '年' },
             { name: '平准化度电成本', value: f.lcoe.toFixed(3), unit: '元/kWh' },
         ],

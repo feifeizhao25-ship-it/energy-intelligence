@@ -18,11 +18,11 @@ class SolarFinanceRequest(BaseModel):
 
 
 class FinancialModelResponse(BaseModel):
-    irr: float  # %
+    irr: Optional[float]  # %；现金流无唯一解时为 None
     npv: float  # USD
     lcoe: float  # USD/kWh
     payback_years: float
-    equity_irr: float
+    equity_irr: Optional[float]
     dscr_min: float
     cashflows: List[float]  # 25-yr annual net cashflow
     sensitivity: dict  # capex/price sensitivity matrix
@@ -57,7 +57,7 @@ class StorageFinanceRequest(BaseModel):
 
 
 class StorageFinanceResponse(BaseModel):
-    irr: float
+    irr: Optional[float]  # 无唯一解时为 None
     npv: float
     lcos: float
     payback_years: float

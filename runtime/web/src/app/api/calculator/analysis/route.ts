@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
     请作为专业的新能源投资顾问，分析以下${typeLabel}项目的测算指标，并给出3条评价建议（只依据下列数据，不编造未提供的信息）。
     
     指标数据：
-    - IRR: ${metrics.irr?.toFixed(2)}%
+    - IRR: ${typeof metrics.irr === 'number' ? `${metrics.irr.toFixed(2)}%` : '无法确认唯一值'}
     - 回收期: ${metrics.paybackYears?.toFixed(1)}年
     - 度电成本: ${metrics.lcoe || metrics.lcos}
     - 装机容量: ${data.metadata?.capacity} kWp

@@ -55,7 +55,7 @@ async def storage_finance(
     lcos = discounted_costs / discounted_energy if discounted_energy > 0 else 0
 
     return StorageFinanceResponse(
-        irr=round(float(irr), 4), npv=round(float(npv), 2), lcos=round(lcos, 4),
+        irr=None if irr is None else round(float(irr), 4), npv=round(float(npv), 2), lcos=round(lcos, 4),
         payback_years=round(min(payback, 99.0), 2),
         annual_revenue=round(initial_discharged * price_spread, 2),
         annual_discharged_mwh=round(initial_discharged, 2), total_capex=round(total_capex, 2),

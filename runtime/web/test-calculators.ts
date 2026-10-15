@@ -22,7 +22,7 @@ async function testSolar() {
     try {
         const result = await calculateSolar(input as any);
         console.log('Solar Result:', JSON.stringify(result, null, 2));
-        console.log('Solar IRR:', result.financial.irr.toFixed(2) + '%');
+        console.log('Solar IRR:', (result.financial.irr === null ? 'n/a' : result.financial.irr.toFixed(2) + '%'));
         console.log('Solar Payback:', result.financial.paybackYears.toFixed(2) + ' years');
     } catch (e) {
         console.error('Solar Test Failed:', e);
@@ -57,7 +57,7 @@ async function testWind() {
     try {
         const result = await calculateWind(input as any);
         console.log('Wind Result:', JSON.stringify(result, null, 2));
-        console.log('Wind IRR:', result.financial.irr.toFixed(2) + '%');
+        console.log('Wind IRR:', (result.financial.irr === null ? 'n/a' : result.financial.irr.toFixed(2) + '%'));
     } catch (e) {
         console.error('Wind Test Failed:', e);
     }
@@ -79,7 +79,7 @@ async function testStorage() {
         const result = await calculateStorage(input as any);
         console.log('Storage Result:', JSON.stringify(result, null, 2));
         if (result.financial && result.financial.metrics) {
-            console.log('Storage IRR:', result.financial.metrics.irr.toFixed(2) + '%');
+            console.log('Storage IRR:', (result.financial.metrics.irr === null ? 'n/a' : result.financial.metrics.irr.toFixed(2) + '%'));
         }
     } catch (e) {
         console.error('Storage Test Failed:', e);

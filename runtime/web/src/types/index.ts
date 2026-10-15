@@ -100,7 +100,7 @@ export interface SolarCalculationOutput {
     exportEnergy?: number; // 首年上网电量 (kWh)
     year1Revenue: number; // 首年收益 (元)
     paybackYears: number; // 回本年限
-    irr: number; // 内部收益率 (%)
+    irr: number | null; // 内部收益率 (%)；现金流无唯一解时为 null
     npv: number; // 净现值 (元)
     lcoe: number; // 平准化度电成本 (元/kWh)，按折现率折现（口径库 STANDARDS.LCOE）
     cashFlow: number[]; // 逐年净现金流（收入 − 运维），不含第 0 年投资
@@ -179,7 +179,7 @@ export interface WindCalculationOutput {
     investment: number; // 总投资 (元)
     year1Revenue: number; // 首年收益 (元)
     paybackYears: number; // 回本年限
-    irr: number; // 内部收益率 (%)
+    irr: number | null; // 内部收益率 (%)；现金流无唯一解时为 null
     npv: number; // 净现值 (元)
     lcoe: number; // 平准化度电成本 (元/kWh)
     cashFlow: number[]; // 25年现金流数组
@@ -369,7 +369,9 @@ export interface StorageCalculationInput {
     efficiency: number; // % (Round-trip)
     dod: number; // % (Depth of Discharge)
     cycleLife: number; // 次数
-    degradationRate: number; // %/year
+    degradationRate: number; // %/year（循环衰减）
+    calendarDegradationRate?: number; // %/year（日历衰减，可选，默认 0）
+    operatingDaysPerYear?: number; // 年运行天数（可选，默认 330）
     maintenanceCostRatio: number; // % of investment
   };
 }

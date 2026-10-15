@@ -110,7 +110,7 @@ export async function POST(req: NextRequest) {
                     monthlyRevenue: annualRevenue === null ? null : Math.round(annualRevenue / 12),
                     totalInvestment: model.financial.investment,
                     paybackYears: payback === null ? null : Math.round(payback * 10) / 10,
-                    irr: price === null ? null : Math.round(model.financial.irr * 10) / 10,
+                    irr: price === null || model.financial.irr === null ? null : Math.round(model.financial.irr * 10) / 10,
                 },
                 environmental: { co2Reduction, treesEquivalent: Math.round(co2Reduction / 22) },
                 pricing: tariff.status === 'ok'

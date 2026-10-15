@@ -430,11 +430,12 @@ export class ReportGenerator {
 
         // 确定风险等级
         let riskLevel: "LOW" | "MEDIUM" | "HIGH" = "LOW";
-        if (data.irr < 8) riskLevel = "HIGH";
+        const irrKnown = typeof data.irr === "number" && Number.isFinite(data.irr);
+        if (!irrKnown || data.irr < 8) riskLevel = "HIGH";
         else if (data.irr < 12) riskLevel = "MEDIUM";
 
         // 结论只做事实描述，不给投资建议（底线：不做投资建议）
-        const conclusion = `按本报告输入与假设测算：内部收益率 ${data.irr.toFixed(2)}%（行业常用对照基准 8%），净现值 ${(data.npv / 10000).toFixed(2)} 万元（折现率见假设章节）。以上为测算值，随电价、造价与发电量假设变化，不构成投资建议。`;
+        const conclusion = `按本报告输入与假设测算：内部收益率 ${irrKnown ? `${data.irr.toFixed(2)}%（行业常用对照基准 8%）` : "无法确认唯一值"}，净现值 ${(data.npv / 10000).toFixed(2)} 万元（折现率见假设章节）。以上为测算值，随电价、造价与发电量假设变化，不构成投资建议。`;
 
         return {
             overview: {

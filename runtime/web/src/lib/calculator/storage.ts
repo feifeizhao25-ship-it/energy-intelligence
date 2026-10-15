@@ -1,10 +1,11 @@
 import { StorageCalculationInput } from '@/types';
+import { solveIrr } from './project-finance';
 
 export interface StorageFinancialResult {
     dailyRevenue: number;
     annualRevenue: number;
     paybackYears: number;
-    irr: number;
+    irr: number | null; // 无唯一解时为 null
     npv: number;
     lcos: number; // Levelized Cost of Storage
 }
@@ -14,7 +15,12 @@ export async function calculateStorage(input: StorageCalculationInput) {
 
     // 1. 发电/放电模型
     const usableEnergy = input.energy * (input.technical.dod / 100);
-    const cycleLossCorrection = Math.sqrt(input.technical.efficiency / 100); // 单程效率
+    // 每日循环次数取自配置：只有配置了第二段充电时段才按两充两放；否则一充一放
+    const dailyCycles = input.applicationMode === 'arbitrage' && input.arbitrageConfig?.chargeTime2 ? 2 : 1;
+    const operatingDays = input.technical.operatingDaysPerYear ?? 330;
+    // 单程效率 = √往返效率；放电量按电池侧可用能量 × 单程效率计到电网侧
+    const oneWayEfficiency = Math.sqrt(input.technical.efficiency / 100);
+    const calendarFadePerYear = (input.technical.calendarDegradationRate ?? 0) / 100;
 
     let dailyRevenue = 0;
 
@@ -43,15 +49,17 @@ export async function calculateStorage(input: StorageCalculationInput) {
     const annualGenerations: number[] = [];
 
     for (let year = 1; year <= years; year++) {
-        const degradation = Math.pow(1 - input.technical.degradationRate / 100, year - 1);
-        const yearRevenue = dailyRevenue * 330 * degradation; // 假设由于检修等每年运行330天
+        // 容量衰减 = 循环衰减（degradationRate，%/年）× 日历衰减（calendarDegradationRate，%/年，默认 0）
+        const degradation = Math.pow(1 - input.technical.degradationRate / 100, year - 1)
+            * Math.pow(1 - calendarFadePerYear, year - 1);
+        const yearRevenue = dailyRevenue * operatingDays * degradation;
         const netCash = yearRevenue - annualOM;
         cashFlows.push(netCash);
-        annualGenerations.push(usableEnergy * 2 * 330 * degradation); // 每年放电量
+        annualGenerations.push(usableEnergy * oneWayEfficiency * dailyCycles * operatingDays * degradation); // 每年放电量（电网侧）
     }
 
-    // 内部收益率
-    const irr = calculateIRR(cashFlows);
+    // 内部收益率：唯一解才给数，否则 null
+    const irrFraction = solveIrr(cashFlows);
 
     // LCOS 计算: (总投资 + 总运维) / 总放电量
     const totalDischarge = annualGenerations.reduce((a, b) => a + b, 0);
@@ -61,14 +69,21 @@ export async function calculateStorage(input: StorageCalculationInput) {
     return {
         technical: {
             usableEnergy,
-            dailyCycles: input.arbitrageConfig?.chargeTime2 ? 2 : 1,
-            estimatedLifeDays: input.technical.cycleLife / (input.arbitrageConfig?.chargeTime2 ? 2 : 1)
+            dailyCycles,
+            operatingDays,
+            estimatedLifeDays: input.technical.cycleLife / dailyCycles
         },
+        assumptions: [
+            `每日循环 ${dailyCycles} 次（${dailyCycles === 2 ? '已配置第二段充放电时段' : '未配置第二段充电时段'}）`,
+            `年运行天数 ${operatingDays} 天`,
+            `循环衰减 ${input.technical.degradationRate}%/年，日历衰减 ${(calendarFadePerYear * 100).toFixed(1)}%/年`,
+            `单程效率 ${(oneWayEfficiency * 100).toFixed(1)}%（往返效率 ${input.technical.efficiency}% 的平方根）`,
+        ],
         financial: {
             metrics: {
                 dailyRevenue,
-                annualRevenue: dailyRevenue * 330,
-                irr: irr * 100,
+                annualRevenue: dailyRevenue * operatingDays,
+                irr: irrFraction === null ? null : irrFraction * 100,
                 lcos,
                 paybackYears: calculatePaybackPeriod(totalInvestment, cashFlows.slice(1)),
                 npv: cashFlows.reduce((sum, val, t) => sum + val / Math.pow(1 + discountRate, t), 0)
@@ -81,22 +96,6 @@ export async function calculateStorage(input: StorageCalculationInput) {
             cashFlows
         }
     };
-}
-
-function calculateIRR(cashFlows: number[]): number {
-    let irr = 0.1;
-    for (let i = 0; i < 100; i++) {
-        let npv = 0;
-        let dnpv = 0;
-        for (let t = 0; t < cashFlows.length; t++) {
-            npv += cashFlows[t] / Math.pow(1 + irr, t);
-            dnpv -= t * cashFlows[t] / Math.pow(1 + irr, t + 1);
-        }
-        const newIrr = irr - npv / dnpv;
-        if (Math.abs(newIrr - irr) < 0.0001) return newIrr;
-        irr = newIrr;
-    }
-    return irr;
 }
 
 function calculatePaybackPeriod(initialInvestment: number, annualCashFlows: number[]): number {
