@@ -1,5 +1,6 @@
 'use client';
 
+import { AiMarkdown } from '@/components/ai/AiMarkdown';
 import React, { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { useSession } from 'next-auth/react';
@@ -279,12 +280,13 @@ export default function AssistantPage() {
                                     </div>
                                 )}
                                 <div className={cn(
-                                    "p-4 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap max-w-2xl",
+                                    "p-4 rounded-2xl text-sm leading-relaxed max-w-2xl",
+                                    msg.role === 'user' && "whitespace-pre-wrap",
                                     msg.role === 'user'
                                         ? "bg-primary text-white rounded-tr-sm"
                                         : "bg-surface-dark border border-border-dark text-white rounded-tl-sm"
                                 )}>
-                                    {msg.content}
+                                    {msg.role === 'user' ? msg.content : <AiMarkdown content={msg.content} />}
                                     {msg.isStreaming && (
                                         <span className="inline-block w-2 h-4 bg-primary ml-1 animate-pulse" />
                                     )}

@@ -131,16 +131,6 @@ export function RealtimeCounter({ className }: { className?: string }) {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
         >
-            <div className="flex -space-x-2">
-                {[1, 2, 3, 4, 5].map((i) => (
-                    <div
-                        key={i}
-                        className="w-6 h-6 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 border-2 border-white flex items-center justify-center text-xs font-bold text-white"
-                    >
-                        {String.fromCharCode(65 + i - 1)}
-                    </div>
-                ))}
-            </div>
             <div className="flex items-center gap-1 text-sm text-gray-600">
                 <TrendingUp className="w-3 h-3 text-primary-500" />
                 <span className="font-semibold text-primary-600">假设与来源</span>

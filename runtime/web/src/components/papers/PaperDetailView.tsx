@@ -1,5 +1,6 @@
 'use client';
 
+import { AiMarkdown } from '@/components/ai/AiMarkdown';
 import { useState, useEffect } from 'react';
 import { Paper } from '@/types';
 import { PdfStatus } from '@/lib/papers/pdf';
@@ -570,7 +571,7 @@ export default function PaperDetailView({ paper, pdfStatus }: PaperDetailViewPro
                                                             "max-w-[80%] px-6 py-4 rounded-[24px] text-sm font-medium leading-relaxed shadow-sm",
                                                             msg.role === 'user' ? "bg-slate-900 text-white" : "bg-white text-slate-700 border border-slate-100"
                                                         )}>
-                                                            {msg.content || (isSending && i === messages.length - 1 ? (
+                                                            {(msg.content && (msg.role === 'user' ? msg.content : <AiMarkdown content={msg.content} />)) || (isSending && i === messages.length - 1 ? (
                                                                 <div className="flex gap-1.5 py-1">
                                                                     <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-bounce"></div>
                                                                     <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-bounce [animation-delay:0.2s]"></div>

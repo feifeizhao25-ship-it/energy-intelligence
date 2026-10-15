@@ -199,13 +199,7 @@ export default function HomePage() {
 
                             {/* 社交证明 */}
                             <div className="mt-6 flex items-center gap-3 bg-white/5 rounded-full px-4 py-2 w-fit">
-                                <div className="flex -space-x-2">
-                                    {[1, 2, 3, 4, 5].map((i) => (
-                                        <div key={i} className="w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 border-2 border-slate-900 flex items-center justify-center text-xs font-bold text-white">
-                                            {String.fromCharCode(65 + i)}
-                                        </div>
-                                    ))}
-                                </div>
+                                <FileText className="w-5 h-5 text-green-400" aria-hidden="true" />
                                 <span className="text-sm text-slate-300">
                                     <span className="font-bold text-green-400">假设与来源</span> 全程留痕可审计
                                 </span>
