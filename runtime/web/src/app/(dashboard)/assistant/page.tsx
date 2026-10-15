@@ -8,6 +8,8 @@ import { Sparkles, Send, Paperclip, Mic, Settings2, Copy, RefreshCw, Loader2, Fi
 import { safeErrorMessage } from '@/lib/api/safe-error';
 import { AigcLabel } from '@/components/ui/AigcLabel';
 import { buildAnswerDateLine } from '@/lib/ai/answer-date-line';
+import { VerificationBadge } from '@/components/evidence/VerificationBadge';
+import type { EvidenceVerification } from '@/lib/evidence/verification';
 
 interface Message {
     id: string;
@@ -17,6 +19,7 @@ interface Message {
     isStreaming?: boolean;
     model?: string;
     question?: string;
+    verification?: EvidenceVerification;
 }
 
 const quickPrompts = [
@@ -138,6 +141,9 @@ export default function AssistantPage() {
                                 if (parsed.type === 'provider') {
                                     const model = parsed.data?.model;
                                     setMessages(prev => prev.map(m => m.id === aiMessageId ? { ...m, model, question: userMessage.content } : m));
+                                } else if (parsed.type === 'evidence') {
+                                    const verification = parsed.data?.verification;
+                                    setMessages(prev => prev.map(m => m.id === aiMessageId ? { ...m, verification } : m));
                                 } else if (parsed.type === 'content') {
                                     accumulatedContent += parsed.data;
                                     setMessages(prev => prev.map(m =>
@@ -299,6 +305,9 @@ export default function AssistantPage() {
                                 </div>
 
                                 {msg.role === 'assistant' && !msg.isStreaming && <AigcLabel tone="dark" />}
+                                {msg.role === 'assistant' && !msg.isStreaming && msg.id !== '1' && (
+                                    <div className="flex flex-wrap items-center gap-2"><VerificationBadge verification={msg.verification} /></div>
+                                )}
                                 {msg.role === 'assistant' && !msg.isStreaming && msg.id !== '1' && (
                                     <p className="text-[11px] text-slate-400" data-testid="answer-date-line">
                                         {buildAnswerDateLine({ content: msg.content, question: msg.question, model: msg.model, answeredAt: msg.timestamp }).text}
