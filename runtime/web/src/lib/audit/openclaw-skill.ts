@@ -95,7 +95,7 @@ export const XINNENGYUAN_SKILL: OpenClawSkill = {
                     output: {
                         resource: { annualGHI: 1420, resourceClass: 'II类', optimalTilt: 35 },
                         economics: { irr: 0.12, paybackYears: 6.5, totalRevenue25: 45.2 },
-                        recommendation: '资源条件良好，IRR达12%，建议投资',
+                        recommendation: '年水平面辐照 1420 kWh/m²（II类），测算 IRR 12%（示例输出，按输入假设计算）',
                         reportUrl: 'https://xinnengyuan.ai/report/xxx',
                     },
                 },
@@ -353,9 +353,8 @@ async function handleSolarAssessment(input: Record<string, unknown>): Promise<un
             paybackYears: result.financial?.paybackYears || 0,
             totalRevenue25: result.financial?.cashFlow.reduce((sum, value) => sum + Math.max(0, value), 0) || 0,
         },
-        recommendation: (result.financial?.irr || 0) > 0.08
-            ? '资源条件良好，建议投资'
-            : '收益率偏低，建议谨慎评估',
+        // 事实描述，不给投资结论；irr 单位为 %
+        recommendation: `测算 IRR ${(result.financial?.irr ?? 0).toFixed(2)}%，静态回收期 ${(result.financial?.paybackYears ?? 0).toFixed(1)} 年（按输入假设计算，不构成投资建议）`,
         reportUrl: `https://xinnengyuan.ai/quick-calc/solar?lat=${lat}&lng=${lng}`,
     };
 }

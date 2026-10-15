@@ -1404,7 +1404,7 @@ def _add_investment_content(doc, data: Dict, metrics: Dict):
 
     _add_heading(doc, "第一章  执行摘要", level=1)
     _add_body(doc,
-        f"本报告对「{data['name']}」进行投资价值分析。"
+        f"本报告对「{data['name']}」进行发电量与财务指标测算分析。"
         f"项目装机容量 {cap:.0f} MW，总投资 {fmt_money(metrics['initial_investment'])}。"
         f"经测算，项目 IRR 为 {fmt_pct(metrics['irr'])}，"
         f"NPV 为 {fmt_money(metrics['npv'])}，"

@@ -71,38 +71,20 @@ export class AuditableCalculationEngine {
     }
 
     /**
-     * 执行可审计计算
+     * 执行可审计计算：调用方传入真实计算函数，快照保存完整输出。
+     * 结论只做事实描述（输入、方法、输出数值），不给投资结论。
      */
-    async execute(input: CalculationInput) {
-        const startTime = Date.now();
+    async execute<T extends Record<string, any>>(input: CalculationInput & {
+        compute: (params: Record<string, any>) => Promise<T>;
+        describe: (output: T) => { headline: string; keyMetrics: { name: string; value: string; unit: string }[] };
+        method: string;
+    }) {
+        const output = await this.traceStepAsync('compute', '执行测算', input.params, () => input.compute(input.params));
+        const facts = input.describe(output);
+        const conclusion = { ...facts, method: input.method, nature: '事实描述，不构成投资建议' };
+        const risks: { level: string; category: string; description: string }[] = [];
+        const nextSteps: { priority: number; action: string; reason: string }[] = [];
 
-        // 逻辑模拟：这里会根据 type 调用具体的计算方法
-        // 示例：calculateSolar(input.params)
-
-        // 记录一个示例步骤
-        this.traceStep('init', '初始化参数', input.params, () => {
-            return { status: 'ready' };
-        });
-
-        // 结论生成（结构化）
-        const conclusion = {
-            headline: "该项目具有极高的投资价值",
-            keyMetrics: [
-                { name: "IRR", value: "12.5%", unit: "%", trend: "up" },
-                { name: "回本周期", value: "6.2", unit: "年" }
-            ],
-            confidence: "high"
-        };
-
-        const risks = [
-            { level: "low", category: "政策", description: "电价补贴可能在2027年后下调" }
-        ];
-
-        const nextSteps = [
-            { priority: 1, action: "导出可研报告", reason: "用于提交银行贷款申请" }
-        ];
-
-        // 保存快照到数据库
         const snapshot = await prisma.calculationSnapshot.create({
             data: {
                 userId: input.userId,
@@ -112,7 +94,7 @@ export class AuditableCalculationEngine {
                 assumptionVersion: this.assumptionVersion,
                 dataSourceVersion: this.dataSourceVersion,
                 inputSnapshot: input.params,
-                outputSnapshot: { result: "dummy_result" }, // 实际应为计算结果
+                outputSnapshot: output as any,
                 calculationTrace: this.trace as any,
                 dataEvidence: this.trace.dataFetched as any,
                 conclusion,
@@ -124,11 +106,18 @@ export class AuditableCalculationEngine {
         return {
             success: true,
             snapshotId: snapshot.id,
+            output,
             conclusion,
-            risks,
-            nextSteps,
-            auditUrl: `/audit/${snapshot.id}`
+            versions: { calc: this.currentVersion, assumptions: this.assumptionVersion, dataSource: this.dataSourceVersion },
+            auditPath: `/audit/${snapshot.id}`,
         };
+    }
+
+    private async traceStepAsync<T>(stepId: string, name: string, input: any, fn: () => Promise<T>): Promise<T> {
+        const start = Date.now();
+        const output = await fn();
+        this.trace.steps.push({ stepId, name, input, output: output as any, duration: Date.now() - start });
+        return output;
     }
 
     private traceStep<T>(stepId: string, name: string, input: any, fn: () => T): T {
@@ -145,4 +134,7 @@ export class AuditableCalculationEngine {
     }
 }
 
-export const calculationEngine = new AuditableCalculationEngine();
+/** 每次请求新建引擎，避免 trace 在请求间累积。 */
+export function createCalculationEngine() {
+    return new AuditableCalculationEngine();
+}

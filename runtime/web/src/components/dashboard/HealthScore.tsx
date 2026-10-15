@@ -191,9 +191,9 @@ export default function HealthScore({ score, grade, trend }: HealthScoreProps) {
 
 function getGradeDescription(grade: string): string {
     const descriptions: Record<string, string> = {
-        'AAA': '资产表现优异，各项指标远超行业标准，投资风险极低',
-        'AA': '资产表现优秀，运营稳定，具有很高的投资价值',
-        'A': '资产表现良好，运营正常，投资风险较低',
+        'AAA': '各项运营指标均明显高于行业对照值',
+        'AA': '各项运营指标高于行业对照值，运行稳定',
+        'A': '运营指标处于正常范围',
         'BBB': '资产表现一般，部分指标需要改进',
         'BB': '资产表现需要关注，存在一定的运营风险',
         'B': '资产表现较差，需要尽快采取改进措施',

@@ -213,10 +213,11 @@ export const AI_TOOLS = {
           lcoe: params.projectData.lcoe,
           carbonReduction: params.projectData.carbonReduction,
         },
+        // 只列事实与核对项，不给投资结论
         recommendations: [
-          '项目IRR超过8%，建议投资',
-          '建议选择可靠的EPC承包商',
-          '关注当地政策变化',
+          `测算 IRR 为 ${params.projectData.irr}%（行业常用对照基准 8%），属于按输入假设的测算值`,
+          '核对 EPC 报价、组件与逆变器参数是否与测算输入一致',
+          '核对所在省份最新电价与并网政策原文',
         ],
       };
 

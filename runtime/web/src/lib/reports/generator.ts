@@ -433,15 +433,8 @@ export class ReportGenerator {
         if (data.irr < 8) riskLevel = "HIGH";
         else if (data.irr < 12) riskLevel = "MEDIUM";
 
-        // 生成结论
-        let conclusion = "";
-        if (data.irr >= 12) {
-            conclusion = `该项目具有良好的投资价值，内部收益率(${data.irr.toFixed(2)}%)显著高于行业基准(8%)，净现值为正(${(data.npv / 10000).toFixed(2)}万元)，建议投资。`;
-        } else if (data.irr >= 8) {
-            conclusion = `该项目具有一定投资价值，内部收益率(${data.irr.toFixed(2)}%)达到行业基准，净现值为正，可考虑投资，但需关注市场风险。`;
-        } else {
-            conclusion = `该项目投资回报率较低(IRR=${data.irr.toFixed(2)}%)，建议优化方案或谨慎投资。`;
-        }
+        // 结论只做事实描述，不给投资建议（底线：不做投资建议）
+        const conclusion = `按本报告输入与假设测算：内部收益率 ${data.irr.toFixed(2)}%（行业常用对照基准 8%），净现值 ${(data.npv / 10000).toFixed(2)} 万元（折现率见假设章节）。以上为测算值，随电价、造价与发电量假设变化，不构成投资建议。`;
 
         return {
             overview: {
