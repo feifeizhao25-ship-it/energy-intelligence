@@ -7,6 +7,7 @@ import { useSession } from 'next-auth/react';
 import { Sparkles, Send, Paperclip, Mic, Settings2, Copy, RefreshCw, Loader2, FileText, Image as ImageIcon, AlertCircle } from 'lucide-react';
 import { safeErrorMessage } from '@/lib/api/safe-error';
 import { AigcLabel } from '@/components/ui/AigcLabel';
+import { buildAnswerDateLine } from '@/lib/ai/answer-date-line';
 
 interface Message {
     id: string;
@@ -14,6 +15,8 @@ interface Message {
     content: string;
     timestamp: Date;
     isStreaming?: boolean;
+    model?: string;
+    question?: string;
 }
 
 const quickPrompts = [
@@ -132,7 +135,10 @@ export default function AssistantPage() {
 
                             try {
                                 const parsed = JSON.parse(data);
-                                if (parsed.type === 'content') {
+                                if (parsed.type === 'provider') {
+                                    const model = parsed.data?.model;
+                                    setMessages(prev => prev.map(m => m.id === aiMessageId ? { ...m, model, question: userMessage.content } : m));
+                                } else if (parsed.type === 'content') {
                                     accumulatedContent += parsed.data;
                                     setMessages(prev => prev.map(m =>
                                         m.id === aiMessageId
@@ -293,6 +299,11 @@ export default function AssistantPage() {
                                 </div>
 
                                 {msg.role === 'assistant' && !msg.isStreaming && <AigcLabel tone="dark" />}
+                                {msg.role === 'assistant' && !msg.isStreaming && msg.id !== '1' && (
+                                    <p className="text-[11px] text-slate-400" data-testid="answer-date-line">
+                                        {buildAnswerDateLine({ content: msg.content, question: msg.question, model: msg.model, answeredAt: msg.timestamp }).text}
+                                    </p>
+                                )}
 
                                 {/* Action Buttons */}
                                 {msg.role === 'assistant' && !msg.isStreaming && (
