@@ -4,15 +4,59 @@ import { WindCalculationInput } from '@/types';
 import { solveIrr, DEFAULT_DISCOUNT_RATE, discountedLcoe } from './project-finance';
 import { extrapolateWindSpeed } from './wind-shear';
 
-// 辅助函数：估算容量因子
-function estimateCapacityFactor(vAvg: number, vIn: number, vRated: number, vOut: number): number {
-  if (vAvg < vIn) return 0;
-  const k = 2.0;
-  const c = vAvg / 0.886;
-  const pAboveIn = Math.exp(-Math.pow(vIn / c, k));
-  const pAboveRated = Math.exp(-Math.pow(vRated / c, k));
-  const pAboveOut = Math.exp(-Math.pow(vOut / c, k));
-  return (pAboveIn - pAboveRated) * 0.45 + (pAboveRated - pAboveOut);
+/** 标准空气密度（kg/m³，海平面 15℃） */
+export const STANDARD_AIR_DENSITY = 1.225;
+
+/** 按海拔（m）与年均气温（℃）修正空气密度：气压按指数大气（标高 8434 m），理想气体温度修正 */
+export function airDensityAt(elevationM = 0, temperatureC = 15): number {
+  const pressureRatio = Math.exp(-Math.max(0, elevationM) / 8434);
+  return STANDARD_AIR_DENSITY * pressureRatio * (288.15 / (273.15 + temperatureC));
+}
+
+/** Gamma 函数（Lanczos 近似），用于由均值求 Weibull 尺度参数 c */
+function gamma(z: number): number {
+  const g = 7;
+  const p = [0.99999999999980993, 676.5203681218851, -1259.1392167224028, 771.32342877765313,
+    -176.61502916214059, 12.507343278686905, -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7];
+  if (z < 0.5) return Math.PI / (Math.sin(Math.PI * z) * gamma(1 - z));
+  z -= 1;
+  let x = p[0];
+  for (let i = 1; i < g + 2; i++) x += p[i] / (z + i);
+  const t = z + g + 0.5;
+  return Math.sqrt(2 * Math.PI) * Math.pow(t, z + 0.5) * Math.exp(-t) * x;
+}
+
+/**
+ * 通用功率曲线（标幺）：切入—额定之间按 v³ 增长并做空气密度修正，额定—切出满发，其余为 0。
+ * 未接入厂商功率曲线时使用；密度低于标准时达到额定所需风速相应提高。
+ */
+export function genericPowerCurve(v: number, vIn: number, vRated: number, vOut: number, densityRatio = 1): number {
+  if (v < vIn || v >= vOut) return 0;
+  if (v >= vRated) return 1;
+  const p = densityRatio * (Math.pow(v, 3) - Math.pow(vIn, 3)) / (Math.pow(vRated, 3) - Math.pow(vIn, 3));
+  return Math.min(1, Math.max(0, p));
+}
+
+/**
+ * 容量因子 = ∫ 功率曲线(v) × Weibull(k, c) 概率密度 dv（数值积分，步长 0.1 m/s）。
+ * 此前固定 k=2，并在切入—额定区间乘常数 0.45，忽略了功率曲线形状（审计 1-5）。
+ */
+export function estimateCapacityFactor(
+  vAvg: number, vIn: number, vRated: number, vOut: number,
+  opts: { weibullK?: number; airDensity?: number; powerCurve?: (v: number) => number } = {},
+): number {
+  if (!(vAvg > 0)) return 0;
+  const k = opts.weibullK ?? 2.0;
+  const c = vAvg / gamma(1 + 1 / k);
+  const densityRatio = (opts.airDensity ?? STANDARD_AIR_DENSITY) / STANDARD_AIR_DENSITY;
+  const curve = opts.powerCurve ?? ((v: number) => genericPowerCurve(v, vIn, vRated, vOut, densityRatio));
+  const dv = 0.1;
+  let cf = 0;
+  for (let v = dv / 2; v < Math.max(vOut, 40); v += dv) {
+    const pdf = (k / c) * Math.pow(v / c, k - 1) * Math.exp(-Math.pow(v / c, k));
+    cf += curve(v) * pdf * dv;
+  }
+  return cf;
 }
 
 export function windSelfUseRatio(raw: unknown, fallback = 0.8): number {
@@ -37,10 +81,14 @@ export async function calculateWind(input: WindCalculationInput) {
   const windResource = await getWindResource(input.lat, input.lng);
   const totalCapacityKW = input.turbine.capacity * input.turbine.count * 1000;
 
+  const airDensity = airDensityAt(input.elevation ?? 0, input.annualMeanTemperature ?? 15);
   // 轮毂高度风速：由 NASA POWER 的 50 米风速（WS50M）按对数律外推
   const monthlyGeneration = windResource.monthly.map(m => {
     const vHub = extrapolateWindSpeed(m.speed50m, 50, input.turbine.hubHeight);
-    const cf = estimateCapacityFactor(vHub, input.turbine.cutInSpeed, input.turbine.ratedSpeed, input.turbine.cutOutSpeed);
+    const cf = estimateCapacityFactor(vHub, input.turbine.cutInSpeed, input.turbine.ratedSpeed, input.turbine.cutOutSpeed, {
+      weibullK: input.turbine.weibullK,
+      airDensity,
+    });
     const days = new Date(2024, m.month, 0).getDate();
     return {
       month: m.month,
@@ -120,7 +168,13 @@ export async function calculateWind(input: WindCalculationInput) {
       paybackYears: calculatePaybackPeriod(calcInvestment, cashFlows.slice(1)),
       lcoe,
       discountRate: DEFAULT_DISCOUNT_RATE
-    }
+    },
+    assumptions: [
+      `风速分布：Weibull k=${input.turbine.weibullK ?? 2}（未提供实测时默认瑞利分布）`,
+      input.turbine.model ? `功率曲线：通用 v³ 曲线（尚未接入 ${input.turbine.model} 厂商曲线）` : '功率曲线：通用 v³ 曲线（未接入厂商曲线）',
+      `空气密度：${airDensity.toFixed(3)} kg/m³（海拔 ${input.elevation ?? 0} m、年均气温 ${input.annualMeanTemperature ?? 15}℃ 修正）`,
+      '结果为 P50 估计：卫星再分析数据（NASA POWER 约 0.5° 网格月均值）仅适合初筛，不能替代测风塔，不确定度通常在 ±15% 以上',
+    ],
   };
 }
 

@@ -74,7 +74,9 @@ describe('风速外推（对数律，m/s）', () => {
         expect(extrapolateWindSpeed(7, 0, 100)).toBe(0);
         expect(extrapolateWindSpeed(-1, 50, 100)).toBe(0);
     });
-    it('容量因子落在 0–1，风速低于切入时为 0', async () => {
+    // 原断言“月均风速低于切入即发电量为 0”来自旧的常数近似（审计 1-5 指出的缺陷）：
+    // 按 Weibull 分布，月均低于切入时仍有部分小时超过切入风速，发电量应很小但不为 0。
+    it('容量因子落在 0–1，切入风速越高容量因子越低', async () => {
         const base: any = {
             lat: 30, lng: 120, province: '浙江', projectName: 't',
             turbine: { type: 'm', capacity: 2, count: 1, hubHeight: 50, rotorDiameter: 100, cutInSpeed: 8, ratedSpeed: 12, cutOutSpeed: 25 },
@@ -82,9 +84,11 @@ describe('风速外推（对数律，m/s）', () => {
             investment: { unitCost: 6000 },
             operation: { availability: 1, wakeLoss: 0, otherLosses: 0 },
         };
-        await expect(calculateWind(base)).rejects.toThrow(/切入风速/);
+        const high = await calculateWind(base);
         const ok = await calculateWind({ ...base, turbine: { ...base.turbine, cutInSpeed: 3 } });
         expect(ok.energy.capacityFactor).toBeGreaterThan(0);
         expect(ok.energy.capacityFactor).toBeLessThanOrEqual(100);
+        expect(high.energy.capacityFactor).toBeLessThan(ok.energy.capacityFactor);
+        expect(high.energy.capacityFactor).toBeGreaterThanOrEqual(0);
     });
 });

@@ -5,9 +5,24 @@ Wind energy calculation utilities.
 import math
 
 
-def wind_power(wind_speed: float, rotor_area: float = 12000, air_density: float = 1.225) -> float:
+# 实际风机风能利用系数 Cp 一般约 0.40–0.48；贝茨极限 0.593 是理论上限，不能当作实际值（审计 1-5）
+DEFAULT_POWER_COEFFICIENT = 0.45
+BETZ_LIMIT = 16 / 27
+
+
+def air_density_at(elevation_m: float = 0.0, temperature_c: float = 15.0) -> float:
+    """按海拔与气温修正空气密度（kg/m³）：指数大气标高 8434 m + 理想气体温度修正。"""
+    return 1.225 * math.exp(-max(0.0, elevation_m) / 8434) * (288.15 / (273.15 + temperature_c))
+
+
+def wind_power(
+    wind_speed: float,
+    rotor_area: float = 12000,
+    air_density: float = 1.225,
+    power_coefficient: float = DEFAULT_POWER_COEFFICIENT,
+) -> float:
     """
-    Calculate wind power using Betz limit.
+    Calculate wind power with a realistic power coefficient (Cp, capped at the Betz limit).
 
     Args:
         wind_speed: Wind speed in m/s
@@ -17,7 +32,8 @@ def wind_power(wind_speed: float, rotor_area: float = 12000, air_density: float 
     Returns:
         Power in kW
     """
-    power_w = 0.5 * air_density * rotor_area * (wind_speed ** 3) * 0.59  # Betz limit
+    cp = min(max(power_coefficient, 0.0), BETZ_LIMIT)
+    power_w = 0.5 * air_density * rotor_area * (wind_speed ** 3) * cp
     return power_w / 1000
 
 

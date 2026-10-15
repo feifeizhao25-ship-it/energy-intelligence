@@ -130,6 +130,8 @@ export interface WindCalculationInput {
   lng: number;
   province: string;
   projectName: string;
+  elevation?: number; // 场址海拔 (m)，用于空气密度修正
+  annualMeanTemperature?: number; // 年均气温 (℃)
   turbine: {
     type: 'low_wind' | 'medium_wind' | 'high_wind' | 'custom';
     model?: string;
@@ -140,6 +142,7 @@ export interface WindCalculationInput {
     cutInSpeed: number; // 切入风速 (m/s)
     ratedSpeed: number; // 额定风速 (m/s)
     cutOutSpeed: number; // 切出风速 (m/s)
+    weibullK?: number; // Weibull 形状参数，缺省 2
   };
   businessModel: {
     mode: 'full_export' | 'self_use_export';
