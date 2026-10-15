@@ -108,6 +108,9 @@ export default function HomePage() {
                     province: data.data.location.province,
                     pricingLabel: data.data.pricing?.label,
                     assumptions: data.data.assumptions,
+                    ranges: data.data.ranges,
+                    emissionFactorScope: data.data.emissionFactor?.scope,
+                    emissionFactorValue: data.data.emissionFactor?.value,
                 });
                 setShowResult(true);
             } else {
@@ -298,34 +301,35 @@ export default function HomePage() {
                                         <QuickResultCard
                                             icon={Sun}
                                             label="年发电量"
-                                            value={result.annualGeneration.toLocaleString()}
-                                            unit="kWh"
+                                            value={result.ranges?.annualGeneration?.text ?? result.annualGeneration.toLocaleString()}
+                                            unit={result.ranges?.annualGeneration ? '' : 'kWh'}
                                             color={{ bg: 'bg-amber-100', text: 'text-amber-600' }}
                                         />
                                         <QuickResultCard
                                             icon={Coins}
                                             label="预计年收益"
-                                            value={result.annualRevenue === null ? '需填写电价' : `¥${result.annualRevenue.toLocaleString()}`}
-                                            unit="元"
+                                            value={result.annualRevenue === null ? '需填写电价' : (result.ranges?.annualRevenue?.text ?? `¥${result.annualRevenue.toLocaleString()}`)}
+                                            unit={result.annualRevenue !== null && result.ranges?.annualRevenue ? '' : '元'}
                                             color={{ bg: 'bg-green-100', text: 'text-green-600' }}
                                         />
                                         <QuickResultCard
                                             icon={Leaf}
                                             label="年减碳"
-                                            value={result.co2Reduction.toLocaleString()}
-                                            unit="kg"
+                                            value={result.ranges?.co2Reduction?.text ?? result.co2Reduction.toLocaleString()}
+                                            unit={result.ranges?.co2Reduction ? '' : 'kg'}
                                             color={{ bg: 'bg-blue-100', text: 'text-blue-600' }}
                                         />
                                         <QuickResultCard
                                             icon={Target}
                                             label="投资回收期"
-                                            value={result.payback === null ? '—' : result.payback}
-                                            unit={result.payback === null ? '' : '年'}
+                                            value={result.payback === null ? '—' : (result.ranges?.paybackYears?.text ?? result.payback)}
+                                            unit={result.payback === null || result.ranges?.paybackYears ? '' : '年'}
                                             color={{ bg: 'bg-purple-100', text: 'text-purple-600' }}
                                         />
                                     </div>
 
-                                    <p className="text-[11px] text-slate-400">年减碳{EMISSION_FACTOR_NOTE}</p>
+                                    {result.ranges?.note && <p data-testid="quick-range-note" className="text-[11px] text-slate-400">{result.ranges.note}，单点中值不构成收益承诺。</p>}
+                                    <p className="text-[11px] text-slate-400">年减碳{result.emissionFactorScope ? `按 2023 年${result.emissionFactorScope} ${result.emissionFactorValue} kg/kWh 计算` : EMISSION_FACTOR_NOTE}</p>
 
                                     {result.irr !== null && (
                                         <div className="bg-slate-50 rounded-xl p-4">

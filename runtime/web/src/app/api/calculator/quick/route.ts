@@ -5,7 +5,8 @@
 // 首页还另按 0.5 元/度算「预计年收益」。现在城市表只提供坐标，发电量与财务一律调用统一光伏模型 simulateSolar，
 // 电价取省级电价表（工商业平均电价，标注来源状态与数据截至）；电价表没有的省份不给收益数字。
 import { NextRequest, NextResponse } from 'next/server';
-import { co2AvoidedKgForProvince } from "@/lib/standards/emission-factor";
+import { co2AvoidedKgForProvince, resolveEmissionFactor } from "@/lib/standards/emission-factor";
+import { proportionalRange, inverseRange, formatRange, SOLAR_RANGE_NOTE } from "@/lib/calculator/ranges";
 import { loadSolarResource } from '@/lib/calculator/solar-resource';
 import { simulateSolar, defaultUnitCost } from '@/lib/calculator/solar';
 import { paybackPeriodOf } from '@/lib/calculator/project-finance';
@@ -96,9 +97,23 @@ export async function POST(req: NextRequest) {
         const co2Reduction = Math.round(co2AvoidedKgForProvince(annualGeneration, province));
         const payback = price === null ? null : paybackPeriodOf(model.financial.investment, model.financial.cashFlow);
 
+        const genRange = proportionalRange(annualGeneration);
+        const revRange = annualRevenue === null ? null : proportionalRange(annualRevenue);
+        const co2Range = proportionalRange(co2Reduction);
+        const paybackRange = payback === null ? null : inverseRange(payback);
+        const emissionFactor = resolveEmissionFactor(province);
+
         return NextResponse.json({
             success: true,
             data: {
+                ranges: {
+                    note: SOLAR_RANGE_NOTE,
+                    annualGeneration: { ...genRange, text: formatRange(genRange, '度') },
+                    annualRevenue: revRange && { ...revRange, text: formatRange(revRange, '元') },
+                    co2Reduction: { ...co2Range, text: formatRange(co2Range, 'kg') },
+                    paybackYears: paybackRange && { ...paybackRange, text: formatRange(paybackRange, '年', { decimals: 1 }) },
+                },
+                emissionFactor: { value: emissionFactor.value, scope: emissionFactor.scope, source: emissionFactor.source },
                 location: { address: location, city: matchedCity, province, lat, lng },
                 resource: { annualGhi: Math.round(resource.annual.ghi), pr: Number(model.energy.pr.toFixed(3)) },
                 energy: {

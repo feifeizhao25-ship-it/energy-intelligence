@@ -83,6 +83,11 @@ export interface SolarCalculationInput {
 }
 
 export interface SolarCalculationOutput {
+  /** 审计 3-2：区间 + 中值（见 lib/calculator/ranges.ts） */
+  ranges?: {
+    year1Generation: import('@/lib/calculator/ranges').ValueRange;
+    year1Co2: import('@/lib/calculator/ranges').ValueRange;
+  };
   energy: {
     year1: number; // 首年发电量 (kWh)
     monthly: number[]; // 月度发电量数组
