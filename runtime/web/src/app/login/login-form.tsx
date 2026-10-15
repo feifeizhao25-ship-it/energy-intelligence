@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { getSession, signIn } from 'next-auth/react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowRight, Check, Shield, Zap } from 'lucide-react';
 import { digitsOnly, isValidPhone, loginErrorMessage, RESEND_SECONDS, sendCodeErrorMessage } from '@/lib/auth/login-flow';
@@ -28,10 +28,8 @@ const copy = {
   authNotConfigured: '登录服务维护中，请稍后再试。您可以先浏览公开页面。',
 };
 
-export default function LoginForm({ authConfigured }: { authConfigured: boolean }) {
+export default function LoginForm({ authConfigured, callbackUrl = '/dashboard' }: { authConfigured: boolean; callbackUrl?: string }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
   const supportEmail = process.env.NEXT_PUBLIC_CONTACT_EMAIL?.trim();
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');

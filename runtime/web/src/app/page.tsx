@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -68,7 +68,6 @@ function QuickResultCard({ icon: Icon, label, value, unit, color }: any) {
 export default function HomePage() {
     const t = useTranslations('Index');
     const router = useRouter();
-    const [isClient, setIsClient] = useState(false);
     const [location, setLocation] = useState('');
     const [capacity, setCapacity] = useState(100);
     const [isCalculating, setIsCalculating] = useState(false);
@@ -77,9 +76,6 @@ export default function HomePage() {
     const contactPhone = process.env.NEXT_PUBLIC_CONTACT_PHONE?.trim();
     const contactEmail = process.env.NEXT_PUBLIC_CONTACT_EMAIL?.trim();
 
-    useEffect(() => {
-        setIsClient(true);
-    }, []);
 
     const handleQuickCalc = async () => {
         if (!location.trim() || capacity <= 0) return;
@@ -130,11 +126,7 @@ export default function HomePage() {
         router.push(`/login?callbackUrl=/calculator/result&from=quick-calc`);
     };
 
-    if (!isClient) return (
-        <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-            <div className="animate-spin w-8 h-8 border-4 border-green-500 border-t-transparent rounded-full" />
-        </div>
-    );
+    // 不再用 isClient 门控整页：服务端直接输出中文首页（check-i18n-runtime 依赖 SSR 内容）
 
     return (
         <div className="min-h-screen bg-slate-50">
