@@ -128,10 +128,13 @@ describe('手算基准：LCOE 折现口径', () => {
 });
 
 describe('碳减排：统一排放因子', () => {
-    it('首年减排 = 首年发电量 × 0.5306 kg/kWh，结果带因子年份与来源', async () => {
+    // 原断言固定用全国平均 0.5306；审计 8-2 指出应按项目所在省取省级因子，基准用例在浙江（0.4974）。
+    it('首年减排 = 首年发电量 × 浙江省级因子 0.4974 kg/kWh，结果带因子年份、来源与口径', async () => {
         const result = await calculateSolar(benchmarkInput);
-        // 手算：1,342,212 kWh × 0.5306 ≈ 712,178 kg
-        expectWithin2Percent(result.environmental.co2Year1, 712_178);
+        // 手算：1,342,212 kWh × 0.4974 ≈ 667,616 kg
+        expectWithin2Percent(result.environmental.co2Year1, 667_616);
+        expect(result.environmental.emissionFactor).toBe(0.4974);
+        expect(result.environmental.emissionFactorScope).toContain('浙江');
         expect(result.environmental.emissionFactorYear).toBe(2023);
         expect(result.environmental.emissionFactorSource).toContain('2025 年第 47 号');
     });

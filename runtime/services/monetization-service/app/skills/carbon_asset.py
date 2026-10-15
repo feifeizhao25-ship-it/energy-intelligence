@@ -26,6 +26,28 @@ from typing import Any, Dict, List, Optional
 # 原文：https://www.mee.gov.cn/xxgk2018/xxgk/xxgk01/202512/t20251231_1139517.html（2026-10-15 核对）
 DEFAULT_GRID_FACTOR_TCO2_PER_MWH = 0.5306
 GRID_FACTOR_YEAR = 2023
+
+# 同一公告附件表 3：2023 年省级电力平均二氧化碳排放因子（tCO2/MWh），与前端 emission-factor.ts 一致（审计 8-2）
+# 附件：https://www.mee.gov.cn/xxgk2018/xxgk/xxgk01/202512/W020251231726284332528.pdf（2026-10-15 核对）
+PROVINCIAL_GRID_FACTORS_2023 = {
+    "北京": 0.5554, "天津": 0.6796, "河北": 0.6516, "山西": 0.6634, "内蒙古": 0.6479,
+    "辽宁": 0.4878, "吉林": 0.4671, "黑龙江": 0.5229, "上海": 0.5737, "江苏": 0.5827,
+    "浙江": 0.4974, "安徽": 0.6553, "福建": 0.4211, "江西": 0.5836, "山东": 0.6191,
+    "河南": 0.5897, "湖北": 0.4044, "湖南": 0.4976, "广东": 0.4419, "广西": 0.4476,
+    "海南": 0.3648, "重庆": 0.5581, "四川": 0.1564, "贵州": 0.5683, "云南": 0.1333,
+    "陕西": 0.6335, "甘肃": 0.4471, "青海": 0.1796, "宁夏": 0.6187, "新疆": 0.6021,
+}
+
+
+def normalize_province(name: Optional[str]) -> Optional[str]:
+    if not name:
+        return None
+    n = str(name).strip()
+    for suffix in ("维吾尔自治区", "壮族自治区", "回族自治区", "自治区", "特别行政区", "省", "市"):
+        if n.endswith(suffix):
+            n = n[: -len(suffix)]
+            break
+    return n or None
 GRID_FACTOR_URL = "https://www.mee.gov.cn/xxgk2018/xxgk/xxgk01/202512/t20251231_1139517.html"
 GRID_FACTOR_SOURCE_CN = (
     "生态环境部、国家统计局《关于发布2023年电力二氧化碳排放因子的公告》（公告2025年第47号，2025-12-31），"
@@ -140,13 +162,28 @@ class CarbonAssetSkill:
             raise ValueError("CA-001 年发电量必须为正数")
 
         market = params.get("market", "cn")
-        grid_factor = float(
-            params.get("grid_emission_factor", DEFAULT_GRID_FACTOR_TCO2_PER_MWH)
-        )
-        factor_source = (
-            params.get("grid_emission_factor_source")
-            or (GRID_FACTOR_SOURCE_EN if market == "global" else GRID_FACTOR_SOURCE_CN)
-        )
+        province = normalize_province(params.get("province"))
+        provincial = PROVINCIAL_GRID_FACTORS_2023.get(province) if province else None
+        if params.get("grid_emission_factor") is not None:
+            grid_factor = float(params["grid_emission_factor"])
+            factor_scope = "用户指定"
+        elif provincial is not None:
+            grid_factor = provincial
+            factor_scope = f"2023年{province}省级电力平均二氧化碳排放因子"
+        else:
+            grid_factor = DEFAULT_GRID_FACTOR_TCO2_PER_MWH
+            factor_scope = (
+                f"2023年全国电力平均二氧化碳排放因子（公告未收录{province}省级因子）"
+                if province else "2023年全国电力平均二氧化碳排放因子"
+            )
+        default_source = GRID_FACTOR_SOURCE_EN if market == "global" else GRID_FACTOR_SOURCE_CN
+        if provincial is not None and params.get("grid_emission_factor") is None:
+            default_source = (
+                f"MEE & NBS Announcement No. 47 of 2025, Table 3: 2023 provincial factor ({province}) {grid_factor} tCO2/MWh"
+                if market == "global"
+                else f"生态环境部、国家统计局公告2025年第47号附件表3：{factor_scope} {grid_factor} tCO2/MWh"
+            )
+        factor_source = params.get("grid_emission_factor_source") or default_source
 
         embedded_raw = params.get("embedded_emissions_tco2")
         need_cbam = market == "global" and embedded_raw is not None
@@ -201,6 +238,7 @@ class CarbonAssetSkill:
                 "grid_emission_factor_tco2_per_mwh": grid_factor,
                 "grid_emission_factor_source": factor_source,
                 "grid_emission_factor_year": GRID_FACTOR_YEAR,
+                "grid_emission_factor_province": province if provincial is not None else None,
                 "grid_emission_factor_url": GRID_FACTOR_URL,
                 "ccer_eligibility": eligibility,
                 "ccer_note": CCER_NOTE_EN,
@@ -235,6 +273,7 @@ class CarbonAssetSkill:
                 "排放因子_tCO2每MWh": grid_factor,
                 "排放因子出处": factor_source,
                 "排放因子年份": GRID_FACTOR_YEAR,
+                "排放因子口径": factor_scope,
                 "排放因子原文": GRID_FACTOR_URL,
                 "CCER资格": {"eligible": "有适用方法学", "no_methodology": "暂无适用方法学", "unknown": "未提供项目类型，无法判定"}[eligibility],
                 "CCER说明": CCER_NOTE_CN,

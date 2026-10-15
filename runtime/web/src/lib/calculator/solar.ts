@@ -13,7 +13,7 @@ import { calculateWind } from './wind';
 import { PolicyService } from '@/lib/services/policy-service';
 import { safeErrorMessage } from '@/lib/api/safe-error';
 import { DEFAULT_DISCOUNT_RATE, discountedLcoe, solveIrr } from './project-finance';
-import { co2AvoidedKg, GRID_EMISSION_FACTOR } from '@/lib/standards/emission-factor';
+import { resolveEmissionFactor } from '@/lib/standards/emission-factor';
 
 // 光伏组件配置
 interface ModuleConfig {
@@ -157,6 +157,8 @@ export function normalizeSelfUseRatio(raw: unknown, fallback: number): number {
 export interface SolarModelParams {
   /** 站点纬度（度）；资源数据自带 lat 时以资源数据为准 */
   lat?: number;
+  /** 项目所在省，用于选择省级排放因子（审计 8-2） */
+  province?: string;
   capacity: number; // kWp
   installationType: SolarCalculationInput['installationType'];
   moduleType: SolarCalculationInput['moduleType'];
@@ -236,7 +238,7 @@ export function simulateSolar(solarResource: SolarResource, params: SolarModelPa
   );
 
   // 4. 环境效益
-  const environmental = calculateEnvironmentalBenefit(year1Generation, lifetimeGeneration.total);
+  const environmental = calculateEnvironmentalBenefit(year1Generation, lifetimeGeneration.total, params.province);
 
   return {
     energy: {
@@ -308,6 +310,7 @@ export async function calculateSolar(input: SolarCalculationInput): Promise<Sola
 
     return simulateSolar(solarResource, {
       lat: input.lat,
+      province: input.province,
       capacity: input.capacity,
       installationType: input.installationType,
       moduleType: input.moduleType,
@@ -507,10 +510,11 @@ function calculatePaybackPeriod(initialInvestment: number, annualCashFlows: numb
 /**
  * 计算环境效益
  */
-function calculateEnvironmentalBenefit(year1Generation: number, lifetimeGenerationKWh: number) {
-  // 排放因子统一取 lib/standards/emission-factor.ts（2023 年全国电力平均）
-  const co2Year1 = co2AvoidedKg(year1Generation);
-  const co2Lifetime = co2AvoidedKg(lifetimeGenerationKWh); // 按含衰减的全生命周期发电量
+function calculateEnvironmentalBenefit(year1Generation: number, lifetimeGenerationKWh: number, province?: string) {
+  // 排放因子统一取 lib/standards/emission-factor.ts：按项目所在省取 2023 年省级因子，未收录时回落全国平均（审计 8-2）
+  const factor = resolveEmissionFactor(province);
+  const co2Year1 = year1Generation * factor.value;
+  const co2Lifetime = lifetimeGenerationKWh * factor.value; // 按含衰减的全生命周期发电量
 
   // 1棵树每年吸收约22kg CO2
   const treesEquivalent = Math.round(co2Lifetime / 22);
@@ -519,9 +523,10 @@ function calculateEnvironmentalBenefit(year1Generation: number, lifetimeGenerati
     co2Year1,
     co2Lifetime,
     treesEquivalent,
-    emissionFactor: GRID_EMISSION_FACTOR.value,
-    emissionFactorYear: GRID_EMISSION_FACTOR.year,
-    emissionFactorSource: GRID_EMISSION_FACTOR.source,
+    emissionFactor: factor.value,
+    emissionFactorYear: factor.year,
+    emissionFactorSource: factor.source,
+    emissionFactorScope: factor.scope,
   };
 }
 

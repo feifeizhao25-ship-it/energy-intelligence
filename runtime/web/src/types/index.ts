@@ -113,6 +113,7 @@ export interface SolarCalculationOutput {
     emissionFactor?: number; // 使用的排放因子 (kgCO2/kWh)
     emissionFactorYear?: number; // 排放因子所属年份
     emissionFactorSource?: string; // 排放因子来源文件
+    emissionFactorScope?: string; // 因子口径（省级/全国平均）
   };
   /** 测算假设，报告与结果页的文字说明从这里取 */
   assumptions?: {

@@ -5,7 +5,7 @@
 // 首页还另按 0.5 元/度算「预计年收益」。现在城市表只提供坐标，发电量与财务一律调用统一光伏模型 simulateSolar，
 // 电价取省级电价表（工商业平均电价，标注来源状态与数据截至）；电价表没有的省份不给收益数字。
 import { NextRequest, NextResponse } from 'next/server';
-import { co2AvoidedKg } from '@/lib/standards/emission-factor';
+import { co2AvoidedKgForProvince } from "@/lib/standards/emission-factor";
 import { loadSolarResource } from '@/lib/calculator/solar-resource';
 import { simulateSolar, defaultUnitCost } from '@/lib/calculator/solar';
 import { paybackPeriodOf } from '@/lib/calculator/project-finance';
@@ -82,6 +82,7 @@ export async function POST(req: NextRequest) {
         const resource = await loadSolarResource(lat, lng);
         const model = simulateSolar(resource, {
             lat,
+            province,
             capacity,
             installationType: 'roof',
             moduleType: 'standard',
@@ -92,7 +93,7 @@ export async function POST(req: NextRequest) {
         });
         const annualGeneration = Math.round(model.energy.year1);
         const annualRevenue = price === null ? null : Math.round(model.financial.year1Revenue);
-        const co2Reduction = Math.round(co2AvoidedKg(annualGeneration));
+        const co2Reduction = Math.round(co2AvoidedKgForProvince(annualGeneration, province));
         const payback = price === null ? null : paybackPeriodOf(model.financial.investment, model.financial.cashFlow);
 
         return NextResponse.json({
