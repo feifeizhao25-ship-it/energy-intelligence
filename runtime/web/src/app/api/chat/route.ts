@@ -9,6 +9,7 @@ import { getDefaultModel, getAvailableModels } from "@/lib/membership/plans";
 import { Plan } from "@/lib/membership/plans";
 import { safeErrorMessage } from '@/lib/api/safe-error';
 import { aigcMeta, AIGC_HEADER } from '@/lib/ai/aigc';
+import { collectSourcesFromToolResult, verifySources, type EvidenceSource } from '@/lib/evidence/verification';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -78,6 +79,7 @@ export async function POST(request: NextRequest) {
                         console.warn('Usage log failed (non-blocking):', usageError);
                     }
 
+                    const evidenceSources: EvidenceSource[] = [];
                     for await (const event of chatSource) {
                         // 转换事件类型以匹配前端期望
                         let transformedEvent = event;
@@ -91,6 +93,7 @@ export async function POST(request: NextRequest) {
                             })}\n\n`));
                             continue;
                         } else if (event.type === 'tool_result') {
+                            evidenceSources.push(...collectSourcesFromToolResult(event.data?.name, event.data?.result));
                             // 发送工具结果状态
                             controller.enqueue(encoder.encode(`data: ${JSON.stringify({
                                 type: 'status',
@@ -102,6 +105,11 @@ export async function POST(request: NextRequest) {
                         const data = JSON.stringify(transformedEvent);
                         controller.enqueue(encoder.encode(`data: ${data}\n\n`));
                     }
+                    // 审计 7-5：回答结束时按多源验证规则给出核验状态（前端引用卡显示 已核验/待核验/冲突）
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                        type: 'evidence',
+                        data: { verification: verifySources(evidenceSources), sources: evidenceSources.slice(0, 20) },
+                    })}\n\n`));
                     controller.enqueue(encoder.encode('data: [DONE]\n\n'));
                     controller.close();
                 } catch (error) {

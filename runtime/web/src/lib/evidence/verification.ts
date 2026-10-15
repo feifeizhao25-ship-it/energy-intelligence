@@ -26,3 +26,73 @@ export function verificationView(v?: Partial<EvidenceVerification> | null) {
     tone: status === 'verified' ? 'ok' : status === 'conflict' ? 'danger' : 'warn',
   } as const;
 }
+
+// ---------------------------------------------------------------------------
+// 与后端 evidence_envelope.verify_policy_claim 相同的规则，用于 web /api/chat
+// ---------------------------------------------------------------------------
+export interface EvidenceSource {
+  title?: string;
+  url?: string;
+  publisher?: string;
+  type?: string;
+  tool?: string;
+}
+
+const OFFICIAL_TYPES = new Set(['official', 'policy_original', 'government', 'regulator', 'standard']);
+const OFFICIAL_MARKERS = ['国务院', '发改委', '发展改革委', '能源局', '生态环境部', '统计局', '工信部', '财政部', '人民政府', '电网'];
+
+export function isOfficialSource(s: EvidenceSource): boolean {
+  if (s.type && OFFICIAL_TYPES.has(s.type.toLowerCase())) return true;
+  const url = (s.url || '').toLowerCase().split('?')[0];
+  if (/\.gov(\.cn)?(\/|$)/.test(url.replace(/^https?:\/\//, '').split('/')[0] + '/')) return true;
+  return OFFICIAL_MARKERS.some((m) => (s.publisher || '').includes(m) || (s.title || '').includes(m));
+}
+
+function independentKey(s: EvidenceSource): string {
+  if (s.publisher?.trim()) return s.publisher.trim();
+  const host = (s.url || '').replace(/^https?:\/\//, '').split('/')[0].toLowerCase();
+  return host || s.title || s.tool || 'unknown';
+}
+
+export function verifySources(sources: EvidenceSource[]): EvidenceVerification {
+  const mk = (status: VerificationStatus, reason: string): EvidenceVerification => ({
+    status, label: VERIFICATION_LABELS[status], reason, usable_as_conclusion: status === 'verified',
+  });
+  if (!sources.length) return mk('unverified', '本次回答未调用带来源的工具，内容基于模型知识');
+  const officials = sources.filter(isOfficialSource);
+  if (!officials.length) return mk('review_recommended', '只有转载/第三方来源，未找到官方原文');
+  const others = new Set(sources.map(independentKey));
+  others.delete(independentKey(officials[0]));
+  if (others.size) return mk('verified', `官方原文 + ${others.size} 个独立来源`);
+  return mk('review_recommended', '仅有官方原文，缺少独立来源交叉核对');
+}
+
+/** 已知数据工具的固定来源（工具结果里没有结构化来源时使用） */
+const TOOL_SOURCES: Record<string, EvidenceSource> = {
+  get_solar_resource: { title: 'NASA POWER 辐照数据', publisher: 'NASA POWER', url: 'https://power.larc.nasa.gov/' },
+  get_wind_resource: { title: 'NASA POWER 风速数据', publisher: 'NASA POWER', url: 'https://power.larc.nasa.gov/' },
+  get_climate_data: { title: 'NASA POWER 气象数据', publisher: 'NASA POWER', url: 'https://power.larc.nasa.gov/' },
+  get_historical_data: { title: 'NASA POWER 历史数据', publisher: 'NASA POWER', url: 'https://power.larc.nasa.gov/' },
+};
+
+/** 从工具结果中递归收集来源（url / source_url / publisher / source_org / source 字段） */
+export function collectSourcesFromToolResult(toolName: string, result: unknown): EvidenceSource[] {
+  const out: EvidenceSource[] = [];
+  const seen = new Set<string>();
+  const visit = (v: unknown, depth: number) => {
+    if (!v || typeof v !== 'object' || depth > 5) return;
+    if (Array.isArray(v)) { v.slice(0, 50).forEach((x) => visit(x, depth + 1)); return; }
+    const o = v as Record<string, unknown>;
+    const url = typeof o.url === 'string' ? o.url : typeof o.source_url === 'string' ? o.source_url : typeof o.sourceUrl === 'string' ? o.sourceUrl : undefined;
+    const publisher = typeof o.publisher === 'string' ? o.publisher : typeof o.source_org === 'string' ? o.source_org : typeof o.source === 'string' ? o.source : undefined;
+    if ((url && /^https?:\/\//.test(url)) || publisher) {
+      const s: EvidenceSource = { url, publisher, title: typeof o.title === 'string' ? o.title : undefined, type: typeof o.type === 'string' ? o.type : undefined, tool: toolName };
+      const key = `${s.url}|${s.publisher}`;
+      if (!seen.has(key)) { seen.add(key); out.push(s); }
+    }
+    for (const x of Object.values(o)) visit(x, depth + 1);
+  };
+  visit(result, 0);
+  if (!out.length && TOOL_SOURCES[toolName]) out.push({ ...TOOL_SOURCES[toolName], tool: toolName });
+  return out;
+}
