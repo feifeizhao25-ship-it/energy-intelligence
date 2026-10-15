@@ -30,26 +30,43 @@ def verify_password(plain: str, hashed: str) -> bool:
     return pwd_context.verify(plain, hashed)
 
 
-def create_access_token(subject: str, expires_delta: Optional[timedelta] = None) -> str:
+def create_access_token(
+    subject: str, expires_delta: Optional[timedelta] = None, token_version: int = 0
+) -> str:
+    """``tv`` = 用户的 token_version；注销账号、重置密码时递增，旧令牌立即失效。"""
     key, algorithm = _jwt_key_and_algorithm()
     expire = datetime.now(timezone.utc) + (
         expires_delta or timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     )
     return jwt.encode(
-        {"sub": subject, "exp": expire, "type": "access"},
+        {"sub": subject, "exp": expire, "type": "access", "tv": int(token_version or 0)},
         key,
         algorithm=algorithm,
     )
 
 
-def create_refresh_token(subject: str) -> str:
+def create_refresh_token(subject: str, token_version: int = 0) -> str:
     key, algorithm = _jwt_key_and_algorithm()
     expire = datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
     return jwt.encode(
-        {"sub": subject, "exp": expire, "type": "refresh"},
+        {"sub": subject, "exp": expire, "type": "refresh", "tv": int(token_version or 0)},
         key,
         algorithm=algorithm,
     )
+
+
+def decode_token_payload(token: str, expected_type: str = "access") -> Optional[dict]:
+    """Like :func:`decode_token` but returns the full payload (incl. ``tv``)."""
+    key, algorithm = _jwt_verify_key_and_algorithm()
+    try:
+        payload = jwt.decode(
+            token, key, algorithms=[algorithm], options={"require": ["exp", "sub"]}
+        )
+    except jwt.PyJWTError:
+        return None
+    if payload.get("type") != expected_type:
+        return None
+    return payload
 
 
 def decode_token(token: str, expected_type: str = "access") -> Optional[str]:

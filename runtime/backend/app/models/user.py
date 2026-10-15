@@ -7,7 +7,7 @@ Canonical User model.
 
 from datetime import datetime, timezone
 
-from sqlalchemy import Column, DateTime, String
+from sqlalchemy import Column, DateTime, Integer, String
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import JSON
 
@@ -31,6 +31,8 @@ class User(Base):
     subscription_plan = Column(String(50), default="free")
     subscription_expires_at = Column(DateTime(timezone=True), nullable=True)
     usage_quota = Column(JSON, default=dict)
+    # 令牌版本：注销账号 / 重置密码时 +1，携带旧 tv 的 JWT 一律拒绝
+    token_version = Column(Integer, nullable=False, default=0, server_default="0")
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at = Column(
         DateTime(timezone=True),

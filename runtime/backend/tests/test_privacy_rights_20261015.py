@@ -53,7 +53,9 @@ async def test_export_then_delete(client, auth_headers, db_session):
     assert user.phone is None and user.email is None and user.name == "已注销用户"
     assert (await db_session.execute(select(Project).where(Project.user_id == uid))).scalars().all() == []
     assert len((await db_session.execute(select(PaymentOrder).where(PaymentOrder.user_id == uid))).scalars().all()) == 1
-    assert (await client.get("/api/v1/privacy/export", headers=auth_headers)).status_code == 404
+    # 注销后旧令牌立即失效（token_version 递增）
+    assert (await client.get("/api/v1/privacy/export", headers=auth_headers)).status_code == 401
+    assert (await client.get("/api/v1/privacy/consent", headers=auth_headers)).status_code == 401
 
 
 @pytest.mark.asyncio
@@ -64,3 +66,19 @@ async def test_consent_defaults_off_and_updates(client, auth_headers):
     assert r.status_code == 200
     r = await client.get("/api/v1/privacy/consent", headers=auth_headers)
     assert r.json()["analytics"] is True and r.json()["marketing"] is False
+
+
+@pytest.mark.asyncio
+async def test_refresh_token_revoked_after_deletion(client, db_session):
+    from app.core.security import create_access_token, create_refresh_token
+    from app.utils.security import get_password_hash
+    uid = str(uuid.uuid4())
+    db_session.add(User(id=uid, phone=f"137{uuid.uuid4().hex[:8]}", password_hash=get_password_hash("x"),
+                        name="待注销", role="user", market="cn", subscription_plan="free"))
+    await db_session.commit()
+    headers = {"Authorization": f"Bearer {create_access_token(uid)}"}
+    refresh = create_refresh_token(uid)
+    assert (await client.post("/api/v1/auth/refresh", params={"refresh_token": refresh})).status_code == 200
+    assert (await client.post("/api/v1/privacy/delete-account", json={"confirm": "DELETE"}, headers=headers)).status_code == 200
+    assert (await client.post("/api/v1/auth/refresh", params={"refresh_token": refresh})).status_code == 401
+    assert (await client.get("/api/v1/privacy/consent", headers=headers)).status_code == 401

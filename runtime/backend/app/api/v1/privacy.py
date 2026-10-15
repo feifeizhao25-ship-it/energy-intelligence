@@ -138,6 +138,7 @@ async def delete_my_account(
     user.subscription_plan = "free"
     user.subscription_expires_at = None
     user.password_hash = "!deleted!" + secrets.token_hex(16)  # 不可能匹配任何密码
+    user.token_version = (user.token_version or 0) + 1  # 吊销该用户所有已签发的访问/刷新令牌
     await db.commit()
     _remove_report_files(report_ids)
     return {

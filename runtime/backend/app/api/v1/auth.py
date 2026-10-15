@@ -57,7 +57,7 @@ async def _clear_attempts(ip: str) -> None:
         logger.warning("Redis delete failed during attempt cleanup: %s", e)
 
 from app.core.database import get_db
-from app.core.security import hash_password, verify_password, create_access_token, create_refresh_token, decode_token
+from app.core.security import hash_password, verify_password, create_access_token, create_refresh_token, decode_token, decode_token_payload
 from app.core.dependencies import get_current_user_id
 from app.models.user import User
 from app.schemas.auth import RegisterRequest, LoginRequest, TokenResponse, MagicLinkRequest
@@ -121,8 +121,8 @@ async def login(body: LoginRequest, request: Request, db: AsyncSession = Depends
         )
 
     await _clear_attempts(client_ip)  # reset on successful login
-    access_token = create_access_token(subject=user.id)
-    refresh_token = create_refresh_token(subject=user.id)
+    access_token = create_access_token(subject=user.id, token_version=user.token_version or 0)
+    refresh_token = create_refresh_token(subject=user.id, token_version=user.token_version or 0)
     return success(data=TokenResponse(access_token=access_token, refresh_token=refresh_token))
 
 
@@ -140,7 +140,7 @@ async def magic_link(body: MagicLinkRequest, db: AsyncSession = Depends(get_db))
         return success(data={"message": "If the email exists, a magic link has been sent"})
     
     # Generate short-lived magic token (15 minutes)
-    magic_token = create_access_token(subject=str(user.id), expires_delta=timedelta(minutes=15))
+    magic_token = create_access_token(subject=str(user.id), expires_delta=timedelta(minutes=15), token_version=user.token_version or 0)
     # Send email with magic link containing token
     try:
         from app.services.notification_service import notification_service
@@ -231,8 +231,8 @@ async def google_oauth(code: str, db: AsyncSession = Depends(get_db)):
     await db.flush()
     await db.refresh(user)
     
-    access_token = create_access_token(subject=str(user.id))
-    refresh_token = create_refresh_token(subject=str(user.id))
+    access_token = create_access_token(subject=str(user.id), token_version=user.token_version or 0)
+    refresh_token = create_refresh_token(subject=str(user.id), token_version=user.token_version or 0)
     return success(data=TokenResponse(access_token=access_token, refresh_token=refresh_token))
 
 
@@ -242,19 +242,20 @@ async def refresh_token(refresh_token: str, db: AsyncSession = Depends(get_db)):
     try:
         # Same key/algorithm selection as access tokens (RS256 public key when
         # configured, else HS256); rejects anything whose type is not "refresh".
-        user_id = decode_token(refresh_token, expected_type="refresh")
-        if not user_id:
+        payload = decode_token_payload(refresh_token, expected_type="refresh")
+        if not payload:
             raise HTTPException(status_code=401, detail=ErrorCode.E2003.message)
-        # Verify user still exists
+        user_id = payload["sub"]
+        # Verify user still exists and the token has not been revoked
         result = await db.execute(select(User).where(User.id == user_id))
         user = result.scalar_one_or_none()
-        if not user:
+        if not user or int(payload.get("tv", 0) or 0) != int(getattr(user, "token_version", 0) or 0):
             raise HTTPException(status_code=401, detail=ErrorCode.E2008.message)
     except Exception as e:
         logger.warning("Refresh token processing failed: %s", e)
         raise HTTPException(status_code=401, detail=ErrorCode.E2003.message)
 
-    new_access = create_access_token(subject=user_id)
+    new_access = create_access_token(subject=user_id, token_version=getattr(user, "token_version", 0) or 0)
     return success(data=TokenResponse(access_token=new_access, refresh_token=refresh_token))
 
 
@@ -335,6 +336,7 @@ async def forgot_password_reset(body: dict, db: AsyncSession = Depends(get_db)):
     from passlib.context import CryptContext
     pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
     user.password_hash = pwd_ctx.hash(new_password)
+    user.token_version = (user.token_version or 0) + 1  # 改密后所有旧令牌失效
     user.updated_at = datetime.now(timezone.utc)
     
     # Clean up used code
