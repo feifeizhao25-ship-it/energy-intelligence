@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { usePathname } from 'next/navigation';
+import { shouldShowOnboardingTip, TIP_DISMISSED_KEY, TIP_SNOOZED_KEY } from './onboarding-tip';
 import {
     X,
     ChevronRight,
@@ -39,25 +41,26 @@ const steps = [
     }
 ];
 
-const STORAGE_KEY = 'hasSeenOnboarding_v1';
-
 /**
- * 首访引导：底部悬浮卡片（不遮挡主内容、无全屏遮罩），
- * 可随时关闭，关闭状态持久化到 localStorage。
+ * 首访引导（审计 10-1）：右下角小提示气泡，不是对话框、无遮罩，测算页不弹出，
+ * 避免盖住“开始计算”等主按钮。“不再显示”永久记住，“稍后”仅本次会话隐藏。
  */
 export default function OnboardingFlow() {
+    const pathname = usePathname();
     const [isVisible, setIsVisible] = useState(false);
     const [currentStep, setCurrentStep] = useState(0);
 
     useEffect(() => {
-        const hasSeenOnboarding = localStorage.getItem(STORAGE_KEY);
-        if (!hasSeenOnboarding) {
-            setIsVisible(true);
-        }
-    }, []);
+        setIsVisible(shouldShowOnboardingTip(pathname, window.localStorage, window.sessionStorage));
+    }, [pathname]);
 
     const handleClose = () => {
-        localStorage.setItem(STORAGE_KEY, 'true');
+        localStorage.setItem(TIP_DISMISSED_KEY, 'true');
+        setIsVisible(false);
+    };
+
+    const handleSnooze = () => {
+        sessionStorage.setItem(TIP_SNOOZED_KEY, 'true');
         setIsVisible(false);
     };
 
@@ -78,23 +81,23 @@ export default function OnboardingFlow() {
     if (!isVisible) return null;
 
     return (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[60] w-full max-w-xl px-4 pointer-events-none">
+        <div className="fixed bottom-4 right-4 z-40 w-[calc(100%-2rem)] max-w-sm pointer-events-none" data-testid="onboarding-tip">
             <motion.div
                 initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="pointer-events-auto bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden relative"
-                role="dialog"
-                aria-label="新手引导"
+                role="status"
+                aria-label="新手提示"
             >
                 <button
-                    onClick={handleClose}
-                    aria-label="关闭引导"
+                    onClick={handleSnooze}
+                    aria-label="稍后再看"
                     className="absolute top-3 right-3 p-1.5 rounded-full hover:bg-slate-100 transition-colors text-slate-400"
                 >
                     <X className="w-4 h-4" />
                 </button>
 
-                <div className="p-5 sm:p-6 flex items-start gap-4">
+                <div className="p-4 flex items-start gap-3">
                     <AnimatePresence mode="wait">
                         <motion.div
                             key={currentStep}
@@ -103,11 +106,11 @@ export default function OnboardingFlow() {
                             exit={{ opacity: 0, x: -16 }}
                             className="flex items-start gap-4"
                         >
-                            <div className={`w-14 h-14 ${steps[currentStep].color} rounded-2xl flex items-center justify-center shrink-0 shadow-inner`}>
+                            <div className={`w-10 h-10 ${steps[currentStep].color} rounded-2xl flex items-center justify-center shrink-0 shadow-inner`}>
                                 {steps[currentStep].icon}
                             </div>
                             <div className="space-y-1.5 pr-6">
-                                <h2 className="text-lg font-extrabold text-slate-900 tracking-tight">
+                                <h2 className="text-base font-extrabold text-slate-900 tracking-tight">
                                     {steps[currentStep].title}
                                 </h2>
                                 <p className="text-slate-600 text-sm leading-relaxed">
@@ -118,7 +121,7 @@ export default function OnboardingFlow() {
                     </AnimatePresence>
                 </div>
 
-                <div className="px-5 sm:px-6 pb-5 flex items-center justify-between">
+                <div className="px-4 pb-4 flex items-center justify-between">
                     <div className="flex gap-1.5">
                         {steps.map((_, i) => (
                             <div
@@ -134,7 +137,7 @@ export default function OnboardingFlow() {
                             onClick={handleClose}
                             className="px-3 py-2 rounded-xl text-sm font-bold text-slate-400 hover:text-slate-600 transition-colors"
                         >
-                            跳过
+                            不再显示
                         </button>
                         {currentStep > 0 && (
                             <button
