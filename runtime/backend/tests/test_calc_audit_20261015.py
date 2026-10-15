@@ -41,14 +41,12 @@ def test_wind_shear_power_law_hand_case():
 
 
 # ── PR：年辐照 × 容量 × PR，不乘 365 ──────────────────────────────────────────
-def test_yield_fallback_formula_has_no_extra_365():
+def test_dead_routers_resource_removed():
+    """app/routers/resource.py 从未挂载、导入即失败（缺 app.utils.exceptions / app.models.task），
+    且与已挂载的 app/api/v1/resource.py 重复，并含按纬度公式生成的估算值 → 已删除。"""
     import pathlib
-    # app/routers/resource.py 目前未挂载且导入失败（缺 app.utils.exceptions），按源码检查
-    text = (pathlib.Path(__file__).resolve().parents[1] / "app/routers/resource.py").read_text()
-    src = text[text.index("async def yield_estimate"):text.index("async def yield_estimate") + 2500]
-    assert "body.capacity_mw * 1000 * annual_ghi * body.pr" in src
-    assert "365" not in src
-    # hand case: 1 MW × 1000 kW/MW × 1600 kWh/m²/yr × 0.82 = 1,312,000 kWh → CF 14.98%
+    assert not (pathlib.Path(__file__).resolve().parents[1] / "app/routers/resource.py").exists()
+    # 年发电量口径仍按：容量 × 年辐照 × PR（不乘 365）
     assert 1 * 1000 * 1600 * 0.82 / (1 * 1000 * 8760) == pytest.approx(0.1498, abs=1e-4)
 
 
