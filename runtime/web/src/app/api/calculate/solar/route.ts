@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { calculateSolar, normalizeSelfUseRatio } from '@/lib/calculator/solar';
 import { getLatestPrice, calculateAveragePrice } from '@/lib/crawler/price-crawler';
-import { lookupTariff, TariffUnavailableError, NEW_ENERGY_FEED_IN_BASIS } from '@/lib/pricing/tariffs';
+import { lookupTariff, TariffUnavailableError, NEW_ENERGY_FEED_IN_BASIS, sourceStatusLabel } from '@/lib/pricing/tariffs';
 import { SolarCalculationInput } from '@/types';
 import { enforceRateLimit, PUBLIC_RULES } from '@/lib/security/rate-limit';
 
@@ -61,12 +61,12 @@ export async function POST(req: Request) {
         // （否则收益测算会整体算错却看不出来）。这里把它翻译成可读提示。
         let pricing: {
             province: string; selfUsePrice: number; feedInTariff: number;
-            sourceDoc: string; asOfLabel: string; stale: boolean; staleNote: string | null; updatedAt: string | null;
+            sourceDoc: string; sourceVerified?: boolean; sourceStatus?: string; asOfLabel: string; stale: boolean; staleNote: string | null; updatedAt: string | null;
         };
         if (tariff.status === 'market') {
             pricing = {
                 province, selfUsePrice: contractPrice, feedInTariff: contractPrice,
-                sourceDoc: '用户输入的合同电价', asOfLabel: '电价为用户输入的合同电价', stale: false, staleNote: null, updatedAt: null,
+                sourceDoc: '用户输入的合同电价', sourceVerified: true, sourceStatus: '用户输入', asOfLabel: '电价为用户输入的合同电价', stale: false, staleNote: null, updatedAt: null,
             };
         } else {
             try {
@@ -79,6 +79,9 @@ export async function POST(req: Request) {
                     selfUsePrice: calculateAveragePrice(price, 1),
                     feedInTariff: feedIn ?? price.valley,
                     sourceDoc: price.sourceDoc,
+                    // 电价来源核验状态如实返回，结果页显示「来源待核实」
+                    sourceVerified: tariff.status === 'ok' ? tariff.tariff.sourceVerified : false,
+                    sourceStatus: tariff.status === 'ok' ? sourceStatusLabel(tariff.tariff) : '来源待核实',
                     asOfLabel: price.asOfLabel,
                     stale: price.stale,
                     staleNote: price.staleNote,

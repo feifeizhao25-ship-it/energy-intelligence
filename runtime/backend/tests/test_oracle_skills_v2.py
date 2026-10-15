@@ -4,7 +4,8 @@
 另验证 market 双语输出键、生产环境 fail-closed、SkillRegistry 发现与执行。
 
 手算基准说明：
-- CA-001: 减排量 = 发电量 × 0.5366（生态环境部/统计局 2022 全国电力平均因子）
+- CA-001: 减排量 = 发电量 × 0.5306（生态环境部/统计局公告2025年第47号，2023 全国电力平均因子）；
+  CCER 只对有方法学的项目类型（海上风电、光热）计算潜在收益
 - ST-001 clear 曲线小时 7..18 出力分数 [0.1..0.5,0.5,0.5..0.1,0]，合计 3.5
   等效满发小时；cloudy = clear × 0.6（合计 2.1）
 - OM-001: 最优间隔 N = sqrt(2C/(R·s/100))（financial_utils 实现）
@@ -50,24 +51,24 @@ class TestCarbonAssetOracle:
         return await carbon_mod.CarbonAssetSkill().execute(params)
 
     async def test_case_1_default_factor(self):
-        # 10,000 MWh × 0.5366 = 5,366.0 tCO2
-        # CCER [60,100] CNY/t → [321,960.0, 536,600.0] CNY
+        # 10,000 MWh × 0.5306 = 5,306.0 tCO2（海上风电有 CCER 方法学）
+        # CCER [60,100] CNY/t → [318,360.0, 530,600.0] CNY
         result = await self._run(
-            annual_generation_mwh=10_000, market="cn",
+            annual_generation_mwh=10_000, market="cn", project_type="offshore_wind",
             ccer_price_low=60.0, ccer_price_high=100.0,
         )
-        assert result["减排量_tCO2"] == pytest.approx(5366.0, abs=0.001)
-        assert result["CCER潜在收益_CNY"]["下限"] == pytest.approx(321_960.0, abs=0.01)
-        assert result["CCER潜在收益_CNY"]["上限"] == pytest.approx(536_600.0, abs=0.01)
-        assert result["排放因子_tCO2每MWh"] == 0.5366
-        assert "2022" in result["排放因子出处"]
+        assert result["减排量_tCO2"] == pytest.approx(5306.0, abs=0.001)
+        assert result["CCER潜在收益_CNY"]["下限"] == pytest.approx(318_360.0, abs=0.01)
+        assert result["CCER潜在收益_CNY"]["上限"] == pytest.approx(530_600.0, abs=0.01)
+        assert result["排放因子_tCO2每MWh"] == 0.5306
+        assert "2023" in result["排放因子出处"] and "第47号" in result["排放因子出处"]
         assert result["estimated"] is False
 
     async def test_case_2_override_factor(self):
         # 2,500 MWh × 0.5568（区域因子覆盖）= 1,392.0 tCO2
         # CCER [50,80] → [69,600.0, 111,360.0] CNY
         result = await self._run(
-            annual_generation_mwh=2_500, market="cn",
+            annual_generation_mwh=2_500, market="cn", project_type="solar_thermal",
             grid_emission_factor=0.5568,
             ccer_price_low=50.0, ccer_price_high=80.0,
         )
@@ -76,14 +77,14 @@ class TestCarbonAssetOracle:
         assert result["CCER潜在收益_CNY"]["上限"] == pytest.approx(111_360.0, abs=0.01)
 
     async def test_case_3_offset_ratio(self):
-        # 50,000 MWh × 0.5366 = 26,830.0 tCO2；年排放 20,000 → 抵消比 1.3415
+        # 50,000 MWh × 0.5306 = 26,530.0 tCO2；年排放 20,000 → 抵消比 1.3265
         result = await self._run(
             annual_generation_mwh=50_000, market="cn",
             annual_emissions_tco2=20_000,
             ccer_price_low=60.0, ccer_price_high=100.0,
         )
-        assert result["减排量_tCO2"] == pytest.approx(26_830.0, abs=0.001)
-        assert result["抵消比例"] == pytest.approx(1.3415, abs=0.0001)
+        assert result["减排量_tCO2"] == pytest.approx(26_530.0, abs=0.001)
+        assert result["抵消比例"] == pytest.approx(1.3265, abs=0.0001)
 
     async def test_case_4_cbam_global(self):
         # CBAM：嵌入排放 800 t × (1−0) × 85 EUR/t = 68,000 EUR
@@ -92,7 +93,7 @@ class TestCarbonAssetOracle:
             embedded_emissions_tco2=800.0, eu_ets_price_eur=85.0,
             ccer_price_low=60.0, ccer_price_high=100.0,
         )
-        assert result["emission_reduction_tco2"] == pytest.approx(5366.0, abs=0.001)
+        assert result["emission_reduction_tco2"] == pytest.approx(5306.0, abs=0.001)
         cbam = result["cbam_carbon_cost_eur"]
         assert cbam["cost_eur"] == pytest.approx(68_000.0, abs=0.01)
 
@@ -129,7 +130,7 @@ class TestCarbonAssetOracle:
     async def test_production_fail_closed_missing_prices(self, monkeypatch):
         monkeypatch.setenv("ENVIRONMENT", "production")
         with pytest.raises(RuntimeError, match="拒绝使用内置价格假设"):
-            await self._run(annual_generation_mwh=10_000, market="cn")
+            await self._run(annual_generation_mwh=10_000, market="cn", project_type="offshore_wind")
 
     async def test_production_fail_closed_missing_ets_price(self, monkeypatch):
         monkeypatch.setenv("APP_ENV", "production")
@@ -141,7 +142,7 @@ class TestCarbonAssetOracle:
             )
 
     async def test_dev_default_prices_labeled_estimate(self):
-        result = await self._run(annual_generation_mwh=10_000, market="cn")
+        result = await self._run(annual_generation_mwh=10_000, market="cn", project_type="offshore_wind")
         assert result["estimated"] is True
         assert result["CCER潜在收益_CNY"]["价格区间假设_CNY每吨"] == [60.0, 100.0]
         assert "内置假设" in result["warning"]
@@ -378,7 +379,7 @@ class TestRegistryDiscoveryV2:
             },
         )
         assert result["status"] == "completed"
-        assert result["data"]["减排量_tCO2"] == pytest.approx(5366.0, abs=0.001)
+        assert result["data"]["减排量_tCO2"] == pytest.approx(5306.0, abs=0.001)
 
     async def test_execute_st001_via_registry(self, registry):
         result = await registry.execute(

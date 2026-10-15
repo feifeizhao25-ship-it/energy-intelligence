@@ -46,7 +46,7 @@ import { cn } from '@/lib/utils';
 import { homePricingPreview } from '@/lib/entitlements/preview';
 import { useTranslations } from 'next-intl';
 import AddressAutocomplete from '@/components/ui/AddressAutocomplete';
-import { provincesWithPrices } from '@/lib/pricing/tariffs';
+import { provincesWithPrices, unverifiedPriceProvinceCount } from '@/lib/pricing/tariffs';
 import { EMISSION_FACTOR_NOTE } from '@/lib/standards/emission-factor';
 
 // 快速计算结果展示组件
@@ -380,7 +380,7 @@ export default function HomePage() {
                         {[
                             { value: '假设可见', label: '关键参数可调整', icon: Building2 },
                             { value: '来源可溯', label: '数据出处与时间记录', icon: Zap },
-                            { value: `${provincesWithPrices().length} 省市`, label: '已收录参考电价', icon: MapPin },
+                            { value: `${provincesWithPrices().length} 省市`, label: unverifiedPriceProvinceCount() > 0 ? `参考电价（${unverifiedPriceProvinceCount()} 省来源待核实）` : '已收录参考电价（来源已核实）', icon: MapPin },
                             { value: '仅供参考', label: '结论不构成投资建议', icon: Star },
                         ].map((stat, i) => (
                             <div key={i} className="text-center">

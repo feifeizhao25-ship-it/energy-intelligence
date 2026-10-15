@@ -81,6 +81,7 @@ export async function POST(req: NextRequest) {
 
         const resource = await loadSolarResource(lat, lng);
         const model = simulateSolar(resource, {
+            lat,
             capacity,
             installationType: 'roof',
             moduleType: 'standard',

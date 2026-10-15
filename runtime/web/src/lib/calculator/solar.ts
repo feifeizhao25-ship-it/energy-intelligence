@@ -6,6 +6,7 @@ import {
   WindCalculationInput
 } from '@/types';
 import { loadSolarResource } from './solar-resource';
+import { poaDaily } from './transposition';
 import { getPriceConfig } from '@/lib/policy/electricity-price';
 import { TariffUnavailableError } from '@/lib/pricing/tariffs';
 import { calculateWind } from './wind';
@@ -154,6 +155,8 @@ export function normalizeSelfUseRatio(raw: unknown, fallback: number): number {
  * 此前 v2 另用「水平面年辐照 × 固定综合效率 0.8」，同一地点比本模型低约 2.7%，且不计温度和倾角。
  */
 export interface SolarModelParams {
+  /** 站点纬度（度）；资源数据自带 lat 时以资源数据为准 */
+  lat?: number;
   capacity: number; // kWp
   installationType: SolarCalculationInput['installationType'];
   moduleType: SolarCalculationInput['moduleType'];
@@ -205,11 +208,12 @@ export function simulateSolar(solarResource: SolarResource, params: SolarModelPa
 
   // 1. 月度发电量
   const { monthlyGeneration, planeIrradiation } = calculateMonthlyGeneration(
-    solarResource,
+    { ...solarResource, lat: solarResource.lat ?? params.lat },
     params.capacity,
     installationFactor,
-    params.tilt || solarResource.annual.optimalTilt,
-    params.azimuth || 180
+    // 用 ?? 而不是 ||：水平安装（倾角 0°）和正北（方位 0°）是合法输入，不能被当成缺省值
+    params.tilt ?? solarResource.annual.optimalTilt,
+    params.azimuth ?? 180
   );
 
   // 2. 25 年发电量（含衰减）
@@ -303,6 +307,7 @@ export async function calculateSolar(input: SolarCalculationInput): Promise<Sola
     const effectiveUnitCost = Math.max(0, initialInvestmentCost - (oneTimeSubsidy * 1000));
 
     return simulateSolar(solarResource, {
+      lat: input.lat,
       capacity: input.capacity,
       installationType: input.installationType,
       moduleType: input.moduleType,
@@ -344,11 +349,10 @@ function calculateMonthlyGeneration(
     (1 - LOSS_ASSUMPTIONS.soilingLoss) *
     (1 - LOSS_ASSUMPTIONS.acLoss);
 
-  // 倾角修正系数
-  const tiltFactor = calculateTiltFactor(solarResource.annual.optimalTilt, tilt);
-
-  // 方位角修正系数（180度为正南）
-  const azimuthFactor = 1 - Math.abs(azimuth - 180) * 0.0003; // 每度偏差0.03%损失
+  const lat = solarResource.lat;
+  if (typeof lat !== 'number' || !Number.isFinite(lat)) {
+    throw new Error('缺少站点纬度，无法换算组件平面辐照');
+  }
 
   solarResource.monthly.filter(m => m.month <= 12).forEach(monthData => {
     // 温度修正：按组件工作温度（环境温度 + 平均温升）计，25°C 以上每度损失 0.4%
@@ -358,9 +362,9 @@ function calculateMonthlyGeneration(
     // 优先用数据所属年份的实际天数；未提供时按 2024 年（闰年）天数
     const daysInMonth = monthData.days ?? new Date(2024, monthData.month, 0).getDate();
 
-    // 组件平面月辐照 (kWh/m²) = 水平面日均辐照 × 天数 × 倾角修正 × 方位角修正
-    // 说明：这里没有直射/散射分解与倾斜面换算，倾角只做折减，是对 POA 的近似。
-    const monthPlane = monthData.ghi * daysInMonth * tiltFactor * azimuthFactor;
+    // 组件平面月辐照 (kWh/m²) = 倾斜面月均日辐照（Hay-Davies 换算，见 transposition.ts）× 天数。
+    // 此前为 GHI × 倾角/方位经验折减（0.2%/度、0.03%/度），最佳倾角时 POA ≡ GHI，中高纬度系统性低估约 4%–22%。
+    const monthPlane = poaDaily({ lat, month: monthData.month, ghi: monthData.ghi, dhi: monthData.dhi, tilt, azimuth }) * daysInMonth;
     planeIrradiation += monthPlane;
 
     // 月发电量(kWh) = 容量(kW) × 组件平面月辐照(kWh/m²) ÷ 1 kW/m² × 系统效率 × 温度修正
@@ -370,15 +374,6 @@ function calculateMonthlyGeneration(
   });
 
   return { monthlyGeneration, planeIrradiation };
-}
-
-/**
- * 计算倾角修正系数
- */
-function calculateTiltFactor(optimalTilt: number, actualTilt: number): number {
-  const tiltDiff = Math.abs(optimalTilt - actualTilt);
-  // 每度偏差损失0.2%
-  return Math.max(0.7, 1 - tiltDiff * 0.002);
 }
 
 /**

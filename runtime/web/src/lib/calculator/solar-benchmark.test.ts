@@ -8,7 +8,9 @@ import { SolarCalculationInput } from '@/types';
 
 const daysIn2024 = (month: number) => new Date(2024, month, 0).getDate();
 
-// 每月组件平面辐照固定 125 kWh/m² → 全年 1500 kWh/m²；气温 0°C → 组件温度 20°C < 25°C，不计温度损失。
+// 每月水平面辐照固定 125 kWh/m² → 全年 1500 kWh/m²；气温 0°C → 组件温度 20°C < 25°C，不计温度损失。
+// 基准用水平安装（倾角 0°），此时组件平面辐照严格等于水平面辐照，手算不依赖换算模型。
+// （此前用倾角 30° 也得到 POA = GHI，是旧算法「最佳倾角不增益」的缺陷，见 transposition.ts。）
 // 统一光伏模型的资源数据入口（原先 mock 的是 nasa-power.getSolarResource，测算已改为从 solar-resource 取数）
 jest.mock('@/lib/calculator/solar-resource', () => ({
     loadSolarResource: jest.fn(async () => ({
@@ -34,7 +36,7 @@ function expectWithin2Percent(actual: number, expected: number) {
 
 const benchmarkInput: SolarCalculationInput = {
     lat: 30, lng: 120, capacity: 1000, installationType: 'ground', moduleType: 'standard',
-    tilt: 30, azimuth: 180, selfUseRatio: 0, electricityPrice: 0.6, feedInTariff: 0.35,
+    tilt: 0, azimuth: 180, selfUseRatio: 0, electricityPrice: 0.6, feedInTariff: 0.35,
     unitCost: 3500, province: '浙江',
 };
 

@@ -3,6 +3,7 @@ import { SolarResource, WindResource } from '@/types';
 
 import { withCache } from '@/lib/cache';
 import { extrapolateWindSpeed } from '@/lib/calculator/wind-shear';
+import { empiricalOptimalTilt } from '@/lib/calculator/transposition';
 
 /** NASA POWER 用 -999 表示缺测；缺测或非数值一律按 0 处理，不能当真实风速。 */
 function validSpeed(value: unknown): number {
@@ -66,7 +67,7 @@ export const getSolarResource = withCache('nasa:solar', async (lat: number, lng:
     const peakSunHours = annualGhi;
 
     // 估算最佳倾角（基于纬度）
-    const optimalTilt = Math.abs(lat) + 10;
+    const optimalTilt = empiricalOptimalTilt(lat);
 
     // 判断资源等级
     let resourceClass: 'I' | 'II' | 'III' | 'IV' | 'V' = 'III';
@@ -77,6 +78,7 @@ export const getSolarResource = withCache('nasa:solar', async (lat: number, lng:
     else resourceClass = 'V';
 
     return {
+      lat,
       monthly,
       annual: {
         ghi: annualGhi,

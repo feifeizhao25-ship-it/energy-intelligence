@@ -63,6 +63,7 @@ export async function calculateSolarOutput(
 ) {
   const resource = await loadSolarResource(lat, lng);
   const model = simulateSolar(resource, {
+    lat,
     capacity: capacityKw,
     installationType: 'ground',
     moduleType: 'standard',

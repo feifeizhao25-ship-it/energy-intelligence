@@ -2,9 +2,11 @@
 
 真实计算逻辑（纯参数化计算，无外部依赖）：
 1. 减排量 = 年发电量(MWh) × 全国电力平均排放因子(tCO2/MWh)，
-   默认因子 0.5366 出自生态环境部、国家统计局 2024 年 12 月联合发布的
-   《2022 年电力二氧化碳排放因子公告》，可用 grid_emission_factor 覆盖；
-2. CCER 潜在收益 = 减排量 × 价格区间（给区间不给单点）；
+   默认因子 0.5306 出自生态环境部、国家统计局《关于发布2023年电力二氧化碳排放因子的公告》
+   （公告2025年第47号，2025-12-31），可用 grid_emission_factor 覆盖；
+2. CCER 资格判定：截至 2026-10-15 生态环境部已发布的可再生能源类方法学仅覆盖并网海上风电、
+   并网光热发电；陆上风电、光伏暂无适用方法学（生态环境部 2025-07-21 对第6011号建议的答复）。
+   只有 project_type 属于有方法学的类型时才计算 CCER 潜在收益 = 减排量 × 价格区间（给区间不给单点）；
    价格为市场假设——生产环境必须显式提供价格区间（fail-closed），
    开发环境使用内置区间并标注 estimated；
 3. 欧盟 CBAM 碳成本（仅 market=global 且提供 embedded_emissions_tco2 时）：
@@ -19,16 +21,35 @@ from __future__ import annotations
 import os
 from typing import Any, Dict, List, Optional
 
-# 生态环境部、国家统计局《2022年电力二氧化碳排放因子公告》（2024-12 发布）：
-# 全国电力平均排放因子 0.5366 tCO2/MWh
-DEFAULT_GRID_FACTOR_TCO2_PER_MWH = 0.5366
+# 生态环境部、国家统计局《关于发布2023年电力二氧化碳排放因子的公告》（公告2025年第47号，2025-12-31）：
+# 2023 年全国电力平均二氧化碳排放因子 0.5306 tCO2/MWh（与前端 web/src/lib/standards/emission-factor.ts 一致）
+# 原文：https://www.mee.gov.cn/xxgk2018/xxgk/xxgk01/202512/t20251231_1139517.html（2026-10-15 核对）
+DEFAULT_GRID_FACTOR_TCO2_PER_MWH = 0.5306
+GRID_FACTOR_YEAR = 2023
+GRID_FACTOR_URL = "https://www.mee.gov.cn/xxgk2018/xxgk/xxgk01/202512/t20251231_1139517.html"
 GRID_FACTOR_SOURCE_CN = (
-    "生态环境部、国家统计局《2022年电力二氧化碳排放因子公告》（2024年12月发布），"
-    "全国电力平均排放因子 0.5366 tCO2/MWh"
+    "生态环境部、国家统计局《关于发布2023年电力二氧化碳排放因子的公告》（公告2025年第47号，2025-12-31），"
+    "2023年全国电力平均二氧化碳排放因子 0.5306 tCO2/MWh"
 )
 GRID_FACTOR_SOURCE_EN = (
-    "MEE & NBS of China, 2022 national average grid CO2 emission factor "
-    "0.5366 tCO2/MWh (published Dec 2024)"
+    "MEE & NBS of China, Announcement No. 47 of 2025 (2025-12-31): 2023 national average "
+    "grid CO2 emission factor 0.5306 tCO2/MWh"
+)
+
+# CCER 方法学覆盖（可再生能源类）。来源：生态环境部对十四届全国人大三次会议第6011号建议的答复（2025-07-21）
+# https://www.mee.gov.cn/xxgk2018/xxgk/xxgk13/202511/t20251114_1133686.html（2026-10-15 核对）
+CCER_METHODOLOGY_URL = "https://www.mee.gov.cn/xxgk2018/xxgk/xxgk13/202511/t20251114_1133686.html"
+CCER_ELIGIBLE_PROJECT_TYPES = {"offshore_wind", "solar_thermal"}
+CCER_NO_METHODOLOGY_TYPES = {"onshore_wind", "solar_pv", "distributed_pv"}
+CCER_NOTE_CN = (
+    "截至2026-10-15，生态环境部已发布的可再生能源类CCER方法学仅有并网海上风力发电、并网光热发电；"
+    "陆上风电、光伏暂无适用方法学，不能申请CCER（生态环境部2025-07-21答复，仍在研究纳入可行性）。"
+    "陆上风光项目可按规定核发绿证。"
+)
+CCER_NOTE_EN = (
+    "As of 2026-10-15, China's CCER methodologies for renewables cover only grid-connected offshore wind "
+    "and solar thermal; onshore wind and PV have no applicable methodology and cannot currently earn CCERs "
+    "(MEE reply, 2025-07-21). Such projects can receive green certificates (GEC) instead."
 )
 
 # 开发环境内置价格假设（生产环境禁止，必须显式传入）
@@ -43,9 +64,18 @@ def _is_production() -> bool:
     )
 
 
-def _require_explicit_prices(params: Dict[str, Any], need_cbam: bool) -> None:
+def ccer_eligibility(project_type: Optional[str]) -> str:
+    """eligible / no_methodology / unknown（未提供项目类型时不假设可申请）。"""
+    if project_type in CCER_ELIGIBLE_PROJECT_TYPES:
+        return "eligible"
+    if project_type in CCER_NO_METHODOLOGY_TYPES:
+        return "no_methodology"
+    return "unknown"
+
+
+def _require_explicit_prices(params: Dict[str, Any], need_cbam: bool, need_ccer: bool = True) -> None:
     """生产环境 fail-closed：价格假设不得用内置合成值冒充真实市场数据。"""
-    if params.get("ccer_price_low") is None or params.get("ccer_price_high") is None:
+    if need_ccer and (params.get("ccer_price_low") is None or params.get("ccer_price_high") is None):
         raise RuntimeError(
             "CA-001 生产环境必须显式提供 ccer_price_low/ccer_price_high，"
             "拒绝使用内置价格假设冒充真实市场结果"
@@ -90,7 +120,8 @@ class CarbonAssetSkill:
     )
     category = "CA"
     references = [
-        "生态环境部、国家统计局《2022年电力二氧化碳排放因子公告》（2024年12月）0.5366 tCO2/MWh",
+        "生态环境部、国家统计局公告2025年第47号《关于发布2023年电力二氧化碳排放因子的公告》0.5306 tCO2/MWh",
+        "生态环境部对十四届全国人大三次会议第6011号建议的答复（2025-07-21）：陆上风电、光伏暂无CCER方法学",
         "《温室气体自愿减排交易管理办法（试行）》（生态环境部 2023）CCER 机制",
         "EU Regulation 2023/956 (CBAM)：嵌入排放 × ETS 价格，扣除免费配额",
         "生态环境部《企业温室气体排放核算方法与报告指南 发电设施》排放因子法",
@@ -121,18 +152,23 @@ class CarbonAssetSkill:
         need_cbam = market == "global" and embedded_raw is not None
         estimated = False
 
-        if _is_production():
-            _require_explicit_prices(params, need_cbam)
+        eligibility = ccer_eligibility(params.get("project_type"))
+        need_ccer = eligibility == "eligible"
 
-        ccer_low = params.get("ccer_price_low")
-        ccer_high = params.get("ccer_price_high")
-        if ccer_low is None or ccer_high is None:
-            ccer_low, ccer_high = DEV_CCER_PRICE_BAND_CNY
-            estimated = True
-        ccer_low = float(ccer_low)
-        ccer_high = float(ccer_high)
-        if ccer_low <= 0 or ccer_high < ccer_low:
-            raise ValueError("CA-001 CCER 价格区间无效")
+        if _is_production():
+            _require_explicit_prices(params, need_cbam, need_ccer)
+
+        ccer_low = ccer_high = None
+        if need_ccer:
+            ccer_low = params.get("ccer_price_low")
+            ccer_high = params.get("ccer_price_high")
+            if ccer_low is None or ccer_high is None:
+                ccer_low, ccer_high = DEV_CCER_PRICE_BAND_CNY
+                estimated = True
+            ccer_low = float(ccer_low)
+            ccer_high = float(ccer_high)
+            if ccer_low <= 0 or ccer_high < ccer_low:
+                raise ValueError("CA-001 CCER 价格区间无效")
 
         ets_price = params.get("eu_ets_price_eur")
         if need_cbam:
@@ -142,7 +178,7 @@ class CarbonAssetSkill:
             ets_price = float(ets_price)
 
         reduction = compute_reduction_tco2(annual_generation_mwh, grid_factor)
-        ccer_range = compute_ccer_revenue_range(reduction, ccer_low, ccer_high)
+        ccer_range = compute_ccer_revenue_range(reduction, ccer_low, ccer_high) if need_ccer else None
 
         emissions_raw = params.get("annual_emissions_tco2")
         offset_ratio: Optional[float] = None
@@ -164,7 +200,12 @@ class CarbonAssetSkill:
                 "emission_reduction_tco2": round(reduction, 3),
                 "grid_emission_factor_tco2_per_mwh": grid_factor,
                 "grid_emission_factor_source": factor_source,
-                "ccer_potential_revenue_cny": {
+                "grid_emission_factor_year": GRID_FACTOR_YEAR,
+                "grid_emission_factor_url": GRID_FACTOR_URL,
+                "ccer_eligibility": eligibility,
+                "ccer_note": CCER_NOTE_EN,
+                "ccer_methodology_source": CCER_METHODOLOGY_URL,
+                "ccer_potential_revenue_cny": None if ccer_range is None else {
                     "low": round(ccer_range[0], 2),
                     "high": round(ccer_range[1], 2),
                     "price_band_assumption_cny_per_t": [ccer_low, ccer_high],
@@ -193,7 +234,12 @@ class CarbonAssetSkill:
                 "减排量_tCO2": round(reduction, 3),
                 "排放因子_tCO2每MWh": grid_factor,
                 "排放因子出处": factor_source,
-                "CCER潜在收益_CNY": {
+                "排放因子年份": GRID_FACTOR_YEAR,
+                "排放因子原文": GRID_FACTOR_URL,
+                "CCER资格": {"eligible": "有适用方法学", "no_methodology": "暂无适用方法学", "unknown": "未提供项目类型，无法判定"}[eligibility],
+                "CCER说明": CCER_NOTE_CN,
+                "CCER方法学出处": CCER_METHODOLOGY_URL,
+                "CCER潜在收益_CNY": None if ccer_range is None else {
                     "下限": round(ccer_range[0], 2),
                     "上限": round(ccer_range[1], 2),
                     "价格区间假设_CNY每吨": [ccer_low, ccer_high],

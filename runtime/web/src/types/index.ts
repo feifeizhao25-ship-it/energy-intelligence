@@ -13,6 +13,8 @@ export interface MonthlyData {
 }
 
 export interface SolarResource {
+  /** 站点纬度（度），组件平面辐照换算需要 */
+  lat?: number;
   monthly: {
     month: number;
     ghi: number; // 全球水平辐照度 (kWh/m²/day)，月内日均值

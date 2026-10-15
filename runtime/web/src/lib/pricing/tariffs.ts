@@ -210,6 +210,34 @@ export function lookupTariff(provinceName: string | null | undefined, now: Date 
 }
 
 /** 收录了价格（可用于测算）的省份 */
+/** 页面展示用：每省电价的来源、核验状态与截至日期（不编造数字，只如实标注）。 */
+export interface TariffDisclosure {
+    province: string;
+    source: string;
+    sourceVerified: boolean;
+    sourceStatus: string;
+    effectiveDate: string | null;
+    asOf: string | null;
+    freshness: TariffFreshness;
+}
+
+export function tariffDisclosure(t: ProvinceTariff, now: Date = new Date()): TariffDisclosure {
+    return {
+        province: t.province,
+        source: t.source,
+        sourceVerified: t.sourceVerified,
+        sourceStatus: sourceStatusLabel(t),
+        effectiveDate: t.effectiveDate,
+        asOf: t.asOf,
+        freshness: tariffFreshness(t.asOf, now),
+    };
+}
+
+/** 有固定分时参考价的省份中，来源未核实的数量（首页统计需如实标注）。 */
+export function unverifiedPriceProvinceCount(): number {
+    return Object.values(TARIFFS).filter(t => t.touStatus === 'fixed' && averageRetailPrice(t) !== undefined && !t.sourceVerified).length;
+}
+
 export function provincesWithPrices(): string[] {
     return Object.values(TARIFFS).filter(t => t.touStatus === 'fixed' && averageRetailPrice(t) !== undefined).map(t => t.province);
 }

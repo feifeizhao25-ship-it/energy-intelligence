@@ -13,6 +13,7 @@ jest.mock('@/lib/services/policy-service', () => ({
 import { calculateSolar, simulateSolar } from './solar';
 import { SolarCalculatorV2 } from './solar-v2';
 import { calculateSolarOutput } from '@/lib/api/nrel';
+import { poaDaily, empiricalOptimalTilt } from './transposition';
 
 const YEAR = new Date().getUTCFullYear() - 1;
 const DAYS_IN_YEAR = new Date(Date.UTC(YEAR, 1, 29)).getUTCMonth() === 1 ? 366 : 365;
@@ -91,16 +92,22 @@ describe('手算基准（统一模型）', () => {
         //   旧 v2 口径：100 × 1460 × 0.8 = 116,800 kWh，比统一模型低约 4%（本例气温较低时差距更小）
         const eta = 0.97 * 0.98 * 0.985 * 0.96 * 0.98 * 0.985;
         expect(eta).toBeCloseTo(0.86770, 4);
-        const expected = 100 * 4 * DAYS_IN_YEAR * eta * 0.96;
-        if (DAYS_IN_YEAR === 365) within(expected, 121_616, 0.0005);
+        // 组件平面年辐照改由 Hay-Davies 换算（无散射数据 → Erbs 分离），最佳倾角 0.76×纬度+3.1、正南；
+        // 旧口径「最佳倾角时 POA = GHI」系统性低估，这里不再沿用 1460。
+        const poa = Array.from({ length: 12 }, (_, i) => poaDaily({ lat: LAT, month: i + 1, ghi: 4, tilt: empiricalOptimalTilt(LAT), azimuth: 180 })
+            * new Date(Date.UTC(YEAR, i + 1, 0)).getUTCDate()).reduce((a, b) => a + b, 0);
+        expect(poa / (4 * DAYS_IN_YEAR)).toBeGreaterThan(1.03);
+        expect(poa / (4 * DAYS_IN_YEAR)).toBeLessThan(1.25); // 全年平直 4 kWh/m²/day 的合成数据冬季占比偏高，增益略大于实测城市
+        const expected = 100 * poa * eta * 0.96;
         const v2 = await SolarCalculatorV2.calculate({ location: { lat: LAT, lng: LNG }, capacity: 100, unitCost: 3.5, electricityPrice: 0.6 });
         within(v2.result.annualGeneration, expected, 0.001); // 逐月取整造成的差异 < 0.1%
         within(v2.assumptions.performanceRatio, 0.8330, 0.001);
-        within(v2.result.planeIrradiation!, 4 * DAYS_IN_YEAR, 1e-9);
+        within(v2.result.planeIrradiation!, poa, 1e-9);
     });
 
     it('simulateSolar 直接调用：资源与参数相同则结果相同，不联网', () => {
         const resource = {
+            lat: LAT,
             monthly: Array.from({ length: 12 }, (_, i) => ({ month: i + 1, ghi: 4, temperature: 15, days: 30 })),
             annual: { ghi: 1440, peakSunHours: 1440, optimalTilt: 42, resourceClass: 'III' as const },
         };
