@@ -81,20 +81,20 @@ _STAGE_NEXT_ACTION = {
         "global": {"label": "Finish profile setup", "href": "/onboarding"},
     },
     "collecting": {
-        "cn": {"label": "查看数据接入进度", "href": "/projects/connect"},
-        "global": {"label": "Check data connection progress", "href": "/projects/connect"},
+        "cn": {"label": "查看数据接入进度", "href": "/projects"},
+        "global": {"label": "Check data connection progress", "href": "/projects"},
     },
     "insight": {
-        "cn": {"label": "查看完整洞察", "href": "/insights"},
-        "global": {"label": "View full insights", "href": "/insights"},
+        "cn": {"label": "查看完整洞察", "href": "/dashboard"},
+        "global": {"label": "View full insights", "href": "/dashboard"},
     },
     "action": {
-        "cn": {"label": "执行本周行动清单", "href": "/actions"},
-        "global": {"label": "Run this week's action list", "href": "/actions"},
+        "cn": {"label": "执行本周行动清单", "href": "/projects/timeline"},
+        "global": {"label": "Run this week's action list", "href": "/projects/timeline"},
     },
     "weekly_review": {
-        "cn": {"label": "查看周报详情", "href": "/reports/weekly"},
-        "global": {"label": "Open weekly report", "href": "/reports/weekly"},
+        "cn": {"label": "查看周报详情", "href": "/dashboard"},
+        "global": {"label": "Open weekly report", "href": "/dashboard"},
     },
 }
 
@@ -277,34 +277,34 @@ _HERO_COPY: Dict[str, List[Dict[str, str]]] = {
 # 「你可能关心」推荐卡：每人设一个条目池，按天轮换，均标注演示。
 _RECOMMENDATIONS: Dict[str, List[Dict[str, str]]] = {
     "chen_xin": [
-        {"title": "分布式光伏整县推进政策解读", "href": "/insights/county-pv"},
-        {"title": "工商业分时电价最新调整一览", "href": "/insights/tou-tariff"},
-        {"title": "同区域投资人都在看的收益率基准", "href": "/benchmarks/roi"},
-        {"title": "绿电交易对分布式收益的影响", "href": "/insights/green-power"},
+        {"title": "分布式光伏整县推进政策解读", "href": "/assistant"},
+        {"title": "工商业分时电价最新调整一览", "href": "/assistant"},
+        {"title": "同区域投资人都在看的收益率基准", "href": "/calculator"},
+        {"title": "绿电交易对分布式收益的影响", "href": "/assistant"},
     ],
     "wang_qiang": [
-        {"title": "组串失配排查作业指导书", "href": "/kb/string-mismatch"},
-        {"title": "逆变器高温告警处置 SOP", "href": "/kb/inverter-overheat"},
-        {"title": "同类电站 PR 基准对比", "href": "/benchmarks/pr"},
-        {"title": "无人机巡检航线规划模板", "href": "/kb/drone-inspection"},
+        {"title": "组串失配排查作业指导书", "href": "/maintenance"},
+        {"title": "逆变器高温告警处置 SOP", "href": "/maintenance"},
+        {"title": "同类电站 PR 基准对比", "href": "/maintenance"},
+        {"title": "无人机巡检航线规划模板", "href": "/maintenance"},
     ],
     "li_na": [
-        {"title": "山东独立储能容量租赁行情月报", "href": "/reports/shandong-lease"},
-        {"title": "两充两放策略测算工具", "href": "/tools/dual-cycle"},
-        {"title": "共享储能商业模式案例库", "href": "/insights/shared-storage"},
-        {"title": "辅助服务市场规则更新速览", "href": "/insights/ancillary-rules"},
+        {"title": "山东独立储能容量租赁行情月报", "href": "/papers"},
+        {"title": "两充两放策略测算工具", "href": "/calculator/storage"},
+        {"title": "共享储能商业模式案例库", "href": "/calculator/storage"},
+        {"title": "辅助服务市场规则更新速览", "href": "/assistant"},
     ],
     "john_smith": [
-        {"title": "ERCOT interconnection queue reform brief", "href": "/insights/ercot-queue"},
-        {"title": "ITC safe-harbor checklist for 2026", "href": "/kb/itc-safe-harbor"},
-        {"title": "PPA price benchmark, utility-scale solar", "href": "/benchmarks/ppa"},
-        {"title": "Permitting timelines by state — Q3 update", "href": "/reports/permitting-q3"},
+        {"title": "ERCOT interconnection queue reform brief", "href": "/papers"},
+        {"title": "ITC safe-harbor checklist for 2026", "href": "/papers"},
+        {"title": "PPA price benchmark, utility-scale solar", "href": "/papers"},
+        {"title": "Permitting timelines by state — Q3 update", "href": "/papers"},
     ],
     "sarah_miller": [
-        {"title": "Wind capture-rate methodology note", "href": "/kb/capture-rate"},
-        {"title": "ERCOT vs. CAISO storage revenue stack", "href": "/insights/storage-stack"},
-        {"title": "Day-ahead forecast MAPE benchmarks", "href": "/benchmarks/mape"},
-        {"title": "Curtailment outlook for SPP wind", "href": "/reports/spp-curtailment"},
+        {"title": "Wind capture-rate methodology note", "href": "/papers"},
+        {"title": "ERCOT vs. CAISO storage revenue stack", "href": "/calculator/storage"},
+        {"title": "Day-ahead forecast MAPE benchmarks", "href": "/papers"},
+        {"title": "Curtailment outlook for SPP wind", "href": "/papers"},
     ],
 }
 

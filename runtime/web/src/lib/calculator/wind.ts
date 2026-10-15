@@ -61,8 +61,7 @@ export async function calculateWind(input: WindCalculationInput) {
   const years = input.operation.operationYears ?? 20;
   const lifetimeGeneration = Array.from({ length: years }, (_, i) => year1Generation * Math.pow(0.998, i));
 
-  const totalInvestment = input.investment.totalInvestment ?? totalCapacityKW * (input.investment.unitCost ?? 5500) / 1000 * 1000;
-  // Wait, unit cost is usually Yuan/kW.
+  // 单位造价按 元/kW 计。
   const calcInvestment = input.investment.totalInvestment ?? totalCapacityKW * (input.investment.unitCost ?? 5500);
 
   // 自用比例统一为 0–1 小数：>1 视为百分数（80 → 0.8），截断到 [0, 1]。
