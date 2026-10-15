@@ -70,11 +70,25 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 @app.get("/health")
 async def health():
-    return {
+    """健康检查。设置 SKILLS_MIN_COUNT 时，已加载技能数不足则返回 503（部署自检/回滚用）。"""
+    import os
+
+    body = {
         "status": "ok",
         "version": app.version,
         "environment": getattr(settings, "ENVIRONMENT", "development"),
     }
+    min_skills = os.getenv("SKILLS_MIN_COUNT", "").strip()
+    if min_skills.isdigit():
+        from app.skills.registry import get_registry
+
+        loaded = get_registry().discover_all()
+        body["skills_loaded"] = loaded
+        if loaded < int(min_skills):
+            body["status"] = "degraded"
+            body["detail"] = f"skills loaded {loaded} < required {min_skills}"
+            return JSONResponse(status_code=503, content=body)
+    return body
 
 
 # ── 路由挂载（仅挂载仓库中真实存在的模块）──────────────────────────────────────
@@ -88,6 +102,7 @@ from app.api.v1 import resource as v1_resource  # noqa: E402
 from app.api.v1 import users as v1_users  # noqa: E402
 from app.routers import misc, personalization, projects  # noqa: E402
 from app.routers import entitlements as entitlements_router  # noqa: E402
+from app.routers import skills_executor  # noqa: E402
 
 app.include_router(v1_auth.router, prefix="/api/v1", tags=["auth"])
 app.include_router(v1_users.router, prefix="/api/v1", tags=["users"])
@@ -99,6 +114,7 @@ app.include_router(v1_finance.router, prefix="/api/v1", tags=["finance"])
 app.include_router(v1_operations.router, prefix="/api/v1", tags=["operations"])
 app.include_router(projects.router, prefix="/api/v1", tags=["projects"])
 app.include_router(misc.router, prefix="/api/v1", tags=["misc"])
+app.include_router(skills_executor.router, prefix="/api/v1")
 # 权益注册表对定价/支付/客服页公开，路径按契约为 /api/entitlements（不带 v1）
 app.include_router(entitlements_router.router, prefix="/api", tags=["entitlements"])
 app.include_router(

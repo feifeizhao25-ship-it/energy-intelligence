@@ -49,10 +49,10 @@ async def _run_skill_async(
     task["progress"] = 10
     started = time.time()
     try:
-        from app.skills.param_adapter import adapt_skill_params
+        from app.skills.param_adapter_v2 import adapt_params
 
         result = await get_registry().execute(
-            skill_id, adapt_skill_params(skill_id, params)
+            skill_id, adapt_params(skill_id, params)
         )
         failed = result.get("status") == SkillStatus.FAILED.value
         task.update({
@@ -287,8 +287,8 @@ async def execute_skill(
 
     # 同步模式: 直接执行
     # P0 修复: 工程参数自动适配为 Skill 金融参数
-    from app.skills.param_adapter import adapt_skill_params
-    adapted_params = adapt_skill_params(skill_id, params)
+    from app.skills.param_adapter_v2 import adapt_params
+    adapted_params = adapt_params(skill_id, params)
     market = request.headers.get("x-market", "cn").lower()
     if skill_id == "RA-001":
         adapted_params["market"] = "global" if market in {"global", "int", "en"} else "cn"

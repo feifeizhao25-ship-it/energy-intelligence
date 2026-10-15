@@ -57,6 +57,8 @@ RUN groupadd --gid 1001 appuser \
     && useradd --uid 1001 --gid appuser --shell /bin/bash --create-home appuser
 
 COPY --chown=appuser:appuser . .
+# 技能实现位于 runtime/services/*/app/skills，需由 compose 的 additional_contexts（services=./services）提供
+COPY --from=services --chown=appuser:appuser . /app/services
 RUN chmod +x /app/docker-entrypoint.sh
 
 # Create required directories

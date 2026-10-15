@@ -30,9 +30,26 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # 项目根目录
 # ---------------------------------------------------------------------------
-_PROJECT_ROOT = Path(__file__).resolve().parents[3]  # backend/..  → 新能源智库/
-_SERVICES_DIR = _PROJECT_ROOT / "services"
-_BACKEND_SKILLS_DIR = _PROJECT_ROOT / "backend" / "skills"
+def _resolve_services_dir() -> Path:
+    """技能目录：优先 SKILLS_SERVICES_DIR；否则依次找仓库布局 runtime/services 与镜像布局 /app/services。
+
+    仓库内 registry.py 位于 runtime/backend/app/skills/，parents[3] = runtime/；
+    生产镜像（build context = ./backend，WORKDIR /app）里位于 /app/app/skills/，
+    parents[3] 是根目录 /，此前因此注册 0 个技能。镜像把 services/ 复制到 /app/services（parents[2]）。
+    """
+    env = os.getenv("SKILLS_SERVICES_DIR", "").strip()
+    if env:
+        return Path(env).resolve()
+    here = Path(__file__).resolve()
+    for root in (here.parents[3], here.parents[2]):
+        if (root / "services").is_dir():
+            return root / "services"
+    return here.parents[2] / "services"
+
+
+_SERVICES_DIR = _resolve_services_dir()
+_PROJECT_ROOT = _SERVICES_DIR.parent
+_BACKEND_SKILLS_DIR = Path(__file__).resolve().parents[2] / "skills"
 # V27 P79: 兼容 SK-* 新 ID 风格 (V27 新 Skills 9 个)
 _NEW_SKILL_PREFIX = "SK-"
 
@@ -45,6 +62,13 @@ _LEGACY_CATEGORY_MAP = {
     "project_mgmt": "PM",
     "resource": "RA",
 }
+
+
+def _rel(path: Path) -> str:
+    try:
+        return str(path.relative_to(_PROJECT_ROOT))
+    except ValueError:
+        return str(path)
 
 
 class SkillRegistry:
@@ -133,7 +157,7 @@ class SkillRegistry:
                 self._load_skills_from_file(service_name, py_file)
             except Exception as exc:
                 logger.error(
-                    "V28 ERR %s (%s): %s", py_file.relative_to(_PROJECT_ROOT), service_name, exc
+                    "V28 ERR %s (%s): %s", _rel(py_file), service_name, exc
                 )
 
     def _load_skills_from_file(self, service_name: str, py_file: Path) -> None:
@@ -374,7 +398,7 @@ class SkillRegistry:
 
         # 构建元信息
         try:
-            rel_path = str(py_file.relative_to(_PROJECT_ROOT))
+            rel_path = str(_rel(py_file))
         except ValueError:
             rel_path = str(py_file)
 
@@ -436,7 +460,7 @@ class SkillRegistry:
             description=instance.description,
             category=instance.category,
             service=service_name,
-            source_file=str(source_file.relative_to(_PROJECT_ROOT)),
+            source_file=str(_rel(source_file)),
             input_schema_class=input_cls_name,
             output_schema_class=output_cls_name,
         )
