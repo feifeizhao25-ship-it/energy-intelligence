@@ -77,7 +77,7 @@ export default function DeveloperPage() {
     };
 
     const revokeApiKey = async (keyId: string) => {
-        if (!confirm('确定要撤销此 API Key 吗？此操作不可逆。')) return;
+        if (!confirm('确定要撤销此 API 密钥吗？此操作不可逆。')) return;
 
         try {
             const res = await fetch(`/api/developer/keys?id=${keyId}`, {
@@ -109,7 +109,7 @@ export default function DeveloperPage() {
                         </div>
                         <div>
                             <h1 className="text-3xl font-black text-slate-900">开发者中心</h1>
-                            <p className="text-slate-500 text-sm">管理您的 API Keys 和查看使用情况</p>
+                            <p className="text-slate-500 text-sm">管理您的 API 密钥并查看使用情况</p>
                         </div>
                     </div>
                 </div>
@@ -117,7 +117,7 @@ export default function DeveloperPage() {
                 {/* Tabs */}
                 <div className="flex gap-2 mb-6 bg-white p-2 rounded-2xl border border-slate-200 shadow-sm">
                     {[
-                        { id: 'keys', label: 'API Keys', icon: Key },
+                        { id: 'keys', label: 'API 密钥', icon: Key },
                         { id: 'usage', label: '使用统计', icon: BarChart3 },
                         { id: 'docs', label: 'API 文档', icon: FileText }
                     ].map((tab) => (
@@ -151,7 +151,7 @@ export default function DeveloperPage() {
                                         {apiKeys.filter(k => k.status === 'active').length}
                                     </span>
                                 </div>
-                                <div className="text-sm font-bold text-slate-500">活跃 Keys</div>
+                                <div className="text-sm font-bold text-slate-500">活跃密钥</div>
                             </div>
 
                             <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
@@ -181,13 +181,13 @@ export default function DeveloperPage() {
 
                         {/* Create Button */}
                         <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-black text-slate-900">我的 API Keys</h2>
+                            <h2 className="text-xl font-black text-slate-900">我的 API 密钥</h2>
                             <button
                                 onClick={() => setShowCreateModal(true)}
                                 className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-xl font-bold text-sm hover:bg-blue-600 transition-colors shadow-lg shadow-blue-500/30"
                             >
                                 <Plus className="w-4 h-4" />
-                                创建新 Key
+                                创建新密钥
                             </button>
                         </div>
 
@@ -201,8 +201,8 @@ export default function DeveloperPage() {
                             ) : apiKeys.length === 0 ? (
                                 <div className="bg-white p-12 rounded-2xl border border-slate-200 text-center">
                                     <Key className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                                    <h3 className="text-lg font-bold text-slate-900 mb-2">还没有 API Key</h3>
-                                    <p className="text-slate-500 mb-4">创建您的第一个 API Key 开始使用开放 API</p>
+                                    <h3 className="text-lg font-bold text-slate-900 mb-2">还没有 API 密钥</h3>
+                                    <p className="text-slate-500 mb-4">创建您的第一个 API 密钥 开始使用开放 API</p>
                                     <button
                                         onClick={() => setShowCreateModal(true)}
                                         className="px-6 py-3 bg-blue-500 text-white rounded-xl font-bold hover:bg-blue-600 transition-colors"
@@ -260,7 +260,7 @@ export default function DeveloperPage() {
                                                     </div>
                                                     <div className="flex items-center gap-1">
                                                         <Zap className="w-4 h-4" />
-                                                        {key.rateLimit}/min
+                                                        {key.rateLimit} 次/分钟
                                                     </div>
                                                 </div>
                                             </div>
@@ -326,8 +326,8 @@ function CreateKeyModal({ onClose, onCreate, newKeyData }: any) {
                         <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                             <Check className="w-8 h-8 text-green-500" />
                         </div>
-                        <h2 className="text-2xl font-black text-slate-900 mb-2">API Key 创建成功！</h2>
-                        <p className="text-slate-500">请妥善保存此 Key，它只会显示一次</p>
+                        <h2 className="text-2xl font-black text-slate-900 mb-2">API 密钥 创建成功！</h2>
+                        <p className="text-slate-500">请妥善保存此密钥，它只会显示一次</p>
                     </div>
 
                     <div className="bg-yellow-50 border-2 border-yellow-200 rounded-xl p-4 mb-6">
@@ -335,13 +335,13 @@ function CreateKeyModal({ onClose, onCreate, newKeyData }: any) {
                             <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
                             <div>
                                 <div className="font-bold text-yellow-900 mb-1">重要提示</div>
-                                <div className="text-sm text-yellow-700">请立即复制并保存此 API Key。关闭此窗口后将无法再次查看完整 Key。</div>
+                                <div className="text-sm text-yellow-700">请立即复制并保存此 API 密钥。关闭此窗口后将无法再次查看完整密钥。</div>
                             </div>
                         </div>
                     </div>
 
                     <div className="bg-slate-50 p-4 rounded-xl mb-6">
-                        <div className="text-sm font-bold text-slate-500 mb-2">您的 API Key</div>
+                        <div className="text-sm font-bold text-slate-500 mb-2">您的 API 密钥</div>
                         <div className="flex items-center gap-2">
                             <code className="flex-1 p-3 bg-white border border-slate-200 rounded-lg font-mono text-sm overflow-x-auto">
                                 {newKeyData.key}
@@ -383,18 +383,18 @@ function CreateKeyModal({ onClose, onCreate, newKeyData }: any) {
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-6 z-50">
             <div className="bg-white rounded-2xl p-8 max-w-2xl w-full">
-                <h2 className="text-2xl font-black text-slate-900 mb-6">创建新的 API Key</h2>
+                <h2 className="text-2xl font-black text-slate-900 mb-6">创建新的 API 密钥</h2>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div>
                         <label className="block text-sm font-bold text-slate-700 mb-2">
-                            Key 名称 <span className="text-red-500">*</span>
+                            密钥名称 <span className="text-red-500">*</span>
                         </label>
                         <input
                             type="text"
                             value={formData.name}
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            placeholder="例如：生产环境 Key"
+                            placeholder="例如：生产环境密钥"
                             className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
                             required
                         />
@@ -466,7 +466,7 @@ function CreateKeyModal({ onClose, onCreate, newKeyData }: any) {
                             type="submit"
                             className="flex-1 py-3 bg-blue-500 text-white rounded-xl font-bold hover:bg-blue-600 transition-colors"
                         >
-                            创建 API Key
+                            创建 API 密钥
                         </button>
                     </div>
                 </form>
@@ -553,9 +553,9 @@ function ApiDocs() {
 
                 <div>
                     <h3 className="text-lg font-bold text-slate-900 mb-2">认证方式</h3>
-                    <p className="text-slate-600 mb-3">在请求头中携带 API Key：</p>
+                    <p className="text-slate-600 mb-3">在请求头中携带 API 密钥：</p>
                     <code className="block p-4 bg-slate-100 rounded-xl text-sm font-mono">
-                        X-API-Key: your_api_key
+                        X-API-Key: 您的密钥
                     </code>
                 </div>
 

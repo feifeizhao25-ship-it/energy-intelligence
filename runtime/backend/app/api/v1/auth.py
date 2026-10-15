@@ -177,10 +177,10 @@ async def google_oauth(code: str, db: AsyncSession = Depends(get_db)):
             token_response = response.json()
         access_token = token_response.get('access_token')
         if not access_token:
-            raise HTTPException(status_code=400, detail="Failed to exchange Google code")
+            raise HTTPException(status_code=400, detail="Google 授权码交换失败")
     except (httpx.HTTPError, ValueError) as exc:
         logger.warning("Google token exchange failed: %s", exc)
-        raise HTTPException(status_code=400, detail="Google token exchange failed") from exc
+        raise HTTPException(status_code=400, detail="Google 令牌交换失败") from exc
     
     # 2. Fetch user profile
     try:
@@ -193,14 +193,14 @@ async def google_oauth(code: str, db: AsyncSession = Depends(get_db)):
             profile = response.json()
     except (httpx.HTTPError, ValueError) as exc:
         logger.warning("Google profile request failed: %s", exc)
-        raise HTTPException(status_code=400, detail="Failed to fetch Google profile") from exc
+        raise HTTPException(status_code=400, detail="获取 Google 用户资料失败") from exc
     
     google_id = profile.get('id')
     email = profile.get('email')
     name = profile.get('name', email)
     
     if not google_id or not email:
-        raise HTTPException(status_code=400, detail="Invalid Google profile")
+        raise HTTPException(status_code=400, detail="Google 用户资料无效")
     
     # 3. Find or create user
     result = await db.execute(select(User).where(User.google_id == google_id))
@@ -316,7 +316,7 @@ async def forgot_password_reset(body: dict, db: AsyncSession = Depends(get_db)):
     if not phone or not code or not new_password:
         raise HTTPException(status_code=400, detail=ErrorCode.E1002.message)
     if len(new_password) < 8:
-        raise HTTPException(status_code=400, detail="Password must be at least 8 characters")
+        raise HTTPException(status_code=400, detail="密码至少需要 8 位")
     
     # Verify code
     stored_code = None

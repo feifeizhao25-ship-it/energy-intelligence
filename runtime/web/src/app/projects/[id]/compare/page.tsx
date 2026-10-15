@@ -36,7 +36,7 @@ export default function ComparePage() {
                     </div>
                     <div>
                         <h1 className="text-3xl font-bold text-gray-900">方案深度对比分析</h1>
-                        <p className="text-gray-500">正在对比：2026.Q1 标准方案 vs 高效 N 型组件方案</p>
+                        <p className="text-gray-500">正在对比：2026 年第一季度标准方案 与 高效 N 型组件方案</p>
                     </div>
                 </div>
 
@@ -60,7 +60,7 @@ export default function ComparePage() {
                         <div>指标项</div>
                         <div>方案 A (基准)</div>
                         <div>方案 B (对比)</div>
-                        <div className="text-right">差异 (Delta)</div>
+                        <div className="text-right">差异</div>
                     </div>
 
                     <div className="divide-y divide-gray-50">

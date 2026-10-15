@@ -72,7 +72,7 @@ async def _get_owned(project_id: str, user_id: str, db: AsyncSession) -> Project
     project = result.scalar_one_or_none()
     if project is None:
         # R11 红线：他人项目一律 404，不暴露存在性
-        raise HTTPException(status_code=404, detail="Project not found")
+        raise HTTPException(status_code=404, detail="项目不存在")
     return project
 
 

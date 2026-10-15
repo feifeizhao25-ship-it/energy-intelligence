@@ -24,7 +24,7 @@ async def _get_project_or_404(project_id: str, user_id: str, db: AsyncSession) -
     if not project:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Project not found or access denied",
+            detail="项目不存在或无权访问",
         )
     return project
 

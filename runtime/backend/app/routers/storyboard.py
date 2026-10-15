@@ -181,5 +181,5 @@ def _render_layout(layout: dict) -> str:
 def storyboard_page(persona_id: str, day: int) -> HTMLResponse:
     layout = _engine.get_daily_layout(persona_id, day)
     if layout is None:
-        raise HTTPException(status_code=404, detail="unknown persona or day")
+        raise HTTPException(status_code=404, detail="未知的用户画像或日期")
     return HTMLResponse(_render_layout(layout))

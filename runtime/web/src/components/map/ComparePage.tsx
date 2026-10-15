@@ -110,7 +110,7 @@ export default function ComparePage() {
                     type="text"
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    placeholder="输入坐标 (lat,lng) 或 地点名称"
+                    placeholder="输入坐标（纬度,经度）或地点名称"
                     className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
                 />
                 <button

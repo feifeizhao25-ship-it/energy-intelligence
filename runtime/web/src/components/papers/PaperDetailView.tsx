@@ -283,7 +283,7 @@ export default function PaperDetailView({ paper, pdfStatus }: PaperDetailViewPro
                                     >
                                         <Download className="w-5 h-5 group-hover:-translate-y-0.5 transition-transform" />
                                         获取完整 PDF
-                                        {pdfStatus.isOa && <span className="ml-1 text-[10px] text-green-400">FREE</span>}
+                                        {pdfStatus.isOa && <span className="ml-1 text-[10px] text-green-400">免费</span>}
                                     </a>
                                 ) : (
                                     <button disabled className="w-full flex items-center justify-center gap-2 bg-slate-100 text-slate-300 py-4 rounded-2xl font-black text-sm cursor-not-allowed">
@@ -374,7 +374,7 @@ export default function PaperDetailView({ paper, pdfStatus }: PaperDetailViewPro
                                     <div className="flex justify-between items-center group">
                                         <h3 className="text-xl font-black text-slate-900 flex items-center gap-3">
                                             <div className="w-1 h-6 bg-green-500 rounded-full"></div>
-                                            Abstract 原文
+                                            摘要原文
                                         </h3>
                                         <button
                                             onClick={handleTranslate}
@@ -388,7 +388,7 @@ export default function PaperDetailView({ paper, pdfStatus }: PaperDetailViewPro
                                     <div className="relative">
                                         <div className="absolute -left-6 top-0 bottom-0 w-px bg-slate-100"></div>
                                         <p className="text-slate-600 font-medium leading-relaxed italic pr-10">
-                                            &quot;{(paper.abstract && !paper.abstract.includes('由于 Semantic Scholar API')) ? paper.abstract : "Abstract preview is available in the full PDF document."}&quot;
+                                            &quot;{(paper.abstract && !paper.abstract.includes('由于 Semantic Scholar API')) ? paper.abstract : "摘要请查看论文 PDF 全文。"}&quot;
                                         </p>
                                     </div>
 
@@ -438,7 +438,7 @@ export default function PaperDetailView({ paper, pdfStatus }: PaperDetailViewPro
 
                                                     {/* Dual Pane Layout */}
                                                     <div className={cn("flex-1 space-y-3", isDualMode && "lg:w-1/2")}>
-                                                        {isDualMode && <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">ORIGINAL TEXT / {item.section}</div>}
+                                                        {isDualMode && <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">原文 / {item.section}</div>}
                                                         <p className="text-slate-500 font-medium leading-relaxed prose prose-slate">
                                                             {item.en}
                                                         </p>

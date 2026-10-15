@@ -28,7 +28,7 @@ async def _owned_project_id(
         select(Project.id).where(Project.id == project_id, Project.user_id == user_id)
     )
     if result.scalar_one_or_none() is None:
-        raise HTTPException(status_code=404, detail="Project not found or access denied")
+        raise HTTPException(status_code=404, detail="项目不存在或无权访问")
     return project_id
 
 
@@ -86,13 +86,13 @@ async def get_resource_assessment(
     )
     assessment = result.scalar_one_or_none()
     if not assessment:
-        raise HTTPException(status_code=404, detail="Assessment not found")
+        raise HTTPException(status_code=404, detail="评估记录不存在")
 
     proj_result = await db.execute(
         select(Project.id).where(Project.id == assessment.project_id, Project.user_id == user_id)
     )
     if proj_result.scalar_one_or_none() is None:
-        raise HTTPException(status_code=404, detail="Assessment not found")
+        raise HTTPException(status_code=404, detail="评估记录不存在")
 
     return {
         "id": assessment.id,

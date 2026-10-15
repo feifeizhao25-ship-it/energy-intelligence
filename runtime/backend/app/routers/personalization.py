@@ -16,6 +16,6 @@ async def daily_layout(
     """Return explicitly labelled demo content; no real user data is exposed."""
     layout = _engine.get_daily_layout(persona_id, day)
     if layout is None:
-        raise HTTPException(status_code=404, detail="Persona not found")
+        raise HTTPException(status_code=404, detail="用户画像不存在")
     return {"code": 0, "message": "success", "data": layout}
 

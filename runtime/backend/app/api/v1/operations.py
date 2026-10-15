@@ -90,7 +90,7 @@ async def get_project_health(
     )
     project = result.scalar_one_or_none()
     if not project:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="项目不存在")
     _operations_source_unavailable()
 
 
@@ -136,7 +136,7 @@ async def get_cleaning_schedule(
         select(Project).where(Project.id == project_id, Project.user_id == user_id)
     )
     if not result.scalar_one_or_none():
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="项目不存在")
 
     daily_gen_mwh = annual_gen_mwh / 365.0
     daily_revenue = daily_gen_mwh * revenue_per_mwh
@@ -182,6 +182,6 @@ async def get_performance(
     )
     project = result.scalar_one_or_none()
     if not project:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="项目不存在")
 
     _operations_source_unavailable()

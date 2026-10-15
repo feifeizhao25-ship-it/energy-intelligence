@@ -45,7 +45,7 @@ async def get_usage(
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="用户不存在")
     now = datetime.now(timezone.utc)
     usage = dict(user.usage_quota or {})
     limits = PLAN_QUOTAS.get(user.plan, PLAN_QUOTAS["free"])
@@ -73,7 +73,7 @@ async def create_checkout(
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="用户不存在")
     if (user.market or "cn") == "cn":
         raise HTTPException(status_code=403, detail="国内版请使用国内支付渠道")
     customer_id = user.stripe_customer_id
@@ -212,7 +212,7 @@ async def stripe_webhook(request: Request, db: AsyncSession = Depends(get_db)):
     if event["type"] == "customer.subscription.created":
         new_plan = metadata.get("plan")
         if new_plan not in {"pro", "enterprise"}:
-            raise HTTPException(status_code=400, detail="Invalid subscription plan metadata")
+            raise HTTPException(status_code=400, detail="订阅套餐信息无效")
         user.plan = new_plan
         if customer_id:
             user.stripe_customer_id = customer_id
@@ -239,14 +239,14 @@ async def customer_portal(
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="用户不存在")
 
     if (user.market or "cn") == "cn":
         raise HTTPException(status_code=403, detail="国内版请在国内会员中心管理订单")
     if not user.stripe_customer_id:
         raise HTTPException(
             status_code=409,
-            detail="No billing customer exists. Complete checkout before opening the portal.",
+            detail="尚无账单客户记录，请先完成支付再打开账单管理",
         )
     customer_id = user.stripe_customer_id
     try:
@@ -265,7 +265,7 @@ async def get_subscription(
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="用户不存在")
 
     if (user.market or "cn") != "cn" and user.stripe_customer_id:
         try:

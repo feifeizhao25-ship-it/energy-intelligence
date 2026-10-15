@@ -148,7 +148,7 @@ async def chat_json(
         prompt = _grounded_prompt(SYSTEM_PROMPT if market == "global" else CN_SYSTEM_PROMPT, hits, market)
         result = await ai_assistant.chat_openai_with_metadata(body.message, prompt, market=market)
     except RuntimeError as error:
-        raise HTTPException(status_code=503, detail="AI service temporarily unavailable") from error
+        raise HTTPException(status_code=503, detail="AI 服务暂时不可用，请稍后重试") from error
     await consume_ai_quota(user, db)
     return {
         "message": result["content"],
@@ -175,7 +175,7 @@ async def analyze(
         prompt = _grounded_prompt(SYSTEM_PROMPT if market == "global" else CN_SYSTEM_PROMPT, hits, market)
         result = await ai_assistant.chat_openai_with_metadata(query, prompt, market=market)
     except RuntimeError as error:
-        raise HTTPException(status_code=503, detail="AI service temporarily unavailable") from error
+        raise HTTPException(status_code=503, detail="AI 服务暂时不可用，请稍后重试") from error
     await consume_ai_quota(user, db)
     return {
         "analysis": result["content"],
@@ -199,7 +199,7 @@ async def get_suggestions(
     )
     project = result.scalar_one_or_none()
     if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
+        raise HTTPException(status_code=404, detail="项目不存在")
 
     suggestions = []
 

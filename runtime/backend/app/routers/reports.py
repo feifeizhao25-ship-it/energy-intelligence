@@ -2557,7 +2557,7 @@ async def create_report_compat(
     user_id: str = Depends(get_current_user_id),
 ):
     """Legacy create-report entrypoint; use /reports/generate for generation."""
-    raise HTTPException(status_code=422, detail="Use /api/v1/reports/generate")
+    raise HTTPException(status_code=422, detail="请改用 /api/v1/reports/generate")
 
 
 @router.delete("/{report_id}")

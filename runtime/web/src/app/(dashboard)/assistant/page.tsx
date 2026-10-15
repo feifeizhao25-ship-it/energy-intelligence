@@ -27,7 +27,7 @@ const knowledgeCards = [
     {
         title: 'LCOE',
         color: 'primary',
-        desc: 'Levelized Cost of Energy (平准化度电成本)。是对项目生命周期内的总成本和总发电量进行折现后的比值。',
+        desc: '平准化度电成本（LCOE）。是对项目生命周期内的总成本和总发电量进行折现后的比值。',
         trend: '-5.2% YoY'
     },
     {

@@ -20,7 +20,7 @@ async def storage_finance(
 ):
     """Auditable storage-arbitrage model based solely on explicit user assumptions."""
     if body.peak_price_per_mwh <= body.offpeak_price_per_mwh:
-        raise HTTPException(status_code=422, detail="Peak price must exceed off-peak price")
+        raise HTTPException(status_code=422, detail="峰时电价必须高于谷时电价")
 
     total_capex = body.capacity_mwh * 1000 * body.capex_per_kwh
     annual_opex = total_capex * body.annual_opex_rate
@@ -253,7 +253,7 @@ async def get_financial_models(
     )
     project = result.scalar_one_or_none()
     if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
+        raise HTTPException(status_code=404, detail="项目不存在")
 
     result = await db.execute(
         select(FinancialModel).where(FinancialModel.project_id == project_id)
@@ -280,7 +280,7 @@ async def save_financial_model(
     )
     project = result.scalar_one_or_none()
     if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
+        raise HTTPException(status_code=404, detail="项目不存在")
 
     is_solar = hasattr(body, 'capex_per_w')
     scenario_name = getattr(body, 'name', None) if hasattr(body, 'name') else None

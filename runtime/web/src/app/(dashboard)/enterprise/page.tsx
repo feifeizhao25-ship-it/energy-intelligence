@@ -38,7 +38,7 @@ export default function EnterpriseCenterPage() {
                         <div className="space-y-4">
                             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/20 text-blue-400 text-[10px] font-black uppercase tracking-widest border border-blue-500/30">
                                 <ShieldCheck className="w-3 h-3" />
-                                Enterprise Management
+                                企业管理
                             </div>
                             <h1 className="text-4xl md:text-6xl font-black text-white tracking-tighter leading-none">
                                 企业 <span className="text-blue-500">管理中心</span>
@@ -165,7 +165,7 @@ export default function EnterpriseCenterPage() {
                                     </div>
                                     <div className="grid md:grid-cols-2 gap-12">
                                         <div className="space-y-6">
-                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">企业 Logo (建议 PNG/SVG)</label>
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">企业标志（建议 PNG 或 SVG 格式）</label>
                                             <div className="border-2 border-dashed border-slate-100 rounded-[32px] p-12 flex flex-col items-center gap-4 hover:border-blue-500 hover:bg-blue-50/50 transition-all cursor-pointer group">
                                                 <div className="p-4 bg-slate-50 rounded-2xl group-hover:bg-blue-500 group-hover:text-white transition-all">
                                                     <Plus className="w-6 h-6" />
@@ -187,7 +187,7 @@ export default function EnterpriseCenterPage() {
                                             </div>
                                             <div className="space-y-4">
                                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">报告页脚水印文本</label>
-                                                <input type="text" placeholder="例如：© 2026 技术支持由 XXX 能源公司提供" className="w-full bg-slate-50 p-4 rounded-2xl border-none outline-none font-bold text-sm" />
+                                                <input type="text" placeholder="例如：© 2026 技术支持由某某能源公司提供" className="w-full bg-slate-50 p-4 rounded-2xl border-none outline-none font-bold text-sm" />
                                             </div>
                                         </div>
                                     </div>
