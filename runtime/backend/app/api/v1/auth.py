@@ -240,12 +240,9 @@ async def google_oauth(code: str, db: AsyncSession = Depends(get_db)):
 async def refresh_token(refresh_token: str, db: AsyncSession = Depends(get_db)):
     """Refresh access token using refresh token."""
     try:
-        import jwt
-        from app.config import settings
-        payload = jwt.decode(refresh_token, settings.SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
-        if payload.get("type") != "refresh":
-            raise HTTPException(status_code=401, detail=ErrorCode.E2007.message)
-        user_id = payload.get("sub")
+        # Same key/algorithm selection as access tokens (RS256 public key when
+        # configured, else HS256); rejects anything whose type is not "refresh".
+        user_id = decode_token(refresh_token, expected_type="refresh")
         if not user_id:
             raise HTTPException(status_code=401, detail=ErrorCode.E2003.message)
         # Verify user still exists

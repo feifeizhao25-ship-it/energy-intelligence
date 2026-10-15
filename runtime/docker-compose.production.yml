@@ -63,7 +63,9 @@ services:
       SENDGRID_API_KEY: ${SENDGRID_API_KEY:-}
       SENTRY_DSN: ${SENTRY_DSN:-}
       FORWARDED_ALLOW_IPS: ${FORWARDED_ALLOW_IPS:-127.0.0.1}
-      REPORTS_DIR: /tmp/reports
+      REPORTS_DIR: /app/data/reports
+    volumes:
+      - reports_data:/app/data/reports
     depends_on:
       postgres: { condition: service_healthy }
       redis: { condition: service_healthy }
@@ -161,6 +163,7 @@ volumes:
   redis_data:
   caddy_data:
   caddy_config:
+  reports_data:
 
 networks:
   backend:
