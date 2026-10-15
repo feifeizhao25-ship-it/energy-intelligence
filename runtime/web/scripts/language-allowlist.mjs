@@ -6,6 +6,7 @@ export const LATIN_ALLOWLIST = new Set([
   'nasa', 'power', 'nrel', 'pvgis', 'pvwatts', 'iec', 'gb', 'gb/t', 'ieee', 'ccer', 'cbam', 'co2', 'co₂', 'eia', 'irena',
   'semantic', 'scholar', 'doi', 'pv', 'bess', 'ems', 'bms', 'pcs', 'scada', 'om', 'o&m', 'icp', 'sms', 'ip',
   'kwh/m', 'kwh/m²', 'w/m', 'w/m²', 'm/s', 'docx', 'png', 'svg', 'capex', 'opex', 'v1', 'v3', 'openapi', 'x-api-key', 'tier1', 'logo',
+  'get', 'post', 'put', 'delete', 'curl',
   'pro', 'deepseek', 'deepseek-v3', 'pdf/word', 'glm', 'kimi', 'qwen', 'openclaw', 'iso', 'gdpr', 'pipl', 'cn', 'utc', 'ok',
 ]);
 export const isAllowed = (word) => LATIN_ALLOWLIST.has(word.toLowerCase()) || /^[a-z]$/i.test(word);

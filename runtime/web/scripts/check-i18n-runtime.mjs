@@ -1,6 +1,7 @@
 // 国内版语言边界运行时检查：即使浏览器带英文 Cookie / Accept-Language，公开页面和开放 API 文档也只输出中文。
 // 国际版英文首页、en.json、LanguageSwitcher 已从国内树删除；这里防止英文分支被重新引入。
 import { load } from 'cheerio';
+import { analyzeVisibleText } from './i18n-runtime-analyze.mjs';
 
 const baseUrl = (process.env.I18N_CHECK_BASE_URL || 'http://127.0.0.1:4311').replace(/\/$/, '');
 const routes = [
@@ -13,8 +14,6 @@ const routes = [
   '/terms',
   '/developer/docs',
 ];
-// 已删除的国际版文案里的标志性短语
-const ENGLISH_MARKERS = ['Energy Intelligence', 'Terms of Service', 'Privacy Policy', 'Request a quote', 'Back to plans', 'Order review', 'Switch to English'];
 const failures = [];
 
 for (const route of routes) {
@@ -29,10 +28,9 @@ for (const route of routes) {
   }
   const html = await response.text();
   const $ = load(html);
-  $('script,style,noscript,template').remove();
+  $('script,style,noscript,template,pre,code').remove(); // 代码示例与接口路径属于技术标识，不计入
   const visibleText = $('body').text().replace(/\s+/g, ' ').trim();
-  if (!/[㐀-鿿]/.test(visibleText)) failures.push(`${route}: 页面没有中文`);
-  for (const marker of ENGLISH_MARKERS) if (visibleText.includes(marker)) failures.push(`${route}: 出现英文文案「${marker}」`);
+  failures.push(...analyzeVisibleText(route, visibleText));
 }
 
 const enRedirect = await fetch(`${baseUrl}/en`, { redirect: 'manual' });
@@ -55,4 +53,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log(`国内版语言边界检查通过：${routes.length} 个公开页面与开放 API 文档在英文浏览器下仍只输出中文。`);
+console.log(`国内版语言边界检查通过：${routes.length} 个公开页面与开放 API 文档在英文浏览器下仍只输出中文（白名单制）。`);
