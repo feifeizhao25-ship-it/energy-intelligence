@@ -57,13 +57,25 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/reports", tags=["报告中心"])
 
 
+def _reports_dir() -> str:
+    """Directory for generated report files.
+
+    Configurable via REPORTS_DIR so read_only production containers can point it
+    at a writable mount (compose sets /tmp/reports on the /tmp tmpfs). Falls back
+    to ./generated_reports for local development.
+    """
+    configured = os.environ.get("REPORTS_DIR", "").strip()
+    base = configured or os.path.join(os.getcwd(), "generated_reports")
+    return os.path.realpath(base)
+
+
 def _report_file(report_id: str, extension: str) -> str:
     """Return a report path only for canonical server-generated UUIDs."""
     try:
         safe_id = str(UUID(report_id))
     except ValueError as exc:
         raise HTTPException(status_code=404, detail="报告不存在或无权访问") from exc
-    report_dir = os.path.realpath(os.path.join(os.getcwd(), "generated_reports"))
+    report_dir = _reports_dir()
     return os.path.join(report_dir, f"{safe_id}.{extension}")
 
 # ═══════════════════════════════════════════════════════════════
@@ -2148,7 +2160,7 @@ async def _generate_report_task(
             ext = "pdf"
 
         # 保存到文件系统
-        reports_dir = os.path.join(os.getcwd(), "generated_reports")
+        reports_dir = _reports_dir()
         os.makedirs(reports_dir, exist_ok=True)
         filename = f"{report_id}.{ext}"
         filepath = os.path.join(reports_dir, filename)

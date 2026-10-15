@@ -52,10 +52,19 @@ def create_refresh_token(subject: str) -> str:
     )
 
 
-def decode_token(token: str) -> Optional[str]:
+def decode_token(token: str, expected_type: str = "access") -> Optional[str]:
+    """Decode a JWT and return its subject only if its ``type`` claim matches.
+
+    Defaults to ``access`` so a long-lived refresh token (or a token without a
+    type claim) can never be used as a bearer access token.
+    """
     key, algorithm = _jwt_verify_key_and_algorithm()
     try:
-        payload = jwt.decode(token, key, algorithms=[algorithm])
-        return payload.get("sub")
+        payload = jwt.decode(
+            token, key, algorithms=[algorithm], options={"require": ["exp", "sub"]}
+        )
     except jwt.PyJWTError:
         return None
+    if payload.get("type") != expected_type:
+        return None
+    return payload.get("sub")

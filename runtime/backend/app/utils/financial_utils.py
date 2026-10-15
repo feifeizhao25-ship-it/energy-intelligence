@@ -108,7 +108,9 @@ def build_solar_cashflows(
         itc_benefit = capex * itc_rate if yr == 1 else 0
         tax = max(0, ebt_d * tax_rate) - itc_benefit
         net_income = ebt_d - tax
-        cashflow = net_income + principal  # add back principal repayment
+        # Equity cash flow: principal repayment is a financing outflow, not income.
+        # (No depreciation is modelled here, so there is no non-cash add-back.)
+        cashflow = net_income - principal
         cashflows.append(cashflow)
         debt_balance = max(0, debt_balance - principal)
 
