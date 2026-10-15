@@ -83,6 +83,24 @@ def _detect_countries(query: str, market: str) -> set:
     return countries
 
 
+_LATIN_RE = re.compile(r"[a-z0-9]+(?:[.\-][a-z0-9]+)*")
+_CJK_RUN_RE = re.compile(r"[\u4e00-\u9fff]+")
+
+
+def tokenize(text: str) -> set:
+    """中英混合分词：英文/数字按词，中文按字 unigram + bigram。
+
+    旧实现用 ``[\u4e00-\u9fff]+`` 把整句中文当一个 token，中文查询几乎永远零重合。
+    这里不引入 jieba 依赖，用字 n-gram，对短政策标题足够稳健。
+    """
+    lowered = (text or "").lower()
+    tokens = set(_LATIN_RE.findall(lowered))
+    for run in _CJK_RUN_RE.findall(lowered):
+        tokens.update(run)  # unigram
+        tokens.update(run[i:i + 2] for i in range(len(run) - 1))  # bigram
+    return tokens
+
+
 class RAGService:
     """小型语料检索：按市场语言过滤 + 词面重合度排序。
 
@@ -103,7 +121,7 @@ class RAGService:
                exclude_stale: bool = False) -> RAGResult:
         lang = "cn" if market == "cn" else "en"
         countries = _detect_countries(query, market)
-        query_tokens = set(re.findall(r"[a-z0-9\u4e00-\u9fff]+", query.lower()))
+        query_tokens = tokenize(query)
         retrieved_at = date.today().isoformat()
 
         scored: List[RAGHit] = []
@@ -113,8 +131,8 @@ class RAGService:
             freshness = self._freshness_of(doc)
             if exclude_stale and freshness == "stale":
                 continue  # 时效保护：过期语料不进入检索结果
-            doc_tokens = set(
-                re.findall(r"[a-z0-9\u4e00-\u9fff]+", (doc["title"] + " " + doc["content"]).lower())
+            doc_tokens = tokenize(
+                " ".join(str(doc.get(k) or "") for k in ("title", "content", "version", "locator"))
             )
             overlap = len(query_tokens & doc_tokens)
             score = overlap / max(len(query_tokens), 1)

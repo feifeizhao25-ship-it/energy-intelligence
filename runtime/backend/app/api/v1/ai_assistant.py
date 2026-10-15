@@ -21,12 +21,37 @@ router = APIRouter(prefix="/ai")
 _AI_LIMITATIONS = ["AI 生成内容仅供辅助分析，关键投资与工程决策需人工复核"]
 
 
-def _evidence_for(query: str, answer: str, market: str) -> dict:
-    """为 AI 问答构建统一证据封装；检索失败时降级为「无来源」而非报错。"""
+def _retrieve(query: str, market: str) -> list:
+    """先检索、后生成：只保留有词面命中、且未过期的来源；检索失败降级为空。"""
     try:
-        hits = RAGService().search(query, top_k=3, market=market).hits
+        hits = RAGService().search(query, top_k=3, market=market, exclude_stale=True).hits
     except Exception:
-        hits = []
+        return []
+    return [h for h in hits if h.score > 0]
+
+
+def _grounded_prompt(base_prompt: str, hits: list, market: str) -> str:
+    """把检索到的证据编号注入系统提示，要求模型按 [S1] 形式引用。"""
+    if market == "global":
+        if not hits:
+            return base_prompt + "\n\nRetrieved sources: none. Say the source library has no matching document; do not cite anything."
+        head = "\n\nRetrieved sources (cite as [S1], [S2] after each claim that uses them; do not cite anything else):"
+    else:
+        if not hits:
+            return base_prompt + "\n\n检索到的资料：无。请说明本库尚未收录相关资料，不得编造引用。"
+        head = "\n\n检索到的资料（使用时在句末以 [S1]、[S2] 标注引用；不得引用列表之外的来源）："
+    lines = []
+    for i, h in enumerate(hits, 1):
+        md = h.metadata or {}
+        lines.append(
+            f"[S{i}] {h.title} | {md.get('source_org') or ''} | {md.get('published_at') or md.get('year')} | "
+            f"{md.get('source_url') or ''}\n{h.content}"
+        )
+    return base_prompt + head + "\n" + "\n".join(lines)
+
+
+def _evidence_for(answer: str, hits: list) -> dict:
+    """证据封装使用与生成时相同的检索结果（不再事后另行检索）。"""
     return envelope_from_rag(answer, hits, limitations=_AI_LIMITATIONS)
 
 
@@ -68,9 +93,13 @@ async def chat(
 ):
     """Chat with AI assistant (streaming)."""
     market = await _market_for_user(user_id, db)
-    prompt = SYSTEM_PROMPT if market == "global" else CN_SYSTEM_PROMPT
+    hits = _retrieve(message, market)
+    prompt = _grounded_prompt(SYSTEM_PROMPT if market == "global" else CN_SYSTEM_PROMPT, hits, market)
+    sources = _evidence_for("", hits)["sources"]
 
     async def stream():
+        # 先下发本次回答所依据的来源，前端可按 [S1] 编号渲染引用
+        yield f"data: {json.dumps({'sources': sources}, ensure_ascii=False)}\n\n"
         async for chunk in ai_assistant.stream_openai(message, prompt, market=market):
             yield f"data: {json.dumps({'content': chunk})}\n\n"
         yield "data: [DONE]\n\n"
@@ -95,7 +124,8 @@ async def chat_json(
         raise HTTPException(status_code=429, detail=str(error)) from error
     try:
         market = await _market_for_user(user_id, db)
-        prompt = SYSTEM_PROMPT if market == "global" else CN_SYSTEM_PROMPT
+        hits = _retrieve(body.message, market)
+        prompt = _grounded_prompt(SYSTEM_PROMPT if market == "global" else CN_SYSTEM_PROMPT, hits, market)
         result = await ai_assistant.chat_openai_with_metadata(body.message, prompt, market=market)
     except RuntimeError as error:
         raise HTTPException(status_code=503, detail="AI service temporarily unavailable") from error
@@ -103,7 +133,7 @@ async def chat_json(
     return {
         "message": result["content"],
         "ai_metadata": result["metadata"],
-        "evidence": _evidence_for(body.message, result["content"], market),
+        "evidence": _evidence_for(result["content"], hits),
     }
 
 
@@ -121,7 +151,8 @@ async def analyze(
         raise HTTPException(status_code=429, detail=str(error)) from error
     try:
         market = await _market_for_user(user_id, db)
-        prompt = SYSTEM_PROMPT if market == "global" else CN_SYSTEM_PROMPT
+        hits = _retrieve(query, market)
+        prompt = _grounded_prompt(SYSTEM_PROMPT if market == "global" else CN_SYSTEM_PROMPT, hits, market)
         result = await ai_assistant.chat_openai_with_metadata(query, prompt, market=market)
     except RuntimeError as error:
         raise HTTPException(status_code=503, detail="AI service temporarily unavailable") from error
@@ -129,7 +160,7 @@ async def analyze(
     return {
         "analysis": result["content"],
         "ai_metadata": result["metadata"],
-        "evidence": _evidence_for(query, result["content"], market),
+        "evidence": _evidence_for(result["content"], hits),
     }
 
 

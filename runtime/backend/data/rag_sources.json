@@ -18,25 +18,30 @@
       "source_org": "国家市场监督管理总局 国家标准全文公开系统",
       "license_note": "国家标准全文公开系统提供免费在线阅读；引用须标注标准号与年代号。",
       "verify_interval_days": 365,
-      "corroborated_by": ["policy-cn-136"]
+      "corroborated_by": [
+        "policy-cn-136"
+      ],
+      "needs_human_verification": "标准年代号（版本年份）尚未与国家标准全文公开系统逐条核对，引用前须人工确认。"
     },
     {
       "source_id": "policy-cn-136",
       "type": "policy",
       "lang": "cn",
-      "title": "分布式光伏并网管理细则（2026）",
-      "authors": "国家能源局",
-      "version": "2026 年修订版",
-      "published_at": "2026-01-01",
-      "locator": "第二章 并网申请与计量",
-      "content": "2026 年分布式光伏并网申请、计量与结算流程要点。",
-      "year": 2026,
-      "last_verified_at": "2026-06-01",
-      "source_url": "https://www.nea.gov.cn/",
-      "source_org": "国家能源局",
-      "license_note": "政府公开发布文件，转载引用须注明来源为国家能源局。",
+      "title": "关于深化新能源上网电价市场化改革 促进新能源高质量发展的通知（发改价格〔2025〕136号）",
+      "authors": "国家发展改革委、国家能源局",
+      "version": "发改价格〔2025〕136号",
+      "published_at": "2025-02-09",
+      "locator": "三、（五）新能源可持续发展价格结算机制的电量规模、机制电价和执行期限",
+      "content": "新能源（风电、太阳能发电）上网电量原则上全部进入电力市场，上网电价通过市场交易形成；在市场外建立新能源可持续发展价格结算机制（机制电价差价结算）。以2025年6月1日为界区分存量与增量：2025年6月1日以前投产的存量项目，机制电价按现行价格政策执行、不高于当地煤电基准价；2025年6月1日起投产的增量项目，机制电价由各地每年组织竞价形成，执行期限按同类项目回收初始投资的平均期限确定。各地须在2025年底前出台并实施具体方案；纳入机制的电量不重复获得绿证收益；不得将配置储能作为新建新能源项目核准、并网、上网等的前置条件。文件落款日期2025年1月27日，2025年2月9日发布。",
+      "year": 2025,
+      "last_verified_at": "2026-10-15",
+      "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202502/t20250209_1396066.html",
+      "source_org": "国家发展和改革委员会",
+      "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
       "verify_interval_days": 90,
-      "corroborated_by": ["std-gb50797"]
+      "corroborated_by": [
+        "std-gb50797"
+      ]
     },
     {
       "source_id": "policy-cn-storage",
@@ -54,7 +59,9 @@
       "source_org": "国家能源局",
       "license_note": "政府公开发布文件，转载引用须注明来源为国家能源局。",
       "verify_interval_days": 90,
-      "corroborated_by": ["policy-cn-136"]
+      "corroborated_by": [
+        "policy-cn-136"
+      ]
     },
     {
       "source_id": "std-iec61724",
@@ -72,25 +79,33 @@
       "source_org": "International Electrotechnical Commission (IEC)",
       "license_note": "IEC standards are copyrighted; summaries are original text, full text requires purchase from the IEC Webstore.",
       "verify_interval_days": 365,
-      "corroborated_by": ["std-ieee1547"]
+      "corroborated_by": [
+        "std-ieee1547"
+      ]
     },
     {
       "source_id": "policy-us-itc",
       "type": "policy",
       "lang": "en",
-      "title": "United States Federal Investment Tax Credit for Solar",
-      "authors": "U.S. Department of Energy",
-      "version": "2025 guidance",
-      "published_at": "2025-02-01",
-      "locator": "Section 25D/48 eligibility",
-      "content": "The federal Investment Tax Credit (ITC) applies to solar photovoltaic and storage projects, with interconnection and placed-in-service requirements.",
+      "title": "US clean energy tax credits after the One Big Beautiful Bill Act (P.L. 119-21): §25D, §48E and §45Y",
+      "authors": "Internal Revenue Service; U.S. Department of the Treasury",
+      "version": "IRS FS-2025-05 (Aug. 21, 2025); IRS Notice 2025-42",
+      "published_at": "2025-08-21",
+      "locator": "FS-2025-05 FAQ 1 and 7; Notice 2025-42 sections 1-3 and 6",
+      "content": "Public Law 119-21 (July 4, 2025), commonly known as the One Big Beautiful Bill Act (OBBBA), accelerated termination of clean energy credits. Residential clean energy credit (section 25D): not allowed for expenditures made after December 31, 2025; an expenditure is treated as made when original installation is completed. Clean electricity investment credit (section 48E) and production credit (section 45Y) for applicable wind and solar facilities: terminated for facilities placed in service after December 31, 2027, unless construction began on or before July 4, 2026. Under IRS Notice 2025-42 (effective for facilities whose construction did not begin before September 2, 2025), beginning of construction must be shown with the Physical Work Test; the Five Percent Safe Harbor is available only for low output solar facilities of 1.5 MW AC or less. Energy storage technology is excepted from the wind and solar termination rule. This is a summary of primary sources, not tax advice.",
       "year": 2025,
-      "last_verified_at": "2026-05-11",
-      "source_url": "https://www.energy.gov/eere/solar",
-      "source_org": "U.S. Department of Energy, Office of Energy Efficiency and Renewable Energy",
-      "license_note": "U.S. federal government publication, generally public domain; attribution to energy.gov required.",
+      "last_verified_at": "2026-10-15",
+      "source_url": "https://www.irs.gov/pub/irs-drop/n-25-42.pdf",
+      "source_org": "Internal Revenue Service",
+      "license_note": "U.S. federal government publication, generally public domain; cite IRS.gov as the source.",
       "verify_interval_days": 90,
-      "corroborated_by": ["guide-grid-interconnection"]
+      "corroborated_by": [
+        "guide-grid-interconnection"
+      ],
+      "source_urls": [
+        "https://www.irs.gov/newsroom/faqs-for-modification-of-sections-25c-25d-25e-30c-30d-45l-45w-and-179d-under-public-law-119-21-139-stat-72-july-4-2025-commonly-known-as-the-one-big-beautiful-bill-obbb",
+        "https://www.irs.gov/pub/irs-drop/n-25-42.pdf"
+      ]
     },
     {
       "source_id": "std-ieee1547",
@@ -108,7 +123,9 @@
       "source_org": "IEEE Standards Association",
       "license_note": "IEEE standards are copyrighted; summaries are original text, full text requires purchase via IEEE Xplore.",
       "verify_interval_days": 365,
-      "corroborated_by": ["std-iec61724"]
+      "corroborated_by": [
+        "std-iec61724"
+      ]
     },
     {
       "source_id": "guide-grid-interconnection",
@@ -126,7 +143,10 @@
       "source_org": "National Renewable Energy Laboratory (NREL)",
       "license_note": "NREL publications are U.S. government-funded works; reuse with attribution per NREL copyright notice.",
       "verify_interval_days": 90,
-      "corroborated_by": ["std-ieee1547", "policy-us-itc"]
+      "corroborated_by": [
+        "std-ieee1547",
+        "policy-us-itc"
+      ]
     },
     {
       "source_id": "price-cn-module",
@@ -144,7 +164,9 @@
       "source_org": "中国光伏行业协会（CPIA）",
       "license_note": "协会公开发布行情信息，引用须注明来源；数据更新频繁，按周核验。",
       "verify_interval_days": 7,
-      "corroborated_by": ["price-us-eia"]
+      "corroborated_by": [
+        "price-us-eia"
+      ]
     },
     {
       "source_id": "price-us-eia",
@@ -162,7 +184,9 @@
       "source_org": "U.S. Energy Information Administration (EIA)",
       "license_note": "U.S. government work, public domain; cite EIA as the source when republishing.",
       "verify_interval_days": 7,
-      "corroborated_by": ["price-cn-module"]
+      "corroborated_by": [
+        "price-cn-module"
+      ]
     }
   ]
 }
