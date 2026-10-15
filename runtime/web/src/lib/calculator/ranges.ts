@@ -1,3 +1,5 @@
+import { solveIrr } from './project-finance';
+
 /**
  * 审计 3-2：对外数字统一用“区间 + 中值”，避免单点数字被理解为承诺。
  *
@@ -14,7 +16,7 @@ export const SOLAR_GENERATION_REL_UNCERTAINTY = Math.sqrt(
 export const SOLAR_RANGE_NOTE =
   `区间来自年际辐照波动（±${SOLAR_INTERANNUAL_VARIATION * 100}%）与损耗假设（±${SOLAR_LOSS_ASSUMPTION_VARIATION * 100}%）合成，约 ±${(SOLAR_GENERATION_REL_UNCERTAINTY * 100).toFixed(1)}%`;
 
-export interface ValueRange {
+export type ValueRange = {
   low: number;
   median: number;
   high: number;
@@ -59,4 +61,47 @@ export function uncertaintySection(items: { label: string; range: ValueRange; un
     items[0]?.range.note ?? SOLAR_RANGE_NOTE,
     '电价、政策与设备价格变化未计入上述区间；单点中值不构成收益承诺。',
   ];
+}
+
+// ---------------------------------------------------------------------------
+// 风电 / 储能的区间来源与 IRR、LCOE（LCOS）区间
+// ---------------------------------------------------------------------------
+
+/** 风电：卫星再分析月均风速仅适合初筛，发电量不确定度按 ±15%（与 wind.ts 结果说明一致） */
+export const WIND_GENERATION_REL_UNCERTAINTY = 0.15;
+export const WIND_RANGE_NOTE = '区间来自卫星再分析风速（NASA POWER 约 0.5° 网格月均值）与通用功率曲线的不确定性，按 ±15% 计；不能替代测风塔';
+
+/** 储能：年运行天数、实际充放电深度与电价执行偏差，年收益/放电量按 ±10% 计 */
+export const STORAGE_THROUGHPUT_REL_UNCERTAINTY = 0.10;
+export const STORAGE_RANGE_NOTE = '区间来自年运行天数、实际充放电深度与峰谷价差执行偏差，年收益与放电量按 ±10% 计';
+
+export type NullableRange = {
+  low: number | null;
+  median: number | null;
+  high: number | null;
+  relUncertainty: number;
+  note: string;
+}
+
+/**
+ * IRR 区间：收入按 (1 ± u) 缩放、成本不变，重算逐年现金流的唯一 IRR（%）；无唯一解的一端为 null。
+ * revenues / costs 为第 1..N 年，investment 为第 0 年初始投资（正数）。
+ */
+export function irrRange(investment: number, revenues: number[], costs: number[], median: number | null, u: number, note: string): NullableRange {
+  const at = (k: number) => {
+    const r = solveIrr([-investment, ...revenues.map((rev, i) => rev * k - (costs[i] ?? 0))]);
+    return r === null ? null : r * 100;
+  };
+  return { low: at(1 - u), median, high: at(1 + u), relUncertainty: u, note };
+}
+
+/** LCOE / LCOS 与发电（放电）量成反比：发电偏低时度电成本升高 */
+export function levelizedCostRange(median: number, u: number, note: string): ValueRange {
+  return inverseRange(median, u, note);
+}
+
+export function formatPercentRange(r: NullableRange): string {
+  if (r.median === null) return '无唯一解';
+  const f = (n: number | null) => (n === null ? '无解' : `${n.toFixed(1)}%`);
+  return `约 ${f(r.low)}–${f(r.high)}（中值 ${r.median.toFixed(1)}%）`;
 }

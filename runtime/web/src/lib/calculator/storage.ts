@@ -1,5 +1,6 @@
 import { StorageCalculationInput } from '@/types';
 import { solveIrr } from './project-finance';
+import { proportionalRange, irrRange, levelizedCostRange, STORAGE_THROUGHPUT_REL_UNCERTAINTY, STORAGE_RANGE_NOTE } from './ranges';
 
 export interface StorageFinancialResult {
     dailyRevenue: number;
@@ -72,6 +73,14 @@ export async function calculateStorage(input: StorageCalculationInput) {
             dailyCycles,
             operatingDays,
             estimatedLifeDays: input.technical.cycleLife / dailyCycles
+        },
+        ranges: {
+            annualRevenue: proportionalRange(dailyRevenue * operatingDays, STORAGE_THROUGHPUT_REL_UNCERTAINTY, STORAGE_RANGE_NOTE),
+            irr: irrRange(
+                totalInvestment, cashFlows.slice(1).map(c => c + annualOM), cashFlows.slice(1).map(() => annualOM),
+                irrFraction === null ? null : irrFraction * 100, STORAGE_THROUGHPUT_REL_UNCERTAINTY, STORAGE_RANGE_NOTE,
+            ),
+            lcos: levelizedCostRange(lcos, STORAGE_THROUGHPUT_REL_UNCERTAINTY, STORAGE_RANGE_NOTE),
         },
         assumptions: [
             `每日循环 ${dailyCycles} 次（${dailyCycles === 2 ? '已配置第二段充放电时段' : '未配置第二段充电时段'}）`,

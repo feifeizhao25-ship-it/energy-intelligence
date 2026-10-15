@@ -14,7 +14,7 @@ import { PolicyService } from '@/lib/services/policy-service';
 import { safeErrorMessage } from '@/lib/api/safe-error';
 import { DEFAULT_DISCOUNT_RATE, discountedLcoe, solveIrr } from './project-finance';
 import { resolveEmissionFactor } from '@/lib/standards/emission-factor';
-import { proportionalRange } from './ranges';
+import { proportionalRange, irrRange, levelizedCostRange, SOLAR_GENERATION_REL_UNCERTAINTY, SOLAR_RANGE_NOTE } from './ranges';
 
 // 光伏组件配置
 interface ModuleConfig {
@@ -258,6 +258,12 @@ export function simulateSolar(solarResource: SolarResource, params: SolarModelPa
     ranges: {
       year1Generation: proportionalRange(year1Generation),
       year1Co2: proportionalRange(environmental.co2Year1),
+      irr: irrRange(
+        financial.investment, financial.revenue,
+        financial.revenue.map((r, i) => r - financial.cashFlow[i]),
+        financial.irr, SOLAR_GENERATION_REL_UNCERTAINTY, SOLAR_RANGE_NOTE,
+      ),
+      lcoe: levelizedCostRange(financial.lcoe, SOLAR_GENERATION_REL_UNCERTAINTY, SOLAR_RANGE_NOTE),
     },
     assumptions: {
       ...FINANCE_ASSUMPTIONS,

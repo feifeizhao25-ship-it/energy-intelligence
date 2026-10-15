@@ -3,6 +3,7 @@ import { getWindResource } from '@/lib/api/nasa-power';
 import { WindCalculationInput } from '@/types';
 import { solveIrr, DEFAULT_DISCOUNT_RATE, discountedLcoe } from './project-finance';
 import { extrapolateWindSpeed } from './wind-shear';
+import { proportionalRange, irrRange, levelizedCostRange, WIND_GENERATION_REL_UNCERTAINTY, WIND_RANGE_NOTE } from './ranges';
 
 /** 标准空气密度（kg/m³，海平面 15℃） */
 export const STANDARD_AIR_DENSITY = 1.225;
@@ -168,6 +169,15 @@ export async function calculateWind(input: WindCalculationInput) {
       paybackYears: calculatePaybackPeriod(calcInvestment, cashFlows.slice(1)),
       lcoe,
       discountRate: DEFAULT_DISCOUNT_RATE
+    },
+    ranges: {
+      year1Generation: proportionalRange(year1Generation, WIND_GENERATION_REL_UNCERTAINTY, WIND_RANGE_NOTE),
+      irr: irrRange(
+        calcInvestment, annualRevenues,
+        annualRevenues.map((r, i) => r - cashFlows[i + 1]),
+        irrPercent(cashFlows), WIND_GENERATION_REL_UNCERTAINTY, WIND_RANGE_NOTE,
+      ),
+      lcoe: levelizedCostRange(lcoe, WIND_GENERATION_REL_UNCERTAINTY, WIND_RANGE_NOTE),
     },
     assumptions: [
       `风速分布：Weibull k=${input.turbine.weibullK ?? 2}（未提供实测时默认瑞利分布）`,

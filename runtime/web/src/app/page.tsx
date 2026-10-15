@@ -327,7 +327,7 @@ export default function HomePage() {
                                         <div className="bg-slate-50 rounded-xl p-4">
                                             <div className="flex items-center justify-between mb-2">
                                                 <span className="text-sm text-slate-600">内部收益率 (IRR)</span>
-                                                <span className="font-bold text-green-600">{result.irr}%</span>
+                                                <span className="font-bold text-green-600">{result.ranges?.irr?.text ?? `${result.irr}%`}</span>
                                             </div>
                                             <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
                                                 <div

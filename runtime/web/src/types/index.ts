@@ -87,6 +87,8 @@ export interface SolarCalculationOutput {
   ranges?: {
     year1Generation: import('@/lib/calculator/ranges').ValueRange;
     year1Co2: import('@/lib/calculator/ranges').ValueRange;
+    irr: import('@/lib/calculator/ranges').NullableRange;
+    lcoe: import('@/lib/calculator/ranges').ValueRange;
   };
   energy: {
     year1: number; // 首年发电量 (kWh)

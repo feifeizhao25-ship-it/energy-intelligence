@@ -6,7 +6,7 @@
 // 电价取省级电价表（工商业平均电价，标注来源状态与数据截至）；电价表没有的省份不给收益数字。
 import { NextRequest, NextResponse } from 'next/server';
 import { co2AvoidedKgForProvince, resolveEmissionFactor } from "@/lib/standards/emission-factor";
-import { proportionalRange, inverseRange, formatRange, SOLAR_RANGE_NOTE } from "@/lib/calculator/ranges";
+import { proportionalRange, inverseRange, formatRange, formatPercentRange, SOLAR_RANGE_NOTE } from "@/lib/calculator/ranges";
 import { loadSolarResource } from '@/lib/calculator/solar-resource';
 import { simulateSolar, defaultUnitCost } from '@/lib/calculator/solar';
 import { paybackPeriodOf } from '@/lib/calculator/project-finance';
@@ -112,6 +112,8 @@ export async function POST(req: NextRequest) {
                     annualRevenue: revRange && { ...revRange, text: formatRange(revRange, '元') },
                     co2Reduction: { ...co2Range, text: formatRange(co2Range, 'kg') },
                     paybackYears: paybackRange && { ...paybackRange, text: formatRange(paybackRange, '年', { decimals: 1 }) },
+                    irr: price === null || !model.ranges ? null : { ...model.ranges.irr, text: formatPercentRange(model.ranges.irr) },
+                    lcoe: model.ranges ? { ...model.ranges.lcoe, text: formatRange(model.ranges.lcoe, '元/度', { decimals: 3 }) } : null,
                 },
                 emissionFactor: { value: emissionFactor.value, scope: emissionFactor.scope, source: emissionFactor.source },
                 location: { address: location, city: matchedCity, province, lat, lng },
