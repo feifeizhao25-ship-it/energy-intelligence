@@ -26,7 +26,9 @@ export type ValueRange = {
 
 /** 与发电量同比例变化的量（发电量、收入、减碳）：median × (1 ± u) */
 export function proportionalRange(median: number, u = SOLAR_GENERATION_REL_UNCERTAINTY, note = SOLAR_RANGE_NOTE): ValueRange {
-  return { low: median * (1 - u), median, high: median * (1 + u), relUncertainty: u, note };
+  // 中值为负（如峰谷价差为负的储能年收益）时 median×(1−u) 反而更大：按大小排序，保证 low ≤ median ≤ high
+  const a = median * (1 - u), b = median * (1 + u);
+  return { low: Math.min(a, b), median, high: Math.max(a, b), relUncertainty: u, note };
 }
 
 /** 与发电量成反比的量（简单回收期）：发电量偏低时回收期变长 */

@@ -5,7 +5,7 @@ import { proportionalRange, irrRange, levelizedCostRange, STORAGE_THROUGHPUT_REL
 export interface StorageFinancialResult {
     dailyRevenue: number;
     annualRevenue: number;
-    paybackYears: number;
+    paybackYears: number | null; // 评估期内未回本时为 null（原来返回 10，界面显示“10 年”）
     irr: number | null; // 无唯一解时为 null
     npv: number;
     lcos: number; // Levelized Cost of Storage
@@ -107,7 +107,7 @@ export async function calculateStorage(input: StorageCalculationInput) {
     };
 }
 
-function calculatePaybackPeriod(initialInvestment: number, annualCashFlows: number[]): number {
+function calculatePaybackPeriod(initialInvestment: number, annualCashFlows: number[]): number | null {
     let remaining = initialInvestment;
     for (let year = 0; year < annualCashFlows.length; year++) {
         remaining -= annualCashFlows[year];
@@ -115,5 +115,5 @@ function calculatePaybackPeriod(initialInvestment: number, annualCashFlows: numb
             return year + 1 + remaining / annualCashFlows[year];
         }
     }
-    return 10;
+    return null;
 }

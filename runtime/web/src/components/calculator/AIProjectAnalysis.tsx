@@ -43,7 +43,7 @@ export default function AIProjectAnalysis({ type, data }: AIAnalysisProps) {
         <div className="mt-8 pt-6 border-t border-slate-800">
             <div className="flex items-center gap-2 mb-4">
                 <Sparkles className="w-4 h-4 text-blue-400" />
-                <h4 className="text-sm font-black text-white tracking-widest uppercase">AI 智能投资诊断</h4>
+                <h4 className="text-sm font-black text-white tracking-widest uppercase">AI 测算解读</h4>
             </div>
 
             <AnimatePresence mode="wait">

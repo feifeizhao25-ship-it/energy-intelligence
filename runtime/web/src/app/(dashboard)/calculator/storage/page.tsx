@@ -18,7 +18,7 @@ import type { PricingInfo } from '@/lib/pricing/tariff-defaults';
 interface StorageResult {
     technical: { usableEnergy: number; dailyCycles: number };
     financial: {
-        metrics: { dailyRevenue: number; annualRevenue: number; irr: number; lcos: number; paybackYears: number; npv: number };
+        metrics: { dailyRevenue: number; annualRevenue: number; irr: number | null; lcos: number; paybackYears: number | null; npv: number };
         investment: { total: number };
     };
     pricing?: PricingInfo;
@@ -147,8 +147,8 @@ export default function StorageCalculatorPage() {
                                 ['初始投资', `${fmt(result.financial.investment.total)} 元`],
                                 ['每日套利收益', `${fmt(result.financial.metrics.dailyRevenue)} 元`],
                                 ['年收益（按 330 天）', `${fmt(result.financial.metrics.annualRevenue)} 元`],
-                                ['内部收益率', `${fmt(result.financial.metrics.irr, 2)}%`],
-                                ['静态回收期', `${fmt(result.financial.metrics.paybackYears, 1)} 年`],
+                                ['内部收益率', result.financial.metrics.irr === null || !Number.isFinite(result.financial.metrics.irr) ? '无法确认唯一值' : `${fmt(result.financial.metrics.irr, 2)}%`],
+                                ['静态回收期', result.financial.metrics.paybackYears === null ? '评估期内未回本' : `${fmt(result.financial.metrics.paybackYears, 1)} 年`],
                                 ['平准化储能成本（LCOS）', `${fmt(result.financial.metrics.lcos, 3)} 元/度`],
                             ].map(([label, value]) => (
                                 <div key={label} className="rounded-xl bg-slate-800/60 p-4">

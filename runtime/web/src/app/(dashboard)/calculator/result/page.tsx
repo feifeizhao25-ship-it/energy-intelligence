@@ -173,8 +173,8 @@ function CalculatorResultPage() {
                                     </div>
                                     <div className="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 text-center">
                                         <div className="text-2xl mb-1">🌳</div>
-                                        <div className="text-emerald-500 font-bold text-lg">{Math.round(co2AvoidedTonnesForProvince(data.energy.lifetime || data.energy.year1 * 25, data.metadata?.province) / 0.022)}</div>
-                                        <div className="text-slate-500 text-[10px] uppercase font-bold">25年等效植树</div>
+                                        <div className="text-emerald-500 font-bold text-lg">{Math.round(co2AvoidedTonnesForProvince(data.energy.year1, data.metadata?.province) / 0.022).toLocaleString('zh-CN')} 棵</div>
+                                        <div className="text-slate-500 text-[10px] uppercase font-bold">等效植树（按每棵树每年吸收约 22 千克二氧化碳）</div>
                                     </div>
                                 </div>
                                 <p className="mt-4 text-[11px] text-slate-500">{emissionFactorNoteFor(data.metadata?.province)}</p>

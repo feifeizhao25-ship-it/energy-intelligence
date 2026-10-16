@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import { useStation } from '@/contexts/StationContext';
 import { useSession } from 'next-auth/react';
+import { PLAN_DETAILS } from '@/lib/membership/plans';
 
 interface NavItem {
     name: string;
@@ -232,7 +233,7 @@ export default function Sidebar() {
                             </div>
                             <div className="flex flex-col overflow-hidden">
                                 <p className="text-slate-900 dark:text-white text-xs font-bold truncate">{session?.user?.name || '用户'}</p>
-                                <p className="text-slate-500 dark:text-white/50 text-[10px] truncate">专业版会员</p>
+                                <p className="text-slate-500 dark:text-white/50 text-[10px] truncate">{PLAN_DETAILS[(session?.user?.plan as keyof typeof PLAN_DETAILS) || 'FREE']?.name ?? '免费版'}</p>
                             </div>
                         </div>
                     ) : (

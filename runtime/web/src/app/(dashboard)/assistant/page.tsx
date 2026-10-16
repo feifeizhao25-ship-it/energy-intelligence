@@ -34,7 +34,6 @@ const knowledgeCards = [
         title: 'LCOE',
         color: 'primary',
         desc: '平准化度电成本（LCOE）。是对项目生命周期内的总成本和总发电量进行折现后的比值。',
-        trend: '-5.2% YoY'
     },
     {
         title: '双面组件',
@@ -122,6 +121,7 @@ export default function AssistantPage() {
             const reader = response.body?.getReader();
             const decoder = new TextDecoder();
             let accumulatedContent = '';
+            let streamError: string | null = null;
 
             if (reader) {
                 while (true) {
@@ -152,7 +152,8 @@ export default function AssistantPage() {
                                             : m
                                     ));
                                 } else if (parsed.type === 'error') {
-                                    throw new Error(parsed.data.message);
+                                    // 服务端错误事件：记下来，读完流后统一报错（原来在内层 try 里抛出，被“忽略解析错误”吞掉，界面留下一个空白的 AI 气泡）
+                                    streamError = String(parsed.data?.message || 'AI 响应失败');
                                 }
                             } catch (e) {
                                 // 忽略解析错误
@@ -160,6 +161,11 @@ export default function AssistantPage() {
                         }
                     }
                 }
+            }
+
+            if (streamError && !accumulatedContent) {
+                // 不把内部配置名（如 *_API_KEY）展示给用户
+                throw new Error(/API_KEY|未配置/.test(streamError) ? 'AI 服务暂时不可用，请稍后再试' : streamError);
             }
 
             // 完成流式传输
@@ -425,14 +431,6 @@ export default function AssistantPage() {
                             <p className="text-xs text-text-secondary leading-relaxed mb-3">
                                 {card.desc}
                             </p>
-                            {card.trend && (
-                                <div className="bg-surface-dark rounded border border-border-dark p-2">
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-xs text-text-secondary">行业趋势</span>
-                                        <span className="text-xs text-green-400 font-mono">{card.trend}</span>
-                                    </div>
-                                </div>
-                            )}
                         </div>
                     ))}
                 </div>
