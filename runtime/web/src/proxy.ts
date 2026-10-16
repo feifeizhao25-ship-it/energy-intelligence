@@ -26,7 +26,7 @@ const intlMiddleware = createIntlMiddleware({
 
 // 仅旧版语言目录中的页面需要语言重写；根目录页面必须保持原路径。
 function domesticRoute(req: NextRequest) {
-  const localizedOnly = ['/education/pitfalls', '/calculator/compare'];
+  const localizedOnly = ['/education/pitfalls'];
   return localizedOnly.includes(req.nextUrl.pathname) ? intlMiddleware(req) : NextResponse.next();
 }
 
@@ -130,6 +130,11 @@ export default async function proxy(req: NextRequest) {
 
   if (path === '/en' || path.startsWith('/en/')) {
     return NextResponse.redirect(siteUrl(req, '/'));
+  }
+
+  // 旧版 /calculator/compare 使用写死、未核实的省份电价，且实际渲染为 404；统一跳到现行的区域对比页。
+  if (path === '/calculator/compare') {
+    return NextResponse.redirect(siteUrl(req, '/quick-calc/compare'));
   }
 
   // 排除 API, 静态文件
