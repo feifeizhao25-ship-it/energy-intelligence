@@ -17,9 +17,10 @@ export default function CheckoutClient({ planParam, billingParam }: { planParam?
   const plan: PurchasablePlan = requested && (purchasable as readonly Plan[]).includes(requested)
     ? requested as PurchasablePlan
     : Plan.PRO;
-  const billing = billingParam === 'yearly' ? 'yearly' : 'monthly';
+  // 年付为唯一在售计费周期 (entitlements sales_billing_period=yearly); 旧 billing=monthly 链接一律按年付结算, 不再产生月付订单
+  const billing = 'yearly' as const;
   const details = PLAN_DETAILS[plan];
-  const amount = billing === 'yearly' ? details.yearlyPrice : details.monthlyPrice;
+  const amount = details.yearlyPrice;
   const planName = details.name;
 
   async function startAlipay() {

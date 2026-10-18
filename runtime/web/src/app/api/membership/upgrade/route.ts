@@ -19,7 +19,8 @@ export async function POST(request: Request) {
         const body = await request.json() as { plan?: string; billingPeriod?: string };
         const plan = String(body.plan || '').toUpperCase() as Plan;
         const billingPeriod = body.billingPeriod as BillingPeriod;
-        if (!PAID_PLANS.has(plan) || !['monthly', 'yearly'].includes(billingPeriod)) {
+        // 年付为唯一在售周期: 月付订单一律拒绝 (与 entitlements.json sales_billing_period=yearly 一致), 不静默改价
+        if (!PAID_PLANS.has(plan) || billingPeriod !== 'yearly') {
             return NextResponse.json({ success: false, error: 'INVALID_PLAN', message: '会员方案或周期无效' }, { status: 400 });
         }
         // 有效期内只允许续费同一方案。原来到账时一律「把新方案的时长接在旧到期日之后，

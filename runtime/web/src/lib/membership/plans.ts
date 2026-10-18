@@ -27,7 +27,7 @@ export const PLAN_DETAILS = {
     PRO: {
         name: '专业版',
         price: 1980,
-        monthlyPrice: 198,
+        monthlyPrice: 0, // 年付唯一在售: 月付已停用(与 entitlements.json 一致)
         yearlyPrice: 1980,
         icon: '⭐',
         description: '资源查询+收益计算+文献检索',
@@ -39,7 +39,7 @@ export const PLAN_DETAILS = {
         name: '运维版（已停售）',
         legacy: true,
         price: 2980,
-        monthlyPrice: 298,
+        monthlyPrice: 0, // 已停售, 月付停用
         yearlyPrice: 2980,
         icon: '🔧',
         description: '专业运维诊断+检修管理',
@@ -48,7 +48,7 @@ export const PLAN_DETAILS = {
     FULL: {
         name: '专家版',
         price: 5800,
-        monthlyPrice: 580,
+        monthlyPrice: 0, // 年付唯一在售: 月付已停用
         yearlyPrice: 5800,
         icon: '💎',
         description: '专业版全部功能 + 运维诊断',

@@ -61,8 +61,9 @@ class AlipayService:
                 raise RuntimeError("生产环境支付宝回调地址必须使用 HTTPS")
 
     def price_for(self, plan: str, billing_period: str) -> Decimal:
-        if billing_period not in {"monthly", "yearly"}:
-            raise ValueError("billing_period must be monthly or yearly")
+        # 年付为唯一在售周期 (entitlements sales_billing_period=yearly); 月付直接拒绝, 不取价
+        if billing_period != "yearly":
+            raise ValueError("仅支持年付，月付已停用")
         registry = json.loads(_ENTITLEMENTS_PATH.read_text(encoding="utf-8"))
         tier = registry.get("tiers", {}).get(plan)
         if not tier or plan == "free" or tier.get("purchasable") is False:

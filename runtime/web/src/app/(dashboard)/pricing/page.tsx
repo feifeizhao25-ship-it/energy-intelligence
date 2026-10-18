@@ -36,7 +36,7 @@ function tierKey(plan: Plan): string {
 }
 
 function domesticPrice(tier: TierInfo) {
-  if (tier.price.monthly_cny > 0) return `¥${tier.price.monthly_cny}/月`;
+  // 唯一在售计费周期为年付 (entitlements.json sales_billing_period=yearly); 月付已停用, 不再展示
   if (tier.price.yearly_cny > 0) return `¥${tier.price.yearly_cny}/年`;
   return '¥0';
 }
@@ -76,14 +76,14 @@ export default function PricingPage() {
             ? '/login?callbackUrl=/dashboard'
             : plan === Plan.TEAM || plan === Plan.ENTERPRISE
               ? `/demo-request?market=${'cn'}&plan=${plan}`
-              : `/checkout?plan=${plan}&billing=monthly`;
+              : `/checkout?plan=${plan}&billing=yearly`;
           const features = tier.features_zh;
           return <article key={plan} className={`relative flex flex-col rounded-3xl border bg-white p-7 ${recommended ? 'border-emerald-500 shadow-xl shadow-emerald-100' : 'border-slate-200'}`}>
             {recommended && <span className="absolute -top-3 left-6 rounded-full bg-emerald-600 px-3 py-1 text-xs font-bold text-white">常用方案</span>}
             <h2 className="text-2xl font-black">{tier.name}</h2>
             <p className="mt-2 min-h-12 text-sm leading-6 text-slate-500">{tier.description}</p>
             <p className="mt-5 text-3xl font-black">{domesticPrice(tier)}</p>
-            {tier.price.yearly_cny > 0 && tier.price.monthly_cny > 0 && <p className="mt-1 text-sm text-slate-500">年付 ¥{tier.price.yearly_cny}</p>}
+            <p className="mt-1 text-sm text-slate-500">年付制（月付已停用）</p>
             <ul className="mt-6 flex-1 space-y-3">{features.map(feature => <li key={feature} className="flex gap-2 text-sm leading-6 text-slate-700"><Check className="mt-1 h-4 w-4 shrink-0 text-emerald-600" />{feature}</li>)}</ul>
             <Link href={href} className={`mt-7 rounded-xl px-4 py-3 text-center text-sm font-bold ${recommended ? 'bg-emerald-600 text-white hover:bg-emerald-500' : 'bg-slate-900 text-white hover:bg-slate-800'}`}>{plan === Plan.FREE ? ('免费开始') : (plan === Plan.TEAM || plan === Plan.ENTERPRISE ? ('联系销售') : '选择方案')}</Link>
           </article>;
