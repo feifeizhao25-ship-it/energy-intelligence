@@ -1,3 +1,9 @@
+> ⚠️ **LEGACY / 遗留树 — 非生产代码（2026-10-18 定稿）**
+> 本目录是旧版后端（含已作废的 free/pro/enterprise 三档配额与 Stripe 旧计费），
+> **不得部署、不得作为定价/配额来源**。现行生产后端是 `runtime/backend`，会员唯一定价/配额源是
+> `runtime/backend/data/entitlements.json`（五档年付，月付已废止，续费/降级/退款规则见 runtime 后端 billing）。
+> 本目录仅作历史参考与迁移对照保留，不物理删除；新功能一律写到 `runtime/` 下。
+
 # Energy Intelligence Platform — 后端 API
 
 新能源项目全栈平台后端，基于 FastAPI + PostgreSQL + Redis + Celery。

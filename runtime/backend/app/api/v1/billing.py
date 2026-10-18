@@ -18,9 +18,57 @@ from app.models.payment_order import PaymentOrder
 from app.services.alipay_service import alipay_service
 from app.services.stripe_service import stripe_service
 from app.core.subscription import PLAN_QUOTAS
+from app.services.billing_rules import renewal_quote, schedule_downgrade, refund_quote
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
+
 router = APIRouter(prefix="/billing")
+
+# ── 计费规则 (2026-10-18 定稿; 只测算/登记, 不接真实支付通道) ──────────────
+class DowngradeRequest(BaseModel):
+    plan: str
+
+class RefundQuoteRequest(BaseModel):
+    paid_amount_cny: str
+    period_start: datetime
+    period_end: datetime
+
+@router.get("/rules")
+async def get_billing_rules():
+    """公开计费规则: 年付唯一, 续费顺延, 降级下周期生效, 退款按未使用比例 (quote)。"""
+    return {"billing_period": "yearly", "renewal": "到期按年付续; 未到期从现到期日顺延1年, 已过期从付款日起算",
+            "downgrade": "下个周期生效, 周期内权益不变, 不退差价", "refund": "未使用天数按比例退 (向下取整到分), 本接口只出测算, 实际退款由财务人工执行"}
+
+@router.post("/renewal/quote")
+async def post_renewal_quote(user_id: str = Depends(get_current_user_id), db: AsyncSession = Depends(get_db)):
+    user = await db.get(User, user_id)
+    if not user: raise HTTPException(status_code=404, detail="用户不存在")
+    from app.services.alipay_service import alipay_service
+    try:
+        price = alipay_service.price_for(user.plan, "yearly")
+        return renewal_quote(current_plan=user.plan, current_expires_at=user.subscription_expires_at, now=datetime.now(timezone.utc), yearly_price_cny=price)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+@router.post("/downgrade")
+async def post_downgrade(payload: DowngradeRequest, user_id: str = Depends(get_current_user_id), db: AsyncSession = Depends(get_db)):
+    user = await db.get(User, user_id)
+    if not user: raise HTTPException(status_code=404, detail="用户不存在")
+    try:
+        scheduled = schedule_downgrade(current_plan=user.plan, target_plan=payload.plan.lower(), current_expires_at=user.subscription_expires_at, now=datetime.now(timezone.utc))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    usage = dict(user.usage_quota or {}); usage["scheduled_downgrade"] = scheduled; user.usage_quota = usage
+    await db.commit()
+    return scheduled
+
+@router.post("/refund/quote")
+async def post_refund_quote(payload: RefundQuoteRequest, user_id: str = Depends(get_current_user_id)):
+    try:
+        return refund_quote(paid_amount_cny=payload.paid_amount_cny, period_start=payload.period_start, period_end=payload.period_end, now=datetime.now(timezone.utc))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
 
 
 def subscription_period_end(start: datetime, period: str) -> datetime:
