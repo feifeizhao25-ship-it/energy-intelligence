@@ -13,6 +13,7 @@ from app.services.ai_service import ai_assistant
 from app.core.subscription import QuotaExceeded, assert_ai_quota, consume_ai_quota
 from app.services.evidence_envelope import envelope_from_rag
 from app.services.rag_service import RAGService
+from app.services.bottom_line import enforce_bottom_line
 from app.models.user import User
 import json
 
@@ -116,11 +117,14 @@ async def chat(
     async def stream():
         # 先下发本次回答所依据的来源，前端可按 [S1] 编号渲染引用
         yield f"data: {json.dumps({'sources': sources}, ensure_ascii=False)}\n\n"
-        produced = False
+        # 底线过滤必须在下发前完成: 流式分片可能把禁词切开, 故先缓冲整段再过滤下发
+        chunks = []
         async for chunk in ai_assistant.stream_openai(message, prompt, market=market):
-            produced = produced or bool(chunk)
-            yield f"data: {json.dumps({'content': chunk})}\n\n"
-        if produced:
+            if chunk:
+                chunks.append(chunk)
+        full = enforce_bottom_line("".join(chunks), market=market)
+        if full:
+            yield f"data: {json.dumps({'content': full}, ensure_ascii=False)}\n\n"
             await consume_ai_quota(user, db)
         yield "data: [DONE]\n\n"
 
@@ -151,7 +155,7 @@ async def chat_json(
         raise HTTPException(status_code=503, detail="AI 服务暂时不可用，请稍后重试") from error
     await consume_ai_quota(user, db)
     return {
-        "message": result["content"],
+        "message": enforce_bottom_line(result["content"], market=market),
         "ai_metadata": result["metadata"],
         "evidence": _evidence_for(result["content"], hits),
     }
@@ -178,7 +182,7 @@ async def analyze(
         raise HTTPException(status_code=503, detail="AI 服务暂时不可用，请稍后重试") from error
     await consume_ai_quota(user, db)
     return {
-        "analysis": result["content"],
+        "analysis": enforce_bottom_line(result["content"], market=market),
         "ai_metadata": result["metadata"],
         "evidence": _evidence_for(result["content"], hits),
     }
