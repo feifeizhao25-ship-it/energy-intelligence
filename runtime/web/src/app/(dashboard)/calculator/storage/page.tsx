@@ -16,10 +16,13 @@ import type { PricingInfo } from '@/lib/pricing/tariff-defaults';
  */
 
 interface StorageResult {
-    technical: { usableEnergy: number; dailyCycles: number };
+    technical: { usableEnergy: number; dailyCycles: number; operatingDays?: number; estimatedLifeDays?: number };
+    assumptions?: string[];
+    ranges?: Record<string, { low: number | null; median: number | null; high: number | null; relUncertainty: number; note: string }>;
     financial: {
         metrics: { dailyRevenue: number; annualRevenue: number; irr: number | null; lcos: number; paybackYears: number | null; npv: number };
-        investment: { total: number };
+        investment: { total: number; unitCost?: number };
+        cashFlows?: number[];
     };
     pricing?: PricingInfo;
 }
@@ -149,7 +152,8 @@ export default function StorageCalculatorPage() {
                                 ['年收益（按 330 天）', `${fmt(result.financial.metrics.annualRevenue)} 元`],
                                 ['内部收益率', result.financial.metrics.irr === null || !Number.isFinite(result.financial.metrics.irr) ? '无法确认唯一值' : `${fmt(result.financial.metrics.irr, 2)}%`],
                                 ['静态回收期', result.financial.metrics.paybackYears === null ? '评估期内未回本' : `${fmt(result.financial.metrics.paybackYears, 1)} 年`],
-                                ['平准化储能成本（LCOS）', `${fmt(result.financial.metrics.lcos, 3)} 元/度`],
+                                ['净现值（折现后的净收益）', `${fmt(result.financial.metrics.npv, 2)} 元`],
+                                ['平准化储能成本（每度电成本）', `${fmt(result.financial.metrics.lcos, 3)} 元/度`],
                             ].map(([label, value]) => (
                                 <div key={label} className="rounded-xl bg-slate-800/60 p-4">
                                     <div className="text-xs text-slate-400">{label}</div>
@@ -157,6 +161,34 @@ export default function StorageCalculatorPage() {
                                 </div>
                             ))}
                         </div>
+                        <section aria-label="技术参数与计算假设" className="space-y-3">
+                            <h3 className="font-bold text-white">这次结果怎么算出来</h3>
+                            <p className="text-sm leading-7 text-slate-300">可用电量 {fmt(result.technical.usableEnergy, 2)} 千瓦时；每日循环 {fmt(result.technical.dailyCycles, 2)} 次；每年运行 {fmt(result.technical.operatingDays ?? 330)} 天。</p>
+                            {result.technical.estimatedLifeDays !== undefined && <p className="text-sm text-slate-300">按循环次数估算的运行寿命：{fmt(result.technical.estimatedLifeDays)} 个运行日；这不是日历寿命或设备质保承诺。</p>}
+                            {result.financial.investment.unitCost !== undefined && <p className="text-sm text-slate-300">单位投资：{fmt(result.financial.investment.unitCost, 2)} 元／千瓦时。</p>}
+                            <ul className="list-disc pl-5 space-y-2 text-sm leading-7 text-slate-300">{result.assumptions?.map((item, index) => <li key={index}>{item}</li>)}</ul>
+                        </section>
+                        {result.ranges && <section aria-label="敏感性估算区间" className="space-y-3">
+                            <h3 className="font-bold text-white">条件变化时，结果可能怎样变化</h3>
+                            <p className="text-sm leading-7 text-slate-300">以下是模型假设变化的敏感性区间，不是保证收益或统计置信区间。</p>
+                            {Object.entries(result.ranges).map(([key, range]) => {
+                                const label = ({ annualRevenue: '年套利收益（元）', irr: '内部收益率（百分比）', lcos: '每度电储能成本（元／度）' } as Record<string, string>)[key] || '其他测算指标';
+                                const value = (number: number | null) => number === null ? '无法确认唯一值' : fmt(number, 3);
+                                return <div key={key} className="rounded-xl bg-slate-800/60 p-4 space-y-2 text-sm leading-7">
+                                    <h4 className="font-bold text-white">{label}</h4>
+                                    <p>低值 {value(range.low)}；基准 {value(range.median)}；高值 {value(range.high)}。</p>
+                                    <p>假设扰动比例：{fmt(range.relUncertainty * 100, 2)}%。{range.note}</p>
+                                </div>;
+                            })}
+                        </section>}
+                        {result.financial.cashFlows && <section aria-label="完整年度现金流" className="space-y-3">
+                            <h3 className="font-bold text-white">全部年度现金流</h3>
+                            <p className="text-sm leading-7 text-slate-300">第0年为初始投入，负数表示支出。后续金额已按本次模型扣除运维费用并计入衰减。展示全部年份，不省略中间年份。</p>
+                            <table className="w-full text-left text-sm" data-testid="storage-cashflows">
+                                <thead><tr><th className="py-3">年份</th><th className="py-3">净现金流（元）</th></tr></thead>
+                                <tbody>{result.financial.cashFlows.map((amount, year) => <tr key={year} className="border-t border-slate-700"><th scope="row" className="py-3 font-normal">第{year}年</th><td className="py-3 break-all">{fmt(amount, 2)}</td></tr>)}</tbody>
+                            </table>
+                        </section>}
                         <p className="text-xs leading-6 text-slate-400" data-testid="storage-pricing">{describePricing(result.pricing)}</p>
                         <p className="text-xs leading-6 text-slate-500">评估期 10 年，每年运行 330 天；未计税费、融资、容量补偿与辅助服务收益，不构成投资建议。</p>
                     </section>

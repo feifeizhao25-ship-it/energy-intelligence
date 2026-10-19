@@ -7,7 +7,7 @@ import { Plan, PLAN_DETAILS, USAGE_LIMITS } from '@/lib/membership/plans';
 
 type Payment = { id: string; amount: number; currency: string; description?: string | null; paidAt?: string | null; createdAt: string };
 type Member = {
-    id: string; name?: string | null; email: string; plan: Plan; planExpireAt?: string | null;
+    id: string; name?: string | null; email: string; plan: Plan; effectivePlan: Plan; nextResetAt: string; planExpireAt?: string | null;
     dailyAiCalls: number; dailyResourceQueries: number; dailyCalculations: number;
     dailyPaperSearches: number; dailyDiagnoses: number; projectCount: number;
     paperCount: number; stationCount: number; folderCount: number;
@@ -37,9 +37,9 @@ export default function MembershipCenterPage() {
 
     const details = PLAN_DETAILS[member.plan] || PLAN_DETAILS.FREE;
     const limits = USAGE_LIMITS[member.plan] || USAGE_LIMITS.FREE;
-    const expiry = member.planExpireAt || member.subscription?.endDate;
-    const active = member.plan === Plan.FREE || (!!expiry && new Date(expiry).getTime() > Date.now());
-    const effectivePlan = active ? member.plan : Plan.FREE;
+    const expiry = member.planExpireAt;
+    const effectivePlan = member.effectivePlan;
+    const active = member.plan === effectivePlan;
     const effectiveDetails = PLAN_DETAILS[effectivePlan];
     const effectiveLimits = USAGE_LIMITS[effectivePlan];
     const payments = member.subscription?.payments || [];
@@ -70,6 +70,7 @@ export default function MembershipCenterPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <section className="rounded-2xl bg-slate-900 border border-slate-800 p-6">
                         <h3 className="text-xl font-bold flex items-center gap-2"><TrendingUp className="text-blue-400" />今日使用情况</h3>
+                        <p className="text-sm text-slate-400 mt-2">按北京时间每日零点重置；下次重置：{new Date(member.nextResetAt).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false })}（北京时间）。</p>
                         <div className="mt-5 space-y-4">
                             <Usage label="AI 对话" value={member.dailyAiCalls} limit={effectiveLimits.ai_chat} />
                             <Usage label="资源查询" value={member.dailyResourceQueries} limit={effectiveLimits.resource_query} />

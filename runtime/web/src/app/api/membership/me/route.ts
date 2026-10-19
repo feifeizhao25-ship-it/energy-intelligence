@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/auth-options';
 import { prisma } from '@/lib/prisma';
+import { effectivePlan } from '@/lib/auth/token-refresh';
+import { startOfShanghaiDay, nextShanghaiMidnight } from '@/lib/membership/day';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,7 +18,7 @@ export async function GET() {
         select: {
             id: true, name: true, email: true, plan: true, planExpireAt: true,
             dailyAiCalls: true, dailyResourceQueries: true, dailyCalculations: true,
-            dailyPaperSearches: true, dailyDiagnoses: true, projectCount: true,
+            dailyPaperSearches: true, dailyDiagnoses: true, lastResetAt: true, projectCount: true,
             paperCount: true, stationCount: true, folderCount: true,
             subscription: {
                 select: {
@@ -33,5 +35,15 @@ export async function GET() {
     if (!user) {
         return NextResponse.json({ success: false, error: 'NOT_FOUND', message: '用户不存在' }, { status: 404 });
     }
-    return NextResponse.json({ success: true, data: user });
+    const now = new Date();
+    // Display the same Beijing-day usage as the atomic consumption service.
+    // Reading the page must not mutate counters or race with a calculation.
+    const newDay = user.lastResetAt < startOfShanghaiDay(now);
+    return NextResponse.json({ success: true, data: {
+        ...user,
+        effectivePlan: effectivePlan(user.plan, user.planExpireAt, now),
+        nextResetAt: nextShanghaiMidnight(now).toISOString(),
+        ...(newDay ? { dailyAiCalls: 0, dailyResourceQueries: 0, dailyCalculations: 0,
+            dailyPaperSearches: 0, dailyDiagnoses: 0 } : {}),
+    } });
 }

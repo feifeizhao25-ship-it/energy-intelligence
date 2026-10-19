@@ -1,0 +1,18 @@
+{
+  "base_commit": "8ca0195228a94b66ef96635d4b0f1dd5c5c14f3f",
+  "source_sha256": {
+    "runtime/web-int/src/app/assessment/page.tsx": "ce76ada4f678c2a915d2107f5b25e3010c94ab312201f2f5f56bf0dda4feb4cc",
+    "runtime/web/src/app/(dashboard)/calculator/storage/page.tsx": "f239ebe8e4d1446e3755347da0d6735013cd52026240430acb5a2ad7064b7ac3",
+    "runtime/web/src/app/(dashboard)/membership/page.tsx": "f2b979eb80362d5571b4862a3b47075923be1d33dd49f8aaea466be6488c1173",
+    "runtime/web/src/app/api/membership/me/route.ts": "07a80e2edcdf0e67807007f80cd0641028825a6b0d06f777ca53f437935efa18"
+  },
+  "environment": "local Next dev, system Chrome, isolated PostgreSQL; no provider payments; 2026-10-19",
+  "ui_records": 170,
+  "historical_records": 977,
+  "sqlite_test_database": "not used for this UI run",
+  "postgres_test_database": "energy_ui_evidence_20261019, dropped after capture",
+  "membership_regression": "14 passed",
+  "typecheck": "CN and Global passed",
+  "membership_boundary_before": "2 failures, 1 pass",
+  "membership_boundary_after": "3 passed"
+}
