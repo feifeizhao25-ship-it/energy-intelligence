@@ -47,10 +47,10 @@ def _sign_callback(private_key, params):
 
 
 def test_page_pay_uses_canonical_price_and_valid_rsa2_signature(alipay_keys):
-    amount = alipay_service.price_for("pro", "monthly")
-    assert str(amount) == "198.00"
+    amount = alipay_service.price_for("pro", "yearly")
+    assert str(amount) == "1980.00"
     url = alipay_service.create_page_pay_url(
-        order_no="ENE202609020001", plan="pro", billing_period="monthly", amount=amount
+        order_no="ENE202609020001", plan="pro", billing_period="yearly", amount=amount
     )
     params = {key: values[0] for key, values in parse_qs(urlparse(url).query).items()}
     signature = base64.b64decode(params.pop("sign"))
@@ -58,7 +58,7 @@ def test_page_pay_uses_canonical_price_and_valid_rsa2_signature(alipay_keys):
         signature, _canonical(params).encode(), padding.PKCS1v15(), hashes.SHA256()
     )
     assert params["method"] == "alipay.trade.page.pay"
-    assert '"total_amount":"198.00"' in params["biz_content"]
+    assert '"total_amount":"1980.00"' in params["biz_content"]
 
 
 def test_callback_signature_rejects_tampering(alipay_keys):
@@ -68,7 +68,7 @@ def test_callback_signature_rejects_tampering(alipay_keys):
         "out_trade_no": "ENE202609020002",
         "trade_no": "2026090222001",
         "trade_status": "TRADE_SUCCESS",
-        "total_amount": "580.00",
+        "total_amount": "5800.00",
         "sign_type": "RSA2",
     }
     params["sign"] = _sign_callback(alipay_keys, params)
@@ -81,21 +81,24 @@ def test_callback_signature_rejects_tampering(alipay_keys):
 async def test_verified_callback_activates_once(
     client, auth_headers, db_session, alipay_keys
 ):
+    user = (await db_session.execute(select(User))).scalar_one()
+    user.usage_quota = {"scheduled_downgrade": {"status": "scheduled"}, "used": 5}
+    await db_session.commit()
     created = await client.post(
         "/api/v1/billing/domestic/alipay/create",
-        json={"plan": "full", "billing_period": "monthly"},
+        json={"plan": "full", "billing_period": "yearly"},
         headers=auth_headers,
     )
     assert created.status_code == 200, created.text
     body = created.json()
-    assert body["amount_cny"] == "580.00"
+    assert body["amount_cny"] == "5800.00"
     params = {
         "app_id": settings.ALIPAY_APP_ID,
         "seller_id": settings.ALIPAY_SELLER_ID,
         "out_trade_no": body["order_no"],
         "trade_no": "20260902220000000001",
         "trade_status": "TRADE_SUCCESS",
-        "total_amount": "580.00",
+        "total_amount": "5800.00",
         "sign_type": "RSA2",
     }
     params["sign"] = _sign_callback(alipay_keys, params)
@@ -111,8 +114,11 @@ async def test_verified_callback_activates_once(
         )
     ).scalar_one()
     user = await db_session.get(User, order.user_id)
+    await db_session.refresh(user)
     assert order.status == "paid"
     assert user.subscription_plan == "full"
+    assert user.usage_quota["scheduled_downgrade"]["status"] == "cancelled"
+    assert user.usage_quota["used"] == 5
 
 
 @pytest.mark.asyncio
@@ -125,7 +131,7 @@ async def test_valid_signature_with_wrong_seller_is_rejected(
         "out_trade_no": "missing",
         "trade_no": "20260902220000000002",
         "trade_status": "TRADE_SUCCESS",
-        "total_amount": "198.00",
+        "total_amount": "1980.00",
         "sign_type": "RSA2",
     }
     params["sign"] = _sign_callback(alipay_keys, params)
@@ -137,13 +143,13 @@ async def test_valid_signature_with_wrong_seller_is_rejected(
 @pytest.mark.asyncio
 @pytest.mark.parametrize("status", ["closed", "refunded", "refund_pending"])
 async def test_callback_cannot_reactivate_nonpayable_order(client, auth_headers, db_session, alipay_keys, status):
-    created = await client.post("/api/v1/billing/domestic/alipay/create", json={"plan": "full", "billing_period": "monthly"}, headers=auth_headers)
+    created = await client.post("/api/v1/billing/domestic/alipay/create", json={"plan": "full", "billing_period": "yearly"}, headers=auth_headers)
     order = (await db_session.execute(select(PaymentOrder).where(PaymentOrder.order_no == created.json()["order_no"]))).scalar_one()
     order.status = status
     await db_session.commit()
     params = {"app_id": settings.ALIPAY_APP_ID, "seller_id": settings.ALIPAY_SELLER_ID,
               "out_trade_no": order.order_no, "trade_no": "guarded-transaction", "trade_status": "TRADE_SUCCESS",
-              "total_amount": "580.00", "sign_type": "RSA2"}
+              "total_amount": "5800.00", "sign_type": "RSA2"}
     params["sign"] = _sign_callback(alipay_keys, params)
     response = await client.post("/api/v1/billing/domestic/alipay/notify", data=params)
     assert response.status_code == 409
@@ -152,16 +158,16 @@ async def test_callback_cannot_reactivate_nonpayable_order(client, auth_headers,
 
 
 @pytest.mark.asyncio
-async def test_paid_monthly_renewals_accumulate_and_duplicate_receipt_does_not(client, auth_headers, db_session, alipay_keys):
+async def test_paid_yearly_renewals_accumulate_and_duplicate_receipt_does_not(client, auth_headers, db_session, alipay_keys):
     from datetime import datetime, timezone
     from app.api.v1.billing import subscription_period_end
     ends = []
     for index in range(2):
-        created = await client.post("/api/v1/billing/domestic/alipay/create", json={"plan": "full", "billing_period": "monthly"}, headers=auth_headers)
+        created = await client.post("/api/v1/billing/domestic/alipay/create", json={"plan": "full", "billing_period": "yearly"}, headers=auth_headers)
         order_no = created.json()["order_no"]
         params = {"app_id": settings.ALIPAY_APP_ID, "seller_id": settings.ALIPAY_SELLER_ID,
                   "out_trade_no": order_no, "trade_no": f"renewal-{index}", "trade_status": "TRADE_SUCCESS",
-                  "total_amount": "580.00", "sign_type": "RSA2"}
+                  "total_amount": "5800.00", "sign_type": "RSA2"}
         params["sign"] = _sign_callback(alipay_keys, params)
         assert (await client.post("/api/v1/billing/domestic/alipay/notify", data=params)).status_code == 200
         await db_session.rollback()
@@ -173,7 +179,7 @@ async def test_paid_monthly_renewals_accumulate_and_duplicate_receipt_does_not(c
         assert (await client.post("/api/v1/billing/domestic/alipay/notify", data=params)).status_code == 200
         await db_session.refresh(user)
         assert user.subscription_expires_at == ends[-1]
-    assert ends[1] == subscription_period_end(ends[0], "monthly")
+    assert ends[1] == subscription_period_end(ends[0], "yearly")
 
 
 @pytest.mark.asyncio
@@ -185,12 +191,12 @@ async def test_postgres_concurrent_renewals_preserve_both_periods(client, auth_h
     requests = []
     user = None
     for index in range(2):
-        created = await client.post("/api/v1/billing/domestic/alipay/create", json={"plan": "full", "billing_period": "monthly"}, headers=auth_headers)
+        created = await client.post("/api/v1/billing/domestic/alipay/create", json={"plan": "full", "billing_period": "yearly"}, headers=auth_headers)
         order = (await db_session.execute(select(PaymentOrder).where(PaymentOrder.order_no == created.json()["order_no"]))).scalar_one()
         user = await db_session.get(User, order.user_id)
         params = {"app_id": settings.ALIPAY_APP_ID, "seller_id": settings.ALIPAY_SELLER_ID,
                   "out_trade_no": order.order_no, "trade_no": f"concurrent-renewal-{index}", "trade_status": "TRADE_SUCCESS",
-                  "total_amount": "580.00", "sign_type": "RSA2"}
+                  "total_amount": "5800.00", "sign_type": "RSA2"}
         params["sign"] = _sign_callback(alipay_keys, params)
         requests.append(params)
     user.subscription_plan = "full"
@@ -199,4 +205,28 @@ async def test_postgres_concurrent_renewals_preserve_both_periods(client, auth_h
     responses = await asyncio.gather(*(client.post("/api/v1/billing/domestic/alipay/notify", data=params) for params in requests))
     assert [response.status_code for response in responses] == [200, 200]
     await db_session.refresh(user)
-    assert user.subscription_expires_at == datetime(2030, 3, 15, tzinfo=timezone.utc)
+    assert user.subscription_expires_at == datetime(2032, 1, 15, tzinfo=timezone.utc)
+
+
+@pytest.mark.asyncio
+async def test_monthly_sale_rejected_but_historical_receipt_supported(client, auth_headers, db_session, alipay_keys):
+    from uuid import uuid4
+    from datetime import datetime, timezone
+    response = await client.post('/api/v1/billing/domestic/alipay/create',
+        json={'plan': 'full', 'billing_period': 'monthly'}, headers=auth_headers)
+    assert response.status_code == 400
+    assert (await db_session.execute(select(PaymentOrder))).scalars().all() == []
+    user = (await db_session.execute(select(User))).scalar_one()
+    user.subscription_plan = 'full'
+    user.subscription_expires_at = datetime(2030, 1, 15, tzinfo=timezone.utc)
+    order = PaymentOrder(id=str(uuid4()), order_no='historical-monthly', user_id=user.id,
+        plan='full', billing_period='monthly', amount_cny=580, status='pending', provider='alipay')
+    db_session.add(order)
+    await db_session.commit()
+    params = {'app_id': settings.ALIPAY_APP_ID, 'seller_id': settings.ALIPAY_SELLER_ID,
+        'out_trade_no': order.order_no, 'trade_no': 'historical-receipt', 'trade_status': 'TRADE_SUCCESS',
+        'total_amount': '580.00', 'sign_type': 'RSA2'}
+    params['sign'] = _sign_callback(alipay_keys, params)
+    assert (await client.post('/api/v1/billing/domestic/alipay/notify', data=params)).status_code == 200
+    await db_session.refresh(user)
+    assert user.subscription_expires_at.replace(tzinfo=timezone.utc) == datetime(2030, 2, 15, tzinfo=timezone.utc)

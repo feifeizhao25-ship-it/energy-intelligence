@@ -8,10 +8,13 @@ celery_app = Celery(
     "energy",
     broker=settings.REDIS_URL.replace("redis://", "redis://"),
     backend=settings.REDIS_URL,
-    include=["app.tasks.gdpr"],
+    include=["app.tasks.gdpr", "app.tasks.subscriptions"],
 )
 
 celery_app.conf.update(
+    beat_schedule={"subscription-downgrades": {
+        "task": "energy.subscriptions.apply_due_downgrades", "schedule": 60.0,
+    }},
     task_serializer="json",
     accept_content=["json"],
     result_serializer="json",

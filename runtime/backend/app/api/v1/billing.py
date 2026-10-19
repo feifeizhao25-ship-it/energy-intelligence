@@ -37,7 +37,7 @@ class RefundQuoteRequest(BaseModel):
 async def get_billing_rules():
     """公开计费规则: 年付唯一, 续费顺延, 降级下周期生效, 退款按未使用比例 (quote)。"""
     return {"billing_period": "yearly", "renewal": "到期按年付续; 未到期从现到期日顺延1年, 已过期从付款日起算",
-            "downgrade": "下个周期生效, 周期内权益不变, 不退差价", "refund": "未使用天数按比例退 (向下取整到分), 本接口只出测算, 实际退款由财务人工执行"}
+            "downgrade": "到期切换续费档位，周期内权益不变、不退差价；付费档位须续费后开通", "refund": "未使用天数按比例退 (向下取整到分), 本接口只出测算, 实际退款由财务人工执行"}
 
 @router.post("/renewal/quote")
 async def post_renewal_quote(user_id: str = Depends(get_current_user_id), db: AsyncSession = Depends(get_db)):
@@ -54,7 +54,8 @@ async def post_renewal_quote(user_id: str = Depends(get_current_user_id), db: As
 
 @router.post("/downgrade")
 async def post_downgrade(payload: DowngradeRequest, user_id: str = Depends(get_current_user_id), db: AsyncSession = Depends(get_db)):
-    user = await db.get(User, user_id)
+    user = (await db.execute(select(User).where(User.id == user_id)
+        .with_for_update().execution_options(populate_existing=True))).scalar_one_or_none()
     if not user: raise HTTPException(status_code=404, detail="用户不存在")
     try:
         scheduled = schedule_downgrade(current_plan=user.plan, target_plan=payload.plan.lower(), current_expires_at=user.subscription_expires_at, now=datetime.now(timezone.utc))
@@ -234,6 +235,12 @@ async def alipay_notify(request: Request, db: AsyncSession = Depends(get_db)):
     start = previous_end if user.subscription_plan == order.plan and previous_end and previous_end > now else now
     user.subscription_expires_at = subscription_period_end(start, order.billing_period)
     user.subscription_plan = order.plan
+    usage = dict(user.usage_quota or {})
+    intent = usage.get("scheduled_downgrade")
+    if isinstance(intent, dict) and intent.get("status") == "scheduled":
+        usage["scheduled_downgrade"] = {**intent, "status": "cancelled",
+            "reason": "新的付款已更新订阅", "processed_at": now.isoformat()}
+        user.usage_quota = usage
     await db.commit()
     return "success"
 
