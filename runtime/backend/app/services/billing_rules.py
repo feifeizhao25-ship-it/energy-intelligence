@@ -9,9 +9,27 @@
 """
 from __future__ import annotations
 from datetime import datetime, timezone
-from decimal import Decimal, ROUND_FLOOR
+from decimal import Decimal, ROUND_FLOOR, InvalidOperation
 
 TIER_ORDER = ["free", "pro", "full", "team", "enterprise"]
+
+def _utc(value: datetime) -> datetime:
+    # Database timestamps without an offset use the application's UTC convention.
+    return value.replace(tzinfo=timezone.utc) if value.tzinfo is None else value.astimezone(timezone.utc)
+
+
+def _money(value) -> Decimal:
+    try:
+        amount = Decimal(str(value))
+        if not amount.is_finite() or amount <= 0:
+            raise ValueError("金额须为大于0、最多两位小数的有限数值")
+        cents = amount.quantize(Decimal("0.01"))
+        if cents != amount:
+            raise ValueError("金额须为大于0、最多两位小数的有限数值")
+        return cents
+    except (InvalidOperation, TypeError):
+        raise ValueError("金额须为大于0、最多两位小数的有限数值") from None
+
 
 def _add_year(start: datetime) -> datetime:
     from calendar import monthrange
@@ -24,8 +42,10 @@ def renewal_quote(*, current_plan: str, current_expires_at, now: datetime, yearl
     """续费测算: 返回应付年付价与新到期日 (不扣款)。"""
     if current_plan not in TIER_ORDER or current_plan == "free":
         raise ValueError("免费版无需续费")
+    now = _utc(now)
+    current_expires_at = _utc(current_expires_at) if current_expires_at else None
     base = current_expires_at if (current_expires_at and current_expires_at > now) else now
-    return {"plan": current_plan, "billing_period": "yearly", "amount_cny": str(Decimal(str(yearly_price_cny)).quantize(Decimal("0.01"))),
+    return {"plan": current_plan, "billing_period": "yearly", "amount_cny": str(_money(yearly_price_cny)),
             "new_expires_at": _add_year(base).isoformat(), "rule": "未到期从现到期日顺延1年, 已过期从付款日起算1年"}
 
 def schedule_downgrade(*, current_plan: str, target_plan: str, current_expires_at, now: datetime) -> dict:
@@ -34,6 +54,8 @@ def schedule_downgrade(*, current_plan: str, target_plan: str, current_expires_a
         raise ValueError("档位无效")
     if TIER_ORDER.index(target_plan) >= TIER_ORDER.index(current_plan):
         raise ValueError("降级目标必须低于当前档位 (升级请走购买/续费)")
+    now = _utc(now)
+    current_expires_at = _utc(current_expires_at) if current_expires_at else None
     effective = current_expires_at if (current_expires_at and current_expires_at > now) else now
     return {"from_plan": current_plan, "to_plan": target_plan, "effective_at": effective.isoformat(),
             "status": "scheduled", "rule": "下个周期生效, 当前周期权益不变, 不退差价"}
@@ -44,12 +66,12 @@ def apply_scheduled_downgrade(scheduled: dict, *, now: datetime):
         return None
     effective = datetime.fromisoformat(scheduled["effective_at"])
     if effective.tzinfo is None: effective = effective.replace(tzinfo=timezone.utc)
-    return scheduled["to_plan"] if now >= effective else None
+    return scheduled["to_plan"] if _utc(now) >= _utc(effective) else None
 
 def refund_quote(*, paid_amount_cny, period_start: datetime, period_end: datetime, now: datetime) -> dict:
     """退款测算: 未使用按比例退, 只出测算不出款。"""
-    paid = Decimal(str(paid_amount_cny))
-    if paid <= 0: raise ValueError("实付金额须大于 0")
+    paid = _money(paid_amount_cny)
+    period_start, period_end, now = _utc(period_start), _utc(period_end), _utc(now)
     total_days = (period_end - period_start).days
     if total_days <= 0: raise ValueError("周期无效")
     if now <= period_start:
