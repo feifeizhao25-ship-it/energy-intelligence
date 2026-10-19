@@ -45,8 +45,10 @@ async def post_renewal_quote(user_id: str = Depends(get_current_user_id), db: As
     if not user: raise HTTPException(status_code=404, detail="用户不存在")
     from app.services.alipay_service import alipay_service
     try:
-        price = alipay_service.price_for(user.plan, "yearly")
-        return renewal_quote(current_plan=user.plan, current_expires_at=user.subscription_expires_at, now=datetime.now(timezone.utc), yearly_price_cny=price)
+        # Effective entitlement becomes free after expiry; renewal uses the purchased tier.
+        purchased_plan = user.subscription_plan or "free"
+        price = alipay_service.price_for(purchased_plan, "yearly")
+        return renewal_quote(current_plan=purchased_plan, current_expires_at=user.subscription_expires_at, now=datetime.now(timezone.utc), yearly_price_cny=price)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
