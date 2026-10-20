@@ -120,12 +120,14 @@ jobs:
       - uses: actions/checkout@v4
       - name: Summarize Results
         run: |
-          echo "## 新能源智库测试报告 $(date)" > test-report.md
-          echo "| 模块 | 状态 |" >> test-report.md
-          echo "|------|------|" >> test-report.md
-          echo "| Backend | ${{ needs.backend-tests.result == 'success' && '✅' || '❌' }} |" >> test-report.md
-          echo "| E2E | ${{ needs.e2e-tests.result == 'success' && '✅' || '❌' }} |" >> test-report.md
-          echo "| Contract | ${{ needs.contract-tests.result == 'success' && '✅' || '❌' }} |" >> test-report.md
+          {
+            echo "## 新能源智库测试报告 $(date)"
+            echo "| 模块 | 状态 |"
+            echo "|------|------|"
+            echo "| Backend | ${{ needs.backend-tests.result == 'success' && '✅' || '❌' }} |"
+            echo "| E2E | ${{ needs.e2e-tests.result == 'success' && '✅' || '❌' }} |"
+            echo "| Contract | ${{ needs.contract-tests.result == 'success' && '✅' || '❌' }} |"
+          } > test-report.md
       - uses: actions/upload-artifact@v4
         with:
           name: test-report

@@ -65,7 +65,7 @@ jobs:
         run: |
           # 检查函数复杂度
           find apps/api/src -name "*.ts" -not -path "*/node_modules/*" -not -path "*/__tests__/*" | \
-          while read file; do
+          while IFS= read -r file; do
             complexity=$(npx ts-complexity "$file" 2>/dev/null | jq '.average.complexity' || echo "0")
             if (( $(echo "$complexity > 10" | bc -l) )); then
               echo "⚠️ High complexity in $file: $complexity"
