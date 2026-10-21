@@ -7,12 +7,18 @@ import { startOfShanghaiDay, nextShanghaiMidnight } from '@/lib/membership/day';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request?: Request) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
         return NextResponse.json({ success: false, error: 'UNAUTHORIZED', message: '请先登录' }, { status: 401 });
     }
 
+    const rawPage = request ? new URL(request.url).searchParams.get('paymentPage') ?? '1' : '1';
+    if (!/^[1-9]\d*$/.test(rawPage) || Number(rawPage) > 1000000) {
+        return NextResponse.json({ success: false, message: '付款记录页码无效' }, { status: 400 });
+    }
+    const page = Number(rawPage);
+    const pageSize = 20;
     const user = await prisma.user.findUnique({
         where: { id: session.user.id },
         select: {
@@ -24,7 +30,8 @@ export async function GET() {
                 select: {
                     status: true, endDate: true, autoRenew: true,
                     payments: {
-                        where: { status: 'completed' }, orderBy: { createdAt: 'desc' }, take: 20,
+                        where: { status: 'completed' }, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+                        skip: (page - 1) * pageSize, take: pageSize + 1,
                         select: { id: true, amount: true, currency: true, paymentMethod: true, description: true, paidAt: true, createdAt: true },
                     },
                 },
@@ -41,6 +48,9 @@ export async function GET() {
     const newDay = user.lastResetAt < startOfShanghaiDay(now);
     return NextResponse.json({ success: true, data: {
         ...user,
+        subscription: user.subscription ? { ...user.subscription,
+            payments: user.subscription.payments.slice(0, pageSize) } : null,
+        paymentPagination: { page, nextPage: (user.subscription?.payments.length ?? 0) > pageSize ? page + 1 : null },
         effectivePlan: effectivePlan(user.plan, user.planExpireAt, now),
         nextResetAt: nextShanghaiMidnight(now).toISOString(),
         ...(newDay ? { dailyAiCalls: 0, dailyResourceQueries: 0, dailyCalculations: 0,

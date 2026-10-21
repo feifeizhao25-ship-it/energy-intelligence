@@ -11,12 +11,35 @@ type Member = {
     dailyAiCalls: number; dailyResourceQueries: number; dailyCalculations: number;
     dailyPaperSearches: number; dailyDiagnoses: number; projectCount: number;
     paperCount: number; stationCount: number; folderCount: number;
+    paymentPagination?: { page: number; nextPage: number | null };
     subscription?: { status: string; endDate: string; autoRenew: boolean; payments: Payment[] } | null;
 };
 
 export default function MembershipCenterPage() {
     const [member, setMember] = useState<Member | null>(null);
     const [error, setError] = useState('');
+    const [paymentsLoading, setPaymentsLoading] = useState(false);
+    const [paymentsError, setPaymentsError] = useState('');
+
+    async function loadMorePayments() {
+        const nextPage = member?.paymentPagination?.nextPage;
+        if (!nextPage || paymentsLoading) return;
+        setPaymentsLoading(true); setPaymentsError('');
+        try {
+            const response = await fetch(`/api/membership/me?paymentPage=${nextPage}`, { cache: 'no-store' });
+            const body = await response.json();
+            if (!response.ok || body.success !== true) throw new Error(body.message || '付款记录加载失败');
+            if (body.data.id !== member?.id) throw new Error('账户已变化，请刷新页面');
+            setMember(current => current?.subscription ? { ...current,
+                paymentPagination: body.data.paymentPagination,
+                subscription: { ...current.subscription, payments: [...new Map(
+                    [...current.subscription.payments, ...(body.data.subscription?.payments || [])]
+                        .map((payment: Payment) => [payment.id, payment])).values()] }
+            } : current);
+        } catch (reason) {
+            setPaymentsError(reason instanceof Error ? reason.message : '付款记录加载失败，请重试');
+        } finally { setPaymentsLoading(false); }
+    }
 
     useEffect(() => {
         const controller = new AbortController();
@@ -104,9 +127,11 @@ export default function MembershipCenterPage() {
                     <h3 className="text-xl font-bold">付款记录</h3>
                     {payments.length === 0 ? <p className="mt-4 text-slate-400">暂无已完成的付款记录。</p> : (
                         <div className="mt-4 divide-y divide-slate-800">
-                            {payments.map(payment => <div key={payment.id} className="py-4 flex justify-between gap-4"><div><p>{payment.description || '会员订阅'}</p><p className="text-sm text-slate-400">{new Date(payment.paidAt || payment.createdAt).toLocaleDateString('zh-CN')}</p></div><strong>{payment.currency === 'CNY' ? '¥' : `${payment.currency} `}{payment.amount.toLocaleString('zh-CN')}</strong></div>)}
+                            {payments.map(payment => <div key={payment.id} className="py-4 flex justify-between gap-4"><div><p>{payment.description || '会员订阅'}</p><p className="text-sm text-slate-400">{new Date(payment.paidAt || payment.createdAt).toLocaleDateString('zh-CN')}</p></div><strong>{payment.currency === 'CNY' ? '¥' : `${payment.currency} `}{payment.amount.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong></div>)}
                         </div>
                     )}
+                    {paymentsError && <p role="alert" className="mt-4 text-red-300">{paymentsError}</p>}
+                    {member.paymentPagination?.nextPage && <button type="button" onClick={loadMorePayments} disabled={paymentsLoading} className="mt-4 rounded-lg border border-slate-600 px-4 py-2 disabled:opacity-50">{paymentsLoading ? '正在加载付款记录…' : '加载更多付款记录'}</button>}
                 </section>
             </div>
         </main>
