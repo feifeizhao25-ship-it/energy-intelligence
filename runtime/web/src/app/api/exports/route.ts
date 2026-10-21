@@ -125,7 +125,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({
                 success: false,
                 error: quota.usage.exceeded ? 'EXPORT_QUOTA_EXCEEDED' : 'EXPORT_QUOTA_UNAVAILABLE',
-                message: quota.usage.exceeded ? '今日导出额度已用尽，请升级套餐或明日再试' : '导出额度暂时无法核验，请稍后重试',
+                message: quota.usage.exceeded ? '本月导出额度已用尽，请查看套餐或下月再试' : '导出额度暂时无法核验，请稍后重试',
                 usage: quota.usage,
             }, { status: quota.usage.exceeded ? 429 : 503 });
         }

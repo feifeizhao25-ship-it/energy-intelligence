@@ -2,6 +2,10 @@
 // 护城河：AI调用、诊断次数、导出次数的配额管理
 
 import { prisma } from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
+import { effectivePlan } from '@/lib/auth/token-refresh';
+import { startOfShanghaiDay, nextShanghaiMidnight } from '@/lib/membership/day';
+import registry from '@/lib/entitlements/entitlements.json';
 
 /**
  * 配额类型
@@ -22,12 +26,12 @@ export type QuotaType =
 /**
  * 套餐类型
  */
-export type PlanType = 'FREE' | 'PRO' | 'ENTERPRISE';
+export type PlanType = 'FREE' | 'PRO' | 'MAINTENANCE' | 'FULL' | 'TEAM' | 'ENTERPRISE';
 
 /**
  * 配额限制配置
  */
-export const QUOTA_LIMITS: Record<PlanType, Record<QuotaType, number>> = {
+const LEGACY_LIMITS: Record<string, Record<QuotaType, number>> = {
     FREE: {
         AI_CALLS: 20,           // 每天20次
         CALCULATIONS: 5,         // 每天5次
@@ -66,6 +70,11 @@ export const QUOTA_LIMITS: Record<PlanType, Record<QuotaType, number>> = {
     },
 };
 
+// Export entitlement comes from the same registry as pricing, including legacy maintenance.
+export const QUOTA_LIMITS = Object.fromEntries(Object.entries(registry.tiers).map(([name, tier]) => [
+    name.toUpperCase(), { ...(LEGACY_LIMITS[name.toUpperCase()] ?? LEGACY_LIMITS.PRO), EXPORTS: tier.quotas.report_exports_per_month }
+])) as Record<PlanType, Record<QuotaType, number>>;
+
 /**
  * 配额重置周期
  */
@@ -73,7 +82,7 @@ export const QUOTA_RESET_PERIOD: Record<QuotaType, 'DAILY' | 'MONTHLY' | 'TOTAL'
     AI_CALLS: 'DAILY',
     CALCULATIONS: 'DAILY',
     DIAGNOSES: 'DAILY',
-    EXPORTS: 'DAILY',
+    EXPORTS: 'MONTHLY',
     PAPER_SEARCHES: 'DAILY',
     PAPER_SUMMARIES: 'DAILY',
     STATION_RECORDS: 'TOTAL',
@@ -93,202 +102,73 @@ export interface QuotaUsage {
     percentage: number;
     resetsAt?: string;
     exceeded: boolean;
+    available?: boolean;
 }
 
-/**
- * 获取用户套餐
- */
-export async function getUserPlan(userId: string): Promise<PlanType> {
-    try {
-        const user = await prisma.user.findUnique({
-            where: { id: userId },
-            select: { plan: true },
-        });
-        return (user?.plan as PlanType) || 'FREE';
-    } catch {
-        return 'FREE';
-    }
+type Db = Prisma.TransactionClient;
+function validate(quotaType: QuotaType, amount = 1) {
+    if (!Object.prototype.hasOwnProperty.call(QUOTA_RESET_PERIOD, quotaType) || !Number.isSafeInteger(amount) || amount <= 0 || amount > 2147483647) throw new Error('额度请求参数无效');
 }
-
-/**
- * 获取配额使用情况
- */
-export async function getQuotaUsage(
-    userId: string,
-    quotaType: QuotaType
-): Promise<QuotaUsage> {
-    const plan = await getUserPlan(userId);
-    const limit = QUOTA_LIMITS[plan][quotaType];
+export function quotaPeriod(quotaType: QuotaType, now = new Date()) {
     const period = QUOTA_RESET_PERIOD[quotaType];
-
-    // 无限配额
-    if (limit === -1) {
-        return {
-            type: quotaType,
-            used: 0,
-            limit: -1,
-            remaining: -1,
-            percentage: 0,
-            exceeded: false,
-        };
+    if (period === 'DAILY') return { start: startOfShanghaiDay(now), end: nextShanghaiMidnight(now) };
+    if (period === 'MONTHLY') {
+        const shifted = new Date(now.getTime() + 8 * 3600000);
+        const year = shifted.getUTCFullYear(), month = shifted.getUTCMonth();
+        return { start: new Date(Date.UTC(year, month, 1) - 8 * 3600000), end: new Date(Date.UTC(year, month + 1, 1) - 8 * 3600000) };
     }
-
-    // 获取使用量
-    let used = 0;
+    return { start: new Date(0), end: undefined };
+}
+async function userPlan(db: Db, userId: string, now: Date): Promise<PlanType> {
+    const user = await db.user.findUnique({where:{id:userId},select:{plan:true,planExpireAt:true,deletedAt:true}});
+    if (!user || user.deletedAt) throw new Error('账户不可用');
+    const plan = effectivePlan(user.plan,user.planExpireAt,now) as PlanType;
+    if (!Object.prototype.hasOwnProperty.call(QUOTA_LIMITS,plan)) throw new Error('会员档位无效');
+    return plan;
+}
+export async function getUserPlan(userId: string): Promise<PlanType> { return userPlan(prisma,userId,new Date()); }
+function usageResult(type: QuotaType, used: number, limit: number, end?: Date): QuotaUsage {
+    return {type,used,limit,remaining:limit === -1 ? -1 : Math.max(0,limit-used),percentage:limit === -1 ? 0 : limit === 0 ? 100 : Math.min(100,Math.round(used/limit*100)),resetsAt:end?.toISOString(),exceeded:limit !== -1 && used >= limit};
+}
+async function readUsage(db: Db, userId: string, type: QuotaType, now: Date) {
+    const plan = await userPlan(db,userId,now), limit = QUOTA_LIMITS[plan][type];
+    const {start,end} = quotaPeriod(type,now);
+    // Sum old daily rows within the month too; changing reset policy must not erase usage.
+    const total = await db.quotaUsage.aggregate({where:{userId,type,periodStart:{gte:start,...(end ? {lt:end} : {})}},_sum:{count:true}});
+    return usageResult(type,total._sum.count ?? 0,limit,end);
+}
+export async function getQuotaUsage(userId: string, quotaType: QuotaType): Promise<QuotaUsage> {
+    validate(quotaType);return readUsage(prisma,userId,quotaType,new Date());
+}
+export async function checkQuota(userId: string, quotaType: QuotaType, amount = 1): Promise<{allowed:boolean;usage:QuotaUsage}> {
+    validate(quotaType,amount);const usage = await getQuotaUsage(userId,quotaType);
+    return {allowed:usage.limit === -1 || usage.remaining >= amount,usage};
+}
+export async function consumeQuota(userId: string, quotaType: QuotaType, amount = 1): Promise<{success:boolean;usage:QuotaUsage}> {
+    validate(quotaType,amount);
     try {
-        const startOfPeriod = period === 'DAILY'
-            ? new Date(new Date().setHours(0, 0, 0, 0))
-            : period === 'MONTHLY'
-                ? new Date(new Date().setDate(1))
-                : new Date(0);
-
-        const usage = await prisma.quotaUsage.findFirst({
-            where: {
-                userId,
-                type: quotaType,
-                periodStart: { gte: startOfPeriod },
-            },
-        });
-        used = usage?.count || 0;
+        return await prisma.$transaction(async tx => {
+            // Transaction-scoped PostgreSQL lock serializes all writers through this service.
+            // A hash collision only serializes unrelated requests; it cannot grant extra quota.
+            await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${JSON.stringify([userId,quotaType])}, 0))`;
+            const now = new Date(), usage = await readUsage(tx,userId,quotaType,now);
+            if (usage.limit !== -1 && usage.remaining < amount) return {success:false,usage:{...usage,exceeded:true}};
+            const {start} = quotaPeriod(quotaType,now);
+            await tx.quotaUsage.upsert({where:{userId_type_periodStart:{userId,type:quotaType,periodStart:start}},update:{count:{increment:amount}},create:{userId,type:quotaType,periodStart:start,count:amount}});
+            return {success:true,usage:usageResult(quotaType,usage.used+amount,usage.limit,usage.resetsAt ? new Date(usage.resetsAt) : undefined)};
+        }, {maxWait:10000,timeout:10000});
     } catch {
-        used = 0;
-    }
-
-    const remaining = Math.max(0, limit - used);
-    const percentage = Math.min(100, Math.round((used / limit) * 100));
-
-    // 计算重置时间
-    let resetsAt: string | undefined;
-    if (period === 'DAILY') {
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        tomorrow.setHours(0, 0, 0, 0);
-        resetsAt = tomorrow.toISOString();
-    } else if (period === 'MONTHLY') {
-        const nextMonth = new Date();
-        nextMonth.setMonth(nextMonth.getMonth() + 1);
-        nextMonth.setDate(1);
-        nextMonth.setHours(0, 0, 0, 0);
-        resetsAt = nextMonth.toISOString();
-    }
-
-    return {
-        type: quotaType,
-        used,
-        limit,
-        remaining,
-        percentage,
-        resetsAt,
-        exceeded: used >= limit,
-    };
-}
-
-/**
- * 检查配额是否足够
- */
-export async function checkQuota(
-    userId: string,
-    quotaType: QuotaType,
-    amount: number = 1
-): Promise<{ allowed: boolean; usage: QuotaUsage }> {
-    const usage = await getQuotaUsage(userId, quotaType);
-
-    if (usage.limit === -1) {
-        return { allowed: true, usage };
-    }
-
-    const allowed = usage.remaining >= amount;
-    return { allowed, usage };
-}
-
-/**
- * 消耗配额
- */
-export async function consumeQuota(
-    userId: string,
-    quotaType: QuotaType,
-    amount: number = 1
-): Promise<{ success: boolean; usage: QuotaUsage }> {
-    const { allowed, usage } = await checkQuota(userId, quotaType, amount);
-
-    if (!allowed) {
-        return { success: false, usage };
-    }
-
-    const period = QUOTA_RESET_PERIOD[quotaType];
-    const startOfPeriod = period === 'DAILY'
-        ? new Date(new Date().setHours(0, 0, 0, 0))
-        : period === 'MONTHLY'
-            ? new Date(new Date().setDate(1))
-            : new Date(0);
-
-    try {
-        await prisma.quotaUsage.upsert({
-            where: {
-                userId_type_periodStart: {
-                    userId,
-                    type: quotaType,
-                    periodStart: startOfPeriod,
-                },
-            },
-            update: {
-                count: { increment: amount },
-            },
-            create: {
-                userId,
-                type: quotaType,
-                count: amount,
-                periodStart: startOfPeriod,
-            },
-        });
-
-        const newUsage = await getQuotaUsage(userId, quotaType);
-        return { success: true, usage: newUsage };
-    } catch (error) {
-        console.error('Failed to consume quota:', error);
-        return { success: false, usage };
+        // Do not fabricate zero usage or report exhaustion when the database is unavailable.
+        return {success:false,usage:{type:quotaType,used:0,limit:0,remaining:0,percentage:0,exceeded:false,available:false}};
     }
 }
-
-/**
- * 获取用户所有配额状态
- */
 export async function getAllQuotaUsage(userId: string): Promise<QuotaUsage[]> {
-    const quotaTypes: QuotaType[] = [
-        'AI_CALLS',
-        'CALCULATIONS',
-        'DIAGNOSES',
-        'EXPORTS',
-        'PAPER_SEARCHES',
-        'PAPER_SUMMARIES',
-        'PROJECTS',
-        'API_CALLS',
-    ];
-
-    return Promise.all(quotaTypes.map(type => getQuotaUsage(userId, type)));
+    return Promise.all((['AI_CALLS','CALCULATIONS','DIAGNOSES','EXPORTS','PAPER_SEARCHES','PAPER_SUMMARIES','PROJECTS','API_CALLS'] as QuotaType[]).map(type=>getQuotaUsage(userId,type)));
 }
-
-/**
- * 配额检查中间件
- */
 export function createQuotaMiddleware(quotaType: QuotaType) {
-    return async function quotaMiddleware(
-        userId: string,
-        next: () => Promise<void>
-    ): Promise<{ success: boolean; error?: string; usage?: QuotaUsage }> {
-        const { allowed, usage } = await checkQuota(userId, quotaType);
-
-        if (!allowed) {
-            return {
-                success: false,
-                error: `${quotaType} 配额已用尽，请升级套餐或等待重置`,
-                usage,
-            };
-        }
-
-        await next();
-        await consumeQuota(userId, quotaType);
-
-        return { success: true, usage };
+    return async (userId: string, next: () => Promise<void>): Promise<{success:boolean;error?:string;usage?:QuotaUsage}> => {
+        const result = await consumeQuota(userId,quotaType);
+        if (!result.success) return {success:false,error:result.usage.exceeded ? '操作额度已用尽，请查看套餐或等待重置' : '额度暂时无法核验，请稍后重试',usage:result.usage};
+        await next();return {success:true,usage:result.usage};
     };
 }

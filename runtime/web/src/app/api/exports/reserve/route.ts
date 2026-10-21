@@ -46,7 +46,7 @@ export async function POST(req: Request) {
     if (!result.success) {
         return NextResponse.json({
             error: 'EXPORT_QUOTA_EXCEEDED',
-            message: result.usage.exceeded ? '今日报告导出额度已用尽，请升级套餐或明日再试' : '导出额度暂时无法核验，请稍后重试',
+            message: result.usage.exceeded ? '本月报告导出额度已用尽，请查看套餐或下月再试' : '导出额度暂时无法核验，请稍后重试',
             usage: result.usage,
         }, { status: result.usage.exceeded ? 429 : 503 });
     }
