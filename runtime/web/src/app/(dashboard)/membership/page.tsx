@@ -5,19 +5,12 @@ import Link from 'next/link';
 import { AlertCircle, Award, Calendar, Database, Loader2, TrendingUp, Zap } from 'lucide-react';
 import { Plan, PLAN_DETAILS, USAGE_LIMITS } from '@/lib/membership/plans';
 
-type Payment = { id: string; amount: number | string; currency: string; description?: string | null; paidAt?: string | null; createdAt: string };
-type Member = {
-    id: string; name?: string | null; email: string; plan: Plan; effectivePlan: Plan; nextResetAt: string; planExpireAt?: string | null;
-    dailyAiCalls: number; dailyResourceQueries: number; dailyCalculations: number;
-    dailyPaperSearches: number; dailyDiagnoses: number; projectCount: number;
-    paperCount: number; stationCount: number; folderCount: number;
-    paymentPagination?: { page: number; nextPage: number | null; nextCursor: string | null };
-    subscription?: { status: string; endDate: string; autoRenew: boolean; payments: Payment[] } | null;
-};
+import { loadMember, type Member, type Payment } from '@/lib/membership/load-member';
 
 export default function MembershipCenterPage() {
     const [member, setMember] = useState<Member | null>(null);
     const [error, setError] = useState('');
+    const [attempt, setAttempt] = useState(0);
     const [paymentsLoading, setPaymentsLoading] = useState(false);
     const [paymentsError, setPaymentsError] = useState('');
 
@@ -26,14 +19,12 @@ export default function MembershipCenterPage() {
         if (!nextCursor || paymentsLoading) return;
         setPaymentsLoading(true); setPaymentsError('');
         try {
-            const response = await fetch(`/api/membership/me?paymentCursor=${encodeURIComponent(nextCursor)}`, { cache: 'no-store' });
-            const body = await response.json();
-            if (!response.ok || body.success !== true) throw new Error(body.message || '付款记录加载失败');
-            if (body.data.id !== member?.id) throw new Error('账户已变化，请刷新页面');
+            const data = await loadMember(`/api/membership/me?paymentCursor=${encodeURIComponent(nextCursor)}`);
+            if (data.id !== member?.id) throw new Error('账户已变化，请刷新页面');
             setMember(current => current?.subscription ? { ...current,
-                paymentPagination: body.data.paymentPagination,
+                paymentPagination: data.paymentPagination,
                 subscription: { ...current.subscription, payments: [...new Map(
-                    [...current.subscription.payments, ...(body.data.subscription?.payments || [])]
+                    [...current.subscription.payments, ...(data.subscription?.payments || [])]
                         .map((payment: Payment) => [payment.id, payment])).values()] }
             } : current);
         } catch (reason) {
@@ -43,19 +34,16 @@ export default function MembershipCenterPage() {
 
     useEffect(() => {
         const controller = new AbortController();
-        fetch('/api/membership/me', { cache: 'no-store', signal: controller.signal })
-            .then(async response => {
-                const body = await response.json();
-                if (!response.ok) throw new Error(body.message || '会员信息加载失败');
-                setMember(body.data);
-            })
+        setError('');
+        loadMember('/api/membership/me', controller.signal)
+            .then(data => { if (!controller.signal.aborted) setMember(data); })
             .catch(reason => {
-                if (reason.name !== 'AbortError') setError(reason.message || '会员信息加载失败');
+                if (!controller.signal.aborted) setError(reason.message || '会员信息加载失败');
             });
         return () => controller.abort();
-    }, []);
+    }, [attempt]);
 
-    if (error) return <State message={error} error />;
+    if (error) return <State message={error} error onRetry={() => { setError(''); setAttempt(value => value + 1); }} />;
     if (!member) return <State message="正在读取您的会员权益…" />;
 
     const details = PLAN_DETAILS[member.plan] || PLAN_DETAILS.FREE;
@@ -137,8 +125,11 @@ export default function MembershipCenterPage() {
     );
 }
 
-function State({ message, error = false }: { message: string; error?: boolean }) {
-    return <main className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-6"><div className="flex items-center gap-3">{error ? <AlertCircle className="text-red-400" /> : <Loader2 className="animate-spin text-blue-400" />}<span>{message}</span></div></main>;
+function State({ message, error = false, onRetry }: { message: string; error?: boolean; onRetry?: () => void }) {
+    return <main className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-6"><div className="space-y-5">
+        <div role={error ? 'alert' : 'status'} className="flex items-center gap-3">{error ? <AlertCircle className="text-red-400 shrink-0" /> : <Loader2 className="animate-spin text-blue-400" />}<span>{message}</span></div>
+        {onRetry && <div className="flex flex-wrap items-center gap-5"><button type="button" onClick={onRetry} className="rounded-lg bg-indigo-600 px-5 py-3">重新加载会员信息</button><Link href="/login?callbackUrl=%2Fmembership" className="text-indigo-300 underline">重新登录</Link></div>}
+    </div></main>;
 }
 function formatLimit(limit: number) { return limit === Infinity ? '不限量' : `最多 ${limit} 次`; }
 function Usage({ label, value, limit }: { label: string; value: number; limit: number }) {

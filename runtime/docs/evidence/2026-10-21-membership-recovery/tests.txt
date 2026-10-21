@@ -1,0 +1,6 @@
+
+Test Suites: 3 passed, 3 total
+Tests:       19 passed, 19 total
+Snapshots:   0 total
+Time:        0.357 s, estimated 1 s
+Ran all test suites matching src/lib/membership/load-member.test.ts|scripts/integration/payment-pagination.test.ts|src/app/api/membership/me/route.test.ts.

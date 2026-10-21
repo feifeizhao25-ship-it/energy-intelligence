@@ -21,6 +21,25 @@ try {
   const ctx=await browser.newContext({viewport:{width,height:900},locale:'zh-CN',timezoneId:'America/Los_Angeles'});
   const csrf=await(await ctx.request.get(base+'/api/auth/csrf')).json();
   await ctx.request.post(base+'/api/auth/callback/sms',{form:{phone,code:'284736',consent:'true',csrfToken:csrf.csrfToken,json:'true',callbackUrl:base+'/membership'}});
+  for (const [scenario,status,payload] of [
+   ['initial-503',503,'<html>upstream failure</html>'],
+   ['initial-empty',200,'{"success":true}'],
+   ['initial-html',200,'<html>invalid response</html>'],
+   ['initial-expired',401,'{}'],
+  ]) {
+   const recovery=await ctx.newPage();let broken=true;
+   await recovery.route('**/api/membership/me',async route=>{if(broken)await route.fulfill({status,body:payload});else await route.continue();});
+   await recovery.goto(base+'/membership',{waitUntil:'networkidle'});
+   await recovery.getByRole('button',{name:'重新加载会员信息',exact:true}).waitFor();
+   assert.equal(await recovery.getByRole('link',{name:'重新登录',exact:true}).count(),1);
+   const alert=await recovery.locator('main').getByRole('alert').innerText();assert.ok(/(会员信息|登录)/.test(alert));
+   await recovery.screenshot({path:`${out}/${width}-${scenario}.png`,fullPage:true});
+   broken=false;await recovery.getByRole('button',{name:'重新加载会员信息',exact:true}).click();
+   await recovery.getByRole('heading',{name:'会员中心',exact:true}).waitFor();
+   assert.equal(await recovery.locator('main section strong').count(),20);
+   await recovery.screenshot({path:`${out}/${width}-${scenario}-recovered.png`,fullPage:true});
+   await recovery.close();
+  }
   const page=await ctx.newPage(), apis=[], pending=[];
   page.on('response',r=>{if(r.url().includes('/api/membership/me'))pending.push(r.text().then(body=>apis.push({url:r.url(),status:r.status(),body})));});
   await page.goto(base+'/membership',{waitUntil:'networkidle'});
@@ -32,7 +51,7 @@ try {
   let fault=true;
   await page.route('**/api/membership/me?paymentCursor=*',async route=>{if(fault){fault=false;await route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({success:false,message:'付款记录暂时无法读取，请重试'})});}else await route.continue();});
   await page.getByRole('button',{name:'加载更多付款记录',exact:true}).click();
-  await page.getByRole('alert').filter({hasText:'付款记录暂时'}).waitFor();
+  await page.getByRole('alert').filter({hasText:'会员信息暂时'}).waitFor();
   assert.equal(await section.locator('strong').count(),20);
   await page.screenshot({path:`${out}/${width}-retry.png`,fullPage:true});
   for(const count of [40,45]) {await page.getByRole('button',{name:'加载更多付款记录',exact:true}).click();await page.waitForFunction(n=>document.querySelectorAll('main section strong').length===n,count);}
@@ -45,7 +64,7 @@ try {
   await page.screenshot({path:`${out}/${width}-complete.png`,fullPage:true});
   fs.writeFileSync(`${out}/${width}.txt`,body); await Promise.all(pending);
   fs.writeFileSync(`${out}/${width}.api.json`,JSON.stringify(apis,null,2));
-  evidence.push({width,records:45,amount,date,overflow,completeDescriptions:true,retryPreservedRecords:true,kind:'real local browser/API/PostgreSQL; seeded payments; injected 503; no real payment'});
+  evidence.push({width,records:45,amount,date,overflow,completeDescriptions:true,retryPreservedRecords:true,initialRecoveryScenarios:4,kind:'real local browser/API/PostgreSQL; seeded payments; injected 503; no real payment'});
   await ctx.close();
  }
  fs.writeFileSync(out+'/verification.json',JSON.stringify(evidence,null,2));
