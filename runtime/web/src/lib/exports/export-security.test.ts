@@ -109,3 +109,22 @@ test('zero generation remains zero in exported data', async () => {
     const cached = getFromExportCache(body.data.filename, 'owner');
     expect(JSON.parse(cached!.content.toString())[0]['年发电量(kWh)']).toBe(0);
 });
+
+test('exports every calculation rather than silently stopping at fifty', async () => {
+    (getServerSession as jest.Mock).mockResolvedValue({ user: { id: 'owner' } });
+    const rows = Array.from({length: 73}, (_, i) => ({id:`calculation-${i}`,type:'SOLAR',input:{index:i},output:{energy:{annualGeneration:i}},createdAt:new Date('2026-10-01')}));
+    (prisma.calculation.findMany as jest.Mock).mockImplementation(async ({take}) => take ? rows.slice(0,take) : rows);
+    const response = await POST(new NextRequest('http://localhost/api/exports', {method:'POST',body:JSON.stringify({dataType:'calculations',format:'json'})}));
+    const body = await response.json();files.push(body.data.filename);
+    expect(body.data.totalRecords).toBe(73);
+    const download = await GET(new NextRequest('http://localhost'+body.data.downloadUrl),{params:Promise.resolve({filename:body.data.filename})});
+    const exported=await download.json();expect(exported.map((r:any)=>r.ID)).toEqual(rows.map(r=>r.id));
+});
+
+test.each(['{','null','[]'])('invalid export JSON returns Chinese 400 without quota or DB access: %s',async body=>{
+    (getServerSession as jest.Mock).mockResolvedValue({user:{id:'owner'}});
+    const {consumeQuota}=await import('@/lib/audit/quota');(consumeQuota as jest.Mock).mockClear();(prisma.project.findMany as jest.Mock).mockClear();(prisma.calculation.findMany as jest.Mock).mockClear();
+    const response=await POST(new NextRequest('http://localhost/api/exports',{method:'POST',body}));
+    expect(response.status).toBe(400);expect((await response.json()).message).toMatch(/请求/);
+    expect(consumeQuota).not.toHaveBeenCalled();expect(prisma.project.findMany).not.toHaveBeenCalled();expect(prisma.calculation.findMany).not.toHaveBeenCalled();
+});

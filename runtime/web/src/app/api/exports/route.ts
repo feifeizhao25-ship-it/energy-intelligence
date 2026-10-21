@@ -11,7 +11,7 @@ import { safeErrorMessage } from '@/lib/api/safe-error';
 
 /**
  * 数据导出 API
- * 支持从数据库获取真实数据并导出为 CSV、JSON、Excel 格式
+ * 支持从数据库获取真实数据并导出为 CSV、JSON 格式
  */
 
 export async function POST(req: NextRequest) {
@@ -21,7 +21,10 @@ export async function POST(req: NextRequest) {
     }
     const userId = session.user.id;
 
-    const body = await req.json();
+    const body = await req.json().catch(() => null);
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+        return NextResponse.json({ success: false, error: 'INVALID_REQUEST', message: '导出请求格式无效，请重试' }, { status: 400 });
+    }
     const { dataType, format = 'csv' } = body;
 
     if (!['csv', 'json'].includes(format)) {
@@ -64,8 +67,7 @@ export async function POST(req: NextRequest) {
                 try {
                     const calculations = await prisma.calculation.findMany({
                         where: { userId },
-                        orderBy: { createdAt: 'desc' },
-                        take: 50
+                        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }]
                     });
 
                     headers = ['ID', '类型', '输入参数', '年发电量(kWh)', '创建日期'];

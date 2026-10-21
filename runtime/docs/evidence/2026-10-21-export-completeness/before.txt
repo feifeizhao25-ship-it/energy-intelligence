@@ -1,0 +1,159 @@
+FAIL src/lib/exports/export-security.test.ts
+  ● exports every calculation rather than silently stopping at fifty
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 73
+    Received: 50
+
+      117 |     const response = await POST(new NextRequest('http://localhost/api/exports', {method:'POST',body:JSON.stringify({dataType:'calculations',format:'json'})}));
+      118 |     const body = await response.json();files.push(body.data.filename);
+    > 119 |     expect(body.data.totalRecords).toBe(73);
+          |                                    ^
+      120 |     const download = await GET(new NextRequest('http://localhost'+body.data.downloadUrl),{params:Promise.resolve({filename:body.data.filename})});
+      121 |     const exported=await download.json();expect(exported.map((r:any)=>r.ID)).toEqual(rows.map(r=>r.id));
+      122 | });
+
+      at Object.<anonymous> (src/lib/exports/export-security.test.ts:119:36)
+
+  ● invalid export JSON returns Chinese 400 without quota or DB access: {
+
+    SyntaxError: Expected property name or '}' in JSON at position 1 (line 1 column 2)
+        at JSON.parse (<anonymous>)
+
+
+  ● invalid export JSON returns Chinese 400 without quota or DB access: null
+
+    TypeError: Cannot destructure property 'dataType' of 'body' as it is null.
+
+      23 |
+      24 |     const body = await req.json();
+    > 25 |     const { dataType, format = 'csv' } = body;
+         |             ^
+      26 |
+      27 |     if (!['csv', 'json'].includes(format)) {
+      28 |         return NextResponse.json({ error: 'UNSUPPORTED_FORMAT', message: '当前安全导出仅支持 CSV 和 JSON 格式' }, { status: 400 });
+
+      at POST (src/app/api/exports/route.ts:25:13)
+      at src/lib/exports/export-security.test.ts:127:20
+
+  ● invalid export JSON returns Chinese 400 without quota or DB access: []
+
+    TypeError: expect(received).toMatch(expected)
+
+    Matcher error: received value must be a string
+
+    Received has value: undefined
+
+      126 |     const {consumeQuota}=await import('@/lib/audit/quota');(consumeQuota as jest.Mock).mockClear();(prisma.project.findMany as jest.Mock).mockClear();(prisma.calculation.findMany as jest.Mock).mockClear();
+      127 |     const response=await POST(new NextRequest('http://localhost/api/exports',{method:'POST',body}));
+    > 128 |     expect(response.status).toBe(400);expect((await response.json()).message).toMatch(/请求/);
+          |                                                                               ^
+      129 |     expect(consumeQuota).not.toHaveBeenCalled();expect(prisma.project.findMany).not.toHaveBeenCalled();expect(prisma.calculation.findMany).not.toHaveBeenCalled();
+      130 | });
+      131 |
+
+      at src/lib/exports/export-security.test.ts:128:79
+
+FAIL src/app/api/exports/reserve/route.test.ts
+  ● invalid reservation never consumes quota: {
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 400
+    Received: 200
+
+      58 |     consumeQuota.mockClear();
+      59 |     const result=await POST(new Request('http://x/api/exports/reserve',{method:'POST',body}));
+    > 60 |     expect(result.status).toBe(400);expect((await result.json()).message).toMatch(/格式|请求/);expect(consumeQuota).not.toHaveBeenCalled();
+         |                           ^
+      61 | });
+      62 |
+
+      at src/app/api/exports/reserve/route.test.ts:60:27
+
+  ● invalid reservation never consumes quota: null
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 400
+    Received: 200
+
+      58 |     consumeQuota.mockClear();
+      59 |     const result=await POST(new Request('http://x/api/exports/reserve',{method:'POST',body}));
+    > 60 |     expect(result.status).toBe(400);expect((await result.json()).message).toMatch(/格式|请求/);expect(consumeQuota).not.toHaveBeenCalled();
+         |                           ^
+      61 | });
+      62 |
+
+      at src/app/api/exports/reserve/route.test.ts:60:27
+
+  ● invalid reservation never consumes quota: []
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 400
+    Received: 200
+
+      58 |     consumeQuota.mockClear();
+      59 |     const result=await POST(new Request('http://x/api/exports/reserve',{method:'POST',body}));
+    > 60 |     expect(result.status).toBe(400);expect((await result.json()).message).toMatch(/格式|请求/);expect(consumeQuota).not.toHaveBeenCalled();
+         |                           ^
+      61 | });
+      62 |
+
+      at src/app/api/exports/reserve/route.test.ts:60:27
+
+  ● invalid reservation never consumes quota: {"format":"xlsx"}
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 400
+    Received: 200
+
+      58 |     consumeQuota.mockClear();
+      59 |     const result=await POST(new Request('http://x/api/exports/reserve',{method:'POST',body}));
+    > 60 |     expect(result.status).toBe(400);expect((await result.json()).message).toMatch(/格式|请求/);expect(consumeQuota).not.toHaveBeenCalled();
+         |                           ^
+      61 | });
+      62 |
+
+      at src/app/api/exports/reserve/route.test.ts:60:27
+
+  ● invalid reservation never consumes quota: {"format":null}
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 400
+    Received: 200
+
+      58 |     consumeQuota.mockClear();
+      59 |     const result=await POST(new Request('http://x/api/exports/reserve',{method:'POST',body}));
+    > 60 |     expect(result.status).toBe(400);expect((await result.json()).message).toMatch(/格式|请求/);expect(consumeQuota).not.toHaveBeenCalled();
+         |                           ^
+      61 | });
+      62 |
+
+      at src/app/api/exports/reserve/route.test.ts:60:27
+
+  ● invalid reservation never consumes quota: {"format":123}
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 400
+    Received: 200
+
+      58 |     consumeQuota.mockClear();
+      59 |     const result=await POST(new Request('http://x/api/exports/reserve',{method:'POST',body}));
+    > 60 |     expect(result.status).toBe(400);expect((await result.json()).message).toMatch(/格式|请求/);expect(consumeQuota).not.toHaveBeenCalled();
+         |                           ^
+      61 | });
+      62 |
+
+      at src/app/api/exports/reserve/route.test.ts:60:27
+
+Test Suites: 2 failed, 2 total
+Tests:       10 failed, 22 passed, 32 total
+Snapshots:   0 total
+Time:        0.373 s, estimated 1 s
+Ran all test suites matching src/lib/exports/export-security.test.ts|src/app/api/exports/reserve/route.test.ts.

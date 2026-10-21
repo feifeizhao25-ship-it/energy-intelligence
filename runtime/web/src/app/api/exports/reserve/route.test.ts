@@ -53,3 +53,9 @@ describe('导出核验', () => {
         }
     });
 });
+
+test.each(['{','null','[]','{"format":"xlsx"}','{"format":null}','{"format":123}'])('invalid reservation never consumes quota: %s',async body=>{
+    consumeQuota.mockClear();
+    const result=await POST(new Request('http://x/api/exports/reserve',{method:'POST',body}));
+    expect(result.status).toBe(400);expect((await result.json()).message).toMatch(/格式|请求/);expect(consumeQuota).not.toHaveBeenCalled();
+});

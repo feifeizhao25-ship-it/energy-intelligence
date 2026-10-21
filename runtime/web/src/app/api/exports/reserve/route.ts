@@ -20,8 +20,19 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'UNAUTHORIZED', message: '请先登录后再导出报告' }, { status: 401 });
     }
 
-    const body = await req.json().catch(() => null);
-    const format = body?.format === 'docx' ? 'docx' : 'pdf';
+    // Only an absent body/format defaults to PDF; malformed requests must not consume quota.
+    const raw = await req.text();
+    let body;
+    try { body = raw.trim() ? JSON.parse(raw) : {}; } catch {
+        return NextResponse.json({ error: 'INVALID_REQUEST', message: '导出请求格式无效，请重试' }, { status: 400 });
+    }
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+        return NextResponse.json({ error: 'INVALID_REQUEST', message: '导出请求格式无效，请重试' }, { status: 400 });
+    }
+    const format = body.format === undefined ? 'pdf' : body.format;
+    if (format !== 'pdf' && format !== 'docx') {
+        return NextResponse.json({ error: 'UNSUPPORTED_FORMAT', message: '报告导出格式仅支持 PDF 或 Word' }, { status: 400 });
+    }
     if (format === 'docx') {
         const user = await prisma.user.findUnique({ where: { id: session.user.id }, select: { plan: true, planExpireAt: true } });
         const plan = effectivePlan(user?.plan, user?.planExpireAt) as keyof typeof EXPORT_FORMATS;

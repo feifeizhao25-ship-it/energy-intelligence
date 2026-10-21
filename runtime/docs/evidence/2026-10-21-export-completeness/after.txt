@@ -1,0 +1,6 @@
+
+Test Suites: 3 passed, 3 total
+Tests:       33 passed, 33 total
+Snapshots:   0 total
+Time:        0.436 s, estimated 1 s
+Ran all test suites matching scripts/integration/export-completeness.test.ts|src/lib/exports/export-security.test.ts|src/app/api/exports/reserve/route.test.ts.
