@@ -1,0 +1,22 @@
+[
+  {
+    "width": 390,
+    "records": 45,
+    "amount": "¥1980.5",
+    "date": "2026/10/1",
+    "overflow": true,
+    "completeDescriptions": true,
+    "retryPreservedRecords": true,
+    "kind": "real local browser/API/PostgreSQL; seeded payments; injected 503; no real payment"
+  },
+  {
+    "width": 1440,
+    "records": 45,
+    "amount": "¥1980.5",
+    "date": "2026/10/1",
+    "overflow": true,
+    "completeDescriptions": true,
+    "retryPreservedRecords": true,
+    "kind": "real local browser/API/PostgreSQL; seeded payments; injected 503; no real payment"
+  }
+]

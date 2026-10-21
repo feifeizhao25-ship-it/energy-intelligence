@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { AlertCircle, Award, Calendar, Database, Loader2, TrendingUp, Zap } from 'lucide-react';
 import { Plan, PLAN_DETAILS, USAGE_LIMITS } from '@/lib/membership/plans';
 
-type Payment = { id: string; amount: number; currency: string; description?: string | null; paidAt?: string | null; createdAt: string };
+type Payment = { id: string; amount: number | string; currency: string; description?: string | null; paidAt?: string | null; createdAt: string };
 type Member = {
     id: string; name?: string | null; email: string; plan: Plan; effectivePlan: Plan; nextResetAt: string; planExpireAt?: string | null;
     dailyAiCalls: number; dailyResourceQueries: number; dailyCalculations: number;
@@ -59,7 +59,6 @@ export default function MembershipCenterPage() {
     if (!member) return <State message="正在读取您的会员权益…" />;
 
     const details = PLAN_DETAILS[member.plan] || PLAN_DETAILS.FREE;
-    const limits = USAGE_LIMITS[member.plan] || USAGE_LIMITS.FREE;
     const expiry = member.planExpireAt;
     const effectivePlan = member.effectivePlan;
     const active = member.plan === effectivePlan;
@@ -117,7 +116,7 @@ export default function MembershipCenterPage() {
                     <h3 className="text-xl font-bold flex items-center gap-2"><Award className="text-amber-400" />当前核心权益</h3>
                     <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-slate-200">
                         <Benefit icon={<Zap />} text={`${formatLimit(effectiveLimits.ai_chat)} AI 对话`} />
-                        <Benefit icon={<Database />} text={`${formatLimit(effectiveLimits.projects)} 项目`} />
+                        <Benefit icon={<Database />} text={`${effectiveLimits.projects === Infinity ? '不限量' : `最多 ${effectiveLimits.projects} 个`} 项目`} />
                         <Benefit icon={<Award />} text={effectivePlan === Plan.FREE ? '基础计算与查询' : '专业报告导出'} />
                         <Benefit icon={<Calendar />} text={member.subscription?.autoRenew ? '已开启自动续费' : '未开启自动续费'} />
                     </div>
@@ -127,7 +126,7 @@ export default function MembershipCenterPage() {
                     <h3 className="text-xl font-bold">付款记录</h3>
                     {payments.length === 0 ? <p className="mt-4 text-slate-400">暂无已完成的付款记录。</p> : (
                         <div className="mt-4 divide-y divide-slate-800">
-                            {payments.map(payment => <div key={payment.id} className="py-4 flex justify-between gap-4"><div><p>{payment.description || '会员订阅'}</p><p className="text-sm text-slate-400">{new Date(payment.paidAt || payment.createdAt).toLocaleDateString('zh-CN')}</p></div><strong>{payment.currency === 'CNY' ? '¥' : `${payment.currency} `}{payment.amount.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong></div>)}
+                            {payments.map(payment => <div key={payment.id} className="py-4 flex flex-col sm:flex-row sm:justify-between gap-2 sm:gap-4"><div className="min-w-0 [overflow-wrap:anywhere]"><p>{payment.description || '会员订阅'}</p><p className="text-sm text-slate-400">{new Date(payment.paidAt || payment.createdAt).toLocaleDateString('zh-CN', { timeZone: 'Asia/Shanghai' })}（北京时间）</p></div><strong className="shrink-0 whitespace-nowrap">{payment.currency === 'CNY' ? '¥' : `${payment.currency} `}{Number(payment.amount).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong></div>)}
                         </div>
                     )}
                     {paymentsError && <p role="alert" className="mt-4 text-red-300">{paymentsError}</p>}
