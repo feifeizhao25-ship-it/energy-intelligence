@@ -47,3 +47,14 @@ export function getFromExportCache(filename: string, ownerId: string) {
         return null;
     }
 }
+
+/** Remove only a generated export; never accept a path from the caller. */
+export function removeFromExportCache(filename: string) {
+    const target = locations(filename);
+    if (!target) return;
+    for (const file of [target.filePath, target.metaPath]) {
+        try { fs.unlinkSync(file); } catch (error) {
+            if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+        }
+    }
+}

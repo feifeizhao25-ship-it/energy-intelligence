@@ -10,7 +10,7 @@ import { prisma } from '@/lib/prisma';
 import { GET } from '@/app/api/exports/download/[filename]/route';
 
 jest.mock('@/lib/prisma', () => ({ prisma: { project: { findMany: jest.fn() }, calculation: { findMany: jest.fn() } } }));
-jest.mock('@/lib/audit/quota', () => ({ consumeQuota: jest.fn().mockResolvedValue({ success: true }) }));
+jest.mock('@/lib/audit/quota', () => ({ consumeQuota: jest.fn(async (_owner, _type, _amount, prepare) => { await prepare?.(); return { success: true }; }) }));
 jest.mock('next-auth', () => ({ getServerSession: jest.fn() }));
 jest.mock('@/lib/auth/auth-options', () => ({ authOptions: {} }));
 

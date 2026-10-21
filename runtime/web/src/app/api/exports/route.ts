@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/auth-options';
 
-import { addToExportCache } from '@/lib/exports/cache';
+import { addToExportCache, removeFromExportCache } from '@/lib/exports/cache';
 import { consumeQuota } from '@/lib/audit/quota';
 import { safeErrorMessage } from '@/lib/api/safe-error';
 
@@ -120,8 +120,12 @@ export async function POST(req: NextRequest) {
         }
 
         // 3. 只有在真实数据和文件都成功生成后才扣减额度；额度核验失败时不暴露文件。
-        const quota = await consumeQuota(userId, 'EXPORTS');
+        const quota = await consumeQuota(userId, 'EXPORTS', 1, async () => {
+            // A filesystem failure aborts the quota transaction; do not charge for a missing file.
+            addToExportCache(filename, { content, format, contentType, ownerId: userId });
+        });
         if (!quota.success) {
+            removeFromExportCache(filename);
             return NextResponse.json({
                 success: false,
                 error: quota.usage.exceeded ? 'EXPORT_QUOTA_EXCEEDED' : 'EXPORT_QUOTA_UNAVAILABLE',
@@ -130,8 +134,7 @@ export async function POST(req: NextRequest) {
             }, { status: quota.usage.exceeded ? 429 : 503 });
         }
 
-        // 4. 存储到缓存并生成下载链接
-        addToExportCache(filename, { content, format, contentType, ownerId: userId });
+        // Only return the unguessable, owner-bound link after the quota transaction commits.
 
         const downloadUrl = `/api/exports/download/${filename}`;
 

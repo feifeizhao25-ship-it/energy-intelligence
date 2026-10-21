@@ -144,7 +144,7 @@ export async function checkQuota(userId: string, quotaType: QuotaType, amount = 
     validate(quotaType,amount);const usage = await getQuotaUsage(userId,quotaType);
     return {allowed:usage.limit === -1 || usage.remaining >= amount,usage};
 }
-export async function consumeQuota(userId: string, quotaType: QuotaType, amount = 1): Promise<{success:boolean;usage:QuotaUsage}> {
+export async function consumeQuota(userId: string, quotaType: QuotaType, amount = 1, prepare?: () => Promise<void>): Promise<{success:boolean;usage:QuotaUsage}> {
     validate(quotaType,amount);
     try {
         return await prisma.$transaction(async tx => {
@@ -155,6 +155,7 @@ export async function consumeQuota(userId: string, quotaType: QuotaType, amount 
             if (usage.limit !== -1 && usage.remaining < amount) return {success:false,usage:{...usage,exceeded:true}};
             const {start} = quotaPeriod(quotaType,now);
             await tx.quotaUsage.upsert({where:{userId_type_periodStart:{userId,type:quotaType,periodStart:start}},update:{count:{increment:amount}},create:{userId,type:quotaType,periodStart:start,count:amount}});
+            if (prepare) await prepare();
             return {success:true,usage:usageResult(quotaType,usage.used+amount,usage.limit,usage.resetsAt ? new Date(usage.resetsAt) : undefined)};
         }, {maxWait:10000,timeout:10000});
     } catch {
