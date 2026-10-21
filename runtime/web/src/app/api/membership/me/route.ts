@@ -5,6 +5,8 @@ import { prisma } from '@/lib/prisma';
 import { effectivePlan } from '@/lib/auth/token-refresh';
 import { startOfShanghaiDay, nextShanghaiMidnight } from '@/lib/membership/day';
 
+import { encodePaymentCursor, paymentBoundary } from '@/lib/membership/payment-cursor';
+
 export const dynamic = 'force-dynamic';
 
 export async function GET(request?: Request) {
@@ -16,6 +18,11 @@ export async function GET(request?: Request) {
     const rawPage = request ? new URL(request.url).searchParams.get('paymentPage') ?? '1' : '1';
     if (!/^[1-9]\d*$/.test(rawPage) || Number(rawPage) > 1000000) {
         return NextResponse.json({ success: false, message: '付款记录页码无效' }, { status: 400 });
+    }
+    const rawCursor = request ? new URL(request.url).searchParams.get('paymentCursor') : null;
+    let boundary;
+    try { boundary = paymentBoundary(rawCursor, session.user.id); } catch {
+        return NextResponse.json({ success: false, message: '付款记录游标无效，请刷新页面' }, { status: 400 });
     }
     const page = Number(rawPage);
     const pageSize = 20;
@@ -30,8 +37,8 @@ export async function GET(request?: Request) {
                 select: {
                     status: true, endDate: true, autoRenew: true,
                     payments: {
-                        where: { status: 'completed' }, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-                        skip: (page - 1) * pageSize, take: pageSize + 1,
+                        where: { status: 'completed', ...boundary }, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+                        skip: rawCursor === null ? (page - 1) * pageSize : 0, take: pageSize + 1,
                         select: { id: true, amount: true, currency: true, paymentMethod: true, description: true, paidAt: true, createdAt: true },
                     },
                 },
@@ -42,6 +49,8 @@ export async function GET(request?: Request) {
     if (!user) {
         return NextResponse.json({ success: false, error: 'NOT_FOUND', message: '用户不存在' }, { status: 404 });
     }
+    const rows = user.subscription?.payments ?? [];
+    const nextCursor = rows.length > pageSize ? encodePaymentCursor(session.user.id, rows[pageSize - 1]) : null;
     const now = new Date();
     // Display the same Beijing-day usage as the atomic consumption service.
     // Reading the page must not mutate counters or race with a calculation.
@@ -50,7 +59,7 @@ export async function GET(request?: Request) {
         ...user,
         subscription: user.subscription ? { ...user.subscription,
             payments: user.subscription.payments.slice(0, pageSize) } : null,
-        paymentPagination: { page, nextPage: (user.subscription?.payments.length ?? 0) > pageSize ? page + 1 : null },
+        paymentPagination: { page, nextCursor, nextPage: (user.subscription?.payments.length ?? 0) > pageSize ? page + 1 : null },
         effectivePlan: effectivePlan(user.plan, user.planExpireAt, now),
         nextResetAt: nextShanghaiMidnight(now).toISOString(),
         ...(newDay ? { dailyAiCalls: 0, dailyResourceQueries: 0, dailyCalculations: 0,

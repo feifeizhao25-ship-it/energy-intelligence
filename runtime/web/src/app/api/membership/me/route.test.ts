@@ -9,7 +9,7 @@ const session = getServerSession as jest.Mock;
 const find = prisma.user.findUnique as jest.Mock;
 beforeEach(() => { jest.clearAllMocks(); session.mockResolvedValue({ user: { id: 'owner' } }); });
 test('45 payments remain accessible in three bounded pages, only signed in owner queried', async () => {
-    const records = Array.from({length:45}, (_,i)=>({id:`payment-${i}`,amount:19.8}));
+    const records = Array.from({length:45}, (_,i)=>({id:`payment-${i}`,amount:19.8,createdAt:new Date('2026-10-01')}));
     find.mockImplementation(async query => {
         expect(query.where).toEqual({id:'owner'});
         const p = query.select.subscription.select.payments;

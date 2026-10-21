@@ -1,0 +1,52 @@
+FAIL scripts/integration/payment-pagination.test.ts
+  ● real database: deletion before cursor and new payment do not skip older records
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 27
+    + Received  +  1
+
+    - Array [
+    -   "pagination-1792577926423-024",
+    -   "pagination-1792577926423-023",
+    -   "pagination-1792577926423-022",
+    -   "pagination-1792577926423-021",
+    -   "pagination-1792577926423-020",
+    -   "pagination-1792577926423-019",
+    -   "pagination-1792577926423-018",
+    -   "pagination-1792577926423-017",
+    -   "pagination-1792577926423-016",
+    -   "pagination-1792577926423-015",
+    -   "pagination-1792577926423-014",
+    -   "pagination-1792577926423-013",
+    -   "pagination-1792577926423-012",
+    -   "pagination-1792577926423-011",
+    -   "pagination-1792577926423-010",
+    -   "pagination-1792577926423-009",
+    -   "pagination-1792577926423-008",
+    -   "pagination-1792577926423-007",
+    -   "pagination-1792577926423-006",
+    -   "pagination-1792577926423-005",
+    -   "pagination-1792577926423-004",
+    -   "pagination-1792577926423-003",
+    -   "pagination-1792577926423-002",
+    -   "pagination-1792577926423-001",
+    -   "pagination-1792577926423-000",
+    - ]
+    + Array []
+
+      31 |  let cursor=first.paymentPagination.nextCursor; const rest:string[]=[];
+      32 |  while(cursor){const result=(await (await GET(new Request(`http://localhost/api/membership/me?paymentCursor=${cursor}`))).json()).data;rest.push(...result.subscription.payments.map((p:any)=>p.id));cursor=result.paymentPagination.nextCursor;}
+    > 33 |  expect(rest).toEqual(expected.slice(20)); expect(rest).not.toContain(other);
+         |               ^
+      34 |  (getServerSession as jest.Mock).mockResolvedValue({user:{id:other}});
+      35 |  expect((await GET(new Request(`http://localhost/api/membership/me?paymentCursor=${first.paymentPagination.nextCursor}`))).status).toBe(400);
+      36 | });
+
+      at Object.<anonymous> (scripts/integration/payment-pagination.test.ts:33:15)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 1 total
+Snapshots:   0 total
+Time:        0.34 s, estimated 1 s
+Ran all test suites matching scripts/integration/payment-pagination.test.ts.

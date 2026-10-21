@@ -11,7 +11,7 @@ type Member = {
     dailyAiCalls: number; dailyResourceQueries: number; dailyCalculations: number;
     dailyPaperSearches: number; dailyDiagnoses: number; projectCount: number;
     paperCount: number; stationCount: number; folderCount: number;
-    paymentPagination?: { page: number; nextPage: number | null };
+    paymentPagination?: { page: number; nextPage: number | null; nextCursor: string | null };
     subscription?: { status: string; endDate: string; autoRenew: boolean; payments: Payment[] } | null;
 };
 
@@ -22,11 +22,11 @@ export default function MembershipCenterPage() {
     const [paymentsError, setPaymentsError] = useState('');
 
     async function loadMorePayments() {
-        const nextPage = member?.paymentPagination?.nextPage;
-        if (!nextPage || paymentsLoading) return;
+        const nextCursor = member?.paymentPagination?.nextCursor;
+        if (!nextCursor || paymentsLoading) return;
         setPaymentsLoading(true); setPaymentsError('');
         try {
-            const response = await fetch(`/api/membership/me?paymentPage=${nextPage}`, { cache: 'no-store' });
+            const response = await fetch(`/api/membership/me?paymentCursor=${encodeURIComponent(nextCursor)}`, { cache: 'no-store' });
             const body = await response.json();
             if (!response.ok || body.success !== true) throw new Error(body.message || '付款记录加载失败');
             if (body.data.id !== member?.id) throw new Error('账户已变化，请刷新页面');
@@ -131,7 +131,7 @@ export default function MembershipCenterPage() {
                         </div>
                     )}
                     {paymentsError && <p role="alert" className="mt-4 text-red-300">{paymentsError}</p>}
-                    {member.paymentPagination?.nextPage && <button type="button" onClick={loadMorePayments} disabled={paymentsLoading} className="mt-4 rounded-lg border border-slate-600 px-4 py-2 disabled:opacity-50">{paymentsLoading ? '正在加载付款记录…' : '加载更多付款记录'}</button>}
+                    {member.paymentPagination?.nextCursor && <button type="button" onClick={loadMorePayments} disabled={paymentsLoading} className="mt-4 rounded-lg border border-slate-600 px-4 py-2 disabled:opacity-50">{paymentsLoading ? '正在加载付款记录…' : '加载更多付款记录'}</button>}
                 </section>
             </div>
         </main>
