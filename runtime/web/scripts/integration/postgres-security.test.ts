@@ -17,6 +17,7 @@ import { prisma } from '@/lib/prisma';
 import { verifySmsCode } from '@/lib/auth/sms-verify';
 import { prismaCodeStore } from '@/lib/auth/sms-store';
 import { consumeAiCall, prismaQuotaStore } from '@/lib/ai/quota-guard';
+import { USAGE_LIMITS } from '@/lib/membership/plans';
 import { incrementUsage } from '@/lib/membership/usage';
 import { eraseUser, exportUserData } from '@/lib/account/erasure';
 
@@ -55,22 +56,24 @@ integration('real PostgreSQL security regressions', () => {
     expect((await verifySmsCode(prismaCodeStore, number, '111111')).ok).toBe(false);
   });
 
-  it('30 requests after midnight share three free AI slots', async () => {
+  it('30 requests after midnight share the free AI slots', async () => {
+    const freeAi = USAGE_LIMITS.FREE.ai_chat;
     await prisma.user.update({ where: { id }, data: { dailyAiCalls: 3, lastResetAt: new Date(Date.now() - 86400000) } });
     const results = await Promise.all(Array.from({ length: 30 }, () => consumeAiCall(prismaQuotaStore, id)));
-    expect(results.filter((r) => r.ok)).toHaveLength(3);
-    expect((await prisma.user.findUniqueOrThrow({ where: { id } })).dailyAiCalls).toBe(3);
+    expect(results.filter((r) => r.ok)).toHaveLength(freeAi);
+    expect((await prisma.user.findUniqueOrThrow({ where: { id } })).dailyAiCalls).toBe(freeAi);
   });
 
   it('other feature increments cannot wipe concurrent AI usage at rollover', async () => {
+    const freeAi = USAGE_LIMITS.FREE.ai_chat;
     await prisma.user.update({ where: { id }, data: { dailyAiCalls: 3, dailyCalculations: 9, lastResetAt: new Date(Date.now() - 86400000) } });
     const [results] = await Promise.all([
       Promise.all(Array.from({ length: 30 }, () => consumeAiCall(prismaQuotaStore, id))),
       Promise.all(Array.from({ length: 8 }, () => incrementUsage(id, 'calculation'))),
     ]);
     const user = await prisma.user.findUniqueOrThrow({ where: { id } });
-    expect(results.filter((r) => r.ok)).toHaveLength(3);
-    expect(user.dailyAiCalls).toBe(3);
+    expect(results.filter((r) => r.ok)).toHaveLength(freeAi);
+    expect(user.dailyAiCalls).toBe(freeAi);
     expect(user.dailyCalculations).toBe(8);
   });
 
