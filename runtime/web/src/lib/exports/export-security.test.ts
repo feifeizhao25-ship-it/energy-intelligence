@@ -115,6 +115,7 @@ test('zero generation remains zero in exported data', async () => {
 
 test('pages past the first batch and still exports every project', async () => {
     (getServerSession as jest.Mock).mockResolvedValue({ user: { id: 'owner' } });
+    (prisma.project.findMany as jest.Mock).mockClear();
     const rows = Array.from({ length: 201 }, (_, index) => ({
         id: `project-${String(index).padStart(3, '0')}`, name: `n${index}`, type: index % 2 ? 'SOLAR' : 'WIND',
         capacity: index, lng: 1, lat: 2, createdAt: new Date('2026-10-02'),

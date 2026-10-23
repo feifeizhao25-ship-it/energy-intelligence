@@ -36,6 +36,18 @@ async function push(stream: fs.WriteStream, text: string, failed: () => Error | 
     return chunk.length;
 }
 
+async function discardStream(stream: fs.WriteStream | undefined, partialPath: string) {
+    if (stream && !stream.closed) {
+        await new Promise<void>((resolve) => {
+            stream.once('close', () => resolve());
+            if (!stream.destroyed) stream.destroy();
+        });
+    }
+    await fs.promises.unlink(partialPath).catch((error: NodeJS.ErrnoException) => {
+        if (error.code !== 'ENOENT') throw error;
+    });
+}
+
 /** 按行写入临时文件，不把整份导出让进内存。失败时删除半成品。 */
 export async function writeTabularExport(options: {
     format: 'csv' | 'json';
@@ -87,8 +99,7 @@ export async function writeTabularExport(options: {
         await finished(stream);
         return { partialPath, bytes, records, sample };
     } catch (error) {
-        stream?.destroy();
-        await fs.promises.unlink(partialPath).catch(() => undefined);
+        await discardStream(stream, partialPath);
         throw error;
     }
 }
