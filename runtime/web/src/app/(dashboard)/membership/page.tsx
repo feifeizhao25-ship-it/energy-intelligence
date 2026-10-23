@@ -120,6 +120,8 @@ export default function MembershipCenterPage() {
                     {paymentsError && <p role="alert" className="mt-4 text-red-300">{paymentsError}</p>}
                     {member.paymentPagination?.nextCursor && <button type="button" onClick={loadMorePayments} disabled={paymentsLoading} className="mt-4 rounded-lg border border-slate-600 px-4 py-2 disabled:opacity-50">{paymentsLoading ? '正在加载付款记录…' : '加载更多付款记录'}</button>}
                 </section>
+
+                <BillingActions member={member} onChanged={() => setAttempt(value => value + 1)} />
             </div>
         </main>
     );
@@ -130,6 +132,38 @@ function State({ message, error = false, onRetry }: { message: string; error?: b
         <div role={error ? 'alert' : 'status'} className="flex items-center gap-3">{error ? <AlertCircle className="text-red-400 shrink-0" /> : <Loader2 className="animate-spin text-blue-400" />}<span>{message}</span></div>
         {onRetry && <div className="flex flex-wrap items-center gap-5"><button type="button" onClick={onRetry} className="rounded-lg bg-indigo-600 px-5 py-3">重新加载会员信息</button><Link href="/login?callbackUrl=%2Fmembership" className="text-indigo-300 underline">重新登录</Link></div>}
     </div></main>;
+}
+function BillingActions({ member, onChanged }: { member: Member; onChanged: () => void }) {
+    const [message, setMessage] = useState('');
+    const [pending, setPending] = useState('');
+    const expiry = member.planExpireAt ? new Date(member.planExpireAt) : null;
+    const active = member.plan !== Plan.FREE && expiry !== null && expiry.getTime() > Date.now() && member.plan === member.effectivePlan;
+    const targets = (Object.keys(PLAN_DETAILS) as Plan[]).filter(plan => {
+        const rank = [Plan.FREE, Plan.PRO, Plan.MAINTENANCE, Plan.FULL, Plan.TEAM, Plan.ENTERPRISE];
+        return plan !== Plan.MAINTENANCE && rank.indexOf(plan) >= 0 && rank.indexOf(plan) < rank.indexOf(member.plan);
+    });
+    async function run(key: string, url: string, body: unknown) {
+        setPending(key); setMessage('');
+        try {
+            const response = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(data.message || '操作没有完成，请稍后再试');
+            if (data.refundCny) setMessage(`测算应退 ¥${data.refundCny}（实付 ¥${data.paidCny}，剩余 ${data.remainingDays} 天）。这只是测算，不会自动退款。`);
+            else setMessage(data.message || '已登记');
+            onChanged();
+        } catch (reason) {
+            setMessage(reason instanceof Error ? reason.message : '操作没有完成，请稍后再试');
+        } finally { setPending(''); }
+    }
+    const payments = (member.subscription?.payments || []).filter(payment => payment.orderNo);
+    return <section className="rounded-2xl bg-slate-900 border border-slate-800 p-6 space-y-4">
+        <h3 className="text-xl font-bold">续费、降级与退款测算</h3>
+        <p className="text-sm text-slate-400">续费请到价格页购买同一方案，未到期从现到期日顺延一年。降级到期后才生效，不退差价。退款只根据已支付订单测算，财务在支付宝后台人工办理。</p>
+        {member.subscription?.scheduledPlan && <p className="text-amber-100">已登记到期后改为 {PLAN_DETAILS[member.subscription.scheduledPlan as Plan]?.name || member.subscription.scheduledPlan}。</p>}
+        {active && <div className="flex flex-wrap gap-3">{targets.map(plan => <button key={plan} type="button" disabled={pending !== ''} onClick={() => run(plan, '/api/membership/downgrade', { plan })} className="rounded-lg border border-slate-600 px-4 py-2 disabled:opacity-50">{pending === plan ? '正在登记…' : `到期后改为${PLAN_DETAILS[plan].name}`}</button>)}</div>}
+        {payments.length > 0 && <div className="flex flex-wrap gap-3">{payments.map(payment => <button key={payment.id} type="button" disabled={pending !== ''} onClick={() => run(payment.id, '/api/membership/refund/quote', { orderNo: payment.orderNo })} className="rounded-lg border border-slate-600 px-4 py-2 disabled:opacity-50">{pending === payment.id ? '正在测算…' : `测算订单 ${payment.orderNo} 的退款`}</button>)}</div>}
+        {message && <p role="status" className="text-slate-200">{message}</p>}
+    </section>;
 }
 function formatLimit(limit: number) { return limit === Infinity ? '不限量' : `最多 ${limit} 次`; }
 function Usage({ label, value, limit }: { label: string; value: number; limit: number }) {

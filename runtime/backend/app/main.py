@@ -6,6 +6,7 @@ FastAPI 应用入口（恢复重建版）。
 （tests/test_redlines.py）的契约为准。
 """
 
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 
@@ -68,16 +69,50 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     )
 
 
+async def _probe_database() -> str:
+    try:
+        from sqlalchemy import text
+        from app.database import engine
+
+        async with engine.connect() as conn:
+            await conn.execute(text("SELECT 1"))
+        return "ok"
+    except Exception:
+        logger.warning("健康检查无法连接数据库", exc_info=True)
+        return "unavailable"
+
+
+async def _probe_redis() -> str:
+    try:
+        from app.redis_client import _MemoryRedis, redis_client
+
+        if isinstance(redis_client, _MemoryRedis):
+            return "memory" if settings.ENVIRONMENT != "production" else "unavailable"
+        pong = await asyncio.wait_for(redis_client.ping(), timeout=1)
+        if pong in (True, "PONG", b"PONG"):
+            return "ok"
+        return "unavailable"
+    except Exception:
+        logger.warning("健康检查无法连接 Redis", exc_info=True)
+        return "unavailable"
+
+
 @app.get("/health")
 async def health():
-    """健康检查。设置 SKILLS_MIN_COUNT 时，已加载技能数不足则返回 503（部署自检/回滚用）。"""
+    """健康检查。生产环境必须同时连上数据库和 Redis；技能数量不足时也返回 503。"""
     import os
 
     body = {
         "status": "ok",
         "version": app.version,
         "environment": getattr(settings, "ENVIRONMENT", "development"),
+        "database": await _probe_database(),
+        "redis": await _probe_redis(),
     }
+    if body["database"] != "ok" or (settings.ENVIRONMENT == "production" and body["redis"] != "ok"):
+        body["status"] = "degraded"
+        body["detail"] = "数据库或 Redis 不可用"
+        return JSONResponse(status_code=503, content=body)
     min_skills = os.getenv("SKILLS_MIN_COUNT", "").strip()
     if min_skills.isdigit():
         from app.skills.registry import get_registry

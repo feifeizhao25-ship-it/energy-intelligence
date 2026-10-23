@@ -26,12 +26,44 @@ async def test_renewal_quote_uses_purchased_plan_even_after_expiry(client, auth_
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize('amount', ['NaN', 'Infinity', 'invalid', '1.001'])
-async def test_invalid_refund_amount_is_http_400(client, auth_headers, amount):
-    response = await client.post('/api/v1/billing/refund/quote', headers=auth_headers,
-        json={'paid_amount_cny': amount, 'period_start': '2026-01-01T00:00:00', 'period_end': '2027-01-01T00:00:00Z'})
-    assert response.status_code == 400, response.text
-    assert '金额' in response.json()['detail']
+@pytest.mark.parametrize('body', [
+    {'paid_amount_cny': '99999.00', 'order_no': 'ENE1'},
+    {'order_no': 'ENE1', 'period_start': '2026-01-01T00:00:00', 'period_end': '2027-01-01T00:00:00Z'},
+])
+async def test_refund_quote_rejects_client_supplied_amounts(client, auth_headers, body):
+    response = await client.post('/api/v1/billing/refund/quote', headers=auth_headers, json=body)
+    assert response.status_code == 422, response.text
+
+
+@pytest.mark.asyncio
+async def test_refund_quote_uses_the_callers_paid_order(client, auth_headers, db_session):
+    from datetime import datetime, timezone, timedelta
+    from decimal import Decimal
+    from uuid import uuid4
+    from app.models.payment_order import PaymentOrder
+    user = (await db_session.execute(select(User))).scalar_one()
+    start = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    order = PaymentOrder(
+        id=str(uuid4()), order_no='ENE-OWN', user_id=user.id, provider='alipay', plan='pro',
+        billing_period='yearly', amount_cny=Decimal('365.00'), status='paid',
+        period_start=start, period_end=start + timedelta(days=365),
+    )
+    other = User(id=str(uuid4()), phone='13900001111', password_hash='x', name='其他人', role='user', market='cn')
+    foreign = PaymentOrder(
+        id=str(uuid4()), order_no='ENE-OTHER', user_id=other.id, provider='alipay', plan='pro',
+        billing_period='yearly', amount_cny=Decimal('1980.00'), status='paid',
+        period_start=start, period_end=start + timedelta(days=365),
+    )
+    db_session.add(other)
+    await db_session.flush()
+    db_session.add_all([order, foreign])
+    await db_session.commit()
+    quoted = await client.post('/api/v1/billing/refund/quote', headers=auth_headers, json={'order_no': 'ENE-OWN'})
+    assert quoted.status_code == 200, quoted.text
+    body = quoted.json()
+    assert body['paid_cny'] == '365.00' and body['status'] == 'quote_only' and body['order_no'] == 'ENE-OWN'
+    hidden = await client.post('/api/v1/billing/refund/quote', headers=auth_headers, json={'order_no': 'ENE-OTHER'})
+    assert hidden.status_code == 404
 
 
 @pytest.mark.asyncio
@@ -50,7 +82,7 @@ async def test_downgrade_persists_intent_without_changing_plan(client, auth_head
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize('path,body', [('renewal/quote', {}), ('downgrade', {'plan': 'free'}), ('refund/quote', {'paid_amount_cny':'1', 'period_start':'2026-01-01', 'period_end':'2027-01-01'})])
+@pytest.mark.parametrize('path,body', [('renewal/quote', {}), ('downgrade', {'plan': 'free'}), ('refund/quote', {'order_no': 'ENE1'})])
 async def test_billing_rule_routes_require_login(client, path, body):
     response = await client.post('/api/v1/billing/' + path, json=body)
     assert response.status_code in (401, 403)

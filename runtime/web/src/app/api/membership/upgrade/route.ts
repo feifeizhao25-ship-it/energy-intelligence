@@ -31,7 +31,7 @@ export async function POST(request: Request) {
         if (activePaid && current.plan !== plan) {
             return NextResponse.json({
                 success: false, error: 'PLAN_CHANGE_NOT_SUPPORTED',
-                message: `当前${current.plan}会员有效期至 ${shanghaiDate(current.planExpireAt!)}，有效期内暂不支持更换方案；到期后可购买其他方案，或联系客服办理升级`,
+                message: `当前会员有效期至 ${shanghaiDate(current.planExpireAt!)}。续费请购买同一方案；降级请在会员中心登记，到期后生效、不退差价。升级差价规则尚未定稿，请联系客服`,
             }, { status: 409 });
         }
         const amount = canonicalPrice(plan, billingPeriod);

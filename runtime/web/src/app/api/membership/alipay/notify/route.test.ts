@@ -75,6 +75,8 @@ describe('支付宝异步通知', () => {
     expect(res.status).toBe(200);
     expect(await res.text()).toBe('success');
     expect(db.payments[0]).toMatchObject({ status: 'completed', transactionId: 'T1' });
+    expect(db.payments[0].serviceStart).toBeInstanceOf(Date);
+    expect(db.payments[0].serviceEnd.getTime()).toBeGreaterThan(db.payments[0].serviceStart.getTime());
     expect(db.users[0].plan).toBe('PRO');
     expect(new Date(db.users[0].planExpireAt).getTime()).toBeGreaterThan(Date.now() + 27 * 86400e3);
   });

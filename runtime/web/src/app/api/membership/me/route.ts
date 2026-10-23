@@ -36,10 +36,11 @@ export async function GET(request?: Request) {
             subscription: {
                 select: {
                     status: true, endDate: true, autoRenew: true,
+                    scheduledPlan: true, scheduledFromPlan: true, scheduledEffectiveAt: true,
                     payments: {
                         where: { status: 'completed', ...boundary }, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
                         skip: rawCursor === null ? (page - 1) * pageSize : 0, take: pageSize + 1,
-                        select: { id: true, amount: true, currency: true, paymentMethod: true, description: true, paidAt: true, createdAt: true },
+                        select: { id: true, orderNo: true, amount: true, currency: true, paymentMethod: true, description: true, paidAt: true, createdAt: true },
                     },
                 },
             },
