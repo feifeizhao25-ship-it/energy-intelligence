@@ -9,6 +9,8 @@ from app.utils.financial_utils import (
     calc_lcoe,
     calc_optimal_cleaning_interval,
     build_solar_cashflows,
+    build_wind_cashflows,
+    min_solar_dscr,
 )
 
 
@@ -167,6 +169,52 @@ class TestSolarCashflows:
         )
         irr = calc_irr(cashflows)
         assert irr is not None and irr > 0, f"Expected positive IRR, got {irr}"
+
+
+def test_principal_repayment_is_not_income():
+    """零电价、零成本、零税、零利息时，还本是现金流出，不能把项目算成正现金流。"""
+    cashflows = build_solar_cashflows(
+        capacity_mw=1, capex_per_w=1, opex_per_kw_yr=0, electricity_price=0,
+        itc_rate=0, capacity_factor=0.2, degradation_rate=0, debt_ratio=0.5,
+        interest_rate=0, tax_rate=0, project_life=2,
+    )
+    assert cashflows == [-500_000, -250_000, -250_000]
+
+
+def test_dscr_is_computed_and_omitted_without_debt():
+    kwargs = dict(
+        capacity_mw=10, capex_per_w=1, opex_per_kw_yr=10, electricity_price=40,
+        itc_rate=0, capacity_factor=0.2, degradation_rate=0, debt_ratio=0.5,
+        interest_rate=0.05, tax_rate=0, project_life=5,
+    )
+    covered = min_solar_dscr(**kwargs)
+    assert covered is not None and covered != 1.35 and covered != 1.5
+    assert min_solar_dscr(**{**kwargs, "debt_ratio": 0}) is None
+
+
+def test_wind_cashflow_repays_principal_instead_of_dividing_by_equity():
+    kwargs = dict(
+        capacity_mw=10, capex_per_kw=1000, opex_per_kw_yr=0, electricity_price=0,
+        wind_capacity_factor=0.35, debt_ratio=0.5, interest_rate=0, tax_rate=0, project_life=2,
+    )
+    cashflows = build_wind_cashflows(**kwargs)
+    assert cashflows[0] < 0
+    assert all(year < 0 for year in cashflows[1:])
+    equity = 10 * 1000 * 1000 * 0.5
+    assert cashflows != [-equity, 0, 0]
+
+
+def test_sensitivity_is_not_a_fixed_fraction_of_irr():
+    kwargs = dict(
+        capacity_mw=10, capex_per_w=0.8, opex_per_kw_yr=12, electricity_price=50,
+        itc_rate=0.3, capacity_factor=0.22, degradation_rate=0.005, debt_ratio=0.6,
+        interest_rate=0.05, tax_rate=0.2, project_life=10,
+    )
+    base = calc_irr(build_solar_cashflows(**kwargs))
+    higher_capex = calc_irr(build_solar_cashflows(**{**kwargs, "capex_per_w": kwargs["capex_per_w"] * 1.1}))
+    assert base is not None and higher_capex is not None
+    assert higher_capex != round(base * 0.88, 2)
+    assert higher_capex < base
 
 
 # ── Integration: finance endpoint ─────────────────────────────────────────────

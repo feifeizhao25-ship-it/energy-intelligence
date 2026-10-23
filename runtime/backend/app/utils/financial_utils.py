@@ -91,6 +91,51 @@ def calc_optimal_cleaning_interval(
     return max(1, round(days))
 
 
+def _solar_projection(
+    capacity_mw: float,
+    capex_per_w: float,
+    opex_per_kw_yr: float,
+    electricity_price: float,
+    itc_rate: float,
+    capacity_factor: float,
+    degradation_rate: float,
+    debt_ratio: float,
+    interest_rate: float,
+    tax_rate: float,
+    project_life: int,
+) -> tuple:
+    """Equity cashflows plus each year's debt-service coverage. No debt → coverage is empty."""
+    capex = capacity_mw * 1_000_000 * capex_per_w  # USD
+    equity = capex * (1 - debt_ratio)
+    debt = capex * debt_ratio
+    annual_gen = capacity_mw * 1000 * 8760 * capacity_factor  # kWh/yr
+
+    cashflows = [-equity]  # year 0: equity investment
+    coverages: List[float] = []
+    debt_balance = debt
+    for yr in range(1, project_life + 1):
+        generation = annual_gen * (1 - degradation_rate) ** (yr - 1)
+        revenue = generation * electricity_price / 1000  # USD
+        opex = capacity_mw * 1000 * opex_per_kw_yr  # USD
+        interest = debt_balance * interest_rate
+        principal = debt / project_life
+        ebitda = revenue - opex
+        ebt_d = ebitda - interest
+        itc_benefit = capex * itc_rate if yr == 1 else 0
+        tax = max(0, ebt_d * tax_rate) - itc_benefit
+        net_income = ebt_d - tax
+        # Equity cash flow: principal repayment is a financing outflow, not income.
+        # (No depreciation is modelled here, so there is no non-cash add-back.)
+        cashflow = net_income - principal
+        cashflows.append(cashflow)
+        service = interest + principal
+        if service > 0:
+            coverages.append((ebitda - tax) / service)
+        debt_balance = max(0, debt_balance - principal)
+
+    return cashflows, coverages
+
+
 def build_solar_cashflows(
     capacity_mw: float,
     capex_per_w: float,
@@ -105,28 +150,43 @@ def build_solar_cashflows(
     project_life: int,
 ) -> List[float]:
     """Build annual equity cashflows for a solar project (USD)."""
-    capex = capacity_mw * 1_000_000 * capex_per_w  # USD
-    equity = capex * (1 - debt_ratio)
-    debt = capex * debt_ratio
-    annual_gen = capacity_mw * 1000 * 8760 * capacity_factor  # kWh/yr
-
-    cashflows = [-equity]  # year 0: equity investment
-    debt_balance = debt
-    for yr in range(1, project_life + 1):
-        generation = annual_gen * (1 - degradation_rate) ** (yr - 1)
-        revenue = generation * electricity_price / 1000  # USD
-        opex = capacity_mw * 1000 * opex_per_kw_yr  # USD
-        interest = debt_balance * interest_rate
-        principal = debt / project_life
-        ebitda = revenue - opex
-        ebt = ebt_d = ebitda - interest
-        itc_benefit = capex * itc_rate if yr == 1 else 0
-        tax = max(0, ebt_d * tax_rate) - itc_benefit
-        net_income = ebt_d - tax
-        # Equity cash flow: principal repayment is a financing outflow, not income.
-        # (No depreciation is modelled here, so there is no non-cash add-back.)
-        cashflow = net_income - principal
-        cashflows.append(cashflow)
-        debt_balance = max(0, debt_balance - principal)
-
+    cashflows, _coverages = _solar_projection(
+        capacity_mw, capex_per_w, opex_per_kw_yr, electricity_price, itc_rate,
+        capacity_factor, degradation_rate, debt_ratio, interest_rate, tax_rate, project_life,
+    )
     return cashflows
+
+
+def min_solar_dscr(**kwargs) -> Optional[float]:
+    """最低偿债覆盖倍数。没有借款时没有这一指标，返回 None，不用固定数代替。"""
+    _cashflows, coverages = _solar_projection(**kwargs)
+    if not coverages:
+        return None
+    return round(min(coverages), 4)
+
+
+def build_wind_cashflows(
+    capacity_mw: float,
+    capex_per_kw: float,
+    opex_per_kw_yr: float,
+    electricity_price: float,
+    wind_capacity_factor: float,
+    debt_ratio: float,
+    interest_rate: float,
+    tax_rate: float,
+    project_life: int,
+) -> List[float]:
+    """Wind equity cashflows. Capex is USD/kW; loan principal and interest are outflows."""
+    return build_solar_cashflows(
+        capacity_mw=capacity_mw,
+        capex_per_w=capex_per_kw / 1000,
+        opex_per_kw_yr=opex_per_kw_yr,
+        electricity_price=electricity_price,
+        itc_rate=0,
+        capacity_factor=wind_capacity_factor,
+        degradation_rate=0,
+        debt_ratio=debt_ratio,
+        interest_rate=interest_rate,
+        tax_rate=tax_rate,
+        project_life=project_life,
+    )

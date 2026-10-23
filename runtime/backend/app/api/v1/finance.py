@@ -6,7 +6,9 @@ from app.schemas.finance import (
     SolarFinanceRequest, WindFinanceRequest, FinancialModelResponse,
     StorageFinanceRequest, StorageFinanceResponse,
 )
-from app.utils.financial_utils import calc_irr, calc_npv, calc_lcoe, build_solar_cashflows
+from app.utils.financial_utils import (
+    calc_irr, calc_npv, calc_lcoe, build_solar_cashflows, build_wind_cashflows, min_solar_dscr,
+)
 from app.core.dependencies import get_current_user_id
 from app.core.database import get_db
 
@@ -109,11 +111,26 @@ async def solar_finance(
         lcoe=lcoe,
         payback_years=float(payback),
         equity_irr=irr,
-        dscr_min=1.35,
+        dscr_min=min_solar_dscr(
+            capacity_mw=body.capacity_mw, capex_per_w=body.capex_per_w, opex_per_kw_yr=body.opex_per_kw_yr,
+            electricity_price=body.electricity_price, itc_rate=body.itc_rate, capacity_factor=body.capacity_factor,
+            degradation_rate=body.degradation_rate, debt_ratio=body.debt_ratio, interest_rate=body.interest_rate,
+            tax_rate=body.tax_rate, project_life=body.project_life,
+        ),
         cashflows=cashflows[1:],
         sensitivity={
-            "capex_+10pct_irr": round(irr * 0.88, 2),
-            "price_-10pct_irr": round(irr * 0.85, 2),
+            "capex_+10pct_irr": calc_irr(build_solar_cashflows(
+                capacity_mw=body.capacity_mw, capex_per_w=body.capex_per_w * 1.1, opex_per_kw_yr=body.opex_per_kw_yr,
+                electricity_price=body.electricity_price, itc_rate=body.itc_rate, capacity_factor=body.capacity_factor,
+                degradation_rate=body.degradation_rate, debt_ratio=body.debt_ratio, interest_rate=body.interest_rate,
+                tax_rate=body.tax_rate, project_life=body.project_life,
+            )),
+            "price_-10pct_irr": calc_irr(build_solar_cashflows(
+                capacity_mw=body.capacity_mw, capex_per_w=body.capex_per_w, opex_per_kw_yr=body.opex_per_kw_yr,
+                electricity_price=body.electricity_price * 0.9, itc_rate=body.itc_rate, capacity_factor=body.capacity_factor,
+                degradation_rate=body.degradation_rate, debt_ratio=body.debt_ratio, interest_rate=body.interest_rate,
+                tax_rate=body.tax_rate, project_life=body.project_life,
+            )),
         },
     )
 
@@ -124,43 +141,39 @@ async def wind_finance(
     user_id: str = Depends(get_current_user_id),
 ):
     """Calculate financial metrics for wind project."""
-    capex = body.capacity_mw * 1000 * body.capex_per_kw  # USD
-    annual_gen = body.capacity_mw * 1000 * 8760 * body.wind_capacity_factor  # kWh/yr
-    equity = capex * (1 - body.debt_ratio)
-    annual_revenue = annual_gen * body.electricity_price / 1000  # USD
-    annual_opex = body.capacity_mw * 1000 * body.opex_per_kw_yr  # USD
-    annual_cashflow = annual_revenue - annual_opex  # USD
-
-    # Simple payback
-    payback = capex / annual_cashflow if annual_cashflow > 0 else 99
-
-    # NPV (simplified, 8% discount)
-    npv = sum(
-        annual_cashflow / (1.08 ** yr) for yr in range(1, body.project_life + 1)
-    ) - equity
-    npv = round(npv, 2)
-
-    # LCOE
-    pv_energy = sum(
-        annual_gen / (1.08 ** yr) for yr in range(1, body.project_life + 1)
+    wind_kwargs = dict(
+        capacity_mw=body.capacity_mw, capex_per_kw=body.capex_per_kw, opex_per_kw_yr=body.opex_per_kw_yr,
+        electricity_price=body.electricity_price, wind_capacity_factor=body.wind_capacity_factor,
+        debt_ratio=body.debt_ratio, interest_rate=body.interest_rate, tax_rate=body.tax_rate,
+        project_life=body.project_life,
     )
-    lcoe = round((capex + annual_opex * body.project_life) / pv_energy, 4) if pv_energy > 0 else 0.0
-
-    # IRR (simplified approximation)
-    irr = round((annual_cashflow / equity) * 100, 2) if equity > 0 else 0.0
-
-    cashflows = [-equity] + [annual_cashflow] * body.project_life
+    cashflows = build_wind_cashflows(**wind_kwargs)
+    irr = calc_irr(cashflows)
+    npv = calc_npv(0.08, cashflows)
+    annual_gen = body.capacity_mw * 1000 * 8760 * body.wind_capacity_factor
+    capex_total = body.capacity_mw * 1000 * body.capex_per_kw
+    opex_total = body.capacity_mw * 1000 * body.opex_per_kw_yr
+    lcoe = calc_lcoe(
+        capex_total, opex_total, annual_gen,
+        degradation_rate=0, project_life=body.project_life,
+    )
+    payback = next((i for i, cf in enumerate(cashflows) if sum(cashflows[:i + 1]) > 0), 99)
     return FinancialModelResponse(
         irr=irr,
         npv=npv,
         lcoe=lcoe,
-        payback_years=min(round(payback, 1), 99.0),
+        payback_years=float(payback),
         equity_irr=irr,
-        dscr_min=1.5,
+        dscr_min=min_solar_dscr(
+            capacity_mw=body.capacity_mw, capex_per_w=body.capex_per_kw / 1000, opex_per_kw_yr=body.opex_per_kw_yr,
+            electricity_price=body.electricity_price, itc_rate=0, capacity_factor=body.wind_capacity_factor,
+            degradation_rate=0, debt_ratio=body.debt_ratio, interest_rate=body.interest_rate,
+            tax_rate=body.tax_rate, project_life=body.project_life,
+        ),
         cashflows=cashflows[1:],
         sensitivity={
-            "capex_+10pct_irr": round(irr * 0.88, 2),
-            "price_-10pct_irr": round(irr * 0.82, 2),
+            "capex_+10pct_irr": calc_irr(build_wind_cashflows(**{**wind_kwargs, "capex_per_kw": body.capex_per_kw * 1.1})),
+            "price_-10pct_irr": calc_irr(build_wind_cashflows(**{**wind_kwargs, "electricity_price": body.electricity_price * 0.9})),
         },
     )
 
@@ -205,35 +218,40 @@ async def compare_scenarios(
             results.append({
                 "scenario_id": i + 1,
                 "name": scenario.get("name", f"Scenario {i+1}"),
-                "irr": round(irr, 2),
+                "irr": None if irr is None else round(irr, 2),
                 "npv": round(npv, 2),
                 "lcoe": round(lcoe, 4),
                 "payback_years": round(payback, 1),
             })
         else:
             req = WindFinanceRequest(**scenario)
-            capex = req.capacity_mw * 1000 * req.capex_per_kw
+            cashflows = build_wind_cashflows(
+                capacity_mw=req.capacity_mw, capex_per_kw=req.capex_per_kw, opex_per_kw_yr=req.opex_per_kw_yr,
+                electricity_price=req.electricity_price, wind_capacity_factor=req.wind_capacity_factor,
+                debt_ratio=req.debt_ratio, interest_rate=req.interest_rate, tax_rate=req.tax_rate,
+                project_life=req.project_life,
+            )
+            irr = calc_irr(cashflows)
+            npv = calc_npv(0.08, cashflows)
             annual_gen = req.capacity_mw * 1000 * 8760 * req.wind_capacity_factor
-            equity = capex * (1 - req.debt_ratio)
-            annual_revenue = annual_gen * req.electricity_price / 1000
-            annual_opex = req.capacity_mw * 1000 * req.opex_per_kw_yr
-            annual_cashflow = annual_revenue - annual_opex
-            payback = capex / annual_cashflow if annual_cashflow > 0 else 99
-            npv = round(sum(annual_cashflow / (1.08 ** yr) for yr in range(1, req.project_life + 1)) - equity, 2)
-            pv_energy = sum(annual_gen / (1.08 ** yr) for yr in range(1, req.project_life + 1))
-            lcoe = round((capex + annual_opex * req.project_life) / pv_energy, 4) if pv_energy > 0 else 0.0
-            irr = round((annual_cashflow / equity) * 100, 2) if equity > 0 else 0.0
+            capex_total = req.capacity_mw * 1000 * req.capex_per_kw
+            opex_total = req.capacity_mw * 1000 * req.opex_per_kw_yr
+            lcoe = calc_lcoe(
+                capex_total, opex_total, annual_gen,
+                degradation_rate=0, project_life=req.project_life,
+            )
+            payback = next((j for j, cf in enumerate(cashflows) if sum(cashflows[:j+1]) > 0), 99)
             results.append({
                 "scenario_id": i + 1,
                 "name": scenario.get("name", f"Scenario {i+1}"),
-                "irr": irr,
-                "npv": npv,
-                "lcoe": lcoe,
-                "payback_years": round(min(payback, 99), 1),
+                "irr": None if irr is None else round(irr, 2),
+                "npv": round(npv, 2),
+                "lcoe": round(lcoe, 4),
+                "payback_years": round(payback, 1),
             })
 
-    # Sort by IRR descending
-    results.sort(key=lambda x: x["irr"], reverse=True)
+    # Sort by IRR descending; scenarios without a unique IRR stay last.
+    results.sort(key=lambda x: (x["irr"] is not None, x["irr"] or 0), reverse=True)
     return {"comparison": results, "best": results[0]["name"] if results else None}
 
 
