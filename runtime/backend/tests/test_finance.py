@@ -206,9 +206,9 @@ def test_wind_cashflow_repays_principal_instead_of_dividing_by_equity():
 
 def test_sensitivity_is_not_a_fixed_fraction_of_irr():
     kwargs = dict(
-        capacity_mw=10, capex_per_w=0.8, opex_per_kw_yr=12, electricity_price=50,
-        itc_rate=0.3, capacity_factor=0.22, degradation_rate=0.005, debt_ratio=0.6,
-        interest_rate=0.05, tax_rate=0.2, project_life=10,
+        capacity_mw=50, capex_per_w=0.85, opex_per_kw_yr=12, electricity_price=60,
+        itc_rate=0.3, capacity_factor=0.25, degradation_rate=0.005, debt_ratio=0.7,
+        interest_rate=0.055, tax_rate=0.21, project_life=25,
     )
     base = calc_irr(build_solar_cashflows(**kwargs))
     higher_capex = calc_irr(build_solar_cashflows(**{**kwargs, "capex_per_w": kwargs["capex_per_w"] * 1.1}))
