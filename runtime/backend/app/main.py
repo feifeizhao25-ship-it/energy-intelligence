@@ -27,11 +27,23 @@ async def lifespan(app: FastAPI):
         await init_db()
     except Exception as exc:  # 数据库未就绪时不阻断进程启动（健康检查仍可用）
         logger.warning("init_db 失败（数据库未就绪？）: %s", exc)
-    yield
     try:
-        await close_db()
-    except Exception:
-        pass
+        yield
+    finally:
+        # Close on the application's event loop, before the server closes it.
+        # A Redis shutdown failure must not prevent database cleanup.
+        from app.redis_client import redis_client
+
+        try:
+            close = getattr(redis_client, "aclose", None) or redis_client.close
+            await close()
+        except Exception:
+            logger.warning("Redis 连接关闭失败", exc_info=True)
+        finally:
+            try:
+                await close_db()
+            except Exception:
+                logger.warning("数据库连接关闭失败", exc_info=True)
 
 
 app = FastAPI(

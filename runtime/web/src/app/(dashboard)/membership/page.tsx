@@ -136,6 +136,7 @@ function State({ message, error = false, onRetry }: { message: string; error?: b
 function BillingActions({ member, onChanged }: { member: Member; onChanged: () => void }) {
     const [message, setMessage] = useState('');
     const [pending, setPending] = useState('');
+    const [selectedPaymentId, setSelectedPaymentId] = useState('');
     const expiry = member.planExpireAt ? new Date(member.planExpireAt) : null;
     const active = member.plan !== Plan.FREE && expiry !== null && expiry.getTime() > Date.now() && member.plan === member.effectivePlan;
     const targets = (Object.keys(PLAN_DETAILS) as Plan[]).filter(plan => {
@@ -150,18 +151,33 @@ function BillingActions({ member, onChanged }: { member: Member; onChanged: () =
             if (!response.ok) throw new Error(data.message || '操作没有完成，请稍后再试');
             if (data.refundCny) setMessage(`测算应退 ¥${data.refundCny}（实付 ¥${data.paidCny}，剩余 ${data.remainingDays} 天）。这只是测算，不会自动退款。`);
             else setMessage(data.message || '已登记');
-            onChanged();
+            if (url === '/api/membership/downgrade') onChanged();
         } catch (reason) {
             setMessage(reason instanceof Error ? reason.message : '操作没有完成，请稍后再试');
         } finally { setPending(''); }
     }
     const payments = (member.subscription?.payments || []).filter(payment => payment.orderNo);
+    const selectedPayment = payments.find(payment => payment.id === selectedPaymentId) || payments[0];
     return <section className="rounded-2xl bg-slate-900 border border-slate-800 p-6 space-y-4">
         <h3 className="text-xl font-bold">续费、降级与退款测算</h3>
         <p className="text-sm text-slate-400">续费请到价格页购买同一方案，未到期从现到期日顺延一年。降级到期后才生效，不退差价。退款只根据已支付订单测算，财务在支付宝后台人工办理。</p>
         {member.subscription?.scheduledPlan && <p className="text-amber-100">已登记到期后改为 {PLAN_DETAILS[member.subscription.scheduledPlan as Plan]?.name || member.subscription.scheduledPlan}。</p>}
         {active && <div className="flex flex-wrap gap-3">{targets.map(plan => <button key={plan} type="button" disabled={pending !== ''} onClick={() => run(plan, '/api/membership/downgrade', { plan })} className="rounded-lg border border-slate-600 px-4 py-2 disabled:opacity-50">{pending === plan ? '正在登记…' : `到期后改为${PLAN_DETAILS[plan].name}`}</button>)}</div>}
-        {payments.length > 0 && <div className="flex flex-wrap gap-3">{payments.map(payment => <button key={payment.id} type="button" disabled={pending !== ''} onClick={() => run(payment.id, '/api/membership/refund/quote', { orderNo: payment.orderNo })} className="rounded-lg border border-slate-600 px-4 py-2 disabled:opacity-50">{pending === payment.id ? '正在测算…' : `测算订单 ${payment.orderNo} 的退款`}</button>)}</div>}
+        {selectedPayment && <div className="space-y-3 min-w-0">
+            <label htmlFor="refund-order" className="block text-sm font-medium">选择退款测算订单</label>
+            <select id="refund-order" value={selectedPayment.id} disabled={pending !== ''}
+                onChange={event => { setSelectedPaymentId(event.target.value); setMessage(''); }}
+                className="w-full min-w-0 rounded-lg border border-slate-600 bg-slate-950 px-3 py-3 text-white">
+                {payments.map(payment => <option key={payment.id} value={payment.id}>{payment.orderNo}</option>)}
+            </select>
+            <p className="text-sm text-slate-300 break-all">当前订单：{selectedPayment.orderNo}</p>
+            <p className="text-sm text-slate-400">可选择已加载的付款记录；更早订单请先在上方加载更多。没有完整服务周期的订单需要财务人工核对。</p>
+            <button type="button" disabled={pending !== ''}
+                onClick={() => run(selectedPayment.id, '/api/membership/refund/quote', { orderNo: selectedPayment.orderNo })}
+                className="rounded-lg border border-slate-600 px-4 py-2 disabled:opacity-50">
+                {pending === selectedPayment.id ? '正在测算…' : '测算所选订单退款'}
+            </button>
+        </div>}
         {message && <p role="status" className="text-slate-200">{message}</p>}
     </section>;
 }

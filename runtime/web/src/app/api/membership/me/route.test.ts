@@ -33,5 +33,5 @@ test.each(['0','-1','1.5','NaN','1000001'])('rejects invalid page %s without que
 });
 test('unauthenticated request never queries records',async()=>{
     session.mockResolvedValue(null);
-    expect((await GET()).status).toBe(401); expect(find).not.toHaveBeenCalled();
+    expect((await GET(new Request('http://localhost/api/membership/me'))).status).toBe(401); expect(find).not.toHaveBeenCalled();
 });

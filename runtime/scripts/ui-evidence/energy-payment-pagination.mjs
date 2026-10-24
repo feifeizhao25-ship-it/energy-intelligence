@@ -6,15 +6,19 @@ const {PrismaClient}=require('@prisma/client');
 const {chromium}=await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const base=process.env.UI_BASE_URL || 'http://127.0.0.1:3411';
 assert.equal(new URL(base).hostname,'127.0.0.1');
-const db=new PrismaClient({datasources:{db:{url:'postgresql://feifei00@127.0.0.1:5432/energy_integration_test'}}});
+const testDatabaseUrl=process.env.UI_TEST_DATABASE_URL || 'postgresql://feifei00@127.0.0.1:5432/energy_integration_test';
+const targetDatabase=new URL(testDatabaseUrl);
+assert.ok(['127.0.0.1','localhost'].includes(targetDatabase.hostname),'UI evidence requires a local test database');
+assert.ok(targetDatabase.pathname.endsWith('_test'),'UI evidence requires a database ending in _test');
+const db=new PrismaClient({datasources:{db:{url:testDatabaseUrl}}});
 const out=process.env.UI_OUTPUT || '/tmp/energy-payment-pagination'; fs.mkdirSync(out,{recursive:true});
 const id=`ui-pagination-${Date.now()}`, phone='19900009291';
-let browser; const evidence=[];
+let browser; const evidence=[], browserErrors=[];
 try {
  await db.user.create({data:{id,email:id+'@example.invalid',phone,name:'付款历史测试用户',plan:'PRO',profileCompleted:true}});
  const sub=await db.subscription.create({data:{userId:id,plan:'PRO',endDate:new Date('2027-01-01')}});
  const descriptions=Array.from({length:45},(_,i)=>`测试付款记录${String(i).padStart(2,'0')}：`+(i===44?'完整订单参考'+ 'ABCDEFGHIJ'.repeat(20):'专业会员订阅'));
- await db.payment.createMany({data:descriptions.map((description,i)=>({id:id+'-'+String(i).padStart(2,'0'),orderNo:id+'-'+i,userId:id,subscriptionId:sub.id,plan:'PRO',billingPeriod:'yearly',amount:'1980.50',status:'completed',description,createdAt:new Date('2026-10-01T16:30:00Z')}))});
+ await db.payment.createMany({data:descriptions.map((description,i)=>({id:id+'-'+String(i).padStart(2,'0'),orderNo:id+'-'+i,userId:id,subscriptionId:sub.id,plan:'PRO',billingPeriod:'yearly',amount:'1980.50',status:'completed',description,createdAt:new Date('2026-10-01T16:30:00Z'),...(i===0?{serviceStart:new Date(Date.now()-30*86400000),serviceEnd:new Date(Date.now()+335*86400000)}:{})}))});
  browser=await chromium.launch({headless:true,executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'});
  for(const width of [390,1440]) {
   await db.verificationCode.create({data:{phone,code:'284736',expiresAt:new Date(Date.now()+600000)}});
@@ -28,6 +32,8 @@ try {
    ['initial-expired',401,'{}'],
   ]) {
    const recovery=await ctx.newPage();let broken=true;
+   recovery.on('pageerror',error=>browserErrors.push(error.message));
+   recovery.on('console',msg=>{if(msg.type()==='error')browserErrors.push(msg.text());});
    await recovery.route('**/api/membership/me',async route=>{if(broken)await route.fulfill({status,body:payload});else await route.continue();});
    await recovery.goto(base+'/membership',{waitUntil:'networkidle'});
    await recovery.getByRole('button',{name:'重新加载会员信息',exact:true}).waitFor();
@@ -41,7 +47,7 @@ try {
    await recovery.close();
   }
   const page=await ctx.newPage(), apis=[], pending=[];
-  page.on('response',r=>{if(r.url().includes('/api/membership/me'))pending.push(r.text().then(body=>apis.push({url:r.url(),status:r.status(),body})));});
+  page.on('response',r=>{if(r.url().includes('/api/membership/me') || r.url().includes('/api/membership/refund/quote'))pending.push(r.text().then(body=>apis.push({url:r.url(),status:r.status(),body})));});
   await page.goto(base+'/membership',{waitUntil:'networkidle'});
   await page.getByRole('heading',{name:'会员中心',exact:true}).waitFor();
   const dismiss=page.getByRole('button',{name:'不再显示',exact:true}); if(await dismiss.isVisible())await dismiss.click();
@@ -56,6 +62,18 @@ try {
   await page.screenshot({path:`${out}/${width}-retry.png`,fullPage:true});
   for(const count of [40,45]) {await page.getByRole('button',{name:'加载更多付款记录',exact:true}).click();await page.waitForFunction(n=>document.querySelectorAll('main section strong').length===n,count);}
   assert.equal(await page.getByRole('button',{name:'加载更多付款记录',exact:true}).count(),0);
+  const orderSelect=page.getByLabel('选择退款测算订单', {exact:true});
+  assert.equal(await orderSelect.locator('option').count(),45);
+  assert.equal(await page.getByRole('button',{name:'测算所选订单退款',exact:true}).count(),1);
+  await orderSelect.selectOption(id+'-44');
+  await page.getByRole('button',{name:'测算所选订单退款',exact:true}).click();
+  await page.getByRole('status').filter({hasText:'请财务按支付渠道记录人工核对'}).waitFor();
+  await page.screenshot({path:`${out}/${width}-refund-manual-review.png`,fullPage:true});
+  await orderSelect.selectOption(id+'-00');
+  await page.getByRole('button',{name:'测算所选订单退款',exact:true}).click();
+  await page.getByRole('status').filter({hasText:'这只是测算，不会自动退款'}).waitFor();
+  assert.equal(await section.locator('strong').count(),45,'refund quote must preserve loaded history');
+  await page.locator('section').filter({has:page.getByRole('heading',{name:'续费、降级与退款测算',exact:true})}).screenshot({path:`${out}/${width}-refund-panel.png`});
   const body=await page.locator('body').innerText();
   for(const description of descriptions)assert.ok(body.includes(description),'missing complete description');
   const amount=await section.locator('strong').first().innerText();
@@ -64,12 +82,21 @@ try {
   await page.screenshot({path:`${out}/${width}-complete.png`,fullPage:true});
   fs.writeFileSync(`${out}/${width}.txt`,body); await Promise.all(pending);
   fs.writeFileSync(`${out}/${width}.api.json`,JSON.stringify(apis,null,2));
-  evidence.push({width,records:45,amount,date,overflow,completeDescriptions:true,retryPreservedRecords:true,initialRecoveryScenarios:4,kind:'real local browser/API/PostgreSQL; seeded payments; injected 503; no real payment'});
+  evidence.push({width,records:45,amount,date,overflow,completeDescriptions:true,refundQuotePreservedRecords:true,singleRefundAction:true,missingPeriodRejected:true,retryPreservedRecords:true,initialRecoveryScenarios:4,kind:'real local browser/API/PostgreSQL; seeded payments; injected 503; no real payment'});
   await ctx.close();
  }
  fs.writeFileSync(out+'/verification.json',JSON.stringify(evidence,null,2));
  for(const row of evidence){assert.equal(row.amount,'¥1,980.50');assert.equal(row.date,'2026/10/2（北京时间）');assert.equal(row.overflow,false);}
  console.log('PASS: both widths, 45 complete records, retry, amount, Shanghai date, no horizontal overflow');
+} catch(error) {
+ let index=0;
+ for(const ctx of browser?.contexts() || []) for(const page of ctx.pages()) {
+  await page.screenshot({path:`${out}/failure-${index}.png`,fullPage:true}).catch(()=>{});
+  fs.writeFileSync(`${out}/failure-${index}.txt`,await page.locator('body').innerText().catch(()=>''));
+  index++;
+ }
+ fs.writeFileSync(out+'/failure.json',JSON.stringify({error:String(error),browserErrors},null,2));
+ throw error;
 } finally {
  await browser?.close();
  await db.payment.deleteMany({where:{userId:id}});await db.subscription.deleteMany({where:{userId:id}});await db.user.deleteMany({where:{id}});await db.verificationCode.deleteMany({where:{phone}});await db.$disconnect();
