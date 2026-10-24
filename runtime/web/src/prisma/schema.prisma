@@ -124,6 +124,10 @@ model Subscription {
   autoRenew         Boolean            @default(false)
   trialEndsAt       DateTime? // 试用期结束时间
   cancelAtPeriodEnd Boolean            @default(false)
+  // 到期后要改成的续费档位。未到到期日不改变当前权益，也不退差价。
+  scheduledPlan        Plan?
+  scheduledFromPlan    Plan?
+  scheduledEffectiveAt DateTime?
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
 
@@ -149,6 +153,9 @@ model Payment {
   transactionId  String?   @unique
   description    String? // 支付描述
   paidAt         DateTime?
+  // 这笔付款实际覆盖的服务周期。退款测算只认这里，不接受调用方自报金额或日期。
+  serviceStart   DateTime?
+  serviceEnd     DateTime?
   createdAt      DateTime  @default(now())
 
   // 关联关系

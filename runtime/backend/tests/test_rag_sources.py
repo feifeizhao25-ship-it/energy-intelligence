@@ -196,9 +196,20 @@ def test_refresh_report_overdue_days():
         assert entry["needs_refetch"]
 
 
-def test_fetch_snapshot_is_a_stub():
-    with pytest.raises(NotImplementedError):
-        fetch_snapshot({"source_id": "std-gb50797"})
+def test_fetch_snapshot_does_not_overwrite_the_registry(tmp_path):
+    """快照只落盘。没有地址时不抓取，有注入内容时也不改注册表。"""
+    skipped = fetch_snapshot({"source_id": "std-gb50797"}, snapshot_dir=tmp_path)
+    assert skipped["status"] == "no_source_url"
+    assert list(tmp_path.iterdir()) == []
+    saved = fetch_snapshot(
+        {"source_id": "std-gb50797", "source_url": "https://example.invalid/policy"},
+        fetcher=lambda _url, _timeout: ("https://example.invalid/policy", 200, b"official text"),
+        snapshot_dir=tmp_path,
+    )
+    assert saved["status"] == "fetched_pending_review"
+    assert (tmp_path / "std-gb50797.snapshot").read_bytes() == b"official text"
+    from app.services.rag_sources import REGISTRY_PATH
+    assert b"official text" not in REGISTRY_PATH.read_bytes()
 
 
 def test_snapshot_sha256_stable():

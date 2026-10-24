@@ -116,6 +116,7 @@ async def test_verified_callback_activates_once(
     user = await db_session.get(User, order.user_id)
     await db_session.refresh(user)
     assert order.status == "paid"
+    assert order.period_start is not None and order.period_end > order.period_start
     assert user.subscription_plan == "full"
     assert user.usage_quota["scheduled_downgrade"]["status"] == "cancelled"
     assert user.usage_quota["used"] == 5

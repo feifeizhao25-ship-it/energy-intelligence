@@ -9,17 +9,17 @@ import { encodePaymentCursor, paymentBoundary } from '@/lib/membership/payment-c
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request?: Request) {
+export async function GET(request: Request) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
         return NextResponse.json({ success: false, error: 'UNAUTHORIZED', message: '请先登录' }, { status: 401 });
     }
 
-    const rawPage = request ? new URL(request.url).searchParams.get('paymentPage') ?? '1' : '1';
+    const rawPage = new URL(request.url).searchParams.get('paymentPage') ?? '1';
     if (!/^[1-9]\d*$/.test(rawPage) || Number(rawPage) > 1000000) {
         return NextResponse.json({ success: false, message: '付款记录页码无效' }, { status: 400 });
     }
-    const rawCursor = request ? new URL(request.url).searchParams.get('paymentCursor') : null;
+    const rawCursor = new URL(request.url).searchParams.get('paymentCursor');
     let boundary;
     try { boundary = paymentBoundary(rawCursor, session.user.id); } catch {
         return NextResponse.json({ success: false, message: '付款记录游标无效，请刷新页面' }, { status: 400 });
@@ -36,10 +36,11 @@ export async function GET(request?: Request) {
             subscription: {
                 select: {
                     status: true, endDate: true, autoRenew: true,
+                    scheduledPlan: true, scheduledFromPlan: true, scheduledEffectiveAt: true,
                     payments: {
                         where: { status: 'completed', ...boundary }, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
                         skip: rawCursor === null ? (page - 1) * pageSize : 0, take: pageSize + 1,
-                        select: { id: true, amount: true, currency: true, paymentMethod: true, description: true, paidAt: true, createdAt: true },
+                        select: { id: true, orderNo: true, amount: true, currency: true, paymentMethod: true, description: true, paidAt: true, createdAt: true },
                     },
                 },
             },

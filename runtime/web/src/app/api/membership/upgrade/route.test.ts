@@ -12,7 +12,7 @@ import { createAlipayPagePayUrl } from '@/lib/payments/alipay';
 import { prisma } from '@/lib/prisma';
 import { POST } from './route';
 
-const buy = () => POST(new NextRequest('http://x/api/membership/upgrade', { method: 'POST', body: JSON.stringify({ plan: 'PRO', billingPeriod: 'monthly' }) }) as never);
+const buy = () => POST(new NextRequest('http://x/api/membership/upgrade', { method: 'POST', body: JSON.stringify({ plan: 'PRO', billingPeriod: 'yearly' }) }) as never);
 
 describe('下单失败时给用户的提示', () => {
   let errorSpy: jest.SpyInstance;

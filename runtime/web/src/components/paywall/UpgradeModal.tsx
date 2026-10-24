@@ -1,10 +1,9 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
-import { X, Crown, Sparkles, Check, Zap, ArrowRight } from 'lucide-react';
+import { X, Crown, Sparkles, Check, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { PLAN_DETAILS, ANNUAL_DISCOUNT, getAnnualPrice, Plan } from '@/lib/membership/plans';
+import { PLAN_DETAILS, Plan } from '@/lib/membership/plans';
 
 interface UpgradeModalProps {
     isOpen: boolean;
@@ -39,8 +38,6 @@ export default function UpgradeModal({
     blockedFeature,
     currentPlan = Plan.FREE,
 }: UpgradeModalProps) {
-    const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('yearly');
-
     const getModalTitle = () => {
         switch (trigger) {
             case 'limit_reached':
@@ -58,16 +55,14 @@ export default function UpgradeModal({
         }
         switch (trigger) {
             case 'limit_reached':
-                return '升级会员，享受无限制使用体验';
+                return '升级后按年付方案使用对应额度';
             default:
                 return '面向新能源从业者的测算与资料工具';
         }
     };
 
-    const proMonthly = PLAN_DETAILS.PRO.monthlyPrice;
-    const proYearly = getAnnualPrice(Plan.PRO);
-    const fullMonthly = PLAN_DETAILS.FULL.monthlyPrice;
-    const fullYearly = getAnnualPrice(Plan.FULL);
+    const proYearly = PLAN_DETAILS.PRO.yearlyPrice;
+    const fullYearly = PLAN_DETAILS.FULL.yearlyPrice;
 
     return (
         <AnimatePresence>
@@ -108,32 +103,7 @@ export default function UpgradeModal({
                             <p className="text-blue-100">{getModalSubtitle()}</p>
                         </div>
 
-                        {/* Billing Toggle */}
-                        <div className="flex justify-center py-6 border-b border-slate-100">
-                            <div className="bg-slate-100 p-1 rounded-xl flex">
-                                <button
-                                    onClick={() => setBillingCycle('monthly')}
-                                    className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${billingCycle === 'monthly'
-                                            ? 'bg-white text-slate-900 shadow'
-                                            : 'text-slate-500'
-                                        }`}
-                                >
-                                    月付
-                                </button>
-                                <button
-                                    onClick={() => setBillingCycle('yearly')}
-                                    className={`px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 ${billingCycle === 'yearly'
-                                            ? 'bg-white text-slate-900 shadow'
-                                            : 'text-slate-500'
-                                        }`}
-                                >
-                                    年付
-                                    <span className="bg-emerald-500 text-white text-[10px] px-2 py-0.5 rounded-full">
-                                        {ANNUAL_DISCOUNT.discountLabel}
-                                    </span>
-                                </button>
-                            </div>
-                        </div>
+                        <p className="py-4 text-center text-sm text-slate-500">只按年付费，月付已停用。升级差价请联系客服。</p>
 
                         {/* Plans */}
                         <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -148,15 +118,8 @@ export default function UpgradeModal({
                                 </div>
 
                                 <div className="mb-4">
-                                    <span className="text-3xl font-black text-slate-900">
-                                        ¥{billingCycle === 'yearly' ? Math.round(proYearly / 12) : proMonthly}
-                                    </span>
-                                    <span className="text-slate-400 text-sm">/月</span>
-                                    {billingCycle === 'yearly' && (
-                                        <div className="text-xs text-slate-400 mt-1">
-                                            年付 ¥{proYearly} (相当于{ANNUAL_DISCOUNT.monthsEquivalent}个月)
-                                        </div>
-                                    )}
+                                    <span className="text-3xl font-black text-slate-900">¥{proYearly}</span>
+                                    <span className="text-slate-400 text-sm">/年</span>
                                 </div>
 
                                 <ul className="space-y-2 mb-6">
@@ -169,7 +132,7 @@ export default function UpgradeModal({
                                 </ul>
 
                                 <Link
-                                    href={`/checkout?plan=PRO&cycle=${billingCycle}`}
+                                    href="/checkout?plan=PRO&billing=yearly"
                                     className="block w-full bg-slate-900 text-white text-center py-3 rounded-xl font-bold hover:bg-slate-800 transition-colors"
                                 >
                                     升级专业版
@@ -188,20 +151,15 @@ export default function UpgradeModal({
                                     <span className="text-2xl">💎</span>
                                     <div>
                                         <h3 className="font-bold text-slate-900">专家版</h3>
-                                        <p className="text-xs text-slate-500">全部功能无限制</p>
+                                        <p className="text-xs text-slate-500">专业版功能加上运维诊断</p>
                                     </div>
                                 </div>
 
                                 <div className="mb-4">
                                     <span className="text-3xl font-black text-blue-600">
-                                        ¥{billingCycle === 'yearly' ? Math.round(fullYearly / 12) : fullMonthly}
+                                        ¥{fullYearly}
                                     </span>
-                                    <span className="text-slate-400 text-sm">/月</span>
-                                    {billingCycle === 'yearly' && (
-                                        <div className="text-xs text-slate-400 mt-1">
-                                            年付 ¥{fullYearly} (相当于{ANNUAL_DISCOUNT.monthsEquivalent}个月)
-                                        </div>
-                                    )}
+                                    <span className="text-slate-400 text-sm">/年</span>
                                 </div>
 
                                 <ul className="space-y-2 mb-6">
@@ -214,7 +172,7 @@ export default function UpgradeModal({
                                 </ul>
 
                                 <Link
-                                    href={`/checkout?plan=FULL&cycle=${billingCycle}`}
+                                    href="/checkout?plan=FULL&billing=yearly"
                                     className="block w-full bg-blue-600 text-white text-center py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
                                 >
                                     升级专家版 <ArrowRight className="w-4 h-4" />

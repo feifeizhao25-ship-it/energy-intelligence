@@ -7,6 +7,7 @@ from app.utils.financial_utils import (
     calc_npv,
     calc_lcoe,
     build_solar_cashflows,
+    min_solar_dscr,
 )
 
 
@@ -56,10 +57,25 @@ async def analyze_solar_project(
         "lcoe": lcoe,
         "payback_years": float(payback),
         "equity_irr": irr,
-        "dscr_min": 1.35,
+        "dscr_min": min_solar_dscr(
+            capacity_mw=capacity_mw, capex_per_w=capex_per_w, opex_per_kw_yr=opex_per_kw_yr,
+            electricity_price=electricity_price, itc_rate=itc_rate, capacity_factor=capacity_factor,
+            degradation_rate=degradation_rate, debt_ratio=debt_ratio, interest_rate=interest_rate,
+            tax_rate=tax_rate, project_life=project_life,
+        ),
         "cashflows": cashflows[1:],
         "sensitivity": {
-            "capex_+10pct_irr": round(irr * 0.88, 2),
-            "price_-10pct_irr": round(irr * 0.85, 2),
+            "capex_+10pct_irr": calc_irr(build_solar_cashflows(
+                capacity_mw=capacity_mw, capex_per_w=capex_per_w * 1.1, opex_per_kw_yr=opex_per_kw_yr,
+                electricity_price=electricity_price, itc_rate=itc_rate, capacity_factor=capacity_factor,
+                degradation_rate=degradation_rate, debt_ratio=debt_ratio, interest_rate=interest_rate,
+                tax_rate=tax_rate, project_life=project_life,
+            )),
+            "price_-10pct_irr": calc_irr(build_solar_cashflows(
+                capacity_mw=capacity_mw, capex_per_w=capex_per_w, opex_per_kw_yr=opex_per_kw_yr,
+                electricity_price=electricity_price * 0.9, itc_rate=itc_rate, capacity_factor=capacity_factor,
+                degradation_rate=degradation_rate, debt_ratio=debt_ratio, interest_rate=interest_rate,
+                tax_rate=tax_rate, project_life=project_life,
+            )),
         },
     }

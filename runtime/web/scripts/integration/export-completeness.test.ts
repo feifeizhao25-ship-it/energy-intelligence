@@ -31,16 +31,18 @@ test('real DB, quota, disk and download: 73 owner records, no foreign records, i
  expect((await prisma.quotaUsage.findFirstOrThrow({where:{userId:owner,type:'EXPORTS'}})).count).toBe(1);
  (getServerSession as jest.Mock).mockResolvedValue({user:{id:other}});expect((await GET(request,{params:Promise.resolve({filename})})).status).toBe(404);
 });
-test.each([1,2])('disk write failure at stage %s rolls back quota and leaves no downloadable file',async(stage)=>{
+test.each(['stream','meta'])('disk write failure at %s rolls back quota and leaves no downloadable file',async(stage)=>{
  (getServerSession as jest.Mock).mockResolvedValue({user:{id:owner}});
  const before=(await prisma.quotaUsage.aggregate({where:{userId:owner,type:'EXPORTS'},_sum:{count:true}}))._sum.count ?? 0;
  const dir=path.join(process.cwd(),'.exports'); const filesBefore=fs.existsSync(dir)?fs.readdirSync(dir).sort():[];
- const originalWrite=fs.writeFileSync;let writes=0;
- const write=jest.spyOn(fs,'writeFileSync').mockImplementation((...args:Parameters<typeof fs.writeFileSync>)=>{if(++writes===stage)throw new Error('disk full');return originalWrite(...args);});
+ const originalWrite=fs.writeFileSync; const originalStream=fs.createWriteStream;
+ const spy=stage==='stream'
+  ? jest.spyOn(fs,'createWriteStream').mockImplementation(((path: fs.PathLike, options?: unknown)=>{ if(String(path).endsWith('.partial')) throw new Error('disk full'); return originalStream.call(fs, path, options as never); }) as typeof fs.createWriteStream)
+  : jest.spyOn(fs,'writeFileSync').mockImplementation(((...args: Parameters<typeof fs.writeFileSync>)=>{ if(String(args[0]).endsWith('.meta.json')) throw new Error('disk full'); return originalWrite.apply(fs, args); }) as typeof fs.writeFileSync);
  try {
   const response=await POST(new NextRequest('http://localhost/api/exports',{method:'POST',body:JSON.stringify({dataType:'calculations',format:'json'})}));
   expect(response.status).toBe(503);expect((await response.json()).data).toBeUndefined();
   expect((await prisma.quotaUsage.aggregate({where:{userId:owner,type:'EXPORTS'},_sum:{count:true}}))._sum.count ?? 0).toBe(before);
   expect(fs.readdirSync(dir).sort()).toEqual(filesBefore);
- }finally{write.mockRestore();}
+ }finally{spy.mockRestore();}
 });
