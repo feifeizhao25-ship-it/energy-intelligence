@@ -69,7 +69,13 @@ class ApiService {
         'data_transfer_consent': dataTransferConsent,
       },
     );
-    final token = resp['access_token'] as String;
+    final wrapped = resp['data'];
+    final Map<String, dynamic> body =
+        wrapped is Map<String, dynamic> ? wrapped : resp;
+    final token = body['access_token'] as String?;
+    if (token == null || token.isEmpty) {
+      throw ApiException(500, 'Sign-in failed: unexpected server response.');
+    }
     _token = token;
     await _secureStorage.write(key: 'energy_token', value: token);
     return token;
@@ -83,7 +89,13 @@ class ApiService {
       '/api/v1/auth/login',
       body: {'email': email, 'password': password},
     );
-    final token = resp['access_token'] as String;
+    final wrapped = resp['data'];
+    final Map<String, dynamic> body =
+        wrapped is Map<String, dynamic> ? wrapped : resp;
+    final token = body['access_token'] as String?;
+    if (token == null || token.isEmpty) {
+      throw ApiException(500, 'Sign-in failed: unexpected server response.');
+    }
     _token = token;
     await _secureStorage.write(key: 'energy_token', value: token);
     return token;
