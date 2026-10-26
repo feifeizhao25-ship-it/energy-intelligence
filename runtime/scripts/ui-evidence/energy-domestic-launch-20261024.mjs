@@ -44,6 +44,10 @@ async function dismissTip(page) {
 }
 
 async function login(page, phone) {
+  const existing = await db.user.findMany({ where: { phone }, select: { id: true } });
+  if (existing.length) {
+    await db.quotaUsage.deleteMany({ where: { userId: { in: existing.map((user) => user.id) }, type: 'CALCULATIONS' } });
+  }
   await db.user.updateMany({
     where: { phone },
     data: {
@@ -63,6 +67,21 @@ async function login(page, phone) {
   await page.waitForURL(/\/(onboarding|dashboard|calculator)/, { timeout: 20000 });
 }
 
+async function sendAssistant(page, text) {
+  const input = page.getByPlaceholder('输入您的问题，或描述分析需求...');
+  await input.waitFor();
+  await input.fill(text);
+  const send = page.getByRole('button', { name: '发送', disabled: false });
+  if (!(await send.count())) {
+    await input.click();
+    await input.fill('');
+    await input.pressSequentially(text, { delay: 15 });
+  }
+  await send.waitFor({ timeout: 10000 });
+  // 点击后按钮文案会变成「思考中」。用回车发送，避免定位器在点击过程中失效后一直重试。
+  await input.press('Enter');
+}
+
 async function runViewport(browser, label, width, height, phone) {
   const context = await browser.newContext({
     viewport: { width, height },
@@ -70,7 +89,7 @@ async function runViewport(browser, label, width, height, phone) {
     timezoneId: 'Asia/Shanghai',
   });
   const page = await context.newPage();
-  const name = (step) => `20261026e-${label}-${step}`;
+  const name = (step) => `20261026f-${label}-${step}`;
 
   try {
     await page.goto(base + '/', { waitUntil: 'domcontentloaded', timeout: 60000 });
@@ -226,8 +245,7 @@ async function runViewport(browser, label, width, height, phone) {
   try {
     await page.goto(base + '/assistant', { waitUntil: 'domcontentloaded' });
     await dismissTip(page);
-    await page.getByPlaceholder('输入您的问题，或描述分析需求...').fill('用普通人能懂的话说明：平准化度电成本是什么，不要预测电价。');
-    await page.getByRole('button', { name: '发送', disabled: false }).click();
+    await sendAssistant(page, '用普通人能懂的话说明：平准化度电成本是什么，不要预测电价。');
     await page.waitForTimeout(4000);
     await shot(page, name('assistant'));
     const aiText = await page.locator('body').innerText();
@@ -242,8 +260,7 @@ async function runViewport(browser, label, width, height, phone) {
     await db.user.update({ where: { id: user.id }, data: { dailyAiCalls: 5, lastResetAt: new Date() } });
     await page.goto(base + '/assistant', { waitUntil: 'domcontentloaded' });
     await dismissTip(page);
-    await page.getByPlaceholder('输入您的问题，或描述分析需求...').fill('再问一次今天的额度。');
-    await page.getByRole('button', { name: '发送', disabled: false }).click();
+    await sendAssistant(page, '再问一次今天的额度。');
     await page.getByText(/次数已用完|暂时不可用|升级会员/).first().waitFor({ timeout: 15000 });
     await shot(page, name('assistant-quota'));
     const quotaText = await page.locator('body').innerText();
