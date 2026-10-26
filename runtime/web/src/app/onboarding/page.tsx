@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PROVINCES } from '@/lib/dashboard/personalization';
+import { onboardingFreeQuotas } from './free-quotas';
 
 // 引导步骤
 interface OnboardingOption {
@@ -96,11 +97,7 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
         title: '个性化设置已完成',
         subtitle: '免费版实际额度如下，升级前可在价格方案页查看完整权益',
         icon: Gift,
-        rewards: [
-            { label: '每日 AI 对话', value: 3 },
-            { label: '每日项目测算', value: 2 },
-            { label: '最多项目数', value: 1 },
-        ]
+        rewards: onboardingFreeQuotas.map((item) => ({ ...item })),
     }
 ];
 
@@ -257,7 +254,7 @@ export default function OnboardingPage() {
                                     className="flex items-center justify-between p-4 bg-green-500/10 rounded-xl border border-green-500/20"
                                 >
                                     <span className="text-white font-bold">{reward.label}</span>
-                                    <span className="text-green-400 font-black text-xl">+{reward.value}</span>
+                                    <span className="text-green-400 font-black text-xl">{reward.value}</span>
                                 </div>
                             ))}
                         </div>
