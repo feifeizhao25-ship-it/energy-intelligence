@@ -46,7 +46,10 @@ async function dismissTip(page) {
 async function login(page, phone) {
   await db.user.updateMany({
     where: { phone },
-    data: { profileCompleted: false, plan: 'FREE', planExpireAt: null, dailyAiCalls: 0 },
+    data: {
+      profileCompleted: false, plan: 'FREE', planExpireAt: null,
+      dailyAiCalls: 0, dailyCalculations: 0, dailyResourceQueries: 0, dailyPaperSearches: 0, dailyDiagnoses: 0,
+    },
   });
   await db.verificationCode.deleteMany({ where: { phone } });
   await db.verificationCode.create({
@@ -67,7 +70,7 @@ async function runViewport(browser, label, width, height, phone) {
     timezoneId: 'Asia/Shanghai',
   });
   const page = await context.newPage();
-  const name = (step) => `20261026c-${label}-${step}`;
+  const name = (step) => `20261026e-${label}-${step}`;
 
   try {
     await page.goto(base + '/', { waitUntil: 'domcontentloaded', timeout: 60000 });
@@ -224,7 +227,7 @@ async function runViewport(browser, label, width, height, phone) {
     await page.goto(base + '/assistant', { waitUntil: 'domcontentloaded' });
     await dismissTip(page);
     await page.getByPlaceholder('输入您的问题，或描述分析需求...').fill('用普通人能懂的话说明：平准化度电成本是什么，不要预测电价。');
-    await page.getByRole('button', { name: '发送' }).click();
+    await page.getByRole('button', { name: '发送', disabled: false }).click();
     await page.waitForTimeout(4000);
     await shot(page, name('assistant'));
     const aiText = await page.locator('body').innerText();
@@ -240,7 +243,7 @@ async function runViewport(browser, label, width, height, phone) {
     await page.goto(base + '/assistant', { waitUntil: 'domcontentloaded' });
     await dismissTip(page);
     await page.getByPlaceholder('输入您的问题，或描述分析需求...').fill('再问一次今天的额度。');
-    await page.getByRole('button', { name: '发送' }).click();
+    await page.getByRole('button', { name: '发送', disabled: false }).click();
     await page.getByText(/次数已用完|暂时不可用|升级会员/).first().waitFor({ timeout: 15000 });
     await shot(page, name('assistant-quota'));
     const quotaText = await page.locator('body').innerText();
