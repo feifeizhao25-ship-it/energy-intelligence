@@ -23,7 +23,7 @@ class FinancialModelResponse(BaseModel):
     lcoe: float  # USD/kWh
     payback_years: float
     equity_irr: Optional[float]
-    dscr_min: float
+    dscr_min: Optional[float] = None  # 无借款时不编造覆盖倍数
     cashflows: List[float]  # 25-yr annual net cashflow
     sensitivity: dict  # capex/price sensitivity matrix
 

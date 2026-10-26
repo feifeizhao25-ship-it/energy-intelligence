@@ -1,13 +1,13 @@
 import { Plan } from './plans';
 
-export type Payment = { id: string; amount: number | string; currency: string; description?: string | null; paidAt?: string | null; createdAt: string };
+export type Payment = { id: string; orderNo?: string | null; amount: number | string; currency: string; description?: string | null; paidAt?: string | null; createdAt: string };
 export type Member = {
     id: string; name?: string | null; email: string; plan: Plan; effectivePlan: Plan; nextResetAt: string; planExpireAt?: string | null;
     dailyAiCalls: number; dailyResourceQueries: number; dailyCalculations: number;
     dailyPaperSearches: number; dailyDiagnoses: number; projectCount: number;
     paperCount: number; stationCount: number; folderCount: number;
     paymentPagination?: { page: number; nextPage: number | null; nextCursor: string | null };
-    subscription?: { status: string; endDate: string; autoRenew: boolean; payments: Payment[] } | null;
+    subscription?: { status: string; endDate: string; autoRenew: boolean; scheduledPlan?: string | null; payments: Payment[] } | null;
 };
 
 function validMember(value: unknown): value is Member {

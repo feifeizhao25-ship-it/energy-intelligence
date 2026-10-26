@@ -1,13 +1,15 @@
 import { randomUUID } from 'crypto';
-import { escapeCsvCell } from '@/lib/exports/csv';
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/auth-options';
 
-import { addToExportCache, removeFromExportCache } from '@/lib/exports/cache';
-import { consumeQuota } from '@/lib/audit/quota';
+import { discardPartial, publishPartial, startExportSweep } from '@/lib/exports/cache';
+import { EXPORT_PAGE_SIZE, writeTabularExport, type ExportRow } from '@/lib/exports/stream';
+import { checkQuota, consumeQuota } from '@/lib/audit/quota';
 import { safeErrorMessage } from '@/lib/api/safe-error';
+
+startExportSweep();
 
 /**
  * 数据导出 API
@@ -33,55 +35,54 @@ export async function POST(req: NextRequest) {
 
     try {
         let headers: string[] = [];
-        let rows: any[][] = [];
         let filenameBase = '';
+        let loadPage: (cursor: string | undefined) => Promise<ExportRow[]> = async () => [];
 
-        // 1. 获取真实数据
         switch (dataType) {
             case 'projects':
                 filenameBase = `projects_export_${Date.now()}`;
-                try {
-                    const projects = await prisma.project.findMany({
-                        where: { userId },
-                        orderBy: { createdAt: 'desc' }
-                    });
-
-                    headers = ['ID', '项目名称', '类型', '容量(kW)', '经度', '纬度', '创建日期'];
-                    rows = projects.map((p: any) => [
-                        p.id,
-                        p.name,
-                        p.type === 'SOLAR' ? '光伏' : '风电',
-                        p.capacity,
-                        p.lng,
-                        p.lat,
-                        p.createdAt.toISOString().split('T')[0]
-                    ]);
-                } catch (dbError) {
-                    console.error('Projects DB fetch failed:', dbError);
-                    throw new Error('项目数据暂时无法读取，未导出示例数据');
-                }
+                headers = ['ID', '项目名称', '类型', '容量(kW)', '经度', '纬度', '创建日期'];
+                loadPage = async (cursor) => {
+                    try {
+                        const projects = await prisma.project.findMany({
+                            where: { userId },
+                            orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+                            take: EXPORT_PAGE_SIZE,
+                            ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+                            select: { id: true, name: true, type: true, capacity: true, lng: true, lat: true, createdAt: true },
+                        });
+                        return projects.map((p) => ({
+                            id: p.id,
+                            cells: [p.id, p.name, p.type === 'SOLAR' ? '光伏' : '风电', p.capacity, p.lng, p.lat, p.createdAt.toISOString().split('T')[0]],
+                        }));
+                    } catch (dbError) {
+                        console.error('Projects DB fetch failed:', dbError);
+                        throw new Error('项目数据暂时无法读取，未导出示例数据');
+                    }
+                };
                 break;
 
             case 'calculations':
                 filenameBase = `calculations_history_${Date.now()}`;
-                try {
-                    const calculations = await prisma.calculation.findMany({
-                        where: { userId },
-                        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }]
-                    });
-
-                    headers = ['ID', '类型', '输入参数', '年发电量(kWh)', '创建日期'];
-                    rows = calculations.map((c: any) => [
-                        c.id,
-                        c.type,
-                        JSON.stringify(c.input),
-                        (c.output as any)?.energy?.annualGeneration ?? '暂无数据',
-                        c.createdAt.toISOString().split('T')[0]
-                    ]);
-                } catch (dbError) {
-                    console.error('Calculations DB fetch failed:', dbError);
-                    throw new Error('计算记录暂时无法读取，未导出示例数据');
-                }
+                headers = ['ID', '类型', '输入参数', '年发电量(kWh)', '创建日期'];
+                loadPage = async (cursor) => {
+                    try {
+                        const calculations = await prisma.calculation.findMany({
+                            where: { userId },
+                            orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+                            take: EXPORT_PAGE_SIZE,
+                            ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+                            select: { id: true, type: true, input: true, output: true, createdAt: true },
+                        });
+                        return calculations.map((c) => ({
+                            id: c.id,
+                            cells: [c.id, c.type, JSON.stringify(c.input), (c.output as { energy?: { annualGeneration?: number } })?.energy?.annualGeneration ?? '暂无数据', c.createdAt.toISOString().split('T')[0]],
+                        }));
+                    } catch (dbError) {
+                        console.error('Calculations DB fetch failed:', dbError);
+                        throw new Error('计算记录暂时无法读取，未导出示例数据');
+                    }
+                };
                 break;
 
             case 'monitoring':
@@ -94,38 +95,40 @@ export async function POST(req: NextRequest) {
                 }, { status: 400 });
         }
 
-        const filename = `${filenameBase}_${randomUUID()}.${format}`;
-        let content: Buffer | string = '';
-        let contentType = '';
-
-        // 2. 生成对应格式的内容
-        if (format === 'csv') {
-            // CSV 转义：含逗号、双引号或换行的字段都要加引号，且内部双引号需翻倍。
-            // 此前只处理了逗号，字段里出现引号或换行会把整份 CSV 结构破坏掉。
-            content = [
-                headers.map(escapeCsvCell).join(','),
-                ...rows.map(row => row.map(escapeCsvCell).join(','))
-            ].join('\n');
-            // 加 UTF-8 BOM，避免 Excel 打开中文表头乱码
-            content = '﻿' + content;
-            contentType = 'text/csv; charset=utf-8';
-        } else if (format === 'json') {
-            const jsonData = rows.map(row => {
-                const obj: any = {};
-                headers.forEach((h, i) => obj[h] = row[i]);
-                return obj;
-            });
-            content = JSON.stringify(jsonData, null, 2);
-            contentType = 'application/json';
+        let gate;
+        try {
+            gate = await checkQuota(userId, 'EXPORTS', 1);
+        } catch (error) {
+            console.error('Export quota check failed:', error);
+            return NextResponse.json({ success: false, error: 'EXPORT_QUOTA_UNAVAILABLE', message: '导出额度暂时无法核验，请稍后重试' }, { status: 503 });
+        }
+        if (!gate.allowed) {
+            return NextResponse.json({
+                success: false,
+                error: 'EXPORT_QUOTA_EXCEEDED',
+                message: '本月导出额度已用尽，请查看套餐或下月再试',
+                usage: gate.usage,
+            }, { status: 429 });
         }
 
-        // 3. 只有在真实数据和文件都成功生成后才扣减额度；额度核验失败时不暴露文件。
+        const filename = `${filenameBase}_${randomUUID()}.${format}`;
+        const contentType = format === 'csv' ? 'text/csv; charset=utf-8' : 'application/json';
+        let staged;
+        try {
+            // 先按批写到临时文件。额度事务只做改名和元数据，避免大导出占住数据库锁。
+            staged = await writeTabularExport({ format, headers, loadPage });
+        } catch (error) {
+            console.error('Export stream failed:', error);
+            const message = safeErrorMessage(error, '');
+            if (message) return NextResponse.json({ success: false, error: message }, { status: 500 });
+            return NextResponse.json({ success: false, error: '导出失败，请稍后重试' }, { status: 503 });
+        }
+
         const quota = await consumeQuota(userId, 'EXPORTS', 1, async () => {
-            // A filesystem failure aborts the quota transaction; do not charge for a missing file.
-            addToExportCache(filename, { content, format, contentType, ownerId: userId });
+            publishPartial(staged.partialPath, filename, { format, contentType, ownerId: userId });
         });
         if (!quota.success) {
-            removeFromExportCache(filename);
+            discardPartial(staged.partialPath, filename);
             return NextResponse.json({
                 success: false,
                 error: quota.usage.exceeded ? 'EXPORT_QUOTA_EXCEEDED' : 'EXPORT_QUOTA_UNAVAILABLE',
@@ -134,23 +137,17 @@ export async function POST(req: NextRequest) {
             }, { status: quota.usage.exceeded ? 429 : 503 });
         }
 
-        // Only return the unguessable, owner-bound link after the quota transaction commits.
-
         const downloadUrl = `/api/exports/download/${filename}`;
-
         return NextResponse.json({
             success: true,
             data: {
                 filename,
                 format,
                 downloadUrl,
-                totalRecords: rows.length,
-                size: Buffer.byteLength(content),
+                totalRecords: staged.records,
+                size: staged.bytes,
                 expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
-                preview: {
-                    headers,
-                    sampleData: rows.slice(0, 3)
-                }
+                preview: { headers, sampleData: staged.sample },
             }
         });
 

@@ -16,7 +16,7 @@ class DomesticComposeTests(unittest.TestCase):
 
     def test_domestic_only_and_no_source_mutation(self):
         self.assertEqual(self.source, self.before)
-        self.assertEqual(set(self.cn['services']), {'postgres', 'redis', 'backend', 'web-cn', 'gateway'})
+        self.assertEqual(set(self.cn['services']), {'postgres', 'redis', 'backend', 'web-cn', 'gateway', 'celery-worker', 'celery-beat', 'membership-cron'})
         self.assertNotIn('INT_DOMAIN', str(self.cn))
         self.assertNotIn('web-int', str(self.cn))
         self.assertNotEqual(self.cn['name'], self.source['name'])
@@ -33,6 +33,12 @@ class DomesticComposeTests(unittest.TestCase):
             self.assertNotIn(key, env)
         for key in ('DASHSCOPE_API_KEY', 'DEEPSEEK_API_KEY', 'GLM_API_KEY', 'ALIPAY_PRIVATE_KEY'):
             self.assertIn(key, env)
+        self.assertIn('database', str(self.cn['services']['backend']['healthcheck']))
+        self.assertIn('celery', ' '.join(self.cn['services']['celery-worker']['command']))
+        self.assertIn('beat', ' '.join(self.cn['services']['celery-beat']['command']))
+        self.assertEqual(self.cn['services']['celery-beat']['healthcheck'], {'disable': True})
+        self.assertIn('CRON_SECRET', self.cn['services']['membership-cron']['environment'])
+        self.assertNotIn('STRIPE_SECRET_KEY', self.cn['services']['celery-worker']['environment'])
 
     def test_domestic_runtime_database_and_build_security_retained(self):
         for name in ('postgres', 'redis', 'web-cn'):

@@ -6,7 +6,7 @@ from typing import Literal
 from uuid import uuid4
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import PlainTextResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -29,15 +29,14 @@ class DowngradeRequest(BaseModel):
     plan: str
 
 class RefundQuoteRequest(BaseModel):
-    paid_amount_cny: str
-    period_start: datetime
-    period_end: datetime
+    model_config = ConfigDict(extra="forbid")
+    order_no: str
 
 @router.get("/rules")
 async def get_billing_rules():
     """公开计费规则: 年付唯一, 续费顺延, 降级下周期生效, 退款按未使用比例 (quote)。"""
     return {"billing_period": "yearly", "renewal": "到期按年付续; 未到期从现到期日顺延1年, 已过期从付款日起算",
-            "downgrade": "到期切换续费档位，周期内权益不变、不退差价；付费档位须续费后开通", "refund": "未使用天数按比例退 (向下取整到分), 本接口只出测算, 实际退款由财务人工执行"}
+            "downgrade": "到期切换续费档位，周期内权益不变、不退差价；付费档位须续费后开通", "refund": "按本人已支付订单的实付金额和服务周期测算未使用天数，向下取整到分；本接口只出测算，实际退款由财务人工执行"}
 
 @router.post("/renewal/quote")
 async def post_renewal_quote(user_id: str = Depends(get_current_user_id), db: AsyncSession = Depends(get_db)):
@@ -66,11 +65,27 @@ async def post_downgrade(payload: DowngradeRequest, user_id: str = Depends(get_c
     return scheduled
 
 @router.post("/refund/quote")
-async def post_refund_quote(payload: RefundQuoteRequest, user_id: str = Depends(get_current_user_id)):
+async def post_refund_quote(payload: RefundQuoteRequest, user_id: str = Depends(get_current_user_id), db: AsyncSession = Depends(get_db)):
+    order_no = payload.order_no.strip()
+    if not order_no:
+        raise HTTPException(status_code=400, detail="请提供已支付订单号")
+    order = (await db.execute(
+        select(PaymentOrder).where(PaymentOrder.order_no == order_no, PaymentOrder.user_id == user_id)
+    )).scalar_one_or_none()
+    if not order:
+        raise HTTPException(status_code=404, detail="找不到这笔订单")
+    if order.status != "paid" or order.period_start is None or order.period_end is None:
+        raise HTTPException(status_code=409, detail="这笔订单还不能自动测算退款，请财务按支付渠道记录人工核对")
     try:
-        return refund_quote(paid_amount_cny=payload.paid_amount_cny, period_start=payload.period_start, period_end=payload.period_end, now=datetime.now(timezone.utc))
+        quote = refund_quote(
+            paid_amount_cny=order.amount_cny,
+            period_start=order.period_start,
+            period_end=order.period_end,
+            now=datetime.now(timezone.utc),
+        )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return {**quote, "order_no": order.order_no}
 
 
 
@@ -233,7 +248,10 @@ async def alipay_notify(request: Request, db: AsyncSession = Depends(get_db)):
     if previous_end is not None and previous_end.tzinfo is None:
         previous_end = previous_end.replace(tzinfo=timezone.utc)
     start = previous_end if user.subscription_plan == order.plan and previous_end and previous_end > now else now
-    user.subscription_expires_at = subscription_period_end(start, order.billing_period)
+    period_end = subscription_period_end(start, order.billing_period)
+    user.subscription_expires_at = period_end
+    order.period_start = start
+    order.period_end = period_end
     user.subscription_plan = order.plan
     usage = dict(user.usage_quota or {})
     intent = usage.get("scheduled_downgrade")

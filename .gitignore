@@ -46,5 +46,7 @@ dist/
 .dart_tool/
 local.properties
 tmp/
+# 网页导出的临时文件含用户数据，只存在于运行目录
+.exports/
 *.tsbuildinfo
 **/android/build/

@@ -11,7 +11,7 @@ jest.mock('@/lib/prisma', () => ({ prisma: { user: { findUnique: jest.fn() }, pa
 import { prisma } from '@/lib/prisma';
 import { POST } from '@/app/api/membership/upgrade/route';
 
-const buy = (plan: string) => POST(new NextRequest('http://x/api/membership/upgrade', { method: 'POST', body: JSON.stringify({ plan, billingPeriod: 'monthly' }) }) as never);
+const buy = (plan: string) => POST(new NextRequest('http://x/api/membership/upgrade', { method: 'POST', body: JSON.stringify({ plan, billingPeriod: 'yearly' }) }) as never);
 
 describe('会员有效期内更换方案', () => {
   it('专业版有效期内买全能版被拒，不再把剩余时长按全能版计', async () => {
