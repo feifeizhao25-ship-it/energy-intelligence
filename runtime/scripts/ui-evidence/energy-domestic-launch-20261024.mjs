@@ -89,7 +89,7 @@ async function runViewport(browser, label, width, height, phone) {
     timezoneId: 'Asia/Shanghai',
   });
   const page = await context.newPage();
-  const name = (step) => `20261026f-${label}-${step}`;
+  const name = (step) => `${process.env.UI_SHOT_PREFIX || '20261026g'}-${label}-${step}`;
 
   try {
     await page.goto(base + '/', { waitUntil: 'domcontentloaded', timeout: 60000 });
@@ -147,6 +147,7 @@ async function runViewport(browser, label, width, height, phone) {
     await page.locator('[role=alert], [role=status]').first().waitFor({ timeout: 15000 });
     await shot(page, name('login-sms'));
     const smsText = await page.locator('[role=alert], [role=status]').first().innerText();
+    if (!smsText.includes('验证码已发送')) throw new Error(smsText.slice(0, 80));
     record(`${label} 登录页与短信入口`, 'pass', smsText.slice(0, 80));
   } catch (error) {
     await shot(page, name('login-fail')).catch(() => {});
