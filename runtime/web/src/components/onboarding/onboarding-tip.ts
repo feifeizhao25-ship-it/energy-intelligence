@@ -7,7 +7,7 @@ export const TIP_DISMISSED_KEY = 'hasSeenOnboarding_v1';
 export const TIP_SNOOZED_KEY = 'onboardingTipSnoozed_v1';
 
 /** 主操作按钮位于页面底部/表单末尾的路由前缀：这些页面不弹提示 */
-export const TIP_SUPPRESSED_PREFIXES = ['/calculator', '/quick-calc', '/checkout', '/onboarding', '/login'];
+export const TIP_SUPPRESSED_PREFIXES = ['/calculator', '/quick-calc', '/checkout', '/onboarding', '/login', '/assistant', '/membership'];
 
 type KV = Pick<Storage, 'getItem'>;
 

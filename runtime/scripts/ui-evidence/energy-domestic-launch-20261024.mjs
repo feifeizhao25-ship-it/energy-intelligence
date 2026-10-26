@@ -67,7 +67,7 @@ async function runViewport(browser, label, width, height, phone) {
     timezoneId: 'Asia/Shanghai',
   });
   const page = await context.newPage();
-  const name = (step) => `20261026-${label}-${step}`;
+  const name = (step) => `20261026b-${label}-${step}`;
 
   try {
     await page.goto(base + '/', { waitUntil: 'domcontentloaded', timeout: 60000 });
@@ -190,11 +190,21 @@ async function runViewport(browser, label, width, height, phone) {
     await dismissTip(page);
     await page.getByRole('button', { name: '下一步' }).click();
     await page.getByRole('button', { name: '执行计算' }).click();
+    await page.getByRole('alert').filter({ hasText: '升级会员' }).waitFor({ timeout: 15000 });
+    await shot(page, name('wind-free-blocked'));
+    const blocked = await page.getByRole('alert').innerText();
+    const user = await db.user.findFirst({ where: { phone } });
+    await db.user.update({
+      where: { id: user.id },
+      data: { plan: 'PRO', planExpireAt: new Date(Date.now() + 365 * 86400000) },
+    });
+    await page.getByRole('button', { name: '执行计算' }).click();
     await page.waitForURL(/\/calculator\/result/, { timeout: 30000 });
     await page.getByText(/发电量|内部收益率/).first().waitFor({ timeout: 15000 });
     await shot(page, name('wind'));
     const windText = await page.locator('body').innerText();
-    record(`${label} 风电测算`, /发电量|内部收益率/.test(windText) ? 'pass' : 'fail', windText.replace(/\s+/g, ' ').slice(0, 220));
+    record(`${label} 风电测算`, /发电量|内部收益率/.test(windText) ? 'pass' : 'fail', `${blocked.replace(/\s+/g, ' ')} | ${windText.replace(/\s+/g, ' ').slice(0, 180)}`);
+    await db.user.update({ where: { id: user.id }, data: { plan: 'FREE', planExpireAt: null } });
   } catch (error) {
     await shot(page, name('wind-fail')).catch(() => {});
     record(`${label} 风电测算`, 'fail', error.message);
