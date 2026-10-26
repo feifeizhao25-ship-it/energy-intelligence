@@ -8,6 +8,27 @@ export class SolarAccessError extends Error {
     constructor(public status: number, message: string) { super(message); }
 }
 
+function calculationDay(now: Date) {
+    return new Date(Math.floor((now.getTime() + 8 * 3600000) / 86400000) * 86400000 - 8 * 3600000);
+}
+
+function effectivePlan(user: { plan: string | null; planExpireAt: Date | null }, now: Date) {
+    return user.plan === 'FREE' || !user.planExpireAt || user.planExpireAt <= now ? 'FREE' : user.plan;
+}
+
+/** 次数已用完时立刻拒绝，避免先请求外部气象再告诉用户不能保存。事务内仍会再核验一次。 */
+export async function assertSolarQuota(userId: string) {
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: { plan: true, planExpireAt: true } });
+    if (!user) throw new SolarAccessError(401, '用户不存在，请重新登录');
+    const now = new Date();
+    const limit = PLANS[effectivePlan(user, now)]?.calculations ?? PLANS.FREE.calculations;
+    if (limit === -1) return;
+    const usage = await prisma.quotaUsage.findUnique({
+        where: { userId_type_periodStart: { userId, type: 'CALCULATIONS', periodStart: calculationDay(now) } },
+    });
+    if ((usage?.count ?? 0) >= limit) throw new SolarAccessError(429, '今日测算次数已用完，请明天再试');
+}
+
 /** 将成功测算、当日用量和项目时间线一同提交，失败时全部回滚。 */
 export async function saveSolar(userId: string, projectId: string | null, result: Awaited<ReturnType<typeof SolarCalculatorV2.calculate>>) {
     return prisma.$transaction(async tx => {
@@ -20,9 +41,9 @@ export async function saveSolar(userId: string, projectId: string | null, result
             if (!owned.length) throw new SolarAccessError(404, '项目不存在');
         }
         const now = new Date();
-        const plan = user.plan === 'FREE' || !user.planExpireAt || user.planExpireAt <= now ? 'FREE' : user.plan;
-        const limit = PLANS[plan].calculations;
-        const day = new Date(Math.floor((now.getTime() + 8 * 3600000) / 86400000) * 86400000 - 8 * 3600000);
+        const plan = effectivePlan(user, now);
+        const limit = PLANS[plan]?.calculations ?? PLANS.FREE.calculations;
+        const day = calculationDay(now);
         const key = { userId, type: 'CALCULATIONS', periodStart: day };
         const usage = await tx.quotaUsage.findUnique({ where: { userId_type_periodStart: key } });
         if (limit !== -1 && (usage?.count ?? 0) >= limit) throw new SolarAccessError(429, '今日测算次数已用完，请明天再试');
