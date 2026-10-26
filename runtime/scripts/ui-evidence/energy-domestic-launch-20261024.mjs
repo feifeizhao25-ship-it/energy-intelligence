@@ -67,7 +67,7 @@ async function runViewport(browser, label, width, height, phone) {
     timezoneId: 'Asia/Shanghai',
   });
   const page = await context.newPage();
-  const name = (step) => `20261026b-${label}-${step}`;
+  const name = (step) => `20261026c-${label}-${step}`;
 
   try {
     await page.goto(base + '/', { waitUntil: 'domcontentloaded', timeout: 60000 });
@@ -192,7 +192,7 @@ async function runViewport(browser, label, width, height, phone) {
     await page.getByRole('button', { name: '执行计算' }).click();
     await page.getByRole('alert').filter({ hasText: '升级会员' }).waitFor({ timeout: 15000 });
     await shot(page, name('wind-free-blocked'));
-    const blocked = await page.getByRole('alert').innerText();
+    const blocked = await page.getByText('风电收益测算需要升级会员').innerText();
     const user = await db.user.findFirst({ where: { phone } });
     await db.user.update({
       where: { id: user.id },

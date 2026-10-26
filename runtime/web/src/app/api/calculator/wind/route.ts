@@ -30,8 +30,9 @@ export async function POST(req: NextRequest) {
                 input.businessModel = { ...businessModel, mode, feedInTariff: prices.feedInTariff, electricityPrice: prices.electricityPrice };
                 const result = { ...(await calculateWind(input)), pricing: prices.pricing };
 
+                let calculationId: string | undefined;
                 try {
-                    await prisma.calculation.create({
+                    const saved = await prisma.calculation.create({
                         data: {
                             userId: user.id,
                             type: 'WIND',
@@ -39,11 +40,12 @@ export async function POST(req: NextRequest) {
                             output: result
                         }
                     });
+                    calculationId = saved.id;
                 } catch (dbError) {
                     console.error('Database logging failed:', dbError);
                 }
 
-                return NextResponse.json({ success: true, data: result });
+                return NextResponse.json({ success: true, data: { ...result, calculationId } });
             } catch (error) {
                 return NextResponse.json(
                     { error: 'CALCULATION_ERROR', message: safeErrorMessage(error, '计算失败') },

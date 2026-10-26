@@ -75,6 +75,7 @@ export default function WindCalculatorPage() {
                     province,
                     capacity: Math.round(formData.capacity * formData.count * 1000),
                     pricing: data.pricing,
+                    calculationId: data.calculationId,
                 },
             };
             router.push(`/calculator/result?type=wind&data=${encodeURIComponent(JSON.stringify(withMeta))}`);
