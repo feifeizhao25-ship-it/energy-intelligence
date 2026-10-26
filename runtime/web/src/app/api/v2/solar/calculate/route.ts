@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/auth-options';
 import { prisma } from '@/lib/prisma';
 import { SolarCalculatorV2 } from '@/lib/calculator/solar-v2';
-import { saveSolar, SolarAccessError } from '@/lib/calculator/save-solar';
+import { assertSolarQuota, saveSolar, SolarAccessError } from '@/lib/calculator/save-solar';
 import { safeErrorMessage } from '@/lib/api/safe-error';
 
 const respond = (status: number, body: object) => NextResponse.json(body, {
@@ -28,6 +28,7 @@ export async function POST(req: NextRequest) {
             });
             if (!project) return respond(404, { success: false, message: '项目不存在' });
         }
+        await assertSolarQuota(session.user.id);
         const result = await SolarCalculatorV2.calculate(body);
         const snapshotId = await saveSolar(session.user.id, body.projectId ?? null, result);
         return respond(200, { success: true, data: { ...result, snapshotId }, meta: { persisted: true, qualityTag: 'PREVIEW' } });

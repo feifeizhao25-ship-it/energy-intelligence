@@ -8,6 +8,8 @@ describe('审计 10-1 引导提示气泡', () => {
   it('测算页不弹出，避免遮挡“开始计算”', () => {
     expect(shouldShowOnboardingTip('/quick-calc/solar', store(), store())).toBe(false);
     expect(shouldShowOnboardingTip('/calculator', store(), store())).toBe(false);
+    expect(shouldShowOnboardingTip('/assistant', store(), store())).toBe(false);
+    expect(shouldShowOnboardingTip('/membership', store(), store())).toBe(false);
     expect(shouldShowOnboardingTip('/dashboard', store(), store())).toBe(true);
   });
   it('“不再显示”永久记住，“稍后”仅本会话', () => {

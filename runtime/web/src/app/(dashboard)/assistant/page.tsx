@@ -115,7 +115,11 @@ export default function AssistantPage() {
             });
 
             if (!response.ok) {
-                throw new Error('AI 服务暂时不可用');
+                const payload = await response.json().catch(() => null);
+                const message = typeof payload?.message === 'string' && payload.message.trim()
+                    ? payload.message
+                    : 'AI 服务暂时不可用';
+                throw new Error(message);
             }
 
             const reader = response.body?.getReader();
