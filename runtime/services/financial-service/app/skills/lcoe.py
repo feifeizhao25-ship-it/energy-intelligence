@@ -90,3 +90,30 @@ class LcoeSkill:
             "engine": "financial_utils.calc_lcoe",
             "references": list(self.references),
         }
+
+
+def _install_contract(cls, formula_ref, valid_range):
+    original = cls.execute
+
+    async def execute(self, params):
+        data = await original(self, params)
+        import sys
+        from pathlib import Path
+        root = str(Path(__file__).resolve().parents[3])
+        if root not in sys.path:
+            sys.path.insert(0, root)
+        from skill_contract import attach
+        return attach(
+            data,
+            skill_id=self.skill_id,
+            formula_ref=formula_ref,
+            inputs=params,
+            assumptions=["口径见引用，不额外承诺"],
+            sources=list(getattr(self, "references", []) or ["见方法卡"]),
+            valid_range=valid_range,
+        )
+
+    cls.execute = execute
+
+
+_install_contract(LcoeSkill, "NREL 简化 LCOE", "发电量为正")

@@ -173,3 +173,30 @@ class SolarResourceSkill:
                 else "启发式估算结果——非实测数据，仅供开发环境演示"
             )
         return result
+
+
+def _install_contract(cls, formula_ref, valid_range):
+    original = cls.execute
+
+    async def execute(self, params):
+        data = await original(self, params)
+        import sys
+        from pathlib import Path
+        root = str(Path(__file__).resolve().parents[3])
+        if root not in sys.path:
+            sys.path.insert(0, root)
+        from skill_contract import attach
+        return attach(
+            data,
+            skill_id=self.skill_id,
+            formula_ref=formula_ref,
+            inputs=params,
+            assumptions=["口径见引用，不额外承诺"],
+            sources=list(getattr(self, "references", []) or ["见方法卡"]),
+            valid_range=valid_range,
+        )
+
+    cls.execute = execute
+
+
+_install_contract(SolarResourceSkill, "RA-001 年辐照分级", "GHI 为正")

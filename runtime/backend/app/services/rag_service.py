@@ -225,6 +225,25 @@ class RAGService:
         scored.sort(key=lambda h: h.score, reverse=True)
         return RAGResult(hits=scored[: max(top_k, 0)])
 
+    def hybrid_search(self, query: str, top_k: int = 8, vector_scores: dict | None = None) -> dict:
+        """词面结果再与向量分混合。不改变 search 的原有排序。"""
+        from app.services.hybrid_retrieval import hybrid_scores, rerank
+
+        base = self.search(query, top_k=max(top_k, 8))
+        docs = [
+            {
+                "source_id": hit.source_id,
+                "content": hit.content,
+                "doc_number": (hit.metadata or {}).get("doc_number"),
+                "issuer": (hit.metadata or {}).get("source_org"),
+            }
+            for hit in base.hits
+        ]
+        rows = hybrid_scores(query, docs, vector_scores)
+        ranked = rerank(query, rows)
+        ranked["rows"] = ranked["rows"][:top_k]
+        return ranked
+
     def _freshness_of(self, doc: Dict) -> str:
         if self._registry is not None:
             return self._registry.freshness_of(doc)

@@ -273,6 +273,10 @@ class CarbonAssetSkill:
                 "排放因子_tCO2每MWh": grid_factor,
                 "排放因子出处": factor_source,
                 "排放因子年份": GRID_FACTOR_YEAR,
+                "因子发布机关": "生态环境部、国家统计局",
+                "因子版本": "公告2025年第47号",
+                "方法学编号": "待企业微信核对现行编号",
+                "审批状态": "pending_wecom",
                 "排放因子口径": factor_scope,
                 "排放因子原文": GRID_FACTOR_URL,
                 "CCER资格": {"eligible": "有适用方法学", "no_methodology": "暂无适用方法学", "unknown": "未提供项目类型，无法判定"}[eligibility],
@@ -293,3 +297,40 @@ class CarbonAssetSkill:
 
         result.update(common)
         return result
+
+
+def public_reduction_view(result: dict) -> dict:
+    """对外只保留减排量。收益数字仍留在内部结果里，待企业微信确认方法学后再决定是否展示。"""
+    hidden = {"CCER潜在收益_CNY", "cbam_carbon_cost_eur"}
+    view = {key: value for key, value in dict(result).items() if key not in hidden}
+    view["展示"] = "仅减排量"
+    view["审批状态"] = "pending_wecom"
+    view["收益口径"] = "未纳入"
+    return view
+
+
+def _install_contract(cls, formula_ref, valid_range):
+    original = cls.execute
+
+    async def execute(self, params):
+        data = await original(self, params)
+        import sys
+        from pathlib import Path
+        root = str(Path(__file__).resolve().parents[3])
+        if root not in sys.path:
+            sys.path.insert(0, root)
+        from skill_contract import attach
+        return attach(
+            data,
+            skill_id=self.skill_id,
+            formula_ref=formula_ref,
+            inputs=params,
+            assumptions=["口径见引用，不额外承诺"],
+            sources=list(getattr(self, "references", []) or ["见方法卡"]),
+            valid_range=valid_range,
+        )
+
+    cls.execute = execute
+
+
+_install_contract(CarbonAssetSkill, "排放因子乘发电量", "发电量为正")

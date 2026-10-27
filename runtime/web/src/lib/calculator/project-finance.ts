@@ -57,6 +57,22 @@ export function discountedLcoe(input: {
 }
 
 /** 静态回收期（年，线性插值）。寿命期内未回本返回 null。annualNetCashFlows[i] 为第 i+1 年。 */
+export interface TaxFlags {
+    增值税: '未计' | string;
+    所得税优惠: '未计' | string;
+}
+
+/** 税费默认未计，并说明简化度电成本与含税口径的差别。 */
+export function taxAssumptions(vat?: string, incomeTax?: string): TaxFlags & { 口径: string; 含税差别: string } {
+    const counted = Boolean(vat || incomeTax);
+    return {
+        增值税: vat || '未计',
+        所得税优惠: incomeTax || '未计',
+        口径: 'NREL 简化平准化度电成本',
+        含税差别: counted ? '税额进入分子后，度电成本上升' : '未计',
+    };
+}
+
 export function paybackPeriodOf(initialInvestment: number, annualNetCashFlows: readonly number[]): number | null {
     let remaining = initialInvestment;
     for (let i = 0; i < annualNetCashFlows.length; i++) {
