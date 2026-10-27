@@ -40,8 +40,8 @@ export default async function RootLayout({
       <body className="font-sans">
         <NextIntlClientProvider locale={locale} messages={messages}>
           <AuthProvider configured={isAuthConfigured()}>
-            {children}
             <BuildStamp />
+            {children}
           </AuthProvider>
         </NextIntlClientProvider>
       </body>
