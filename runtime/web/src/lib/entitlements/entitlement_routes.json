@@ -1,0 +1,296 @@
+[
+  {
+    "tier": "free",
+    "feature": "每日 5 次 AI 对话",
+    "page": "src/app/(dashboard)/assistant/page.tsx",
+    "e2e": "entitlement-route:free:每日 5 次 AI 对话"
+  },
+  {
+    "tier": "free",
+    "feature": "每日 3 次资源查询与测算",
+    "page": "src/app/(dashboard)/calculator/page.tsx",
+    "e2e": "entitlement-route:free:每日 3 次资源查询与测算"
+  },
+  {
+    "tier": "free",
+    "feature": "最多 1 个项目",
+    "page": "src/app/(dashboard)/projects/page.tsx",
+    "e2e": "entitlement-route:free:最多 1 个项目"
+  },
+  {
+    "tier": "free",
+    "feature": "PDF 导出 3 份/月（带水印）",
+    "page": "src/app/(dashboard)/calculator/result/page.tsx",
+    "e2e": "entitlement-route:free:PDF 导出 3 份/月（带水印）"
+  },
+  {
+    "tier": "free",
+    "feature": "数据保留 7 天",
+    "page": "src/app/(dashboard)/membership/page.tsx",
+    "e2e": "entitlement-route:free:数据保留 7 天"
+  },
+  {
+    "tier": "free",
+    "feature": "每日一数",
+    "page": "src/app/(dashboard)/daily/page.tsx",
+    "e2e": "entitlement-route:free:每日一数"
+  },
+  {
+    "tier": "free",
+    "feature": "数据集下载 3 次/月",
+    "page": "src/app/(dashboard)/datasets/page.tsx",
+    "e2e": "entitlement-route:free:数据集下载 3 次/月"
+  },
+  {
+    "tier": "pro",
+    "feature": "每日 100 次 AI 对话",
+    "page": "src/app/(dashboard)/assistant/page.tsx",
+    "e2e": "entitlement-route:pro:每日 100 次 AI 对话"
+  },
+  {
+    "tier": "pro",
+    "feature": "资源查询与测算不限次（公平使用）",
+    "page": "src/app/(dashboard)/calculator/page.tsx",
+    "e2e": "entitlement-route:pro:资源查询与测算不限次（公平使用）"
+  },
+  {
+    "tier": "pro",
+    "feature": "最多 30 个项目",
+    "page": "src/app/(dashboard)/projects/page.tsx",
+    "e2e": "entitlement-route:pro:最多 30 个项目"
+  },
+  {
+    "tier": "pro",
+    "feature": "PDF 与 Word 报告导出 30 份/月",
+    "page": "src/app/(dashboard)/calculator/result/page.tsx",
+    "e2e": "entitlement-route:pro:PDF 与 Word 报告导出 30 份/月"
+  },
+  {
+    "tier": "pro",
+    "feature": "文献检索与引用导出",
+    "page": "src/app/(dashboard)/papers/page.tsx",
+    "e2e": "entitlement-route:pro:文献检索与引用导出"
+  },
+  {
+    "tier": "pro",
+    "feature": "数据保留 1 年",
+    "page": "src/app/(dashboard)/membership/page.tsx",
+    "e2e": "entitlement-route:pro:数据保留 1 年"
+  },
+  {
+    "tier": "pro",
+    "feature": "数据集下载不限次（公平使用）",
+    "page": "src/app/(dashboard)/datasets/page.tsx",
+    "e2e": "entitlement-route:pro:数据集下载不限次（公平使用）"
+  },
+  {
+    "tier": "pro",
+    "feature": "按省份与主题订阅政策提醒",
+    "page": "src/app/(dashboard)/alerts/page.tsx",
+    "e2e": "entitlement-route:pro:按省份与主题订阅政策提醒"
+  },
+  {
+    "tier": "pro",
+    "feature": "每日一数",
+    "page": "src/app/(dashboard)/daily/page.tsx",
+    "e2e": "entitlement-route:pro:每日一数"
+  },
+  {
+    "tier": "pro",
+    "feature": "1 个席位",
+    "page": "src/app/(dashboard)/membership/page.tsx",
+    "e2e": "entitlement-route:pro:1 个席位"
+  },
+  {
+    "tier": "pro",
+    "feature": "政策历史版本与变更记录",
+    "page": "src/app/(dashboard)/ops/policy-diff/page.tsx",
+    "e2e": "entitlement-route:pro:政策历史版本与变更记录"
+  },
+  {
+    "tier": "pro",
+    "feature": "引用一键复制（GB/T 7714）",
+    "page": "src/app/(dashboard)/policies/page.tsx",
+    "e2e": "entitlement-route:pro:引用一键复制（GB/T 7714）"
+  },
+  {
+    "tier": "full",
+    "feature": "标准档已实现的测算、报告与文献功能",
+    "page": "src/app/(dashboard)/calculator/page.tsx",
+    "e2e": "entitlement-route:full:标准档已实现的测算、报告与文献功能"
+  },
+  {
+    "tier": "full",
+    "feature": "每日 300 次 AI 对话",
+    "page": "src/app/(dashboard)/assistant/page.tsx",
+    "e2e": "entitlement-route:full:每日 300 次 AI 对话"
+  },
+  {
+    "tier": "full",
+    "feature": "运维诊断、积灰与清洗分析，最多 50 个电站",
+    "page": "src/app/(dashboard)/maintenance/page.tsx",
+    "e2e": "entitlement-route:full:运维诊断、积灰与清洗分析，最多 50 个电站"
+  },
+  {
+    "tier": "full",
+    "feature": "最多 200 个项目",
+    "page": "src/app/(dashboard)/projects/page.tsx",
+    "e2e": "entitlement-route:full:最多 200 个项目"
+  },
+  {
+    "tier": "full",
+    "feature": "PDF 与 Word 导出不限份数",
+    "page": "src/app/(dashboard)/calculator/result/page.tsx",
+    "e2e": "entitlement-route:full:PDF 与 Word 导出不限份数"
+  },
+  {
+    "tier": "full",
+    "feature": "数据保留 2 年",
+    "page": "src/app/(dashboard)/membership/page.tsx",
+    "e2e": "entitlement-route:full:数据保留 2 年"
+  },
+  {
+    "tier": "full",
+    "feature": "3 个席位",
+    "page": "src/app/(dashboard)/enterprise/page.tsx",
+    "e2e": "entitlement-route:full:3 个席位"
+  },
+  {
+    "tier": "full",
+    "feature": "Excel 与 PPT 报告导出",
+    "page": "src/app/(dashboard)/calculator/result/page.tsx",
+    "e2e": "entitlement-route:full:Excel 与 PPT 报告导出"
+  },
+  {
+    "tier": "full",
+    "feature": "分级接口 500 次/月",
+    "page": "src/app/(dashboard)/developer/page.tsx",
+    "e2e": "entitlement-route:full:分级接口 500 次/月"
+  },
+  {
+    "tier": "full",
+    "feature": "按关键词与文号的政策提醒",
+    "page": "src/app/(dashboard)/alerts/page.tsx",
+    "e2e": "entitlement-route:full:按关键词与文号的政策提醒"
+  },
+  {
+    "tier": "full",
+    "feature": "口径咨询预约（人工审批，不自动通过）",
+    "page": "src/app/(dashboard)/membership/page.tsx",
+    "e2e": "entitlement-route:full:口径咨询预约（人工审批，不自动通过）"
+  },
+  {
+    "tier": "team",
+    "feature": "专业档已实现功能",
+    "page": "src/app/(dashboard)/calculator/page.tsx",
+    "e2e": "entitlement-route:team:专业档已实现功能"
+  },
+  {
+    "tier": "team",
+    "feature": "10 个团队席位",
+    "page": "src/app/(dashboard)/enterprise/page.tsx",
+    "e2e": "entitlement-route:team:10 个团队席位"
+  },
+  {
+    "tier": "team",
+    "feature": "团队共享 1,500 次/日 AI 对话",
+    "page": "src/app/(dashboard)/assistant/page.tsx",
+    "e2e": "entitlement-route:team:团队共享 1,500 次/日 AI 对话"
+  },
+  {
+    "tier": "team",
+    "feature": "最多 500 个共享项目",
+    "page": "src/app/(dashboard)/projects/page.tsx",
+    "e2e": "entitlement-route:team:最多 500 个共享项目"
+  },
+  {
+    "tier": "team",
+    "feature": "数据保留 3 年",
+    "page": "src/app/(dashboard)/membership/page.tsx",
+    "e2e": "entitlement-route:team:数据保留 3 年"
+  },
+  {
+    "tier": "team",
+    "feature": "分级接口 5,000 次/月",
+    "page": "src/app/(dashboard)/developer/page.tsx",
+    "e2e": "entitlement-route:team:分级接口 5,000 次/月"
+  },
+  {
+    "tier": "team",
+    "feature": "季度简报",
+    "page": "src/app/(dashboard)/briefs/page.tsx",
+    "e2e": "entitlement-route:team:季度简报"
+  },
+  {
+    "tier": "team",
+    "feature": "Excel 与 PPT 报告导出",
+    "page": "src/app/(dashboard)/calculator/result/page.tsx",
+    "e2e": "entitlement-route:team:Excel 与 PPT 报告导出"
+  },
+  {
+    "tier": "team",
+    "feature": "勘误优先通道（时限待人工确认）",
+    "page": "src/app/(dashboard)/maintenance/page.tsx",
+    "e2e": "entitlement-route:team:勘误优先通道（时限待人工确认）"
+  },
+  {
+    "tier": "enterprise",
+    "feature": "10 个席位，合同可增加",
+    "page": "src/app/(dashboard)/enterprise/page.tsx",
+    "e2e": "entitlement-route:enterprise:10 个席位，合同可增加"
+  },
+  {
+    "tier": "enterprise",
+    "feature": "用量和项目数量按合同配置",
+    "page": "src/app/(dashboard)/enterprise/page.tsx",
+    "e2e": "entitlement-route:enterprise:用量和项目数量按合同配置"
+  },
+  {
+    "tier": "enterprise",
+    "feature": "分级接口按合同计量",
+    "page": "src/app/(dashboard)/developer/page.tsx",
+    "e2e": "entitlement-route:enterprise:分级接口按合同计量"
+  },
+  {
+    "tier": "enterprise",
+    "feature": "Excel 与 PPT 报告导出",
+    "page": "src/app/(dashboard)/calculator/result/page.tsx",
+    "e2e": "entitlement-route:enterprise:Excel 与 PPT 报告导出"
+  },
+  {
+    "tier": "enterprise",
+    "feature": "季度简报",
+    "page": "src/app/(dashboard)/briefs/page.tsx",
+    "e2e": "entitlement-route:enterprise:季度简报"
+  },
+  {
+    "tier": "enterprise",
+    "feature": "私有化与定制需求评估",
+    "page": "src/app/(dashboard)/enterprise/page.tsx",
+    "e2e": "entitlement-route:enterprise:私有化与定制需求评估"
+  },
+  {
+    "tier": "maintenance",
+    "feature": "运维诊断与检修管理",
+    "page": "src/app/(dashboard)/maintenance/page.tsx",
+    "e2e": "entitlement-route:maintenance:运维诊断与检修管理"
+  },
+  {
+    "tier": "maintenance",
+    "feature": "最多 10 个电站",
+    "page": "src/app/(dashboard)/my/stations/page.tsx",
+    "e2e": "entitlement-route:maintenance:最多 10 个电站"
+  },
+  {
+    "tier": "maintenance",
+    "feature": "每日 100 次 AI 对话",
+    "page": "src/app/(dashboard)/assistant/page.tsx",
+    "e2e": "entitlement-route:maintenance:每日 100 次 AI 对话"
+  },
+  {
+    "tier": "maintenance",
+    "feature": "PDF 报告导出",
+    "page": "src/app/(dashboard)/calculator/result/page.tsx",
+    "e2e": "entitlement-route:maintenance:PDF 报告导出"
+  }
+]

@@ -220,7 +220,7 @@ export function ConclusionCard({
                             className="gap-1"
                         >
                             <FileText className="w-4 h-4" />
-                            PDF
+                            导出 PDF
                         </Button>
                         <Button
                             variant="outline"
@@ -229,7 +229,7 @@ export function ConclusionCard({
                             className="gap-1"
                         >
                             <Download className="w-4 h-4" />
-                            Excel
+                            导出 Excel
                         </Button>
                         <Button
                             variant="outline"

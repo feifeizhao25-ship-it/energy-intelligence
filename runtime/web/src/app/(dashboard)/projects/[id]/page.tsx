@@ -430,7 +430,7 @@ export default function ProjectDetailPage(props: ProjectDetailProps) {
                             ) : (
                                 <div className="text-center py-8 text-slate-400">
                                     <BrainCircuit className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                                    <div className="text-sm font-bold">点击&ldquo;开始诊断&rdquo;获取 AI 智能分析报告</div>
+                                    <div className="text-sm font-bold">点击「开始诊断」获取人工智能分析报告</div>
                                     <div className="text-xs mt-1">基于大模型的结构化运维建议</div>
                                 </div>
                             )}

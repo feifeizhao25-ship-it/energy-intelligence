@@ -32,6 +32,31 @@ describe('营销与页面文案：不用绝对化、无依据的说法', () => {
         }
         expect(hits).toEqual([]);
     });
+
+    it('营销文案不出现回报承诺，测算术语除外', () => {
+        const patterns: Array<{ word: string; allow: string[] }> = [
+            { word: '躺赚', allow: [] },
+            { word: '保本', allow: [] },
+            { word: '稳赚', allow: [] },
+            { word: '回报', allow: ['不承诺回报'] },
+            { word: '收益率', allow: ['内部收益率'] },
+            { word: '回本', allow: ['未回本', '回收期', '返回本'] },
+        ];
+        const hits: string[] = [];
+        for (const file of DIRS.flatMap(walk)) {
+            readFileSync(file, 'utf8').split('\n').forEach((line, i) => {
+                if (/^\s*(\/\/|\*|\/\*)/.test(line)) return;
+                for (const pattern of patterns) {
+                    let rest = line;
+                    for (const allowed of pattern.allow) rest = rest.split(allowed).join('');
+                    if (rest.includes(pattern.word)) hits.push(`${relative(ROOT, file)}:${i + 1} 「${pattern.word}」`);
+                }
+            });
+        }
+        expect(hits).toEqual([]);
+        const publish = readFileSync(join(ROOT, '../backend/ops/publish.py'), 'utf8');
+        expect(publish).not.toMatch(/\bskip\b|\bbypass\b/i);
+    });
 });
 
 describe('首页价格预览与权益注册表一致', () => {

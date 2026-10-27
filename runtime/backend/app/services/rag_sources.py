@@ -40,9 +40,24 @@ REQUIRED_FIELDS = (
     "source_org",
     "license_note",
     "verify_interval_days",
+    "doc_number",
+    "issuer",
+    "publish_date",
+    "effective_date",
+    "status",
+    "jurisdiction",
+    "source_tier",
+    "license",
+    "snapshot_sha256",
 )
 
+# 这些字段必须出现，但允许 JSON null（表示原文未写截止日期，或尚未被替代）。
+NULLABLE_FIELDS = ("expiry_date", "superseded_by")
+
 VALID_TYPES = ("policy", "standard", "price")
+VALID_STATUS = ("现行", "征求意见", "废止", "被替代", "待核实")
+VALID_JURISDICTION = ("全国", "省", "市", "海外")
+VALID_TIERS = ("一手官方", "协会", "媒体", "学术")
 
 # 接近截止的阈值：已用掉超过 80% 核验周期即建议复核
 REVIEW_THRESHOLD_RATIO = 0.8
@@ -129,6 +144,20 @@ class SourceRegistry:
             for field_name in REQUIRED_FIELDS:
                 if field_name not in source or source[field_name] in (None, ""):
                     problems.append("%s: missing required field %s" % (sid, field_name))
+            for field_name in NULLABLE_FIELDS:
+                if field_name not in source:
+                    problems.append("%s: missing required field %s" % (sid, field_name))
+            if source.get("status") not in VALID_STATUS:
+                problems.append("%s: status must be one of %s" % (sid, VALID_STATUS))
+            if source.get("jurisdiction") not in VALID_JURISDICTION:
+                problems.append("%s: jurisdiction must be one of %s" % (sid, VALID_JURISDICTION))
+            if source.get("source_tier") not in VALID_TIERS:
+                problems.append("%s: source_tier must be one of %s" % (sid, VALID_TIERS))
+            digest = str(source.get("snapshot_sha256") or "")
+            if len(digest) != 64 or any(ch not in "0123456789abcdef" for ch in digest):
+                problems.append("%s: snapshot_sha256 must be 64 hex chars" % sid)
+            if source.get("status") == "被替代" and not source.get("superseded_by"):
+                problems.append("%s: superseded_by required when status is 被替代" % sid)
             if sid in seen:
                 problems.append("%s: duplicate source_id" % sid)
             seen.add(sid)

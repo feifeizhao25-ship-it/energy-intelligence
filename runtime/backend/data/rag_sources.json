@@ -6,12 +6,12 @@
       "source_id": "std-gb50797",
       "type": "standard",
       "lang": "cn",
-      "title": "GB 50797 光伏发电站设计规范",
+      "title": "光伏发电站设计标准（2024 年版）",
       "authors": "中华人民共和国住房和城乡建设部",
       "version": "2024 年版",
       "published_at": "2024-03-01",
-      "locator": "第 6 章 电气设计要求",
-      "content": "光伏发电站设计规范，涵盖组件布置、间距与电气设计要求。",
+      "locator": "6.6 发电量计算",
+      "content": "《光伏发电站设计标准》GB 50797-2012（2024 年版）。产品测算采用该标准第 6.6 节发电量公式 Ep = H_A × P_AZ × K，K 为综合效率系数。条文以国家标准全文公开系统原文为准。",
       "year": 2024,
       "last_verified_at": "2026-01-15",
       "source_url": "https://openstd.samr.gov.cn/bzgk/gb/index",
@@ -21,10 +21,22 @@
       "corroborated_by": [
         "policy-cn-136"
       ],
-      "needs_human_verification": "标准年代号（版本年份）尚未与国家标准全文公开系统逐条核对，引用前须人工确认。",
+      "needs_human_verification": "标题、施行日 2025-04-01 与 6.6 节公式须对照国家标准全文公开系统核对后才能当作已核验原文。",
       "countries": [
         "cn"
-      ]
+      ],
+      "doc_number": "GB 50797-2012",
+      "issuer": "中华人民共和国住房和城乡建设部",
+      "publish_date": "2024-03-01",
+      "effective_date": "2025-04-01",
+      "expiry_date": null,
+      "superseded_by": null,
+      "jurisdiction": "全国",
+      "source_tier": "一手官方",
+      "license": "国家标准全文公开系统提供免费在线阅读；引用须标注标准号与年代号。",
+      "snapshot_note": "snapshot_scope=已收录摘要，不是官方全文影像。",
+      "snapshot_sha256": "3f95e9427dac9378479df69021f6287045167814a65cf2a26fd5e2e5cdbc2f72",
+      "status": "现行"
     },
     {
       "source_id": "policy-cn-136",
@@ -51,7 +63,17 @@
       "effective_date": "2025-02-09",
       "expiry": null,
       "superseded_by": null,
-      "evidence_status": "legacy_unreviewed"
+      "evidence_status": "legacy_unreviewed",
+      "doc_number": "发改价格〔2025〕136号",
+      "issuer": "国家发展改革委、国家能源局",
+      "publish_date": "2025-02-09",
+      "expiry_date": null,
+      "jurisdiction": "全国",
+      "source_tier": "一手官方",
+      "license": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
+      "snapshot_note": "snapshot_scope=已收录摘要，不是官方全文影像。",
+      "snapshot_sha256": "070f8c1846864446b829fc3266864b605077ea755c7835977b29d1fcd9981433",
+      "status": "现行"
     },
     {
       "source_id": "policy-cn-storage",
@@ -78,7 +100,19 @@
       "effective_date": "2025-06-01",
       "expiry": null,
       "superseded_by": null,
-      "evidence_status": "legacy_unreviewed"
+      "evidence_status": "pending",
+      "doc_number": "2025 年版",
+      "issuer": "国家能源局",
+      "publish_date": "2025-06-01",
+      "expiry_date": null,
+      "jurisdiction": "全国",
+      "source_tier": "一手官方",
+      "license": "政府公开发布文件，转载引用须注明来源为国家能源局。",
+      "snapshot_note": "snapshot_scope=已收录摘要，不是官方全文影像。",
+      "snapshot_sha256": "a7cb2a4a92b4f9139a3ff80a5b10424d44fdaf6dbfd55cec626bb3c86923a450",
+      "status": "待核实",
+      "document_url_status": "待核实",
+      "needs_human_verification": "当前 source_url 只是国家能源局首页，不是调度规则原文页。人工须补上原文 URL 与快照后才能入库检索。"
     },
     {
       "source_id": "std-iec61724",
@@ -101,7 +135,19 @@
       ],
       "countries": [
         "us"
-      ]
+      ],
+      "doc_number": "IEC 61724-1:2021",
+      "issuer": "IEC Technical Committee 82",
+      "publish_date": "2021-07-01",
+      "effective_date": "2021-07-01",
+      "expiry_date": null,
+      "superseded_by": null,
+      "jurisdiction": "海外",
+      "source_tier": "一手官方",
+      "license": "IEC standards are copyrighted; summaries are original text, full text requires purchase from the IEC Webstore.",
+      "snapshot_note": "snapshot_scope=已收录摘要，不是官方全文影像。",
+      "snapshot_sha256": "77b72406002d592391bd41353755ddc9b82b66a1cf26499e11423685f072648e",
+      "status": "现行"
     },
     {
       "source_id": "policy-us-itc",
@@ -132,7 +178,17 @@
       "effective_date": "2025-08-21",
       "expiry": null,
       "superseded_by": null,
-      "evidence_status": "legacy_unreviewed"
+      "evidence_status": "legacy_unreviewed",
+      "doc_number": "IRS FS-2025-05 (Aug. 21, 2025); IRS Notice 2025-42",
+      "issuer": "Internal Revenue Service; U.S. Department of the Treasury",
+      "publish_date": "2025-08-21",
+      "expiry_date": null,
+      "jurisdiction": "海外",
+      "source_tier": "学术",
+      "license": "U.S. federal government publication, generally public domain; cite IRS.gov as the source.",
+      "snapshot_note": "snapshot_scope=已收录摘要，不是官方全文影像。",
+      "snapshot_sha256": "b61584ba10d836cbd15cf90848c345c294462167736a8b94574a1390829cbc06",
+      "status": "现行"
     },
     {
       "source_id": "std-ieee1547",
@@ -155,7 +211,19 @@
       ],
       "countries": [
         "us"
-      ]
+      ],
+      "doc_number": "IEEE 1547-2018",
+      "issuer": "IEEE Standards Association",
+      "publish_date": "2018-04-01",
+      "effective_date": "2018-04-01",
+      "expiry_date": null,
+      "superseded_by": null,
+      "jurisdiction": "海外",
+      "source_tier": "一手官方",
+      "license": "IEEE standards are copyrighted; summaries are original text, full text requires purchase via IEEE Xplore.",
+      "snapshot_note": "snapshot_scope=已收录摘要，不是官方全文影像。",
+      "snapshot_sha256": "917b34e2e9163d61d1d61cc46f5ed1d473fe5d350ed3dd275ec1d5e3c8529aa4",
+      "status": "现行"
     },
     {
       "source_id": "guide-grid-interconnection",
@@ -183,7 +251,17 @@
       "effective_date": "2026-01-15",
       "expiry": null,
       "superseded_by": null,
-      "evidence_status": "legacy_unreviewed"
+      "evidence_status": "legacy_unreviewed",
+      "doc_number": "2026 edition",
+      "issuer": "National Renewable Energy Laboratory (NREL)",
+      "publish_date": "2026-01-15",
+      "expiry_date": null,
+      "jurisdiction": "海外",
+      "source_tier": "一手官方",
+      "license": "NREL publications are U.S. government-funded works; reuse with attribution per NREL copyright notice.",
+      "snapshot_note": "snapshot_scope=已收录摘要，不是官方全文影像。",
+      "snapshot_sha256": "e1bff883cff62fa6e236550e8da652fe6a79bcec5f08a4cca93f518656a55b83",
+      "status": "现行"
     },
     {
       "source_id": "price-cn-module",
@@ -206,7 +284,22 @@
       ],
       "countries": [
         "cn"
-      ]
+      ],
+      "doc_number": "2026 年第 29 周",
+      "issuer": "中国光伏行业协会（CPIA）",
+      "publish_date": "2026-07-20",
+      "effective_date": "2026-07-20",
+      "expiry_date": null,
+      "superseded_by": null,
+      "jurisdiction": "全国",
+      "source_tier": "协会",
+      "license": "协会公开发布行情信息，引用须注明来源；数据更新频繁，按周核验。",
+      "snapshot_note": "snapshot_scope=已收录摘要，不是官方全文影像。",
+      "snapshot_sha256": "080742c402e144d80bc9f56d6e0c9c4bf25f83bed969a8866386d7f72451c909",
+      "status": "待核实",
+      "quote_policy": "withdrawn",
+      "evidence_status": "pending",
+      "needs_human_verification": "组件价格周更任务尚未接入已核验原文。在此之前不得回答当前价格。"
     },
     {
       "source_id": "price-us-eia",
@@ -229,7 +322,19 @@
       ],
       "countries": [
         "us"
-      ]
+      ],
+      "doc_number": "July 2026",
+      "issuer": "U.S. Energy Information Administration",
+      "publish_date": "2026-07-20",
+      "effective_date": "2026-07-20",
+      "expiry_date": null,
+      "superseded_by": null,
+      "jurisdiction": "海外",
+      "source_tier": "一手官方",
+      "license": "U.S. government work, public domain; cite EIA as the source when republishing.",
+      "snapshot_note": "snapshot_scope=已收录摘要，不是官方全文影像。",
+      "snapshot_sha256": "c07b5e19feeaa90f85c32478ac1e947e20a25eae4bf898fdfb8e15c72b00cb3a",
+      "status": "现行"
     },
     {
       "source_id": "policy-cn-688",
@@ -257,7 +362,17 @@
         "cn"
       ],
       "evidence_status": "legacy_unreviewed",
-      "needs_human_verification": "标题与链接来自 2026-10 工作副本，入库前须对照国家能源局原文。"
+      "needs_human_verification": "标题与链接来自 2026-10 工作副本，入库前须对照国家能源局原文。",
+      "doc_number": "发改能源〔2026〕688号",
+      "issuer": "国家发展改革委、国家能源局",
+      "publish_date": "2026-05-20",
+      "expiry_date": null,
+      "jurisdiction": "全国",
+      "source_tier": "一手官方",
+      "license": "政府公开发布文件，引用须给出原文链接。Mac 工作副本曾误把本文编号写成 policy-cn-136，生产登记表以本 id 为准。",
+      "snapshot_note": "snapshot_scope=已收录摘要，不是官方全文影像。",
+      "snapshot_sha256": "53ca41660967558ceffcd0733f16b5e82ee4fdcf5b5fe706319643528308a558",
+      "status": "待核实"
     }
   ],
   "id_aliases": {

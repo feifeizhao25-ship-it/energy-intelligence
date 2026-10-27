@@ -10,7 +10,7 @@ jest.mock('@/lib/services/policy-service', () => ({
     PolicyService: { getActivePolicies: jest.fn(async () => []) },
 }));
 
-import { calculateSolar, simulateSolar } from './solar';
+import { calculateSolar, monthTemperatureFactor, simulateSolar } from './solar';
 import { SolarCalculatorV2 } from './solar-v2';
 import { calculateSolarOutput } from '@/lib/api/nrel';
 import { poaDaily, empiricalOptimalTilt } from './transposition';
@@ -94,16 +94,25 @@ describe('手算基准（统一模型）', () => {
         //   旧 v2 口径：100 × 1460 × 0.8 = 116,800 kWh，比统一模型低约 4%（本例气温较低时差距更小）
         const eta = 0.97 * 0.98 * 0.985 * 0.96 * 0.98 * 0.985;
         expect(eta).toBeCloseTo(0.86770, 4);
-        // 组件平面年辐照改由 Hay-Davies 换算（无散射数据 → Erbs 分离），最佳倾角 0.76×纬度+3.1、正南；
-        // 旧口径「最佳倾角时 POA = GHI」系统性低估，这里不再沿用 1460。
-        const poa = Array.from({ length: 12 }, (_, i) => poaDaily({ lat: LAT, month: i + 1, ghi: 4, tilt: empiricalOptimalTilt(LAT), azimuth: 180 })
-            * new Date(Date.UTC(YEAR, i + 1, 0)).getUTCDate()).reduce((a, b) => a + b, 0);
+        // 组件平面年辐照改由 Hay-Davies 换算（无散射数据 → Erbs 分离），最佳倾角 0.76×纬度+3.1、正南。
+        // 温度用 SAPM，高于和低于 25°C 都修正，不再用「环境温度 +20°C、只计高温损失 0.4%」。
+        const tilt = empiricalOptimalTilt(LAT);
+        let expected = 0;
+        let poa = 0;
+        for (let month = 1; month <= 12; month += 1) {
+            const days = new Date(Date.UTC(YEAR, month, 0)).getUTCDate();
+            const plane = poaDaily({ lat: LAT, month, ghi: 4, tilt, azimuth: 180 }) * days;
+            poa += plane;
+            const temp = monthTemperatureFactor({
+                airC: 15, dailyPoaKwhM2: plane / days, lat: LAT, month, installationType: 'roof',
+            });
+            expected += Math.round(100 * plane * eta * temp);
+        }
         expect(poa / (4 * DAYS_IN_YEAR)).toBeGreaterThan(1.03);
-        expect(poa / (4 * DAYS_IN_YEAR)).toBeLessThan(1.25); // 全年平直 4 kWh/m²/day 的合成数据冬季占比偏高，增益略大于实测城市
-        const expected = 100 * poa * eta * 0.96;
+        expect(poa / (4 * DAYS_IN_YEAR)).toBeLessThan(1.25);
         const v2 = await SolarCalculatorV2.calculate({ location: { lat: LAT, lng: LNG }, capacity: 100, unitCost: 3.5, electricityPrice: 0.6 });
-        within(v2.result.annualGeneration, expected, 0.001); // 逐月取整造成的差异 < 0.1%
-        within(v2.assumptions.performanceRatio, 0.8330, 0.001);
+        within(v2.result.annualGeneration, expected, 0.001);
+        within(v2.assumptions.performanceRatio, expected / (100 * poa), 0.002);
         within(v2.result.planeIrradiation!, poa, 1e-9);
     });
 
@@ -117,5 +126,28 @@ describe('手算基准（统一模型）', () => {
             selfUsePrice: 0.6, feedInPrice: 0.6, selfUseRatio: 1, unitCost: 3500 };
         expect(simulateSolar(resource, params)).toEqual(simulateSolar(resource, params));
         expect(global.fetch).not.toHaveBeenCalled();
+    });
+});
+
+describe('四个光伏入口都落到同一套模型', () => {
+    const routes = [
+        'src/app/api/calculate/solar/route.ts',
+        'src/app/api/calculator/solar/route.ts',
+        'src/app/api/v1/calculate/solar/route.ts',
+        'src/app/api/v2/solar/calculate/route.ts',
+    ];
+    it('路由文件调用 calculateSolar 或 SolarCalculatorV2，二者都进入 simulateSolar', () => {
+        const { readFileSync } = require('node:fs');
+        const { join } = require('node:path');
+        const root = join(__dirname, '../../..');
+        const engine = readFileSync(join(__dirname, 'solar.ts'), 'utf8');
+        const v2 = readFileSync(join(__dirname, 'solar-v2.ts'), 'utf8');
+        expect(engine).toContain('export function simulateSolar');
+        expect(engine).toContain('return simulateSolar');
+        expect(v2).toContain('simulateSolar');
+        for (const route of routes) {
+            const src = readFileSync(join(root, route), 'utf8');
+            expect(src.includes('calculateSolar') || src.includes('SolarCalculatorV2')).toBe(true);
+        }
     });
 });

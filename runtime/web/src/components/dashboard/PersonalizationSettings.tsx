@@ -6,7 +6,7 @@ import { ROLES, ROLE_LABELS, INTERESTS, INTEREST_LABELS, PROVINCES, type Prefere
 
 /** 设置页「工作台个性化」：角色、所在省份、关注领域，以及关闭个性化的开关。免费用户同样可用。 */
 export default function PersonalizationSettings() {
-    const [prefs, setPrefs] = useState<Preferences>({ role: null, province: null, interest: null, personalized: true });
+    const [prefs, setPrefs] = useState<Preferences>({ role: null, province: null, interest: null, personalized: true, tags: [] });
     const [state, setState] = useState<'loading' | 'idle' | 'saving' | 'saved' | 'error'>('loading');
     const [message, setMessage] = useState('');
 
@@ -62,10 +62,23 @@ export default function PersonalizationSettings() {
                     </select>
                 </label>
             </div>
+            <div className="space-y-2">
+                <p className="text-xs font-bold text-slate-500">我的标签</p>
+                {(prefs.tags ?? []).length === 0 && <p className="text-xs text-slate-500">还没有标签。标签只来自你的操作记录，不会自动生成。</p>}
+                <ul className="space-y-2">
+                    {(prefs.tags ?? []).map(tag => (
+                        <li key={tag.id} className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2 text-sm">
+                            <span>{tag.label}<span className="ml-2 text-xs text-slate-500">来源：{tag.source}</span></span>
+                            <button type="button" className="text-xs font-bold text-rose-700" onClick={() => setPrefs({ ...prefs, tags: (prefs.tags ?? []).filter(item => item.id !== tag.id) })}>删除</button>
+                        </li>
+                    ))}
+                </ul>
+            </div>
             <label className="flex items-center gap-2 text-sm text-slate-700">
                 <input type="checkbox" checked={prefs.personalized} onChange={e => setPrefs({ ...prefs, personalized: e.target.checked })} />
                 开启个性化（关闭后工作台显示通用版）
             </label>
+            <button type="button" className="text-sm font-bold text-slate-700 underline" onClick={() => setPrefs({ ...prefs, personalized: false })}>一键关闭个性化</button>
             <div className="flex items-center gap-3">
                 <button type="button" onClick={save} disabled={state === 'saving' || state === 'loading'}
                     className="bg-green-600 text-white px-6 py-2.5 rounded-2xl font-bold text-sm flex items-center gap-2 disabled:opacity-50">

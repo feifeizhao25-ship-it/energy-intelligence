@@ -97,7 +97,7 @@ export default function TrendChart({ labels, prData, generationData, revenueData
                                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
                                 }`}
                         >
-                            PR
+                            性能比（PR）
                         </button>
                         <button
                             onClick={() => setActiveChart('generation')}

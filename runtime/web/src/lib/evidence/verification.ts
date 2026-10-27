@@ -54,6 +54,33 @@ function independentKey(s: EvidenceSource): string {
   return host || s.title || s.tool || 'unknown';
 }
 
+export interface NumericPoint extends EvidenceSource {
+  value?: number;
+  snapshot_sha256?: string;
+}
+
+/** 一个官方来源加 64 位快照即可核验；两个以上来源不一致则标冲突且不择一。 */
+export function verifyNumericClaim(values: NumericPoint[], tolerance = 0.01): EvidenceVerification {
+  const mk = (status: VerificationStatus, reason: string): EvidenceVerification => ({
+    status, label: VERIFICATION_LABELS[status], reason, usable_as_conclusion: status === 'verified',
+  });
+  const points = values.filter((row) => typeof row.value === 'number' && Number.isFinite(row.value));
+  if (!points.length) return mk('unverified', '无数值来源');
+  const byPub = new Map<string, number>();
+  for (const row of points) byPub.set(independentKey(row), row.value as number);
+  if (byPub.size < 2) {
+    const only = points[0];
+    if (isOfficialSource(only) && (only.snapshot_sha256 || '').length === 64) return mk('verified', '一手官方原文并附快照');
+    return mk('review_recommended', '只有 1 个独立来源');
+  }
+  const nums = [...byPub.values()];
+  const lo = Math.min(...nums);
+  const hi = Math.max(...nums);
+  const base = Math.max(Math.abs(lo), Math.abs(hi)) || 1;
+  if ((hi - lo) / base < tolerance) return mk('verified', `${nums.length} 个独立来源一致`);
+  return mk('conflict', `${nums.length} 个来源数值冲突（${lo}–${hi}），已全部展示，待人工核验`);
+}
+
 export function verifySources(sources: EvidenceSource[]): EvidenceVerification {
   const mk = (status: VerificationStatus, reason: string): EvidenceVerification => ({
     status, label: VERIFICATION_LABELS[status], reason, usable_as_conclusion: status === 'verified',

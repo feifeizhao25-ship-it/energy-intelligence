@@ -2,6 +2,40 @@ import math
 from typing import List, Optional
 
 
+def solve_irr_rate(cashflows: List[float], max_iter: int = 200, tol: float = 1e-12) -> Optional[float]:
+    """与前端 project-finance.solveIrr 相同的二分法，返回小数利率。无唯一解返回 None。"""
+    if len(cashflows) < 2:
+        return None
+    if any(cf != cf or cf in (float("inf"), float("-inf")) for cf in cashflows):
+        return None
+    signs = [1 if cf > 0 else -1 for cf in cashflows if cf != 0]
+    if sum(1 for i in range(1, len(signs)) if signs[i] != signs[i - 1]) != 1:
+        return None
+
+    def npv(rate: float) -> float:
+        total, divisor = 0.0, 1.0
+        for cf in cashflows:
+            total += cf / divisor
+            divisor *= (1 + rate)
+        return total
+
+    low, high = -0.999, 1.0
+    while (npv(low) > 0) == (npv(high) > 0) and high < 1e6:
+        high *= 2
+    if (npv(low) > 0) == (npv(high) > 0):
+        return None
+    low_positive = npv(low) > 0
+    for _ in range(max_iter):
+        mid = (low + high) / 2
+        if (npv(mid) > 0) == low_positive:
+            low = mid
+        else:
+            high = mid
+        if high - low < tol:
+            break
+    return (low + high) / 2
+
+
 def calc_irr(cashflows: List[float], max_iter: int = 300, tol: float = 1e-12) -> Optional[float]:
     """IRR（百分数，保留 4 位）。
 

@@ -112,7 +112,7 @@ export default function ProjectTimelinePage() {
                         <section>
                             <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
                                 <BarChart2 className="text-primary-500" />
-                                智能下一步 (AI OS)
+                                智能下一步
                             </h3>
                             <div className="space-y-3">
                                 <RecommendationItem

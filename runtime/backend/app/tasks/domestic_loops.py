@@ -10,19 +10,11 @@ from app.tasks.celery_app import celery_app
 
 @celery_app.task(name="energy.domestic.skill_improvement")
 def skill_improvement() -> dict:
-    from app.services.skill_improvement import run_cycle
-
-    def _metrics(_candidate, _gate):
-        return {
-            "citation_accuracy": 1.0,
-            "freshness_correctness": 1.0,
-            "redteam_blocked": 1.0,
-            "calculator_reference": 100.0,
-            "calculator_actual": 100.0,
-        }
-
+    """Read the latest measured eval file. Never invent a passing score."""
     from app.services.feedback_samples import load_samples
-    return run_cycle(load_samples(), _metrics)
+    from app.services.skill_improvement import eval_latest_path, run_cycle
+
+    return run_cycle(load_samples(), lambda *_args: {}, eval_file=eval_latest_path())
 
 
 @celery_app.task(name="energy.domestic.policy_snapshot")

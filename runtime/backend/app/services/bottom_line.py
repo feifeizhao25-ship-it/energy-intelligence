@@ -77,6 +77,7 @@ _PATTERNS = (
     (re.compile(r"该不该投|能不能投|要不要投|值不值得投|可以投吗|值得\s*投(?!资|入|放|标)|该不该上(?!报|网|课|班|学)"), "投资询问"),
     # 「官方发布」只在把结论说成官方背书时命中。引用「官方发布的文件/通知」不算。
     (re.compile(r"(?:这是|属于|视为).{0,8}官方发布的(?!文件|通知|原文|政策|办法|公告|网页|链接|文本)|官方发布的(?:结论|认证|推荐|保证|承诺|背书)|官方发布(?:并|且)(?:保证|承诺|推荐)|经官方发布|国家认证|政府推荐|官方认证"), "冒充官方"),
+    (re.compile(r"以.{0,8}(?:能源局|发改委|国务院|政府)名义"), "冒充官方"),
     (re.compile(r"recommend(?:ed)?\s+invest", re.I), "recommend investing"),
     (re.compile(r"price\s+will\s+(?:rise|fall)", re.I), "price forecast"),
     (re.compile(r"guaranteed\s+returns?", re.I), "guaranteed return"),

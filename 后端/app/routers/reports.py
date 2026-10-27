@@ -1492,18 +1492,13 @@ def _add_investment_content(doc, data: Dict, metrics: Dict):
         "符合国家碳中和战略方向，ESG 评级为 A 级。"
     )
 
-    _add_heading(doc, "第六章  投资建议", level=1)
+    _add_heading(doc, "第六章  测算结果", level=1)
     _add_body(doc,
-        f"综合财务模型和风险分析，项目 IRR ({fmt_pct(metrics['irr'])}) "
-        f"{'高于' if metrics['irr'] > 0.08 else '低于'}行业基准 (8%)，"
-        f"NPV {'为正' if metrics['npv'] > 0 else '为负'}。"
+        f"综合本报告所列财务假设，IRR ({fmt_pct(metrics['irr'])}) "
+        f"{'高于' if metrics['irr'] > 0.08 else '不高于'}对照折现率 8%，"
+        f"NPV {'为正' if metrics['npv'] > 0 else '不为正'}。"
+        "以上为测算值，不构成收益承诺。"
     )
-    recommendation = (
-        "建议：推荐投资。项目财务指标良好，政策风险可控，ESG 效益显著。"
-        if metrics["npv"] > 0 and metrics["irr"] > 0.08
-        else "建议：暂缓投资。需优化成本结构或提升电价水平后再行评估。"
-    )
-    _add_body(doc, recommendation, bold=True)
 
 
 # ── 合规报告 正文 ──
@@ -2097,10 +2092,11 @@ def _build_pdf_content(story, data, metrics, report_type, style_h1, style_h2, st
         story.append(Paragraph(
             f"年减排 CO₂ 约 {co2:,.2f} 万吨，ESG 评级 A 级。", style_body))
 
-        story.append(Paragraph("第六章  投资建议", style_h1))
-        ok = metrics["npv"] > 0 and metrics["irr"] > 0.08
+        story.append(Paragraph("第六章  测算结果", style_h1))
         story.append(Paragraph(
-            "推荐投资。" if ok else "暂缓投资，需优化后重新评估。", style_body))
+            f"IRR {fmt_pct(metrics['irr'])}，NPV {fmt_money(metrics['npv'])}。以上为测算值。",
+            style_body,
+        ))
 
     elif report_type == "compliance":
         story.append(Paragraph("第一章  法规清单", style_h1))

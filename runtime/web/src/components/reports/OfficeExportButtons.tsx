@@ -20,7 +20,8 @@ export function OfficeExportButtons({ title, rows }: { title: string; rows: stri
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = format === 'xlsx' ? '新能源智库.xlsx' : '新能源智库.pptx';
+        const ext = format === 'xlsx' ? 'xlsx' : 'pptx';
+        link.download = `新能源智库.${ext}`;
         link.click();
         setTimeout(() => URL.revokeObjectURL(url), 1000);
     }

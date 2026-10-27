@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
+import { PolicyTools } from '@/components/policy/PolicyTools';
 
 export default function PoliciesPage() {
     const [q, setQ] = useState('');
@@ -18,6 +19,11 @@ export default function PoliciesPage() {
     }
     return <main className="mx-auto max-w-4xl space-y-4 p-6">
         <h1 className="text-2xl font-bold">政策检索</h1>
+        <PolicyTools title="政策原文" docNumber={null} supersededBy={null} />
+        <section className="rounded-2xl border border-slate-200 p-4 text-sm text-slate-700">
+            <h2 className="font-bold text-slate-900">省级档案</h2>
+            <p>能源主管部门、发改委价格处、电网代理购电公告、电力交易中心、136号文省级实施方案、分时时段：待核实。正式网址尚未连接。</p>
+        </section>
         <p className="text-sm text-slate-600">{note}</p>
         <form onSubmit={search} className="flex gap-2">
             <input value={q} onChange={(event) => setQ(event.target.value)} placeholder="省份、文号或标题" className="flex-1 rounded-xl border px-3 py-2" />

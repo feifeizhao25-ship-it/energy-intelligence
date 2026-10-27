@@ -79,7 +79,7 @@ export default function MembershipCenterPage() {
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <section className="rounded-2xl bg-slate-900 border border-slate-800 p-6">
-                        <h3 className="text-xl font-bold flex items-center gap-2"><TrendingUp className="text-blue-400" />今日使用情况</h3>
+                        <h3 className="text-xl font-bold flex items-center gap-2"><TrendingUp className="text-blue-400" />我的权益</h3>
                         <p className="text-sm text-slate-400 mt-2">按北京时间每日零点重置；下次重置：{new Date(member.nextResetAt).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false })}（北京时间）。</p>
                         <div className="mt-5 space-y-4">
                             <Usage label="AI 对话" value={member.dailyAiCalls} limit={effectiveLimits.ai_chat} />
@@ -121,6 +121,7 @@ export default function MembershipCenterPage() {
                     {member.paymentPagination?.nextCursor && <button type="button" onClick={loadMorePayments} disabled={paymentsLoading} className="mt-4 rounded-lg border border-slate-600 px-4 py-2 disabled:opacity-50">{paymentsLoading ? '正在加载付款记录…' : '加载更多付款记录'}</button>}
                 </section>
 
+                <ConsultBox />
                 <BillingActions member={member} onChanged={() => setAttempt(value => value + 1)} />
             </div>
         </main>
@@ -179,6 +180,26 @@ function BillingActions({ member, onChanged }: { member: Member; onChanged: () =
             </button>
         </div>}
         {message && <p role="status" className="text-slate-200">{message}</p>}
+    </section>;
+}
+function ConsultBox() {
+    const [topic, setTopic] = useState('');
+    const [message, setMessage] = useState('');
+    async function submit() {
+        const response = await fetch('/api/membership/consult', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ topic }),
+        });
+        const body = await response.json().catch(() => ({}));
+        setMessage(typeof body.message === 'string' ? body.message : '预约没有完成');
+    }
+    return <section className="rounded-2xl bg-slate-900 border border-slate-800 p-6 space-y-3">
+        <h3 className="text-xl font-bold">口径咨询预约</h3>
+        <p className="text-sm text-slate-400">提交后进入待审批，不会自动通过。响应时限待人工确认。</p>
+        <input value={topic} onChange={(event) => setTopic(event.target.value)} placeholder="咨询主题" className="w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-3" />
+        <button type="button" onClick={submit} className="rounded-lg border border-slate-600 px-4 py-2">提交预约</button>
+        {message && <p role="status">{message}</p>}
     </section>;
 }
 function formatLimit(limit: number) { return limit === Infinity ? '不限量' : `最多 ${limit} 次`; }

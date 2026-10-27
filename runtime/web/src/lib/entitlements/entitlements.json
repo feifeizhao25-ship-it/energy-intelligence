@@ -144,7 +144,9 @@
         "数据集下载不限次（公平使用）",
         "按省份与主题订阅政策提醒",
         "每日一数",
-        "1 个席位"
+        "1 个席位",
+        "政策历史版本与变更记录",
+        "引用一键复制（GB/T 7714）"
       ],
       "features_en": [
         "100 AI interactions per day",
@@ -156,7 +158,9 @@
         "Dataset downloads under fair use",
         "Policy alerts by province and topic",
         "Daily data card",
-        "1 seat"
+        "1 seat",
+        "Policy version history",
+        "Copy a GB/T 7714 citation"
       ],
       "purchasable": true,
       "billing_periods": [
@@ -232,7 +236,8 @@
         "3 个席位",
         "Excel 与 PPT 报告导出",
         "分级接口 500 次/月",
-        "按关键词与文号的政策提醒"
+        "按关键词与文号的政策提醒",
+        "口径咨询预约（人工审批，不自动通过）"
       ],
       "features_en": [
         "Everything in Professional",
@@ -244,7 +249,8 @@
         "3 seats",
         "Excel and PowerPoint export",
         "500 API calls per month",
-        "Policy alerts by keyword and document number"
+        "Policy alerts by keyword and document number",
+        "Book a method consultation"
       ],
       "purchasable": true,
       "billing_periods": [
@@ -318,7 +324,8 @@
         "数据保留 3 年",
         "分级接口 5,000 次/月",
         "季度简报",
-        "Excel 与 PPT 报告导出"
+        "Excel 与 PPT 报告导出",
+        "勘误优先通道（时限待人工确认）"
       ],
       "features_en": [
         "Everything in Expert",
@@ -328,7 +335,8 @@
         "3-year data retention",
         "5,000 API calls per month",
         "Quarterly brief",
-        "Excel and PowerPoint export"
+        "Excel and PowerPoint export",
+        "Priority errata channel"
       ],
       "purchasable": true,
       "billing_periods": [

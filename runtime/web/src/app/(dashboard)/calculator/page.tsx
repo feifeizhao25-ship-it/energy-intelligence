@@ -118,7 +118,7 @@ export default function CalculatorHomePage() {
 
                   <div className="grid grid-cols-2 gap-4 border-t border-slate-700/50 pt-6">
                     <div>
-                      <div className="text-[10px] text-slate-500 uppercase font-bold mb-1">平均收益率</div>
+                      <div className="text-[10px] text-slate-500 uppercase font-bold mb-1">平均内部收益率</div>
                       <div className="text-lg font-bold text-white">{engine.stats.irr}</div>
                     </div>
                     <div>

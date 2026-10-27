@@ -105,7 +105,7 @@ export default function ResourceMapPage() {
                                         "w-8 h-1.5 rounded-full",
                                         v === 1 ? "bg-red-500" : v === 2 ? "bg-orange-500" : v === 3 ? "bg-yellow-400" : "bg-blue-400"
                                     )}></div>
-                                    <span className="text-[10px] font-bold text-slate-300">Level {v}</span>
+                                    <span className="text-[10px] font-bold text-slate-300">第 {v} 级</span>
                                 </div>
                             ))}
                         </div>
@@ -140,7 +140,7 @@ export default function ResourceMapPage() {
                                         <span className="text-sm font-black text-slate-900">{idx === 0 ? '1650' : idx === 1 ? '1420' : '1580'}</span>
                                     </div>
                                     <div className="bg-slate-50 p-3 rounded-2xl">
-                                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block">IRR</span>
+                                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block">内部收益率（IRR）·示例</span>
                                         <span className="text-sm font-black text-green-600">14.2%</span>
                                     </div>
                                 </div>
