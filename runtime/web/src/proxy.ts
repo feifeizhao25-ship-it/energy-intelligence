@@ -70,6 +70,7 @@ const knownSegments = new Set([
   'enterprise', 'login', 'maintenance', 'map', 'membership', 'my',
   'onboarding', 'papers', 'pricing', 'privacy', 'project', 'projects',
   'quick-calc', 'referral', 'resource', 'settings', 'terms',
+  'policies', 'datasets', 'daily', 'alerts', 'briefs',
 ]);
 
 function firstSegment(pathname: string): string {

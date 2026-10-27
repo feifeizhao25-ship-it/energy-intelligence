@@ -1,0 +1,14 @@
+# 发布与外部调用开关。缺省全部关闭。
+# 也可用环境变量覆盖，例如 NENGJIAN_SWITCH_PUBLISH_A=1。
+# 本文件入库时保持关闭，生产打开前要有对应审批。
+switches:
+  publish_a: false
+  publish_b: false
+  publish_c: false
+  baidu_push: false
+  email_opt_in: false
+  github_methodology: false
+  seo_generate: false
+  geo_monitor: false
+  wecom_submit: false
+  marketing_media: false

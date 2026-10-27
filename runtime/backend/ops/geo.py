@@ -35,11 +35,66 @@ QUESTIONS = [
 assert len(QUESTIONS) == 60
 
 
-def run_monitor() -> dict:
+def _endpoints() -> dict:
+    # 文心模型号以千帆控制台为准，未确认时用 ernie-4.5-turbo-32k，可用 NENGJIAN_GEO_WENXIN_MODEL 覆盖。
+    # 豆包常用推理接入点 ep-，由 NENGJIAN_GEO_DOUBAO_MODEL 提供。
+    return {
+        "qwen": {
+            "url": "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
+            "model": os.environ.get("NENGJIAN_GEO_QWEN_MODEL", "qwen3.5-plus"),
+            "key": os.environ.get("NENGJIAN_GEO_QWEN_API_KEY", ""),
+        },
+        "wenxin": {
+            "url": "https://qianfan.baidubce.com/v2/chat/completions",
+            "model": os.environ.get("NENGJIAN_GEO_WENXIN_MODEL", "ernie-4.5-turbo-32k"),
+            "key": os.environ.get("NENGJIAN_GEO_WENXIN_API_KEY", ""),
+        },
+        "doubao": {
+            "url": os.environ.get("NENGJIAN_ARK_BASE_URL", "https://ark.cn-beijing.volces.com/api/v3").rstrip("/") + "/chat/completions",
+            "model": os.environ.get("NENGJIAN_GEO_DOUBAO_MODEL", ""),
+            "key": os.environ.get("NENGJIAN_GEO_DOUBAO_API_KEY", ""),
+        },
+    }
+
+
+def _post_chat(url: str, key: str, model: str, question: str) -> str:
+    import json
+    import urllib.request
+    payload = {"model": model, "messages": [{"role": "user", "content": question}]}
+    req = urllib.request.Request(
+        url,
+        data=json.dumps(payload).encode(),
+        headers={"Content-Type": "application/json", "Authorization": f"Bearer {key}"},
+        method="POST",
+    )
+    with urllib.request.urlopen(req, timeout=30) as resp:
+        data = json.loads(resp.read().decode() or "{}")
+    return ((data.get("choices") or [{}])[0].get("message") or {}).get("content") or ""
+
+
+def run_monitor(questions: list[str] | None = None, transport=None) -> dict:
+    asked = list(questions or QUESTIONS)
     if not SWITCHES["geo_monitor"]:
         return {"status": "disabled", "reason": "switch off", "questions": len(QUESTIONS), "cited": []}
     missing = [name for name, env in PROVIDERS.items() if not os.environ.get(env)]
     if missing:
         return {"status": "disabled", "reason": "missing keys", "providers": missing, "questions": len(QUESTIONS)}
-    # TODO: 各家官方 chat API 的请求体以当前文档为准。密钥齐了也先记为未调用，避免未核实的端点。
-    return {"status": "stub", "questions": len(QUESTIONS), "cited": [], "called": False}
+    endpoints = _endpoints()
+    if not endpoints["doubao"]["model"]:
+        return {"status": "disabled", "reason": "missing doubao model", "questions": len(QUESTIONS)}
+    cited = []
+    called = False
+    for name, spec in endpoints.items():
+        for question in asked:
+            called = True
+            try:
+                if transport is None:
+                    answer = _post_chat(spec["url"], spec["key"], spec["model"], question)
+                else:
+                    answer = transport(name, spec["url"], spec["model"], question)
+            except Exception as exc:
+                cited.append({"provider": name, "error": exc.__class__.__name__, "cited": False})
+                continue
+            text = answer or ""
+            cited.append({"provider": name, "cited": "新能源智库" in text, "chars": len(text)})
+    return {"status": "ok", "questions": len(asked), "cited": cited, "called": called}

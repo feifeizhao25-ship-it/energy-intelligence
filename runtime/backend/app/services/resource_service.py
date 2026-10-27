@@ -87,7 +87,12 @@ def _extraterrestrial_monthly(lat: float, month: int) -> float:
 async def fetch_solar_resource(req: SolarResourceRequest) -> SolarResourceResponse:
     """Fetch solar resource from Open-Meteo Climate API.
     GHI + temperature from Open-Meteo; DNI/DHI estimated via Orgill-Hollands.
-    Provider failures are surfaced; production calculations never use synthetic data."""
+    Provider failures are surfaced; production calculations never use synthetic data.
+    国内版只读本地样本或批量缓存，不访问 Open-Meteo。"""
+    from app.services import overseas_gate
+    if (overseas_gate.settings.APP_EDITION or "").lower() == "cn":
+        from app.services.domestic_resource import solar_response_fields
+        return SolarResourceResponse(**solar_response_fields(req.lat, req.lng))
     refuse_if_cn()
     try:
         async with httpx.AsyncClient(timeout=15.0) as client:
@@ -181,7 +186,16 @@ async def fetch_solar_resource(req: SolarResourceRequest) -> SolarResourceRespon
 
 
 async def fetch_wind_resource(req: WindResourceRequest) -> WindResourceResponse:
-    """Fetch wind resource from Open-Meteo without synthetic fallback."""
+    """Fetch wind resource from Open-Meteo without synthetic fallback.
+
+    国内版只读本地样本或批量缓存。
+    """
+    from app.services import overseas_gate
+    if (overseas_gate.settings.APP_EDITION or "").lower() == "cn":
+        from app.services.domestic_resource import wind_response_fields
+        fields = wind_response_fields(req.lat, req.lng)
+        fields.pop("data_source", None)
+        return WindResourceResponse(**fields)
     refuse_if_cn()
     try:
         async with httpx.AsyncClient(timeout=60.0) as client:

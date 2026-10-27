@@ -10,6 +10,7 @@ import { Plan } from "@/lib/membership/plans";
 import { safeErrorMessage } from '@/lib/api/safe-error';
 import { aigcMeta, AIGC_HEADER } from '@/lib/ai/aigc';
 import { BOTTOM_LINE_NOTICE_ZH, neutralizeCnText } from '@/lib/compliance/bottom-line';
+import { recordFeedback } from '@/lib/feedback/samples';
 import { collectSourcesFromToolResult, verifySources, type EvidenceSource } from '@/lib/evidence/verification';
 
 export const runtime = 'nodejs';
@@ -31,6 +32,7 @@ export async function POST(request: NextRequest) {
 
         const latestUser = [...(body.messages || [])].reverse().find((item: Message) => item?.role === 'user');
         if (latestUser && neutralizeCnText(String(latestUser.content || '')) === BOTTOM_LINE_NOTICE_ZH) {
+            void recordFeedback('blocked_output', String(latestUser.content || ''));
             const encoder = new TextEncoder();
             const blocked = new ReadableStream({
                 start(controller) {
@@ -121,14 +123,21 @@ export async function POST(request: NextRequest) {
                         const data = JSON.stringify(transformedEvent);
                         controller.enqueue(encoder.encode(`data: ${data}\n\n`));
                     }
-                    const answer = neutralizeCnText(textParts.join(''));
+                    const rawAnswer = textParts.join('');
+                    const answer = neutralizeCnText(rawAnswer);
+                    if (answer === BOTTOM_LINE_NOTICE_ZH && rawAnswer && rawAnswer !== answer) {
+                        void recordFeedback('blocked_output', rawAnswer);
+                    }
                     if (answer) {
                         controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'content', data: answer })}\n\n`));
                     }
-                    // 审计 7-5：回答结束时按多源验证规则给出核验状态（前端引用卡显示 已核验/待核验/冲突）
+                    const verification = verifySources(evidenceSources);
+                    if (evidenceSources.length && verification.status !== 'verified') {
+                        void recordFeedback('failed_citation', rawAnswer || answer);
+                    }
                     controller.enqueue(encoder.encode(`data: ${JSON.stringify({
                         type: 'evidence',
-                        data: { verification: verifySources(evidenceSources), sources: evidenceSources.slice(0, 20) },
+                        data: { verification, sources: evidenceSources.slice(0, 20) },
                     })}\n\n`));
                     controller.enqueue(encoder.encode('data: [DONE]\n\n'));
                     controller.close();

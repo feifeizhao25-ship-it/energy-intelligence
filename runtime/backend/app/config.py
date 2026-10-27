@@ -237,8 +237,9 @@ class Settings(BaseSettings):
     # 现行定价页（2026-10-13 核对 https://api-docs.deepseek.com/zh-cn/quick_start/pricing/）列出 deepseek-flash（V4.1-Flash）。
     DEEPSEEK_MODEL: str = "deepseek-flash"
     GLM_BASE_URL: str = "https://open.bigmodel.cn/api/paas/v4/"
-    # TODO: 智谱当前公开模型号以控制台为准。未核实前不改成未出现在官方文档里的名字。
-    GLM_MODEL: str = "glm-4-flash"
+    # 智谱开放平台文档（docs.bigmodel.cn）当前模型号 glm-4.7-flash。
+    # glm-4-flash / glm-4.5-flash 已停用，2026-01-30 后 GLM-4.5-Flash 路由到 GLM-4.7-Flash。
+    GLM_MODEL: str = "glm-4.7-flash"
     # 国内编排默认不是 cn，避免同一镜像在未设置时关掉国际路径。cn compose 显式设为 cn。
     APP_EDITION: str = "global"
     NENGJIAN_DEEPSEEK_API_KEY: Optional[str] = None
@@ -251,8 +252,9 @@ class Settings(BaseSettings):
     NENGJIAN_ARK_API_KEY: Optional[str] = None
     NENGJIAN_ARK_BASE_URL: str = "https://ark.cn-beijing.volces.com/api/v3"
     # TODO: 方舟控制台里的接入点 ID 可能是 ep- 前缀，模型名以 Seedream / Seedance 文档为准。
-    NENGJIAN_SEEDREAM_MODEL: str = "seedream-5.0-flash"
-    NENGJIAN_SEEDANCE_MODEL: str = "seedance-2.0-mini-720p"
+    # 文档示例。控制台推理接入点若是 ep- 前缀，用环境变量覆盖，不要把接入点写进仓库。
+    NENGJIAN_SEEDREAM_MODEL: str = "doubao-seedream-4-0-250828"
+    NENGJIAN_SEEDANCE_MODEL: str = "doubao-seedance-1-0-pro-250528"
     NENGJIAN_EMBEDDING_MODEL: str = "text-embedding-v4"
     NENGJIAN_RERANK_MODEL: str = "qwen3-rerank"
     # TODO: qwen3-rerank 的 HTTP 路径以百炼当前文档为准。

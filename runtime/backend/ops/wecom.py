@@ -15,7 +15,7 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
 BLOCK = 32
 
-# TODO: 六个模板 ID 以企业微信管理后台当前模板为准。
+# 八个模板 ID 以企业微信管理后台当前模板为准。控件 ID 也来自后台，用 WECOM_SHA_CONTROL_ID 覆盖。
 TEMPLATES = {
     "content": os.environ.get("WECOM_TPL_CONTENT", ""),
     "business": os.environ.get("WECOM_TPL_BUSINESS", ""),
@@ -23,6 +23,8 @@ TEMPLATES = {
     "promotion": os.environ.get("WECOM_TPL_PROMOTION", ""),
     "switch": os.environ.get("WECOM_TPL_SWITCH", ""),
     "incident": os.environ.get("WECOM_TPL_INCIDENT", ""),
+    "policy": os.environ.get("WECOM_TPL_POLICY", ""),
+    "finance": os.environ.get("WECOM_TPL_FINANCE", ""),
 }
 
 
@@ -88,20 +90,146 @@ def approval_allows(detail: dict | None, content_sha256: str) -> bool:
     return detail.get("content_sha256") == content_sha256
 
 
-def fetch_approval_detail(sp_no: str) -> dict:
-    """TODO: GET https://qyapi.weixin.qq.com/cgi-bin/oa/getapprovaldetail。未配置时视为不可用。"""
-    if not os.environ.get("NENGJIAN_WECOM_SECRET"):
+def _creds() -> dict:
+    return {
+        "secret": os.environ.get("NENGJIAN_WECOM_SECRET", ""),
+        "corp": os.environ.get("NENGJIAN_WECOM_CORP_ID", ""),
+        "agent": os.environ.get("NENGJIAN_WECOM_AGENT_ID", ""),
+    }
+
+
+def _http_json(method: str, url: str, payload: dict | None = None) -> dict:
+    import json
+    import urllib.request
+    data = None if payload is None else json.dumps(payload).encode()
+    req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"}, method=method)
+    with urllib.request.urlopen(req, timeout=10) as resp:
+        return json.loads(resp.read().decode() or "{}")
+
+
+def _access_token(getter=None) -> str:
+    creds = _creds()
+    url = f"https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid={creds['corp']}&corpsecret={creds['secret']}"
+    data = (getter or (lambda u: _http_json("GET", u)))(url)
+    token = (data or {}).get("access_token") or ""
+    if not token:
+        raise RuntimeError("wecom token missing")
+    return token
+
+
+def _sha_from_detail(info: dict) -> str:
+    import re
+    blob = json_dumps(info)
+    found = re.findall(r"[a-f0-9]{64}", blob)
+    return found[0] if found else ""
+
+
+def json_dumps(value) -> str:
+    import json
+    return json.dumps(value, ensure_ascii=False)
+
+
+def fetch_approval_detail(sp_no: str, transport=None) -> dict:
+    """POST https://qyapi.weixin.qq.com/cgi-bin/oa/getapprovaldetail 。未配置时视为不可用。"""
+    creds = _creds()
+    if not creds["secret"]:
         return {"error": "wecom_down", "status": "unavailable", "sp_no": sp_no}
-    return {"error": "stub", "status": "unavailable", "sp_no": sp_no}
+    if not creds["corp"] or not creds["agent"] or not sp_no:
+        return {"error": "missing_corp_or_agent", "status": "unavailable", "sp_no": sp_no}
+    try:
+        if transport is None:
+            token = _access_token()
+            data = _http_json("POST", f"https://qyapi.weixin.qq.com/cgi-bin/oa/getapprovaldetail?access_token={token}", {"sp_no": sp_no})
+        else:
+            data = transport("getapprovaldetail", {"sp_no": sp_no, "agentid": creds["agent"]})
+    except Exception as exc:
+        return {"error": exc.__class__.__name__, "status": "unavailable", "sp_no": sp_no}
+    info = (data or {}).get("info") or {}
+    sp_status = info.get("sp_status")
+    status = "approved" if sp_status == 2 else "unavailable"
+    if (data or {}).get("errcode") not in (0, None) and not info:
+        return {"error": "wecom_down", "status": "unavailable", "sp_no": sp_no}
+    return {
+        "status": status,
+        "sp_no": sp_no,
+        "sp_status": sp_status,
+        "content_sha256": _sha_from_detail(info),
+        "agent_id": creds["agent"],
+    }
 
 
-def submit_approval(template: str, content_sha256: str) -> dict:
+def submit_approval(template: str, content_sha256: str, transport=None) -> dict:
+    if template not in TEMPLATES:
+        return {"submitted": False, "reason": "unknown template"}
     if not TEMPLATES.get(template):
         return {"submitted": False, "reason": "template id empty"}
-    if not os.environ.get("NENGJIAN_WECOM_SECRET"):
+    creds = _creds()
+    if not creds["secret"]:
         return {"submitted": False, "reason": "wecom_down"}
-    # TODO: applyevent。桩不提交。
-    return {"submitted": False, "reason": "stub", "content_sha256": content_sha256}
+    if not creds["corp"] or not creds["agent"]:
+        return {"submitted": False, "reason": "missing_corp_or_agent"}
+    creator = os.environ.get("NENGJIAN_WECOM_CREATOR", "")
+    if not creator:
+        return {"submitted": False, "reason": "creator_missing", "content_sha256": content_sha256}
+    control_id = os.environ.get("WECOM_SHA_CONTROL_ID", "Text-sha256")
+    payload = {
+        "creator_userid": creator,
+        "template_id": TEMPLATES[template],
+        "use_template_approver": 1,
+        "agentid": int(creds["agent"]) if str(creds["agent"]).isdigit() else creds["agent"],
+        "apply_data": {"contents": [{"control": "Text", "id": control_id, "value": {"text": content_sha256}}]},
+        "summary_list": [{"summary_info": [{"text": content_sha256, "lang": "zh_CN"}]}],
+    }
+    try:
+        if transport is None:
+            token = _access_token()
+            data = _http_json("POST", f"https://qyapi.weixin.qq.com/cgi-bin/oa/applyevent?access_token={token}", payload)
+        else:
+            data = transport("applyevent", payload)
+    except Exception as exc:
+        return {"submitted": False, "reason": exc.__class__.__name__, "content_sha256": content_sha256}
+    if (data or {}).get("errcode") not in (0, None):
+        return {"submitted": False, "reason": "wecom_rejected", "content_sha256": content_sha256}
+    return {"submitted": True, "sp_no": (data or {}).get("sp_no"), "content_sha256": content_sha256}
+
+
+def send_template_card(user_id: str, title: str, description: str, transport=None) -> dict:
+    creds = _creds()
+    if not all(creds.values()):
+        return {"sent": False, "reason": "wecom_down"}
+    payload = {
+        "touser": user_id,
+        "msgtype": "template_card",
+        "agentid": int(creds["agent"]) if str(creds["agent"]).isdigit() else creds["agent"],
+        "template_card": {
+            "card_type": "text_notice",
+            "main_title": {"title": title[:40]},
+            "sub_title_text": description[:160],
+            "card_action": {"type": 1, "url": "https://work.weixin.qq.com"},
+        },
+    }
+    try:
+        if transport is None:
+            token = _access_token()
+            data = _http_json("POST", f"https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token={token}", payload)
+        else:
+            data = transport("message/send", payload)
+    except Exception as exc:
+        return {"sent": False, "reason": exc.__class__.__name__}
+    return {"sent": (data or {}).get("errcode") in (0, None), "result": data}
+
+
+def send_group_robot(text: str, transport=None) -> dict:
+    key = os.environ.get("NENGJIAN_WECOM_ROBOT_KEY", "")
+    if not key:
+        return {"sent": False, "reason": "robot key empty"}
+    payload = {"msgtype": "text", "text": {"content": text[:2000]}}
+    url = f"https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key={key}"
+    try:
+        data = transport("webhook", payload) if transport else _http_json("POST", url, payload)
+    except Exception as exc:
+        return {"sent": False, "reason": exc.__class__.__name__}
+    return {"sent": (data or {}).get("errcode") in (0, None)}
 
 
 def callback_xml(token: str, aes_key: str, receive_id: str, message: str, timestamp: str, nonce: str) -> str:

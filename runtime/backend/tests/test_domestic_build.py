@@ -72,15 +72,18 @@ async def test_cn_edition_blocks_overseas_resource_http(monkeypatch):
     from app.api.v1.research import search_arxiv
     from app.schemas.resource import SolarResourceRequest, WindResourceRequest
     from app.services.nasa_power_service import NASAPowerService
-    from app.services.overseas_gate import OverseasSourceDisabled
     from app.services.resource_service import fetch_solar_resource, fetch_wind_resource
 
-    with pytest.raises(OverseasSourceDisabled):
-        await fetch_solar_resource(SolarResourceRequest(lat=31.2, lng=121.5))
-    with pytest.raises(OverseasSourceDisabled):
-        await fetch_wind_resource(WindResourceRequest(lat=31.2, lng=121.5))
-    with pytest.raises(OverseasSourceDisabled):
-        await NASAPowerService().get_solar_resource(31.2, 121.5)
+    from app.services.domestic_resource import DomesticResourceNotLoaded
+
+    solar = await fetch_solar_resource(SolarResourceRequest(lat=31.2, lng=121.5))
+    wind = await fetch_wind_resource(WindResourceRequest(lat=31.2, lng=121.5))
+    nasa = await NASAPowerService().get_solar_resource(31.2, 121.5)
+    assert solar.ghi > 0 and "NASA" not in solar.data_source
+    assert wind.mean_speed > 0
+    assert nasa["ghi_annual"] > 0 and "NASA" not in nasa["data_source"]
+    with pytest.raises(DomesticResourceNotLoaded):
+        await fetch_solar_resource(SolarResourceRequest(lat=0, lng=0))
     assert await search_arxiv("solar") == []
     assert calls["n"] == 0
 

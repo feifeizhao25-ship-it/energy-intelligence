@@ -47,14 +47,13 @@ describe('导出核验', () => {
         for (const [plan, formats] of Object.entries(EXPORT_FORMATS)) {
             const tier = tiers[plan.toLowerCase()];
             expect(tier.export.formats.includes('docx')).toBe((formats as readonly string[]).includes('Word'));
-            expect(tier.export.formats).not.toContain('xlsx');
-            expect(tier.features_zh.join('')).not.toContain('Excel');
-            expect(formats as readonly string[]).not.toContain('Excel');
+            expect(tier.export.formats.includes('xlsx')).toBe((formats as readonly string[]).includes('Excel'));
+            expect(tier.export.formats.includes('pptx')).toBe((formats as readonly string[]).includes('PPT'));
         }
     });
 });
 
-test.each(['{','null','[]','{"format":"xlsx"}','{"format":null}','{"format":123}'])('invalid reservation never consumes quota: %s',async body=>{
+test.each(['{','null','[]','{"format":"exe"}','{"format":null}','{"format":123}'])('invalid reservation never consumes quota: %s',async body=>{
     consumeQuota.mockClear();
     const result=await POST(new Request('http://x/api/exports/reserve',{method:'POST',body}));
     expect(result.status).toBe(400);expect((await result.json()).message).toMatch(/格式|请求/);expect(consumeQuota).not.toHaveBeenCalled();

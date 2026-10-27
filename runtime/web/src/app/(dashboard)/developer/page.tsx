@@ -35,6 +35,7 @@ interface ApiKey {
 export default function DeveloperPage() {
     const [activeTab, setActiveTab] = useState<'keys' | 'usage' | 'docs'>('keys');
     const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
+    const [entitlementNote, setEntitlementNote] = useState('');
     const [loading, setLoading] = useState(true);
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [newKeyData, setNewKeyData] = useState<any>(null);
@@ -51,6 +52,7 @@ export default function DeveloperPage() {
             const data = await res.json();
             if (data.success) {
                 setApiKeys(data.data.keys);
+                if (data.data.entitlement) setEntitlementNote(data.data.entitlement.note || '');
             }
         } catch (error) {
             console.error('Failed to fetch API keys:', error);
@@ -110,6 +112,7 @@ export default function DeveloperPage() {
                         <div>
                             <h1 className="text-3xl font-black text-slate-900">开发者中心</h1>
                             <p className="text-slate-500 text-sm">管理您的 API 密钥并查看使用情况</p>
+                            {entitlementNote && <p className="text-slate-600 text-sm mt-1">{entitlementNote}</p>}
                         </div>
                     </div>
                 </div>
@@ -119,7 +122,7 @@ export default function DeveloperPage() {
                     {[
                         { id: 'keys', label: 'API 密钥', icon: Key },
                         { id: 'usage', label: '使用统计', icon: BarChart3 },
-                        { id: 'docs', label: 'API 文档', icon: FileText }
+                        { id: 'docs', label: '接口说明', icon: FileText }
                     ].map((tab) => (
                         <button
                             key={tab.id}

@@ -54,7 +54,8 @@ export async function POST(req: NextRequest) {
         const result = await sendVerificationCode(phone, code);
 
         if (result.success) {
-            return NextResponse.json({ success: true, message: "验证码已发送" });
+            const reveal = process.env.NODE_ENV === 'development' && process.env.SMS_DEV_REVEAL === '1' && 'mock' in result && result.mock;
+            return NextResponse.json({ success: true, message: "验证码已发送", ...(reveal ? { devCode: code } : {}) });
         } else {
             return NextResponse.json({ success: false, error: result.error || "发送失败" }, { status: 500 });
         }

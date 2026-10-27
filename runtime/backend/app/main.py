@@ -140,6 +140,7 @@ async def health():
 
 # ── 路由挂载（仅挂载仓库中真实存在的模块）──────────────────────────────────────
 from app.api.v1 import ai_assistant as v1_ai  # noqa: E402
+from app.api.v1.domestic_product import router as domestic_product_router  # noqa: E402
 from app.api.v1 import billing as v1_billing  # noqa: E402
 from app.api.v1 import auth as v1_auth  # noqa: E402
 from app.api.v1 import finance as v1_finance  # noqa: E402
@@ -157,6 +158,7 @@ app.include_router(v1_users.router, prefix="/api/v1", tags=["users"])
 app.include_router(v1_resource.router, prefix="/api/v1", tags=["resource"])
 app.include_router(v1_research.router, prefix="/api/v1", tags=["research"])
 app.include_router(v1_ai.router, prefix="/api/v1", tags=["ai"])
+app.include_router(domestic_product_router, prefix="/api/v1", tags=["domestic"])
 app.include_router(v1_privacy.router, prefix="/api/v1", tags=["privacy"])
 app.include_router(v1_billing.router, prefix="/api/v1", tags=["billing"])
 app.include_router(v1_finance.router, prefix="/api/v1", tags=["finance"])

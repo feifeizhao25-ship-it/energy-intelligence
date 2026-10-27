@@ -51,7 +51,7 @@ export const PLAN_DETAILS = {
         monthlyPrice: 0, // 年付唯一在售: 月付已停用
         yearlyPrice: 5800,
         icon: '💎',
-        description: '标准档全部已实现功能，4 个席位',
+        description: '标准档全部已实现功能，3 个席位',
         color: 'purple',
         recommended: true,
     },
@@ -195,12 +195,12 @@ export const FEATURE_ACCESS = {
     // 报告导出
     report_export: ['PRO', 'MAINTENANCE', 'FULL', 'TEAM', 'ENTERPRISE'],
     no_watermark: ['FULL', 'TEAM', 'ENTERPRISE'],
-    white_label: ['ENTERPRISE'],
+    white_label: [],
     batch_export_report: ['FULL', 'TEAM', 'ENTERPRISE'],
 
     // 团队/企业专属
-    api_access: ['ENTERPRISE'],
-    sso_login: ['ENTERPRISE'],
+    api_access: ['FULL', 'TEAM', 'ENTERPRISE'],
+    sso_login: [],
     custom_development: ['ENTERPRISE'],
 } as const;
 
@@ -219,10 +219,9 @@ export const EXPORT_FORMATS = {
     FREE: [],
     PRO: ['PDF', 'Word'],
     MAINTENANCE: ['PDF'],
-    // Excel 导出没有实现，已从权益中撤下（原来写着 Excel 却没有任何导出入口）
-    FULL: ['PDF', 'Word'],
-    TEAM: ['PDF', 'Word'],
-    ENTERPRISE: ['PDF', 'Word', 'White_Label'],
+    FULL: ['PDF', 'Word', 'Excel', 'PPT'],
+    TEAM: ['PDF', 'Word', 'Excel', 'PPT'],
+    ENTERPRISE: ['PDF', 'Word', 'Excel', 'PPT'],
 } as const;
 
 // 历史数据保留时间（天）

@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import InvestmentReport from '@/components/calculator/InvestmentReport';
+import { OfficeExportButtons } from '@/components/reports/OfficeExportButtons';
 import MonthlyGenerationBarChart from '@/components/charts/MonthlyGenerationBarChart';
 import CostBreakdownEditor from '@/components/calculator/CostBreakdownEditor';
 import AIProjectAnalysis from '@/components/calculator/AIProjectAnalysis';
@@ -94,6 +95,7 @@ function CalculatorResultPage() {
 
                     <div className="flex flex-wrap items-start gap-2 sm:justify-end">
                         <WordDownloadButton data={data} type={type || 'solar'} />
+                        <OfficeExportButtons title="测算结果" rows={[['类型', type || 'solar']]} />
                         <PDFDownloadButton data={data} type={type || 'solar'} />
                     </div>
                 </div>

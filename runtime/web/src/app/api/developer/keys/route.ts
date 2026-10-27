@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/auth-options';
 import { prisma } from '@/lib/prisma';
 import crypto from 'crypto';
+import { tierOf } from '@/lib/entitlements/access';
 
 function hashKey(value: string) {
     return crypto.createHash('sha256').update(value).digest('hex');
@@ -28,6 +29,12 @@ export async function GET() {
     });
     const counts = await prisma.apiLog.groupBy({ by: ['apiKeyId'], where: { userId, apiKeyId: { not: null } }, _count: { _all: true } });
     const countByKey = new Map(counts.map(item => [item.apiKeyId, item._count._all]));
+    const account = await prisma.user.findUnique({ where: { id: userId }, select: { plan: true, planExpireAt: true } });
+    const tier = tierOf(account?.plan, account?.planExpireAt);
+    const monthly = Number(tier?.quotas?.api_calls_per_month ?? 0);
+    const monthStart = new Date();
+    monthStart.setUTCDate(1); monthStart.setUTCHours(0, 0, 0, 0);
+    const used = await prisma.apiLog.count({ where: { userId, createdAt: { gte: monthStart } } });
     const keys = records.map(record => ({
         id: record.id,
         name: record.name || '未命名密钥',
@@ -39,12 +46,20 @@ export async function GET() {
         status: record.status.toLowerCase(),
         usageCount: countByKey.get(record.id) || 0,
     }));
-    return NextResponse.json({ success: true, data: { keys, total: keys.length, limits: { maxKeys: 5 } } });
+    const note = monthly === 0
+        ? '当前套餐不含分级接口。专业档 500 次/月，团队档 5,000 次/月，上限档按合同计量。'
+        : monthly < 0
+            ? `上限档接口按合同计量。本月已记录 ${used} 次。每分钟 60 次。`
+            : `本月接口额度 ${used} / ${monthly}。每分钟 60 次。说明见 /developer/docs。`;
+    return NextResponse.json({ success: true, data: { keys, total: keys.length, limits: { maxKeys: 5, rpm: 60, apiCallsPerMonth: monthly, usedThisMonth: used }, entitlement: { note } } });
 }
 
 export async function POST(req: NextRequest) {
     const userId = await currentUserId();
     if (!userId) return NextResponse.json({ error: '请先登录' }, { status: 401 });
+    const account = await prisma.user.findUnique({ where: { id: userId }, select: { plan: true, planExpireAt: true } });
+    const monthly = Number(tierOf(account?.plan, account?.planExpireAt)?.quotas?.api_calls_per_month ?? 0);
+    if (monthly === 0) return NextResponse.json({ error: '当前套餐不含分级接口' }, { status: 403 });
     const { name, permissions, expiresInDays } = await req.json();
     if (!name || String(name).trim().length > 80) {
         return NextResponse.json({ error: '请填写 API 密钥名称，且不超过 80 个字符' }, { status: 400 });

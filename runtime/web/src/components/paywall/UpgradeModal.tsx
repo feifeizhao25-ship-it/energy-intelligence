@@ -151,7 +151,7 @@ export default function UpgradeModal({
                                     <span className="text-2xl">💎</span>
                                     <div>
                                         <h3 className="font-bold text-slate-900">专业</h3>
-                                        <p className="text-xs text-slate-500">标准档已实现功能，4 个席位</p>
+                                        <p className="text-xs text-slate-500">标准档已实现功能，3 个席位</p>
                                     </div>
                                 </div>
 

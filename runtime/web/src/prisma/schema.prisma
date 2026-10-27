@@ -109,6 +109,9 @@ model User {
   UserAchievementDetail UserAchievementDetail[]
   payments              Payment[]
   documentChunks        DocumentChunk[]
+  policyAlertSubscriptions PolicyAlertSubscription[]
+  policyAlertNotices       PolicyAlertNotice[]
+  datasetDownloads         DatasetDownload[]
 
   @@map("users")
 }
@@ -1328,4 +1331,42 @@ model DocumentChunk {
 
   @@index([userId, documentId])
   @@map("document_chunks")
+}
+
+model PolicyAlertSubscription {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  province      String
+  topic         String   @default("")
+  channelInApp  Boolean  @default(true)
+  channelEmail  Boolean  @default(false)
+  channelWecom  Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  @@index([userId])
+  @@map("policy_alert_subscriptions")
+}
+
+model PolicyAlertNotice {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  body      String
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@map("policy_alert_notices")
+}
+
+model DatasetDownload {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  datasetId String
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@map("dataset_downloads")
 }

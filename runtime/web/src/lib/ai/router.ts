@@ -7,6 +7,7 @@ export type AIModel =
     | 'minimax-abab6.5'
     | 'deepseek-v3'
     | 'deepseek-chat'
+    | 'deepseek-flash'
     | 'moonshot-v1-auto'
     | 'claude-sonnet';
 
@@ -22,11 +23,52 @@ export interface AIRequest {
 
 const siliconFlowKey = process.env.SILICONFLOW_API_KEY;
 
+export function isCnEdition(): boolean {
+    return (process.env.NEXT_PUBLIC_APP_EDITION || process.env.APP_EDITION || '').toLowerCase() === 'cn';
+}
+
+/** glm-4-flash 对应智谱文档中的 glm-4.7-flash。deepseek-flash 保持原模型号。 */
+export function cnRequestModel(model?: string): string {
+    if (!model || model === 'deepseek-flash') return 'deepseek-flash';
+    if (model === 'glm-4-flash' || model === 'glm-4.7-flash') return 'glm-4.7-flash';
+    return model;
+}
+
+async function callDomesticBackend(req: AIRequest) {
+    const base = (process.env.BACKEND_INTERNAL_URL || '').replace(/\/$/, '');
+    const token = process.env.NENGJIAN_INTERNAL_TOKEN || '';
+    const development = process.env.NODE_ENV === 'development';
+    if (!base || (!token && !development)) {
+        throw new Error('国内 AI 服务已拒绝生成替代内容');
+    }
+    const response = await fetch(`${base}/api/v1/ai/domestic`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'X-Internal-Token': token } : {}),
+        },
+        body: JSON.stringify({
+            model: cnRequestModel(req.model),
+            messages: req.messages,
+        }),
+    });
+    if (!response.ok) {
+        throw new Error('国内 AI 服务已拒绝生成替代内容');
+    }
+    const data = await response.json();
+    return {
+        choices: [{ message: { role: 'assistant', content: data.content || '' } }],
+        model: data.model,
+        provider: data.provider,
+    };
+}
+
 /**
  * 统一 AI 路由服务
- * 优先使用 SiliconFlow 接入国产模型，支持自动备选切换
+ * 国内版走后端 DeepSeek → 百炼 → 智谱。其他环境仍可使用 SiliconFlow。
  */
 export async function callAI(req: AIRequest) {
+    if (isCnEdition()) return callDomesticBackend(req);
     const model = req.model || 'glm-4-plus';
 
     if (!siliconFlowKey) {
@@ -71,6 +113,22 @@ export async function callAI(req: AIRequest) {
  * 使用 BAAI/bge-m3 模型，支持 1024 维向量
  */
 export async function createEmbedding(input: string | string[]) {
+    if (isCnEdition()) {
+        const base = (process.env.BACKEND_INTERNAL_URL || '').replace(/\/$/, '');
+        const token = process.env.NENGJIAN_INTERNAL_TOKEN || '';
+        if (!base || (!token && process.env.NODE_ENV !== 'development')) {
+            throw new Error('向量服务已拒绝生成替代向量');
+        }
+        const response = await fetch(`${base}/api/v1/ai/embeddings`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...(token ? { 'X-Internal-Token': token } : {}) },
+            body: JSON.stringify({ input: Array.isArray(input) ? input : [input] }),
+        });
+        if (!response.ok) throw new Error('向量服务已拒绝生成替代向量');
+        const data = await response.json();
+        if (!Array.isArray(data.vectors) || !data.vectors.length) throw new Error('向量服务已拒绝生成替代向量');
+        return data.vectors as number[][];
+    }
     if (!siliconFlowKey) {
         throw new Error('SILICONFLOW_API_KEY 未配置，向量服务已拒绝生成替代向量');
     }
@@ -105,8 +163,9 @@ function getModelMapping(model: AIModel): string {
         // DeepSeek V3 保持原样
         'deepseek-v3': 'deepseek-ai/DeepSeek-V3',
         'deepseek-chat': 'deepseek-ai/DeepSeek-V3',
-        // 旧内部标识在 SiliconFlow 路径映射到可用的通用质量模型；
-        // 国内版固定走硅基流动境内端点。
+        'deepseek-flash': 'deepseek-flash',
+        // 旧内部标识在非国内版的 SiliconFlow 路径映射到可用模型。
+        // 国内版在 callAI 开头转到后端国内路由，不使用这里的映射。
         'claude-sonnet': 'deepseek-ai/DeepSeek-V3'
     };
     return mapping[model] || mapping['glm-4-plus'];

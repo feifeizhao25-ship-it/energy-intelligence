@@ -4,7 +4,7 @@ import { AiMarkdown } from '@/components/ai/AiMarkdown';
 import React, { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { useSession } from 'next-auth/react';
-import { Sparkles, Send, Paperclip, Mic, Settings2, Copy, RefreshCw, Loader2, FileText, Image as ImageIcon, AlertCircle } from 'lucide-react';
+import { Sparkles, Send, Paperclip, Mic, Copy, RefreshCw, Loader2, FileText, Image as ImageIcon, AlertCircle } from 'lucide-react';
 import { safeErrorMessage } from '@/lib/api/safe-error';
 import { AigcLabel } from '@/components/ui/AigcLabel';
 import { buildAnswerDateLine } from '@/lib/ai/answer-date-line';
@@ -251,9 +251,10 @@ export default function AssistantPage() {
                                 <p className="text-xs text-text-secondary">专业的新能源项目分析助手</p>
                             </div>
                         </div>
-                        <button className="p-2 rounded-lg hover:bg-surface-dark transition-colors">
-                            <Settings2 className="w-5 h-5 text-text-secondary" />
-                        </button>
+                        <div className="flex gap-2">
+                            <button type="button" className="rounded-lg border border-border-dark px-3 py-2 text-xs" onClick={() => fetch('/api/feedback', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'thumbs_down', text: '回答无用' }) })}>回答无用</button>
+                            <button type="button" className="rounded-lg border border-border-dark px-3 py-2 text-xs" onClick={() => fetch('/api/feedback', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'low_rating', rating: 1, text: '低分' }) })}>低分</button>
+                        </div>
                     </div>
                 </div>
 
