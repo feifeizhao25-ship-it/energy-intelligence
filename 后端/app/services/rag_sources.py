@@ -60,7 +60,9 @@ def freshness_status(
     except ValueError:
         return "stale"
     interval = max(int(verify_interval_days), 1)
-    age = max((today - verified).days, 0)
+    if verified > today:
+        return "stale"
+    age = (today - verified).days
     if age > interval:
         return "stale"
     if age > interval * REVIEW_THRESHOLD_RATIO:
@@ -68,23 +70,50 @@ def freshness_status(
     return "current"
 
 
-def verification_status(source: Dict, registry: Optional["SourceRegistry"] = None) -> str:
-    """Return ``verified`` only for a genuinely independent corroborating source.
+def evidence_status(source: Dict) -> str:
+    """Legacy entries remain usable; explicit unknown states fail closed."""
+    if "evidence_review" not in source:
+        return "legacy_unreviewed"
+    review = source["evidence_review"]
+    if not isinstance(review, dict):
+        return "invalid"
+    status = review.get("status")
+    return status if status in ("approved", "pending", "quarantined") else "invalid"
 
-    A bare identifier is not enough: the referenced record must exist, cover the
-    same language and source type, and come from a different publisher.  This
-    prevents, for example, a Chinese module-price series being labelled verified
-    merely because it points at an unrelated US electricity-price series.
+
+def evidence_usable(source: Dict) -> bool:
+    return evidence_status(source) in ("approved", "legacy_unreviewed")
+
+
+def verification_status(source: Dict, registry: Optional["SourceRegistry"] = None) -> str:
+    """Reviewed shared claims are required; publisher/type similarity is insufficient.
+
+    This label covers the registered shared claims, not every sentence in a source.
+    Claim IDs must be assigned by evidence review, never lexical similarity.
     """
+    if not evidence_usable(source):
+        return "blocked"
     refs = source.get("corroborated_by") or []
     if registry is None:
         return "corroborated_unchecked" if refs else "single_source"
     for ref in refs:
         other = registry.get(ref)
-        if not other:
+        if not other or not evidence_usable(other):
+            continue
+        primary_claims = source.get("reviewed_claim_ids", [])
+        other_claims = other.get("reviewed_claim_ids", [])
+        valid_claims = lambda values: isinstance(values, list) and all(
+            isinstance(value, str) and value.strip() for value in values)
+        if not valid_claims(primary_claims) or not valid_claims(other_claims):
             continue
         if (
-            other.get("lang") == source.get("lang")
+            evidence_status(source) == evidence_status(other) == "approved"
+            and registry.freshness_of(source) != "stale"
+            and registry.freshness_of(other) != "stale"
+            and bool(set(primary_claims) & set(other_claims))
+            and bool(str(source.get("source_org", "")).strip())
+            and bool(str(other.get("source_org", "")).strip())
+            and other.get("lang") == source.get("lang")
             and other.get("type") == source.get("type")
             and other.get("source_org") != source.get("source_org")
         ):
@@ -133,6 +162,8 @@ class SourceRegistry:
             if sid in seen:
                 problems.append("%s: duplicate source_id" % sid)
             seen.add(sid)
+            if evidence_status(source) == "invalid":
+                problems.append("%s: invalid evidence_review status" % sid)
             url = str(source.get("source_url", ""))
             if not (url.startswith("https://") or url.startswith("http://")):
                 problems.append("%s: source_url must be an http(s) URL" % sid)

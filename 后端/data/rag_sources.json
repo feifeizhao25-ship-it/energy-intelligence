@@ -14,49 +14,107 @@
       "source_org": "国家市场监督管理总局 国家标准全文公开系统",
       "license_note": "国家标准全文公开系统提供免费在线阅读；引用须标注标准号与年代号。",
       "verify_interval_days": 365,
-      "corroborated_by": ["policy-cn-136"]
+      "corroborated_by": [
+        "policy-cn-136"
+      ]
     },
     {
       "source_id": "policy-cn-136",
       "type": "policy",
       "lang": "cn",
-      "title": "关于有序推动绿电直连发展有关事项的通知",
-      "content": "国家发展改革委、国家能源局发布的绿电直连政策文件，明确项目范围、源荷匹配、并网运行与安全责任。计量与结算流程要点。",
+      "title": "关于有序推动多用户绿电直连发展有关事项的通知（发改能源〔2026〕688号）",
+      "content": "多用户绿电直连国家级框架，规定适用主体、规划建设、运行责任、交易计量和价格机制。省级能源主管部门须进一步细化用户边界、就近消纳距离和上网电量比例等要求；全国框架不能替代省级实施细则。",
       "year": 2026,
-      "last_verified_at": "2026-07-30",
+      "last_verified_at": "2026-10-17",
       "source_url": "https://www.nea.gov.cn/20260520/9e1c4277ce324c8ab82a84da98da7980/c.html",
       "source_org": "国家能源局",
       "license_note": "政府公开发布文件，转载引用须注明来源为国家能源局。",
       "verify_interval_days": 90,
-      "corroborated_by": ["std-gb50797"]
+      "corroborated_by": [],
+      "applicability": {
+        "status": "reviewed",
+        "countries": [
+          "cn"
+        ],
+        "level": "national_framework",
+        "reviewed_at": "2026-10-17",
+        "evidence_url": "https://www.nea.gov.cn/20260520/9e1c4277ce324c8ab82a84da98da7980/c.html"
+      },
+      "evidence_review": {
+        "status": "approved",
+        "reviewed_at": "2026-10-17",
+        "reviewer": "Codex source review",
+        "evidence_url": "https://www.nea.gov.cn/20260520/9e1c4277ce324c8ab82a84da98da7980/c.html",
+        "supporting_urls": [
+          "https://www.nea.gov.cn/20260520/9e1c4277ce324c8ab82a84da98da7980/c.html"
+        ],
+        "note": "重新核对官方正文，摘要限于国家框架及省级需进一步细化的事项；不是项目级或省级适用性结论。"
+      }
     },
     {
       "source_id": "policy-cn-storage",
       "type": "policy",
       "lang": "cn",
-      "title": "国家能源局：2026 年一季度新型储能发展情况",
-      "content": "国家能源局公开的新型储能装机与发展情况答复；截至 2026 年一季度末，全国已建成投运新型储能装机规模超过 1.4 亿千瓦。",
+      "title": "关于十四届全国人大四次会议第7521号建议的答复（国能建科技〔2026〕106号）",
+      "content": "国家能源局2026年6月26日答复披露：截至2026年第一季度末，我国已建成新型储能装机规模超过1.4亿千瓦。答复介绍发展规划、市场机制与示范应用工作；该数字是历史时点统计，不代表当前装机量。",
       "year": 2026,
-      "last_verified_at": "2026-07-30",
+      "last_verified_at": "2026-10-16",
       "source_url": "https://www.nea.gov.cn/20260720/5829ec81daff4b8aaf852164fe2bb1a6/c.html",
       "source_org": "国家能源局",
       "license_note": "政府公开发布文件，转载引用须注明来源为国家能源局。",
       "verify_interval_days": 90,
-      "corroborated_by": ["policy-cn-136"]
+      "corroborated_by": [
+        "policy-cn-136"
+      ],
+      "evidence_review": {
+        "status": "approved",
+        "reviewed_at": "2026-10-16",
+        "evidence_url": "https://www.nea.gov.cn/20260720/5829ec81daff4b8aaf852164fe2bb1a6/c.html",
+        "note": "核对官方正文中的历史统计和正式标题；非独立第二来源验证。"
+      },
+      "applicability": {
+        "status": "reviewed",
+        "countries": [
+          "cn"
+        ],
+        "level": "national_statistics",
+        "reviewed_at": "2026-10-16",
+        "evidence_url": "https://www.nea.gov.cn/20260720/5829ec81daff4b8aaf852164fe2bb1a6/c.html"
+      }
     },
     {
       "source_id": "policy-cn-energy-plan-2030",
       "type": "policy",
       "lang": "cn",
-      "title": "新型能源体系建设“十五五”规划",
-      "content": "国家发展改革委、国家能源局发布的 2026—2030 年新型能源体系建设国家级规划，覆盖能源安全、绿色转型、新能源发展与系统调节能力。",
+      "title": "关于印发《新型能源体系建设“十五五”规划》的通知（发改能源〔2026〕884号）",
+      "content": "国家发展改革委、国家能源局于2026年6月13日印发通知，说明《新型能源体系建设“十五五”规划》已经国务院同意，要求各省级政府、有关部门及中央企业贯彻实施。本条只核验印发通知；附件中的具体指标、任务和项目要求尚未在本条逐项核验。",
       "year": 2026,
-      "last_verified_at": "2026-07-30",
+      "last_verified_at": "2026-10-17",
       "source_url": "https://www.nea.gov.cn/20260625/0ccfdc1674e84868b49480edf584eb5f/c.html",
       "source_org": "国家发展改革委、国家能源局",
       "license_note": "政府公开发布文件；摘要为项目原创表述，引用原文须注明发布机构和文件日期。",
       "verify_interval_days": 90,
-      "corroborated_by": ["policy-cn-136"]
+      "corroborated_by": [],
+      "evidence_review": {
+        "status": "approved",
+        "reviewed_at": "2026-10-17",
+        "reviewer": "Codex source review",
+        "evidence_url": "https://www.nea.gov.cn/20260625/0ccfdc1674e84868b49480edf584eb5f/c.html",
+        "supporting_urls": [
+          "https://www.nea.gov.cn/20260625/0ccfdc1674e84868b49480edf584eb5f/c.html",
+          "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202606/t20260625_1406079.html"
+        ],
+        "note": "核对正式标题、文号、制发日期、收文对象和印发事实；未逐项核验附件。两网站为同一通知，不构成独立交叉验证。"
+      },
+      "applicability": {
+        "status": "reviewed",
+        "countries": [
+          "cn"
+        ],
+        "level": "national_framework",
+        "reviewed_at": "2026-10-17",
+        "evidence_url": "https://www.nea.gov.cn/20260625/0ccfdc1674e84868b49480edf584eb5f/c.html"
+      }
     },
     {
       "source_id": "std-iec61724",
@@ -70,7 +128,9 @@
       "source_org": "International Electrotechnical Commission (IEC)",
       "license_note": "IEC standards are copyrighted; summaries are original text, full text requires purchase from the IEC Webstore.",
       "verify_interval_days": 365,
-      "corroborated_by": ["std-ieee1547"]
+      "corroborated_by": [
+        "std-ieee1547"
+      ]
     },
     {
       "source_id": "policy-us-itc",
@@ -84,7 +144,9 @@
       "source_org": "U.S. Department of Energy, Office of Energy Efficiency and Renewable Energy",
       "license_note": "U.S. federal government publication, generally public domain; attribution to energy.gov required.",
       "verify_interval_days": 90,
-      "corroborated_by": ["guide-grid-interconnection"]
+      "corroborated_by": [
+        "guide-grid-interconnection"
+      ]
     },
     {
       "source_id": "std-ieee1547",
@@ -98,7 +160,9 @@
       "source_org": "IEEE Standards Association",
       "license_note": "IEEE standards are copyrighted; summaries are original text, full text requires purchase via IEEE Xplore.",
       "verify_interval_days": 365,
-      "corroborated_by": ["std-iec61724"]
+      "corroborated_by": [
+        "std-iec61724"
+      ]
     },
     {
       "source_id": "guide-grid-interconnection",
@@ -112,7 +176,10 @@
       "source_org": "National Renewable Energy Laboratory (NREL)",
       "license_note": "NREL publications are U.S. government-funded works; reuse with attribution per NREL copyright notice.",
       "verify_interval_days": 90,
-      "corroborated_by": ["std-ieee1547", "policy-us-itc"]
+      "corroborated_by": [
+        "std-ieee1547",
+        "policy-us-itc"
+      ]
     },
     {
       "source_id": "price-cn-module",
@@ -126,7 +193,9 @@
       "source_org": "中国光伏行业协会（CPIA）",
       "license_note": "协会公开发布行情信息，引用须注明来源；数据更新频繁，按周核验。",
       "verify_interval_days": 7,
-      "corroborated_by": ["price-us-eia"]
+      "corroborated_by": [
+        "price-us-eia"
+      ]
     },
     {
       "source_id": "price-us-eia",
@@ -140,7 +209,9 @@
       "source_org": "U.S. Energy Information Administration (EIA)",
       "license_note": "U.S. government work, public domain; cite EIA as the source when republishing.",
       "verify_interval_days": 7,
-      "corroborated_by": ["price-cn-module"]
+      "corroborated_by": [
+        "price-cn-module"
+      ]
     },
     {
       "source_id": "research-irena-capacity-2026",
@@ -154,7 +225,9 @@
       "source_org": "International Renewable Energy Agency (IRENA)",
       "license_note": "Use the publisher's citation and terms. This registry stores an original summary, not the report text.",
       "verify_interval_days": 90,
-      "corroborated_by": ["research-iea-global-review-2026"]
+      "corroborated_by": [
+        "research-iea-global-review-2026"
+      ]
     },
     {
       "source_id": "research-iea-global-review-2026",
@@ -168,7 +241,9 @@
       "source_org": "International Energy Agency (IEA)",
       "license_note": "Licensed CC BY 4.0 by IEA; attribution is required. This registry stores an original summary.",
       "verify_interval_days": 90,
-      "corroborated_by": ["research-irena-capacity-2026"]
+      "corroborated_by": [
+        "research-irena-capacity-2026"
+      ]
     }
   ]
 }

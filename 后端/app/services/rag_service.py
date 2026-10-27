@@ -13,7 +13,7 @@ import re
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 
-from app.services.rag_sources import SourceRegistry, verification_status
+from app.services.rag_sources import SourceRegistry, verification_status, evidence_usable, evidence_status
 
 
 @dataclass
@@ -39,20 +39,34 @@ _COUNTRY_MAP = {
 
 
 def _detect_countries(query: str, market: str) -> set:
-    """地区识别（保留恢复片段的语义）：从查询词中识别目标国家。"""
-    tokens = set(re.findall(r"[a-zA-Z\u4e00-\u9fff]+", query.lower()))
-    countries = set()
-    for token, code in _COUNTRY_MAP.items():
-        if token in query.lower() or token in tokens:
-            countries.add(code)
-    joined = tokens
-    if {"united", "states"} <= joined:
-        countries.add("us")
-    if market == "cn":
-        countries.add("cn")
-    elif not countries:
-        countries.add(market)
-    return countries
+    """Only explicit country names constrain evidence; market controls language."""
+    lowered = query.lower()
+    return {code for token, code in _COUNTRY_MAP.items()
+            if (token in lowered if re.search(r"[\u4e00-\u9fff]", token)
+                else re.search(r"(?<![a-z])" + re.escape(token) + r"(?![a-z])", lowered))}
+
+
+def _source_countries(doc: Dict) -> set:
+    # Missing/malformed scope is unknown, never inferred from language or title.
+    scope = doc.get("applicability")
+    if not isinstance(scope, dict) or scope.get("status") != "reviewed":
+        return set()
+    countries = scope.get("countries")
+    if not isinstance(countries, list) or not countries or not all(
+        isinstance(code, str) and re.fullmatch(r"[a-z]{2}", code)
+        for code in countries
+    ):
+        return set()
+    return set(countries)
+
+
+def _retrieval_terms(text: str) -> set:
+    """English whole terms and Chinese bigrams; no external tokenizer dependency."""
+    terms = set(re.findall(r"[a-z0-9]+", text.lower()))
+    for span in re.findall(r"[\u4e00-\u9fff]+", text):
+        # Single Chinese characters are too broad to establish relevance.
+        terms.update(span[i:i + 2] for i in range(len(span) - 1))
+    return terms
 
 
 class RAGService:
@@ -78,22 +92,31 @@ class RAGService:
         market: str = "cn",
         include_stale: bool = False,
     ) -> RAGResult:
+        if top_k <= 0:
+            return RAGResult(hits=[])
         lang = "cn" if market == "cn" else "en"
         countries = _detect_countries(query, market)
-        query_tokens = set(re.findall(r"[a-z0-9\u4e00-\u9fff]+", query.lower()))
+        query_tokens = _retrieval_terms(query)
+        if not query_tokens:
+            return RAGResult(hits=[])
 
         scored: List[RAGHit] = []
         for doc in self._corpus:
+            if not evidence_usable(doc):
+                continue  # Quarantine cannot be bypassed by include_stale.
             if doc["lang"] != lang:
                 continue  # 语言隔离：global 不返回未翻译中文
+            source_countries = _source_countries(doc)
+            if countries and not countries.intersection(source_countries):
+                continue  # Explicit jurisdiction: unknown and unrelated evidence excluded.
             freshness = self._freshness_of(doc)
             if freshness == "stale" and not include_stale:
                 continue  # 生产默认 fail closed：过期资料不能进入模型上下文
-            doc_tokens = set(
-                re.findall(r"[a-z0-9\u4e00-\u9fff]+", (doc["title"] + " " + doc["content"]).lower())
-            )
+            doc_tokens = _retrieval_terms(doc["title"] + " " + doc["content"])
             overlap = len(query_tokens & doc_tokens)
-            score = overlap / max(len(query_tokens), 1)
+            if not overlap:
+                continue
+            score = overlap / len(query_tokens)
             hit = RAGHit(
                 source_id=doc["source_id"],
                 title=doc["title"],
@@ -104,8 +127,11 @@ class RAGService:
                     "last_verified_at": doc["last_verified_at"],
                     "freshness_status": freshness,
                     "verification": verification_status(doc, self._registry),
+                    "evidence_status": evidence_status(doc),
                     "market": market,
-                    "countries": sorted(countries),
+                    "countries": sorted(source_countries),
+                    "query_countries": sorted(countries),
+                    "applicability_status": "reviewed" if source_countries else "unknown",
                     "source_url": doc.get("source_url"),
                     "source_org": doc.get("source_org"),
                     "license_note": doc.get("license_note"),

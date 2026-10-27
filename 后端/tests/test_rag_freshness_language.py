@@ -1,6 +1,7 @@
 """RAG provenance, freshness and market-language quality gates."""
 
 import re
+from datetime import date
 
 from app.services.rag_service import RAGService
 
@@ -23,7 +24,13 @@ def test_rag_hits_expose_honest_freshness_metadata():
 
 
 def test_global_rag_context_does_not_contain_untranslated_chinese():
-    hits = RAGService().search(
+    # Deterministic reviewed fixtures: registry scope coverage is a separate gate.
+    corpus = [dict(source_id=lang, lang=lang, title=title,
+                   content='solar grid interconnection', year=2026,
+                   last_verified_at=date.today().isoformat(),
+                   applicability={'status':'reviewed','countries':['us']})
+              for lang, title in [('cn','光伏并网'),('en','Solar interconnection')]]
+    hits = RAGService(corpus=corpus).search(
         "solar grid interconnection tax incentive United States",
         top_k=8,
         market="global",

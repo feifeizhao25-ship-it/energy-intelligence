@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -19,7 +20,7 @@ from urllib.robotparser import RobotFileParser
 
 import httpx
 
-from app.services.rag_sources import REGISTRY_PATH, SourceRegistry
+from app.services.rag_sources import REGISTRY_PATH, SourceRegistry, evidence_status, evidence_usable
 
 
 def snapshot_sha256(content: bytes) -> str:
@@ -40,8 +41,8 @@ def fetch_snapshot(
     """
     source_id = str(source.get("source_id", "")).strip()
     url = str(source.get("source_url", "")).strip()
-    if not source_id:
-        raise ValueError("source_id 为必填项")
+    if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._-]{0,127}', source_id):
+        raise ValueError("source_id 必须是安全的单段标识符")
     if source.get("ingestion_policy") != "snapshot_allowed":
         raise PermissionError("%s 未获授权进行原文快照抓取" % source_id)
     if not str(source.get("license_note", "")).strip():
@@ -81,7 +82,7 @@ def fetch_snapshot(
         fetched_at = datetime.now(timezone.utc)
         digest = snapshot_sha256(content)
         root = Path(quarantine_dir or Path("data/rag_quarantine"))
-        target_dir = root / source_id / fetched_at.strftime("%Y%m%dT%H%M%SZ")
+        target_dir = root / source_id / fetched_at.strftime("%Y%m%dT%H%M%S%fZ")
         target_dir.mkdir(parents=True, exist_ok=False)
         extension = ".pdf" if "application/pdf" in content_type else ".bin"
         snapshot_path = target_dir / ("snapshot" + extension)
@@ -119,9 +120,13 @@ def refresh_report(
 
     entries: List[Dict] = []
     refresh_needed: List[str] = []
+    evidence_review_needed: List[str] = []
     counts = {"current": 0, "review_recommended": 0, "stale": 0}
 
     for source in registry.sources:
+        review_status = evidence_status(source)
+        if review_status != "approved":
+            evidence_review_needed.append(source["source_id"])
         status = registry.freshness_of(source, today=today)
         counts[status] += 1
         interval = int(source.get("verify_interval_days", 365))
@@ -140,6 +145,8 @@ def refresh_report(
             "lang": source["lang"],
             "type": source.get("type"),
             "freshness_status": status,
+            "evidence_status": review_status,
+            "retrieval_allowed_by_review": evidence_usable(source),
             "verify_interval_days": interval,
             "last_verified_at": source.get("last_verified_at"),
             "age_days": age_days,
@@ -155,4 +162,5 @@ def refresh_report(
         "counts": counts,
         "entries": entries,
         "refresh_needed": refresh_needed,
+        "evidence_review_needed": evidence_review_needed,
     }

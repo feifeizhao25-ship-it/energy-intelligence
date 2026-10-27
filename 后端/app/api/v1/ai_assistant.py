@@ -239,6 +239,10 @@ async def ask(
             "last_verified_at": hit.metadata.get("last_verified_at"),
             "freshness_status": hit.metadata.get("freshness_status"),
             "verification": hit.metadata.get("verification"),
+            "evidence_status": hit.metadata.get("evidence_status", "legacy_unreviewed"),
+            "countries": hit.metadata.get("countries", []),
+            "query_countries": hit.metadata.get("query_countries", []),
+            "applicability_status": hit.metadata.get("applicability_status", "unknown"),
         }
         for hit in hits
     ]

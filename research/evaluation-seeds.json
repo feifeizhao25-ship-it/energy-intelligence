@@ -1,0 +1,52 @@
+[
+  {
+    "id": "energy-01",
+    "scenario": "全国政策与某省细则",
+    "expected_behavior": "按地区和生效期匹配",
+    "status": "scenario_seed_not_executed_model_eval"
+  },
+  {
+    "id": "energy-02",
+    "scenario": "未来核验日期",
+    "expected_behavior": "按过期处理",
+    "status": "automated_http_fixture_verified_not_live_model_eval",
+    "test": "后端/tests/test_rag_api_freshness.py",
+    "verification_scope": "local HTTP authentication quota and retrieval; model mocked; future expired invalid dates excluded"
+  },
+  {
+    "id": "energy-03",
+    "scenario": "source_id为路径穿越",
+    "expected_behavior": "抓取前拒绝",
+    "status": "scenario_seed_not_executed_model_eval"
+  },
+  {
+    "id": "energy-04",
+    "scenario": "W与kW混合",
+    "expected_behavior": "显式换算并记录单位",
+    "status": "scenario_seed_not_executed_model_eval"
+  },
+  {
+    "id": "energy-05",
+    "scenario": "无现金流变化的IRR",
+    "expected_behavior": "不给伪造解",
+    "status": "scenario_seed_not_executed_model_eval"
+  },
+  {
+    "id": "energy-06",
+    "scenario": "政策正文更新",
+    "expected_behavior": "生成复核候选而非直接覆盖",
+    "status": "scenario_seed_not_executed_model_eval"
+  },
+  {
+    "id": "energy-07",
+    "scenario": "参考图表无页码",
+    "expected_behavior": "不声称精确出处",
+    "status": "scenario_seed_not_executed_model_eval"
+  },
+  {
+    "id": "energy-08",
+    "scenario": "储能寿命假设变化",
+    "expected_behavior": "重算敏感性并列明假设",
+    "status": "scenario_seed_not_executed_model_eval"
+  }
+]

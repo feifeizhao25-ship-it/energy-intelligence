@@ -113,18 +113,15 @@ def test_search_metadata_uses_per_entry_interval():
 # ── 多方验证标记 ──────────────────────────────────────────────────────────────
 
 
-def test_verification_flag_verified_when_corroborated():
-    registry = SourceRegistry([
-        {
-            "source_id": "primary", "lang": "en", "type": "policy",
-            "source_org": "Publisher A", "corroborated_by": ["other"],
-        },
-        {
-            "source_id": "other", "lang": "en", "type": "policy",
-            "source_org": "Publisher B",
-        },
-    ])
-    assert verification_status(registry.get("primary"), registry) == "verified"
+def test_verification_flag_requires_reviewed_shared_claims():
+    from datetime import date
+    rows = [dict(source_id='primary',lang='en',type='policy',source_org='Publisher A',corroborated_by=['other']),
+            dict(source_id='other',lang='en',type='policy',source_org='Publisher B')]
+    registry = SourceRegistry(rows)
+    assert verification_status(rows[0],registry)=='single_source'
+    for row in rows:
+        row.update(evidence_review={'status':'approved'},reviewed_claim_ids=['claim-1'],last_verified_at=date.today().isoformat())
+    assert verification_status(rows[0],registry)=='verified'
 
 
 def test_verification_flag_single_source_without_corroboration():
@@ -265,3 +262,14 @@ def test_rag_service_defaults_to_registry_corpus():
     service = RAGService()
     assert len(service._corpus) == len(registry.sources)
     assert all("source_url" in doc for doc in service._corpus)
+
+
+def test_future_verification_is_not_fresh():
+    assert freshness_status((TODAY + timedelta(days=1)).isoformat(), today=TODAY) == 'stale'
+
+
+@pytest.mark.parametrize('source_id', ['../escape', '/tmp/escape', '..', 'a/b', 'a\\b'])
+def test_snapshot_rejects_unsafe_source_id(source_id, tmp_path):
+    with pytest.raises(ValueError):
+        fetch_snapshot({'source_id':source_id},quarantine_dir=tmp_path)
+    assert list(tmp_path.iterdir()) == []
