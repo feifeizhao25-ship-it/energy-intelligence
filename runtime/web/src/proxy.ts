@@ -43,6 +43,7 @@ const publicPaths = [
   '/quick-calc',
   '/api-docs',
   '/developer/docs',
+  '/preview/p0',
   '/auth/error' // 中文认证错误页必须始终可访问（尤其登录未配置时）
 ];
 
@@ -68,7 +69,7 @@ const knownSegments = new Set([
   'achievements', 'assistant', 'audit', 'auth', 'calculator', 'checkout',
   'community', 'dashboard', 'demo-request', 'developer', 'education',
   'enterprise', 'login', 'maintenance', 'map', 'membership', 'my',
-  'onboarding', 'papers', 'pricing', 'privacy', 'project', 'projects',
+  'onboarding', 'papers', 'preview', 'pricing', 'privacy', 'project', 'projects',
   'quick-calc', 'referral', 'resource', 'settings', 'terms',
   'policies', 'datasets', 'daily', 'alerts', 'briefs', 'ops',
 ]);
@@ -92,7 +93,7 @@ function isDemoDashboardPreview(pathname: string): boolean {
 
 // 只在本地截图时放行这些页。生产 compose 不设置 NENGJIAN_SCREENSHOT。
 const screenshotPaths = new Set([
-  '/datasets', '/daily', '/briefs', '/alerts',
+  '/datasets', '/daily', '/briefs', '/alerts', '/preview/p0',
   '/ops/policy-diff', '/ops/preflight', '/ops/solar-sample',
 ]);
 

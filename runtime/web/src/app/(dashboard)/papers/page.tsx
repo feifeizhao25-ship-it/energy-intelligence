@@ -342,7 +342,7 @@ export default function PapersPage() {
                                         {paper.impactFactor && (
                                             <div className="flex items-center gap-2 text-amber-500">
                                                 <Star className="w-4 h-4 fill-current" />
-                                                <span className="font-black">IF: {paper.impactFactor}</span>
+                                                <span className="font-black">影响因子 {paper.impactFactor}</span>
                                             </div>
                                         )}
                                     </div>

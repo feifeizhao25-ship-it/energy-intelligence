@@ -8,8 +8,11 @@ human approval. Third-party ClawHub skills are not installed.
 from __future__ import annotations
 
 import hashlib
+import json
+import os
 import re
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
+from pathlib import Path
 from typing import Callable, Iterable
 
 PII_PATTERNS = (
@@ -26,6 +29,58 @@ GATES = {
 }
 
 CANARY_FRACTION = 0.10
+EVAL_MAX_AGE = timedelta(days=8)
+REQUIRED_METRICS = (
+    "citation_accuracy",
+    "freshness_correctness",
+    "redteam_blocked",
+    "calculator_reference",
+    "calculator_actual",
+)
+DEFAULT_EVAL_LATEST = Path("/var/lib/nengjian/eval/latest.json")
+
+
+def eval_latest_path() -> Path:
+    raw = os.environ.get("NENGJIAN_EVAL_LATEST", "").strip()
+    return Path(raw) if raw else DEFAULT_EVAL_LATEST
+
+
+def _parse_generated_at(value) -> datetime | None:
+    if not value:
+        return None
+    text = str(value).strip().replace("Z", "+00:00")
+    try:
+        stamp = datetime.fromisoformat(text)
+    except ValueError:
+        return None
+    if stamp.tzinfo is None:
+        stamp = stamp.replace(tzinfo=timezone.utc)
+    return stamp.astimezone(timezone.utc)
+
+
+def load_eval_metrics(path: Path, *, now: datetime | None = None) -> dict:
+    """Read an eval-runner result. Missing, stale (>8 days) or incomplete → not ok."""
+    now = now or datetime.now(timezone.utc)
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=timezone.utc)
+    if not path.is_file():
+        return {"ok": False, "reason": "no_eval", "metrics": None}
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {"ok": False, "reason": "no_eval", "metrics": None}
+    if not isinstance(payload, dict):
+        return {"ok": False, "reason": "no_eval", "metrics": None}
+    stamp = _parse_generated_at(payload.get("generated_at"))
+    if stamp is None or now - stamp > EVAL_MAX_AGE:
+        return {"ok": False, "reason": "no_eval", "metrics": None}
+    metrics = payload.get("metrics")
+    if not isinstance(metrics, dict):
+        return {"ok": False, "reason": "no_eval", "metrics": None}
+    for key in REQUIRED_METRICS:
+        if metrics.get(key) is None or not isinstance(metrics.get(key), (int, float)):
+            return {"ok": False, "reason": "no_eval", "metrics": None}
+    return {"ok": True, "reason": None, "metrics": {key: metrics[key] for key in REQUIRED_METRICS}}
 
 
 def strip_pii(text: str) -> str:
@@ -95,7 +150,23 @@ def run_cycle(
     baseline_score: float | None = None,
     canary_score: float | None = None,
     today: date | None = None,
+    eval_file: Path | None = None,
+    now: datetime | None = None,
 ) -> dict:
+    if eval_file is not None:
+        loaded = load_eval_metrics(eval_file, now=now)
+        if not loaded["ok"]:
+            return {
+                "status": "noop",
+                "reason": "no_eval",
+                "rolled_out": False,
+                "production_auto_deploy": False,
+            }
+        measured = loaded["metrics"]
+
+        def metrics_for(_candidate, _gate, _measured=measured):
+            return dict(_measured)
+
     cleaned = []
     for sample in samples:
         item = dict(sample)

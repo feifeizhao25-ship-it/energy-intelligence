@@ -1,0 +1,138 @@
+# 场景套件 v1。判定由 eval_scenarios.run_all 执行，期望不依赖未收录原文。
+- id: S01
+  description: 杭州年辐照标注离线样本
+  covers:
+    - RA-001
+    - domestic_resources
+- id: S02
+  description: 风资源默认瑞利分布
+  covers:
+    - RA-002
+- id: S03
+  description: LCOE 与公式对照
+  covers:
+    - FM-001
+- id: S04
+  description: IRR 无唯一解
+  covers:
+    - FM-002
+- id: S05
+  description: 储能未回本提示且无推荐
+  covers:
+    - ST-001
+- id: S06
+  description: 清洗间隔与解析解
+  covers:
+    - OM-001
+- id: S07
+  description: 碳减排只给因子年份
+  covers:
+    - CA-001
+- id: S08
+  description: 占位技能生产环境未配置
+  covers:
+    - translation
+    - multimodal_analysis
+    - transcript_summary
+    - video_summarizer
+- id: S09
+  description: 知识库只返回已审核
+  covers:
+    - knowledge_management
+- id: S10
+  description: 地理围栏与未配置
+  covers:
+    - geocode_address
+- id: S11
+  description: 资源查询后测算一致
+  covers:
+    - get_solar_resource
+    - calculate_solar
+- id: S12
+  description: 文献默认不出境
+  covers:
+    - search_papers
+- id: S13
+  description: 地点对比不排名
+  covers:
+    - compare_locations
+- id: S14
+  description: 资源报告含免责与标识
+  covers:
+    - generate_resource_report
+- id: S15
+  description: 无 SCADA 不给健康分
+  covers:
+    - diagnose_system_health
+- id: S16
+  description: 136 号文节点与链接
+  covers:
+    - query_knowledge_base
+    - policy-cn-136
+- id: S17
+  description: GB 50797 设计标准 6.6
+  covers:
+    - std-gb50797
+- id: S18
+  description: 过期储能规则待复核
+  covers:
+    - policy-cn-storage
+- id: S19
+  description: PR 定义注明 IEC 版本与海外
+  covers:
+    - std-iec61724
+- id: S20
+  description: 688 号文链接与施行日
+  covers:
+    - policy-cn-688
+- id: S21
+  description: 组件价格不报现价
+  covers:
+    - price-cn-module
+- id: S22
+  description: 国内并网问题不引用美国条目
+  covers:
+    - policy-us-itc
+    - std-ieee1547
+    - guide-grid-interconnection
+    - price-us-eia
+- id: S23
+  description: 代理购电为结构样本
+  covers:
+    - cn_datasets
+- id: S24
+  description: 北京辐照为离线样本
+  covers:
+    - domestic_resources
+- id: S25
+  description: 用户 PDF 引用页码
+  covers:
+    - user_pdf
+- id: S26
+  description: 每日一数带来源与截至
+  covers:
+    - daily_number
+- id: S27
+  description: 政策提醒只推已审核
+  covers:
+    - policy_alerts
+- id: S28
+  description: 拒绝投资建议
+  covers:
+    - redteam
+- id: S29
+  description: 拒绝价格预测
+  covers:
+    - redteam
+- id: S30
+  description: 拒绝冒充官方
+  covers:
+    - redteam
+- id: S31
+  description: 未来核验日期按过期
+  covers:
+    - freshness
+- id: S32
+  description: 维护技能不写生产语料
+  covers:
+    - cn-energy-evidence

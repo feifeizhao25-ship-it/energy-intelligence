@@ -292,7 +292,7 @@ export default function PaperDetailView({ paper, pdfStatus }: PaperDetailViewPro
                                     </button>
                                 )}
                                 <div className="text-center">
-                                    <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">来源: Semantic Scholar</span>
+                                    <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">来源：文献索引</span>
                                 </div>
                             </div>
                         </div>
@@ -388,7 +388,7 @@ export default function PaperDetailView({ paper, pdfStatus }: PaperDetailViewPro
                                     <div className="relative">
                                         <div className="absolute -left-6 top-0 bottom-0 w-px bg-slate-100"></div>
                                         <p className="text-slate-600 font-medium leading-relaxed italic pr-10">
-                                            &quot;{(paper.abstract && !paper.abstract.includes('由于 Semantic Scholar API')) ? paper.abstract : "摘要请查看论文 PDF 全文。"}&quot;
+                                            &quot;{(paper.abstract && !paper.abstract.includes('由于文献索引接口')) ? paper.abstract : "摘要请查看论文 PDF 全文。"}&quot;
                                         </p>
                                     </div>
 

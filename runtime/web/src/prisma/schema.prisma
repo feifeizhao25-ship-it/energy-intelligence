@@ -603,6 +603,9 @@ model Policy {
   reviewedAt   DateTime?
   sourceTitle  String? // 文件标题
   docNumber    String? // 文号，如「发改价格〔2025〕136号」
+  effectiveDate DateTime?
+  expiryDate    DateTime?
+  supersededBy  String?
 
   @@index([region, type])
   @@index([reviewStatus, region])

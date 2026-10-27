@@ -35,12 +35,32 @@ export const PROVINCES = [
 
 export const PREFERENCE_LOG_TYPES = ['PROFILE_PREFERENCES', 'ONBOARDING_COMPLETE'] as const;
 
+export interface PreferenceTag {
+    id: string;
+    label: string;
+    source: string;
+}
+
 export interface Preferences {
     role: Role | null;
     province: string | null;
     interest: Interest | null;
     /** false = 用户关闭了个性化 */
     personalized: boolean;
+    /** 可删除的兴趣标签。没有标签时为空数组。 */
+    tags: PreferenceTag[];
+}
+
+function cleanTags(value: unknown): PreferenceTag[] {
+    if (!Array.isArray(value)) return [];
+    return value.flatMap((item) => {
+        if (!item || typeof item !== 'object') return [];
+        const row = item as Record<string, unknown>;
+        if (typeof row.id !== 'string' || typeof row.label !== 'string' || typeof row.source !== 'string') return [];
+        const label = row.label.trim();
+        if (!label) return [];
+        return [{ id: row.id, label, source: row.source }];
+    });
 }
 
 const isRole = (v: unknown): v is Role => typeof v === 'string' && (ROLES as readonly string[]).includes(v);
@@ -60,6 +80,7 @@ export function parsePreferences(metadata: unknown): Preferences {
         province: cleanProvince(prefs.province),
         interest: isInterest(prefs.interest) ? prefs.interest : null,
         personalized: prefs.personalized !== false,
+        tags: cleanTags(prefs.tags),
     };
 }
 
@@ -77,6 +98,7 @@ export function validatePreferences(input: unknown): Preferences {
         province,
         interest: isInterest(body.interest) ? body.interest : null,
         personalized: body.personalized !== false,
+        tags: cleanTags(body.tags),
     };
 }
 
@@ -217,6 +239,7 @@ export interface Personalization {
     tariff: TariffDefaults | null;
     policies: { id: string; title: string; docNumber: string | null; sourceUrl: string | null; value: number; unit: string; region: string }[];
     milestones: PolicyMilestone[];
+    tags: PreferenceTag[];
     /** 为什么这样展示（逐条说明） */
     reasons: string[];
 }
@@ -231,12 +254,12 @@ export function buildPersonalization(input: {
     /** 今日测算次数已用完：不再把用户往测算页推 */
     calcQuotaExhausted?: boolean;
 }): Personalization {
-    const prefs = input.prefs ?? { role: null, province: null, interest: null, personalized: true };
+    const prefs = input.prefs ?? { role: null, province: null, interest: null, personalized: true, tags: [] };
     if (!prefs.personalized) {
         return {
             personalized: false, role: null, roleLabel: null, province: null, provinceSource: null, interest: null,
             moduleOrder: ROLE_MODULE_ORDER.default, focus: null, quickActionOrder: [...QUICK_ACTION_IDS],
-            tariff: null, policies: [], milestones: [], reasons: ['你已关闭个性化，工作台显示通用版（可在「设置」重新开启）'],
+            tariff: null, policies: [], milestones: [], tags: [], reasons: ['你已关闭个性化，工作台显示通用版（可在「设置」重新开启）'],
         };
     }
     const reasons: string[] = [];
@@ -299,6 +322,7 @@ export function buildPersonalization(input: {
         tariff,
         policies: related.slice(0, 3).map(p => ({ id: p.id, title: policyTitle(p), docNumber: p.docNumber, sourceUrl: p.sourceUrl, value: p.value, unit: p.unit, region: p.region })),
         milestones,
+        tags: prefs.personalized ? (prefs.tags ?? []) : [],
         reasons,
     };
 }

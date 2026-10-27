@@ -525,22 +525,13 @@ def calc_financial_metrics(fin: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def _calc_irr(cashflows: List[float], max_iter: int = 100, tol: float = 1e-6) -> float:
-    """Newton-Raphson 法求 IRR"""
-    rate = 0.10  # 初始猜测 10%
-    for _ in range(max_iter):
-        npv = sum(cf / ((1 + rate) ** i) for i, cf in enumerate(cashflows))
-        dnpv = sum(
-            -i * cf / ((1 + rate) ** (i + 1)) for i, cf in enumerate(cashflows)
-        )
-        if abs(dnpv) < 1e-12:
-            break
-        rate_new = rate - npv / dnpv
-        if abs(rate_new - rate) < tol:
-            return rate_new
-        rate = rate_new
-        if rate < -0.99:
-            rate = -0.99
+def _calc_irr(cashflows: List[float], max_iter: int = 200, tol: float = 1e-12) -> float:
+    """与前端 solveIrr 共用二分法。无唯一解时返回 nan，报告显示「无法确认唯一值」。"""
+    from app.utils.financial_utils import solve_irr_rate
+
+    rate = solve_irr_rate(cashflows, max_iter=max_iter, tol=tol)
+    if rate is None:
+        return float("nan")
     return rate
 
 
@@ -554,7 +545,9 @@ def fmt_money(v: float, unit: str = "元", decimals: int = 0) -> str:
 
 
 def fmt_pct(v: float, decimals: int = 1) -> str:
-    """百分比格式化 — 全报告统一 1 位小数"""
+    """百分比格式化 — 全报告统一 1 位小数。无唯一解时不编造数字。"""
+    if v is None or (isinstance(v, float) and v != v):
+        return "无法确认唯一值"
     return f"{v * 100:.{decimals}f}%"
 
 
@@ -571,7 +564,7 @@ def _global_section_body(section: str, data: Dict[str, Any], metrics: Dict[str, 
     irr = metrics.get("irr")
     npv = metrics.get("npv")
     lcoe = metrics.get("lcoe")
-    irr_txt = f"{irr:.2%}" if isinstance(irr, (int, float)) else "n/a"
+    irr_txt = f"{irr:.2%}" if isinstance(irr, (int, float)) and irr == irr else "无法确认唯一值"
     npv_txt = f"{npv:,.0f}" if isinstance(npv, (int, float)) else "n/a"
     lcoe_txt = f"{lcoe:.4f}" if isinstance(lcoe, (int, float)) else "n/a"
     bodies = {

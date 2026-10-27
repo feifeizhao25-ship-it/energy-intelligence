@@ -188,6 +188,10 @@ def verify_numeric_claim(values: Sequence[Dict[str, Any]], tolerance: float = NU
     for v, key in pts:
         by_pub.setdefault(key, float(v["value"]))
     if len(by_pub) < 2:
+        only = next(iter(pts))[0]
+        snapshot = str(only.get("snapshot_sha256") or "")
+        if is_official_source(only) and len(snapshot) == 64:
+            return VERIFIED, "一手官方原文并附快照"
         return REVIEW_RECOMMENDED, "只有 1 个独立来源"
     nums = list(by_pub.values())
     lo, hi = min(nums), max(nums)
@@ -195,6 +199,27 @@ def verify_numeric_claim(values: Sequence[Dict[str, Any]], tolerance: float = NU
     if (hi - lo) / base < tolerance:
         return VERIFIED, f"{len(nums)} 个独立来源一致（相对差 < {tolerance:.0%}）"
     return CONFLICT, f"{len(nums)} 个来源数值冲突（{lo:g}–{hi:g}），已全部展示，待人工核验"
+
+
+def present_claim(values: Sequence[Dict[str, Any]], *, claim_type: str = "numeric") -> Dict[str, Any]:
+    """冲突时并列来源，不替用户择一。政策类二手来源只标延伸阅读。"""
+    if claim_type == "policy":
+        status, reason = verify_policy_claim(values)
+        rows = []
+        for src in values:
+            rows.append({
+                **src,
+                "role": "官方原文" if is_official_source(src) else "延伸阅读",
+            })
+        return {"label": VERIFICATION_LABELS[status], "status": status, "reason": reason, "sources": rows, "picked": None}
+    status, reason = verify_numeric_claim(values)
+    return {
+        "label": VERIFICATION_LABELS.get(status, "待核验"),
+        "status": status,
+        "reason": reason,
+        "sources": list(values),
+        "picked": None,
+    }
 
 
 def compute_verification(

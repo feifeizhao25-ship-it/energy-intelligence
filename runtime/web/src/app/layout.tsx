@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import AuthProvider from '@/components/providers/AuthProvider'
+import { BuildStamp } from '@/components/layout/BuildStamp'
 import { isAuthConfigured } from '@/lib/auth/availability'
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -39,6 +40,7 @@ export default async function RootLayout({
       <body className="font-sans">
         <NextIntlClientProvider locale={locale} messages={messages}>
           <AuthProvider configured={isAuthConfigured()}>
+            <BuildStamp />
             {children}
           </AuthProvider>
         </NextIntlClientProvider>

@@ -1,0 +1,1278 @@
+{
+  "label": "待核实",
+  "note": "31 个省级行政区的栏目与电价字段尚未人工核对。空值显示待核实，不填猜测网址或电价。示例数据不得写入本文件。",
+  "as_of": null,
+  "provinces": [
+    {
+      "province": "北京",
+      "fields": {
+        "能源主管部门": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "发改委价格处": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电网公司代理购电公告": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电力交易中心": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "136号文省级实施方案": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "分时时段": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        }
+      }
+    },
+    {
+      "province": "天津",
+      "fields": {
+        "能源主管部门": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "发改委价格处": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电网公司代理购电公告": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电力交易中心": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "136号文省级实施方案": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "分时时段": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        }
+      }
+    },
+    {
+      "province": "河北",
+      "fields": {
+        "能源主管部门": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "发改委价格处": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电网公司代理购电公告": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电力交易中心": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "136号文省级实施方案": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "分时时段": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        }
+      }
+    },
+    {
+      "province": "山西",
+      "fields": {
+        "能源主管部门": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "发改委价格处": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电网公司代理购电公告": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电力交易中心": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "136号文省级实施方案": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "分时时段": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        }
+      }
+    },
+    {
+      "province": "内蒙古",
+      "fields": {
+        "能源主管部门": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "发改委价格处": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电网公司代理购电公告": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电力交易中心": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "136号文省级实施方案": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "分时时段": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        }
+      }
+    },
+    {
+      "province": "辽宁",
+      "fields": {
+        "能源主管部门": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "发改委价格处": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电网公司代理购电公告": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电力交易中心": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "136号文省级实施方案": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "分时时段": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        }
+      }
+    },
+    {
+      "province": "吉林",
+      "fields": {
+        "能源主管部门": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "发改委价格处": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电网公司代理购电公告": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电力交易中心": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "136号文省级实施方案": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "分时时段": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        }
+      }
+    },
+    {
+      "province": "黑龙江",
+      "fields": {
+        "能源主管部门": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "发改委价格处": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电网公司代理购电公告": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电力交易中心": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "136号文省级实施方案": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "分时时段": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        }
+      }
+    },
+    {
+      "province": "上海",
+      "fields": {
+        "能源主管部门": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "发改委价格处": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电网公司代理购电公告": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电力交易中心": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "136号文省级实施方案": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "分时时段": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        }
+      }
+    },
+    {
+      "province": "江苏",
+      "fields": {
+        "能源主管部门": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "发改委价格处": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电网公司代理购电公告": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电力交易中心": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "136号文省级实施方案": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "分时时段": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        }
+      }
+    },
+    {
+      "province": "浙江",
+      "fields": {
+        "能源主管部门": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "发改委价格处": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电网公司代理购电公告": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电力交易中心": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "136号文省级实施方案": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "分时时段": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        }
+      }
+    },
+    {
+      "province": "安徽",
+      "fields": {
+        "能源主管部门": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "发改委价格处": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电网公司代理购电公告": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电力交易中心": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "136号文省级实施方案": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "分时时段": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        }
+      }
+    },
+    {
+      "province": "福建",
+      "fields": {
+        "能源主管部门": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "发改委价格处": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电网公司代理购电公告": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电力交易中心": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "136号文省级实施方案": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "分时时段": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        }
+      }
+    },
+    {
+      "province": "江西",
+      "fields": {
+        "能源主管部门": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "发改委价格处": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电网公司代理购电公告": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电力交易中心": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "136号文省级实施方案": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "分时时段": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        }
+      }
+    },
+    {
+      "province": "山东",
+      "fields": {
+        "能源主管部门": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "发改委价格处": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电网公司代理购电公告": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电力交易中心": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "136号文省级实施方案": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "分时时段": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        }
+      }
+    },
+    {
+      "province": "河南",
+      "fields": {
+        "能源主管部门": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "发改委价格处": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电网公司代理购电公告": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电力交易中心": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "136号文省级实施方案": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "分时时段": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        }
+      }
+    },
+    {
+      "province": "湖北",
+      "fields": {
+        "能源主管部门": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "发改委价格处": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电网公司代理购电公告": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电力交易中心": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "136号文省级实施方案": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "分时时段": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        }
+      }
+    },
+    {
+      "province": "湖南",
+      "fields": {
+        "能源主管部门": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "发改委价格处": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电网公司代理购电公告": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电力交易中心": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "136号文省级实施方案": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "分时时段": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        }
+      }
+    },
+    {
+      "province": "广东",
+      "fields": {
+        "能源主管部门": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "发改委价格处": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电网公司代理购电公告": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电力交易中心": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "136号文省级实施方案": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "分时时段": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        }
+      }
+    },
+    {
+      "province": "广西",
+      "fields": {
+        "能源主管部门": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "发改委价格处": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电网公司代理购电公告": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电力交易中心": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "136号文省级实施方案": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "分时时段": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        }
+      }
+    },
+    {
+      "province": "海南",
+      "fields": {
+        "能源主管部门": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "发改委价格处": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电网公司代理购电公告": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电力交易中心": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "136号文省级实施方案": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "分时时段": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        }
+      }
+    },
+    {
+      "province": "重庆",
+      "fields": {
+        "能源主管部门": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "发改委价格处": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电网公司代理购电公告": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电力交易中心": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "136号文省级实施方案": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "分时时段": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        }
+      }
+    },
+    {
+      "province": "四川",
+      "fields": {
+        "能源主管部门": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "发改委价格处": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电网公司代理购电公告": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电力交易中心": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "136号文省级实施方案": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "分时时段": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        }
+      }
+    },
+    {
+      "province": "贵州",
+      "fields": {
+        "能源主管部门": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "发改委价格处": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电网公司代理购电公告": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电力交易中心": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "136号文省级实施方案": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "分时时段": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        }
+      }
+    },
+    {
+      "province": "云南",
+      "fields": {
+        "能源主管部门": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "发改委价格处": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电网公司代理购电公告": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电力交易中心": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "136号文省级实施方案": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "分时时段": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        }
+      }
+    },
+    {
+      "province": "西藏",
+      "fields": {
+        "能源主管部门": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "发改委价格处": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电网公司代理购电公告": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电力交易中心": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "136号文省级实施方案": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "分时时段": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        }
+      }
+    },
+    {
+      "province": "陕西",
+      "fields": {
+        "能源主管部门": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "发改委价格处": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电网公司代理购电公告": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电力交易中心": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "136号文省级实施方案": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "分时时段": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        }
+      }
+    },
+    {
+      "province": "甘肃",
+      "fields": {
+        "能源主管部门": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "发改委价格处": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电网公司代理购电公告": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电力交易中心": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "136号文省级实施方案": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "分时时段": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        }
+      }
+    },
+    {
+      "province": "青海",
+      "fields": {
+        "能源主管部门": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "发改委价格处": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电网公司代理购电公告": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电力交易中心": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "136号文省级实施方案": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "分时时段": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        }
+      }
+    },
+    {
+      "province": "宁夏",
+      "fields": {
+        "能源主管部门": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "发改委价格处": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电网公司代理购电公告": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电力交易中心": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "136号文省级实施方案": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "分时时段": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        }
+      }
+    },
+    {
+      "province": "新疆",
+      "fields": {
+        "能源主管部门": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "发改委价格处": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电网公司代理购电公告": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "电力交易中心": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "136号文省级实施方案": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        },
+        "分时时段": {
+          "value": null,
+          "source_url": null,
+          "as_of": null,
+          "display": "待核实"
+        }
+      }
+    }
+  ]
+}

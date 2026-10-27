@@ -2,7 +2,7 @@
 // 不再只靠一份“已知英文短语”黑名单（黑名单漏掉新加的英文）。
 import { isAllowed } from './language-allowlist.mjs';
 
-export const RUNTIME_MAX_NON_ALLOWLISTED = Number(process.env.LANGUAGE_PURITY_MAX ?? 3);
+export const RUNTIME_MAX_NON_ALLOWLISTED = Number(process.env.LANGUAGE_PURITY_MAX ?? 0);
 
 // 保留旧黑名单作为硬失败（出现即失败，不计入阈值）
 export const ENGLISH_MARKERS = ['Energy Intelligence', 'Terms of Service', 'Privacy Policy', 'Request a quote', 'Back to plans', 'Order review', 'Switch to English'];

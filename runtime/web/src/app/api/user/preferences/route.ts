@@ -31,7 +31,7 @@ export async function PUT(req: Request) {
         return NextResponse.json({ error: safeErrorMessage(e, '偏好设置无效') }, { status: 400 });
     }
     await prisma.usageLog.create({
-        data: { userId, type: 'PROFILE_PREFERENCES', count: 0, metadata: { preferences: { ...preferences } } },
+        data: { userId, type: 'PROFILE_PREFERENCES', count: 0, metadata: JSON.parse(JSON.stringify({ preferences })) },
     });
     return NextResponse.json({ success: true, preferences });
 }

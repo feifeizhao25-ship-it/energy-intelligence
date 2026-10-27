@@ -12,11 +12,11 @@ import {
 
 export default function ComparePage() {
     const comparison = {
-        summary: "示例对照：方案 B 的 IRR 为 12.5%，方案 A 为 11.3%，回本周期相差 0.8 年。数字来自本页示例，不是实测。",
+        summary: "示例对照：方案 B 的内部收益率（IRR）为 12.5%，方案 A 为 11.3%，静态回收期相差 0.8 年。数字来自本页示例，不是实测。",
         recommendation: "示例对照：方案 B 的 LCOE 低 0.03，初始投资高 5%。这是两组假设的差额。",
         differences: [
             { metric: "内部收益率 (IRR)", left: "11.3%", right: "12.5%", delta: "+1.2%", impact: "positive" },
-            { metric: "回本周期", left: "7.0年", right: "6.2年", delta: "-0.8年", impact: "positive" },
+            { metric: "静态回收期", left: "7.0年", right: "6.2年", delta: "-0.8年", impact: "positive" },
             { metric: "LCOE (度电成本)", left: "0.32", right: "0.29", delta: "-0.03", impact: "positive" },
             { metric: "初始投资 (CAPEX)", left: "¥18.2万", right: "¥19.1万", delta: "+¥0.9万", impact: "negative" }
         ]

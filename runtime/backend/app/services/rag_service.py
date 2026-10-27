@@ -28,6 +28,18 @@ class StalePolicyError(Exception):
         )
 
 
+_OVERSEAS_QUERY_MARKERS = ("美国", "海外", "境外", "IEC", "IEEE", "NREL", "EIA", "ITC", "PR")
+
+
+def query_allows_overseas(query: str) -> bool:
+    """国内问答默认不检索海外条目。点名海外地区或已登记的国际标准指标时例外。"""
+    text = query or ""
+    upper = text.upper()
+    if any(marker in text for marker in ("美国", "海外", "境外")):
+        return True
+    return any(marker in upper for marker in ("IEC", "IEEE", "NREL", "EIA", "ITC", "PR"))
+
+
 def assert_no_stale_policy(hits: List["RAGHit"]) -> None:
     """Fail-closed 守卫：命中中存在 stale 政策类语料时抛出 StalePolicyError。
 
@@ -135,6 +147,7 @@ class RAGService:
         if top_k <= 0:
             return RAGResult(hits=[])
         lang = "cn" if market == "cn" else "en"
+        allow_overseas = market != "cn" or query_allows_overseas(query)
         countries = _detect_countries(query, market)
         query_tokens = tokenize(query)
         if not query_tokens:
@@ -144,7 +157,14 @@ class RAGService:
 
         scored: List[RAGHit] = []
         for doc in self._corpus:
-            if doc["lang"] != lang:
+            overseas = doc.get("jurisdiction") == "海外"
+            if overseas and not allow_overseas:
+                continue
+            if doc["lang"] != lang and not (overseas and allow_overseas):
+                continue
+            if doc.get("quote_policy") == "withdrawn":
+                continue
+            if doc.get("status") == "待核实" and doc.get("evidence_status") == "pending":
                 continue
             if doc.get("type") == "price":
                 continue  # 电价走结构化查询，不进向量/词面检索
@@ -192,8 +212,12 @@ class RAGService:
                     "query_countries": sorted(countries),
                     "evidence_status": review or "legacy_unreviewed",
                     "effective_date": doc.get("effective_date"),
-                    "expiry": doc.get("expiry"),
+                    "expiry": doc.get("expiry") or doc.get("expiry_date"),
+                    "expiry_date": doc.get("expiry_date"),
                     "superseded_by": doc.get("superseded_by"),
+                    "jurisdiction": doc.get("jurisdiction"),
+                    "status": doc.get("status"),
+                    "doc_number": doc.get("doc_number"),
                 },
             )
             scored.append(hit)

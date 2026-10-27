@@ -158,7 +158,7 @@ export default function ComparePage() {
                                 </div>
                                 <h3 className="text-2xl font-bold text-white mb-2">解锁多点深度对比</h3>
                                 <p className="text-slate-400 mb-8">
-                                    当前仅预览前 3 个省份的数据。升级 Pro 会员即可查看全国 34 个省份的完整投资回报对比分析。
+                                    当前仅预览前 3 个省份的数据。升级后可查看已收录省份的完整测算对照。
                                 </p>
                                 <button
                                     onClick={() => setShowPaywall(true)}
@@ -184,9 +184,9 @@ export default function ComparePage() {
                                         <tr className="border-b border-slate-700">
                                             <th className="text-left py-3 px-4 text-xs font-bold text-slate-400 uppercase">省份</th>
                                             <th className="text-right py-3 px-4 text-xs font-bold text-slate-400 uppercase">年发电量</th>
-                                            <th className="text-right py-3 px-4 text-xs font-bold text-blue-400 uppercase">IRR</th>
+                                            <th className="text-right py-3 px-4 text-xs font-bold text-blue-400 uppercase">内部收益率（IRR）</th>
                                             <th className="text-right py-3 px-4 text-xs font-bold text-orange-400 uppercase">回收期</th>
-                                            <th className="text-right py-3 px-4 text-xs font-bold text-emerald-400 uppercase">LCOE</th>
+                                            <th className="text-right py-3 px-4 text-xs font-bold text-emerald-400 uppercase">度电成本（LCOE）</th>
                                             <th className="text-right py-3 px-4 text-xs font-bold text-purple-400 uppercase">年收入</th>
                                         </tr>
                                     </thead>

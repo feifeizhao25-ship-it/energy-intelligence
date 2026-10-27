@@ -64,7 +64,7 @@ const pitfalls = [
       {
         name: '山寨品牌',
         description: '使用与知名品牌名字相似的山寨货',
-        howToAvoid: '认准Tier1品牌，官网核实品牌真伪',
+        howToAvoid: '认准一线品牌，官网核实品牌真伪',
         redFlags: ['品牌名称相似但不同', '无法在官网查到', '价格远低于正品'],
       },
       {

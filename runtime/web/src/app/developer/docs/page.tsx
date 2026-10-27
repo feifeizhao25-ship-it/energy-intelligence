@@ -6,7 +6,7 @@ const copy = {
     intro: '以下只列出代码中已经存在的接口。项目数据按 API 密钥所属用户隔离；正式调用前，请在登录后的开发者中心创建密钥并确认会员权限。',
     auth: '认证', authBody: '请求头使用 X-API-Key。密钥只在创建时完整显示，请勿写入网页代码、日志或公开仓库。',
     endpoints: '当前接口', example: '请求示例', reliability: '准确性与错误处理',
-    reliabilityBody: '计算结果应同时保存输入、模型版本、来源日期和审计快照。客户端必须处理 401、403、429 与 5xx，不应把暂时失败替换成示例数据。接口能力和限额以实际响应及会员权益为准。',
+    reliabilityBody: '计算结果应同时保存输入、模型版本、来源日期和审计快照。客户端必须处理 401、403、429 与服务器错误，不应把暂时失败替换成示例数据。接口能力和限额以实际响应及会员权益为准。',
     schema: '查看机器可读 OpenAPI JSON', console: '登录开发者中心', back: '返回首页',
     notice: '接口输出用于决策支持，不替代持证工程、法律、税务或投资意见。生产域名、服务等级和合同限额在商用发布前另行确认。',
     rows: [['GET', '/api/v1/projects', '分页读取当前用户的项目'], ['GET', '/api/v1/projects/{id}', '读取有权访问的单个项目'], ['GET', '/api/v1/projects/{id}/monitoring', '读取项目监测数据'], ['GET', '/api/v1/projects/{id}/analytics', '读取项目分析结果'], ['GET', '/api/v1/papers/search?q=', '检索文献；结果仍需核对来源与日期'], ['POST', '/api/v1/calculate/solar', '执行带审计快照的光伏收益计算']],

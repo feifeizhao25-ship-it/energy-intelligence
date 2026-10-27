@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import ResourceMapClient from '@/components/map/ResourceMapClient';
 import VectorLayerPanel from '@/components/map/VectorLayerPanel';
+import { ProvinceBlockChart } from '@/components/map/ProvinceBlockChart';
 
 export const metadata: Metadata = {
     title: '新能源资源地图 | 新能源智库',
@@ -11,5 +12,6 @@ export default function Page() {
     return <div>
         <div className="bg-slate-950 p-4"><VectorLayerPanel /></div>
         <ResourceMapClient />
+        <div className="bg-slate-50 p-4"><ProvinceBlockChart /></div>
     </div>;
 }

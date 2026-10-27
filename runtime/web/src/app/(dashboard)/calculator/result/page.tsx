@@ -23,6 +23,8 @@ import AIProjectAnalysis from '@/components/calculator/AIProjectAnalysis';
 import { safeErrorMessage } from '@/lib/api/safe-error';
 import { co2AvoidedTonnesForProvince, emissionFactorNoteFor } from '@/lib/standards/emission-factor';
 import { priceAsOfText } from '@/lib/pricing/tariffs';
+import { ExplainLayer } from '@/components/explain/ExplainLayer';
+import { FreshnessBadge } from '@/components/freshness/FreshnessBadge';
 
 const PDFDownloadLink = dynamic(
     () => import('@react-pdf/renderer').then((mod) => mod.PDFDownloadLink),
@@ -110,6 +112,17 @@ function CalculatorResultPage() {
                     {priceAsOfText(data.metadata?.pricing ?? data.pricing)}
                     {(data.metadata?.pricing ?? data.pricing)?.feedInBasis && <span className="mt-1 block">{(data.metadata?.pricing ?? data.pricing).feedInBasis}</span>}
                 </p>
+                <div className="mb-6 space-y-3">
+                    <ExplainLayer
+                        fact={`年发电量 ${Math.round(Number(data.energy.year1) || 0)} kWh，按当前输入与假设算出。`}
+                        method="年发电量等于倾斜面年辐照乘装机容量乘综合效率系数。性能比按国际电工委员会性能比定义，为实际发电量与标准测试条件参考发电量之比。"
+                        sources={[
+                            { title: '光伏发电站设计标准（2024 年版）', locator: '6.6', status: '待核验' },
+                            { title: '未绑定原文的数字', status: '不支持' },
+                        ]}
+                    />
+                    <FreshnessBadge asOf={(data.metadata?.pricing ?? data.pricing)?.updatedAt ?? null} intervalDays={90} />
+                </div>
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
 
                     {/* Main Dashboard */}

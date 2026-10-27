@@ -95,6 +95,90 @@ export const LOSS_ASSUMPTIONS = {
   tempCoefficient: 0.004,
 } as const;
 
+/** 晶硅功率温度系数典型区间 −0.29 %/°C 至 −0.40 %/°C 的中值。不是某一型号规格书的实测值，规格书接入后应替换。 */
+export const MODULE_GAMMA_PER_C = -0.0034;
+
+/**
+ * pvlib `temperature.TEMPERATURE_MODEL_PARAMETERS['sapm']`（King 等，Sandia）。
+ * 屋顶贴装用 close_mount_glass_glass，地面支架用 open_rack_glass_glass。
+ * 风速缺测时用 1 m/s，结果里应标明这是模型缺省，不是测风数据。
+ */
+export const SAPM_MOUNT = {
+  roof: { a: -2.98, b: -0.0471, deltaT: 1 },
+  ground: { a: -3.47, b: -0.0594, deltaT: 3 },
+} as const;
+
+export const DEFAULT_WIND_MS = 1;
+
+export function sapmMount(installationType: string): keyof typeof SAPM_MOUNT {
+  return installationType === 'roof' || installationType === 'carport' ? 'roof' : 'ground';
+}
+
+export function sapmCellTemperatureC(
+  airC: number,
+  poaWm2: number,
+  installationType: string,
+  windMs = DEFAULT_WIND_MS,
+): number {
+  const { a, b, deltaT } = SAPM_MOUNT[sapmMount(installationType)];
+  const moduleC = poaWm2 * Math.exp(a + b * windMs) + airC;
+  return moduleC + (poaWm2 / 1000) * deltaT;
+}
+
+/** 近似昼长（小时），用于把日辐照换成能量加权辐照，不是观测日照时数。 */
+export function daylightHours(lat: number, month: number): number {
+  const day = [15, 45, 74, 105, 135, 166, 196, 227, 258, 288, 319, 349][month - 1] ?? 172;
+  const decl = 23.45 * Math.sin((2 * Math.PI * (284 + day)) / 365) * Math.PI / 180;
+  const latR = lat * Math.PI / 180;
+  const cosH = -Math.tan(latR) * Math.tan(decl);
+  const hourAngle = Math.acos(Math.min(1, Math.max(-1, cosH)));
+  return (2 * hourAngle * 180 / Math.PI) / 15;
+}
+
+/** 半正弦日曲线的能量加权平面辐照（W/m²）。 */
+export function energyWeightedIrradianceWm2(dailyKwhM2: number, hours: number): number {
+  if (!(dailyKwhM2 > 0) || !(hours > 0)) return 0;
+  return (dailyKwhM2 * 1000) * (Math.PI ** 2) / (8 * hours);
+}
+
+/** 高于和低于 25°C 都修正。gamma 为负值，例如 −0.0034。 */
+export function temperatureFactor(cellC: number, gamma = MODULE_GAMMA_PER_C): number {
+  return 1 + gamma * (cellC - 25);
+}
+
+export function monthTemperatureFactor(input: {
+  airC: number;
+  dailyPoaKwhM2: number;
+  lat: number;
+  month: number;
+  installationType: string;
+}): number {
+  const irradiance = energyWeightedIrradianceWm2(input.dailyPoaKwhM2, daylightHours(input.lat, input.month));
+  const cell = sapmCellTemperatureC(input.airC, irradiance, input.installationType);
+  return temperatureFactor(cell);
+}
+
+/** GB 50797-2012（2024 年版）6.6：Ep = H_A × P_AZ × K。H_A 为 kWh/m²，P_AZ 为 kW，K 无量纲。 */
+export function gb50797AnnualEnergyKWh(haKwhM2: number, pazKw: number, k: number): number {
+  return haKwhM2 * pazKw * k;
+}
+
+/** 与参考夹具同一套月尺度公式：月辐照 × 容量 × 损耗 × 逆变器 × 温度系数。 */
+export function referenceMonthlyEnergyKWh(
+  monthlyPoaKwhM2: number[],
+  monthlyCellC: number[],
+  capacityKw: number,
+  gamma: number,
+  losses: number,
+  inverter: number,
+): number {
+  let total = 0;
+  for (let i = 0; i < monthlyPoaKwhM2.length; i += 1) {
+    total += monthlyPoaKwhM2[i] * capacityKw * losses * inverter * (1 + gamma * (monthlyCellC[i] - 25));
+  }
+  return total;
+}
+
 /** 财务假设（结果里通过 assumptions 原样返回，报告文字从这里取，不再另写一套）。 */
 export const FINANCE_ASSUMPTIONS = {
   lifetimeYears: 25,
@@ -216,7 +300,8 @@ export function simulateSolar(solarResource: SolarResource, params: SolarModelPa
     installationFactor,
     // 用 ?? 而不是 ||：水平安装（倾角 0°）和正北（方位 0°）是合法输入，不能被当成缺省值
     params.tilt ?? solarResource.annual.optimalTilt,
-    params.azimuth ?? 180
+    params.azimuth ?? 180,
+    params.installationType,
   );
 
   // 2. 25 年发电量（含衰减）
@@ -349,7 +434,8 @@ function calculateMonthlyGeneration(
   capacity: number,
   installationFactor: InstallationFactor,
   tilt: number,
-  azimuth: number
+  azimuth: number,
+  installationType: string,
 ): { monthlyGeneration: number[]; planeIrradiation: number } {
   const monthlyGeneration: number[] = [];
   let planeIrradiation = 0; // 组件平面年累计辐照 (kWh/m²/年)
@@ -369,10 +455,6 @@ function calculateMonthlyGeneration(
   }
 
   solarResource.monthly.filter(m => m.month <= 12).forEach(monthData => {
-    // 温度修正：按组件工作温度（环境温度 + 平均温升）计，25°C 以上每度损失 0.4%
-    const cellTemperature = monthData.temperature + LOSS_ASSUMPTIONS.cellTempRise;
-    const tempFactor = 1 - Math.max(0, (cellTemperature - 25) * LOSS_ASSUMPTIONS.tempCoefficient);
-
     // 优先用数据所属年份的实际天数；未提供时按 2024 年（闰年）天数
     const daysInMonth = monthData.days ?? new Date(2024, monthData.month, 0).getDate();
 
@@ -380,9 +462,16 @@ function calculateMonthlyGeneration(
     // 此前为 GHI × 倾角/方位经验折减（0.2%/度、0.03%/度），最佳倾角时 POA ≡ GHI，中高纬度系统性低估约 4%–22%。
     const monthPlane = poaDaily({ lat, month: monthData.month, ghi: monthData.ghi, dhi: monthData.dhi, tilt, azimuth }) * daysInMonth;
     planeIrradiation += monthPlane;
+    const appliedTemp = monthTemperatureFactor({
+      airC: monthData.temperature,
+      dailyPoaKwhM2: daysInMonth > 0 ? monthPlane / daysInMonth : 0,
+      lat,
+      month: monthData.month,
+      installationType,
+    });
 
     // 月发电量(kWh) = 容量(kW) × 组件平面月辐照(kWh/m²) ÷ 1 kW/m² × 系统效率 × 温度修正
-    const generation = annualEnergyKWh(capacity, monthPlane, systemEfficiency * tempFactor);
+    const generation = annualEnergyKWh(capacity, monthPlane, systemEfficiency * appliedTemp);
 
     monthlyGeneration.push(Math.round(generation));
   });

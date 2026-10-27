@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { MapApprovalNotice } from './MapApprovalNotice';
 
 const TILE = 256;
 
@@ -74,6 +75,7 @@ export default function DomesticTileMap({
                 <button type="button" className="rounded bg-white px-2 py-1 text-sm shadow" onClick={() => setCenter({ lat: 35, lng: 105 })}>回到全国</button>
             </div>
             <p className="absolute bottom-3 left-3 rounded bg-white/90 px-3 py-1 text-xs text-slate-600">点击地图选择位置。瓦片密钥留在服务端。</p>
+            <MapApprovalNotice />
         </div>
     );
 }

@@ -77,7 +77,7 @@ export default function AIProjectAnalysis({ type, data }: AIAnalysisProps) {
                             {analysis}
                         </div>
                         <div className="mt-4 flex items-center justify-between">
-                            <div className="text-[10px] text-slate-600 font-black uppercase tracking-tighter">Powered by DeepSeek V3</div>
+                            <div className="text-[10px] text-slate-600 font-black uppercase tracking-tighter">由 DeepSeek 生成</div>
                             <AigcLabel compact tone="dark" />
                         </div>
                     </motion.div>

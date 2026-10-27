@@ -107,6 +107,7 @@ export default function OnboardingPage() {
     const [currentStep, setCurrentStep] = useState(0);
     const [selections, setSelections] = useState<Record<string, string>>({});
     const [isCompleting, setIsCompleting] = useState(false);
+    const [ageConfirmed, setAgeConfirmed] = useState(false);
 
     const step = ONBOARDING_STEPS[currentStep];
     const isLastStep = currentStep === ONBOARDING_STEPS.length - 1;
@@ -127,7 +128,11 @@ export default function OnboardingPage() {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        preferences: selections,
+                        preferences: {
+                            ...selections,
+                            ageConfirmed,
+                            ...(selections.role === 'researcher' ? { marketingPush: false } : {}),
+                        },
                         completedAt: new Date().toISOString()
                     })
                 });
@@ -150,7 +155,7 @@ export default function OnboardingPage() {
     };
 
     // 省份可以跳过（之后在设置里填），其余选项步骤需要先选
-    const canProceed = step.options && step.id !== 'province' ? !!selections[step.id] : true;
+    const canProceed = ageConfirmed && (step.options && step.id !== 'province' ? !!selections[step.id] : true);
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
@@ -260,6 +265,11 @@ export default function OnboardingPage() {
                         </div>
                     )}
 
+                    <label className="mb-4 flex items-start gap-2 text-sm text-slate-300">
+                        <input type="checkbox" checked={ageConfirmed} onChange={(event) => setAgeConfirmed(event.target.checked)} />
+                        <span>我已年满 14 周岁，或已取得监护人同意。未满 14 周岁不应单独注册。本条待法律顾问确认。</span>
+                    </label>
+                    {selections.role === 'researcher' && <p className="mb-4 text-sm text-slate-300">学生角色不接收营销推送。</p>}
                     {/* Buttons */}
                     <div className="flex gap-4">
                         {currentStep > 0 && currentStep < ONBOARDING_STEPS.length - 1 && (

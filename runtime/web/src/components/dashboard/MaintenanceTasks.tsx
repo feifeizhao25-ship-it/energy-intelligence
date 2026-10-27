@@ -168,7 +168,7 @@ export default function MaintenanceTasks({ weekOf, tasks }: MaintenanceTasksProp
                                             </div>
                                         </div>
                                         <div className="p-3 bg-gradient-to-br from-green-400 to-emerald-500 rounded-lg">
-                                            <div className="text-xs text-green-100 mb-1">ROI</div>
+                                            <div className="text-xs text-green-100 mb-1">投入产出比（ROI）</div>
                                             <div className="text-lg font-bold text-white">
                                                 {task.roi}
                                             </div>

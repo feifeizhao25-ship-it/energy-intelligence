@@ -18,7 +18,7 @@ import { proportionalRange, uncertaintySection } from '@/lib/calculator/ranges';
 import { priceAsOfText } from '@/lib/pricing/tariffs';
 
 export const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-export const AI_LABEL_TEXT = '【AI 辅助生成】本节文字由人工智能生成，可能存在错误，请核实后使用。';
+export const AI_LABEL_TEXT = '【AI 辅助生成】本节文字含人工智能生成合成，可能存在错误，请核实后使用。';
 
 const FONT = '微软雅黑';
 const money = (v: number | null | undefined) => (typeof v === 'number' && Number.isFinite(v) ? Math.round(v).toLocaleString('zh-CN') : '—');
@@ -146,6 +146,12 @@ export function buildCalculationDocx(data: any, type: string, options: DocxRepor
             { name: 'AIGC', value: hasAi ? '含AI辅助生成内容' : '未含AI生成内容' },
             { name: 'ServiceProvider', value: '新能源智库' },
             { name: 'ContentID', value: reportId },
+            { name: 'Label', value: hasAi ? '1' : '0' },
+            { name: 'ContentProducer', value: '新能源智库' },
+            { name: 'ProduceID', value: reportId },
+            { name: 'ContentPropagator', value: '新能源智库' },
+            { name: 'PropagateID', value: reportId },
+            { name: 'ReservedCode', value: '1' },
         ],
         styles: { default: { document: { run: { font: FONT } } } },
         sections: [{
