@@ -3,9 +3,11 @@
 import React, { useState } from 'react';
 import { Plus, Trash2, Zap, Wind, Thermometer, BarChart2, Layers } from 'lucide-react';
 import { safeErrorMessage } from '@/lib/api/safe-error';
-import { getSolarResource, getWindResource, getClimateData } from '@/lib/api/nasa-power';
+import { getSolarResource, getWindResource } from '@/lib/api/nasa-power';
+import { domesticClimate } from '@/lib/api/domestic-station';
 import { calculateSolarScore, calculateWindScore } from '@/lib/resource/analysis';
 import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+import VectorLayerPanel from './VectorLayerPanel';
 
 interface LocationData {
     id: string;
@@ -68,11 +70,11 @@ export default function ComparePage() {
         }
         const { lat, lng, name } = resolved;
         try {
-            const [solar, wind, climate] = await Promise.all([
+            const [solar, wind] = await Promise.all([
                 getSolarResource(lat, lng),
                 getWindResource(lat, lng),
-                getClimateData(lat, lng)
             ]);
+            const climate = domesticClimate(lat, lng);
 
             const solarScore = calculateSolarScore(solar, climate);
             const windScore = calculateWindScore(wind, climate, 0); // Elevation 0 for now
@@ -224,9 +226,12 @@ export default function ComparePage() {
                     </div>
                 </div>
             ) : (
+                <div className="space-y-4">
+                <VectorLayerPanel />
                 <div className="flex flex-col items-center justify-center size-full h-96 text-gray-500 border-2 border-dashed border-gray-700 rounded-xl">
                     <Layers className="w-16 h-16 mb-4 opacity-20" />
                     <p>添加地点开始对比分析</p>
+                </div>
                 </div>
             )}
         </div>

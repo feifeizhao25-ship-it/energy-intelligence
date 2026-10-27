@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 
 jest.mock('next-auth', () => ({ getServerSession: jest.fn(async () => ({ user: { id: 'u1' } })) }));
 jest.mock('@/lib/auth/auth-options', () => ({ authOptions: {} }));
+jest.mock('@/lib/payments/wechat', () => ({ placeWechatOrder: jest.fn() }));
 jest.mock('@/lib/payments/alipay', () => ({
   canonicalPrice: jest.fn(() => 198),
   createAlipayPagePayUrl: jest.fn(),

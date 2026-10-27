@@ -1,15 +1,19 @@
 """Operations API — asset health diagnostics, alerts, cleaning schedule."""
 import math
+import uuid
+from datetime import datetime, timezone
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from pydantic import BaseModel, Field
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user_id
 from app.models.database import Project
+from app.models.operation_telemetry import OperationAlarmEvent, OperationAlarmRule, OperationSample
+from app.services.operation_ingest import parse_csv, parse_points, rule_matches
 from app.utils.financial_utils import calc_optimal_cleaning_interval
 
 router = APIRouter(prefix="/operations")
@@ -91,7 +95,17 @@ async def get_project_health(
     project = result.scalar_one_or_none()
     if not project:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="项目不存在")
-    _operations_source_unavailable()
+    rows = await _project_samples(db, project_id)
+    if not rows:
+        _operations_source_unavailable()
+    latest = rows[-1]
+    return {
+        "project_id": project_id,
+        "health_score": None,
+        "sample_count": len(rows),
+        "latest_power_kw": latest.power_kw,
+        "note": "已入库遥测。没有单独定义的健康分公式，因此不返回分数。",
+    }
 
 
 # ── GET /operations/alerts ─────────────────────────────────────────────────────
@@ -103,7 +117,31 @@ async def list_alerts(
     db: AsyncSession = Depends(get_db),
 ):
     """Return operational alerts for the current user."""
-    _operations_source_unavailable()
+    project_ids = (await db.execute(select(Project.id).where(Project.user_id == user_id))).scalars().all()
+    if not project_ids:
+        _operations_source_unavailable()
+    sample_count = (await db.execute(
+        select(func.count()).select_from(OperationSample).where(OperationSample.project_id.in_(project_ids))
+    )).scalar_one()
+    if not sample_count:
+        _operations_source_unavailable()
+    events = (await db.execute(
+        select(OperationAlarmEvent).where(OperationAlarmEvent.project_id.in_(project_ids))
+    )).scalars().all()
+    if unread_only:
+        events = [event for event in events if event.acknowledged_at is None]
+    if severity:
+        events = [event for event in events if event.severity == severity]
+    return {
+        "alerts": [{
+            "id": event.id,
+            "project_id": event.project_id,
+            "severity": event.severity,
+            "message": event.message,
+            "acknowledged_at": event.acknowledged_at.isoformat() if event.acknowledged_at else None,
+        } for event in events],
+        "note": "告警只来自已入库遥测越过阈值的记录。",
+    }
 
 
 # ── PATCH /operations/alerts/{alert_id}/read ───────────────────────────────────
@@ -111,9 +149,18 @@ async def list_alerts(
 async def mark_alert_read(
     alert_id: str,
     user_id: str = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
 ):
-    """Mark a specific alert as read."""
-    _operations_source_unavailable()
+    """Mark a stored threshold alert as read. Missing telemetry stays unavailable."""
+    event = (await db.execute(select(OperationAlarmEvent).where(OperationAlarmEvent.id == alert_id))).scalar_one_or_none()
+    if not event:
+        _operations_source_unavailable()
+    project = (await db.execute(select(Project).where(Project.id == event.project_id, Project.user_id == user_id))).scalar_one_or_none()
+    if not project:
+        raise HTTPException(status_code=404, detail="告警不存在")
+    event.acknowledged_at = datetime.now(timezone.utc)
+    await db.commit()
+    return {"id": event.id, "acknowledged_at": event.acknowledged_at.isoformat()}
 
 
 # ── GET /operations/cleaning/{project_id} ─────────────────────────────────────
@@ -183,5 +230,87 @@ async def get_performance(
     project = result.scalar_one_or_none()
     if not project:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="项目不存在")
+    rows = await _project_samples(db, project_id)
+    if not rows:
+        _operations_source_unavailable()
+    powers = [row.power_kw for row in rows if row.power_kw is not None]
+    energy = sum(row.energy_kwh or 0 for row in rows)
+    return {
+        "project_id": project_id,
+        "sample_count": len(rows),
+        "energy_kwh": round(energy, 3),
+        "max_power_kw": max(powers) if powers else None,
+        "note": "只汇总已入库遥测，不外推发电量。",
+    }
 
-    _operations_source_unavailable()
+
+async def _project_samples(db: AsyncSession, project_id: str) -> list[OperationSample]:
+    result = await db.execute(
+        select(OperationSample).where(OperationSample.project_id == project_id).order_by(OperationSample.recorded_at)
+    )
+    return list(result.scalars().all())
+
+
+class AlarmRuleBody(BaseModel):
+    metric: str
+    operator: str
+    threshold: float = 0
+    severity: str = "warning"
+
+
+@router.post("/telemetry/{project_id}")
+async def ingest_telemetry(
+    project_id: str,
+    request: Request,
+    user_id: str = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+):
+    project = (await db.execute(select(Project).where(Project.id == project_id, Project.user_id == user_id))).scalar_one_or_none()
+    if not project:
+        raise HTTPException(status_code=404, detail="项目不存在")
+    content_type = request.headers.get("content-type", "")
+    try:
+        if "text/csv" in content_type:
+            points = parse_csv((await request.body()).decode())
+        else:
+            points = parse_points(await request.json())
+    except (ValueError, UnicodeDecodeError) as exc:
+        raise HTTPException(status_code=400, detail="遥测格式不正确") from exc
+    rules = (await db.execute(select(OperationAlarmRule).where(OperationAlarmRule.project_id == project_id, OperationAlarmRule.enabled == "true"))).scalars().all()
+    created = 0
+    for point in points:
+        db.add(OperationSample(id=str(uuid.uuid4()), project_id=project_id, **point))
+        created += 1
+        for rule in rules:
+            if rule_matches({"metric": rule.metric, "operator": rule.operator, "threshold": rule.threshold}, point):
+                db.add(OperationAlarmEvent(
+                    id=str(uuid.uuid4()),
+                    project_id=project_id,
+                    rule_id=rule.id,
+                    point_id=point["point_id"],
+                    severity=rule.severity if rule.severity in {"info", "warning", "critical"} else "warning",
+                    message=f"点 {point['point_id']} 越过已保存的阈值",
+                ))
+    await db.commit()
+    return {"accepted": created, "note": "只保存本次提交的点。"}
+
+
+@router.post("/alarms/rules/{project_id}")
+async def create_alarm_rule(
+    project_id: str,
+    body: AlarmRuleBody,
+    user_id: str = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+):
+    project = (await db.execute(select(Project).where(Project.id == project_id, Project.user_id == user_id))).scalar_one_or_none()
+    if not project:
+        raise HTTPException(status_code=404, detail="项目不存在")
+    if body.metric not in {"power_kw", "irradiance", "alarm_code"} or body.operator not in {"gt", "lt", "present"}:
+        raise HTTPException(status_code=400, detail="阈值指标或比较方式无效")
+    rule = OperationAlarmRule(
+        id=str(uuid.uuid4()), project_id=project_id, metric=body.metric, operator=body.operator,
+        threshold=body.threshold, severity=body.severity if body.severity in {"info", "warning", "critical"} else "warning",
+    )
+    db.add(rule)
+    await db.commit()
+    return {"id": rule.id}

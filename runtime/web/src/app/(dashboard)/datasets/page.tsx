@@ -35,13 +35,13 @@ export default function DatasetsPage() {
         <ul className="space-y-3">
             {items.map((item) => <li key={item.id} className="rounded-xl border p-4">
                 <h2 className="font-medium">{item.title}</h2>
-                <p className="text-sm text-slate-500">{item.updated} · {item.rows.length} 行</p>
+                <p className="text-sm text-slate-500">{item.rows.length ? `${item.updated || ''} · ${item.rows.length} 行` : '尚未载入已核验记录'}</p>
                 <div className="mt-3 overflow-x-auto">
                     <table className="w-full text-left text-sm">
                         <thead><tr>{item.columns.map((column) => <th key={column} className="border-b px-2 py-1 font-medium">{column}</th>)}</tr></thead>
                         <tbody>
                             {item.rows.map((row, index) => <tr key={index}>
-                                {row.map((cell, cellIndex) => <td key={cellIndex} className="border-b px-2 py-1">{cell || '样本（未载入已核验电价）'}</td>)}
+                                {row.map((cell, cellIndex) => <td key={cellIndex} className="border-b px-2 py-1">{cell}</td>)}
                             </tr>)}
                         </tbody>
                     </table>

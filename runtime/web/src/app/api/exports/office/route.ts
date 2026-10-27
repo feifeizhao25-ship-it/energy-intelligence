@@ -26,8 +26,9 @@ export async function POST(req: Request) {
     }
     const rows = Array.isArray(body.rows) ? body.rows.filter((row: unknown) => Array.isArray(row)).map((row: unknown[]) => row.map((cell) => String(cell ?? ''))) : [];
     const title = typeof body.title === 'string' && body.title.trim() ? body.title.trim() : '新能源智库';
-    const table = [['新能源智库', title], ...rows];
-    const file = format === 'xlsx' ? workbookBuffer(table) : slidesBuffer('新能源智库', [title, ...rows.map((row: string[]) => row.join(' '))]);
+    const disclaimer = '本文件只汇总调用方提供的数字和假设清单，不承诺回报。';
+    const table = [['新能源智库', title], ['说明', disclaimer], ...rows];
+    const file = format === 'xlsx' ? workbookBuffer(table) : slidesBuffer('新能源智库', [title, disclaimer, ...rows.map((row: string[]) => row.join(' '))]);
     const filename = format === 'xlsx' ? 'nengjian.xlsx' : 'nengjian.pptx';
     const type = format === 'xlsx'
         ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'

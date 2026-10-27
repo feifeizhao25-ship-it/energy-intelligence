@@ -70,6 +70,33 @@ export function resolveDomesticStation(lat: number, lng: number): ResolvedStatio
 }
 
 /** NASA 月度 JSON 形状，坐标用请求值，避免 0.001 度核验把邻近城市判成另一地点。 */
+/** 对比页和报告页用的气候量。降水、湿度没有进入省级样本时保持空，不写成 0。 */
+export function domesticClimate(lat: number, lng: number) {
+    const station = resolveDomesticStation(lat, lng);
+    if (!station) throw new Error('DOMESTIC_RESOURCE_NOT_LOADED');
+    const monthly = station.monthly_temp.map((temperature, index) => ({
+        month: index + 1,
+        temperature,
+        humidity: null,
+        precipitation: null,
+        pressure: null,
+        windSpeed: station.monthly_wind_100m[index] ?? null,
+    }));
+    const temperature = monthly.reduce((sum, month) => sum + month.temperature, 0) / 12;
+    return {
+        monthly,
+        annual: {
+            temperature,
+            precipitation: null as number | null,
+            humidity: null as number | null,
+            description: temperature > 25 ? '炎热' : temperature < 0 ? '寒冷' : '温和',
+        },
+        provenance: station.provenance,
+        licenseNote: station.license_note,
+        station: { province: station.province, city: station.city, interpolated: Boolean(station.interpolated) },
+    };
+}
+
 export function domesticNasaMonthly(lat: number, lng: number, year: number): string | null {
     const station = resolveDomesticStation(lat, lng);
     if (!station || station.monthly_daily_ghi.length !== 12 || station.monthly_temp.length !== 12) return null;

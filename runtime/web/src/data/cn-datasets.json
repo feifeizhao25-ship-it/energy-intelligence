@@ -1,68 +1,24 @@
 {
-  "license_note": "价格行为结构样本，不是已核验的代理购电价格，不能当作结算依据。政策元数据只列公开文号与标题，金额以原文为准。",
+  "license_note": "电价只在载入带来源链接和 asOf 的记录后展示。政策元数据只列公开文号与标题，金额以原文为准。",
   "datasets": [
     {
-      "id": "proxy-purchase-sample",
-      "title": "省级代理购电价格结构样本",
-      "kind": "price_sample",
-      "updated": "2026-10-15",
-      "columns": [
-        "province",
-        "month",
-        "price_yuan_per_kwh",
-        "license_note"
-      ],
-      "rows": [
-        [
-          "上海",
-          "2026-09",
-          "样本（未载入已核验电价）",
-          "结构样本，空值表示尚未载入已核验电价"
-        ],
-        [
-          "江苏",
-          "2026-09",
-          "样本（未载入已核验电价）",
-          "结构样本，空值表示尚未载入已核验电价"
-        ],
-        [
-          "浙江",
-          "2026-09",
-          "样本（未载入已核验电价）",
-          "结构样本，空值表示尚未载入已核验电价"
-        ],
-        [
-          "广东",
-          "2026-09",
-          "样本（未载入已核验电价）",
-          "结构样本，空值表示尚未载入已核验电价"
-        ],
-        [
-          "山东",
-          "2026-09",
-          "样本（未载入已核验电价）",
-          "结构样本，空值表示尚未载入已核验电价"
-        ]
-      ]
+      "id": "proxy-purchase",
+      "title": "省级代理购电价格",
+      "kind": "verified_tariff",
+      "loaded": false,
+      "updated": null,
+      "columns": ["province", "month", "price_yuan_per_kwh", "source_url", "as_of"],
+      "rows": []
     },
     {
       "id": "policy-metadata",
       "title": "政策元数据",
       "kind": "policy_metadata",
+      "loaded": true,
       "updated": "2026-10-15",
-      "columns": [
-        "doc_number",
-        "title",
-        "region",
-        "note"
-      ],
+      "columns": ["doc_number", "title", "region", "note"],
       "rows": [
-        [
-          "发改价格〔2025〕136号",
-          "新能源上网电价市场化改革",
-          "全国",
-          "元数据，正文与生效日期以发布机关原文为准"
-        ]
+        ["发改价格〔2025〕136号", "新能源上网电价市场化改革", "全国", "元数据，正文与生效日期以发布机关原文为准"]
       ]
     }
   ]

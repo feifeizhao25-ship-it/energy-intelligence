@@ -13,6 +13,7 @@ type PurchasablePlan = (typeof purchasable)[number];
 export default function CheckoutClient({ planParam, billingParam }: { planParam?: string; billingParam?: string }) {
   const [paying, setPaying] = useState(false);
   const [paymentError, setPaymentError] = useState('');
+  const [wechatCode, setWechatCode] = useState('');
   const requested = planParam?.toUpperCase() as Plan | undefined;
   const plan: PurchasablePlan = requested && (purchasable as readonly Plan[]).includes(requested)
     ? requested as PurchasablePlan
@@ -23,16 +24,25 @@ export default function CheckoutClient({ planParam, billingParam }: { planParam?
   const amount = details.yearlyPrice;
   const planName = details.name;
 
-  async function startAlipay() {
+  async function startPay(method: 'alipay' | 'wechat') {
     setPaying(true);
     setPaymentError('');
+    setWechatCode('');
     try {
       const response = await fetch('/api/membership/upgrade', {
         method: 'POST', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ plan, billingPeriod: billing }),
+        body: JSON.stringify({ plan, billingPeriod: billing, method }),
       });
       const result = await response.json();
-      if (!response.ok || !result.paymentUrl) throw new Error(result.message || '支付订单创建失败');
+      if (!response.ok) throw new Error(result.message || '支付订单创建失败');
+      if (method === 'wechat') {
+        const code = result.wechat?.code_url;
+        if (!code) throw new Error(result.message || '微信支付订单创建失败');
+        setWechatCode(code);
+        setPaying(false);
+        return;
+      }
+      if (!result.paymentUrl) throw new Error(result.message || '支付订单创建失败');
       window.location.assign(result.paymentUrl);
     } catch (error) {
       setPaymentError(safeErrorMessage(error, '支付订单创建失败，请稍后重试'));
@@ -54,7 +64,7 @@ export default function CheckoutClient({ planParam, billingParam }: { planParam?
           '最终会员等级和额度由服务端记录。',
         ].map(item => <div key={item} className="flex gap-2"><Check className="h-4 w-4 shrink-0 text-emerald-600" />{item}</div>)}</div>
       </section>
-      <aside className="h-fit rounded-3xl bg-slate-900 p-7 text-white"><ShieldCheck className="h-9 w-9 text-emerald-400" /><h2 className="mt-5 text-2xl font-black">支付宝安全支付</h2><p className="mt-3 text-sm leading-6 text-slate-300">{`本次应付 ¥${amount}，支付结果以支付宝服务端通知为准，不接受前端自报成功。`}</p>{<button type="button" onClick={startAlipay} disabled={paying} className="mt-7 w-full rounded-xl bg-emerald-400 px-4 py-3 text-center font-bold text-slate-950 hover:bg-emerald-300 disabled:cursor-wait disabled:opacity-60">{paying ? '正在创建安全订单…' : `支付宝支付 ¥${amount}`}</button>}{paymentError && <p role="alert" className="mt-3 text-sm text-rose-300">{paymentError}</p>}<Link href="/terms" className="mt-4 block text-center text-sm text-slate-400 hover:text-white">查看服务条款</Link></aside>
+      <aside className="h-fit rounded-3xl bg-slate-900 p-7 text-white"><ShieldCheck className="h-9 w-9 text-emerald-400" /><h2 className="mt-5 text-2xl font-black">支付宝安全支付</h2><p className="mt-3 text-sm leading-6 text-slate-300">{`本次应付 ¥${amount}，支付结果以支付宝服务端通知为准，不接受前端自报成功。`}</p>{<button type="button" onClick={() => startPay('alipay')} disabled={paying} className="mt-7 w-full rounded-xl bg-emerald-400 px-4 py-3 text-center font-bold text-slate-950 hover:bg-emerald-300 disabled:cursor-wait disabled:opacity-60">{paying ? '正在创建安全订单…' : `支付宝支付 ¥${amount}`}</button>}{<button type="button" onClick={() => startPay('wechat')} disabled={paying} className="mt-3 w-full rounded-xl border border-emerald-400 px-4 py-3 text-center font-bold text-emerald-300 hover:bg-emerald-400/10 disabled:cursor-wait disabled:opacity-60">微信扫码支付</button>}{wechatCode && <div className="mt-3 space-y-2 text-xs leading-5 text-slate-300"><p>请用微信扫描通道返回的收款链接。到账以服务端通知为准。</p><p className="break-all">{wechatCode}</p></div>}{paymentError && <p role="alert" className="mt-3 text-sm text-rose-300">{paymentError}</p>}<Link href="/terms" className="mt-4 block text-center text-sm text-slate-400 hover:text-white">查看服务条款</Link></aside>
     </main>
   </div>;
 }

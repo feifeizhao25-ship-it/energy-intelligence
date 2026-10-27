@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import resources from '@/data/domestic-resources.json';
+import { readVerifiedTariffs } from '@/lib/data/verified-tariffs';
 
 export async function GET() {
     const now = new Date();
@@ -15,11 +16,11 @@ export async function GET() {
         },
         {
             title: '已核验电价',
-            value: '0',
+            value: readVerifiedTariffs().loaded ? String(readVerifiedTariffs().rows.length) : '—',
             unit: '条',
-            note: '数据集价格列标为样本（未载入已核验电价）。没有带来源的官方电价时不填数字。',
-            source: 'cn-datasets.json',
-            loaded: true,
+            note: readVerifiedTariffs().loaded ? '条数只统计带来源链接和 asOf 的记录，这里不展示电价本身。' : '尚未载入已核验电价，因此不显示金额。',
+            source: readVerifiedTariffs().loaded ? readVerifiedTariffs().rows[0].sourceUrl : '已核验电价表',
+            loaded: readVerifiedTariffs().loaded,
         },
     ];
     try {

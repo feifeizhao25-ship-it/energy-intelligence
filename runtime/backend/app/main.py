@@ -150,6 +150,7 @@ from app.api.v1 import research as v1_research  # noqa: E402
 from app.api.v1 import resource as v1_resource  # noqa: E402
 from app.api.v1 import users as v1_users  # noqa: E402
 from app.api.v1 import privacy as v1_privacy  # noqa: E402
+from app.api.v1 import status as v1_status  # noqa: E402
 from app.routers import misc, personalization, projects  # noqa: E402
 from app.routers import entitlements as entitlements_router  # noqa: E402
 from app.routers import skills_executor  # noqa: E402
@@ -162,6 +163,7 @@ app.include_router(v1_ai.router, prefix="/api/v1", tags=["ai"])
 app.include_router(domestic_product_router, prefix="/api/v1", tags=["domestic"])
 app.include_router(wecom_callback_router, prefix="/api/v1", tags=["wecom"])
 app.include_router(v1_privacy.router, prefix="/api/v1", tags=["privacy"])
+app.include_router(v1_status.router, prefix="/api/v1", tags=["status"])
 app.include_router(v1_billing.router, prefix="/api/v1", tags=["billing"])
 app.include_router(v1_finance.router, prefix="/api/v1", tags=["finance"])
 app.include_router(v1_operations.router, prefix="/api/v1", tags=["operations"])

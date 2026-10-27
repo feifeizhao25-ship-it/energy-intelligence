@@ -3,6 +3,7 @@ import { searchPapers as searchSemantic } from '../api/semantic-scholar';
 import { searchArxiv } from '../api/arxiv';
 import { searchOpenAlex } from '../api/openalex'; // Add Import
 import { simpleChat } from '../ai/unified';
+import { domesticSearchResult, isCnEdition, overseasLiveEnabled, readLiteratureCache, type CorpusRecord } from './domestic-corpus';
 
 /**
  * 统一搜索入口：AI优化查询 + 多源搜索 + 结果合并
@@ -14,6 +15,11 @@ export async function unifiedSearch(
     originalQuery: string,
     options: SearchOptions = {}
 ): Promise<SearchResult> {
+
+    if (isCnEdition() && !overseasLiveEnabled()) {
+        const records = [...readLiteratureCache(), ...(await userCorpus(options.userId, originalQuery))];
+        return domesticSearchResult(records, originalQuery, options);
+    }
 
     // 1. AI 查询优化与翻译
     let queries = [originalQuery];
@@ -103,6 +109,50 @@ export async function unifiedSearch(
         papers: filtered.slice(options.offset ?? 0, (options.offset ?? 0) + limit),
         providers,
     };
+}
+
+async function userCorpus(userId: string | undefined, query: string): Promise<CorpusRecord[]> {
+    if (!userId) return [];
+    try {
+        const { prisma } = await import('@/lib/prisma');
+        const needle = query.trim().slice(0, 80);
+        const [uploaded, stored] = await Promise.all([
+            prisma.documentChunk.findMany({
+                where: { userId, ...(needle ? { content: { contains: needle } } : {}) },
+                take: 20,
+                select: { documentId: true, content: true, metadata: true },
+            }),
+            prisma.literatureRecord.findMany({ where: { userId }, take: 100 }),
+        ]);
+        const fromChunks: CorpusRecord[] = uploaded.map((chunk) => {
+            const meta = (chunk.metadata || {}) as { title?: string; sourceUrl?: string; licence?: string };
+            return {
+                source: 'user-upload',
+                externalId: chunk.documentId,
+                title: meta.title || '用户上传文献',
+                abstract: chunk.content.slice(0, 500),
+                pdfUrl: meta.sourceUrl || null,
+                licence: meta.licence || '用户上传',
+                licenceNote: '片段来自当前用户上传并建立索引的文件。',
+            };
+        });
+        const fromRows: CorpusRecord[] = stored.map((row) => ({
+            source: row.source,
+            externalId: row.externalId,
+            title: row.title,
+            authors: row.authors,
+            year: row.year,
+            doi: row.doi,
+            abstract: row.abstract,
+            pdfUrl: row.pdfUrl,
+            licence: row.licence,
+            licenceNote: row.licenceNote,
+            citations: Array.isArray(row.citations) ? row.citations as CorpusRecord['citations'] : [],
+        }));
+        return [...fromChunks, ...fromRows];
+    } catch {
+        return [];
+    }
 }
 
 // 辅助函数：标准化标题

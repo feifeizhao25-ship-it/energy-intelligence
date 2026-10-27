@@ -257,6 +257,8 @@ export interface Paper {
   doi?: string;
   sourceProvider?: string;
   sourceUrl?: string;
+  licence?: string;
+  licenceNote?: string;
   retrievedAt?: string;
   evidenceStatus?: 'provider_verified';
 }
@@ -267,6 +269,7 @@ export interface SearchOptions {
   openAccess?: boolean;
   limit?: number;
   offset?: number;
+  userId?: string;
 }
 
 export interface SearchResult {
@@ -274,7 +277,7 @@ export interface SearchResult {
   totalScope?: 'retrieved_window';
   papers: Paper[];
   providers?: Array<{
-    name: 'Semantic Scholar' | 'OpenAlex' | 'arXiv';
+    name: 'Semantic Scholar' | 'OpenAlex' | 'arXiv' | '国内学术语料' | '用户上传';
     status: 'available' | 'unavailable';
   }>;
 }

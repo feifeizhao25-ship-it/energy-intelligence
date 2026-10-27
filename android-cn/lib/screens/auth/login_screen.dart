@@ -18,6 +18,7 @@ class _LoginScreenState extends State<LoginScreen>
   final _codeController = TextEditingController();
   bool _showPassword = false;
   bool _isLoading = false;
+  bool _consent = false;
   int _countdownSeconds = 0;
 
   @override
@@ -56,16 +57,41 @@ class _LoginScreenState extends State<LoginScreen>
     }
   }
 
-  void _startCountdown() {
-    setState(() => _countdownSeconds = 60);
-    Future.doWhile(() async {
-      await Future.delayed(Duration(seconds: 1));
-      if (_countdownSeconds > 0) {
+  Future<void> _sendSms() async {
+    if (!_consent) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('请先同意接收验证码')));
+      return;
+    }
+    try {
+      await ApiService.sendSms(phone: _phoneController.text, consent: true);
+      setState(() => _countdownSeconds = 60);
+      Future.doWhile(() async {
+        await Future.delayed(Duration(seconds: 1));
+        if (!mounted || _countdownSeconds <= 0) return false;
         setState(() => _countdownSeconds--);
-        return true;
-      }
-      return false;
-    });
+        return _countdownSeconds > 0;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('验证码发送失败：${e.toString()}')));
+    }
+  }
+
+  Future<void> _handlePhoneLogin() async {
+    if (!_consent) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('请先同意接收验证码')));
+      return;
+    }
+    setState(() => _isLoading = true);
+    try {
+      await ApiService.loginWithSms(phone: _phoneController.text, code: _codeController.text, consent: true);
+      if (mounted) Navigator.of(context).pushReplacementNamed('/dashboard');
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('登录失败：${e.toString()}')));
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -133,7 +159,7 @@ class _LoginScreenState extends State<LoginScreen>
                           ),
                           SizedBox(height: 24),
                           SizedBox(
-                            height: 280,
+                            height: 340,
                             child: TabBarView(
                               controller: _tabController,
                               children: [_buildEmailTab(), _buildPhoneTab()],
@@ -258,7 +284,7 @@ class _LoginScreenState extends State<LoginScreen>
             ),
             SizedBox(width: 12),
             OutlinedButton(
-              onPressed: _countdownSeconds == 0 ? _startCountdown : null,
+              onPressed: _countdownSeconds == 0 ? _sendSms : null,
               child: Text(
                 _countdownSeconds > 0 ? '${_countdownSeconds}s' : '获取验证码',
                 style: TextStyle(fontSize: 12),
@@ -266,10 +292,15 @@ class _LoginScreenState extends State<LoginScreen>
             ),
           ],
         ),
-        SizedBox(height: 20),
+        SizedBox(height: 12),
+        Row(children: [
+          Checkbox(value: _consent, onChanged: (value) => setState(() => _consent = value ?? false)),
+          Expanded(child: Text('同意接收验证码并用于登录', style: TextStyle(fontSize: 12))),
+        ]),
+        SizedBox(height: 8),
         SizedBox(
           width: double.infinity,
-          child: ElevatedButton(onPressed: _handleLogin, child: Text('登录')),
+          child: ElevatedButton(onPressed: _isLoading ? null : _handlePhoneLogin, child: Text('登录')),
         ),
       ],
     );
