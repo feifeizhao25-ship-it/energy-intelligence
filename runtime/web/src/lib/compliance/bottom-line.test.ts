@@ -1,7 +1,7 @@
 // 底线禁词扫描：源码中的用户可见文案与接口输出不得包含投资建议/价格预测/冒充官方用语
 import fs from 'fs';
 import path from 'path';
-import { findBottomLineViolations, bottomLineTerms } from './bottom-line';
+import { findBottomLineViolations, bottomLineTerms, neutralizeCnText, BOTTOM_LINE_NOTICE_ZH } from './bottom-line';
 import { describeSolarOutput, parseV1SolarInput, auditUrlFor, V1InputError } from '@/lib/calculation/v1-solar';
 
 const SRC = path.resolve(__dirname, '../..');
@@ -68,5 +68,30 @@ describe('底线禁词扫描', () => {
         const route = fs.readFileSync(path.join(SRC, 'app/api/v1/calculate/solar/route.ts'), 'utf8');
         expect(route).not.toMatch(/solarwind\.pro|dummy_result/);
         expect(fs.readFileSync(path.join(SRC, 'lib/calculation/auditable-engine.ts'), 'utf8')).not.toMatch(/dummy_result|12\.5%/);
+    });
+});
+
+describe('国内运行时过滤', () => {
+    it('免责声明、引用和标准说明保留原文', () => {
+        const kept = [
+            '不构成价格预测',
+            '不提供投资建议、收益承诺或价格预测',
+            BOTTOM_LINE_NOTICE_ZH,
+            '国家发展改革委官方发布的文件是发改价格〔2025〕136号。',
+            '山东省代理购电价格以已公布的价格表为准。本段不构成价格预测。',
+            '该不该上网要看省级规则。',
+            '这批机组值得投入运行。',
+        ];
+        for (const text of kept) expect(neutralizeCnText(text)).toBe(text);
+    });
+
+    it('改写后的投资询问和官方背书仍整段替换', () => {
+        for (const text of ['这个光伏项目值得投吗', '该不该上', '这是官方发布的结论', '这个项目值得投资']) {
+            expect(neutralizeCnText(text)).toBe(BOTTOM_LINE_NOTICE_ZH);
+        }
+    });
+
+    it('源码扫描仍看到免责声明里的禁词', () => {
+        expect(findBottomLineViolations('不构成价格预测')).toEqual(['价格预测']);
     });
 });

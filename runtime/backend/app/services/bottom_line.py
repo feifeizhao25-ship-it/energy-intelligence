@@ -28,23 +28,27 @@ TERMS = _load_terms()
 NOTICE_ZH = "我只能提供事实、数据、政策原文和可验证的计算，不提供投资建议、收益承诺或价格预测，也不代表任何政府或官方机构。"
 NOTICE_EN = "I can provide facts, data, primary policy sources and verifiable calculations only, not investment advice, return guarantees or price predictions, and I do not speak for any government or official body."
 
-# 否定语境先抹掉，避免「不构成投资建议」这类免责声明被当成违规。
-_NEGATIONS = (
-    "不构成投资建议",
-    "不提供投资建议",
-    "并非投资建议",
-    "不是投资建议",
-    "不作为投资建议",
-    "不做投资建议",
-    "不给投资建议",
-    "不得用于投资决策",
-    "不用于投资决策",
-    "不是投资结论",
-    "不提供投资建议、收益承诺或价格预测",
-    "不是投资建议或价格预测",
-    "does not give investment advice",
-    "not investment advice",
-    "do not give investment advice",
+# 免责声明按最长跨度抹掉。「不提供投资建议」不能先于
+# 「不提供投资建议、收益承诺或价格预测」，否则「价格预测」会漏出来。
+_NEGATION_PATTERNS = (
+    re.compile(r"不提供投资建议、收益承诺或价格预测"),
+    re.compile(r"不构成投资建议、收益承诺或价格预测"),
+    re.compile(r"不提供投资建议或价格预测"),
+    re.compile(r"不构成投资建议或价格预测"),
+    re.compile(r"不是投资建议或价格预测"),
+    re.compile(r"(?:不构成|不提供|不做|不是|并非|不会|不进行)(?:任何)?价格预测"),
+    re.compile(r"(?:不构成|不提供|不做|不是|并非|不给|不作为)投资建议"),
+    re.compile(r"(?:不构成|不提供|不做|不是|并非)收益承诺"),
+    re.compile(r"并非投资建议"),
+    re.compile(r"不得用于投资决策"),
+    re.compile(r"不用于投资决策"),
+    re.compile(r"不是投资结论"),
+    re.compile(r"does not give investment advice", re.I),
+    re.compile(r"not investment advice", re.I),
+    re.compile(r"do not give investment advice", re.I),
+    re.compile(r"not a price forecast", re.I),
+    re.compile(r"will not rise", re.I),
+    re.compile(r"will not fall", re.I),
 )
 
 # 不调用模型的改写层。只在国内市场启用，避免改变国际版既有精确匹配行为。
@@ -64,8 +68,9 @@ _PATTERNS = (
     (re.compile(r"会涨|会跌"), "涨跌判断"),
     (re.compile(r"(承诺|保证).{0,8}(收益|回报|年化)"), "收益承诺"),
     (re.compile(r"稳赚|保本|必赚|无风险收益|年化保底"), "收益承诺"),
-    (re.compile(r"该不该投|能不能投|要不要投|值不值得投|可以投吗"), "投资询问"),
-    (re.compile(r"官方发布|国家认证|政府推荐|官方认证"), "冒充官方"),
+    (re.compile(r"该不该投|能不能投|要不要投|值不值得投|可以投吗|值得\s*投(?!资|入|放|标)|该不该上(?!报|网|课|班|学)"), "投资询问"),
+    # 「官方发布」只在把结论说成官方背书时命中。引用「官方发布的文件/通知」不算。
+    (re.compile(r"(?:这是|属于|视为).{0,8}官方发布的(?!文件|通知|原文|政策|办法|公告|网页|链接|文本)|官方发布的(?:结论|认证|推荐|保证|承诺|背书)|官方发布(?:并|且)(?:保证|承诺|推荐)|经官方发布|国家认证|政府推荐|官方认证"), "冒充官方"),
     (re.compile(r"recommend(?:ed)?\s+invest", re.I), "recommend investing"),
     (re.compile(r"price\s+will\s+(?:rise|fall)", re.I), "price forecast"),
     (re.compile(r"guaranteed\s+returns?", re.I), "guaranteed return"),
@@ -73,14 +78,37 @@ _PATTERNS = (
 
 
 def _mask(text: str) -> str:
-    masked = text or ""
-    for phrase in _NEGATIONS:
-        masked = masked.replace(phrase, " ")
-    return masked
+    """按最长、互不重叠的跨度抹掉免责声明。短句不能先吃掉长句的前缀。"""
+    if not text:
+        return ""
+    spans: list[tuple[int, int]] = []
+    for pattern in _NEGATION_PATTERNS:
+        spans.extend((match.start(), match.end()) for match in pattern.finditer(text))
+    for phrase in (NOTICE_ZH, NOTICE_EN):
+        start = 0
+        while True:
+            idx = text.find(phrase, start)
+            if idx < 0:
+                break
+            spans.append((idx, idx + len(phrase)))
+            start = idx + len(phrase)
+    if not spans:
+        return text
+    spans.sort(key=lambda span: (-(span[1] - span[0]), span[0]))
+    chosen: list[tuple[int, int]] = []
+    for start, end in spans:
+        if any(not (end <= kept_start or start >= kept_end) for kept_start, kept_end in chosen):
+            continue
+        chosen.append((start, end))
+    chars = list(text)
+    for start, end in chosen:
+        for index in range(start, end):
+            chars[index] = " "
+    return "".join(chars)
 
 
 def find_exact_violations(text: str) -> list[str]:
-    lower = (text or "").lower()
+    lower = _mask(text or "").lower()
     return [term for term in TERMS if term.lower() in lower]
 
 
