@@ -63,14 +63,16 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
     {
         id: 'role',
         title: '您的角色是？',
-        subtitle: '帮助我们为您推荐最适合的功能',
+        subtitle: '按角色排列首页模块，可以在设置里关闭',
         icon: Target,
         options: [
-            { id: 'investor', label: '投资者/开发商', desc: '寻找项目投资机会' },
-            { id: 'owner', label: '电站业主', desc: '管理自有电站资产' },
-            { id: 'engineer', label: '工程师/技术人员', desc: '技术研究与项目设计' },
-            { id: 'researcher', label: '研究人员/学生', desc: '学术研究与学习' },
-            { id: 'government', label: '政府/园区', desc: '规划、政策与园区能源管理' },
+            { id: 'ci_owner', label: '工商业业主', desc: '对照已公布分时电价' },
+            { id: 'residential_owner', label: '户用业主', desc: '先看容量、省份和电价' },
+            { id: 'developer', label: '项目开发', desc: '核对已公布电价与测算输入' },
+            { id: 'epc', label: '总承包与设计', desc: '核对损耗与设备参数' },
+            { id: 'om', label: '运维', desc: '查看告警与发电记录' },
+            { id: 'researcher', label: '研究员与学生', desc: '查阅政策原文与术语' },
+            { id: 'government', label: '政府与园区', desc: '查看已审核政策与时间' },
         ]
     },
     {

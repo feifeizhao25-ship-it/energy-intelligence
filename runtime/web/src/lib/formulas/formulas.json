@@ -1,0 +1,52 @@
+{
+  "review_status": "pending_wecom",
+  "items": [
+    {
+      "id": "FM-001",
+      "name": "简化平准化度电成本",
+      "latex": "LCOE = \\frac{I_0 + \\sum_{t=1}^{N} \\frac{M_t}{(1+r)^t}}{\\sum_{t=1}^{N} \\frac{E_t}{(1+r)^t}}",
+      "variables": [
+        {"symbol": "I_0", "meaning": "初始投资", "unit": "元"},
+        {"symbol": "M_t", "meaning": "第 t 年运维费", "unit": "元"},
+        {"symbol": "E_t", "meaning": "第 t 年发电量", "unit": "千瓦时"},
+        {"symbol": "r", "meaning": "折现率", "unit": "小数"},
+        {"symbol": "N", "meaning": "评估年限", "unit": "年"}
+      ],
+      "source": "NREL 简化口径。含税差别默认未计，待方法卡核对。",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "FM-002",
+      "name": "净现值",
+      "latex": "NPV = \\sum_{t=0}^{N} \\frac{C_t}{(1+r)^t}",
+      "variables": [
+        {"symbol": "C_t", "meaning": "第 t 年现金流", "unit": "元"},
+        {"symbol": "r", "meaning": "折现率", "unit": "小数"}
+      ],
+      "source": "符号只变化一次时才求解内部收益率。",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "ST-001",
+      "name": "储能平准化成本",
+      "latex": "LCOS = \\frac{I_0 + \\sum_{t=1}^{N} \\frac{OM_t + Ch_t}{(1+r)^t}}{\\sum_{t=1}^{N} \\frac{D_t}{(1+r)^t}}",
+      "variables": [
+        {"symbol": "D_t", "meaning": "第 t 年放电量", "unit": "千瓦时"},
+        {"symbol": "Ch_t", "meaning": "第 t 年充电成本", "unit": "元"}
+      ],
+      "source": "Schmidt 折现口径的简化实现。",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "RA-002",
+      "name": "空气密度修正",
+      "latex": "\\rho = \\rho_0 \\exp(-h/8434.5) \\frac{288.15}{T+273.15}",
+      "variables": [
+        {"symbol": "h", "meaning": "海拔", "unit": "米"},
+        {"symbol": "T", "meaning": "气温", "unit": "摄氏度"}
+      ],
+      "source": "参照 IEC 61400-12-1 的密度思路，不是现场实测。",
+      "review_status": "pending_wecom"
+    }
+  ]
+}

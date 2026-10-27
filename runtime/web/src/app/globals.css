@@ -24,6 +24,35 @@
   --ring: 142 71% 45%;
 
   --radius: 12px;
+
+  /* 国内版色板。新页面用这些变量，按钮绿色不用于小字。 */
+  --moss: #0e2a2b;
+  --accent-solid: #22c55e;
+  --ink: #14221f;
+  --ink-soft: #3d524c;
+  --line: #d5e0dc;
+  --warn: #c26a12;
+  --danger: #b42318;
+  --paper: #f4f7f6;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+}
+
+@font-face {
+  font-family: "Noto Sans SC";
+  src: url("/fonts/noto-sans-sc/noto-sans-sc-chinese-simplified-400-normal.woff") format("woff");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Noto Sans SC";
+  src: url("/fonts/noto-sans-sc/noto-sans-sc-chinese-simplified-700-normal.woff") format("woff");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
 }
 
 /* Smooth Scrolling */
@@ -39,6 +68,7 @@ html {
 
   body {
     @apply bg-background text-foreground antialiased;
+    font-family: "Noto Sans SC", "Source Han Sans SC", "Noto Sans CJK SC", sans-serif;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 

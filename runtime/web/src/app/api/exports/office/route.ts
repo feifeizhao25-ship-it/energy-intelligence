@@ -5,15 +5,15 @@ import { consumeQuota } from '@/lib/audit/quota';
 import { prisma } from '@/lib/prisma';
 import { effectivePlan } from '@/lib/auth/token-refresh';
 import { EXPORT_FORMATS } from '@/lib/membership/plans';
-import { slidesBuffer, workbookBuffer } from '@/lib/reports/ooxml-zip';
+import { gazetteBuffer, slidesBuffer, workbookBuffer } from '@/lib/reports/ooxml-zip';
 
 export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return NextResponse.json({ error: 'UNAUTHORIZED', message: '请先登录后再导出报告' }, { status: 401 });
     const body = await req.json().catch(() => null);
     const format = body?.format;
-    const label = format === 'xlsx' ? 'Excel' : format === 'pptx' ? 'PPT' : '';
-    if (!label) return NextResponse.json({ error: 'UNSUPPORTED_FORMAT', message: '请选择 Excel 或 PPT' }, { status: 400 });
+    const label = format === 'xlsx' ? 'Excel' : format === 'pptx' ? 'PPT' : format === 'docx' ? 'Word' : '';
+    if (!label) return NextResponse.json({ error: 'UNSUPPORTED_FORMAT', message: '请选择 Excel、PPT 或 Word' }, { status: 400 });
     const user = await prisma.user.findUnique({ where: { id: session.user.id }, select: { plan: true, planExpireAt: true } });
     const plan = effectivePlan(user?.plan, user?.planExpireAt) as keyof typeof EXPORT_FORMATS;
     const allowed = (EXPORT_FORMATS[plan] ?? []) as readonly string[];
@@ -28,11 +28,17 @@ export async function POST(req: Request) {
     const title = typeof body.title === 'string' && body.title.trim() ? body.title.trim() : '新能源智库';
     const disclaimer = '本文件只汇总调用方提供的数字和假设清单，不承诺回报。';
     const table = [['新能源智库', title], ['说明', disclaimer], ...rows];
-    const file = format === 'xlsx' ? workbookBuffer(table) : slidesBuffer('新能源智库', [title, disclaimer, ...rows.map((row: string[]) => row.join(' '))]);
-    const filename = format === 'xlsx' ? 'nengjian.xlsx' : 'nengjian.pptx';
+    const file = format === 'xlsx'
+        ? workbookBuffer(table)
+        : format === 'docx'
+            ? gazetteBuffer(title, rows)
+            : slidesBuffer('新能源智库', [title, disclaimer, ...rows.map((row: string[]) => row.join(' '))]);
+    const filename = format === 'xlsx' ? 'nengjian.xlsx' : format === 'docx' ? 'nengjian.docx' : 'nengjian.pptx';
     const type = format === 'xlsx'
         ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-        : 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+        : format === 'docx'
+            ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            : 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
     return new NextResponse(new Uint8Array(file), {
         headers: {
             'Content-Type': type,

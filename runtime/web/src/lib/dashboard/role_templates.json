@@ -1,0 +1,55 @@
+{
+  "review_status": "draft",
+  "roles": {
+    "ci_owner": {
+      "label": "工商业业主",
+      "modules": ["tariff", "focus", "projects", "nextActions", "policies", "usage", "stationAlerts"],
+      "term_depth": "说人话",
+      "export": "excel",
+      "reading_mode": "professional"
+    },
+    "residential_owner": {
+      "label": "户用业主",
+      "modules": ["focus", "tariff", "nextActions", "projects", "usage", "policies", "stationAlerts"],
+      "term_depth": "说人话",
+      "export": "pdf",
+      "reading_mode": "beginner"
+    },
+    "developer": {
+      "label": "项目开发",
+      "modules": ["tariff", "policies", "projects", "focus", "nextActions", "usage", "stationAlerts"],
+      "term_depth": "专业",
+      "export": "excel",
+      "reading_mode": "professional",
+      "forbidden_modules": ["ranking", "recommendation"]
+    },
+    "epc": {
+      "label": "EPC/设计院",
+      "modules": ["focus", "nextActions", "projects", "tariff", "usage", "policies", "stationAlerts"],
+      "term_depth": "专业",
+      "export": "word",
+      "reading_mode": "professional"
+    },
+    "om": {
+      "label": "运维",
+      "modules": ["stationAlerts", "focus", "projects", "nextActions", "tariff", "usage", "policies"],
+      "term_depth": "专业",
+      "export": "excel",
+      "reading_mode": "professional"
+    },
+    "researcher": {
+      "label": "研究员/学生",
+      "modules": ["focus", "policies", "nextActions", "usage", "projects", "tariff", "stationAlerts"],
+      "term_depth": "专业",
+      "export": "word",
+      "reading_mode": "beginner"
+    },
+    "government": {
+      "label": "政府/园区",
+      "modules": ["policies", "focus", "tariff", "projects", "nextActions", "usage", "stationAlerts"],
+      "term_depth": "原文优先",
+      "export": "gazette",
+      "reading_mode": "professional"
+    }
+  }
+}

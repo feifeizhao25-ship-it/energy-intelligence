@@ -113,6 +113,7 @@ model User {
   policyAlertNotices       PolicyAlertNotice[]
   datasetDownloads         DatasetDownload[]
   literatureRecords        LiteratureRecord[]
+  profile                  UserProfile?
 
   @@map("users")
 }
@@ -1512,4 +1513,28 @@ model LiteratureRecord {
   @@unique([source, externalId])
   @@index([userId])
   @@map("literature_records")
+}
+
+// 用户画像。旧的 usage_logs 偏好仍可读，迁移时写入本表。
+model UserProfile {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role             String?
+  subRole          String?
+  provinces        String[] @default([])
+  topics           String[] @default([])
+  projectStage     String?
+  readingMode      String   @default("professional")
+  notifyFrequency  String   @default("即时")
+  notifyChannel    String   @default("站内")
+  notifyWindow     String   @default("08:00-20:00")
+  personalized     Boolean  @default(true)
+  tags             Json     @default("[]")
+  follows          Json     @default("[]")
+  understoodTerms  String[] @default([])
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@map("user_profiles")
 }

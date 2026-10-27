@@ -1,0 +1,5285 @@
+{
+  "review_status": "pending_wecom",
+  "terms": [
+    {
+      "id": "t001",
+      "term": "电压",
+      "short": "电路两点之间的电位差",
+      "example": "配电常见等级写成伏",
+      "source": "GB/T 2900 系列《电工术语》",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t002",
+      "term": "电流",
+      "short": "单位时间通过导体截面的电荷量",
+      "example": "支路电流用安表示",
+      "source": "GB/T 2900 系列《电工术语》",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t003",
+      "term": "电阻",
+      "short": "导体对电流的阻碍",
+      "example": "线路电阻影响压降",
+      "source": "GB/T 2900 系列《电工术语》",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t004",
+      "term": "电导",
+      "short": "电阻的倒数",
+      "example": "绝缘检测会用到电导",
+      "source": "GB/T 2900 系列《电工术语》",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t005",
+      "term": "电容",
+      "short": "储存电荷的能力",
+      "example": "无功补偿柜含电容器",
+      "source": "GB/T 2900 系列《电工术语》",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t006",
+      "term": "电感",
+      "short": "线圈对电流变化的阻碍",
+      "example": "变压器绕组具有电感",
+      "source": "GB/T 2900 系列《电工术语》",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t007",
+      "term": "频率",
+      "short": "交流电每秒周期数",
+      "example": "工频是 50 赫兹",
+      "source": "GB/T 2900 系列《电工术语》",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t008",
+      "term": "相位",
+      "short": "交流量相对参考轴的角度",
+      "example": "三相之间相位相差 120 度",
+      "source": "GB/T 2900 系列《电工术语》",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t009",
+      "term": "有功功率",
+      "short": "实际做功的功率",
+      "example": "电表计量有功",
+      "source": "GB/T 2900 系列《电工术语》",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t010",
+      "term": "无功功率",
+      "short": "建立磁场或电场所需的功率",
+      "example": "功率因数低时无功增大",
+      "source": "GB/T 2900 系列《电工术语》",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t011",
+      "term": "视在功率",
+      "short": "有功与无功的合成",
+      "example": "变压器容量按视在功率选取",
+      "source": "GB/T 2900 系列《电工术语》",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t012",
+      "term": "功率因数",
+      "short": "有功与视在功率之比",
+      "example": "并网点考核功率因数",
+      "source": "GB/T 2900 系列《电工术语》",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t013",
+      "term": "三相",
+      "short": "三组相位不同的交流",
+      "example": "低压并网常见三相",
+      "source": "GB/T 2900 系列《电工术语》",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t014",
+      "term": "中性线",
+      "short": "三相系统的公共回流导体",
+      "example": "不平衡负荷走中性线",
+      "source": "GB/T 2900 系列《电工术语》",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t015",
+      "term": "接地",
+      "short": "与大地的电气连接",
+      "example": "设备外壳需要保护接地",
+      "source": "GB/T 2900 系列《电工术语》",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t016",
+      "term": "短路",
+      "short": "电位不同的点被低阻接通",
+      "example": "短路电流用于开关选型",
+      "source": "GB/T 2900 系列《电工术语》",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t017",
+      "term": "过载",
+      "short": "电流超过设备允许值",
+      "example": "过载保护在逆变器里",
+      "source": "GB/T 2900 系列《电工术语》",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t018",
+      "term": "绝缘",
+      "short": "阻止不应有的电流",
+      "example": "电缆绝缘电阻要检测",
+      "source": "GB/T 2900 系列《电工术语》",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t019",
+      "term": "变压器",
+      "short": "改变交流电压的设备",
+      "example": "升压变把低压送到集电线路",
+      "source": "GB/T 2900 系列《电工术语》",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t020",
+      "term": "断路器",
+      "short": "可切断负荷和故障电流的开关",
+      "example": "并网点配置断路器",
+      "source": "GB/T 2900 系列《电工术语》",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t021",
+      "term": "熔断器",
+      "short": "过流时熔断的保护件",
+      "example": "组串汇流可加熔断器",
+      "source": "GB/T 2900 系列《电工术语》",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t022",
+      "term": "继电器",
+      "short": "用小电流控制大电流的开关",
+      "example": "保护装置含继电器",
+      "source": "GB/T 2900 系列《电工术语》",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t023",
+      "term": "互感器",
+      "short": "按比例变换电流或电压",
+      "example": "计量用电流互感器",
+      "source": "GB/T 2900 系列《电工术语》",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t024",
+      "term": "母线",
+      "short": "汇集和分配电能的导体",
+      "example": "低压柜有母线",
+      "source": "GB/T 2900 系列《电工术语》",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t025",
+      "term": "谐波",
+      "short": "频率为基波整数倍的分量",
+      "example": "逆变器输出要限制谐波",
+      "source": "GB/T 2900 系列《电工术语》",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t026",
+      "term": "闪变",
+      "short": "电压短时波动引起的光闪",
+      "example": "大容量电动机启动可能引起闪变",
+      "source": "GB/T 2900 系列《电工术语》",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t027",
+      "term": "电压偏差",
+      "short": "实际电压与标称电压之差",
+      "example": "并网点有电压偏差限值",
+      "source": "GB/T 2900 系列《电工术语》",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t028",
+      "term": "频率偏差",
+      "short": "实际频率与标称频率之差",
+      "example": "电网故障时频率会偏离",
+      "source": "GB/T 2900 系列《电工术语》",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t029",
+      "term": "三相不平衡",
+      "short": "三相电压或电流不相等",
+      "example": "单相负荷过多会造成不平衡",
+      "source": "GB/T 2900 系列《电工术语》",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t030",
+      "term": "电能质量",
+      "short": "电压频率和波形是否合格",
+      "example": "并网前要核对电能质量",
+      "source": "GB/T 2900 系列《电工术语》",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t031",
+      "term": "辐照度",
+      "short": "单位面积接收的辐射功率",
+      "example": "单位是瓦每平方米",
+      "source": "GB 50797-2012《光伏发电站设计标准》（2024年版）",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t032",
+      "term": "辐照量",
+      "short": "一段时间的辐照度积分",
+      "example": "年辐照量单位是千瓦时每平方米",
+      "source": "GB 50797-2012《光伏发电站设计标准》（2024年版）",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t033",
+      "term": "水平面总辐照",
+      "short": "水平面接收的总太阳辐射",
+      "example": "资源数据常给年水平面总辐照",
+      "source": "GB 50797-2012《光伏发电站设计标准》（2024年版）",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t034",
+      "term": "直接辐照",
+      "short": "来自日轮方向的辐照",
+      "example": "跟踪系统更依赖直接辐照",
+      "source": "GB 50797-2012《光伏发电站设计标准》（2024年版）",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t035",
+      "term": "散射辐照",
+      "short": "经过大气散射后的辐照",
+      "example": "阴天以散射为主",
+      "source": "GB 50797-2012《光伏发电站设计标准》（2024年版）",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t036",
+      "term": "倾斜面辐照",
+      "short": "组件斜面接收的辐照",
+      "example": "发电量公式使用斜面辐照",
+      "source": "GB 50797-2012《光伏发电站设计标准》（2024年版）",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t037",
+      "term": "峰值日照小时",
+      "short": "把辐照折成 1000 瓦每平方米的小时数",
+      "example": "用来估算发电量",
+      "source": "GB 50797-2012《光伏发电站设计标准》（2024年版）",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t038",
+      "term": "标准测试条件",
+      "short": "辐照 1000、电池温度 25 摄氏度、光谱 AM1.5",
+      "example": "组件铭牌功率在该条件下给出",
+      "source": "GB/T 6495 系列光伏器件测量",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t039",
+      "term": "组件",
+      "short": "由电池片封装成的发电单元",
+      "example": "电站容量按组件功率加总",
+      "source": "GB 50797-2012《光伏发电站设计标准》（2024年版）",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t040",
+      "term": "电池片",
+      "short": "组件内部的半导体小片",
+      "example": "晶硅电池片是常见类型",
+      "source": "GB 50797-2012《光伏发电站设计标准》（2024年版）",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t041",
+      "term": "组串",
+      "short": "若干组件串联的回路",
+      "example": "组串电压不能超过逆变器上限",
+      "source": "GB 50797-2012《光伏发电站设计标准》（2024年版）",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t042",
+      "term": "汇流箱",
+      "short": "把多路组串电流汇在一起的设备",
+      "example": "直流汇流后送往逆变器",
+      "source": "GB 50797-2012《光伏发电站设计标准》（2024年版）",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t043",
+      "term": "逆变器",
+      "short": "把直流变成交流的设备",
+      "example": "并网逆变器要符合接入规定",
+      "source": "GB 50797-2012《光伏发电站设计标准》（2024年版）",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t044",
+      "term": "最大功率点跟踪",
+      "short": "让组件工作在当前最大功率附近",
+      "example": "逆变器持续做这项调节",
+      "source": "GB 50797-2012《光伏发电站设计标准》（2024年版）",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t045",
+      "term": "倾角",
+      "short": "组件平面与水平面的夹角",
+      "example": "固定支架要写明倾角",
+      "source": "GB 50797-2012《光伏发电站设计标准》（2024年版）",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t046",
+      "term": "方位角",
+      "short": "组件法线在水平面的朝向",
+      "example": "正南常取为零点",
+      "source": "GB 50797-2012《光伏发电站设计标准》（2024年版）",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t047",
+      "term": "遮挡",
+      "short": "树木或构筑物挡住阳光",
+      "example": "遮挡要在发电量里单列",
+      "source": "GB 50797-2012《光伏发电站设计标准》（2024年版）",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t048",
+      "term": "失配",
+      "short": "组串里组件特性不一致",
+      "example": "失配会造成整串电流被限制",
+      "source": "GB 50797-2012《光伏发电站设计标准》（2024年版）",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t049",
+      "term": "衰减",
+      "short": "组件功率随时间下降",
+      "example": "首年衰减和其后年衰减分开列",
+      "source": "GB 50797-2012《光伏发电站设计标准》（2024年版）",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t050",
+      "term": "系统效率",
+      "short": "从斜面辐照到交流电的综合系数",
+      "example": "发电量公式里的综合效率系数",
+      "source": "GB 50797-2012《光伏发电站设计标准》（2024年版）6.6节",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t051",
+      "term": "性能比",
+      "short": "实际交流发电量与额定功率乘辐照之比",
+      "example": "定义见 IEC 61724-1",
+      "source": "IEC 61724-1",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t052",
+      "term": "温度系数",
+      "short": "功率随电池温度变化的比例",
+      "example": "常见范围写在组件规格书",
+      "source": "组件规格书",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t053",
+      "term": "首年衰减",
+      "short": "投运第一年的功率下降",
+      "example": "与其后每年衰减分开假设",
+      "source": "组件质保书",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t054",
+      "term": "线损",
+      "short": "电流在导线上的发热损失",
+      "example": "直流线损和交流线损分开",
+      "source": "GB 50797-2012《光伏发电站设计标准》（2024年版）",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t055",
+      "term": "灰尘损失",
+      "short": "表面积灰减少透光",
+      "example": "清洗排程要单列这项",
+      "source": "IEC 61724-1",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t056",
+      "term": "可利用率",
+      "short": "设备可发电时间占日历时间的比例",
+      "example": "计划停机要单独说明",
+      "source": "IEC 61724-1",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t057",
+      "term": "容配比",
+      "short": "组件功率与逆变器功率之比",
+      "example": "超过 1 表示组件侧更大",
+      "source": "GB 50797-2012《光伏发电站设计标准》（2024年版）",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t058",
+      "term": "支架",
+      "short": "支撑组件的结构",
+      "example": "屋顶贴装和地面支架温度不同",
+      "source": "GB 50797-2012《光伏发电站设计标准》（2024年版）",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t059",
+      "term": "跟踪支架",
+      "short": "让组件跟随太阳转动的支架",
+      "example": "只在直接辐照高的场址讨论",
+      "source": "GB 50797-2012《光伏发电站设计标准》（2024年版）",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t060",
+      "term": "防孤岛",
+      "short": "电网停电时逆变器停止出力",
+      "example": "并网逆变器必须具备",
+      "source": "GB/T 19964 或现行接入规定，版本待核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t061",
+      "term": "低电压穿越",
+      "short": "电网电压暂降时保持并网",
+      "example": "大型电站有这项要求",
+      "source": "现行接入规定，版本待核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t062",
+      "term": "风速",
+      "short": "空气流动的速率",
+      "example": "资源评估常用米每秒",
+      "source": "GB/T 18710《风电场风能资源评估方法》",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t063",
+      "term": "风功率密度",
+      "short": "单位面积气流的功率",
+      "example": "用空气密度和风速计算",
+      "source": "GB/T 18710《风电场风能资源评估方法》",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t064",
+      "term": "威布尔分布",
+      "short": "描述风速概率的一种分布",
+      "example": "形状参数为 2 时是瑞利分布",
+      "source": "GB/T 18710《风电场风能资源评估方法》",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t065",
+      "term": "瑞利分布",
+      "short": "形状参数取 2 的威布尔分布",
+      "example": "没有实测分布时要写明采用它",
+      "source": "GB/T 18710《风电场风能资源评估方法》",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t066",
+      "term": "风切变",
+      "short": "风速随高度变化",
+      "example": "外推到轮毂高度时使用",
+      "source": "GB/T 18710《风电场风能资源评估方法》",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t067",
+      "term": "轮毂高度",
+      "short": "风轮中心离地高度",
+      "example": "功率曲线按这个高度给出",
+      "source": "GB/T 18710《风电场风能资源评估方法》",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t068",
+      "term": "切入风速",
+      "short": "风机开始发电的风速",
+      "example": "低于它时出力为零",
+      "source": "风机规格书",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t069",
+      "term": "额定风速",
+      "short": "达到额定功率的风速",
+      "example": "高于它到切出前保持额定",
+      "source": "风机规格书",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t070",
+      "term": "切出风速",
+      "short": "风机停机保护的风速",
+      "example": "超过它不发电",
+      "source": "风机规格书",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t071",
+      "term": "功率曲线",
+      "short": "风速与输出功率的对应表",
+      "example": "应由用户选择机型",
+      "source": "风机规格书",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t072",
+      "term": "空气密度",
+      "short": "单位体积空气的质量",
+      "example": "按海拔和温度修正",
+      "source": "IEC 61400-12-1",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t073",
+      "term": "尾流",
+      "short": "上游风机使下游风速降低",
+      "example": "损失要单列为假设",
+      "source": "GB/T 18710《风电场风能资源评估方法》",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t074",
+      "term": "湍流",
+      "short": "风速的短时脉动",
+      "example": "高湍流影响载荷",
+      "source": "IEC 61400-1，版本待核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t075",
+      "term": "容量系数",
+      "short": "实际发电量与满发全年电量之比",
+      "example": "风电和光伏都使用这个比",
+      "source": "IEC 61400-12-1",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t076",
+      "term": "可利用率损失",
+      "short": "停机造成的发电减少",
+      "example": "与尾流损失分开列",
+      "source": "运行记录",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t077",
+      "term": "荷电状态",
+      "short": "电池当前电量占额定容量的比例",
+      "example": "调度时要看上下限",
+      "source": "GB/T 36276《电力储能用锂离子电池》，现行版本待核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t078",
+      "term": "健康状态",
+      "short": "当前可用容量相对初始容量",
+      "example": "循环和日历老化都会降低它",
+      "source": "GB/T 36276《电力储能用锂离子电池》，现行版本待核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t079",
+      "term": "放电深度",
+      "short": "一次放出的电量占额定容量的比例",
+      "example": "影响循环寿命假设",
+      "source": "GB/T 36276《电力储能用锂离子电池》，现行版本待核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t080",
+      "term": "往返效率",
+      "short": "放出电量与充入电量之比",
+      "example": "充电成本按它折算",
+      "source": "GB/T 36547《电化学储能电站接入电网技术规定》，现行版本待核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t081",
+      "term": "循环衰减",
+      "short": "每次充放造成的容量下降",
+      "example": "与日历衰减分开",
+      "source": "GB/T 36276《电力储能用锂离子电池》，现行版本待核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t082",
+      "term": "日历衰减",
+      "short": "即使不循环也会发生的容量下降",
+      "example": "按年给出假设",
+      "source": "GB/T 36276《电力储能用锂离子电池》，现行版本待核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t083",
+      "term": "储能度电成本",
+      "short": "折现成本除以折现放电量",
+      "example": "对照 Schmidt 2019 与 Lazard 方法",
+      "source": "Schmidt 等，Joule，2019",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t084",
+      "term": "两充两放",
+      "short": "一天内两段充电和两段放电",
+      "example": "只有配置了第二段时段才按两次",
+      "source": "省级分时电价文件",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t085",
+      "term": "峰段",
+      "short": "电价较高的时段",
+      "example": "以省级文件的时钟为准",
+      "source": "省级分时电价文件",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t086",
+      "term": "谷段",
+      "short": "电价较低的时段",
+      "example": "充电常安排在谷段",
+      "source": "省级分时电价文件",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t087",
+      "term": "平段",
+      "short": "介于峰谷之间的时段",
+      "example": "有的省份还有尖峰",
+      "source": "省级分时电价文件",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t088",
+      "term": "尖峰",
+      "short": "高于峰段的短时电价",
+      "example": "不是每个省都有",
+      "source": "省级分时电价文件",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t089",
+      "term": "代理购电",
+      "short": "电网企业代理用户购电",
+      "example": "价格以公告为准",
+      "source": "电网公司代理购电公告",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t090",
+      "term": "目录电价",
+      "short": "政府公布的用户电价表",
+      "example": "引用时写明电压等级",
+      "source": "省级价格文件",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t091",
+      "term": "机制电量",
+      "short": "按机制电价结算的上网电量",
+      "example": "划分见现行价格文件",
+      "source": "发改价格〔2025〕136号",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t092",
+      "term": "机制电价",
+      "short": "机制电量对应的结算价格",
+      "example": "存量与增量形成方式不同",
+      "source": "发改价格〔2025〕136号",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t093",
+      "term": "市场交易电量",
+      "short": "进入电力市场结算的电量",
+      "example": "与机制电量分开",
+      "source": "发改价格〔2025〕136号",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t094",
+      "term": "绿证",
+      "short": "可再生能源绿色电力证书",
+      "example": "核发和交易以平台记录为准",
+      "source": "国家能源主管部门绿证规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t095",
+      "term": "绿电",
+      "short": "带环境属性的电量交易",
+      "example": "直连规则见能源局文件",
+      "source": "发改能源〔2026〕688号，待与原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t096",
+      "term": "排放因子",
+      "short": "单位电量对应的二氧化碳量",
+      "example": "要写发布机关、年份和版本",
+      "source": "生态环境部、国家统计局公告2025年第47号",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t097",
+      "term": "减排量",
+      "short": "发电量乘以排放因子",
+      "example": "只是测算，不是收益",
+      "source": "生态环境部、国家统计局公告2025年第47号",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t098",
+      "term": "方法学",
+      "short": "核算减排的规则文本",
+      "example": "编号和版本以发布文本为准",
+      "source": "生态环境部方法学目录，编号待核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t099",
+      "term": "内部收益率",
+      "short": "使净现值为零的折现率",
+      "example": "无唯一解时不给数",
+      "source": "建设项目经济评价方法",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t100",
+      "term": "净现值",
+      "short": "现金流按折现率折到现在的和",
+      "example": "折现率是输入不是结论",
+      "source": "建设项目经济评价方法",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t101",
+      "term": "回收期",
+      "short": "累计净现金流覆盖初始投入的时间",
+      "example": "评估期内未覆盖就写未覆盖",
+      "source": "建设项目经济评价方法",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t102",
+      "term": "平准化度电成本",
+      "short": "折现成本除以折现发电量",
+      "example": "本站用简化口径",
+      "source": "NREL 简化 LCOE 方法",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t103",
+      "term": "平准化储能成本",
+      "short": "储能的折现成本除以折现放电量",
+      "example": "充电成本是否计入要写明",
+      "source": "Schmidt 等，Joule，2019",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t104",
+      "term": "折现率",
+      "short": "把未来金额换算到现在的比率",
+      "example": "由用户给定",
+      "source": "建设项目经济评价方法",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t105",
+      "term": "资本金",
+      "short": "项目所有者投入的资金",
+      "example": "与借款分开列",
+      "source": "建设项目经济评价方法",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t106",
+      "term": "增值税",
+      "short": "流转环节的税",
+      "example": "默认标为未计",
+      "source": "税法，适用税率以主管税务机关为准",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t107",
+      "term": "所得税",
+      "short": "对利润征收的税",
+      "example": "优惠是否适用标为未计",
+      "source": "税法，适用条款待核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t108",
+      "term": "运维费",
+      "short": "运行维护的年度费用",
+      "example": "按用户填写的口径",
+      "source": "项目可研输入",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t109",
+      "term": "残值",
+      "short": "评估期末资产剩余价值",
+      "example": "未填写就标未计",
+      "source": "建设项目经济评价方法",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t110",
+      "term": "敏感性",
+      "short": "改一个输入后结果变化多少",
+      "example": "只展示变化，不排序方案",
+      "source": "测算方法",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t111",
+      "term": "现金流",
+      "short": "各年现金流入减流出",
+      "example": "第 0 年通常是投入",
+      "source": "建设项目经济评价方法",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t112",
+      "term": "度电",
+      "short": "一千瓦时的俗称",
+      "example": "与千瓦不要混用",
+      "source": "电工常用单位",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t113",
+      "term": "千瓦",
+      "short": "功率单位",
+      "example": "装机容量常用千瓦或兆瓦",
+      "source": "GB/T 2900 系列《电工术语》",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t114",
+      "term": "千瓦时",
+      "short": "能量单位",
+      "example": "发电量用千瓦时",
+      "source": "GB/T 2900 系列《电工术语》",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t115",
+      "term": "兆瓦",
+      "short": "一千千瓦",
+      "example": "集中式电站常用兆瓦",
+      "source": "GB/T 2900 系列《电工术语》",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t116",
+      "term": "并网点",
+      "short": "电站与电网的连接点",
+      "example": "计量和保护都看这里",
+      "source": "现行接入规定，版本待核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t117",
+      "term": "备案",
+      "short": "向主管部门提交项目信息",
+      "example": "容量以备案文件为准",
+      "source": "地方能源主管部门办事指南",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t118",
+      "term": "接网",
+      "short": "接入公共电网",
+      "example": "意见以电网公司答复为准",
+      "source": "电网公司接网办法",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t119",
+      "term": "调度",
+      "short": "电网对出力的安排",
+      "example": "储能调度规则以原文为准",
+      "source": "国家能源局调度规则原文，链接待复核",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t120",
+      "term": "现货",
+      "short": "按短时段出清的电能量市场",
+      "example": "价格以交易中心已发布结果为准",
+      "source": "电力交易中心规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t121",
+      "term": "中长期",
+      "short": "跨日或更长的电能量合约",
+      "example": "结算科目以规则为准",
+      "source": "电力交易中心规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t122",
+      "term": "偏差电量",
+      "short": "实际电量与合约电量的差",
+      "example": "结算公式以原文为准",
+      "source": "电力交易中心规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t123",
+      "term": "利用小时",
+      "short": "发电量除以装机容量",
+      "example": "用来比较资源，不是承诺",
+      "source": "统计制度",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t124",
+      "term": "弃电",
+      "short": "有资源但因电网原因未发出的电量",
+      "example": "比率以监测结果为准",
+      "source": "全国新能源消纳监测预警中心",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t125",
+      "term": "补贴目录",
+      "short": "可享受既有补贴的项目清单",
+      "example": "新增平价项目通常不在其中",
+      "source": "价格主管部门通知",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t126",
+      "term": "平价",
+      "short": "不再领取中央度电补贴",
+      "example": "依据以通知原文为准",
+      "source": "价格主管部门通知",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t127",
+      "term": "自用",
+      "short": "项目现场消耗的电量",
+      "example": "比例是输入",
+      "source": "接网与结算规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t128",
+      "term": "余电上网",
+      "short": "自用后送入电网的电量",
+      "example": "结算电价看项目纳入的机制",
+      "source": "发改价格〔2025〕136号",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t129",
+      "term": "全额上网",
+      "short": "发电量全部送入电网",
+      "example": "与自发自用是不同结算方式",
+      "source": "接网规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t130",
+      "term": "自发自用",
+      "short": "优先供自己使用",
+      "example": "余电是否上网看项目类型",
+      "source": "接网规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t131",
+      "term": "工商业",
+      "short": "工厂商场等用户类别",
+      "example": "电价表要选对类别",
+      "source": "省级价格文件",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t132",
+      "term": "户用",
+      "short": "居民屋顶等小型项目",
+      "example": "输入项更少",
+      "source": "接网规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t133",
+      "term": "设计标准",
+      "short": "工程设计应当遵守的标准",
+      "example": "光伏电站现行名称是设计标准",
+      "source": "GB 50797-2012（2024年版）",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t134",
+      "term": "设计规范",
+      "short": "已被改名的旧称呼",
+      "example": "引用时要核对是否被替代",
+      "source": "标准更名说明",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t135",
+      "term": "文号",
+      "short": "文件的官方编号",
+      "example": "回答里的文号必须能在原文找到",
+      "source": "公文格式",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t136",
+      "term": "发文机关",
+      "short": "发出文件的机构",
+      "example": "与文号一起引用",
+      "source": "公文格式",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t137",
+      "term": "施行日期",
+      "short": "文件开始执行的日期",
+      "example": "问现行规定时要核对",
+      "source": "公文格式",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t138",
+      "term": "废止",
+      "short": "文件不再执行",
+      "example": "被替代的要链到新文件",
+      "source": "公文格式",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t139",
+      "term": "征求意见",
+      "short": "尚未正式发布的稿",
+      "example": "不能当成现行规定",
+      "source": "公文格式",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t140",
+      "term": "条款",
+      "short": "文件里的具体条目",
+      "example": "引用时写节或条",
+      "source": "公文格式",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t141",
+      "term": "快照",
+      "short": "抓取当时的原文副本",
+      "example": "用哈希标识",
+      "source": "资料管理",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t142",
+      "term": "哈希",
+      "short": "文件内容的校验值",
+      "example": "内容变了哈希就变",
+      "source": "资料管理",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t143",
+      "term": "一手来源",
+      "short": "发文机关自己公布的文本",
+      "example": "政策事实以它为准",
+      "source": "证据规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t144",
+      "term": "二手解读",
+      "short": "对原文的转述",
+      "example": "只作延伸阅读",
+      "source": "证据规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t145",
+      "term": "截至日期",
+      "short": "数据或文件核对到的日期",
+      "example": "数字旁边要写",
+      "source": "证据规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t146",
+      "term": "待核实",
+      "short": "还没有核对原文的字段",
+      "example": "不能显示成确定值",
+      "source": "证据规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t147",
+      "term": "待核验",
+      "short": "回答里还没找到出处的句子",
+      "example": "不能用事实口吻",
+      "source": "证据规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t148",
+      "term": "示例",
+      "short": "演示用的数据",
+      "example": "必须标明，不能当成官方数",
+      "source": "产品规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t149",
+      "term": "测算值",
+      "short": "按给定输入算出来的数",
+      "example": "给出区间，不说成承诺",
+      "source": "产品规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t150",
+      "term": "假设",
+      "short": "计算时采用的条件",
+      "example": "改假设结果就变",
+      "source": "测算方法",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t151",
+      "term": "新手模式",
+      "short": "只展示少数输入和解释",
+      "example": "与专业模式用同一引擎",
+      "source": "产品规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t152",
+      "term": "专业模式",
+      "short": "展示全部假设和现金流",
+      "example": "数值与新手模式一致",
+      "source": "产品规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t153",
+      "term": "术语",
+      "short": "有专门含义的词",
+      "example": "首次出现给一句话解释",
+      "source": "GB/T 2900 系列《电工术语》",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t154",
+      "term": "定义",
+      "short": "对术语的正式说明",
+      "example": "引用标准或政策原文",
+      "source": "标准或政策原文",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t155",
+      "term": "定理",
+      "short": "由前提推出的命题",
+      "example": "在回答里单独成框",
+      "source": "数学表述",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t156",
+      "term": "公式",
+      "short": "用符号写的计算关系",
+      "example": "要有变量表和单位",
+      "source": "测算方法",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t157",
+      "term": "注意",
+      "short": "使用条件或限制",
+      "example": "不是结论",
+      "source": "产品规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t158",
+      "term": "审图号",
+      "short": "地图经审核后的编号",
+      "example": "出现地图时要能看见",
+      "source": "地图审核规定",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t159",
+      "term": "方块图",
+      "short": "用矩形面积表示分省数值",
+      "example": "不是地图，不画边界",
+      "source": "产品规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t160",
+      "term": "分享卡",
+      "short": "可转发的图文摘要",
+      "example": "含原文链接和截至日期",
+      "source": "产品规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t161",
+      "term": "公文版",
+      "short": "政府用户的资料汇编格式",
+      "example": "封面写非正式文件，不用红头",
+      "source": "产品规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t162",
+      "term": "试用",
+      "short": "一段不收费的标准档使用",
+      "example": "到期回到免费档",
+      "source": "会员规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t163",
+      "term": "席位",
+      "short": "团队里可登录的名额",
+      "example": "满额后不能再邀请",
+      "source": "会员规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t164",
+      "term": "只读",
+      "short": "可以查看但不能导出",
+      "example": "外部顾问使用",
+      "source": "会员规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t165",
+      "term": "额度",
+      "short": "一段时间内允许的操作次数",
+      "example": "超额说明重置时间",
+      "source": "会员规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t166",
+      "term": "关注",
+      "short": "用户选择的省份或文号",
+      "example": "增删后推送按新名单",
+      "source": "产品规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t167",
+      "term": "提醒频率",
+      "short": "提醒隔多久发一次",
+      "example": "即时、每日或每周",
+      "source": "产品规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t168",
+      "term": "个性化",
+      "short": "按角色调整模块顺序",
+      "example": "可以关闭",
+      "source": "算法推荐规定",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t169",
+      "term": "标签",
+      "short": "系统用来编排页面的标记",
+      "example": "用户可以查看和删除",
+      "source": "算法推荐规定",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t170",
+      "term": "空回答",
+      "short": "模型没有返回正文",
+      "example": "会缩短提示后再试一次",
+      "source": "产品规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t171",
+      "term": "裁判",
+      "short": "另一家模型判断句子是否被原文支持",
+      "example": "只回答是否或部分",
+      "source": "产品规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t172",
+      "term": "重排",
+      "short": "对召回结果再排序",
+      "example": "没有密钥时用本地词面",
+      "source": "检索方法",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t173",
+      "term": "混合检索",
+      "short": "词面和向量一起召回",
+      "example": "再交给重排",
+      "source": "检索方法",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t174",
+      "term": "条款分块",
+      "short": "按文件条款切开文本",
+      "example": "每块前面加文号和机关",
+      "source": "检索方法",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t175",
+      "term": "技能",
+      "short": "一段可复核的计算方法",
+      "example": "输出要带编号和版本",
+      "source": "产品规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t176",
+      "term": "方法卡",
+      "short": "说明公式、变量和出处的文档",
+      "example": "专家签字前标为待审",
+      "source": "产品规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t177",
+      "term": "北极星",
+      "short": "本周有效使用的付费席位",
+      "example": "做过测算、导出或打开原文",
+      "source": "运营定义",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t178",
+      "term": "漏斗",
+      "short": "从注册到续费的步骤",
+      "example": "只统计行为，不排名用户",
+      "source": "运营定义",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t179",
+      "term": "有效使用",
+      "short": "测算、导出或打开政策原文之一",
+      "example": "按席位按周计数",
+      "source": "运营定义",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t180",
+      "term": "日志留存",
+      "short": "访问和操作记录保存的时间",
+      "example": "不少于六个月",
+      "source": "网络安全法第二十一条",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t181",
+      "term": "审批",
+      "short": "企业微信里的人工确认",
+      "example": "超时作废，不自动外发",
+      "source": "产品规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t182",
+      "term": "勘误",
+      "short": "对已发布内容的更正",
+      "example": "团队档有优先通道的草稿",
+      "source": "会员规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t183",
+      "term": "口径咨询",
+      "short": "人工解释指标定义的服务",
+      "example": "次数按季计算，待开通",
+      "source": "会员规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t184",
+      "term": "资料汇编",
+      "short": "把已审核材料订在一起",
+      "example": "封面声明非正式文件",
+      "source": "公文习惯",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t185",
+      "term": "题注",
+      "short": "图、表、公式的编号说明",
+      "example": "正文要引用这些编号",
+      "source": "排版规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t186",
+      "term": "参考文献",
+      "short": "按 GB/T 7714 排列的来源",
+      "example": "缺字段写待核实",
+      "source": "GB/T 7714-2015",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t187",
+      "term": "隐式标识",
+      "short": "写在文件元数据里的生成标记",
+      "example": "字段按 GB 45438-2025",
+      "source": "GB 45438-2025",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t188",
+      "term": "显式标识",
+      "short": "读者能直接看见的生成说明",
+      "example": "使用人工智能生成合成字样",
+      "source": "标识办法",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t189",
+      "term": "底线",
+      "short": "不提供投资建议、价格预测，不冒充官方",
+      "example": "命中后整段替换成说明",
+      "source": "产品规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t190",
+      "term": "红队",
+      "short": "故意诱导越界的测试题",
+      "example": "应当拒答或改成中性说明",
+      "source": "测试规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t191",
+      "term": "黄金集",
+      "short": "带标准答案的评测题",
+      "example": "与门禁集分开存放",
+      "source": "测试规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t192",
+      "term": "门禁",
+      "short": "发布前必须通过的检查",
+      "example": "任一失败就拒绝部署",
+      "source": "测试规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t193",
+      "term": "时效",
+      "short": "数据或文件是否还在核验周期内",
+      "example": "过期的不进入测算",
+      "source": "证据规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t194",
+      "term": "临近复核",
+      "short": "距离下次核验不超过七天",
+      "example": "界面用橙色",
+      "source": "证据规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t195",
+      "term": "已过期",
+      "short": "超过核验周期或被替代",
+      "example": "界面用红色且不参与测算",
+      "source": "证据规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t196",
+      "term": "冲突",
+      "short": "两个来源对同一数字不一致",
+      "example": "并列展示，不择一",
+      "source": "证据规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t197",
+      "term": "许可证",
+      "short": "数据能否用于产品的法律条件",
+      "example": "非商用数据不入库",
+      "source": "数据治理",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t198",
+      "term": "离线样本",
+      "short": "事先放进安装包的演示数",
+      "example": "必须标明不是实测",
+      "source": "产品规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t199",
+      "term": "结构样本",
+      "short": "只说明表格长什么样的数据",
+      "example": "不是结算依据",
+      "source": "产品规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t200",
+      "term": "方块图例",
+      "short": "用色块面积表示数量",
+      "example": "不使用边界数据",
+      "source": "产品规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t201",
+      "term": "等宽数字",
+      "short": "每位数字一样宽",
+      "example": "便于对齐表格",
+      "source": "排版规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t202",
+      "term": "行高",
+      "short": "行与行之间的距离",
+      "example": "正文取 1.6 到 1.75",
+      "source": "排版规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t203",
+      "term": "对比度",
+      "short": "文字和背景的亮度差",
+      "example": "无障碍要求达到 AA",
+      "source": "无障碍规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t204",
+      "term": "焦点",
+      "short": "键盘当前所在的控件",
+      "example": "必须看得见",
+      "source": "无障碍规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t205",
+      "term": "替代文本",
+      "short": "图片无法显示时的文字",
+      "example": "没有它就不通过构建检查的目标",
+      "source": "无障碍规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t206",
+      "term": "种子用户",
+      "short": "测试用的五位虚构用户",
+      "example": "数据全部标示例",
+      "source": "测试规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t207",
+      "term": "视口",
+      "short": "浏览器窗口的宽高",
+      "example": "桌面 1440，手机 390",
+      "source": "测试规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t208",
+      "term": "提交号",
+      "short": "构建所用的代码版本",
+      "example": "截图页脚要能读到",
+      "source": "测试规则",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t209",
+      "term": "接线盒",
+      "short": "组件背面引出电缆的盒子",
+      "example": "里面有旁路二极管",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t210",
+      "term": "旁路二极管",
+      "short": "遮挡时为电流提供旁路",
+      "example": "减少热斑",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t211",
+      "term": "热斑",
+      "short": "被遮电池局部发热",
+      "example": "严重时损坏组件",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t212",
+      "term": "背板",
+      "short": "组件背面的保护层",
+      "example": "老化后可能开裂",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t213",
+      "term": "封装胶膜",
+      "short": "粘接玻璃和电池片的膜",
+      "example": "常见为乙烯醋酸乙烯酯共聚物",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t214",
+      "term": "钢化玻璃",
+      "short": "组件正面的透光盖板",
+      "example": "也承受机械载荷",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t215",
+      "term": "铝合金边框",
+      "short": "组件四周的金属框",
+      "example": "接地时常利用它",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t216",
+      "term": "直流电缆",
+      "short": "输送直流的电缆",
+      "example": "要按电流和电压选型",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t217",
+      "term": "交流电缆",
+      "short": "逆变器之后的电缆",
+      "example": "线损按长度估算",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t218",
+      "term": "桥架",
+      "short": "敷设电缆的金属槽",
+      "example": "屋顶要考虑防腐",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t219",
+      "term": "夹具",
+      "short": "把组件固定到支架的零件",
+      "example": "抗风要核对夹具",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t220",
+      "term": "压块",
+      "short": "从上方压住组件边框的零件",
+      "example": "中压块和边压块不同",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t221",
+      "term": "地锚",
+      "short": "把支架基础锚入地面",
+      "example": "荷载由结构专业计算",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t222",
+      "term": "配重",
+      "short": "用质量压住支架",
+      "example": "屋顶允许荷载要先核对",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t223",
+      "term": "女儿墙",
+      "short": "屋顶边缘的矮墙",
+      "example": "可能造成遮挡",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t224",
+      "term": "采光带",
+      "short": "屋顶透光的带状结构",
+      "example": "组件要避开它",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t225",
+      "term": "屋面荷载",
+      "short": "屋顶能承受的重量",
+      "example": "以结构鉴定为准",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t226",
+      "term": "朝向",
+      "short": "屋面或组件的方位",
+      "example": "偏离正南要在模型里体现",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t227",
+      "term": "间距",
+      "short": "前后排组件的距离",
+      "example": "用来控制遮挡",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t228",
+      "term": "阴影遮挡",
+      "short": "前排对后排的遮挡",
+      "example": "冬至日往往最严",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t229",
+      "term": "清洗用水",
+      "short": "冲洗组件的水",
+      "example": "水质影响玻璃",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t230",
+      "term": "机器人清洗",
+      "short": "用设备代替人工清洗",
+      "example": "成本要单列",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t231",
+      "term": "巡检",
+      "short": "按规定路线查看设备",
+      "example": "记录缺陷不打分",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t232",
+      "term": "缺陷",
+      "short": "设备偏离正常状态",
+      "example": "分级以运行规程为准",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t233",
+      "term": "备件",
+      "short": "用于更换的零件",
+      "example": "库存不是健康分",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t234",
+      "term": "计划停机",
+      "short": "事先安排的停运",
+      "example": "从可利用率里扣除",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t235",
+      "term": "故障停机",
+      "short": "意外造成的停运",
+      "example": "与计划停机分开统计",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t236",
+      "term": "告警",
+      "short": "设备报出的异常信号",
+      "example": "要有时间和设备编号",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t237",
+      "term": "遥测",
+      "short": "远方送来的测量值",
+      "example": "没有核验数据时不编造",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t238",
+      "term": "遥信",
+      "short": "远方送来的开关状态",
+      "example": "同样要有来源",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t239",
+      "term": "通信中断",
+      "short": "监控通道不通",
+      "example": "不能据此编造运行数据",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t240",
+      "term": "电度表",
+      "short": "计量电量的表计",
+      "example": "结算以它为准",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t241",
+      "term": "关口表",
+      "short": "与电网结算的表计",
+      "example": "安装在并网点",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t242",
+      "term": "双向计量",
+      "short": "分别记录用电和上网",
+      "example": "自发自用项目需要",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t243",
+      "term": "功率预测",
+      "short": "对未来短时出力的估计",
+      "example": "本产品不提供电价预测",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t244",
+      "term": "限电",
+      "short": "调度要求降低出力",
+      "example": "以调度指令为准",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t245",
+      "term": "AGC",
+      "short": "自动发电控制",
+      "example": "是否投入看调度协议",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t246",
+      "term": "AVC",
+      "short": "自动电压控制",
+      "example": "是否投入看调度协议",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t247",
+      "term": "无功补偿",
+      "short": "就地提供无功",
+      "example": "装置容量是设计输入",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t248",
+      "term": "静止无功发生器",
+      "short": "用电力电子发出无功的设备",
+      "example": "用于电压调节",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t249",
+      "term": "箱变",
+      "short": "把逆变器交流升压的变压器",
+      "example": "容量按回路选取",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t250",
+      "term": "开关站",
+      "short": "汇集出线的开关设备场所",
+      "example": "大型地面电站常见",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t251",
+      "term": "集电线路",
+      "short": "把箱变连到开关站的线路",
+      "example": "线损按它估算",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t252",
+      "term": "送出线路",
+      "short": "从电站到电网的线路",
+      "example": "由接网方案确定",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t253",
+      "term": "对侧变电站",
+      "short": "送出线路接入的变电站",
+      "example": "间隔是否空闲以电网答复为准",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t254",
+      "term": "间隔",
+      "short": "变电站里的一回出线位置",
+      "example": "占用情况不是公开承诺",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t255",
+      "term": "保护定值",
+      "short": "继电保护的动作门槛",
+      "example": "由调度或设计给出",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t256",
+      "term": "防雷",
+      "short": "减少雷击损坏的措施",
+      "example": "接地电阻要检测",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t257",
+      "term": "接地电阻",
+      "short": "接地装置对地的电阻",
+      "example": "单位是欧姆",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t258",
+      "term": "等电位",
+      "short": "把金属部分连到同一电位",
+      "example": "减少接触电压",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t259",
+      "term": "消防通道",
+      "short": "灭火和疏散用的通道",
+      "example": "组件布置要留出",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t260",
+      "term": "安全距离",
+      "short": "带电部分与人体或构筑物的最小距离",
+      "example": "以规程为准",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t261",
+      "term": "运维通道",
+      "short": "人员行走和搬运的通道",
+      "example": "宽度在总图里标出",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t262",
+      "term": "围栏",
+      "short": "电站边界的隔离",
+      "example": "不是土地权属证明",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t263",
+      "term": "土地性质",
+      "short": "地块的法定用途",
+      "example": "以不动产或规划文件为准",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t264",
+      "term": "屋顶产权",
+      "short": "屋面属于谁",
+      "example": "合同里写明",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t265",
+      "term": "租赁期限",
+      "short": "使用屋顶或土地的年限",
+      "example": "与评估年限对照",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t266",
+      "term": "备案证",
+      "short": "完成备案的凭证",
+      "example": "容量以它载明的为准",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t267",
+      "term": "接入系统方案",
+      "short": "如何与电网连接的技术文件",
+      "example": "以审定稿为准",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t268",
+      "term": "购售电合同",
+      "short": "结算电量的合同",
+      "example": "价格条款以合同原文为准",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t269",
+      "term": "调度协议",
+      "short": "电站服从调度的协议",
+      "example": "限电和考核看这里",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t270",
+      "term": "并网验收",
+      "short": "投运前的检查",
+      "example": "结论以验收文件为准",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t271",
+      "term": "试运行",
+      "short": "正式商运前的运行",
+      "example": "电量是否结算看协议",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t272",
+      "term": "商运",
+      "short": "正式商业运行",
+      "example": "日期以并网文件为准",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t273",
+      "term": "保险",
+      "short": "对财产或责任的合同",
+      "example": "保费是成本输入",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t274",
+      "term": "质保",
+      "short": "厂家对设备的保证期限",
+      "example": "衰减承诺以质保书为准，不是本平台的承诺",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t275",
+      "term": "组件规格书",
+      "short": "厂家给出的电气参数",
+      "example": "温度系数从这里读取",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t276",
+      "term": "开路电压",
+      "short": "不接负载时的电压",
+      "example": "低温下会升高",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t277",
+      "term": "短路电流",
+      "short": "输出端短接时的电流",
+      "example": "辐照高时增大",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t278",
+      "term": "最大功率电压",
+      "short": "最大功率点的电压",
+      "example": "组串设计要用它",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t279",
+      "term": "最大功率电流",
+      "short": "最大功率点的电流",
+      "example": "汇流设计要用它",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t280",
+      "term": "填充因子",
+      "short": "实际最大功率与开路电压乘短路电流之比",
+      "example": "反映电池片质量",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t281",
+      "term": "双面组件",
+      "short": "背面也能接收辐照的组件",
+      "example": "背面增益要单列假设",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t282",
+      "term": "背面增益",
+      "short": "背面多发的电量比例",
+      "example": "与地面反射率有关",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t283",
+      "term": "反射率",
+      "short": "地面把光反射上去的比例",
+      "example": "默认值必须写明",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t284",
+      "term": "光谱",
+      "short": "辐射按波长的分布",
+      "example": "标准测试用 AM1.5",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t285",
+      "term": "大气质量",
+      "short": "阳光穿过大气的路径倍数",
+      "example": "AM1.5 是一种标准光谱",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t286",
+      "term": "太阳高度角",
+      "short": "太阳与地平线的夹角",
+      "example": "影响斜面辐照",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t287",
+      "term": "太阳方位角",
+      "short": "太阳在水平面上的方向",
+      "example": "与组件方位一起使用",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t288",
+      "term": "赤纬",
+      "short": "太阳直射点的纬度",
+      "example": "代表日计算会用到",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t289",
+      "term": "代表日",
+      "short": "用一天代表一个月的算法",
+      "example": "月均模型的一种",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t290",
+      "term": "逐时",
+      "short": "按小时计算",
+      "example": "比月均模型更细",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t291",
+      "term": "月均",
+      "short": "按月平均后计算",
+      "example": "与逐时模型有差别",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t292",
+      "term": "不确定度",
+      "short": "结果可能偏离的范围",
+      "example": "用区间表示，不说成单点承诺",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t293",
+      "term": "P50",
+      "short": "有一半可能高于该值的估计",
+      "example": "资源评估常用",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t294",
+      "term": "P90",
+      "short": "有九成可能高于该值的估计",
+      "example": "比 P50 更保守",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t295",
+      "term": "再分析",
+      "short": "用模式回算的气象资料",
+      "example": "不是测风塔实测",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t296",
+      "term": "测风塔",
+      "short": "现场测量风速的塔",
+      "example": "外推前要说明是否有它",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t297",
+      "term": "测光站",
+      "short": "现场测量辐照的站",
+      "example": "卫星数据不能替代它做竣工结算",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t298",
+      "term": "卫星辐照",
+      "short": "由卫星反演的辐照",
+      "example": "要注明产品和时段",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t299",
+      "term": "网格",
+      "short": "资料的空间分辨率",
+      "example": "例如 0.5 度",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t300",
+      "term": "气候态",
+      "short": "多年平均",
+      "example": "不是某一年的实测",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t301",
+      "term": "典型气象年",
+      "short": "用多年资料拼出的代表年",
+      "example": "用于逐时模拟",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t302",
+      "term": "水平轴",
+      "short": "风机绕水平轴旋转",
+      "example": "与垂直轴区分",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t303",
+      "term": "叶轮直径",
+      "short": "风轮扫过圆的直径",
+      "example": "与功率相关",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t304",
+      "term": "扫风面积",
+      "short": "叶轮扫过的圆面积",
+      "example": "功率与它成正比的理论关系要写条件",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t305",
+      "term": "桨距",
+      "short": "叶片角度",
+      "example": "用于限功率",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t306",
+      "term": "偏航",
+      "short": "机舱对准风向",
+      "example": "偏航误差是损失项",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t307",
+      "term": "齿轮箱",
+      "short": "提高转速的机械部件",
+      "example": "直驱机型没有它",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t308",
+      "term": "直驱",
+      "short": "发电机与叶轮同转速",
+      "example": "与双馈区分",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t309",
+      "term": "双馈",
+      "short": "转子通过变流器与电网交换功率",
+      "example": "一种常见机型",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t310",
+      "term": "变流器",
+      "short": "风机或储能里的电力电子装置",
+      "example": "负责变频或充放",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t311",
+      "term": "塔筒",
+      "short": "支撑机舱的筒",
+      "example": "高度影响风速",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t312",
+      "term": "机舱",
+      "short": "塔筒顶部的设备舱",
+      "example": "里面有传动和发电部件",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t313",
+      "term": "基础",
+      "short": "塔筒或支架下面的结构",
+      "example": "工程量由结构专业给出",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t314",
+      "term": "道路",
+      "short": "施工和运维用的路",
+      "example": "造价里可单列",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t315",
+      "term": "集电海缆",
+      "short": "海上风电的海底电缆",
+      "example": "陆上项目没有这一项",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t316",
+      "term": "海上升压站",
+      "short": "海上汇集升压的平台",
+      "example": "只在海上项目出现",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t317",
+      "term": "登陆点",
+      "short": "海缆上岸的位置",
+      "example": "以核准或批复为准",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t318",
+      "term": "电化学储能",
+      "short": "用电池储存电能",
+      "example": "与抽水蓄能区分",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t319",
+      "term": "磷酸铁锂",
+      "short": "一种锂离子电池正极材料",
+      "example": "电站要写明化学体系",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t320",
+      "term": "液流电池",
+      "short": "电解液存在罐里的电池",
+      "example": "功率和容量可以分开",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t321",
+      "term": "电池舱",
+      "short": "放置电池的集装箱",
+      "example": "温控是假设项",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t322",
+      "term": "消防系统",
+      "short": "电池舱的灭火设施",
+      "example": "以设计文件为准",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t323",
+      "term": "热管理",
+      "short": "控制电池温度",
+      "example": "影响日历衰减假设",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t324",
+      "term": "电池管理系统",
+      "short": "监测单体并管理充放",
+      "example": "不替代结算表计",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t325",
+      "term": "能量管理系统",
+      "short": "安排充放计划的软件",
+      "example": "策略是输入",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t326",
+      "term": "功率变换系统",
+      "short": "连接电池与交流电网的装置",
+      "example": "效率要单列",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t327",
+      "term": "单体",
+      "short": "电池最小单元",
+      "example": "一致性看单体差异",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t328",
+      "term": "模组",
+      "short": "若干单体组成的模块",
+      "example": "更换有时以模组为单位",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t329",
+      "term": "电池簇",
+      "short": "若干模组串联",
+      "example": "电压按簇计算",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t330",
+      "term": "额定能量",
+      "short": "电池标称可存电量",
+      "example": "单位千瓦时",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t331",
+      "term": "可用能量",
+      "short": "考虑放电深度后的电量",
+      "example": "比额定能量小",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t332",
+      "term": "充放电倍率",
+      "short": "电流相对容量的倍数",
+      "example": "高倍率影响寿命",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t333",
+      "term": "日历寿命",
+      "short": "按时间计算的寿命",
+      "example": "与循环寿命并列",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t334",
+      "term": "循环寿命",
+      "short": "按充放次数计算的寿命",
+      "example": "与放电深度有关",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t335",
+      "term": "辅助用电",
+      "short": "电池舱自己消耗的电",
+      "example": "从放电量里扣除或单列",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t336",
+      "term": "站用电",
+      "short": "电站自身消耗的电",
+      "example": "与上网电量不同",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t337",
+      "term": "上网电量",
+      "short": "送入电网的电量",
+      "example": "以关口表为准",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t338",
+      "term": "发电量",
+      "short": "设备发出的电量",
+      "example": "要说明是直流还是交流",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t339",
+      "term": "厂用电率",
+      "short": "站用电占发电量的比例",
+      "example": "是假设或实测都要标明",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t340",
+      "term": "弃电率",
+      "short": "未发出电量占可发电量的比例",
+      "example": "以监测发布为准",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t341",
+      "term": "同时率",
+      "short": "负荷或出力同时出现的比例",
+      "example": "用于容量估算",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t342",
+      "term": "负荷曲线",
+      "short": "用电功率随时间变化",
+      "example": "来自用户电费单或表计",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t343",
+      "term": "电费单",
+      "short": "供电企业出具的账单",
+      "example": "可以提取用电量和电价",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t344",
+      "term": "基本电费",
+      "short": "按容量或需量收取的费用",
+      "example": "与电度电费分开",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t345",
+      "term": "需量",
+      "short": "计量周期内的最大平均功率",
+      "example": "需量电费按它计算",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t346",
+      "term": "电度电费",
+      "short": "按电量收取的费用",
+      "example": "分时用户按段计",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t347",
+      "term": "力调电费",
+      "short": "按功率因数调整的电费",
+      "example": "规则以省级文件为准",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t348",
+      "term": "输配电价",
+      "short": "使用电网的价格",
+      "example": "按监管周期文件",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t349",
+      "term": "系统运行费",
+      "short": "系统运行相关的单列费用",
+      "example": "以现行电价构成文件为准",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t350",
+      "term": "线损费",
+      "short": "上网环节线损对应的费用",
+      "example": "与目录电价构成一起看",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t351",
+      "term": "政府性基金及附加",
+      "short": "随电费征收的基金",
+      "example": "标准以联合通知为准",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t352",
+      "term": "交叉补贴",
+      "short": "不同用户之间的电价调节",
+      "example": "是否单列以文件为准",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t353",
+      "term": "分时",
+      "short": "不同钟点不同电价",
+      "example": "时段以省级文件为准",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t354",
+      "term": "季节时段",
+      "short": "随季节变化的峰谷时钟",
+      "example": "要写明适用月份",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t355",
+      "term": "深谷",
+      "short": "比谷段更低的时段",
+      "example": "不是每省都有",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t356",
+      "term": "浮动电价",
+      "short": "在基准上加减的价格",
+      "example": "公式以文件为准",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t357",
+      "term": "基准价",
+      "short": "浮动或衔接使用的参照价",
+      "example": "煤电基准价是一种",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t358",
+      "term": "煤电基准价",
+      "short": "燃煤发电标杆或基准价格",
+      "example": "衔接规则以价格文件为准",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t359",
+      "term": "容量电价",
+      "short": "按容量支付的价格",
+      "example": "与电量电价分开",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t360",
+      "term": "电量电价",
+      "short": "按发出或使用的电量支付",
+      "example": "与容量电价并列时要写明",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t361",
+      "term": "现货出清",
+      "short": "现货市场确定的价格和电量",
+      "example": "以交易中心发布为准",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t362",
+      "term": "节点电价",
+      "short": "电网某节点的价格",
+      "example": "不是全省一个数",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t363",
+      "term": "阻塞",
+      "short": "线路容量限制造成的价差",
+      "example": "解释见市场规则",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t364",
+      "term": "辅助服务",
+      "short": "调频调压等电网服务",
+      "example": "补偿以规则为准",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t365",
+      "term": "调频",
+      "short": "跟随频率指令调节功率",
+      "example": "储能可以参与，是否中标看市场",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t366",
+      "term": "调峰",
+      "short": "为平衡负荷而调整出力",
+      "example": "与电能量市场分开看",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t367",
+      "term": "备用",
+      "short": "为应对突发而预留的容量",
+      "example": "补偿标准以规则为准",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t368",
+      "term": "黑启动",
+      "short": "电网全停后恢复的能力",
+      "example": "是否具备以试验记录为准",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t369",
+      "term": "一次调频",
+      "short": "机组自动响应频率变化",
+      "example": "参数以规程为准",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t370",
+      "term": "惯量",
+      "short": "系统抵抗频率变化的能力",
+      "example": "解释用物理定义，不引申结论",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t371",
+      "term": "短路容量",
+      "short": "并网点短路电流对应的容量",
+      "example": "用于评估接入影响",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t372",
+      "term": "渗透率",
+      "short": "新能源电力占负荷的比例",
+      "example": "统计口径要写明",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t373",
+      "term": "消纳",
+      "short": "新能源电量被用掉",
+      "example": "监测值以发布为准",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t374",
+      "term": "外送",
+      "short": "电力送到其他地区",
+      "example": "价格以核定文件为准",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t375",
+      "term": "省间",
+      "short": "跨省的交易或输送",
+      "example": "规则与省内不同",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t376",
+      "term": "电力交易中心",
+      "short": "组织电力交易的机构",
+      "example": "出清和结算看它的公告",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t377",
+      "term": "售电公司",
+      "short": "向用户售电的市场主体",
+      "example": "与电网代理购电不同",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t378",
+      "term": "批发",
+      "short": "发电与售电之间的市场",
+      "example": "用户侧零售是另一层",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t379",
+      "term": "零售",
+      "short": "面向用户的售电",
+      "example": "合同价格不是本平台预测",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t380",
+      "term": "偏差考核",
+      "short": "对偏离合约的结算",
+      "example": "公式以规则原文为准",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t381",
+      "term": "曲线",
+      "short": "分时段电量安排",
+      "example": "合同里会规定",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t382",
+      "term": "典型日",
+      "short": "代表一天的负荷或出力",
+      "example": "要说明如何选取",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t383",
+      "term": "工作日",
+      "short": "通常周一到周五",
+      "example": "电价时段有时区分",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t384",
+      "term": "节假日",
+      "short": "国务院办公厅公布的放假安排",
+      "example": "推送窗口会用到",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t385",
+      "term": "北京时间",
+      "short": "中国标准时间",
+      "example": "日期按它计算",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t386",
+      "term": "会计年度",
+      "short": "财务统计的年度",
+      "example": "不一定是自然年",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t387",
+      "term": "运营期",
+      "short": "项目投入运行后的年限",
+      "example": "评估年限是输入",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t388",
+      "term": "建设期",
+      "short": "开工到投运",
+      "example": "投资发生在这个阶段",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t389",
+      "term": "总投资",
+      "short": "建设花费的全部资金",
+      "example": "口径要写明是否含税",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t390",
+      "term": "单位投资",
+      "short": "总投资除以容量",
+      "example": "单位是元每千瓦",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t391",
+      "term": "流动资金",
+      "short": "运营需要的周转资金",
+      "example": "未计入时标未计",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t392",
+      "term": "折旧",
+      "short": "资产价值按年分摊",
+      "example": "税法折旧与会计折旧可能不同",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t393",
+      "term": "摊销",
+      "short": "无形资产按年分摊",
+      "example": "未计入时标未计",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t394",
+      "term": "维修费",
+      "short": "修理和更换的费用",
+      "example": "可含在运维费里，但要说明",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t395",
+      "term": "人工费",
+      "short": "人员工资",
+      "example": "是成本输入",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t396",
+      "term": "保险费",
+      "short": "购买保险的支出",
+      "example": "按年计入",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t397",
+      "term": "土地租金",
+      "short": "使用土地的费用",
+      "example": "合同年限要对照",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t398",
+      "term": "屋顶租金",
+      "short": "使用屋顶的费用",
+      "example": "有的按电量分成",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t399",
+      "term": "分成",
+      "short": "按收入或电量支付的比例",
+      "example": "是合同条款，不是测算结论",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t400",
+      "term": "贷款",
+      "short": "借入的资金",
+      "example": "利率和年限是输入",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t401",
+      "term": "等额本金",
+      "short": "每年还的本金相同",
+      "example": "利息逐期减少",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t402",
+      "term": "等额本息",
+      "short": "每年还款总额相同",
+      "example": "本金和利息的结构在变",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t403",
+      "term": "宽限期",
+      "short": "只付息不还本的时期",
+      "example": "要在现金流里写明",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t404",
+      "term": "资本金比例",
+      "short": "资本金占总投资的比例",
+      "example": "其余视为借款时要说明",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t405",
+      "term": "所得税率",
+      "short": "所得税占利润的比例",
+      "example": "优惠未核实就标未计",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t406",
+      "term": "三免三减半",
+      "short": "一种所得税优惠说法",
+      "example": "是否适用以税务机关认定为准",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t407",
+      "term": "即征即退",
+      "short": "增值税的一种处理",
+      "example": "是否适用标未计",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t408",
+      "term": "残值率",
+      "short": "期末残值占总投资的比例",
+      "example": "未填写就标未计",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t409",
+      "term": "折现",
+      "short": "把未来金额换成现在的金额",
+      "example": "用折现率",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t410",
+      "term": "年金",
+      "short": "每年相同的金额",
+      "example": "运维费有时按年金",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t411",
+      "term": "终值",
+      "short": "期末的金额",
+      "example": "残值是一种终值",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t412",
+      "term": "名义值",
+      "short": "含通货膨胀的金额",
+      "example": "与实际值区分",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t413",
+      "term": "实际值",
+      "short": "扣除通货膨胀后的金额",
+      "example": "口径要写明",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t414",
+      "term": "通货膨胀",
+      "short": "物价上涨",
+      "example": "未计入时标未计",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t415",
+      "term": "汇率",
+      "short": "两种货币的比价",
+      "example": "国内测算默认人民币",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t416",
+      "term": "人民币",
+      "short": "国内金额的货币",
+      "example": "报告里写元",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t417",
+      "term": "含税",
+      "short": "金额里包括税款",
+      "example": "与不含税并列时必须标明",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t418",
+      "term": "不含税",
+      "short": "金额里不包括税款",
+      "example": "电价文件有时单列",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t419",
+      "term": "到户价",
+      "short": "用户最终支付的价格",
+      "example": "构成见电价文件",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t420",
+      "term": "上网电价",
+      "short": "发电上网的结算价格",
+      "example": "机制或市场以项目类型为准",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t421",
+      "term": "标杆电价",
+      "short": "历史上按区域规定的价格",
+      "example": "是否仍适用要看文件",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t422",
+      "term": "竞价",
+      "short": "通过报价确定价格或容量",
+      "example": "结果以公告为准",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t423",
+      "term": "竞价上限",
+      "short": "允许的最高报价",
+      "example": "以当年通知为准",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t424",
+      "term": "机制电量比例",
+      "short": "机制电量占上网电量的比例",
+      "example": "以条款原文为准",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t425",
+      "term": "存量项目",
+      "short": "文件规定的时间点之前的项目",
+      "example": "划分日期以原文为准",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t426",
+      "term": "增量项目",
+      "short": "文件规定的时间点之后的项目",
+      "example": "形成方式与存量不同",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t427",
+      "term": "全容量并网",
+      "short": "全部容量完成并网",
+      "example": "时间点影响项目划分时以原文为准",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t428",
+      "term": "公示",
+      "short": "对外公布征求意见或结果",
+      "example": "还不是生效文件时要标明",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t429",
+      "term": "公告",
+      "short": "正式对外发布",
+      "example": "引用要带日期和链接",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t430",
+      "term": "通知",
+      "short": "一种公文",
+      "example": "看文号和施行日期",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t431",
+      "term": "办法",
+      "short": "一种规章或规范性文件",
+      "example": "效力以发布机关为准",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t432",
+      "term": "规定",
+      "short": "提出要求的文件",
+      "example": "引用条款号",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t433",
+      "term": "指南",
+      "short": "办事或技术指导",
+      "example": "不代替法规",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t434",
+      "term": "标准",
+      "short": "经标准化机构发布的技术文件",
+      "example": "要写标准号和年代",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t435",
+      "term": "强制性标准",
+      "short": "必须执行的标准",
+      "example": "与推荐性标准区分",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t436",
+      "term": "推荐性标准",
+      "short": "可以选用的标准",
+      "example": "代号里常有斜线 T",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t437",
+      "term": "局部修订",
+      "short": "只改标准的一部分",
+      "example": "引用要写年版",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t438",
+      "term": "代替",
+      "short": "新文件使旧文件失效",
+      "example": "界面应链到新文件",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t439",
+      "term": "现行",
+      "short": "现在仍然有效",
+      "example": "过了废止日就不是现行",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t440",
+      "term": "有效期",
+      "short": "文件或数据可以使用的期间",
+      "example": "过了就标过期",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t441",
+      "term": "复核",
+      "short": "再次核对来源",
+      "example": "临近日期要提示",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t442",
+      "term": "快照哈希",
+      "short": "原文副本的校验值",
+      "example": "用来发现改动",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t443",
+      "term": "来源等级",
+      "short": "一手官方、协会、媒体或学术",
+      "example": "政策事实优先一手",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t444",
+      "term": "辖区",
+      "short": "文件适用的地域",
+      "example": "全国、省或市",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t445",
+      "term": "适用地区",
+      "short": "文件写明的地理范围",
+      "example": "问答时要匹配用户省份",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t446",
+      "term": "栏目",
+      "short": "网站上的一个列表入口",
+      "example": "不是整站首页",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t447",
+      "term": "人工采集",
+      "short": "网站不允许自动抓取时由人录入",
+      "example": "要标明",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t448",
+      "term": "机器人协议",
+      "short": "网站对自动访问的说明",
+      "example": "不允许的栏目不抓",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t449",
+      "term": "限速",
+      "short": "降低访问频率",
+      "example": "避免影响对方网站",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t450",
+      "term": "审核",
+      "short": "人在企业微信里确认后才入库",
+      "example": "未审核不检索",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t451",
+      "term": "发布",
+      "short": "审核通过后对外可见",
+      "example": "与草稿区分",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t452",
+      "term": "草稿",
+      "short": "还不能对外的文本",
+      "example": "审批前不是发布",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t453",
+      "term": "作废",
+      "short": "超时或被拒绝的审批",
+      "example": "不会自动发出",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t454",
+      "term": "抽检",
+      "short": "从已发布内容里取样检查",
+      "example": "分数来自专家，不预填",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t455",
+      "term": "失败样本",
+      "short": "抽检分数低的条目",
+      "example": "进入后续优化",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t456",
+      "term": "优化集",
+      "short": "用来改进的题目",
+      "example": "与门禁集分开",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t457",
+      "term": "误杀",
+      "short": "不该拦截的正常问答被拦截",
+      "example": "用事实句回归",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t458",
+      "term": "拒答",
+      "short": "不回答越界问题",
+      "example": "并说明可以提供的事实",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t459",
+      "term": "中性改写",
+      "short": "去掉越界结论后保留事实",
+      "example": "不是给建议",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t460",
+      "term": "可读性",
+      "short": "句子和段落是否容易读",
+      "example": "超长就改写一次",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t461",
+      "term": "句长",
+      "short": "一句有多少字",
+      "example": "平均不超过 35 字是目标",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t462",
+      "term": "段长",
+      "short": "一段有多少句",
+      "example": "目标不超过 4 句",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t463",
+      "term": "单位",
+      "short": "数字后面的量纲",
+      "example": "千瓦时、元、年都是单位",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t464",
+      "term": "区间",
+      "short": "结果的上下范围",
+      "example": "代替单一精确点",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t465",
+      "term": "对照",
+      "short": "和另一份计算比较",
+      "example": "差在容差内才通过",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t466",
+      "term": "容差",
+      "short": "允许的最大差别",
+      "example": "超过就失败",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t467",
+      "term": "回归",
+      "short": "改代码后重跑旧测试",
+      "example": "防止算式被改坏",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t468",
+      "term": "契约",
+      "short": "技能必须返回的字段",
+      "example": "缺了就不能当完整结果",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t469",
+      "term": "版本",
+      "short": "技能或文件的第几稿",
+      "example": "报告里要写出来",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t470",
+      "term": "变量表",
+      "short": "公式里每个符号的意思",
+      "example": "和单位、出处放在一起",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t471",
+      "term": "编号",
+      "short": "图、表、式的顺序号",
+      "example": "正文引用它",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t472",
+      "term": "目录",
+      "short": "章节和页码",
+      "example": "文字处理软件里更新域后才准",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t473",
+      "term": "页眉",
+      "short": "每页顶部的文字",
+      "example": "可放文件名",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t474",
+      "term": "页脚",
+      "short": "每页底部的文字",
+      "example": "含页码和版本",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t475",
+      "term": "封面",
+      "short": "文档第一页",
+      "example": "公文版写资料汇编",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t476",
+      "term": "免责页",
+      "short": "说明文件性质的一页",
+      "example": "没有它不能下载",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t477",
+      "term": "水印",
+      "short": "页面上的浅色标记",
+      "example": "试用导出写试用",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t478",
+      "term": "字体",
+      "short": "文字的字形",
+      "example": "公文版标题用黑体、正文用仿宋",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t479",
+      "term": "字号",
+      "short": "文字的大小",
+      "example": "正文常用三号的说法只在公文版",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t480",
+      "term": "三线表",
+      "short": "只有顶线、栏目线和底线的表",
+      "example": "报告里使用",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t481",
+      "term": "交叉引用",
+      "short": "正文指向图号或表号",
+      "example": "编号变了引用也要变",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t482",
+      "term": "更新域",
+      "short": "让目录页码重新计算",
+      "example": "文字处理软件里的操作",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t483",
+      "term": "子集",
+      "short": "只包含常用字的字体文件",
+      "example": "用来减小首屏体积",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t484",
+      "term": "令牌",
+      "short": "设计里的颜色和间距变量",
+      "example": "页面引用变量而不是随手写色值",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t485",
+      "term": "主色",
+      "short": "界面的主要深色",
+      "example": "本版用墨绿",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t486",
+      "term": "强调色",
+      "short": "按钮和图形用的绿色",
+      "example": "不用于小字",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t487",
+      "term": "状态色",
+      "short": "表示警示或错误",
+      "example": "与主色分开",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t488",
+      "term": "深色模式",
+      "short": "深背景浅文字",
+      "example": "对比度仍要够",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t489",
+      "term": "减弱动效",
+      "short": "系统要求减少动画",
+      "example": "这时不做位移动画",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t490",
+      "term": "无障碍",
+      "short": "让更多人能使用",
+      "example": "图表要有数据表",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t491",
+      "term": "屏幕阅读",
+      "short": "把界面读出来",
+      "example": "控件要有名称",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t492",
+      "term": "键盘",
+      "short": "不用鼠标操作",
+      "example": "焦点要看得见",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t493",
+      "term": "空状态",
+      "short": "还没有数据时的页面",
+      "example": "给出下一步而不是空白",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t494",
+      "term": "折叠",
+      "short": "先藏起次要内容",
+      "example": "专业细节默认折叠",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t495",
+      "term": "首屏",
+      "short": "打开页面第一眼看见的区域",
+      "example": "卡片数量有上限",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t496",
+      "term": "合规条",
+      "short": "每页底部的说明",
+      "example": "提醒测算值不是承诺",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t497",
+      "term": "原因",
+      "short": "为什么显示这个模块",
+      "example": "个性化时必须有",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t498",
+      "term": "关闭个性化",
+      "short": "回到通用首页",
+      "example": "设置里可以做",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t499",
+      "term": "我的标签",
+      "short": "系统正在使用的标记",
+      "example": "可以逐个删除",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t500",
+      "term": "画像",
+      "short": "保存的角色和关注",
+      "example": "从旧偏好迁移",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t501",
+      "term": "阅读模式",
+      "short": "新手或专业",
+      "example": "学生和户用默认新手",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t502",
+      "term": "导出",
+      "short": "把结果存成文件",
+      "example": "只读成员不能导出",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t503",
+      "term": "试用角标",
+      "short": "试用期内文件上的标记",
+      "example": "写在右下角",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t504",
+      "term": "补差",
+      "short": "升级时按剩余天数计算的金额",
+      "example": "规则待确认前不收款",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t505",
+      "term": "降级",
+      "short": "改到较低档",
+      "example": "下个周期才生效",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t506",
+      "term": "重置时间",
+      "short": "额度重新计算的时刻",
+      "example": "按北京时间零点",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t507",
+      "term": "超额",
+      "short": "用完了额度",
+      "example": "说明何时重置",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t508",
+      "term": "邀请",
+      "short": "把人加入团队",
+      "example": "满额会拒绝",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t509",
+      "term": "移除",
+      "short": "把人移出团队",
+      "example": "之后不能再看团队项目",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t510",
+      "term": "管理员",
+      "short": "可以邀请和移除成员",
+      "example": "团队角色之一",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t511",
+      "term": "成员",
+      "short": "可以使用团队项目",
+      "example": "可以按权益导出",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t512",
+      "term": "外部顾问",
+      "short": "只读角色",
+      "example": "不能导出",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t513",
+      "term": "共享项目",
+      "short": "团队里多人可见的项目",
+      "example": "仍只含事实和测算",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t514",
+      "term": "用量",
+      "short": "做了多少次操作",
+      "example": "不做排名",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t515",
+      "term": "周报",
+      "short": "一周的操作汇总",
+      "example": "发出前要企业微信确认",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t516",
+      "term": "季度简报",
+      "short": "一个季度的资料汇总",
+      "example": "团队档功能",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t517",
+      "term": "政策速读",
+      "short": "短时间读完一份文件的结构",
+      "example": "必须链到原文",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t518",
+      "term": "每日一数",
+      "short": "首页上的一个带出处数字",
+      "example": "样本不能显示成实测",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t519",
+      "term": "上手清单",
+      "short": "新用户的前几步",
+      "example": "第 1 天显示",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t520",
+      "term": "周回顾",
+      "short": "第 7 天的汇总",
+      "example": "列出已做和未做",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t521",
+      "term": "连续使用",
+      "short": "连续打开的天数",
+      "example": "中断就重新计",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t522",
+      "term": "价差",
+      "short": "峰段与谷段价格的差",
+      "example": "用已公布价格，不预测",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t523",
+      "term": "窗口",
+      "short": "允许做某件事的时间段",
+      "example": "推送也有时间窗口",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t524",
+      "term": "解绑",
+      "short": "取消群机器人地址",
+      "example": "之后不再推送",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t525",
+      "term": "群机器人",
+      "short": "企业微信群里的通知地址",
+      "example": "由用户自己填写",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t526",
+      "term": "分享图",
+      "short": "五比四的摘要图",
+      "example": "含截至和链接",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t527",
+      "term": "原文链接",
+      "short": "文件发布页的网址",
+      "example": "回答和分享都要带",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    },
+    {
+      "id": "t528",
+      "term": "二维码",
+      "short": "用图形表示链接",
+      "example": "扫码打开原文",
+      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "source_url": "",
+      "as_of": "2026-10-27",
+      "review_status": "pending_wecom"
+    }
+  ]
+}
