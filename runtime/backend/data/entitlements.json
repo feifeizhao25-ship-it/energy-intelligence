@@ -89,7 +89,7 @@
       "name": "标准·数据库订阅",
       "name_en": "Professional",
       "description": "个人从业者、业主、分析师",
-      "description_en": "For analysts developing reviewable investment cases.",
+      "description_en": "For analysts developing reviewable calculation cases.",
       "price": {
         "monthly_cny": 0,
         "yearly_cny": 1980

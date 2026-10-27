@@ -34,7 +34,7 @@ def test_global_docx_contains_no_chinese_text():
         "investment",
         TEMPLATES["investment"],
         calc_financial_metrics(data["financial"]),
-        "Investment Analysis Report",
+        "Calculation Report",
         "confidential",
         "global",
     )
@@ -54,7 +54,7 @@ def test_global_pdf_contains_no_chinese_text():
         "investment",
         TEMPLATES["investment"],
         calc_financial_metrics(data["financial"]),
-        "Investment Analysis Report",
+        "Calculation Report",
         "confidential",
         "global",
     )
@@ -72,7 +72,7 @@ def test_global_demo_export_sanitizes_untranslated_project_fields(kind):
         "investment",
         TEMPLATES["investment"],
         calc_financial_metrics(data["financial"]),
-        "Investment Analysis Report",
+        "Calculation Report",
         "confidential",
         "global",
     )

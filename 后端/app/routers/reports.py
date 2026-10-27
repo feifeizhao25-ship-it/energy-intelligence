@@ -280,7 +280,7 @@ TEMPLATES: Dict[str, TemplateInfo] = {
     "investment": TemplateInfo(
         id="investment",
         name_zh="投资分析报告",
-        name_en="Investment Analysis Report",
+        name_en="Calculation Report",
         description_zh="执行摘要、市场分析、财务模型、敏感性分析、ESG评估、投资建议",
         description_en="Executive summary, market analysis, financial modeling, sensitivity analysis, ESG assessment, investment recommendation",
         sections_zh=[

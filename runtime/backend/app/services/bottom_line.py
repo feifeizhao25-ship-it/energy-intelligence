@@ -47,6 +47,7 @@ _NEGATION_PATTERNS = (
     re.compile(r"不得用于投资决策"),
     re.compile(r"不用于投资决策"),
     re.compile(r"不是投资结论"),
+    re.compile(r"不(?:提供|承诺|给)碳收益"),
     re.compile(r"does not give investment advice", re.I),
     re.compile(r"not investment advice", re.I),
     re.compile(r"do not give investment advice", re.I),
@@ -74,6 +75,9 @@ _PATTERNS = (
     (re.compile(r"会涨|会跌"), "涨跌判断"),
     (re.compile(r"(承诺|保证).{0,8}(收益|回报|年化)"), "收益承诺"),
     (re.compile(r"稳赚|保本|必赚|无风险收益|年化保底"), "收益承诺"),
+    (re.compile(r"闭眼冲|躺赚|回本神器"), "收益黑话"),
+    (re.compile(r"目标价|这只股票|买入评级|个股代码|证券投资咨询"), "证券咨询"),
+    (re.compile(r"碳收益"), "收益承诺"),
     (re.compile(r"该不该投|能不能投|要不要投|值不值得投|可以投吗|值得\s*投(?!资|入|放|标)|该不该上(?!报|网|课|班|学)"), "投资询问"),
     # 「官方发布」只在把结论说成官方背书时命中。引用「官方发布的文件/通知」不算。
     (re.compile(r"(?:这是|属于|视为).{0,8}官方发布的(?!文件|通知|原文|政策|办法|公告|网页|链接|文本)|官方发布的(?:结论|认证|推荐|保证|承诺|背书)|官方发布(?:并|且)(?:保证|承诺|推荐)|经官方发布|国家认证|政府推荐|官方认证"), "冒充官方"),
