@@ -30,7 +30,7 @@ export {
     type DiagnosticSummary,
     createConclusionCard,
     createDiagnosticSummary,
-    determineRecommendationLevel,
+    determineReadingBand,
     determineDiagnosticStatus,
 } from './conclusion-card';
 

@@ -12,8 +12,8 @@ import {
 
 export default function ComparePage() {
     const comparison = {
-        summary: "由于方案 B 采用了更高效率的 N 型组件，IRR 提升了 1.2%，整体回本周期缩短了 0.8 年。",
-        recommendation: "建议优先考虑方案 B，尽管初始投资高出 5%，但其 LCOE 更有竞争优势。",
+        summary: "示例对照：方案 B 的 IRR 为 12.5%，方案 A 为 11.3%，回本周期相差 0.8 年。数字来自本页示例，不是实测。",
+        recommendation: "示例对照：方案 B 的 LCOE 低 0.03，初始投资高 5%。这是两组假设的差额。",
         differences: [
             { metric: "内部收益率 (IRR)", left: "11.3%", right: "12.5%", delta: "+1.2%", impact: "positive" },
             { metric: "回本周期", left: "7.0年", right: "6.2年", delta: "-0.8年", impact: "positive" },

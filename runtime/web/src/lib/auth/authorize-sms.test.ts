@@ -5,14 +5,18 @@ jest.mock('./sms-verify', () => ({ ...jest.requireActual('./sms-verify'), verify
 
 import { prisma } from '@/lib/prisma';
 import { verifySmsCode } from './sms-verify';
-import { authorizeSms } from './auth-options';
+import { authorizeSms, syntheticAccountEmail } from './auth-options';
 import { LEGAL_VERSION } from '@/lib/legal/consent';
 
 const creds = (over: Record<string, string> = {}) => ({ phone: '13800138000', code: '123456', consent: 'true', ...over });
-const row = (over = {}) => ({ id: 'u1', name: '用户_8000', email: '13800138000@xinnengyuan.ai', phone: '13800138000', plan: 'FREE', profileCompleted: false, termsVersion: LEGAL_VERSION, ...over });
+const row = (over = {}) => ({ id: 'u1', name: '用户_8000', email: syntheticAccountEmail('13800138000'), phone: '13800138000', plan: 'FREE', profileCompleted: false, termsVersion: LEGAL_VERSION, ...over });
 
 describe('短信登录 authorize', () => {
-  beforeEach(() => { jest.resetAllMocks(); jest.mocked(verifySmsCode).mockResolvedValue({ ok: true }); });
+  beforeEach(() => {
+    jest.resetAllMocks();
+    delete process.env.NENGJIAN_ACCOUNT_EMAIL_DOMAIN;
+    jest.mocked(verifySmsCode).mockResolvedValue({ ok: true });
+  });
 
   it('没勾选同意：拒绝，且不消耗验证码、不建用户', async () => {
     await expect(authorizeSms(creds({ consent: '' }))).rejects.toThrow('请先阅读并同意《服务条款》和《隐私政策》');
@@ -40,6 +44,8 @@ describe('短信登录 authorize', () => {
     expect(data.termsVersion).toBe(LEGAL_VERSION);
     expect(data.termsAcceptedAt).toBeInstanceOf(Date);
     expect(data.plan).toBe('FREE');
+    expect(data.email).toBe('13800138000@account.internal');
+    expect(String(data.email)).not.toContain('xinnengyuan.ai');
   });
 
   it('老用户首次在新版条款下登录：补记同意；版本一致则不重复写', async () => {

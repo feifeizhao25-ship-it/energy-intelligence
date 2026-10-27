@@ -93,7 +93,10 @@ describe('国内运行时过滤', () => {
         }
     });
 
-    it('源码扫描仍看到免责声明里的禁词', () => {
-        expect(findBottomLineViolations('不构成价格预测')).toEqual(['价格预测']);
+    it('「价格预测」改由运行时模式识别，源码扫描不再把免责声明里的这四个字当成禁词', () => {
+        expect(findBottomLineViolations('不构成价格预测')).toEqual([]);
+        expect(neutralizeCnText('请给出价格预测')).toBe(BOTTOM_LINE_NOTICE_ZH);
+        expect(neutralizeCnText('明年价格预测会涨')).toBe(BOTTOM_LINE_NOTICE_ZH);
+        expect(neutralizeCnText('不构成价格预测')).toBe('不构成价格预测');
     });
 });

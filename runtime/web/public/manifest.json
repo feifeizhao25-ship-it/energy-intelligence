@@ -4,7 +4,7 @@
     "description": "新能源智库：政策、数据集、测算与可核对的计算方法。艾瑞能见。",
     "start_url": "/dashboard",
     "display": "standalone",
-    "background_color": "#0f172a",
+    "background_color": "#0E2A2B",
     "theme_color": "#0E2A2B",
     "lang": "zh-CN",
     "icons": [

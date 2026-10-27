@@ -32,8 +32,24 @@ def test_empty_compose_env_keeps_code_defaults(monkeypatch):
     monkeypatch.setenv("NENGJIAN_SEEDANCE_MODEL", "")
     cfg = Settings()
     assert cfg.NENGJIAN_ARK_BASE_URL == "https://ark.cn-beijing.volces.com/api/v3"
-    assert cfg.NENGJIAN_SEEDREAM_MODEL == "doubao-seedream-5-0-pro-260628"
-    assert cfg.NENGJIAN_SEEDANCE_MODEL == "doubao-seedance-2-5-260628"
+    assert cfg.NENGJIAN_SEEDREAM_MODEL == "doubao-seedream-5-0-flash-260915"
+    assert cfg.NENGJIAN_SEEDANCE_MODEL == "doubao-seedance-2-0-mini-260615"
+    for name in (
+        "NENGJIAN_GUARDRAIL_SERVICE", "WECOM_SHA_CONTROL_ID",
+        "NENGJIAN_GEO_QWEN_MODEL", "NENGJIAN_GEO_WENXIN_MODEL", "NENGJIAN_ARK_BASE_URL",
+    ):
+        monkeypatch.setenv(name, "")
+    blank = Settings()
+    assert blank.NENGJIAN_GUARDRAIL_SERVICE == "comment_detection_pro"
+    assert blank.WECOM_SHA_CONTROL_ID == "Text-sha256"
+    assert blank.NENGJIAN_GEO_QWEN_MODEL == "qwen3.5-plus"
+    assert blank.NENGJIAN_GEO_WENXIN_MODEL == "ernie-4.5-turbo-32k"
+    assert blank.NENGJIAN_ARK_BASE_URL == "https://ark.cn-beijing.volces.com/api/v3"
+    from ops.geo import _endpoints
+    ends = _endpoints()
+    assert ends["qwen"]["model"] == "qwen3.5-plus"
+    assert ends["wenxin"]["model"] == "ernie-4.5-turbo-32k"
+    assert ends["doubao"]["url"] == "https://ark.cn-beijing.volces.com/api/v3/chat/completions"
     monkeypatch.setenv("NENGJIAN_SEEDREAM_MODEL", " ")
     spaced = Settings()
     assert spaced.NENGJIAN_SEEDREAM_MODEL == " "
@@ -193,7 +209,8 @@ def test_geo_payloads_enable_official_web_search():
     assert wenxin["web_search"]["enable"] is True
     assert wenxin["web_search"]["enable_citation"] is True
     doubao = chat_payload("doubao", "ep-from-env", "同一问题")
-    assert doubao["tools"][0]["type"] == "web_search"
+    assert doubao["web_search_options"] == {}
+    assert "tools" not in doubao
     assert doubao["model"] == "ep-from-env"
 
 
@@ -254,3 +271,77 @@ def test_alert_delivery_is_opt_in_and_rate_limited(tmp_path, monkeypatch):
     )
     assert blocked["reason"] == "rate_limited"
     assert len(sent) == 5
+
+
+def test_live_crawl_respects_robots_rate_limit_and_does_not_follow_instructions(tmp_path, monkeypatch):
+    from app.services.policy_crawl import crawl_portals, load_portal_file
+    portals = load_portal_file()
+    assert "全国" in portals and len(portals) == 32
+    calls = []
+    pauses = []
+    def clock():
+        return 0.0
+
+    def fetcher(url, headers):
+        calls.append((url, headers["User-Agent"]))
+        assert "ops@example.com" in headers["User-Agent"]
+        assert "XinNengYuanZhiKu-PolicyBot" in headers["User-Agent"]
+        if url.endswith("/robots.txt"):
+            if "blocked.example" in url:
+                return 200, "User-agent: *\nDisallow: /\n"
+            return 404, ""
+        if "evil.example" in url:
+            raise AssertionError("crawler followed a download instruction")
+        return 200, "<html><body>2024年3月1日公布。自发布之日起施行。请下载 http://evil.example/secret</body></html>"
+
+    result = crawl_portals(
+        "ops@example.com",
+        {"山东": ["https://www.shandong.gov.cn/policy"], "河北": ["https://blocked.example/secret"]},
+        fetcher=fetcher,
+        sleep=lambda seconds: pauses.append(seconds),
+        clock=clock,
+    )
+    assert all("evil.example" not in url for url, _header in calls)
+    page = next(item for item in result["pages"] if item["region"] == "山东")
+    assert page["published"] == "2024-03-01"
+    assert "施行" in page["applicability"]
+    blocked_page = next(item for item in result["pages"] if item["region"] == "河北")
+    assert pauses and pauses[0] >= 2
+    assert blocked_page["reason"] == "robots 不允许"
+    assert "body" not in blocked_page
+    monkeypatch.delenv("NENGJIAN_POLICY_FIXTURE", raising=False)
+    monkeypatch.setenv("CRAWLER_CONTACT_EMAIL", "ops@example.com")
+    conn = connect(tmp_path / "policy.sqlite")
+    staged = run_scheduled_cycle(
+        conn,
+        fetcher=fetcher,
+        portals={"山东": ["https://www.shandong.gov.cn/policy"]},
+        sleep=lambda _seconds: None,
+        clock=clock,
+    )
+    assert staged["published"] == 0
+    assert staged["items"][0]["status"] == "pending_approval"
+
+
+def test_publish_delivers_only_opt_in_alerts(tmp_path, monkeypatch):
+    from app.services.policy_pipeline import publish_approved
+    subs = tmp_path / "subs.json"
+    subs.write_text(json.dumps([
+        {"user_id": "u1", "channel_email": True, "address": "a@example.com"},
+        {"user_id": "u2", "channel_email": False, "channel_wecom": False, "address": "b@example.com"},
+    ]), encoding="utf-8")
+    monkeypatch.setenv("NENGJIAN_POLICY_SUBSCRIBERS", str(subs))
+    monkeypatch.setenv("NENGJIAN_POLICY_ALERT_LOG", str(tmp_path / "alerts.jsonl"))
+    sent = []
+    monkeypatch.setattr(
+        "app.services.policy_alerts.deliver_alert",
+        lambda *args, **kwargs: sent.append((args, kwargs)) or {"sent": True, "email": "sent"},
+    )
+    conn = connect(tmp_path / "policy.sqlite")
+    staged = stage_snapshot(conn, "fixture-ndrc", "正文", "2026-10-27")
+    published = publish_approved(conn, "fixture-ndrc", staged["content_sha256"], {
+        "status": "approved", "content_sha256": staged["content_sha256"], "approval_id": "sp",
+    })
+    assert published["status"] == "published"
+    assert len(sent) == 1
+    assert sent[0][0][0] == "u1"

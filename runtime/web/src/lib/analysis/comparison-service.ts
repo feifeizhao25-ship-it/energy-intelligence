@@ -56,8 +56,8 @@ export class ComparisonService {
 
         // AI 辅助分析摘要（此处为模拟逻辑）
         const winner = rightOut.irr > leftOut.irr ? '方案 B' : '方案 A';
-        const summary = `${winner} 在财务表现上更优。主要差异在于 ${differences[0].metric} 提升了 ${Math.abs(differences[0].delta as number * 100).toFixed(2)}%。`;
-        const recommendation = `考虑到资金成本，建议优先执行 ${winner}。`;
+        const summary = `${winner} 的 IRR 更高。主要差异在于 ${differences[0].metric} 相差 ${Math.abs(differences[0].delta as number * 100).toFixed(2)}%。`;
+        const recommendation = `两组假设的 IRR 对照：${winner} 较高。差额来自输入，不是执行结论。`;
 
         // 记录对比事件到时间线
         await prisma.projectComparison.create({

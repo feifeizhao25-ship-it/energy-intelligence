@@ -171,7 +171,8 @@ def submit_approval(template: str, content_sha256: str, transport=None) -> dict:
     creator = os.environ.get("NENGJIAN_WECOM_CREATOR", "")
     if not creator:
         return {"submitted": False, "reason": "creator_missing", "content_sha256": content_sha256}
-    control_id = os.environ.get("WECOM_SHA_CONTROL_ID", "Text-sha256")
+    from app.config import Settings
+    control_id = Settings().WECOM_SHA_CONTROL_ID or "Text-sha256"
     payload = {
         "creator_userid": creator,
         "template_id": TEMPLATES[template],

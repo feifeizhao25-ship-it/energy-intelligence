@@ -278,7 +278,7 @@ export class AssumptionManager {
                 irr: { current: 8.5, new: 8.3, delta: -0.2 },
                 lcoe: { current: 0.35, new: 0.36, delta: 0.01 }
             },
-            recommendation: "建议保持当前版本，新版本对项目收益评估影响较小"
+            recommendation: "新版本 IRR 读数与当前版本相差 0.2 个百分点。是否更换版本由使用方决定。"
         };
     }
 
