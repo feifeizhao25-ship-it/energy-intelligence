@@ -112,6 +112,7 @@ model User {
   policyAlertSubscriptions PolicyAlertSubscription[]
   policyAlertNotices       PolicyAlertNotice[]
   datasetDownloads         DatasetDownload[]
+  literatureRecords        LiteratureRecord[]
 
   @@map("users")
 }
@@ -225,6 +226,11 @@ model Project {
   reports              Report[]
   savedPapers          SavedPaper[]
   paperRecommendations ProjectPaperRecommendation[]
+  workOrders           WorkOrder[]
+  telemetrySamples     TelemetrySample[]
+  telemetryCredentials TelemetryCredential[]
+  alarmRules           AlarmRule[]
+  alarmEvents          AlarmEvent[]
 
   @@map("projects")
 }
@@ -1369,4 +1375,138 @@ model DatasetDownload {
 
   @@index([userId, createdAt])
   @@map("dataset_downloads")
+}
+
+// 运维工单。与按周生成的 maintenance_plans 分开，供业主创建、分派和留痕。
+model WorkOrder {
+  id          String    @id @default(cuid())
+  projectId   String
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title       String
+  description String    @default("")
+  type        String
+  status      String    @default("scheduled")
+  priority    String    @default("medium")
+  assignee    String?
+  dueAt       DateTime?
+  createdBy   String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  attachments WorkOrderAttachment[]
+  events      WorkOrderEvent[]
+
+  @@index([projectId, status])
+  @@map("work_orders")
+}
+
+model WorkOrderAttachment {
+  id          String    @id @default(cuid())
+  workOrderId String
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  filename    String
+  contentType String
+  sizeBytes   Int
+  content     Bytes
+  createdAt   DateTime  @default(now())
+
+  @@index([workOrderId])
+  @@map("work_order_attachments")
+}
+
+model WorkOrderEvent {
+  id          String    @id @default(cuid())
+  workOrderId String
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  actorId     String
+  action      String
+  detail      Json      @default("{}")
+  createdAt   DateTime  @default(now())
+
+  @@index([workOrderId, createdAt])
+  @@map("work_order_events")
+}
+
+model TelemetryCredential {
+  id        String    @id @default(cuid())
+  projectId String
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  label     String    @default("")
+  createdAt DateTime  @default(now())
+  revokedAt DateTime?
+
+  @@index([projectId])
+  @@map("telemetry_credentials")
+}
+
+model TelemetrySample {
+  id         String   @id @default(cuid())
+  projectId  String
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  pointId    String
+  recordedAt DateTime
+  powerKw    Float?
+  energyKwh  Float?
+  irradiance Float?
+  alarmCode  String   @default("")
+  source     String
+  createdAt  DateTime @default(now())
+
+  @@index([projectId, recordedAt])
+  @@map("telemetry_samples")
+}
+
+model AlarmRule {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  metric    String
+  operator  String
+  threshold Float
+  severity  String   @default("warning")
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@index([projectId])
+  @@map("alarm_rules")
+}
+
+model AlarmEvent {
+  id             String    @id @default(cuid())
+  projectId      String
+  project        Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  ruleId         String?
+  severity       String
+  title          String
+  observed       Float?
+  threshold      Float?
+  status         String    @default("active")
+  createdAt      DateTime  @default(now())
+  acknowledgedAt DateTime?
+
+  @@index([projectId, status])
+  @@map("alarm_events")
+}
+
+// 国内文献语料：批量导入的开放元数据与用户上传，请求路径不访问境外。
+model LiteratureRecord {
+  id          String   @id @default(cuid())
+  source      String
+  externalId  String
+  title       String
+  authors     String   @default("")
+  year        Int?
+  doi         String?
+  abstract    String   @default("")
+  pdfUrl      String?
+  licence     String   @default("")
+  licenceNote String   @default("")
+  citations   Json     @default("[]")
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  @@unique([source, externalId])
+  @@index([userId])
+  @@map("literature_records")
 }

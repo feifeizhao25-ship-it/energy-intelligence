@@ -78,10 +78,36 @@ class ApiService {
       '/api/v1/auth/login',
       body: {'email': email, 'password': password},
     );
-    final token = resp['access_token'] as String;
+    final token = _accessToken(resp);
     _token = token;
     await _secureStorage.write(key: 'energy_token', value: token);
     return token;
+  }
+
+  static Future<void> sendSms({required String phone, required bool consent}) async {
+    await _post('/api/v1/auth/sms/send', body: {'phone': phone, 'consent': consent});
+  }
+
+  static Future<String> loginWithSms({
+    required String phone,
+    required String code,
+    required bool consent,
+  }) async {
+    final resp = await _post('/api/v1/auth/sms/login', body: {
+      'phone': phone,
+      'code': code,
+      'consent': consent,
+    });
+    final token = _accessToken(resp);
+    _token = token;
+    await _secureStorage.write(key: 'energy_token', value: token);
+    return token;
+  }
+
+  static String _accessToken(Map<String, dynamic> resp) {
+    final data = resp['data'];
+    if (data is Map && data['access_token'] is String) return data['access_token'] as String;
+    return resp['access_token'] as String;
   }
 
   static Future<void> logout() async {

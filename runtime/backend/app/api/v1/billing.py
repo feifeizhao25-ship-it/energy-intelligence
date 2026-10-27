@@ -1,3 +1,4 @@
+import os
 import stripe
 from datetime import datetime, timezone
 from calendar import monthrange
@@ -15,7 +16,10 @@ from app.core.dependencies import get_current_user_id
 from app.core.database import get_db
 from app.models.user import User
 from app.models.payment_order import PaymentOrder
+from app.models.invoice_request import InvoiceRequest
 from app.services.alipay_service import alipay_service
+from app.services.alipay_reconcile import production_forbids_simulation, reconcile_orders
+from app.services.wechat_pay_service import WechatPayError, place_order, query_order, refund_order, read_config, verify_notify, decrypt_resource
 from app.services.stripe_service import stripe_service
 from app.core.subscription import PLAN_QUOTAS
 from app.services.billing_rules import renewal_quote, schedule_downgrade, refund_quote
@@ -199,6 +203,8 @@ async def alipay_notify(request: Request, db: AsyncSession = Depends(get_db)):
     """Verify Alipay RSA2 notification and atomically activate membership."""
     form = await request.form()
     params = {str(key): str(value) for key, value in form.multi_items()}
+    if params.get("simulate") == "1" or os.environ.get("PAYMENT_SIMULATION") == "1" and settings.ENVIRONMENT == "production":
+        raise HTTPException(status_code=400, detail="不接受模拟到账")
     if not alipay_service.verify_callback(params):
         raise HTTPException(status_code=400, detail="支付宝回调验签失败")
     if params.get("trade_status") not in {"TRADE_SUCCESS", "TRADE_FINISHED"}:
@@ -392,3 +398,191 @@ async def list_invoices(
         }
     except Exception:
         return {"invoices": []}
+
+
+class WechatCheckoutRequest(BaseModel):
+    plan: str
+    billing_period: Literal["monthly", "yearly"]
+    trade_type: Literal["native", "jsapi"] = "native"
+    openid: str | None = None
+
+
+@router.post("/domestic/wechat/create")
+async def create_wechat_checkout(
+    payload: WechatCheckoutRequest,
+    user_id: str = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+):
+    user = await db.get(User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="用户不存在")
+    if (user.market or "cn") != "cn":
+        raise HTTPException(status_code=400, detail="国际版用户请使用 Stripe 支付")
+    try:
+        production_forbids_simulation(settings.ENVIRONMENT, bool(settings.WECHAT_PAY_SANDBOX), os.environ.get("PAYMENT_SIMULATION"))
+        amount = alipay_service.price_for(payload.plan, payload.billing_period)
+        order_no = f"ENE{datetime.now(timezone.utc):%Y%m%d%H%M%S}{uuid4().hex[:12].upper()}"
+        order = PaymentOrder(
+            id=str(uuid4()), order_no=order_no, user_id=user_id, provider="wechat",
+            plan=payload.plan, billing_period=payload.billing_period, amount_cny=amount, status="pending",
+        )
+        db.add(order)
+        await db.flush()
+        placed = await place_order(
+            order_no=order_no, description=f"新能源智库-{payload.plan}-年付", amount_yuan=amount,
+            trade_type=payload.trade_type, openid=payload.openid,
+        )
+        await db.commit()
+        return {"order_no": order_no, "amount_cny": f"{amount:.2f}", "code_url": placed.get("code_url"), "prepay_id": placed.get("prepay_id")}
+    except WechatPayError as exc:
+        await db.rollback()
+        status = 503 if exc.code == "WECHAT_PAY_NOT_CONFIGURED" else 400
+        raise HTTPException(status_code=status, detail=str(exc)) from exc
+    except (ValueError, RuntimeError) as exc:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.post("/domestic/wechat/notify")
+async def wechat_notify(request: Request, db: AsyncSession = Depends(get_db)):
+    raw = (await request.body()).decode()
+    try:
+        config = read_config()
+    except WechatPayError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    if config is None:
+        raise HTTPException(status_code=503, detail="微信支付未配置")
+    if not verify_notify(config, request.headers.get("wechatpay-timestamp", ""), request.headers.get("wechatpay-nonce", ""), raw, request.headers.get("wechatpay-signature", "")):
+        raise HTTPException(status_code=400, detail="微信支付通知验签失败")
+    try:
+        body = __import__("json").loads(raw)
+        resource = decrypt_resource(config["api_v3_key"], body["resource"])
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail="微信支付通知无法解密") from exc
+    if resource.get("trade_state") != "SUCCESS":
+        return {"code": "SUCCESS", "message": "已忽略未成功的通知"}
+    order_no = resource.get("out_trade_no", "")
+    trade_no = resource.get("transaction_id", "")
+    try:
+        paid_amount = (Decimal(resource["amount"]["total"]) / Decimal(100)).quantize(Decimal("0.01"))
+    except (InvalidOperation, KeyError, TypeError) as exc:
+        raise HTTPException(status_code=400, detail="微信支付金额无效") from exc
+    result = await db.execute(select(PaymentOrder).where(PaymentOrder.order_no == order_no).with_for_update())
+    order = result.scalar_one_or_none()
+    if not order:
+        raise HTTPException(status_code=404, detail="支付订单不存在")
+    if order.provider != "wechat" or paid_amount != order.amount_cny:
+        raise HTTPException(status_code=400, detail="支付订单渠道或金额不匹配")
+    if order.status == "paid":
+        if order.provider_trade_no != trade_no:
+            raise HTTPException(status_code=409, detail="支付流水号冲突")
+        return {"code": "SUCCESS"}
+    if order.status != "pending" or not trade_no:
+        raise HTTPException(status_code=409, detail="当前订单状态不允许开通会员")
+    if order.billing_period not in {"monthly", "yearly"} or order.plan not in PLAN_QUOTAS or order.plan == "free":
+        raise HTTPException(status_code=409, detail="订单套餐或账期无效，请核对")
+    duplicate = await db.execute(select(PaymentOrder.id).where(PaymentOrder.provider_trade_no == trade_no))
+    if duplicate.scalar_one_or_none() is not None:
+        raise HTTPException(status_code=409, detail="微信交易号已使用")
+    user_result = await db.execute(select(User).where(User.id == order.user_id).with_for_update())
+    user = user_result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="订单用户不存在")
+    order.status = "paid"
+    order.provider_trade_no = trade_no
+    order.paid_at = datetime.now(timezone.utc)
+    now = datetime.now(timezone.utc)
+    previous_end = user.subscription_expires_at
+    if previous_end is not None and previous_end.tzinfo is None:
+        previous_end = previous_end.replace(tzinfo=timezone.utc)
+    start = previous_end if user.subscription_plan == order.plan and previous_end and previous_end > now else now
+    order.period_start = start
+    order.period_end = subscription_period_end(start, order.billing_period)
+    user.subscription_expires_at = order.period_end
+    user.subscription_plan = order.plan
+    await db.commit()
+    return {"code": "SUCCESS"}
+
+
+@router.get("/domestic/wechat/query/{order_no}")
+async def wechat_query(order_no: str, user_id: str = Depends(get_current_user_id), db: AsyncSession = Depends(get_db)):
+    order = (await db.execute(select(PaymentOrder).where(PaymentOrder.order_no == order_no, PaymentOrder.user_id == user_id))).scalar_one_or_none()
+    if not order or order.provider != "wechat":
+        raise HTTPException(status_code=404, detail="支付订单不存在")
+    try:
+        return await query_order(order_no)
+    except WechatPayError as exc:
+        status = 503 if exc.code == "WECHAT_PAY_NOT_CONFIGURED" else 400
+        raise HTTPException(status_code=status, detail=str(exc)) from exc
+
+
+class WechatRefundRequest(BaseModel):
+    order_no: str
+
+
+@router.post("/domestic/wechat/refund")
+async def wechat_refund(payload: WechatRefundRequest, user_id: str = Depends(get_current_user_id), db: AsyncSession = Depends(get_db)):
+    order = (await db.execute(select(PaymentOrder).where(PaymentOrder.order_no == payload.order_no, PaymentOrder.user_id == user_id))).scalar_one_or_none()
+    if not order or order.provider != "wechat" or order.status != "paid":
+        raise HTTPException(status_code=404, detail="没有可退款的微信订单")
+    try:
+        result = await refund_order(order_no=order.order_no, refund_no=f"R{uuid4().hex[:20]}", amount_yuan=order.amount_cny)
+    except WechatPayError as exc:
+        status = 503 if exc.code == "WECHAT_PAY_NOT_CONFIGURED" else 400
+        raise HTTPException(status_code=status, detail=str(exc)) from exc
+    if result.get("status") == "SUCCESS":
+        order.status = "refunded"
+        await db.commit()
+    return {"status": result.get("status") or "PROCESSING", "invoice_no": None}
+
+
+def _cron_authorized(request: Request) -> bool:
+    secret = os.environ.get("CRON_SECRET", "")
+    if not secret and settings.ENVIRONMENT != "production":
+        secret = "dev-secret-key"
+    return bool(secret) and request.headers.get("x-cron-secret") == secret
+
+
+@router.post("/domestic/reconcile")
+async def reconcile_payments(request: Request, db: AsyncSession = Depends(get_db)):
+    if settings.ENVIRONMENT == "production" and os.environ.get("PAYMENT_SIMULATION") == "1":
+        raise HTTPException(status_code=400, detail="生产环境禁止模拟支付")
+    if not _cron_authorized(request):
+        raise HTTPException(status_code=401, detail="无权执行对账")
+    body = await request.json()
+    bill = body.get("bill") if isinstance(body, dict) else None
+    if not isinstance(bill, list):
+        raise HTTPException(status_code=400, detail="请提供渠道账单")
+    rows = (await db.execute(select(PaymentOrder).where(PaymentOrder.status == "paid"))).scalars().all()
+    result = reconcile_orders(
+        [{"order_no": row.order_no, "amount": row.amount_cny, "status": row.status} for row in rows],
+        bill,
+    )
+    if result["alert"]:
+        from ops.wecom import send_group_robot
+        send_group_robot(f"支付对账差额 {result['diff']} 元，请人工核对。")
+    from fastapi.responses import JSONResponse
+    return JSONResponse(result, status_code=409 if result["alert"] else 200)
+
+
+class InvoiceBody(BaseModel):
+    order_no: str
+    title: str
+    tax_no: str | None = None
+
+
+@router.post("/invoices/request", status_code=202)
+async def request_invoice(payload: InvoiceBody, user_id: str = Depends(get_current_user_id), db: AsyncSession = Depends(get_db)):
+    order = (await db.execute(select(PaymentOrder).where(PaymentOrder.order_no == payload.order_no, PaymentOrder.user_id == user_id))).scalar_one_or_none()
+    if not order or order.status != "paid":
+        raise HTTPException(status_code=404, detail="没有可开票的已支付订单")
+    if not payload.title.strip():
+        raise HTTPException(status_code=400, detail="请填写发票抬头")
+    record = InvoiceRequest(
+        id=str(uuid4()), user_id=user_id, order_no=order.order_no, title=payload.title.strip()[:200],
+        tax_no=(payload.tax_no or "").strip()[:40] or None, status="pending_manual", invoice_no=None,
+    )
+    db.add(record)
+    await db.commit()
+    note = "已登记，待人工开票。未接入税控时不生成发票号。" if not os.environ.get("INVOICE_PROVIDER_KEY") else "已登记。税控回执到达前不生成发票号。"
+    return {"id": record.id, "status": "pending_manual", "invoice_no": None, "note": note}

@@ -61,6 +61,17 @@ async def search_papers(
     user_id: str = Depends(get_current_user_id),
 ):
     papers = await search_arxiv(q, max_results=30)
+    source = 'arxiv'
+    notice = None
+    if not papers:
+        from app.api.v1.research_new import search_domestic_corpus
+        domestic = search_domestic_corpus(q)
+        if domestic:
+            papers = domestic
+            source = 'domestic-cache'
+        elif not overseas_live_allowed():
+            source = 'domestic-cache'
+            notice = '未配置国内学术源/未开启境外'
     if year_from:
         papers = [p for p in papers if p['year'] >= year_from]
     if year_to:
@@ -75,7 +86,8 @@ async def search_papers(
         'page': page,
         'page_size': page_size,
         'pages': max(1, (total + page_size - 1) // page_size),
-        'source': 'arxiv',
+        'source': source,
+        **({'notice': notice} if notice else {}),
     }
 
 @router.get('/trends')

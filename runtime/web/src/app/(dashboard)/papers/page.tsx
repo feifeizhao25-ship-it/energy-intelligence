@@ -300,7 +300,7 @@ export default function PapersPage() {
                     {isSearching ? (
                         <div className="py-20 flex flex-col items-center justify-center gap-4">
                             <div className="w-12 h-12 border-4 border-green-500 border-t-transparent rounded-full animate-spin"></div>
-                            <p className="font-black text-slate-400 uppercase tracking-widest text-xs">正在检索全球文献库...</p>
+                            <p className="font-black text-slate-400 uppercase tracking-widest text-xs">正在检索已入库文献...</p>
                         </div>
                     ) : papers.length === 0 && !searchError ? <p className="py-8 text-slate-600">本次未检索到匹配论文，可以调整关键词后重试。</p> : papers.slice(0, visibleCount).map((paper) => (
                         <div
@@ -334,13 +334,6 @@ export default function PapersPage() {
                                         {paper.abstract}
                                     </p>
 
-                                    {showFilters && <div className="max-w-6xl mx-auto flex flex-wrap items-center gap-4 px-6 py-4">
-                <label>开始年份 <input aria-label="开始年份" inputMode="numeric" value={yearFrom} onChange={e => setYearFrom(e.target.value)} className="w-24 border rounded p-2" /></label>
-                <label>结束年份 <input aria-label="结束年份" inputMode="numeric" value={yearTo} onChange={e => setYearTo(e.target.value)} className="w-24 border rounded p-2" /></label>
-                <label className="flex gap-2"><input type="checkbox" checked={openAccess} onChange={e => setOpenAccess(e.target.checked)} />仅显示有开放全文链接的论文</label>
-                <button onClick={() => handleSearch()} disabled={isSearching} className="rounded bg-green-700 text-white px-4 py-2">应用筛选</button>
-            </div>}
-            {/* Stats */}
                                     <div className="flex items-center gap-8 text-sm">
                                         <div className="flex items-center gap-2 text-slate-400">
                                             <MessageSquare className="w-4 h-4" />

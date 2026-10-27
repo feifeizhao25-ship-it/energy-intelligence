@@ -1,18 +1,31 @@
 import { generateSmsCode } from '@/lib/auth/sms-verify';
 import Core from '@alicloud/pop-core';
 
-const accessKeyId = process.env.ALIYUN_ACCESS_KEY_ID;
-const accessKeySecret = process.env.ALIYUN_ACCESS_KEY_SECRET;
-const signName = process.env.ALIYUN_SMS_SIGN_NAME || '新能源智库';
-const templateCode = process.env.ALIYUN_SMS_TEMPLATE_CODE;
+function smsSettings() {
+    return {
+        accessKeyId: process.env.ALIYUN_ACCESS_KEY_ID?.trim() || '',
+        accessKeySecret: process.env.ALIYUN_ACCESS_KEY_SECRET?.trim() || '',
+        signName: process.env.ALIYUN_SMS_SIGN_NAME?.trim() || '新能源智库',
+        templateCode: process.env.ALIYUN_SMS_TEMPLATE_CODE?.trim() || '',
+    };
+}
+
+/** live：密钥和模板都在；mock：仅开发环境；unconfigured：其余环境必须显式失败。 */
+export function smsDeliveryMode(): 'live' | 'mock' | 'unconfigured' {
+    const { accessKeyId, accessKeySecret, templateCode } = smsSettings();
+    if (accessKeyId && accessKeySecret && templateCode) return 'live';
+    if (process.env.NODE_ENV === 'development') return 'mock';
+    return 'unconfigured';
+}
 
 // 懒加载 client - 避免在没有 Key 时 build 失败
 let client: Core | null = null;
 function getClient() {
+    const { accessKeyId, accessKeySecret } = smsSettings();
     if (!client && accessKeyId && accessKeySecret) {
         client = new Core({
-            accessKeyId: accessKeyId,
-            accessKeySecret: accessKeySecret,
+            accessKeyId,
+            accessKeySecret,
             endpoint: 'https://dysmsapi.aliyuncs.com',
             apiVersion: '2017-05-25'
         });
@@ -26,11 +39,15 @@ function getClient() {
  * @param code 验证码
  */
 export async function sendVerificationCode(phone: string, code: string) {
-    // 如果是开发环境且没有配置 Key，则直接打印日志并返回成功
-    if (process.env.NODE_ENV === 'development' && (!accessKeyId || !accessKeySecret)) {
+    const mode = smsDeliveryMode();
+    if (mode === 'unconfigured') {
+        return { success: false, code: 'SMS_NOT_CONFIGURED', error: '短信服务未配置' };
+    }
+    if (mode === 'mock') {
         console.log(`[SMS MOCK] To: ${phone}, Code: ${code}`);
         return { success: true, mock: true };
     }
+    const { signName, templateCode } = smsSettings();
 
     const params = {
         "RegionId": "cn-hangzhou",

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { sendVerificationCode } from "@/lib/sms/aliyun";
+import { sendVerificationCode, smsDeliveryMode } from "@/lib/sms/aliyun";
 import { generateSmsCode, DAILY_LIMIT_PER_PHONE, PHONE_PATTERN, CODE_TTL_MS, RESEND_INTERVAL_MS } from "@/lib/auth/sms-verify";
 
 import { enforceRateLimit, PUBLIC_RULES } from "@/lib/security/rate-limit";
@@ -41,6 +41,10 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ success: false, error: "今日验证码发送次数已达上限，请明天再试" }, { status: 429 });
         }
 
+        if (typeof smsDeliveryMode === 'function' && smsDeliveryMode() === 'unconfigured') {
+            return NextResponse.json({ success: false, error: '短信服务未配置', code: 'SMS_NOT_CONFIGURED' }, { status: 503 });
+        }
+
         // 2. 生成验证码
         const code = generateSmsCode();
         const expiresAt = new Date(Date.now() + CODE_TTL_MS);
@@ -53,6 +57,9 @@ export async function POST(req: NextRequest) {
         // 4. 发送短信
         const result = await sendVerificationCode(phone, code);
 
+        if (!result.success && 'code' in result && result.code === 'SMS_NOT_CONFIGURED') {
+            return NextResponse.json({ success: false, error: '短信服务未配置', code: 'SMS_NOT_CONFIGURED' }, { status: 503 });
+        }
         if (result.success) {
             const reveal = process.env.NODE_ENV === 'development' && process.env.SMS_DEV_REVEAL === '1' && 'mock' in result && result.mock;
             return NextResponse.json({ success: true, message: "验证码已发送", ...(reveal ? { devCode: code } : {}) });

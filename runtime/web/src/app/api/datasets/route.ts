@@ -4,6 +4,20 @@ import { authOptions } from '@/lib/auth/auth-options';
 import { prisma } from '@/lib/prisma';
 import { tierOf } from '@/lib/entitlements/access';
 import catalog from '@/data/cn-datasets.json';
+import { readVerifiedTariffs } from '@/lib/data/verified-tariffs';
+
+function withTariffs() {
+    const tariffs = readVerifiedTariffs();
+    return {
+        ...catalog,
+        datasets: catalog.datasets.map((dataset) => dataset.id === 'proxy-purchase' && tariffs.loaded ? {
+            ...dataset,
+            loaded: true,
+            updated: tariffs.rows[0]?.asOf || null,
+            rows: tariffs.rows.map((row) => [row.province, row.month, String(row.priceYuanPerKwh), row.sourceUrl, row.asOf]),
+        } : dataset),
+    };
+}
 
 function csvEscape(value: string) {
     if (/[",\n]/.test(value)) return `"${value.replace(/"/g, '""')}"`;
@@ -12,8 +26,9 @@ function csvEscape(value: string) {
 
 export async function GET(req: NextRequest) {
     const id = req.nextUrl.searchParams.get('id');
-    if (!id) return NextResponse.json({ success: true, data: catalog });
-    const dataset = catalog.datasets.find((item) => item.id === id);
+    const live = withTariffs();
+    if (!id) return NextResponse.json({ success: true, data: live });
+    const dataset = live.datasets.find((item) => item.id === id);
     if (!dataset) return NextResponse.json({ error: '没有这个数据集' }, { status: 404 });
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return NextResponse.json({ error: '请先登录' }, { status: 401 });

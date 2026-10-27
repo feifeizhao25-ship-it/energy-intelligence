@@ -1,16 +1,13 @@
-import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth/auth-options';
+import { loadOwnedSamples, reportResponse } from '@/lib/maintenance/project-telemetry';
 
-async function unavailable() {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) return NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 });
-    return NextResponse.json({
-        success: false,
-        error: 'VERIFIED_TELEMETRY_REQUIRED',
-        message: '运维报告需要经验证的 SCADA/IoT 数据，当前不会生成模拟报告。',
-    }, { status: 503 });
+type RouteContext = { params: Promise<{ id: string }> };
+
+async function handle(_req: Request, { params }: RouteContext) {
+    const { id } = await params;
+    const loaded = await loadOwnedSamples(id);
+    if ('error' in loaded) return loaded.error;
+    return reportResponse(loaded.points);
 }
 
-export const GET = unavailable;
-export const POST = unavailable;
+export const GET = handle;
+export const POST = handle;

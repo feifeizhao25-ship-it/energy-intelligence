@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { X, Sun, Wind, CloudRain, TrendingUp, Info } from 'lucide-react';
-import { getSolarResource, getWindResource, getClimateData } from '@/lib/api/nasa-power';
+import { getSolarResource, getWindResource } from '@/lib/api/nasa-power';
+import { domesticClimate } from '@/lib/api/domestic-station';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
 import SunPathChart from './SunPathChart';
 
@@ -21,11 +22,11 @@ export default function LocationDetail({ location, onClose }: LocationDetailProp
             setLoading(true);
             try {
                 // 并行获取数据
-                const [solar, wind, climate] = await Promise.all([
+                const [solar, wind] = await Promise.all([
                     getSolarResource(location.lat, location.lng),
                     getWindResource(location.lat, location.lng),
-                    getClimateData(location.lat, location.lng)
                 ]);
+                const climate = domesticClimate(location.lat, location.lng);
 
                 setData({ solar, wind, climate });
             } catch (error) {
@@ -43,8 +44,8 @@ export default function LocationDetail({ location, onClose }: LocationDetailProp
         return (
             <div className="absolute top-20 left-4 w-96 bg-gray-800/95 backdrop-blur border border-gray-700 text-white p-6 rounded-lg shadow-2xl z-30 min-h-[400px] flex flex-col items-center justify-center">
                 <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500 mb-4"></div>
-                <p className="text-gray-400">正在分析NASA卫星数据...</p>
-                <p className="text-xs text-gray-500 mt-2">获取40年历史气象记录</p>
+                <p className="text-gray-400">正在读取国内省级资源样本...</p>
+                <p className="text-xs text-gray-500 mt-2">请求路径不访问境外气象</p>
             </div>
         );
     }
@@ -250,7 +251,7 @@ export default function LocationDetail({ location, onClose }: LocationDetailProp
             </div>
 
             <div className="p-3 border-t border-gray-700 text-xs text-gray-500 bg-gray-800/95 sticky bottom-0 text-center">
-                数据来源: NASA POWER (1991-2022) | 经度: {location.lng.toFixed(2)} 纬度: {location.lat.toFixed(2)}
+                数据来源: {data?.climate?.provenance || '国内省级离线样本'} | 经度: {location.lng.toFixed(2)} 纬度: {location.lat.toFixed(2)}
             </div>
         </div>
     );

@@ -49,12 +49,15 @@ export default function Sidebar() {
                 { name: '测算首页', href: '/dashboard', icon: 'bolt', tier: 'L1' },
                 { name: 'AI 能源专家', href: '/assistant', icon: 'smart_toy', tier: 'L1' },
                 { name: '资源地图', href: '/map', icon: 'map', tier: 'L2' },
+                { name: '充电测算', href: '/calculator/charging', icon: 'battery_charging_full', tier: 'L2' },
+                { name: '排放测算', href: '/calculator/carbon', icon: 'description', tier: 'L2' },
             ]
         },
         {
             label: '资产中心',
             items: [
                 { name: '我的项目', href: '/projects', icon: 'folder_open', tier: 'L3', requiresAuth: true },
+                { name: '运维诊断', href: '/maintenance', icon: 'build', tier: 'L3' },
                 { name: '项目日志', href: '/projects/timeline', icon: 'history', tier: 'L3', requiresAuth: true },
             ]
         },
@@ -62,6 +65,7 @@ export default function Sidebar() {
             label: '智库教育',
             items: [
                 { name: '专家文献', href: '/papers', icon: 'menu_book', tier: 'L2' },
+                { name: '文献图谱', href: '/papers/graph', icon: 'menu_book', tier: 'L2' },
                 { name: '问答社区', href: '/community', icon: 'forum', tier: 'L2' },
                 { name: '避坑指南', href: '/education/pitfalls', icon: 'error', tier: 'L2' },
             ]
@@ -83,6 +87,8 @@ export default function Sidebar() {
                 { name: '企业空间', href: '/enterprise', icon: 'domain', tier: 'L4', requiresAuth: true },
                 { name: '开发者中心', href: '/developer', icon: 'terminal', tier: 'L5', requiresAuth: true },
                 { name: '会员订阅', href: '/pricing', icon: 'workspace_premium', tier: 'L4' },
+                { name: '服务状态', href: '/status', icon: 'verified_user', tier: 'L1' },
+                { name: '管理台', href: '/admin', icon: 'domain', tier: 'L5', requiresAuth: true },
             ]
         }
     ];

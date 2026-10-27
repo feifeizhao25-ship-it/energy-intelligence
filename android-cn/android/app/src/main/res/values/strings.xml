@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="privacy_notice">手机号只用于登录验证。未配置短信服务时不会发送验证码，也不会保存未发出的登录码。</string>
+</resources>

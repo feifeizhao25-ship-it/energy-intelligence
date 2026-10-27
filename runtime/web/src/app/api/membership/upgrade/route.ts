@@ -6,6 +6,7 @@ import { authOptions } from '@/lib/auth/auth-options';
 import { prisma } from '@/lib/prisma';
 import { Plan, PURCHASABLE_PLANS } from '@/lib/membership/plans';
 import { BillingPeriod, canonicalPrice, createAlipayPagePayUrl } from '@/lib/payments/alipay';
+import { placeWechatOrder } from '@/lib/payments/wechat';
 
 // 只允许购买在售档位；MAINTENANCE（运维版）已停售，不能新购
 const PAID_PLANS: ReadonlySet<Plan> = new Set<Plan>(PURCHASABLE_PLANS);
@@ -16,7 +17,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ success: false, error: 'UNAUTHORIZED', message: '请先登录' }, { status: 401 });
     }
     try {
-        const body = await request.json() as { plan?: string; billingPeriod?: string };
+        const body = await request.json() as { plan?: string; billingPeriod?: string; method?: string; openid?: string };
         const plan = String(body.plan || '').toUpperCase() as Plan;
         const billingPeriod = body.billingPeriod as BillingPeriod;
         // 年付为唯一在售周期: 月付订单一律拒绝 (与 entitlements.json sales_billing_period=yearly 一致), 不静默改价
@@ -36,13 +37,27 @@ export async function POST(request: Request) {
         }
         const amount = canonicalPrice(plan, billingPeriod);
         const orderNo = `ENE${Date.now()}${randomUUID().replaceAll('-', '').slice(0, 10).toUpperCase()}`;
-        const paymentUrl = createAlipayPagePayUrl({ orderNo, plan, billingPeriod, amount });
+        const method = body.method === 'wechat' ? 'wechat' : 'alipay';
+        let paymentUrl = '';
+        let wechat: { code_url?: string; prepay_id?: string } | null = null;
+        if (method === 'wechat') {
+            wechat = await placeWechatOrder({
+                orderNo,
+                description: `新能源智库-${plan}-年付`,
+                amountFen: Math.round(amount * 100),
+                tradeType: body.openid ? 'jsapi' : 'native',
+                openid: body.openid,
+            });
+            paymentUrl = wechat.code_url || '';
+        } else {
+            paymentUrl = createAlipayPagePayUrl({ orderNo, plan, billingPeriod, amount });
+        }
         await prisma.payment.create({ data: {
             orderNo, userId: session.user.id, plan, billingPeriod, amount,
-            currency: 'CNY', status: 'pending', paymentMethod: 'alipay',
+            currency: 'CNY', status: 'pending', paymentMethod: method,
             description: `${plan}-${billingPeriod}`,
         } });
-        return NextResponse.json({ success: true, orderNo, amount: amount.toFixed(2), paymentUrl });
+        return NextResponse.json({ success: true, orderNo, amount: amount.toFixed(2), paymentUrl, wechat });
     } catch (error) {
         // 原来把 error.message 原样返回：缺配置时用户会看到「支付宝商户配置缺失：ALIPAY_PRIVATE_KEY」，
         // 把环境变量名、内部校验和数据库连接信息都暴露给浏览器。细节只写服务端日志。

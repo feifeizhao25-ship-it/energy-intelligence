@@ -41,7 +41,7 @@ export async function GET() {
         `统计区间：${now.getUTCFullYear()} 年第 ${quarter} 季度（按 UTC 季度，展示时区为 Asia/Shanghai 的发布日历）。`,
         `已审核且处于生效期的政策条目：${count} 条。来源是本站政策库，未连接时显示为横线。`,
         `省级城市气候样本 ${stations} 个。数值是离线样本，不是 NASA POWER 实测。`,
-        '省级代理购电价格列写明「样本（未载入已核验电价）」。没有带来源链接的官方电价时不填金额。',
+        '省级代理购电价格只在载入带来源链接和日期的记录后出现。没有这类记录时不填金额。',
         '政策正文、生效日期和适用期以发布机关原文为准。本简报不代替原文。',
     ].map((paragraph) => neutralizeCnText(paragraph));
     return NextResponse.json({

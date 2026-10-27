@@ -1,5 +1,5 @@
-import { redirect } from 'next/navigation';
+import DiagnosticsWorkbench from '@/components/maintenance/DiagnosticsWorkbench';
 
 export default function MaintenancePage() {
-    redirect('/projects');
+    return <DiagnosticsWorkbench />;
 }

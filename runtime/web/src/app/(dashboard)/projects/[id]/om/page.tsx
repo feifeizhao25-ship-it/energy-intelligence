@@ -24,6 +24,7 @@ import {
     TrendingUp
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import OperationsIngestPanel from '@/components/maintenance/OperationsIngestPanel';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 
 interface OmPageProps {
@@ -61,13 +62,28 @@ export default function OperationsMaintenancePage(props: OmPageProps) {
                 setStationsSummary(stationsData.data.summary);
             }
 
-            // Fetch alerts
             const alertsRes = await fetch(`/api/projects/${params.id}/alerts`);
+            const alarmsRes = await fetch(`/api/projects/${params.id}/alarms`);
             const alertsData = await alertsRes.json();
-            if (alertsData.success) {
-                setAlerts(alertsData.data.alerts);
-                setAlertsSummary(alertsData.data.summary);
-            }
+            const alarmsData = await alarmsRes.json();
+            const assetAlerts = alertsData.success ? alertsData.data.alerts : [];
+            const thresholdAlerts = alarmsData.success
+                ? (alarmsData.data.events || []).map((event: { id: string; severity?: string; title: string; observed?: number | null; threshold?: number | null; status?: string; createdAt: string }) => ({
+                    id: event.id,
+                    type: event.severity === 'critical' || event.severity === 'error' ? 'error' : 'warning',
+                    title: event.title,
+                    description: event.observed == null ? '阈值告警' : `观测值 ${event.observed}，阈值 ${event.threshold ?? ''}`,
+                    status: event.status || 'active',
+                    createdAt: event.createdAt,
+                    deviceName: '遥测阈值',
+                }))
+                : [];
+            const mergedAlerts = [...thresholdAlerts, ...assetAlerts];
+            setAlerts(mergedAlerts);
+            setAlertsSummary({
+                total: mergedAlerts.length,
+                active: mergedAlerts.filter((item: { status?: string }) => item.status === 'active').length,
+            });
 
             // Fetch maintenance
             const maintRes = await fetch(`/api/projects/${params.id}/maintenance`);
@@ -214,8 +230,12 @@ export default function OperationsMaintenancePage(props: OmPageProps) {
                                     <span className="text-xs font-bold text-slate-400 uppercase">实时功率</span>
                                 </div>
                                 <div className="text-2xl font-black text-slate-900">
-                                    {monitoring?.summary?.currentPower?.toFixed(1) || 0}
-                                    <span className="text-sm font-bold text-slate-400 ml-1">kW</span>
+                                    {typeof monitoring?.summary?.currentPower === 'number'
+                                        ? monitoring.summary.currentPower.toFixed(1)
+                                        : '未接入'}
+                                    {typeof monitoring?.summary?.currentPower === 'number' && (
+                                        <span className="text-sm font-bold text-slate-400 ml-1">kW</span>
+                                    )}
                                 </div>
                             </div>
                             <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
@@ -255,6 +275,8 @@ export default function OperationsMaintenancePage(props: OmPageProps) {
                                 </div>
                             </div>
                         </div>
+
+                        <OperationsIngestPanel projectId={params.id} onChanged={() => { void fetchData(); }} />
 
                         {/* Power Chart */}
                         <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
@@ -518,7 +540,7 @@ export default function OperationsMaintenancePage(props: OmPageProps) {
                                                 "text-[10px] font-bold px-2 py-0.5 rounded",
                                                 alert.status === 'active' ? "bg-red-100 text-red-700" : "bg-slate-100 text-slate-500"
                                             )}>
-                                                {alert.status === 'active' ? '待处理' : '已解决'}
+                                                {alert.status === 'active' ? '待处理' : alert.status === 'acknowledged' ? '已确认' : '已解决'}
                                             </span>
                                         </div>
                                         <div className="text-sm text-slate-600">{alert.description}</div>
@@ -593,7 +615,7 @@ export default function OperationsMaintenancePage(props: OmPageProps) {
                                         </div>
                                         <div>
                                             <div className="text-[10px] font-bold text-slate-400 uppercase mb-1">预计时长</div>
-                                            <div className="text-sm font-bold text-slate-900">{task.estimatedDuration} 小时</div>
+                                            <div className="text-sm font-bold text-slate-900">{task.estimatedDuration ? `${task.estimatedDuration} 小时` : '未填写'}</div>
                                         </div>
                                         <div>
                                             <div className="text-[10px] font-bold text-slate-400 uppercase mb-1">负责人</div>

@@ -3,9 +3,11 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { FileText, Download, Printer, Share2 } from 'lucide-react';
-import { getSolarResource, getWindResource, getClimateData, getHistoricalData } from '@/lib/api/nasa-power';
+import { getSolarResource, getWindResource } from '@/lib/api/nasa-power';
+import { domesticClimate } from '@/lib/api/domestic-station';
 import { calculateSolarScore, calculateWindScore, analyzeComplementarity } from '@/lib/resource/analysis';
 import { generateResourceReport } from '@/lib/resource/report';
+import VectorLayerPanel from './VectorLayerPanel';
 
 export default function ReportPage() {
     const searchParams = useSearchParams();
@@ -24,12 +26,12 @@ export default function ReportPage() {
 
         async function generate() {
             try {
-                const [solar, wind, climate, history] = await Promise.all([
+                const [solar, wind] = await Promise.all([
                     getSolarResource(lat, lng),
                     getWindResource(lat, lng),
-                    getClimateData(lat, lng),
-                    getHistoricalData(lat, lng, 2020, 2022)
                 ]);
+                const climate = domesticClimate(lat, lng);
+                const history = { note: '历史逐年序列未随省级样本提供，本次报告不含趋势。' };
 
                 // Mock elevation or fetch if needed
                 const elevation = 0;
@@ -66,7 +68,8 @@ export default function ReportPage() {
 
     return (
         <div className="min-h-screen bg-gray-900 text-white p-8 flex justify-center">
-            <div className="w-full max-w-4xl">
+            <div className="w-full max-w-4xl space-y-4">
+                <VectorLayerPanel />
                 <div className="flex justify-between items-center mb-6">
                     <h1 className="text-2xl font-bold flex items-center gap-2">
                         <FileText className="w-6 h-6 text-blue-400" />
@@ -87,7 +90,7 @@ export default function ReportPage() {
                         <div className="flex flex-col items-center justify-center h-[400px]">
                             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
                             <p className="text-gray-500">正在生成专业评估报告...</p>
-                            <p className="text-xs text-gray-400 mt-2">整合NASA气象数据与AI分析模型</p>
+                            <p className="text-xs text-gray-400 mt-2">数据来自国内省级离线样本，不是实时境外气象。</p>
                         </div>
                     ) : (
                         <div className="prose prose-lg max-w-none whitespace-pre-wrap font-sans">

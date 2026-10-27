@@ -39,12 +39,14 @@ export function generateResourceReport(data: ReportData, type: 'basic' | 'standa
 ## 3. 结论与建议
 
 ${data.analysis.solarScore > data.analysis.windScore ?
-            '该地区太阳能资源优于风能资源，建议优先开发光伏项目。' :
-            '该地区风能资源较为丰富，适合开发风电项目。'}
+            '按本次评分，太阳能资源分高于风能资源分。这是资源量对比，不是开发建议。' :
+            '按本次评分，风能资源分不低于太阳能资源分。这是资源量对比，不是开发建议。'}
 
 互补性评价：${data.analysis.complementarity.description} (评分: ${data.analysis.complementarity.score.toFixed(0)})
 
+${data.history?.note || ''}
+
 ---
-*数据来源: NASA POWER (1991-2022)*
+*数据来源: ${data.climate?.provenance || '国内省级离线样本'}。${data.climate?.licenseNote || ''}*
     `;
 }
