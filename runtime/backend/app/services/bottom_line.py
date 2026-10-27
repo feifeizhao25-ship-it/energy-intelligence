@@ -104,6 +104,11 @@ def find_violations(text: str, *, market: str = "cn") -> list[str]:
 
 def enforce_bottom_line(text: str, market: str = "cn") -> str:
     if find_violations(text, market=market):
+        try:
+            from app.services.feedback_samples import record_sample
+            record_sample("blocked_output", text or "")
+        except Exception:
+            pass
         return NOTICE_EN if market == "global" else NOTICE_ZH
     return text
 
@@ -113,13 +118,43 @@ def optional_model_review_enabled() -> bool:
     return os.environ.get("NENGJIAN_BOTTOM_LINE_MODEL_REVIEW") == "1"
 
 
-def review_bottom_line_with_model(text: str) -> str | None:
+def review_bottom_line_with_model(text: str, poster=None) -> str | None:
     """可选的国内模型复核。未开启或没有百炼密钥时返回 None，不访问任何境外服务。
 
-    TODO: 百炼文本审核的请求体以控制台当前文档为准；这里只保留开关与密钥判断。
+    打开后调用百炼兼容 chat/completions（qwen3.5-plus）。模型只回答 yes 或 no。
     """
     if not optional_model_review_enabled():
         return None
-    if not (os.environ.get("NENGJIAN_DASHSCOPE_API_KEY") or os.environ.get("DASHSCOPE_API_KEY")):
+    key = os.environ.get("NENGJIAN_DASHSCOPE_API_KEY") or os.environ.get("DASHSCOPE_API_KEY")
+    if not key:
         return None
+    model = os.environ.get("DASHSCOPE_MODEL", "qwen3.5-plus")
+    base = os.environ.get("DASHSCOPE_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1").rstrip("/")
+    body = {
+        "model": model,
+        "messages": [
+            {"role": "system", "content": "判断文本是否包含投资结论、收益承诺或价格预测。只回答 yes 或 no。"},
+            {"role": "user", "content": (text or "")[:4000]},
+        ],
+    }
+
+    def _post(payload: dict, api_key: str) -> str:
+        import json
+        import urllib.request
+        req = urllib.request.Request(
+            base + "/chat/completions",
+            data=json.dumps(payload).encode(),
+            headers={"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"},
+            method="POST",
+        )
+        with urllib.request.urlopen(req, timeout=20) as resp:
+            data = json.loads(resp.read().decode() or "{}")
+        return ((data.get("choices") or [{}])[0].get("message") or {}).get("content") or ""
+
+    try:
+        answer = (poster or _post)(body, key).strip().lower()
+    except Exception:
+        return None
+    if answer.startswith("yes"):
+        return NOTICE_ZH
     return None

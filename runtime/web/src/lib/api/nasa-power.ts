@@ -3,7 +3,6 @@ import { SolarResource, WindResource } from '@/types';
 
 import { withCache } from '@/lib/cache';
 import { extrapolateWindSpeed } from '@/lib/calculator/wind-shear';
-import { empiricalOptimalTilt } from '@/lib/calculator/transposition';
 
 /** NASA POWER 用 -999 表示缺测；缺测或非数值一律按 0 处理，不能当真实风速。 */
 function validSpeed(value: unknown): number {
@@ -22,77 +21,10 @@ export interface NASAApiParams {
  * 获取太阳能资源数据
  */
 export const getSolarResource = withCache('nasa:solar', async (lat: number, lng: number): Promise<SolarResource> => {
-  try {
-    throw new Error('OVERSEAS_SOURCE_DISABLED');
-    // 获取月度数据
-    const monthlyParams = {
-      lat: lat.toFixed(4),
-      lon: lng.toFixed(4),
-      start: '2022',
-      end: '2022',
-      parameters: 'ALLSKY_SFC_SW_DWN,ALLSKY_SFC_SW_DNI,ALLSKY_SFC_SW_DIFF,T2M',
-      timeStandard: 'UTC',
-      outputFormat: 'JSON'
-    };
-
-    const monthlyUrl = `https://domestic-cache.invalid/api/temporal/monthly/point?parameters=${monthlyParams.parameters}&community=RE&start=${monthlyParams.start}&end=${monthlyParams.end}&latitude=${monthlyParams.lat}&longitude=${monthlyParams.lon}&time-standard=${monthlyParams.timeStandard}&format=${monthlyParams.outputFormat}`;
-
-    const response = await fetch(monthlyUrl);
-    if (!response.ok) {
-      throw new Error(`NASA API请求失败: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const properties = data.properties;
-
-    // 处理月度数据 (排除 ANN/13月数据)
-    const monthlyRaw = Object.entries(properties.parameter.ALLSKY_SFC_SW_DWN).map(([month, ghi]: [string, any]) => {
-      let monthNum = parseInt(month);
-      if (monthNum > 100) monthNum = monthNum % 100; // Handle YYYYMM format
-      return {
-        month: monthNum,
-        ghi: ghi || 0,
-        dni: properties.parameter.ALLSKY_SFC_SW_DNI[month] || 0,
-        dhi: properties.parameter.ALLSKY_SFC_SW_DIFF[month] || 0,
-        temperature: properties.parameter.T2M[month] || 0
-      };
-    });
-
-    const monthly = monthlyRaw.filter(m => m.month >= 1 && m.month <= 12).sort((a, b) => a.month - b.month);
-
-    // 计算年度数据
-    const annualGhi = monthly.reduce((sum, m) => sum + m.ghi * new Date(2022, m.month, 0).getDate(), 0);
-    const annualTemp = monthly.reduce((sum, m) => sum + m.temperature, 0) / 12;
-
-    // 计算峰值日照小时数 (年总辐射量 kWh/m²/year 等效于年峰值小时)
-    const peakSunHours = annualGhi;
-
-    // 估算最佳倾角（基于纬度）
-    const optimalTilt = empiricalOptimalTilt(lat);
-
-    // 判断资源等级
-    let resourceClass: 'I' | 'II' | 'III' | 'IV' | 'V' = 'III';
-    if (annualGhi >= 1800) resourceClass = 'I';
-    else if (annualGhi >= 1600) resourceClass = 'II';
-    else if (annualGhi >= 1400) resourceClass = 'III';
-    else if (annualGhi >= 1200) resourceClass = 'IV';
-    else resourceClass = 'V';
-
-    return {
-      lat,
-      monthly,
-      annual: {
-        ghi: annualGhi,
-        peakSunHours,
-        optimalTilt,
-        resourceClass
-      }
-    };
-
-  } catch (error) {
-    console.error('获取太阳能资源数据失败:', error);
-    throw new Error('获取太阳能资源数据失败，请稍后重试');
-  }
+  const { nearestDomesticStation } = await import('@/lib/api/domestic-station');
+  const { toSolarResource, verifiedSolar } = await import('@/lib/api/verified-solar');
+  if (!nearestDomesticStation(lat, lng)) throw new Error('DOMESTIC_RESOURCE_NOT_LOADED');
+  return toSolarResource(await verifiedSolar(lat, lng), lat);
 });
 
 const windPayloads = new Map<string, { properties: { parameter: { WS10M: Record<string, number>; WS50M: Record<string, number> } } }>();
@@ -164,9 +96,17 @@ export function parseWindPowerPayload(data: { properties: { parameter: { WS10M: 
  * 获取风能资源数据。只读国内缓存；批次导入在后端 nasa_batch_import。
  */
 export const getWindResource = withCache('nasa:wind', async (lat: number, lng: number): Promise<WindResource> => {
-  const data = windPayloads.get(`${lat.toFixed(4)},${lng.toFixed(4)}`);
-  if (!data) throw new Error('OVERSEAS_SOURCE_DISABLED');
-  return parseWindPowerPayload(data);
+  const seeded = windPayloads.get(`${lat.toFixed(4)},${lng.toFixed(4)}`);
+  if (seeded) return parseWindPowerPayload(seeded);
+  const { nearestDomesticStation } = await import('@/lib/api/domestic-station');
+  const station = nearestDomesticStation(lat, lng);
+  if (!station) throw new Error('DOMESTIC_RESOURCE_NOT_LOADED');
+  const months = Object.fromEntries(station.monthly_wind_100m.map((speed, index) => {
+    const key = `2022${String(index + 1).padStart(2, '0')}`;
+    return [key, speed];
+  }));
+  const ws50 = Object.fromEntries(Object.entries(months).map(([key, speed]) => [key, Number(speed) * 0.9]));
+  return parseWindPowerPayload({ properties: { parameter: { WS10M: ws50, WS50M: months } } });
 });
 
 /**

@@ -39,7 +39,7 @@ test('invalid coordinates do not trigger network calls', async () => {
     expect(fetcher).not.toHaveBeenCalled();
 });
 test('upstream failure cannot become a successful fixed estimate', async () => {
-    await expect(verifiedSolar(0, 0, now)).rejects.toThrow('OVERSEAS_SOURCE_DISABLED');
+    await expect(verifiedSolar(0, 0, now)).rejects.toThrow('DOMESTIC_RESOURCE_NOT_LOADED');
 });
 test('calculator uses verified data and labels user prices and preview assumptions', async () => {
     const year = new Date().getUTCFullYear() - 1;

@@ -44,7 +44,7 @@ export default function EnterpriseCenterPage() {
                                 企业 <span className="text-blue-500">管理中心</span>
                             </h1>
                             <p className="text-slate-400 font-bold text-lg max-w-2xl">
-                                集中管理多子账号权限、自定义企业白标报告，助力团队规模化能源资产评估。
+                                上限档含 10 个席位，更多席位按合同增加。本页不提供白标报告或单点登录。
                             </p>
                         </div>
                         <button className="bg-white text-slate-900 px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-500 hover:text-white transition-all shadow-xl flex items-center gap-2">
@@ -56,10 +56,10 @@ export default function EnterpriseCenterPage() {
                     {/* Quick Stats */}
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-12">
                         {[
-                            { label: '活跃席位', value: '18 / 50', icon: Users },
-                            { label: '本月生成报告', value: '1,245', icon: FileSpreadsheet },
-                            { label: '团队平均 IRR', value: '16.5%', icon: Sparkles },
-                            { label: '白标模板', value: '3套', icon: Palette },
+                            { label: '含席位', value: '10', icon: Users },
+                            { label: '本月生成报告', value: '以导出记录为准', icon: FileSpreadsheet },
+                            { label: '收益结论', value: '不在此展示', icon: Sparkles },
+                            { label: '品牌定制', value: '未提供', icon: Palette },
                         ].map((s, i) => (
                             <div key={i} className="bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-3xl">
                                 <span className="text-slate-500 text-[10px] font-black uppercase tracking-widest block mb-2">{s.label}</span>
@@ -79,7 +79,7 @@ export default function EnterpriseCenterPage() {
                     <aside className="w-full lg:w-64 space-y-2">
                         {[
                             { id: 'accounts', label: '成员账号管', icon: Users },
-                            { id: 'whitelabel', label: '品牌白标设置', icon: Palette },
+                            { id: 'whitelabel', label: '品牌定制未开通', icon: Palette },
                             { id: 'templates', label: '报告模板库', icon: Layout },
                             { id: 'security', label: '安全与审计', icon: ShieldCheck },
                             { id: 'api', label: 'API 接口管理', icon: Settings },
@@ -193,7 +193,7 @@ export default function EnterpriseCenterPage() {
                                     </div>
                                     <div className="pt-8 border-t border-slate-50">
                                         <button className="bg-slate-900 text-white px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl hover:scale-105 hover:bg-blue-600 transition-all">
-                                            保存全局白标设置
+                                            品牌定制未开通
                                         </button>
                                     </div>
                                 </div>

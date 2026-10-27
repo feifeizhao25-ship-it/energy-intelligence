@@ -60,6 +60,11 @@ class AlipayService:
             if any(not str(url).startswith("https://") for url in urls):
                 raise RuntimeError("生产环境支付宝回调地址必须使用 HTTPS")
 
+    def _product_name(self, plan: str) -> str:
+        registry = json.loads(_ENTITLEMENTS_PATH.read_text(encoding="utf-8"))
+        tier = registry.get("tiers", {}).get(plan, {})
+        return tier.get("name") or plan
+
     def price_for(self, plan: str, billing_period: str) -> Decimal:
         # 年付为唯一在售周期 (entitlements sales_billing_period=yearly); 月付直接拒绝, 不取价
         if billing_period != "yearly":
@@ -86,7 +91,7 @@ class AlipayService:
                 "out_trade_no": order_no,
                 "product_code": "FAST_INSTANT_TRADE_PAY",
                 "total_amount": f"{amount:.2f}",
-                "subject": f"新能源智库-{plan}-{billing_period}",
+                "subject": f"新能源智库-{self._product_name(plan)}-{'年付' if billing_period == 'yearly' else '月付'}",
             },
             ensure_ascii=False,
             separators=(",", ":"),

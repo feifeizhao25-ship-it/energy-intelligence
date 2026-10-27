@@ -45,7 +45,13 @@ celery_app.conf.update(
     task_serializer="json",
     accept_content=["json"],
     result_serializer="json",
-    timezone="UTC",
+    # 定时表达式按 Asia/Shanghai 墙钟。enable_utc 仍为 True，Celery 会换算到 UTC。
+    # UTC 对照：技能改进周一 03:00 CST = 周日 19:00 UTC；
+    # 政策快照每日 02:15 CST = 前一日 18:15 UTC；
+    # RAG 刷新每日 02:45 CST = 前一日 18:45 UTC；
+    # GEO 周一 04:00 CST = 周日 20:00 UTC；
+    # NASA 批量周日 05:00 CST = 周六 21:00 UTC。
+    timezone="Asia/Shanghai",
     enable_utc=True,
     task_track_started=True,
     task_time_limit=3600,  # 1 hour max

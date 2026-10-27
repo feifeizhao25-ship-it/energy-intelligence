@@ -43,8 +43,22 @@ class DomesticComposeTests(unittest.TestCase):
         self.assertNotIn('STRIPE_SECRET_KEY', self.cn['services']['celery-worker']['environment'])
 
     def test_domestic_runtime_database_and_build_security_retained(self):
-        for name in ('postgres', 'redis', 'web-cn'):
+        for name in ('postgres', 'redis'):
             self.assertEqual(self.cn['services'][name], self.source['services'][name])
+        web = self.cn['services']['web-cn']['environment']
+        source_web = self.source['services']['web-cn']['environment']
+        self.assertNotIn('OPENALEX_CONTACT_EMAIL', web)
+        self.assertIn('OPENALEX_CONTACT_EMAIL', source_web)
+        self.assertNotIn('SILICONFLOW_API_KEY', web)
+        self.assertNotIn('OPENWEATHERMAP_API_KEY', web)
+        self.assertEqual(web['APP_EDITION'], 'cn')
+        self.assertIn('NENGJIAN_INTERNAL_TOKEN', web)
+        backend = self.cn['services']['backend']['environment']
+        for key in ('NENGJIAN_WECOM_CORP_ID', 'NENGJIAN_WECOM_AGENT_ID', 'NENGJIAN_WECOM_SECRET',
+                    'NENGJIAN_GEO_QWEN_API_KEY', 'NENGJIAN_BAIDU_PUSH_TOKEN', 'NENGJIAN_RERANK_URL',
+                    'NENGJIAN_INTERNAL_TOKEN', 'WECOM_TPL_POLICY', 'WECOM_TPL_FINANCE'):
+            self.assertIn(key, backend)
+        self.assertEqual(backend['GLM_MODEL'], 'glm-4.7-flash')
         self.assertEqual(self.cn['volumes'], self.source['volumes'])
 
     def test_actual_compose_config_without_international_variables(self):

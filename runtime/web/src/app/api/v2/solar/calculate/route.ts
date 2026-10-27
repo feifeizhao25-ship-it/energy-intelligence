@@ -37,6 +37,9 @@ export async function POST(req: NextRequest) {
         if (error instanceof Error && ['INVALID_SOLAR_INPUT', 'INVALID_COORDINATES', 'INVALID_QUALITY_TAG'].includes(error.message)) {
             return respond(400, { success: false, message: '测算参数无效，请检查位置、容量、成本和电价' });
         }
+        if (error instanceof Error && error.message === 'DOMESTIC_RESOURCE_NOT_LOADED') return respond(422, {
+            success: false, message: '该坐标的辐照数据尚未加载。请改用已覆盖的省会坐标，或等待服务端批量导入完成。',
+        });
         if (error instanceof Error && error.message === 'AUDIT_GRADE_UNAVAILABLE') return respond(422, {
             success: false, message: '当前只提供初步估算，暂不支持审计级报告',
         });

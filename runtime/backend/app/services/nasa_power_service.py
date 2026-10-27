@@ -24,6 +24,10 @@ class NASAPowerService:
         Returns:
             包含GHI、DNI、DHI等数据的字典
         """
+        from app.services import overseas_gate
+        if (overseas_gate.settings.APP_EDITION or "").lower() == "cn":
+            from app.services.domestic_resource import nasa_shaped
+            return nasa_shaped(lat, lon)
         refuse_if_cn()
         params = {
             "parameters": "ALLSKY_SFC_SW_DWN",  # GHI

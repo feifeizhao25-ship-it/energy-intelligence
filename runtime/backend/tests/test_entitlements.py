@@ -92,10 +92,11 @@ def test_entitlements_matrix_values():
     assert ENTITLEMENTS["enterprise"]["data_sources"] == ["all"]
     assert ENTITLEMENTS["free"]["export_formats"] == ["pdf"]
     assert ENTITLEMENTS["pro"]["export_formats"] == ["pdf", "docx"]
-    assert ENTITLEMENTS["enterprise"]["export_formats"] == ["pdf", "docx", "api"]
+    assert ENTITLEMENTS["enterprise"]["export_formats"] == ["pdf", "docx", "api", "xlsx", "pptx"]
     assert ENTITLEMENTS["free"]["team_seats"] == 1
     assert ENTITLEMENTS["pro"]["team_seats"] == 1
-    assert ENTITLEMENTS["enterprise"]["team_seats"] == -1
+    assert ENTITLEMENTS["full"]["team_seats"] == 3
+    assert ENTITLEMENTS["enterprise"]["team_seats"] == 10
     assert ENTITLEMENTS["free"]["support_level"] == "community"
     assert ENTITLEMENTS["pro"]["support_level"] == "email"
     assert ENTITLEMENTS["enterprise"]["support_level"] == "dedicated"
@@ -111,7 +112,7 @@ def test_minus_one_means_unlimited_for_enterprise():
     assert check_numeric_entitlement(user, "report_exports_per_month") == -1
     assert check_numeric_entitlement(user, "ai_queries_per_day") == -1
     assert check_numeric_entitlement(user, "max_projects") == -1
-    assert check_numeric_entitlement(user, "team_seats") == -1
+    assert check_numeric_entitlement(user, "team_seats") == 10
 
 
 def test_check_numeric_entitlement_rejects_non_numeric_key():

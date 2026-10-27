@@ -29,14 +29,20 @@ def test_web_and_backend_registry_identical():
     assert BACKEND_REG.read_bytes() == WEB_REG.read_bytes()
 
 
-def test_no_excel_or_ppt_in_entitlements_at_launch():
-    for plan, ent in ENTITLEMENTS.items():
-        fmts = {f.lower() for f in ent["export_formats"]}
-        assert not fmts & {"xlsx", "excel", "pptx", "ppt"}, plan
-    reg_text = BACKEND_REG.read_text("utf-8")
-    for tier in json.loads(reg_text)["tiers"].values():
-        feats = " ".join(tier["features_zh"] + tier["features_en"])
-        assert "Excel" not in feats and "PPT" not in feats
+def test_excel_ppt_and_seats_follow_0s2():
+    reg = json.loads(BACKEND_REG.read_text("utf-8"))
+    assert reg["tiers"]["full"]["collaboration"]["team_seats"] == 3
+    assert reg["tiers"]["team"]["collaboration"]["team_seats"] == 10
+    assert reg["tiers"]["enterprise"]["collaboration"]["team_seats"] == 10
+    assert reg["tiers"]["enterprise"]["collaboration"]["sso"] is False
+    assert reg["tiers"]["enterprise"]["collaboration"]["white_label"] is False
+    assert "xlsx" in reg["tiers"]["full"]["export"]["formats"]
+    assert "pptx" in reg["tiers"]["enterprise"]["export"]["formats"]
+    assert "xlsx" not in reg["tiers"]["free"]["export"]["formats"]
+    assert "xlsx" not in reg["tiers"]["pro"]["export"]["formats"]
+    assert all(reg["feature_flags"].values())
+    assert "5 人" not in reg["tiers"]["team"]["description"]
+    assert "白标" not in " ".join(reg["tiers"]["enterprise"]["features_zh"])
 
 
 def test_matrix_values_from_pricing_table():

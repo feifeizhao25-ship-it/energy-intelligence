@@ -21,7 +21,7 @@ afterAll(async()=>{
  if(filename)for(const suffix of ['', '.meta.json'])fs.rmSync(path.join(process.cwd(),'.exports',filename+suffix),{force:true});
 });
 test('real DB, quota, disk and download: 73 owner records, no foreign records, invalid format consumes nothing',async()=>{
- const invalid=await reserve(new Request('http://localhost/api/exports/reserve',{method:'POST',body:'{"format":"xlsx"}'}));expect(invalid.status).toBe(400);
+ const invalid=await reserve(new Request('http://localhost/api/exports/reserve',{method:'POST',body:'{"format":"exe"}'}));expect(invalid.status).toBe(400);
  expect(await prisma.quotaUsage.count({where:{userId:owner}})).toBe(0);
  const result=await POST(new NextRequest('http://localhost/api/exports',{method:'POST',body:JSON.stringify({dataType:'calculations',format:'json'})}));expect(result.status).toBe(200);
  const body=await result.json();filename=body.data.filename;expect(body.data.totalRecords).toBe(73);

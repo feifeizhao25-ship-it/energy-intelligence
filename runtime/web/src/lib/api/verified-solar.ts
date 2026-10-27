@@ -1,6 +1,7 @@
 import { createHash } from 'crypto';
 import type { SolarResource } from '@/types';
 import { empiricalOptimalTilt } from '@/lib/calculator/transposition';
+import { domesticNasaMonthly } from '@/lib/api/domestic-station';
 
 /**
  * 仅请求上一完整公历年，不用旧年份或缺失月份静默补值。
@@ -22,8 +23,8 @@ export async function verifiedSolar(lat: number, lng: number, now = new Date()) 
     if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) throw new Error('INVALID_COORDINATES');
     const year = now.getUTCFullYear() - 1;
     const requestUrl = `domestic-cache://nasa-power/monthly?parameters=ALLSKY_SFC_SW_DWN,ALLSKY_SFC_SW_DIFF,T2M&start=${year}&end=${year}`;
-    const raw = solarCache.get(`${lat},${lng},${year}`);
-    if (raw == null) throw new Error('OVERSEAS_SOURCE_DISABLED');
+    const raw = solarCache.get(`${lat},${lng},${year}`) ?? domesticNasaMonthly(lat, lng, year);
+    if (raw == null) throw new Error('DOMESTIC_RESOURCE_NOT_LOADED');
     const data = JSON.parse(raw);
     if (data.header?.start !== `${year}0101` || data.header?.end !== `${year}1231` || data.header?.time_standard !== 'UTC') {
         throw new Error('SOLAR_PERIOD_UNVERIFIED');
@@ -53,7 +54,8 @@ export async function verifiedSolar(lat: number, lng: number, now = new Date()) 
     });
     const annualGHI = monthly.reduce((sum, month) => sum + month.totalGhi, 0);
     if (!Number.isFinite(annualGHI) || annualGHI <= 0) throw new Error('SOLAR_DATA_INVALID');
-    return { source: 'NASA POWER' as const, annualGHI, monthly, year, units: 'kWh/m²/年',
+    const source = typeof data.provenance === 'string' && data.provenance ? data.provenance : 'NASA POWER' as const;
+    return { source, annualGHI, monthly, year, units: 'kWh/m²/年',
         timestamp: new Date(), cacheHit: true, requestUrl,
         rawResponse: raw, responseSha256: createHash('sha256').update(raw).digest('hex'),
         temporalCoverage: { start: new Date(Date.UTC(year, 0, 1)), end: new Date(Date.UTC(year + 1, 0, 1) - 1) },

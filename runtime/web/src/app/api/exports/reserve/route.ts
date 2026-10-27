@@ -30,15 +30,17 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'INVALID_REQUEST', message: '导出请求格式无效，请重试' }, { status: 400 });
     }
     const format = body.format === undefined ? 'pdf' : body.format;
-    if (format !== 'pdf' && format !== 'docx') {
-        return NextResponse.json({ error: 'UNSUPPORTED_FORMAT', message: '报告导出格式仅支持 PDF 或 Word' }, { status: 400 });
+    const formatName: Record<string, string> = { pdf: 'PDF', docx: 'Word', xlsx: 'Excel', pptx: 'PPT' };
+    if (typeof format !== 'string' || !(format in formatName)) {
+        return NextResponse.json({ error: 'UNSUPPORTED_FORMAT', message: '报告导出格式仅支持 PDF、Word、Excel 或 PPT' }, { status: 400 });
     }
-    if (format === 'docx') {
+    if (format !== 'pdf') {
         const user = await prisma.user.findUnique({ where: { id: session.user.id }, select: { plan: true, planExpireAt: true } });
         const plan = effectivePlan(user?.plan, user?.planExpireAt) as keyof typeof EXPORT_FORMATS;
         const allowed = (EXPORT_FORMATS[plan] ?? []) as readonly string[];
-        if (!allowed.includes('Word')) {
-            return NextResponse.json({ error: 'FORMAT_NOT_INCLUDED', message: '当前套餐不含 Word 导出，可导出 PDF，或升级到专业版及以上' }, { status: 403 });
+        const label = formatName[format];
+        if (!allowed.includes(label)) {
+            return NextResponse.json({ error: 'FORMAT_NOT_INCLUDED', message: `当前套餐不含 ${label} 导出，可导出 PDF，或升级到专业版及以上` }, { status: 403 });
         }
     }
 

@@ -9,6 +9,7 @@ from .database import (
 from .user import User
 from .alert import AlertRule
 from .payment_order import PaymentOrder
+from .product_usage import DatasetDownload, PolicyAlertSubscription
 
 __all__ = [
     "Base",
@@ -19,4 +20,6 @@ __all__ = [
     "ConsentRecord",
     "AlertRule",
     "PaymentOrder",
+    "PolicyAlertSubscription",
+    "DatasetDownload",
 ]

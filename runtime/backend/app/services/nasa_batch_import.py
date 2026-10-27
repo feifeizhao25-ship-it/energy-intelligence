@@ -30,10 +30,39 @@ def planned_monthly_url(lat: float, lng: float, year: int) -> str:
     )
 
 
-def run_batch(points: list[dict], cache_path: Path) -> dict:
+def _fetch(url: str) -> str:
+    """The only function in this module that opens a socket. Request handlers must not call it."""
+    import urllib.request
+    req = urllib.request.Request(url, headers={"User-Agent": "nengjian-nasa-batch/1.0"})
+    with urllib.request.urlopen(req, timeout=60) as resp:
+        return resp.read().decode("utf-8", errors="replace")
+
+
+def run_batch(points: list[dict], cache_path: Path, fetcher=None) -> dict:
     if not batch_import_enabled():
-        return {"status": "disabled", "written": 0, "license_note": LICENSE_NOTE}
-    # TODO: perform the HTTP GET only inside this function when operations
-    # enables the flag. The default path writes nothing and does not open a socket.
-    cache_path.write_text(json.dumps({"points": points, "license_note": LICENSE_NOTE}, ensure_ascii=False), encoding="utf-8")
-    return {"status": "staged", "written": len(points), "license_note": LICENSE_NOTE, "fetched": False}
+        return {"status": "disabled", "written": 0, "license_note": LICENSE_NOTE, "fetched": False}
+    fetch = fetcher or _fetch
+    rows = []
+    for point in points:
+        lat = float(point["lat"])
+        lng = float(point["lng"])
+        year = int(point.get("year") or 2024)
+        url = planned_monthly_url(lat, lng, year)
+        try:
+            body = fetch(url)
+            parsed = json.loads(body) if body else {}
+            rows.append({"lat": lat, "lng": lng, "year": year, "fetched": True, "body": parsed, "city": point.get("city"), "province": point.get("province")})
+        except Exception as exc:
+            rows.append({"lat": lat, "lng": lng, "year": year, "fetched": False, "error": exc.__class__.__name__})
+    stations = []
+    for row in rows:
+        if not row.get("fetched"):
+            continue
+        stations.append({
+            "lat": row["lat"], "lng": row["lng"], "city": row.get("city"), "province": row.get("province"),
+            "provenance": "NASA POWER 批量导入缓存",
+            "license_note": LICENSE_NOTE,
+            "nasa": row.get("body"),
+        })
+    cache_path.write_text(json.dumps({"points": rows, "stations": stations, "license_note": LICENSE_NOTE}, ensure_ascii=False), encoding="utf-8")
+    return {"status": "imported", "written": len(rows), "license_note": LICENSE_NOTE, "fetched": any(row.get("fetched") for row in rows)}

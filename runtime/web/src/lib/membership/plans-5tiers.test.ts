@@ -7,9 +7,13 @@ describe('会员五档（免费 / ¥1,980 / ¥5,800 / ¥16,800 / ¥33,000）', (
     expect(registry.tier_order).toEqual(PLAN_ORDER.map((p) => p.toLowerCase()));
     expect(PURCHASABLE_PLANS).not.toContain(Plan.MAINTENANCE);
   });
-  it('上线时任何档位都不含 Excel / PPT', () => {
-    for (const fmts of Object.values(EXPORT_FORMATS)) {
-      expect((fmts as readonly string[]).filter((f) => /excel|xlsx|ppt/i.test(f))).toEqual([]);
-    }
+  it('Excel / PPT 只在专业、团队和上限档', () => {
+    expect(EXPORT_FORMATS.FREE).not.toEqual(expect.arrayContaining(['Excel', 'PPT']));
+    expect(EXPORT_FORMATS.PRO).not.toEqual(expect.arrayContaining(['Excel', 'PPT']));
+    expect(EXPORT_FORMATS.FULL).toEqual(expect.arrayContaining(['Excel', 'PPT']));
+    expect(EXPORT_FORMATS.TEAM).toEqual(expect.arrayContaining(['Excel', 'PPT']));
+    expect(EXPORT_FORMATS.ENTERPRISE).toEqual(expect.arrayContaining(['Excel', 'PPT']));
+    expect(EXPORT_FORMATS.ENTERPRISE).not.toContain('White_Label');
+    expect(PLAN_DETAILS.FULL.description).toContain('3 个席位');
   });
 });

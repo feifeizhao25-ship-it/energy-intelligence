@@ -69,7 +69,12 @@ export default function Sidebar() {
         {
             label: '标准与报表',
             items: [
-                { name: '审计记录', href: '/audit', icon: 'verified_user', tier: 'L3', requiresAuth: true }
+                { name: '审计记录', href: '/audit', icon: 'verified_user', tier: 'L3', requiresAuth: true },
+                { name: '政策检索', href: '/policies', icon: 'menu_book', tier: 'L2', requiresAuth: true },
+                { name: '数据集', href: '/datasets', icon: 'library_books', tier: 'L2', requiresAuth: true },
+                { name: '每日一数', href: '/daily', icon: 'history', tier: 'L1', requiresAuth: true },
+                { name: '政策提醒', href: '/alerts', icon: 'verified_user', tier: 'L3', requiresAuth: true },
+                { name: '季度简报', href: '/briefs', icon: 'description', tier: 'L4', requiresAuth: true },
             ]
         },
         {

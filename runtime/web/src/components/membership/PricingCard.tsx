@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Plan, PLAN_DETAILS } from '@/lib/membership/plans';
+import registry from '@/lib/entitlements/entitlements.json';
 import { Check, X } from 'lucide-react';
 
 interface PricingCardProps {
@@ -102,113 +103,7 @@ export default function PricingCard({ plan, billingPeriod, onSelect }: PricingCa
 }
 
 function getFeaturesByPlan(plan: Plan): { included: string[]; excluded: string[] } {
-    const features = {
-        FREE: {
-            included: [
-                '资源地图查看',
-                '单点查询 3次/天',
-                '光伏计算 3次/天',
-                '论文搜索 5次/天',
-                'AI对话 5次/天',
-                '免费PDF下载',
-            ],
-            excluded: [
-                '月度/历史数据',
-                '运维诊断',
-                '报告导出',
-                '文献库管理',
-            ],
-        },
-        PRO: {
-            included: [
-                '✅ 资源查询无限次',
-                '✅ 月度数据 + 34年历史趋势',
-                '✅ 多点对比（3点）',
-                '✅ 光伏/风电计算无限次',
-                '✅ 25年现金流分析',
-                '✅ 敏感性分析',
-                '✅ 论文搜索无限次',
-                '✅ AI中文摘要',
-                '✅ 引用网络 + 推荐',
-                '✅ 文献库 500篇',
-                '✅ AI对话 100次/天',
-                '✅ 报告导出（PDF/Word）',
-            ],
-            excluded: ['运维诊断功能'],
-        },
-        MAINTENANCE: {
-            included: [
-                '✅ 资源查询无限次',
-                '✅ 光伏计算 10次/天',
-                '✅ 论文搜索 10次/天',
-                '✅ AI对话 100次/天',
-                '',
-                '🔧 运维专属功能：',
-                '✅ PR深度分析（无限）',
-                '✅ 智能清洗决策',
-                '✅ 逆变器故障诊断（无限）',
-                '✅ 组串异常定位',
-                '✅ IV曲线分析',
-                '✅ 检修工作票生成',
-                '✅ 预测性维护计划',
-                '✅ 停机损失计算',
-                '✅ 风机故障诊断',
-                '✅ 电站管理 10个',
-            ],
-            excluded: [],
-        },
-        FULL: {
-            included: [
-                '✅ 专业版全部功能',
-                '✅ 运维诊断全部功能',
-                '',
-                '💎 专家版专属：',
-                '✅ 多点对比 10点',
-                '✅ 详细版报告（无水印）',
-                '✅ 电站管理 50个',
-                '✅ 文献库 2000篇',
-                '✅ AI对话 300次/天',
-                '✅ 优先响应',
-                '✅ 数据保留 2 年',
-            ],
-            excluded: [],
-        },
-        TEAM: {
-            included: [
-                '✅ 专业档已实现功能 × 10席',
-                '',
-                '👥 团队专属：',
-                '✅ 5个独立账号',
-                '✅ 项目共享协作',
-                '✅ 统一账单管理',
-                '✅ 成员权限管理',
-                '✅ 团队数据统计',
-                '✅ 电站管理 100个',
-                '✅ 文献库 5000篇（共享）',
-                '✅ AI对话 500次/天（共享）',
-            ],
-            excluded: [],
-        },
-        ENTERPRISE: {
-            included: [
-                '✅ 全部功能无限制',
-                '✅ 无限账号',
-                '✅ 无限电站管理',
-                '✅ 无限AI对话',
-                '✅ 无限存储空间',
-                '',
-                '🏢 企业专属：',
-                '✅ 数据整理交付（不含测算结论）',
-                '✅ 白标报告（使用企业Logo）',
-                '✅ SSO单点登录',
-                '✅ 专属客户成功经理',
-                '✅ 优先技术支持',
-                '✅ 季度业务回顾',
-                '✅ 定制开发配额',
-            ],
-            excluded: [],
-        },
-    };
-
-    return features[plan];
+    const key = { FREE: 'free', PRO: 'pro', MAINTENANCE: 'maintenance', FULL: 'full', TEAM: 'team', ENTERPRISE: 'enterprise' }[plan];
+    const tier = (registry.tiers as Record<string, { features_zh?: string[] }>)[key];
+    return { included: (tier?.features_zh ?? []).map((line) => line.startsWith('✅') ? line : `✅ ${line}`), excluded: [] };
 }

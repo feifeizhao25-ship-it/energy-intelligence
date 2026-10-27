@@ -59,7 +59,7 @@ export default function LoginForm({ authConfigured, callbackUrl = '/dashboard' }
         // 服务端说「60 秒内已发过」时，按钮也进入冷却，避免用户连点
         if (response.status === 429) setCooldown(RESEND_SECONDS);
       } else {
-        setNotice(copy.sent);
+        setNotice(typeof payload?.devCode === 'string' ? `开发环境验证码：${payload.devCode}` : copy.sent);
         setCooldown(RESEND_SECONDS);
       }
     } catch {

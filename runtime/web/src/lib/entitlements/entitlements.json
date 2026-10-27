@@ -24,7 +24,9 @@
         "resource_queries_per_day": 3,
         "calculations_per_day": 3,
         "max_projects": 1,
-        "report_exports_per_month": 3
+        "report_exports_per_month": 3,
+        "api_calls_per_month": 0,
+        "dataset_downloads_per_month": 3
       },
       "knowledge": {
         "data_sources": [
@@ -57,19 +59,31 @@
         "每日 3 次资源查询与测算",
         "最多 1 个项目",
         "PDF 导出 3 份/月（带水印）",
-        "数据保留 7 天"
+        "数据保留 7 天",
+        "每日一数",
+        "数据集下载 3 次/月"
       ],
       "features_en": [
         "5 AI interactions per day",
         "3 resource queries and calculations per day",
         "1 active project",
         "3 watermarked PDF exports per month",
-        "7-day data retention"
+        "7-day data retention",
+        "Daily data card",
+        "3 dataset downloads per month"
       ],
       "purchasable": false,
       "billing_periods": [
         "yearly"
-      ]
+      ],
+      "capabilities": {
+        "policy_alerts": "none",
+        "daily_number": true,
+        "excel_export": false,
+        "ppt_export": false,
+        "quarterly_brief": false,
+        "tiered_api": false
+      }
     },
     "pro": {
       "name": "标准·数据库订阅",
@@ -87,7 +101,9 @@
         "max_projects": 30,
         "report_exports_per_month": 30,
         "diagnoses_per_day": 3,
-        "max_stations": 0
+        "max_stations": 0,
+        "api_calls_per_month": 0,
+        "dataset_downloads_per_month": -1
       },
       "knowledge": {
         "data_sources": [
@@ -124,7 +140,11 @@
         "最多 30 个项目",
         "PDF 与 Word 报告导出 30 份/月",
         "文献检索与引用导出",
-        "数据保留 1 年"
+        "数据保留 1 年",
+        "数据集下载不限次（公平使用）",
+        "按省份与主题订阅政策提醒",
+        "每日一数",
+        "1 个席位"
       ],
       "features_en": [
         "100 AI interactions per day",
@@ -132,17 +152,29 @@
         "Up to 30 projects",
         "30 PDF and Word exports per month",
         "Literature search and citation export",
-        "1-year data retention"
+        "1-year data retention",
+        "Dataset downloads under fair use",
+        "Policy alerts by province and topic",
+        "Daily data card",
+        "1 seat"
       ],
       "purchasable": true,
       "billing_periods": [
         "yearly"
-      ]
+      ],
+      "capabilities": {
+        "policy_alerts": "province_topic",
+        "daily_number": true,
+        "excel_export": false,
+        "ppt_export": false,
+        "quarterly_brief": false,
+        "tiered_api": false
+      }
     },
     "full": {
       "name": "专业",
       "name_en": "Expert",
-      "description": "资深分析师、运维经理、咨询顾问",
+      "description": "资深分析师、运维经理、咨询顾问，3 个席位",
       "description_en": "For senior analysts, O&M managers and consultants.",
       "price": {
         "monthly_cny": 0,
@@ -155,7 +187,9 @@
         "max_projects": 200,
         "report_exports_per_month": -1,
         "diagnoses_per_day": -1,
-        "max_stations": 50
+        "max_stations": 50,
+        "api_calls_per_month": 500,
+        "dataset_downloads_per_month": -1
       },
       "knowledge": {
         "data_sources": [
@@ -174,12 +208,14 @@
       "export": {
         "formats": [
           "pdf",
-          "docx"
+          "docx",
+          "xlsx",
+          "pptx"
         ],
         "citation_export": true
       },
       "collaboration": {
-        "team_seats": 4,
+        "team_seats": 3,
         "shared_projects": false
       },
       "service": {
@@ -192,7 +228,11 @@
         "运维诊断、积灰与清洗分析，最多 50 个电站",
         "最多 200 个项目",
         "PDF 与 Word 导出不限份数",
-        "数据保留 2 年"
+        "数据保留 2 年",
+        "3 个席位",
+        "Excel 与 PPT 报告导出",
+        "分级接口 500 次/月",
+        "按关键词与文号的政策提醒"
       ],
       "features_en": [
         "Everything in Professional",
@@ -200,18 +240,30 @@
         "O&M diagnosis and soiling analysis, up to 50 stations",
         "Up to 200 projects",
         "Unlimited PDF and Word exports",
-        "2-year data retention"
+        "2-year data retention",
+        "3 seats",
+        "Excel and PowerPoint export",
+        "500 API calls per month",
+        "Policy alerts by keyword and document number"
       ],
       "purchasable": true,
       "billing_periods": [
         "yearly"
-      ]
+      ],
+      "capabilities": {
+        "policy_alerts": "keyword_doc",
+        "daily_number": true,
+        "excel_export": true,
+        "ppt_export": true,
+        "quarterly_brief": false,
+        "tiered_api": true
+      }
     },
     "team": {
       "name": "团队",
       "name_en": "Team",
-      "description": "5 人项目/咨询团队",
-      "description_en": "For a five-person project or advisory team.",
+      "description": "10 人项目/咨询团队",
+      "description_en": "For a ten-person project or advisory team.",
       "price": {
         "monthly_cny": 0,
         "yearly_cny": 16800
@@ -223,7 +275,9 @@
         "max_projects": 500,
         "report_exports_per_month": -1,
         "diagnoses_per_day": -1,
-        "max_stations": 100
+        "max_stations": 100,
+        "api_calls_per_month": 5000,
+        "dataset_downloads_per_month": -1
       },
       "knowledge": {
         "data_sources": [
@@ -242,7 +296,9 @@
       "export": {
         "formats": [
           "pdf",
-          "docx"
+          "docx",
+          "xlsx",
+          "pptx"
         ],
         "citation_export": true
       },
@@ -259,24 +315,38 @@
         "10 个团队席位",
         "团队共享 1,500 次/日 AI 对话",
         "最多 500 个共享项目",
-        "数据保留 3 年"
+        "数据保留 3 年",
+        "分级接口 5,000 次/月",
+        "季度简报",
+        "Excel 与 PPT 报告导出"
       ],
       "features_en": [
         "Everything in Expert",
-        "5 team accounts",
+        "10 team seats",
         "1,500 shared AI interactions per day",
         "Up to 500 shared projects",
-        "3-year data retention"
+        "3-year data retention",
+        "5,000 API calls per month",
+        "Quarterly brief",
+        "Excel and PowerPoint export"
       ],
       "purchasable": true,
       "billing_periods": [
         "yearly"
-      ]
+      ],
+      "capabilities": {
+        "policy_alerts": "keyword_doc",
+        "daily_number": true,
+        "excel_export": true,
+        "ppt_export": true,
+        "quarterly_brief": true,
+        "tiered_api": true
+      }
     },
     "enterprise": {
       "name": "上限档",
       "name_en": "Enterprise",
-      "description": "集团、机构、设计院",
+      "description": "集团、机构、设计院；含 10 个席位，合同可增加",
       "description_en": "For governed integrations and multi-team rollouts.",
       "price": {
         "monthly_cny": 0,
@@ -289,7 +359,9 @@
         "max_projects": -1,
         "report_exports_per_month": -1,
         "diagnoses_per_day": -1,
-        "max_stations": -1
+        "max_stations": -1,
+        "api_calls_per_month": -1,
+        "dataset_downloads_per_month": -1
       },
       "knowledge": {
         "data_sources": [
@@ -307,15 +379,17 @@
         "formats": [
           "pdf",
           "docx",
-          "api"
+          "api",
+          "xlsx",
+          "pptx"
         ],
         "citation_export": true
       },
       "collaboration": {
-        "team_seats": -1,
+        "team_seats": 10,
         "shared_projects": true,
-        "sso": true,
-        "white_label": true
+        "sso": false,
+        "white_label": false
       },
       "service": {
         "support_level": "dedicated",
@@ -323,19 +397,33 @@
         "private_deployment": true
       },
       "features_zh": [
-        "20 个账号起，按合同扩展",
+        "10 个席位，合同可增加",
         "用量和项目数量按合同配置",
+        "分级接口按合同计量",
+        "Excel 与 PPT 报告导出",
+        "季度简报",
         "私有化与定制需求评估"
       ],
       "features_en": [
-        "From 20 seats, extendable by contract",
+        "10 seats included, more by contract",
         "Contract-defined scale and retention",
+        "API metering by contract",
+        "Excel and PowerPoint export",
+        "Quarterly brief",
         "Private deployment assessment"
       ],
       "purchasable": true,
       "billing_periods": [
         "yearly"
-      ]
+      ],
+      "capabilities": {
+        "policy_alerts": "keyword_doc",
+        "daily_number": true,
+        "excel_export": true,
+        "ppt_export": true,
+        "quarterly_brief": true,
+        "tiered_api": true
+      }
     },
     "maintenance": {
       "name": "运维版",
@@ -353,7 +441,9 @@
         "max_projects": 10,
         "report_exports_per_month": 50,
         "diagnoses_per_day": -1,
-        "max_stations": 10
+        "max_stations": 10,
+        "api_calls_per_month": 0,
+        "dataset_downloads_per_month": 3
       },
       "knowledge": {
         "data_sources": [
@@ -399,21 +489,29 @@
       "purchasable": false,
       "billing_periods": [
         "yearly"
-      ]
+      ],
+      "capabilities": {
+        "policy_alerts": "none",
+        "daily_number": true,
+        "excel_export": false,
+        "ppt_export": false,
+        "quarterly_brief": false,
+        "tiered_api": false
+      }
     }
   },
   "legacy_tiers": [
     "maintenance"
   ],
-  "pricing_note": "五档年付(唯一在售计费周期): 免费 / ¥1,980 / ¥5,800 / ¥16,800 / ¥33,000（年付）。月付已停用, monthly_cny 一律 0, 不得据此下单。运维版(maintenance)已停售, 仅存量用户保留。Excel 导出计划第 7–8 周、PPT 导出第 9–10 周上线，上线前不列入任何档位权益。",
+  "pricing_note": "五档年付(唯一在售计费周期): 免费 / ¥1,980 / ¥5,800 / ¥16,800 / ¥33,000（年付）。月付已停用, monthly_cny 一律 0, 不得据此下单。运维版(maintenance)已停售, 仅存量用户保留。席位按 0S2：标准 1、专业 3、团队 10、上限档 10（合同可增加）。专业及以上含 Excel 与 PPT 导出。白标与单点登录未提供。",
   "sales_billing_period": "yearly",
   "feature_flags": {
-    "daily_number": false,
-    "datasets": false,
-    "policy_alerts": false,
-    "tiered_api": false,
-    "excel_export": false,
-    "ppt_export": false,
-    "quarterly_brief": false
+    "daily_number": true,
+    "datasets": true,
+    "policy_alerts": true,
+    "tiered_api": true,
+    "excel_export": true,
+    "ppt_export": true,
+    "quarterly_brief": true
   }
 }

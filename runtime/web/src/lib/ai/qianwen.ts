@@ -67,6 +67,12 @@ export interface SiliconFlowChatResponse {
 
 // 非流式聊天
 export async function chat(messages: Message[], model: string = DEFAULT_MODEL): Promise<SiliconFlowChatResponse> {
+    if ((process.env.NEXT_PUBLIC_APP_EDITION || process.env.APP_EDITION || '').toLowerCase() === 'cn') {
+        const { callAI } = await import('./router');
+        const response = await callAI({ messages: messages as any, model: 'deepseek-flash' });
+        const content = (response as { choices?: { message?: { content?: string } }[] }).choices?.[0]?.message?.content || '';
+        return { content, model: 'deepseek-flash' };
+    }
     if (!SILICONFLOW_API_KEY) {
         throw new Error('SILICONFLOW_API_KEY 未配置');
     }

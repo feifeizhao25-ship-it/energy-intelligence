@@ -12,8 +12,9 @@ function calculationDay(now: Date) {
     return new Date(Math.floor((now.getTime() + 8 * 3600000) / 86400000) * 86400000 - 8 * 3600000);
 }
 
-function effectivePlan(user: { plan: string | null; planExpireAt: Date | null }, now: Date) {
-    return user.plan === 'FREE' || !user.planExpireAt || user.planExpireAt <= now ? 'FREE' : user.plan;
+function effectivePlan(user: { plan: string | null; planExpireAt: Date | null }, now: Date): string {
+    if (!user.plan || user.plan === 'FREE' || !user.planExpireAt || user.planExpireAt <= now) return 'FREE';
+    return user.plan;
 }
 
 /** 次数已用完时立刻拒绝，避免先请求外部气象再告诉用户不能保存。事务内仍会再核验一次。 */

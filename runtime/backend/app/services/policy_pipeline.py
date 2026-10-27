@@ -65,6 +65,11 @@ def publish_approved(conn: sqlite3.Connection, source_id: str, content_sha256: s
         (approval.get("approval_id") or "", row["id"]),
     )
     conn.commit()
+    try:
+        from app.services.policy_alerts import note_published
+        note_published(source_id, content_sha256, body="")
+    except Exception:
+        pass
     return {"status": "published", "content_sha256": content_sha256}
 
 

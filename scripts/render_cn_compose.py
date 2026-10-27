@@ -29,9 +29,35 @@ def domestic_config(source):
     environment['DEEPSEEK_MODEL'] = 'deepseek-flash'
     for key in (
         'NENGJIAN_DEEPSEEK_API_KEY', 'NENGJIAN_DASHSCOPE_API_KEY', 'NENGJIAN_GLM_API_KEY',
-        'NENGJIAN_GUARDRAIL_AK_ID', 'NENGJIAN_GUARDRAIL_AK_SECRET', 'NENGJIAN_ARK_API_KEY',
+        'NENGJIAN_GUARDRAIL_AK_ID', 'NENGJIAN_GUARDRAIL_AK_SECRET', 'NENGJIAN_GUARDRAIL_ENDPOINT',
+        'NENGJIAN_ARK_API_KEY', 'NENGJIAN_ARK_BASE_URL',
+        'NENGJIAN_SEEDREAM_MODEL', 'NENGJIAN_SEEDANCE_MODEL',
+        'NENGJIAN_EMBEDDING_MODEL', 'NENGJIAN_RERANK_MODEL', 'NENGJIAN_RERANK_URL',
+        'NENGJIAN_WECOM_CORP_ID', 'NENGJIAN_WECOM_AGENT_ID', 'NENGJIAN_WECOM_SECRET',
+        'NENGJIAN_WECOM_TOKEN', 'NENGJIAN_WECOM_AES_KEY', 'NENGJIAN_WECOM_CREATOR',
+        'NENGJIAN_WECOM_ROBOT_KEY',
+        'WECOM_TPL_CONTENT', 'WECOM_TPL_BUSINESS', 'WECOM_TPL_COMPLIANCE', 'WECOM_TPL_PROMOTION',
+        'WECOM_TPL_SWITCH', 'WECOM_TPL_INCIDENT', 'WECOM_TPL_POLICY', 'WECOM_TPL_FINANCE',
+        'WECOM_SHA_CONTROL_ID',
+        'NENGJIAN_GEO_QWEN_API_KEY', 'NENGJIAN_GEO_WENXIN_API_KEY', 'NENGJIAN_GEO_DOUBAO_API_KEY',
+        'NENGJIAN_GEO_DOUBAO_MODEL', 'NENGJIAN_GEO_WENXIN_MODEL', 'NENGJIAN_GEO_QWEN_MODEL',
+        'NENGJIAN_BAIDU_PUSH_TOKEN', 'NENGJIAN_BAIDU_SITE',
+        'NENGJIAN_INTERNAL_TOKEN', 'NENGJIAN_FEEDBACK_PATH',
     ):
         environment[key] = '${%s:-}' % key
+    environment['GLM_MODEL'] = 'glm-4.7-flash'
+    environment['NENGJIAN_USER_DAILY_BUDGET_CNY'] = '${NENGJIAN_USER_DAILY_BUDGET_CNY:-20}'
+    environment['NENGJIAN_USER_MONTHLY_BUDGET_CNY'] = '${NENGJIAN_USER_MONTHLY_BUDGET_CNY:-200}'
+    environment['NENGJIAN_MODEL_CALL_CNY'] = '${NENGJIAN_MODEL_CALL_CNY:-0.01}'
+    environment['NENGJIAN_BOTTOM_LINE_MODEL_REVIEW'] = '${NENGJIAN_BOTTOM_LINE_MODEL_REVIEW:-0}'
+    environment['NENGJIAN_MEDIA_ENABLED'] = '${NENGJIAN_MEDIA_ENABLED:-0}'
+    environment['NENGJIAN_OPENCLAW_SECRETS_FILE'] = '${NENGJIAN_OPENCLAW_SECRETS_FILE:-/etc/airui-nengjian/openclaw.env}'
+    web = config['services']['web-cn']['environment']
+    web.pop('OPENALEX_CONTACT_EMAIL', None)
+    web.pop('SILICONFLOW_API_KEY', None)
+    web.pop('OPENWEATHERMAP_API_KEY', None)
+    web['APP_EDITION'] = 'cn'
+    web['NENGJIAN_INTERNAL_TOKEN'] = '${NENGJIAN_INTERNAL_TOKEN:-}'
     backend = config['services']['backend']
     worker = copy.deepcopy(backend)
     worker['command'] = ['celery', '-A', 'app.tasks.celery_app', 'worker', '--loglevel=info', '--concurrency=2', '--pidfile=/tmp/celery-worker.pid']

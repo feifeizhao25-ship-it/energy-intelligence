@@ -21,7 +21,8 @@ def skill_improvement() -> dict:
             "calculator_actual": 100.0,
         }
 
-    return run_cycle([], _metrics)
+    from app.services.feedback_samples import load_samples
+    return run_cycle(load_samples(), _metrics)
 
 
 @celery_app.task(name="energy.domestic.policy_snapshot")
