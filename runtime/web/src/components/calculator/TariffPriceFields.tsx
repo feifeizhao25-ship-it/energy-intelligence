@@ -77,7 +77,7 @@ export default function TariffPriceFields({
                     const tableValue = defaults && (defaults.status === 'ok' || field.key === 'coalBenchmarkPrice') ? defaults[field.key] : null;
                     return (
                         <label key={field.key} className="space-y-2 text-sm">
-                            <span className="block text-xs font-bold text-slate-400">{field.label}（元/度）</span>
+                            <span className="block text-xs font-bold text-slate-400">{field.label}（元/千瓦时）</span>
                             <input
                                 type="number"
                                 min={0}
@@ -96,6 +96,7 @@ export default function TariffPriceFields({
             </div>
             {/* 分时电价的备注只在填分时电价时显示；上网电价只显示基准价与 136 号文说明 */}
             {defaults?.note && fields.some(f => f.key !== 'coalBenchmarkPrice') && <p className="text-[11px] leading-5 text-slate-500">电价表备注：{defaults.note}</p>}
+            <p className="text-[11px] leading-5 text-slate-500">这里的「度」指千瓦时。电价按元/千瓦时填写，不是分/千瓦时。</p>
             {showFeedInBasis && <p className="rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-2 text-[11px] leading-5 text-slate-400">{NEW_ENERGY_FEED_IN_BASIS}</p>}
         </div>
     );

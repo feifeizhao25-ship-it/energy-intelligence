@@ -494,10 +494,10 @@
     {
       "id": "t050",
       "term": "系统效率",
-      "short": "从斜面辐照到交流电的综合系数",
-      "example": "发电量公式里的综合效率系数",
-      "source": "GB 50797-2012《光伏发电站设计标准》（2024年版）6.6节",
-      "source_url": "",
+      "short": "本站测算里，系统效率是斜面辐照换到交流电的折减乘积，不含组件效率",
+      "example": "它不是性能比，也不要直接写成综合效率系数",
+      "source": "产品口径。综合效率系数 K 见 GB 50797-2012（2024年版）6.6，性能比见 IEC 61724-1。二者不要混用。K 的分项待对照标准全文。",
+      "source_url": "https://webstore.iec.ch/publication/33622",
       "as_of": "2026-10-27",
       "review_status": "pending_wecom"
     },
@@ -744,10 +744,10 @@
     {
       "id": "t075",
       "term": "容量系数",
-      "short": "实际发电量与满发全年电量之比",
-      "example": "风电和光伏都使用这个比",
-      "source": "IEC 61400-12-1",
-      "source_url": "",
+      "short": "统计期发电量除以额定功率与统计小时数的乘积",
+      "example": "年容量系数约等于年利用小时除以当年日历小时。平年按 8760。",
+      "source": "与利用小时同一统计口径换算。IEC 61400-12-1 是功率特性测试，不定义容量系数。",
+      "source_url": "https://chinaenergyportal.org/statistical-reporting-system-for-renewable-energy/",
       "as_of": "2026-10-27",
       "review_status": "pending_wecom"
     },
@@ -1224,20 +1224,20 @@
     {
       "id": "t123",
       "term": "利用小时",
-      "short": "发电量除以装机容量",
-      "example": "用来比较资源，不是承诺",
-      "source": "统计制度",
-      "source_url": "",
+      "short": "发电量除以发电设备平均容量，装机不变时等于发电量除以装机容量",
+      "example": "单位是小时，不是百分数",
+      "source": "可再生能源利用统计指标解释：发电设备平均利用小时 = 发电量 / 发电设备平均容量（不含试运行电量）",
+      "source_url": "https://chinaenergyportal.org/statistical-reporting-system-for-renewable-energy/",
       "as_of": "2026-10-27",
       "review_status": "pending_wecom"
     },
     {
       "id": "t124",
       "term": "弃电",
-      "short": "有资源但因电网原因未发出的电量",
-      "example": "比率以监测结果为准",
-      "source": "全国新能源消纳监测预警中心",
-      "source_url": "",
+      "short": "电网通道或安全运行等原因下可发而未发出的电量，不含设备自身故障",
+      "example": "弃风率等于弃风电量除以实际发电量与弃风电量之和",
+      "source": "国家能源局可再生能源统计指标解释，计算办法指向原电监会《风电场弃风电量计算办法（试行）》。2022年监测办法改称受限电量，条文全文待核实。",
+      "source_url": "https://zfxxgk.nea.gov.cn/2022-04/26/c_1310587756.htm",
       "as_of": "2026-10-27",
       "review_status": "pending_wecom"
     },
@@ -5214,9 +5214,9 @@
     {
       "id": "t522",
       "term": "价差",
-      "short": "峰段与谷段价格的差",
-      "example": "用已公布价格，不预测",
-      "source": "起草条目，出处待企业微信专家按 GB/T 2900、行业标准或政策原文核对",
+      "short": "峰段电价减去谷段电价，单位与电价相同",
+      "example": "0.8 元/千瓦时减 0.3 元/千瓦时等于 0.5 元/千瓦时，不是 50 分再乘一次",
+      "source": "省级分时电价文件。价差只使用已公布价格，不预测。",
       "source_url": "",
       "as_of": "2026-10-27",
       "review_status": "pending_wecom"

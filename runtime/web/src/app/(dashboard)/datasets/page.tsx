@@ -30,7 +30,7 @@ export default function DatasetsPage() {
         link.href = url; link.download = `${id}.csv`; link.click();
         setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
-    return <main className="mx-auto max-w-4xl space-y-4 p-6">
+    return <main className="mx-auto min-w-0 max-w-4xl space-y-4 overflow-x-hidden p-6">
         <h1 className="text-2xl font-bold">数据集</h1>
         <p className="text-sm text-slate-600">{note}</p>
         {message && <p className="text-amber-800">{message}</p>}
@@ -38,7 +38,7 @@ export default function DatasetsPage() {
             {items.map((item) => <li key={item.id} className="rounded-xl border p-4">
                 <h2 className="font-medium">{item.title}</h2>
                 <p className="text-sm text-slate-500">{item.rows.length ? `${item.updated || ''} · ${item.rows.length} 行` : '尚未载入已核验记录'}</p>
-                <div className="mt-3 overflow-x-auto">
+                <div className="mt-3 max-w-full overflow-x-auto">
                     <table className="w-full text-left text-sm">
                         <thead><tr>{item.columns.map((column) => <th key={column} className="border-b px-2 py-1 font-medium">{column}</th>)}</tr></thead>
                         <tbody>
@@ -56,13 +56,16 @@ export default function DatasetsPage() {
             <p className="text-sm text-slate-600">启用的来源在展示数据时保留下面的署名。未启用的来源不会入库。</p>
             <ul className="space-y-2">
                 {enabledAttributions(attributions).map((item) => <li key={item.id} className="rounded-xl border p-3 text-sm">
-                    <p className="font-medium">{item.name}</p>
-                    <p className="mt-1 text-slate-600">{item.attribution}</p>
+                    <p className="font-medium">{/[\u4e00-\u9fff]/.test(item.name) ? item.name : '公开来源'}</p>
+                    <p className="mt-1 break-all text-slate-600">{item.attribution}</p>
                 </li>)}
             </ul>
             <h3 className="font-medium">未启用</h3>
             <ul className="space-y-1 text-sm text-slate-600">
-                {disabledReasons(attributions).map((item) => <li key={item.id}>{item.name}：{item.reason}</li>)}
+                {disabledReasons(attributions).map((item) => {
+                    const chinese = (item.name.match(/[\u4e00-\u9fff]+/g) || []).join('');
+                    return <li key={item.id}>{chinese || '未启用来源'}：{item.reason}</li>;
+                })}
             </ul>
         </section>
     </main>;

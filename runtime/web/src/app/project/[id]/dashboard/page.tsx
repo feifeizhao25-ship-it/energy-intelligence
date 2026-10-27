@@ -203,13 +203,13 @@ export default function ProjectDashboard() {
                     {/* 今日数据概览 */}
                     {data && (
                         <>
-                            <TodayOverview data={data.today} />
+                            {data.today ? <TodayOverview data={data.today} /> : (
+                                <p className="rounded-xl bg-white p-6 text-sm text-slate-600">今日监测未接入。没有运行记录时不显示发电量、性能比或收益。</p>
+                            )}
 
-                            {/* 健康度评分 */}
                             <HealthScore
-                                score={data.today.healthScore.value}
-                                grade={data.today.healthScore.grade}
-                                trend={data.today.healthScore.trend}
+                                score={data.today?.healthScore?.value ?? null}
+                                trend={data.today?.healthScore?.trend ?? null}
                             />
 
                             {/* 趋势图 */}
@@ -243,24 +243,12 @@ export default function ProjectDashboard() {
                                         <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">监测天数</div>
                                     </div>
                                     <div className="text-center">
-                                        <div className="text-2xl font-bold text-blue-500">{data.summary.dataPointsCollected}</div>
-                                        <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">数据点数</div>
-                                    </div>
-                                    <div className="text-center">
-                                        <div className="text-2xl font-bold text-yellow-500">{data.summary.anomaliesDetected}</div>
+                                        <div className="text-2xl font-bold text-yellow-500">{data.summary.anomaliesDetected ?? '未接入'}</div>
                                         <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">检测到异常</div>
                                     </div>
                                     <div className="text-center">
-                                        <div className="text-2xl font-bold text-orange-500">{data.summary.alertsSent}</div>
-                                        <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">发送告警</div>
-                                    </div>
-                                    <div className="text-center">
-                                        <div className="text-2xl font-bold text-purple-500">{data.summary.reportsGenerated}</div>
-                                        <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">生成报告</div>
-                                    </div>
-                                    <div className="text-center">
                                         <div className="text-2xl font-bold text-gray-500">
-                                            {Math.ceil((Date.now() - new Date(data.summary.activatedAt).getTime()) / (1000 * 60 * 60 * 24))}
+                                            {data.summary.activatedAt ? Math.ceil((Date.now() - new Date(data.summary.activatedAt).getTime()) / (1000 * 60 * 60 * 24)) : '未接入'}
                                         </div>
                                         <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">激活天数</div>
                                     </div>

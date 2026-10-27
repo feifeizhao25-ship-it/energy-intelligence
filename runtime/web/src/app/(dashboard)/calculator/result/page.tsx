@@ -70,7 +70,7 @@ function CalculatorResultPage() {
     }
 
     return (
-        <div className="min-h-screen bg-[#020617] text-slate-200 pb-20">
+        <div className="min-h-screen overflow-x-hidden bg-[#020617] pb-20 text-slate-200">
             {/* Result Header：手机上标题与按钮分两行，标题正常换行，按钮可折行，不再撑出屏幕 */}
             <div className="bg-slate-900/50 border-b border-slate-800 sm:sticky sm:top-0 z-40 backdrop-blur-md">
                 <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

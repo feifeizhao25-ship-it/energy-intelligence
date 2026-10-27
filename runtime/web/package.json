@@ -56,14 +56,15 @@
     "date-fns": "^3.6.0",
     "dayjs": "^1.11.19",
     "docx": "^9.5.1",
-    "echarts": "^6.0.0",
-    "zod": "^3.25.76",
     "dotenv": "^17.2.3",
+    "echarts": "^6.0.0",
     "framer-motion": "^12.24.0",
+    "hls.js": "^1.7.3",
     "jsonwebtoken": "^9.0.3",
     "katex": "^0.16.47",
     "lru-cache": "^11.2.4",
     "lucide-react": "^0.439.0",
+    "mermaid": "^11.17.2",
     "nanoid": "^5.1.6",
     "next": "^16.3.3",
     "next-auth": "^4.24.15",
@@ -84,7 +85,8 @@
     "tailwindcss": "^3.4.10",
     "tailwindcss-animate": "^1.0.7",
     "typescript": "^5.6.2",
-    "uuid": "^13.0.0"
+    "uuid": "^13.0.0",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",

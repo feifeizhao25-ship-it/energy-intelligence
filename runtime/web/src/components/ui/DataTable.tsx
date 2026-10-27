@@ -21,6 +21,7 @@ export function DataTable({
     const [query, setQuery] = useState('');
     const [sortKey, setSortKey] = useState(columns[0]?.key ?? '');
     const [ascending, setAscending] = useState(true);
+    const [scrollTop, setScrollTop] = useState(0);
     const filtered = useMemo(() => {
         const needle = query.trim();
         const matched = needle
@@ -33,7 +34,13 @@ export function DataTable({
             return ascending ? order : -order;
         });
     }, [rows, columns, query, sortKey, ascending]);
-    const visible = open ? filtered : filtered.slice(0, 6);
+    const collapsed = open ? filtered : filtered.slice(0, 6);
+    const rowHeight = 32;
+    const windowHeight = 240;
+    const virtual = open && filtered.length > 12;
+    const start = virtual ? Math.max(0, Math.floor(scrollTop / rowHeight) - 2) : 0;
+    const visibleCount = Math.ceil(windowHeight / rowHeight) + 4;
+    const visible = virtual ? filtered.slice(start, start + visibleCount) : collapsed;
 
     function download() {
         const header = columns.map((column) => column.label).join(',');
@@ -57,6 +64,12 @@ export function DataTable({
                     className="ml-2 rounded-lg border border-[var(--line)] px-2 py-1"
                 />
             </label>
+            <div
+                className={virtual ? 'overflow-auto' : 'overflow-x-auto'}
+                style={virtual ? { maxHeight: windowHeight } : undefined}
+                onScroll={(event) => setScrollTop(event.currentTarget.scrollTop)}
+            >
+            {virtual ? <div style={{ height: start * rowHeight }} /> : null}
             <table className="w-full text-left text-sm">
                 <thead>
                     <tr>
@@ -88,7 +101,9 @@ export function DataTable({
                     ))}
                 </tbody>
             </table>
-            <p className="mt-1 text-xs text-[var(--ink-soft)]">当前显示 {visible.length} 行</p>
+            {virtual ? <div style={{ height: Math.max(0, (filtered.length - start - visible.length) * rowHeight) }} /> : null}
+            </div>
+            <p className="mt-1 text-xs text-[var(--ink-soft)]">{virtual ? `共 ${filtered.length} 行，窗口内 ${visible.length} 行` : `当前显示 ${visible.length} 行`}</p>
             {filtered.length > 6 ? (
                 <button type="button" className="mt-2 text-sm underline" onClick={() => setOpen((value) => !value)}>
                     {open ? '收起' : '展开更多'}

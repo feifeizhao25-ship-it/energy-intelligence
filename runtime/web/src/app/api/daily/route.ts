@@ -11,7 +11,7 @@ export async function GET() {
             value: String((resources.stations || []).length),
             unit: '个省级城市气候样本',
             note: '来自国内离线样本，不是 NASA POWER 实测，也不是官方辐照公报。',
-            source: 'domestic-resources.json',
+            source: '国内离线样本',
             loaded: true,
         },
         {

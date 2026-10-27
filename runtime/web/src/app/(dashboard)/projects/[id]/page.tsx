@@ -91,10 +91,10 @@ export default function ProjectDetailPage(props: ProjectDetailProps) {
                     })));
                     setAlerts(p.alerts || []);
                 } else {
-                    console.error('Project not found API error');
+                    console.error('没有找到这个项目');
                 }
             } catch (e) {
-                console.error('Failed to fetch project details', e);
+                console.error('项目详情没有读到', e);
             } finally {
                 setLoading(false);
             }
@@ -223,10 +223,9 @@ export default function ProjectDetailPage(props: ProjectDetailProps) {
                             <div className="p-2 bg-purple-50 rounded-lg">
                                 <Activity className="w-5 h-5 text-purple-500" />
                             </div>
-                            <span className="text-xs font-bold text-slate-400">实时</span>
                         </div>
-                        <div className="text-sm font-bold text-slate-500">及格率 (PR)</div>
-                        <div className="text-2xl font-black text-slate-900">82.4 <span className="text-xs font-bold text-slate-400">%</span></div>
+                        <div className="text-sm font-bold text-slate-500">性能比（PR）</div>
+                        <div className="text-2xl font-black text-slate-900">未接入</div>
                     </div>
                     <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
                         <div className="flex justify-between items-start mb-2">

@@ -46,10 +46,10 @@ const TYPE_LABEL: Record<string, string> = { SOLAR: '光伏', WIND: '风电', ST
 
 // 静态导航（非编造数据，沿用原页面设计）
 const quickActions = [
-    { id: 'calc', title: '光伏测算', titleEn: 'Solar calc', icon: Zap, color: 'amber', link: '/calculator/solar' },
-    { id: 'wind', title: '风电测算', titleEn: 'Wind calc', icon: Wind, color: 'cyan', link: '/calculator/wind' },
-    { id: 'storage', title: '储能测算', titleEn: 'Storage calc', icon: Battery, color: 'emerald', link: '/calculator/storage' },
-    { id: 'report', title: '生成报告', titleEn: 'Reports', icon: FileText, color: 'purple', link: '/my/stations' },
+    { id: 'calc', title: '光伏测算', icon: Zap, color: 'amber', link: '/calculator/solar' },
+    { id: 'wind', title: '风电测算', icon: Wind, color: 'cyan', link: '/calculator/wind' },
+    { id: 'storage', title: '储能测算', icon: Battery, color: 'emerald', link: '/calculator/storage' },
+    { id: 'report', title: '生成报告', icon: FileText, color: 'purple', link: '/my/stations' },
 ];
 
 function orderQuickActions(order?: string[]) {
@@ -83,7 +83,7 @@ function TariffCard({ tariff, provinceSource }: { tariff: NonNullable<Personaliz
                         ))}
                     </div>
                     <p className="mt-2 text-[11px] leading-5 text-slate-500">
-                        单位：元/度。{tariff.coalBenchmarkPrice !== null && `燃煤发电基准价 ${tariff.coalBenchmarkPrice}（新能源上网电价已市场化，仅作参考）。`}
+                        单位：元/千瓦时（俗称元/度，不是分/千瓦时）。{tariff.coalBenchmarkPrice !== null && `燃煤发电基准价 ${tariff.coalBenchmarkPrice}（新能源上网电价已市场化，仅作参考）。`}
                         {tariff.sourceStatus}，{tariff.asOfLabel}{tariff.staleNote ? `，${tariff.staleNote}` : ''}。
                     </p>
                 </>
