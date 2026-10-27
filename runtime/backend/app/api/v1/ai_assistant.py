@@ -13,19 +13,25 @@ from app.services.ai_service import ai_assistant
 from app.core.subscription import QuotaExceeded, assert_ai_quota, consume_ai_quota
 from app.services.evidence_envelope import envelope_from_rag
 from app.services.rag_service import RAGService
-from app.services.bottom_line import enforce_bottom_line
+from app.services.bottom_line import NOTICE_EN, NOTICE_ZH, enforce_bottom_line, find_violations
+from app.services.budget_caps import BudgetExceeded, assert_product_budget, charge_product_budget
 from app.models.user import User
 import json
 
 router = APIRouter(prefix="/ai")
 
-_AI_LIMITATIONS = ["AI 生成内容仅供辅助分析，关键投资与工程决策需人工复核"]
+_AI_LIMITATIONS = ["AI 生成内容仅供辅助核对方法与来源，关键数据需人工复核"]
+_RAG_SERVICE = RAGService()
+
+
+def _llm_configured() -> bool:
+    return bool(settings.DEEPSEEK_API_KEY or settings.DASHSCOPE_API_KEY or settings.GLM_API_KEY)
 
 
 def _retrieve(query: str, market: str) -> list:
     """先检索、后生成：只保留有词面命中、且未过期的来源；检索失败降级为空。"""
     try:
-        hits = RAGService().search(query, top_k=3, market=market, exclude_stale=True).hits
+        hits = _RAG_SERVICE.search(query, top_k=3, market=market, exclude_stale=True).hits
     except Exception:
         return []
     return [h for h in hits if h.score > 0]
@@ -80,6 +86,18 @@ CN_SYSTEM_PROMPT = """你是新能源智库的分析助手，熟悉中国光伏�
 使用通俗中文回答。"""
 
 
+def blocked_model_text(text: str, market: str) -> Optional[str]:
+    """国内输入和输出都过精确词 + 正则。命中则不再把原文交给模型。"""
+    if not find_violations(text or "", market=market):
+        return None
+    return NOTICE_EN if market == "global" else NOTICE_ZH
+
+
+def _charge_cn(user_id: str, market: str) -> None:
+    if market != "global":
+        charge_product_budget(user_id)
+
+
 async def _market_for_user(user_id: str, db: AsyncSession) -> str:
     market = await db.scalar(select(User.market).where(User.id == user_id))
     return "global" if market == "global" else "cn"
@@ -110,6 +128,16 @@ async def chat(
             },
         ) from error
     market = await _market_for_user(user_id, db)
+    blocked = blocked_model_text(message, market)
+    if blocked:
+        async def blocked_stream():
+            yield f"data: {json.dumps({'content': blocked}, ensure_ascii=False)}\n\n"
+            yield "data: [DONE]\n\n"
+        return StreamingResponse(blocked_stream(), media_type="text/event-stream", headers={"X-Accel-Buffering": "no"})
+    try:
+        assert_product_budget(user_id, market)
+    except BudgetExceeded as error:
+        raise HTTPException(status_code=429, detail={"error": "PRODUCT_BUDGET_EXCEEDED", "message": str(error)}) from error
     hits = _retrieve(message, market)
     prompt = _grounded_prompt(SYSTEM_PROMPT if market == "global" else CN_SYSTEM_PROMPT, hits, market)
     sources = _evidence_for("", hits)["sources"]
@@ -126,6 +154,7 @@ async def chat(
         if full:
             yield f"data: {json.dumps({'content': full}, ensure_ascii=False)}\n\n"
             await consume_ai_quota(user, db)
+            _charge_cn(user_id, market)
         yield "data: [DONE]\n\n"
 
     return StreamingResponse(
@@ -148,12 +177,19 @@ async def chat_json(
         raise HTTPException(status_code=429, detail=str(error)) from error
     try:
         market = await _market_for_user(user_id, db)
+        blocked = blocked_model_text(body.message, market)
+        if blocked:
+            return {"message": blocked, "ai_metadata": {"blocked": "bottom_line"}, "evidence": _evidence_for("", [])}
+        assert_product_budget(user_id, market)
         hits = _retrieve(body.message, market)
         prompt = _grounded_prompt(SYSTEM_PROMPT if market == "global" else CN_SYSTEM_PROMPT, hits, market)
         result = await ai_assistant.chat_openai_with_metadata(body.message, prompt, market=market)
+    except BudgetExceeded as error:
+        raise HTTPException(status_code=429, detail={"error": "PRODUCT_BUDGET_EXCEEDED", "message": str(error)}) from error
     except RuntimeError as error:
         raise HTTPException(status_code=503, detail="AI 服务暂时不可用，请稍后重试") from error
     await consume_ai_quota(user, db)
+    _charge_cn(user_id, market)
     return {
         "message": enforce_bottom_line(result["content"], market=market),
         "ai_metadata": result["metadata"],
@@ -175,12 +211,19 @@ async def analyze(
         raise HTTPException(status_code=429, detail=str(error)) from error
     try:
         market = await _market_for_user(user_id, db)
+        blocked = blocked_model_text(query, market)
+        if blocked:
+            return {"analysis": blocked, "ai_metadata": {"blocked": "bottom_line"}, "evidence": _evidence_for("", [])}
+        assert_product_budget(user_id, market)
         hits = _retrieve(query, market)
         prompt = _grounded_prompt(SYSTEM_PROMPT if market == "global" else CN_SYSTEM_PROMPT, hits, market)
         result = await ai_assistant.chat_openai_with_metadata(query, prompt, market=market)
+    except BudgetExceeded as error:
+        raise HTTPException(status_code=429, detail={"error": "PRODUCT_BUDGET_EXCEEDED", "message": str(error)}) from error
     except RuntimeError as error:
         raise HTTPException(status_code=503, detail="AI 服务暂时不可用，请稍后重试") from error
     await consume_ai_quota(user, db)
+    _charge_cn(user_id, market)
     return {
         "analysis": enforce_bottom_line(result["content"], market=market),
         "ai_metadata": result["metadata"],
@@ -326,3 +369,42 @@ async def get_suggestions(
         "technology": tech,
         "suggestions": suggestions,
     }
+
+
+class AskRequest(BaseModel):
+    query: str = Field(min_length=1, max_length=4000)
+    market: str = "cn"
+
+
+@router.post("/ask")
+async def ask(
+    body: AskRequest,
+    user_id: str = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+):
+    """检索优先的问答。未配置国内模型时只返回已收录来源，不外呼。"""
+    market = "global" if body.market == "global" else "cn"
+    blocked = blocked_model_text(body.query, market)
+    hits = [] if blocked else _retrieve(body.query, market)
+    if blocked or not _llm_configured():
+        if blocked:
+            answer = blocked
+        elif not hits:
+            answer = "本库尚未收录相关资料。" if market != "global" else "No data available in the source library."
+        else:
+            answer = "\n".join(
+                f"[S{i}] {hit.title}（{hit.metadata.get('published_at') or hit.metadata.get('year')}）"
+                for i, hit in enumerate(hits, 1)
+            )
+        return {"answer": answer, "sources": _evidence_for(answer, hits).get("sources", []), "model": None}
+    try:
+        assert_product_budget(user_id, market)
+        prompt = _grounded_prompt(SYSTEM_PROMPT if market == "global" else CN_SYSTEM_PROMPT, hits, market)
+        result = await ai_assistant.chat_openai_with_metadata(body.query, prompt, market=market)
+    except BudgetExceeded as error:
+        raise HTTPException(status_code=429, detail={"error": "PRODUCT_BUDGET_EXCEEDED", "message": str(error)}) from error
+    except RuntimeError as error:
+        raise HTTPException(status_code=503, detail="AI 服务暂时不可用，请稍后重试") from error
+    _charge_cn(user_id, market)
+    answer = enforce_bottom_line(result["content"], market=market)
+    return {"answer": answer, "sources": _evidence_for(answer, hits).get("sources", []), "model": result["metadata"]}

@@ -49,7 +49,7 @@ interface PersonalDashboard {
 }
 
 const PLAN_NAMES: Record<string, string> = {
-    FREE: '免费版', PRO: '专业版', MAINTENANCE: '运维版（已停售）', FULL: '专家版', TEAM: '团队版', ENTERPRISE: '企业版',
+    FREE: '免费', PRO: '标准·数据库订阅', MAINTENANCE: '运维版（已停售）', FULL: '专业', TEAM: '团队', ENTERPRISE: '上限档',
 };
 const TYPE_LABEL: Record<string, string> = { SOLAR: '光伏', WIND: '风电', STORAGE: '储能' };
 

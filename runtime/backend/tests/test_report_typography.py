@@ -21,7 +21,7 @@ from app.routers.reports import (
 REPORT_TYPES = ["feasibility", "investment"]
 COVER_TITLES = {
     "feasibility": "可行性研究报告",
-    "investment": "投资分析报告",
+    "investment": "测算报告",
 }
 
 

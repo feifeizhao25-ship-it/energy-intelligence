@@ -179,7 +179,7 @@ export default function HealthScore({ score, grade, trend }: HealthScoreProps) {
                                 资产健康度评分用途
                             </div>
                             <div className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-                                此评分可用于银行融资、资产交易、投资决策等场景。评级越高，资产质量越好，融资成本越低。
+                                此评分汇总已录入的运营指标，便于对照历史读数。分数只反映输入数据，不代表融资成本或交易结论。
                             </div>
                         </div>
                     </div>

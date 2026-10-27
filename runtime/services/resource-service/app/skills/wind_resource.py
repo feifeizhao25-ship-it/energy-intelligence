@@ -43,7 +43,9 @@ def _is_production() -> bool:
 
 
 async def _fetch_mean_speed_nasa(latitude: float, longitude: float) -> float:
-    """从 NASA POWER 获取多年平均 50m 风速，返回 m/s。"""
+    """从 NASA POWER 获取多年平均 50m 风速，返回 m/s。国内构建不走这条请求路径。"""
+    if os.getenv("APP_EDITION", "").lower() == "cn":
+        raise RuntimeError("OVERSEAS_SOURCE_DISABLED")
     import httpx
 
     params = {
@@ -137,7 +139,7 @@ class WindResourceSkill:
                 engine = "nasa_power"
                 data_source = "NASA POWER climatology"
             except Exception as exc:
-                if _is_production():
+                if _is_production() or os.getenv("APP_EDITION", "").lower() == "cn":
                     raise RuntimeError(
                         "RA-002 外部气象数据不可达，生产环境拒绝返回合成估算结果: "
                         f"{exc}"

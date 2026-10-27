@@ -2,6 +2,7 @@
 import { WeatherData, PVForecast } from '@/types';
 
 import { withCache } from '@/lib/cache';
+import { refuseOverseas } from '@/lib/data/overseas-gate';
 import { GRID_EMISSION_FACTOR } from '@/lib/standards/emission-factor';
 
 /**
@@ -20,7 +21,7 @@ export const getWeatherForecast = withCache('meteo:forecast', async (lat: number
 
     const url = `https://api.open-meteo.com/v1/forecast?${params.toString()}`;
 
-    const response = await fetch(url);
+    const response = await refuseOverseas(url);
     if (!response.ok) {
       throw new Error(`Open-Meteo API请求失败: ${response.status}`);
     }
@@ -67,7 +68,7 @@ export const getSunTimes = withCache('meteo:sun', async (lat: number, lng: numbe
 
     const url = `https://api.open-meteo.com/v1/sunrise-sunset?${params.toString()}`;
 
-    const response = await fetch(url);
+    const response = await refuseOverseas(url);
     if (!response.ok) {
       throw new Error(`Open-Meteo太阳时间API请求失败: ${response.status}`);
     }
@@ -114,7 +115,7 @@ export const getPVForecast = withCache('meteo:pv', async (
 
     const url = `https://api.open-meteo.com/v1/solar-power?${params.toString()}`;
 
-    const response = await fetch(url);
+    const response = await refuseOverseas(url);
     if (!response.ok) {
       throw new Error(`Open-Meteo Solar API请求失败: ${response.status}`);
     }
@@ -146,7 +147,7 @@ export const getCarbonIntensity = withCache('meteo:carbon', async (country: stri
 
     const url = `https://api.open-meteo.com/v1/carbon-intensity?${params.toString()}`;
 
-    const response = await fetch(url);
+    const response = await refuseOverseas(url);
     if (!response.ok) {
       throw new Error(`碳排放强度API请求失败: ${response.status}`);
     }
@@ -184,7 +185,7 @@ export const getAirQualityIndex = withCache('meteo:aq', async (lat: number, lng:
 
     const url = `https://air-quality-api.open-meteo.com/v1/air-quality?${params.toString()}`;
 
-    const response = await fetch(url);
+    const response = await refuseOverseas(url);
     if (!response.ok) {
       throw new Error(`空气质量API请求失败: ${response.status}`);
     }

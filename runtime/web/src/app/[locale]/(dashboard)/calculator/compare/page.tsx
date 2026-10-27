@@ -257,7 +257,7 @@ export default function ComparePage() {
                         <div className="absolute top-0 right-0 p-4 opacity-10">
                             <TrendingUp className="w-32 h-32" />
                         </div>
-                        <h3 className="text-xl font-bold text-white mb-4">💡 投资建议</h3>
+                        <h3 className="text-xl font-bold text-white mb-4">测算读数（按 IRR 排序）</h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             {filteredData
                                 .sort((a, b) => parseFloat(b.irr) - parseFloat(a.irr))

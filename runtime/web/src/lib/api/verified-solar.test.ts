@@ -1,4 +1,4 @@
-import { verifiedSolar } from './verified-solar';
+import { clearVerifiedSolarCache, seedVerifiedSolarCache, verifiedSolar } from './verified-solar';
 import { SolarCalculatorV2 } from '../calculator/solar-v2';
 const now = new Date('2025-06-01T00:00:00Z');
 function fixture(year = 2024, lat = 0, lng = 0) {
@@ -7,10 +7,11 @@ function fixture(year = 2024, lat = 0, lng = 0) {
     return { geometry: { coordinates: [lng, lat] }, parameters: { ALLSKY_SFC_SW_DWN: { units: 'kW-hr/m^2/day' }, T2M: { units: 'C' } }, header: { fill_value: -999, start: `${year}0101`, end: `${year}1231`, time_standard: 'UTC' },
         properties: { parameter: { ALLSKY_SFC_SW_DWN: months(4), T2M: months(15) } } };
 }
-afterEach(() => jest.restoreAllMocks());
+afterEach(() => { clearVerifiedSolarCache(); jest.restoreAllMocks(); });
 test('complete leap year uses exact day counts and retains source evidence', async () => {
     const raw = JSON.stringify(fixture());
-    const fetcher = jest.spyOn(global, 'fetch').mockResolvedValue(new Response(raw));
+    const fetcher = jest.spyOn(global, 'fetch');
+    seedVerifiedSolarCache(0, 0, 2024, raw);
     const result = await verifiedSolar(0, 0, now);
     expect(result.annualGHI).toBe(366 * 4);
     expect(result.rawResponse).toBe(raw);
@@ -18,7 +19,7 @@ test('complete leap year uses exact day counts and retains source evidence', asy
     expect(result.requestUrl).toContain('start=2024');
     expect(result.requestUrl).toContain('T2M');
     expect(result.monthly[6].temperature).toBe(15);
-    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(fetcher).not.toHaveBeenCalled();
 });
 test.each(['missing', 'fill', 'unit', 'string', 'temperature-missing', 'temperature-fill', 'temperature-unit'])('rejects %s response without fallback', async kind => {
     const data = fixture(2024, 30, 120);
@@ -29,7 +30,7 @@ test.each(['missing', 'fill', 'unit', 'string', 'temperature-missing', 'temperat
     if (kind === 'temperature-missing') delete (data.properties.parameter.T2M as any)['202407'];
     if (kind === 'temperature-fill') data.properties.parameter.T2M['202407'] = -999;
     if (kind === 'temperature-unit') data.parameters.T2M.units = 'K';
-    jest.spyOn(global, 'fetch').mockResolvedValue(new Response(JSON.stringify(data)));
+    seedVerifiedSolarCache(30, 120, 2024, JSON.stringify(data));
     await expect(verifiedSolar(30, 120, now)).rejects.toThrow();
 });
 test('invalid coordinates do not trigger network calls', async () => {
@@ -38,11 +39,11 @@ test('invalid coordinates do not trigger network calls', async () => {
     expect(fetcher).not.toHaveBeenCalled();
 });
 test('upstream failure cannot become a successful fixed estimate', async () => {
-    jest.spyOn(global, 'fetch').mockResolvedValue(new Response('', { status: 503 }));
-    await expect(verifiedSolar(0, 0, now)).rejects.toThrow('SOLAR_DATA_UNAVAILABLE');
+    await expect(verifiedSolar(0, 0, now)).rejects.toThrow('OVERSEAS_SOURCE_DISABLED');
 });
 test('calculator uses verified data and labels user prices and preview assumptions', async () => {
-    jest.spyOn(global, 'fetch').mockResolvedValue(new Response(JSON.stringify(fixture(new Date().getUTCFullYear() - 1, 30, 120))));
+    const year = new Date().getUTCFullYear() - 1;
+    seedVerifiedSolarCache(30, 120, year, JSON.stringify(fixture(year, 30, 120)));
     const result = await SolarCalculatorV2.calculate({ location: { lat: 30, lng: 120 }, capacity: 100, unitCost: 3, electricityPrice: 0.5, subsidyPrice: 0.1 });
     expect(result.auditMeta.qualityTag).toBe('PREVIEW');
     expect(result.auditMeta.hash).toHaveLength(64);
@@ -59,6 +60,6 @@ test.each(['year', 'coordinates'])('rejects mismatched %s evidence', async kind 
     const data = fixture();
     if (kind === 'year') data.header.start = '20220101';
     else data.geometry.coordinates = [10, 10];
-    jest.spyOn(global, 'fetch').mockResolvedValue(new Response(JSON.stringify(data)));
+    seedVerifiedSolarCache(0, 0, 2024, JSON.stringify(data));
     await expect(verifiedSolar(0, 0, now)).rejects.toThrow();
 });

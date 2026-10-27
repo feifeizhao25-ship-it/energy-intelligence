@@ -91,7 +91,7 @@ def test_report_citation_omits_absent_provenance_fields():
 
 def test_stale_policy_is_flagged_in_metadata():
     service = RAGService(corpus=[_doc("old-policy", "policy", days_ago=200)])
-    hits = service.search("光伏 政策", market="cn").hits
+    hits = service.search("光伏 政策", market="cn", exclude_stale=False).hits
     assert hits[0].metadata["freshness_status"] == "stale"
 
 
@@ -107,7 +107,7 @@ def test_exclude_stale_removes_expired_sources():
 
 def test_assert_no_stale_policy_blocks_expired_policy():
     service = RAGService(corpus=[_doc("stale-one", "policy", days_ago=200)])
-    hits = service.search("光伏 政策", market="cn").hits
+    hits = service.search("光伏 政策", market="cn", exclude_stale=False).hits
     with pytest.raises(StalePolicyError) as exc:
         assert_no_stale_policy(hits)
     assert exc.value.source_ids == ["stale-one"]

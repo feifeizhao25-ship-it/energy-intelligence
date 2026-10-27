@@ -175,7 +175,7 @@ function getFeaturesByPlan(plan: Plan): { included: string[]; excluded: string[]
         },
         TEAM: {
             included: [
-                '✅ 专家版全部功能 × 5人',
+                '✅ 专业档已实现功能 × 10席',
                 '',
                 '👥 团队专属：',
                 '✅ 5个独立账号',
@@ -198,7 +198,7 @@ function getFeaturesByPlan(plan: Plan): { included: string[]; excluded: string[]
                 '✅ 无限存储空间',
                 '',
                 '🏢 企业专属：',
-                '✅ API接入（集成到自有系统）',
+                '✅ 数据整理交付（不含测算结论）',
                 '✅ 白标报告（使用企业Logo）',
                 '✅ SSO单点登录',
                 '✅ 专属客户成功经理',

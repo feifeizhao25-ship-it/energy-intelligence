@@ -1,7 +1,7 @@
 {
   "product": "新能源智库",
   "version": "2.0.0",
-  "updated_at": "2026-10-15",
+  "updated_at": "2026-10-27",
   "tier_order": [
     "free",
     "pro",
@@ -11,7 +11,7 @@
   ],
   "tiers": {
     "free": {
-      "name": "免费版",
+      "name": "免费",
       "name_en": "Evaluation",
       "description": "体验、户用业主、学生",
       "description_en": "Validate one project workflow before procurement.",
@@ -72,7 +72,7 @@
       ]
     },
     "pro": {
-      "name": "专业版",
+      "name": "标准·数据库订阅",
       "name_en": "Professional",
       "description": "个人从业者、业主、分析师",
       "description_en": "For analysts developing reviewable investment cases.",
@@ -140,7 +140,7 @@
       ]
     },
     "full": {
-      "name": "专家版",
+      "name": "专业",
       "name_en": "Expert",
       "description": "资深分析师、运维经理、咨询顾问",
       "description_en": "For senior analysts, O&M managers and consultants.",
@@ -179,7 +179,7 @@
         "citation_export": true
       },
       "collaboration": {
-        "team_seats": 1,
+        "team_seats": 4,
         "shared_projects": false
       },
       "service": {
@@ -187,7 +187,7 @@
         "data_retention_days": 730
       },
       "features_zh": [
-        "专业版全部功能",
+        "标准档已实现的测算、报告与文献功能",
         "每日 300 次 AI 对话",
         "运维诊断、积灰与清洗分析，最多 50 个电站",
         "最多 200 个项目",
@@ -208,7 +208,7 @@
       ]
     },
     "team": {
-      "name": "团队版",
+      "name": "团队",
       "name_en": "Team",
       "description": "5 人项目/咨询团队",
       "description_en": "For a five-person project or advisory team.",
@@ -247,7 +247,7 @@
         "citation_export": true
       },
       "collaboration": {
-        "team_seats": 5,
+        "team_seats": 10,
         "shared_projects": true
       },
       "service": {
@@ -255,8 +255,8 @@
         "data_retention_days": 1095
       },
       "features_zh": [
-        "专家版全部功能",
-        "5 个团队账号",
+        "专业档已实现功能",
+        "10 个团队席位",
         "团队共享 1,500 次/日 AI 对话",
         "最多 500 个共享项目",
         "数据保留 3 年"
@@ -274,7 +274,7 @@
       ]
     },
     "enterprise": {
-      "name": "企业版",
+      "name": "上限档",
       "name_en": "Enterprise",
       "description": "集团、机构、设计院",
       "description_en": "For governed integrations and multi-team rollouts.",
@@ -324,13 +324,11 @@
       },
       "features_zh": [
         "20 个账号起，按合同扩展",
-        "API、SSO 与白标能力",
         "用量和项目数量按合同配置",
         "私有化与定制需求评估"
       ],
       "features_en": [
         "From 20 seats, extendable by contract",
-        "API, SSO, and white-label options",
         "Contract-defined scale and retention",
         "Private deployment assessment"
       ],
@@ -408,5 +406,14 @@
     "maintenance"
   ],
   "pricing_note": "五档年付(唯一在售计费周期): 免费 / ¥1,980 / ¥5,800 / ¥16,800 / ¥33,000（年付）。月付已停用, monthly_cny 一律 0, 不得据此下单。运维版(maintenance)已停售, 仅存量用户保留。Excel 导出计划第 7–8 周、PPT 导出第 9–10 周上线，上线前不列入任何档位权益。",
-  "sales_billing_period": "yearly"
+  "sales_billing_period": "yearly",
+  "feature_flags": {
+    "daily_number": false,
+    "datasets": false,
+    "policy_alerts": false,
+    "tiered_api": false,
+    "excel_export": false,
+    "ppt_export": false,
+    "quarterly_brief": false
+  }
 }

@@ -1,5 +1,6 @@
 // OpenWeatherMap API 封装
 import { WeatherData } from '@/types';
+import { refuseOverseas } from '@/lib/data/overseas-gate';
 
 // 简单的内存缓存
 const cache = new Map<string, { data: any; expires: number }>();
@@ -33,7 +34,7 @@ export const getCurrentWeather = withCache(async (lat: number, lng: number): Pro
 
     const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lng}&appid=${apiKey}&units=metric&lang=zh_cn`;
 
-    const response = await fetch(url);
+    const response = await refuseOverseas(url);
     if (!response.ok) {
       if (response.status === 401) {
         throw new Error('OpenWeatherMap API Key无效');
@@ -77,7 +78,7 @@ export const getWeatherForecast = withCache(async (lat: number, lng: number, day
 
     const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lng}&appid=${apiKey}&units=metric&lang=zh_cn&cnt=${days * 8}`; // 每3小时一个预报
 
-    const response = await fetch(url);
+    const response = await refuseOverseas(url);
     if (!response.ok) {
       throw new Error(`天气预报API请求失败: ${response.status}`);
     }
@@ -134,7 +135,7 @@ export const getAirQuality = withCache(async (lat: number, lng: number) => {
 
     const url = `https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lng}&appid=${apiKey}`;
 
-    const response = await fetch(url);
+    const response = await refuseOverseas(url);
     if (!response.ok) {
       throw new Error(`空气质量API请求失败: ${response.status}`);
     }
@@ -171,7 +172,7 @@ export const getUVIndex = withCache(async (lat: number, lng: number) => {
 
     const url = `https://api.openweathermap.org/data/2.5/uvi?lat=${lat}&lon=${lng}&appid=${apiKey}`;
 
-    const response = await fetch(url);
+    const response = await refuseOverseas(url);
     if (!response.ok) {
       throw new Error(`UV指数API请求失败: ${response.status}`);
     }
@@ -202,7 +203,7 @@ export const getHistoricalWeather = withCache(async (lat: number, lng: number, t
 
     const url = `https://api.openweathermap.org/data/3.0/onecall/timemachine?lat=${lat}&lon=${lng}&dt=${timestamp}&appid=${apiKey}&units=metric&lang=zh_cn`;
 
-    const response = await fetch(url);
+    const response = await refuseOverseas(url);
     if (!response.ok) {
       throw new Error(`历史天气API请求失败: ${response.status}`);
     }

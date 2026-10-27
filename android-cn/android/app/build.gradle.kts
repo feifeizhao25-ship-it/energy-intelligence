@@ -9,6 +9,7 @@ plugins {
 }
 
 android {
+    // TODO: do not rename namespace or applicationId here; a signing change needs its own release.
     namespace = "com.example.energy_app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion

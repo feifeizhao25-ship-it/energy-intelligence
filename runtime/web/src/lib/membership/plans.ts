@@ -16,7 +16,7 @@ export const PLAN_ORDER: readonly Plan[] = [Plan.FREE, Plan.PRO, Plan.FULL, Plan
 // 会员计划详情
 export const PLAN_DETAILS = {
     FREE: {
-        name: '免费版',
+        name: '免费',
         price: 0,
         monthlyPrice: 0,
         yearlyPrice: 0,
@@ -25,7 +25,7 @@ export const PLAN_DETAILS = {
         color: 'gray',
     },
     PRO: {
-        name: '专业版',
+        name: '标准·数据库订阅',
         price: 1980,
         monthlyPrice: 0, // 年付唯一在售: 月付已停用(与 entitlements.json 一致)
         yearlyPrice: 1980,
@@ -46,31 +46,31 @@ export const PLAN_DETAILS = {
         color: 'green',
     },
     FULL: {
-        name: '专家版',
+        name: '专业',
         price: 5800,
         monthlyPrice: 0, // 年付唯一在售: 月付已停用
         yearlyPrice: 5800,
         icon: '💎',
-        description: '专业版全部功能 + 运维诊断',
+        description: '标准档全部已实现功能，4 个席位',
         color: 'purple',
         recommended: true,
     },
     TEAM: {
-        name: '团队版',
+        name: '团队',
         price: 16800,
         monthlyPrice: 0,
         yearlyPrice: 16800,
         icon: '👥',
-        description: '5账号+协作功能',
+        description: '10 个席位与协作功能',
         color: 'orange',
     },
     ENTERPRISE: {
-        name: '企业版',
+        name: '上限档',
         price: 33000,
         monthlyPrice: 0,
         yearlyPrice: 33000,
         icon: '🏢',
-        description: '20 账号起+API+定制',
+        description: '按约定范围整理已公开数据；不含测算结论',
         color: 'red',
     },
 } as const;
@@ -254,17 +254,17 @@ export const AI_MODEL_TIERS = {
     },
     FULL: {
         defaultModel: 'deepseek-v3',
-        allowedModels: ['glm-4-flash', 'glm-4-plus', 'deepseek-chat', 'deepseek-v3', 'moonshot-v1-auto'],
+        allowedModels: ['glm-4-flash', 'glm-4-plus', 'deepseek-chat', 'deepseek-v3', 'deepseek-flash'],
         maxTokens: 8192,
     },
     TEAM: {
         defaultModel: 'deepseek-v3',
-        allowedModels: ['glm-4-flash', 'glm-4-plus', 'deepseek-chat', 'deepseek-v3', 'moonshot-v1-auto'],
+        allowedModels: ['glm-4-flash', 'glm-4-plus', 'deepseek-chat', 'deepseek-v3', 'deepseek-flash'],
         maxTokens: 8192,
     },
     ENTERPRISE: {
         defaultModel: 'deepseek-v3',
-        allowedModels: ['glm-4-flash', 'glm-4-plus', 'deepseek-chat', 'deepseek-v3', 'moonshot-v1-auto'],
+        allowedModels: ['glm-4-flash', 'glm-4-plus', 'deepseek-chat', 'deepseek-v3', 'deepseek-flash'],
         maxTokens: 16384,
     },
 } as const;

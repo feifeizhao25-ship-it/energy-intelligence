@@ -17,7 +17,7 @@ RAG 时效自动化 — 来源刷新报告与可配置抓取。
 
 from __future__ import annotations
 
-import hashlib, json, os, urllib.request, urllib.robotparser
+import hashlib, json, os, re, urllib.request, urllib.robotparser
 from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Callable, Dict, List, Optional
@@ -59,6 +59,8 @@ def fetch_snapshot(source: Dict, *, fetcher: Optional[Callable[[str, float], tup
     if not url:
         result["status"] = "no_source_url"
         return result
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}", str(source_id)):
+        raise ValueError("unsafe source_id")
     timeout = float(os.environ.get("RAG_REFRESH_TIMEOUT_SECONDS", "15"))
     max_bytes = int(os.environ.get("RAG_REFRESH_MAX_BYTES", "2000000"))
     if fetcher is None and not _robots_allowed(url, timeout):
@@ -132,5 +134,14 @@ def refresh_report(registry: Optional[SourceRegistry] = None, today: Optional[da
             "type": source.get("type"), "freshness_status": status, "verify_interval_days": interval,
             "last_verified_at": source.get("last_verified_at"), "age_days": age_days,
             "days_overdue": days_overdue, "needs_refetch": needs_refetch, "source_url": source.get("source_url")})
+    review_needed = [
+        source["source_id"] for source in registry.sources
+        if source.get("evidence_status") in {"pending", "quarantined", "invalid"}
+    ]
+    allowed = [
+        source["source_id"] for source in registry.sources
+        if source.get("evidence_status") not in {"pending", "quarantined", "invalid"}
+    ]
     return {"generated_at": today.isoformat(), "registry_path": str(registry.path) if registry.path else None,
-            "total": len(entries), "counts": counts, "entries": entries, "refresh_needed": refresh_needed}
+            "total": len(entries), "counts": counts, "entries": entries, "refresh_needed": refresh_needed,
+            "evidence_review_needed": review_needed, "retrieval_allowed_by_review": allowed}

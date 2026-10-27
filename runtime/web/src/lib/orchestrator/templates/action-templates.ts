@@ -122,7 +122,7 @@ export const ACTION_TEMPLATES = {
         },
         rationale: {
             type: 'RULE',
-            summary: '完整报告帮助您做出更准确的投资决策',
+            summary: '完整报告列出 IRR、敏感性分析与 25 年现金流，便于核对假设',
         },
         requiresPlan: 'PRO',
     }),

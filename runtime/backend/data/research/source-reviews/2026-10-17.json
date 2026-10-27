@@ -1,0 +1,131 @@
+{
+  "reviews": [
+    {
+      "source_id": "policy-cn-136",
+      "before": {
+        "source_id": "policy-cn-136",
+        "type": "policy",
+        "lang": "cn",
+        "title": "关于有序推动多用户绿电直连发展有关事项的通知（发改能源〔2026〕688号）",
+        "content": "多用户绿电直连国家级框架，规定适用主体、规划建设、运行责任、交易计量和价格机制。省级能源主管部门须进一步细化用户边界、就近消纳距离和上网电量比例等要求；全国框架不能替代省级实施细则。",
+        "year": 2026,
+        "last_verified_at": "2026-10-16",
+        "source_url": "https://www.nea.gov.cn/20260520/9e1c4277ce324c8ab82a84da98da7980/c.html",
+        "source_org": "国家能源局",
+        "license_note": "政府公开发布文件，转载引用须注明来源为国家能源局。",
+        "verify_interval_days": 90,
+        "corroborated_by": [
+          "std-gb50797"
+        ],
+        "applicability": {
+          "status": "reviewed",
+          "countries": [
+            "cn"
+          ],
+          "level": "national_framework",
+          "reviewed_at": "2026-10-16",
+          "evidence_url": "https://www.nea.gov.cn/20260520/9e1c4277ce324c8ab82a84da98da7980/c.html",
+          "note": "保留旧 source_id 以兼容已有引用；实际文号为2026年688号。"
+        }
+      },
+      "after": {
+        "source_id": "policy-cn-136",
+        "type": "policy",
+        "lang": "cn",
+        "title": "关于有序推动多用户绿电直连发展有关事项的通知（发改能源〔2026〕688号）",
+        "content": "多用户绿电直连国家级框架，规定适用主体、规划建设、运行责任、交易计量和价格机制。省级能源主管部门须进一步细化用户边界、就近消纳距离和上网电量比例等要求；全国框架不能替代省级实施细则。",
+        "year": 2026,
+        "last_verified_at": "2026-10-17",
+        "source_url": "https://www.nea.gov.cn/20260520/9e1c4277ce324c8ab82a84da98da7980/c.html",
+        "source_org": "国家能源局",
+        "license_note": "政府公开发布文件，转载引用须注明来源为国家能源局。",
+        "verify_interval_days": 90,
+        "corroborated_by": [],
+        "applicability": {
+          "status": "reviewed",
+          "countries": [
+            "cn"
+          ],
+          "level": "national_framework",
+          "reviewed_at": "2026-10-17",
+          "evidence_url": "https://www.nea.gov.cn/20260520/9e1c4277ce324c8ab82a84da98da7980/c.html"
+        },
+        "evidence_review": {
+          "status": "approved",
+          "reviewed_at": "2026-10-17",
+          "reviewer": "Codex source review",
+          "evidence_url": "https://www.nea.gov.cn/20260520/9e1c4277ce324c8ab82a84da98da7980/c.html",
+          "supporting_urls": [
+            "https://www.nea.gov.cn/20260520/9e1c4277ce324c8ab82a84da98da7980/c.html"
+          ],
+          "note": "重新核对官方正文，摘要限于国家框架及省级需进一步细化的事项；不是项目级或省级适用性结论。"
+        }
+      },
+      "evidence_urls": [
+        "https://www.nea.gov.cn/20260520/9e1c4277ce324c8ab82a84da98da7980/c.html"
+      ],
+      "scope": "重新核对官方正文，摘要限于国家框架及省级需进一步细化的事项；不是项目级或省级适用性结论。",
+      "production_deployed": false
+    },
+    {
+      "source_id": "policy-cn-energy-plan-2030",
+      "before": {
+        "source_id": "policy-cn-energy-plan-2030",
+        "type": "policy",
+        "lang": "cn",
+        "title": "新型能源体系建设“十五五”规划",
+        "content": "国家发展改革委、国家能源局发布的 2026—2030 年新型能源体系建设国家级规划，覆盖能源安全、绿色转型、新能源发展与系统调节能力。",
+        "year": 2026,
+        "last_verified_at": "2026-07-30",
+        "source_url": "https://www.nea.gov.cn/20260625/0ccfdc1674e84868b49480edf584eb5f/c.html",
+        "source_org": "国家发展改革委、国家能源局",
+        "license_note": "政府公开发布文件；摘要为项目原创表述，引用原文须注明发布机构和文件日期。",
+        "verify_interval_days": 90,
+        "corroborated_by": [
+          "policy-cn-136"
+        ]
+      },
+      "after": {
+        "source_id": "policy-cn-energy-plan-2030",
+        "type": "policy",
+        "lang": "cn",
+        "title": "关于印发《新型能源体系建设“十五五”规划》的通知（发改能源〔2026〕884号）",
+        "content": "国家发展改革委、国家能源局于2026年6月13日印发通知，说明《新型能源体系建设“十五五”规划》已经国务院同意，要求各省级政府、有关部门及中央企业贯彻实施。本条只核验印发通知；附件中的具体指标、任务和项目要求尚未在本条逐项核验。",
+        "year": 2026,
+        "last_verified_at": "2026-10-17",
+        "source_url": "https://www.nea.gov.cn/20260625/0ccfdc1674e84868b49480edf584eb5f/c.html",
+        "source_org": "国家发展改革委、国家能源局",
+        "license_note": "政府公开发布文件；摘要为项目原创表述，引用原文须注明发布机构和文件日期。",
+        "verify_interval_days": 90,
+        "corroborated_by": [],
+        "evidence_review": {
+          "status": "approved",
+          "reviewed_at": "2026-10-17",
+          "reviewer": "Codex source review",
+          "evidence_url": "https://www.nea.gov.cn/20260625/0ccfdc1674e84868b49480edf584eb5f/c.html",
+          "supporting_urls": [
+            "https://www.nea.gov.cn/20260625/0ccfdc1674e84868b49480edf584eb5f/c.html",
+            "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202606/t20260625_1406079.html"
+          ],
+          "note": "核对正式标题、文号、制发日期、收文对象和印发事实；未逐项核验附件。两网站为同一通知，不构成独立交叉验证。"
+        },
+        "applicability": {
+          "status": "reviewed",
+          "countries": [
+            "cn"
+          ],
+          "level": "national_framework",
+          "reviewed_at": "2026-10-17",
+          "evidence_url": "https://www.nea.gov.cn/20260625/0ccfdc1674e84868b49480edf584eb5f/c.html"
+        }
+      },
+      "evidence_urls": [
+        "https://www.nea.gov.cn/20260625/0ccfdc1674e84868b49480edf584eb5f/c.html",
+        "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202606/t20260625_1406079.html"
+      ],
+      "scope": "核对正式标题、文号、制发日期、收文对象和印发事实；未逐项核验附件。两网站为同一通知，不构成独立交叉验证。",
+      "production_deployed": false
+    }
+  ],
+  "reviewed_by": "Codex; no human specialist review claimed"
+}

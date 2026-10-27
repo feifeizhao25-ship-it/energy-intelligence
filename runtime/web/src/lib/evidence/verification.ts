@@ -69,10 +69,10 @@ export function verifySources(sources: EvidenceSource[]): EvidenceVerification {
 
 /** 已知数据工具的固定来源（工具结果里没有结构化来源时使用） */
 const TOOL_SOURCES: Record<string, EvidenceSource> = {
-  get_solar_resource: { title: 'NASA POWER 辐照数据', publisher: 'NASA POWER', url: 'https://power.larc.nasa.gov/' },
-  get_wind_resource: { title: 'NASA POWER 风速数据', publisher: 'NASA POWER', url: 'https://power.larc.nasa.gov/' },
-  get_climate_data: { title: 'NASA POWER 气象数据', publisher: 'NASA POWER', url: 'https://power.larc.nasa.gov/' },
-  get_historical_data: { title: 'NASA POWER 历史数据', publisher: 'NASA POWER', url: 'https://power.larc.nasa.gov/' },
+  get_solar_resource: { title: 'NASA POWER 辐照数据', publisher: 'NASA POWER', url: 'domestic-cache://nasa-power/' },
+  get_wind_resource: { title: 'NASA POWER 风速数据', publisher: 'NASA POWER', url: 'domestic-cache://nasa-power/' },
+  get_climate_data: { title: 'NASA POWER 气象数据', publisher: 'NASA POWER', url: 'domestic-cache://nasa-power/' },
+  get_historical_data: { title: 'NASA POWER 历史数据', publisher: 'NASA POWER', url: 'domestic-cache://nasa-power/' },
 };
 
 /** 从工具结果中递归收集来源（url / source_url / publisher / source_org / source 字段） */

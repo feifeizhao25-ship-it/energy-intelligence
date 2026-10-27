@@ -7,16 +7,23 @@ import { empiricalOptimalTilt } from '@/lib/calculator/transposition';
  * 同时取月均气温 T2M：统一光伏引擎（lib/calculator/solar.ts simulateSolar）按组件工作温度逐月计温度损失，
  * 缺气温就无法按同一口径计算，所以气温缺失与辐照缺失一样直接报错。
  */
+const solarCache = new Map<string, string>();
+
+/** 把已导入的 NASA POWER 月度 JSON 放进国内缓存。用户请求不会再访问 power.larc.nasa.gov。 */
+export function seedVerifiedSolarCache(lat: number, lng: number, year: number, raw: string) {
+    solarCache.set(`${lat},${lng},${year}`, raw);
+}
+
+export function clearVerifiedSolarCache() {
+    solarCache.clear();
+}
+
 export async function verifiedSolar(lat: number, lng: number, now = new Date()) {
     if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) throw new Error('INVALID_COORDINATES');
     const year = now.getUTCFullYear() - 1;
-    const url = new URL('https://power.larc.nasa.gov/api/temporal/monthly/point');
-    url.search = new URLSearchParams({ parameters: 'ALLSKY_SFC_SW_DWN,ALLSKY_SFC_SW_DIFF,T2M', community: 'RE',
-        start: String(year), end: String(year), latitude: String(lat), longitude: String(lng),
-        'time-standard': 'UTC', format: 'JSON' }).toString();
-    const response = await fetch(url, { signal: AbortSignal.timeout(15000), cache: 'no-store', redirect: 'error' });
-    if (!response.ok) throw new Error('SOLAR_DATA_UNAVAILABLE');
-    const raw = await response.text();
+    const requestUrl = `domestic-cache://nasa-power/monthly?parameters=ALLSKY_SFC_SW_DWN,ALLSKY_SFC_SW_DIFF,T2M&start=${year}&end=${year}`;
+    const raw = solarCache.get(`${lat},${lng},${year}`);
+    if (raw == null) throw new Error('OVERSEAS_SOURCE_DISABLED');
     const data = JSON.parse(raw);
     if (data.header?.start !== `${year}0101` || data.header?.end !== `${year}1231` || data.header?.time_standard !== 'UTC') {
         throw new Error('SOLAR_PERIOD_UNVERIFIED');
@@ -47,7 +54,7 @@ export async function verifiedSolar(lat: number, lng: number, now = new Date()) 
     const annualGHI = monthly.reduce((sum, month) => sum + month.totalGhi, 0);
     if (!Number.isFinite(annualGHI) || annualGHI <= 0) throw new Error('SOLAR_DATA_INVALID');
     return { source: 'NASA POWER' as const, annualGHI, monthly, year, units: 'kWh/m²/年',
-        timestamp: new Date(), cacheHit: false, requestUrl: url.toString(),
+        timestamp: new Date(), cacheHit: true, requestUrl,
         rawResponse: raw, responseSha256: createHash('sha256').update(raw).digest('hex'),
         temporalCoverage: { start: new Date(Date.UTC(year, 0, 1)), end: new Date(Date.UTC(year + 1, 0, 1) - 1) },
     };

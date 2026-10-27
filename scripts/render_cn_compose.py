@@ -20,8 +20,18 @@ def domestic_config(source):
     gateway['volumes'] = [mount.replace('./Caddyfile:', './Caddyfile.cn:') for mount in gateway['volumes']]
     # 国内部署不注入国际支付与海外模型凭据。
     environment = config['services']['backend']['environment']
-    for key in ('OPENAI_API_KEY', 'ANTHROPIC_API_KEY', 'OPENROUTER_API_KEY', 'STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET', 'SENDGRID_API_KEY'):
+    for key in ('OPENAI_API_KEY', 'ANTHROPIC_API_KEY', 'OPENROUTER_API_KEY', 'STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET', 'SENDGRID_API_KEY', 'SENTRY_DSN'):
         environment.pop(key, None)
+    environment['APP_EDITION'] = 'cn'
+    environment['NENGJIAN_OVERSEAS_LIVE'] = 'disabled'
+    environment['NENGJIAN_NASA_BATCH_IMPORT'] = '0'
+    environment['DASHSCOPE_MODEL'] = 'qwen3.5-plus'
+    environment['DEEPSEEK_MODEL'] = 'deepseek-flash'
+    for key in (
+        'NENGJIAN_DEEPSEEK_API_KEY', 'NENGJIAN_DASHSCOPE_API_KEY', 'NENGJIAN_GLM_API_KEY',
+        'NENGJIAN_GUARDRAIL_AK_ID', 'NENGJIAN_GUARDRAIL_AK_SECRET', 'NENGJIAN_ARK_API_KEY',
+    ):
+        environment[key] = '${%s:-}' % key
     backend = config['services']['backend']
     worker = copy.deepcopy(backend)
     worker['command'] = ['celery', '-A', 'app.tasks.celery_app', 'worker', '--loglevel=info', '--concurrency=2', '--pidfile=/tmp/celery-worker.pid']

@@ -23,6 +23,7 @@ export interface NASAApiParams {
  */
 export const getSolarResource = withCache('nasa:solar', async (lat: number, lng: number): Promise<SolarResource> => {
   try {
+    throw new Error('OVERSEAS_SOURCE_DISABLED');
     // 获取月度数据
     const monthlyParams = {
       lat: lat.toFixed(4),
@@ -34,7 +35,7 @@ export const getSolarResource = withCache('nasa:solar', async (lat: number, lng:
       outputFormat: 'JSON'
     };
 
-    const monthlyUrl = `https://power.larc.nasa.gov/api/temporal/monthly/point?parameters=${monthlyParams.parameters}&community=RE&start=${monthlyParams.start}&end=${monthlyParams.end}&latitude=${monthlyParams.lat}&longitude=${monthlyParams.lon}&time-standard=${monthlyParams.timeStandard}&format=${monthlyParams.outputFormat}`;
+    const monthlyUrl = `https://domestic-cache.invalid/api/temporal/monthly/point?parameters=${monthlyParams.parameters}&community=RE&start=${monthlyParams.start}&end=${monthlyParams.end}&latitude=${monthlyParams.lat}&longitude=${monthlyParams.lon}&time-standard=${monthlyParams.timeStandard}&format=${monthlyParams.outputFormat}`;
 
     const response = await fetch(monthlyUrl);
     if (!response.ok) {
@@ -94,29 +95,14 @@ export const getSolarResource = withCache('nasa:solar', async (lat: number, lng:
   }
 });
 
-/**
- * 获取风能资源数据
- */
-export const getWindResource = withCache('nasa:wind', async (lat: number, lng: number): Promise<WindResource> => {
-  try {
-    const monthlyParams = {
-      lat: lat.toFixed(4),
-      lon: lng.toFixed(4),
-      start: '2022',
-      end: '2022',
-      parameters: 'WS10M,WS50M',
-      timeStandard: 'UTC',
-      outputFormat: 'JSON'
-    };
+const windPayloads = new Map<string, { properties: { parameter: { WS10M: Record<string, number>; WS50M: Record<string, number> } } }>();
 
-    const monthlyUrl = `https://power.larc.nasa.gov/api/temporal/monthly/point?parameters=${monthlyParams.parameters}&community=RE&start=${monthlyParams.start}&end=${monthlyParams.end}&latitude=${monthlyParams.lat}&longitude=${monthlyParams.lon}&time-standard=${monthlyParams.timeStandard}&format=${monthlyParams.outputFormat}`;
+/** 测试与国内缓存写入。用户请求路径不访问 NASA。 */
+export function seedWindResourcePayload(lat: number, lng: number, data: { properties: { parameter: { WS10M: Record<string, number>; WS50M: Record<string, number> } } }) {
+  windPayloads.set(`${lat.toFixed(4)},${lng.toFixed(4)}`, data);
+}
 
-    const response = await fetch(monthlyUrl);
-    if (!response.ok) {
-      throw new Error(`NASA API请求失败: ${response.status}`);
-    }
-
-    const data = await response.json();
+export function parseWindPowerPayload(data: { properties: { parameter: { WS10M: Record<string, number>; WS50M: Record<string, number> } } }): WindResource {
     const properties = data.properties;
 
     // 处理月度数据。50 米风速直接用 NASA POWER 的 WS50M；此前误把 WS10M 当 50 米风速，
@@ -172,10 +158,15 @@ export const getWindResource = withCache('nasa:wind', async (lat: number, lng: n
         resourceClass
       }
     };
+}
 
-  } catch (error) {
-    throw new Error('获取风能资源数据失败，请稍后重试');
-  }
+/**
+ * 获取风能资源数据。只读国内缓存；批次导入在后端 nasa_batch_import。
+ */
+export const getWindResource = withCache('nasa:wind', async (lat: number, lng: number): Promise<WindResource> => {
+  const data = windPayloads.get(`${lat.toFixed(4)},${lng.toFixed(4)}`);
+  if (!data) throw new Error('OVERSEAS_SOURCE_DISABLED');
+  return parseWindPowerPayload(data);
 });
 
 /**
@@ -189,11 +180,12 @@ export const getHistoricalData = withCache('nasa:history', async (
   parameters: string[] = ['T2M', 'WS10M', 'ALLSKY_SFC_SW_DWN']
 ): Promise<any> => {
   try {
-    // NASA POWER 每日数据API
+    throw new Error('OVERSEAS_SOURCE_DISABLED');
+    // 历史序列只从国内缓存读取。
     const start = `${startYear}0101`;
     const end = `${endYear}1231`;
 
-    const url = `https://power.larc.nasa.gov/api/temporal/daily/point?parameters=${parameters.join(',')}&community=RE&start=${start}&end=${end}&latitude=${lat}&longitude=${lng}&time-standard=UTC&format=JSON`;
+    const url = `https://domestic-cache.invalid/api/temporal/daily/point?parameters=${parameters.join(',')}&community=RE&start=${start}&end=${end}&latitude=${lat}&longitude=${lng}&time-standard=UTC&format=JSON`;
 
     const response = await fetch(url);
     if (!response.ok) {
@@ -246,6 +238,7 @@ export const getHistoricalData = withCache('nasa:history', async (
  */
 export const getClimateData = withCache('nasa:climate', async (lat: number, lng: number): Promise<any> => {
   try {
+    throw new Error('OVERSEAS_SOURCE_DISABLED');
     const monthlyParams = {
       lat: lat.toFixed(4),
       lon: lng.toFixed(4),
@@ -256,7 +249,7 @@ export const getClimateData = withCache('nasa:climate', async (lat: number, lng:
       outputFormat: 'JSON'
     };
 
-    const monthlyUrl = `https://power.larc.nasa.gov/api/temporal/monthly/point?parameters=${monthlyParams.parameters}&community=RE&start=${monthlyParams.start}&end=${monthlyParams.end}&latitude=${monthlyParams.lat}&longitude=${monthlyParams.lon}&time-standard=${monthlyParams.timeStandard}&format=${monthlyParams.outputFormat}`;
+    const monthlyUrl = `https://domestic-cache.invalid/api/temporal/monthly/point?parameters=${monthlyParams.parameters}&community=RE&start=${monthlyParams.start}&end=${monthlyParams.end}&latitude=${monthlyParams.lat}&longitude=${monthlyParams.lon}&time-standard=${monthlyParams.timeStandard}&format=${monthlyParams.outputFormat}`;
 
     const response = await fetch(monthlyUrl);
     if (!response.ok) {

@@ -23,7 +23,7 @@ class StalePolicyError(Exception):
     def __init__(self, source_ids: List[str]) -> None:
         self.source_ids = list(source_ids)
         super().__init__(
-            "政策类语料已过期（stale），不得用于生成投资结论: "
+            "政策类语料已过期（stale），不得进入测算引用: "
             + ", ".join(self.source_ids)
         )
 
@@ -31,8 +31,8 @@ class StalePolicyError(Exception):
 def assert_no_stale_policy(hits: List["RAGHit"]) -> None:
     """Fail-closed 守卫：命中中存在 stale 政策类语料时抛出 StalePolicyError。
 
-    生成「可投资」类结论前必须调用；过期政策只能触发重新核验，
-    不能静默进入结论。
+    生成测算引用前必须调用；过期政策只能触发重新核验，
+    不能静默进入结果。
     """
     stale = [
         hit.source_id
@@ -66,21 +66,31 @@ _COUNTRY_MAP = {
 }
 
 
-def _detect_countries(query: str, market: str) -> set:
-    """地区识别（保留恢复片段的语义）：从查询词中识别目标国家。"""
-    tokens = set(re.findall(r"[a-zA-Z\u4e00-\u9fff]+", query.lower()))
+def _detect_countries(query: str, market: str = "") -> set:
+    """只从查询词识别国家。市场参数不再自动补国家，避免把未写适用范围的文档收进来。"""
+    text = (query or "").lower()
     countries = set()
     for token, code in _COUNTRY_MAP.items():
-        if token in query.lower() or token in tokens:
+        if re.search(r"[\u4e00-\u9fff]", token):
+            if token in text:
+                countries.add(code)
+        elif re.search(rf"\b{re.escape(token)}\b", text):
             countries.add(code)
-    joined = tokens
-    if {"united", "states"} <= joined:
+    if re.search(r"\bunited states\b", text):
         countries.add("us")
-    if market == "cn":
-        countries.add("cn")
-    elif not countries:
-        countries.add(market)
     return countries
+
+
+def _currently_effective(doc: Dict, today: date) -> bool:
+    if doc.get("superseded_by"):
+        return False
+    expiry = doc.get("expiry") or doc.get("expiry_date")
+    if not expiry:
+        return True
+    try:
+        return date.fromisoformat(str(expiry)) >= today
+    except ValueError:
+        return False
 
 
 _LATIN_RE = re.compile(r"[a-z0-9]+(?:[.\-][a-z0-9]+)*")
@@ -118,24 +128,46 @@ class RAGService:
             self._corpus = self._registry.sources
 
     def search(self, query: str, top_k: int = 5, market: str = "cn",
-               exclude_stale: bool = False) -> RAGResult:
+               exclude_stale: bool = True, effective_only: bool = True,
+               include_stale: bool = False) -> RAGResult:
+        if include_stale:
+            exclude_stale = False
+        if top_k <= 0:
+            return RAGResult(hits=[])
         lang = "cn" if market == "cn" else "en"
         countries = _detect_countries(query, market)
         query_tokens = tokenize(query)
-        retrieved_at = date.today().isoformat()
+        if not query_tokens:
+            return RAGResult(hits=[])
+        today = date.today()
+        retrieved_at = today.isoformat()
 
         scored: List[RAGHit] = []
         for doc in self._corpus:
             if doc["lang"] != lang:
-                continue  # 语言隔离：global 不返回未翻译中文
+                continue
+            if doc.get("type") == "price":
+                continue  # 电价走结构化查询，不进向量/词面检索
+            review = doc.get("evidence_status")
+            if review in {"pending", "quarantined", "invalid"}:
+                continue
+            if effective_only and not _currently_effective(doc, today):
+                continue
+            source_countries = set(doc.get("countries") or [])
+            if countries and source_countries and not (countries & source_countries):
+                continue
+            if countries and not source_countries and doc.get("applicability_status") != "reviewed":
+                continue
             freshness = self._freshness_of(doc)
             if exclude_stale and freshness == "stale":
-                continue  # 时效保护：过期语料不进入检索结果
+                continue
             doc_tokens = tokenize(
                 " ".join(str(doc.get(k) or "") for k in ("title", "content", "version", "locator"))
             )
             overlap = len(query_tokens & doc_tokens)
             score = overlap / max(len(query_tokens), 1)
+            if score <= 0:
+                continue
             hit = RAGHit(
                 source_id=doc["source_id"],
                 title=doc["title"],
@@ -156,13 +188,18 @@ class RAGService:
                     "source_org": doc.get("source_org"),
                     "license_note": doc.get("license_note"),
                     "market": market,
-                    "countries": sorted(countries),
+                    "countries": list(doc.get("countries") or []),
+                    "query_countries": sorted(countries),
+                    "evidence_status": review or "legacy_unreviewed",
+                    "effective_date": doc.get("effective_date"),
+                    "expiry": doc.get("expiry"),
+                    "superseded_by": doc.get("superseded_by"),
                 },
             )
             scored.append(hit)
 
         scored.sort(key=lambda h: h.score, reverse=True)
-        return RAGResult(hits=scored[:top_k])
+        return RAGResult(hits=scored[: max(top_k, 0)])
 
     def _freshness_of(self, doc: Dict) -> str:
         if self._registry is not None:

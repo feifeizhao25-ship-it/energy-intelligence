@@ -68,11 +68,11 @@ export function ConclusionCard({
     onViewAudit,
 }: ConclusionCardProps) {
     const levelConfig = {
-        HIGHLY_RECOMMENDED: { color: 'text-green-600', bg: 'bg-green-50', icon: CheckCircle, label: '强烈推荐' },
-        RECOMMENDED: { color: 'text-emerald-600', bg: 'bg-emerald-50', icon: CheckCircle, label: '推荐' },
-        NEUTRAL: { color: 'text-gray-600', bg: 'bg-gray-50', icon: Info, label: '中性' },
-        CAUTION: { color: 'text-yellow-600', bg: 'bg-yellow-50', icon: AlertTriangle, label: '谨慎' },
-        NOT_RECOMMENDED: { color: 'text-red-600', bg: 'bg-red-50', icon: XCircle, label: '不推荐' },
+        HIGHLY_RECOMMENDED: { color: 'text-green-600', bg: 'bg-green-50', icon: CheckCircle, label: '测算读数偏高' },
+        RECOMMENDED: { color: 'text-emerald-600', bg: 'bg-emerald-50', icon: CheckCircle, label: '高于对照基准' },
+        NEUTRAL: { color: 'text-gray-600', bg: 'bg-gray-50', icon: Info, label: '接近对照基准' },
+        CAUTION: { color: 'text-yellow-600', bg: 'bg-yellow-50', icon: AlertTriangle, label: '低于对照基准' },
+        NOT_RECOMMENDED: { color: 'text-red-600', bg: 'bg-red-50', icon: XCircle, label: '测算读数偏低' },
     };
 
     const config = levelConfig[recommendation.level];
@@ -90,7 +90,7 @@ export function ConclusionCard({
             animate={{ opacity: 1, y: 0 }}
             className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden"
         >
-            {/* 头部 - 投资评级 */}
+            {/* 头部 - 测算读数 */}
             <div className={`${config.bg} px-6 py-4 border-b border-gray-100`}>
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -136,9 +136,9 @@ export function ConclusionCard({
                     ))}
                 </div>
 
-                {/* 推荐理由 */}
+                {/* 测算说明 */}
                 <div className="bg-blue-50 rounded-xl p-4 mb-6">
-                    <div className="text-sm font-medium text-blue-800 mb-1">投资建议</div>
+                    <div className="text-sm font-medium text-blue-800 mb-1">测算说明</div>
                     <div className="text-blue-700">{recommendation.reason}</div>
                 </div>
 

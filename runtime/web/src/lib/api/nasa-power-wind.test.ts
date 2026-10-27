@@ -2,7 +2,7 @@
  * 风资源：50 米风速必须取 NASA POWER 的 WS50M，而不是把 WS10M 当 50 米风速。
  * 手算：z0 = 0.03 m，v100 = v50 × ln(100/0.03) / ln(50/0.03) = 6 × 8.1117 / 7.4186 = 6.5606 m/s
  */
-import { getWindResource } from './nasa-power';
+import { getWindResource, seedWindResourcePayload } from './nasa-power';
 import { calculateWind } from '@/lib/calculator/wind';
 import { extrapolateWindSpeed } from '@/lib/calculator/wind-shear';
 
@@ -14,6 +14,8 @@ function powerResponse() {
 }
 
 beforeEach(() => {
+    seedWindResourcePayload(41.1, 114.9, powerResponse());
+    seedWindResourcePayload(41.2, 114.8, powerResponse());
     (global as any).fetch = jest.fn(async () => ({ ok: true, json: async () => powerResponse() }));
 });
 
@@ -32,7 +34,7 @@ describe('NASA POWER 风资源', () => {
     it('缺测值 -999 不当作风速', async () => {
         const data = powerResponse();
         (data.properties.parameter.WS50M as any)['202201'] = -999;
-        (global as any).fetch = jest.fn(async () => ({ ok: true, json: async () => data }));
+        seedWindResourcePayload(10, 10, data);
         const r = await getWindResource(10, 10);
         expect(r.monthly[0].speed50m).toBe(0);
     });
@@ -46,7 +48,7 @@ describe('NASA POWER 风资源', () => {
         const high = await run(41.2); // WS50M = 6
         const low = powerResponse();
         for (const k of Object.keys(low.properties.parameter.WS50M)) (low.properties.parameter.WS50M as any)[k] = 4;
-        (global as any).fetch = jest.fn(async () => ({ ok: true, json: async () => low }));
+        seedWindResourcePayload(41.3, 114.8, low);
         const same = await run(41.3); // WS50M = WS10M = 4，相当于旧的错误口径
         expect(high.energy.year1).toBeGreaterThan(same.energy.year1 * 1.2);
         expect(extrapolateWindSpeed(6, 50, 50)).toBeCloseTo(6, 10);
