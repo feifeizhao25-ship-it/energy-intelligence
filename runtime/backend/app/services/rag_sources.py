@@ -63,8 +63,11 @@ def freshness_status(
         verified = date.fromisoformat(str(last_verified_at))
     except ValueError:
         return "stale"
+    # 核验日在今天之后视为无效记录，不当作“刚核验过”。
+    if verified > today:
+        return "stale"
     interval = max(int(verify_interval_days), 1)
-    age = max((today - verified).days, 0)
+    age = (today - verified).days
     if age > interval:
         return "stale"
     if age > interval * REVIEW_THRESHOLD_RATIO:

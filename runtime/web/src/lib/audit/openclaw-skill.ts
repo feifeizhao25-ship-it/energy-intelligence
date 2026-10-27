@@ -85,7 +85,7 @@ export const XINNENGYUAN_SKILL: OpenClawSkill = {
                             totalRevenue25: { type: 'number', description: '25年总收益(万元)' },
                         },
                     },
-                    recommendation: { type: 'string', description: '投资建议' },
+                    recommendation: { type: 'string', description: '测算说明（不构成投资建议）' },
                     reportUrl: { type: 'string', description: '详细报告链接' },
                 },
             },

@@ -7,7 +7,7 @@ import warnings
 from functools import lru_cache
 from typing import List, Optional, Dict, Union
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, EnvSettingsSource, SettingsConfigDict
 
 _DEVELOPMENT_SECRET = "dev-secret-key-must-be-at-least-32-chars-long-for-security"
@@ -229,13 +229,40 @@ class Settings(BaseSettings):
     DEEPSEEK_API_KEY: Optional[str] = None
     GLM_API_KEY: Optional[str] = None
     DASHSCOPE_BASE_URL: str = "https://dashscope.aliyuncs.com/compatible-mode/v1"
-    DASHSCOPE_MODEL: str = "qwen-plus"
+    # 高风险回答与复核走百炼 qwen3.5-plus。批量文本走 DEEPSEEK_MODEL。
+    DASHSCOPE_MODEL: str = "qwen3.5-plus"
+    DASHSCOPE_REVIEW_MODEL: str = "qwen3.5-plus"
     DEEPSEEK_BASE_URL: str = "https://api.deepseek.com"
     # DeepSeek 官方更新日志（2026-04-24）：旧模型名 deepseek-chat / deepseek-reasoner 于 2026-07-24 停止使用；
     # 现行定价页（2026-10-13 核对 https://api-docs.deepseek.com/zh-cn/quick_start/pricing/）列出 deepseek-flash（V4.1-Flash）。
     DEEPSEEK_MODEL: str = "deepseek-flash"
     GLM_BASE_URL: str = "https://open.bigmodel.cn/api/paas/v4/"
+    # TODO: 智谱当前公开模型号以控制台为准。未核实前不改成未出现在官方文档里的名字。
     GLM_MODEL: str = "glm-4-flash"
+    # 国内编排默认不是 cn，避免同一镜像在未设置时关掉国际路径。cn compose 显式设为 cn。
+    APP_EDITION: str = "global"
+    NENGJIAN_DEEPSEEK_API_KEY: Optional[str] = None
+    NENGJIAN_DASHSCOPE_API_KEY: Optional[str] = None
+    NENGJIAN_GLM_API_KEY: Optional[str] = None
+    NENGJIAN_GUARDRAIL_AK_ID: Optional[str] = None
+    NENGJIAN_GUARDRAIL_AK_SECRET: Optional[str] = None
+    # TODO: 阿里云内容安全的地域 endpoint 以控制台为准，空值时模块保持关闭。
+    NENGJIAN_GUARDRAIL_ENDPOINT: str = ""
+    NENGJIAN_ARK_API_KEY: Optional[str] = None
+    NENGJIAN_ARK_BASE_URL: str = "https://ark.cn-beijing.volces.com/api/v3"
+    # TODO: 方舟控制台里的接入点 ID 可能是 ep- 前缀，模型名以 Seedream / Seedance 文档为准。
+    NENGJIAN_SEEDREAM_MODEL: str = "seedream-5.0-flash"
+    NENGJIAN_SEEDANCE_MODEL: str = "seedance-2.0-mini-720p"
+    NENGJIAN_EMBEDDING_MODEL: str = "text-embedding-v4"
+    NENGJIAN_RERANK_MODEL: str = "qwen3-rerank"
+    # TODO: qwen3-rerank 的 HTTP 路径以百炼当前文档为准。
+    NENGJIAN_RERANK_URL: str = ""
+    NENGJIAN_USER_DAILY_BUDGET_CNY: float = 20
+    NENGJIAN_USER_MONTHLY_BUDGET_CNY: float = 200
+    NENGJIAN_MODEL_CALL_CNY: float = 0.01
+    NENGJIAN_OVERSEAS_LIVE: str = "disabled"
+    NENGJIAN_NASA_BATCH_IMPORT: str = "0"
+    NENGJIAN_KILL_SWITCH: str = "0"
     
     # 国际版
     ANTHROPIC_API_KEY: Optional[str] = None
@@ -330,6 +357,18 @@ class Settings(BaseSettings):
     RATE_LIMIT_REQUESTS: int = 100
     RATE_LIMIT_WINDOW: int = 60
     
+    @model_validator(mode="after")
+    def apply_nengjian_key_aliases(self):
+        """产品密钥用 NENGJIAN_ 前缀。旧变量仍可用，避免现有 compose 和测试失效。"""
+        for src, dest in (
+            ("NENGJIAN_DEEPSEEK_API_KEY", "DEEPSEEK_API_KEY"),
+            ("NENGJIAN_DASHSCOPE_API_KEY", "DASHSCOPE_API_KEY"),
+            ("NENGJIAN_GLM_API_KEY", "GLM_API_KEY"),
+        ):
+            if getattr(self, src) and not getattr(self, dest):
+                setattr(self, dest, getattr(self, src))
+        return self
+
     # 功能开关
     ENABLE_AI_CHAT: bool = True
     ENABLE_REALTIME_SIMULATION: bool = True

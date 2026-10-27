@@ -150,8 +150,8 @@ export default function UpgradeModal({
                                 <div className="flex items-center gap-2 mb-4">
                                     <span className="text-2xl">💎</span>
                                     <div>
-                                        <h3 className="font-bold text-slate-900">专家版</h3>
-                                        <p className="text-xs text-slate-500">专业版功能加上运维诊断</p>
+                                        <h3 className="font-bold text-slate-900">专业</h3>
+                                        <p className="text-xs text-slate-500">标准档已实现功能，4 个席位</p>
                                     </div>
                                 </div>
 
@@ -175,7 +175,7 @@ export default function UpgradeModal({
                                     href="/checkout?plan=FULL&billing=yearly"
                                     className="block w-full bg-blue-600 text-white text-center py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
                                 >
-                                    升级专家版 <ArrowRight className="w-4 h-4" />
+                                    升级专业 <ArrowRight className="w-4 h-4" />
                                 </Link>
                             </div>
                         </div>

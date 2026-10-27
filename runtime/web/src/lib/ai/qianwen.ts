@@ -17,12 +17,7 @@ export const AI_MODELS = {
     'glm-4-plus': 'Pro/zai-org/GLM-4.7', // 最强 GLM
     'glm-4-air': 'zai-org/GLM-4.6',
 
-    // Kimi (Moonshot) 系列
-    'kimi-k2-thinking': 'moonshotai/Kimi-K2-Thinking', // 思考模型
-    'kimi-k2-pro': 'Pro/moonshotai/Kimi-K2-Thinking',
-    'kimi-k2-instruct': 'moonshotai/Kimi-K2-Instruct-0905',
-
-    // 其他顶尖模型
+    // 其他国产模型
     'kat-dev': 'Kwaipilot/KAT-Dev', // 快手
     'minimax-m2': 'MiniMaxAI/MiniMax-M2', // MiniMax
     'ling-1t': 'inclusionAI/Ling-1T' // 01万物
@@ -32,15 +27,15 @@ export const AI_MODELS = {
 const DEFAULT_MODEL = AI_MODELS['deepseek-v3'];
 
 // 系统提示词
-const SYSTEM_PROMPT = `你是新能源智库——新能源项目智能决策系统的AI助手。你专精于：
+const SYSTEM_PROMPT = `你是新能源智库的测算与政策助手。你只提供事实、数据、政策原文和可复核的计算方法。你专精于：
 
-1. **光伏发电系统**：太阳能电池技术、组件选型、系统设计、发电量预测
-2. **风力发电系统**：风机选型、风资源评估、选址分析、运维管理
-3. **储能系统**：电池储能、抽水蓄能、储能配置优化
-4. **新能源政策**：补贴政策、并网要求、电力交易规则
-5. **项目投资分析**：投资回报、风险评估、融资策略
+1. **光伏发电系统**：太阳能电池技术、组件参数、系统设计、发电量测算方法
+2. **风力发电系统**：风机参数、风资源数据、选址数据、运维记录
+3. **储能系统**：电池储能、抽水蓄能、储能容量测算
+4. **新能源政策**：已发布的补贴政策、并网要求、电力交易规则（标注生效日期与来源）
+5. **测算方法**：在给定假设下计算 IRR、NPV、LCOE 与敏感性，并写明方法与数据来源
 
-请用专业但易懂的方式回答问题，并在适当时提供具体的数据和计算结果。`;
+不提供买入结论、收益承诺或电价涨跌判断，不代表任何政府机构。`;
 
 // 转换 Anthropic 工具定义为 OpenAI 格式
 function convertToOpenAITools(tools: typeof AI_TOOLS) {
@@ -437,12 +432,6 @@ export function getAvailableModels() {
             id: AI_MODELS['glm-4-plus'],
             provider: 'siliconflow',
             description: '智谱 GLM-4.7 - 中文能力天花板'
-        },
-        {
-            name: 'Kimi K2 Thinking',
-            id: AI_MODELS['kimi-k2-thinking'],
-            provider: 'siliconflow',
-            description: '月之暗面 K2 - 擅长复杂逻辑思考'
         },
         {
             name: 'MiniMax M2',

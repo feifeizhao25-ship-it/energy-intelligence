@@ -301,7 +301,7 @@ export interface StandardReport {
  */
 export class ReportGenerator {
     /**
-     * 生成投资分析报告
+     * 生成测算报告
      */
     static async generateInvestmentReport(
         calculationResult: CalculationResult,
@@ -395,7 +395,7 @@ export class ReportGenerator {
         const assumptionVersion = AssumptionManager.getVersion(auditMeta.assumptionVersion);
 
         return {
-            title: "项目投资分析报告",
+            title: "项目测算报告",
             project: {
                 name: projectInfo.name,
                 location: projectInfo.location,
@@ -642,13 +642,13 @@ export class ReportGenerator {
         return {
             standards: evidence.regulatoryCompliance || [],
             calculationBasis: `本报告基于口径版本${auditMeta.assumptionVersion}进行计算，符合行业标准要求。`,
-            dataQualityStatement: "所用数据来自权威机构（NASA POWER、Open-Meteo等），数据质量可靠。",
-            applicableScope: "本报告适用于项目投资决策、银行贷款评审、政府备案等场景。",
-            validityPeriod: "本报告有效期为生成之日起6个月。",
+            dataQualityStatement: "辐照与气温来自国内缓存的气象序列（原始批次注明许可）；电价来自已收录的价格表。缺数据时不外推。",
+            applicableScope: "本报告用于核对测算方法、假设与数据来源。",
+            validityPeriod: "输入数据的有效期见各来源的发布日期与核验日期。",
             disclaimers: [
-                "本报告结果基于当前市场条件和技术参数，实际情况可能有所不同。",
-                "投资决策应综合考虑多方面因素，本报告仅供参考。",
-                "如政策或市场环境发生重大变化，建议重新评估。"
+                "本报告结果基于当前输入与技术参数，改变假设后须重算。",
+                "测算结果仅供核对方法，不构成投资建议。",
+                "政策或电价表更新后，应使用新版本数据重算。"
             ]
         };
     }

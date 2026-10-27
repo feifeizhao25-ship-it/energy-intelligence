@@ -175,7 +175,7 @@ export function getUpgradeSuggestion(user: User, blockedFeature: string): {
         if (currentPlan === 'FREE' || currentPlan === 'PRO') {
             suggestions.push({
                 plan: Plan.FULL,
-                reason: '专家版：运维诊断 + 专业版全部功能',
+                reason: '专业档：已实现的运维诊断与测算功能',
             });
         }
     } else if (blockedFeature.includes('资源') || blockedFeature.includes('计算')) {

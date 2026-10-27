@@ -21,7 +21,10 @@
       "corroborated_by": [
         "policy-cn-136"
       ],
-      "needs_human_verification": "标准年代号（版本年份）尚未与国家标准全文公开系统逐条核对，引用前须人工确认。"
+      "needs_human_verification": "标准年代号（版本年份）尚未与国家标准全文公开系统逐条核对，引用前须人工确认。",
+      "countries": [
+        "cn"
+      ]
     },
     {
       "source_id": "policy-cn-136",
@@ -41,7 +44,14 @@
       "verify_interval_days": 90,
       "corroborated_by": [
         "std-gb50797"
-      ]
+      ],
+      "countries": [
+        "cn"
+      ],
+      "effective_date": "2025-02-09",
+      "expiry": null,
+      "superseded_by": null,
+      "evidence_status": "legacy_unreviewed"
     },
     {
       "source_id": "policy-cn-storage",
@@ -61,7 +71,14 @@
       "verify_interval_days": 90,
       "corroborated_by": [
         "policy-cn-136"
-      ]
+      ],
+      "countries": [
+        "cn"
+      ],
+      "effective_date": "2025-06-01",
+      "expiry": null,
+      "superseded_by": null,
+      "evidence_status": "legacy_unreviewed"
     },
     {
       "source_id": "std-iec61724",
@@ -81,6 +98,9 @@
       "verify_interval_days": 365,
       "corroborated_by": [
         "std-ieee1547"
+      ],
+      "countries": [
+        "us"
       ]
     },
     {
@@ -105,7 +125,14 @@
       "source_urls": [
         "https://www.irs.gov/newsroom/faqs-for-modification-of-sections-25c-25d-25e-30c-30d-45l-45w-and-179d-under-public-law-119-21-139-stat-72-july-4-2025-commonly-known-as-the-one-big-beautiful-bill-obbb",
         "https://www.irs.gov/pub/irs-drop/n-25-42.pdf"
-      ]
+      ],
+      "countries": [
+        "us"
+      ],
+      "effective_date": "2025-08-21",
+      "expiry": null,
+      "superseded_by": null,
+      "evidence_status": "legacy_unreviewed"
     },
     {
       "source_id": "std-ieee1547",
@@ -125,6 +152,9 @@
       "verify_interval_days": 365,
       "corroborated_by": [
         "std-iec61724"
+      ],
+      "countries": [
+        "us"
       ]
     },
     {
@@ -146,7 +176,14 @@
       "corroborated_by": [
         "std-ieee1547",
         "policy-us-itc"
-      ]
+      ],
+      "countries": [
+        "us"
+      ],
+      "effective_date": "2026-01-15",
+      "expiry": null,
+      "superseded_by": null,
+      "evidence_status": "legacy_unreviewed"
     },
     {
       "source_id": "price-cn-module",
@@ -166,6 +203,9 @@
       "verify_interval_days": 7,
       "corroborated_by": [
         "price-us-eia"
+      ],
+      "countries": [
+        "cn"
       ]
     },
     {
@@ -186,7 +226,41 @@
       "verify_interval_days": 7,
       "corroborated_by": [
         "price-cn-module"
+      ],
+      "countries": [
+        "us"
       ]
+    },
+    {
+      "source_id": "policy-cn-688",
+      "type": "policy",
+      "lang": "cn",
+      "title": "关于有序推动多用户绿电直连的通知（发改能源〔2026〕688号）",
+      "authors": "国家发展改革委、国家能源局",
+      "version": "发改能源〔2026〕688号",
+      "published_at": "2026-05-20",
+      "effective_date": "2026-05-20",
+      "expiry": null,
+      "superseded_by": null,
+      "locator": "正文",
+      "content": "多用户绿电直连按已发布文件执行。引用须核对国家能源局原文。本条不是对 136 号文的替换。",
+      "year": 2026,
+      "last_verified_at": "2026-10-15",
+      "source_url": "https://www.nea.gov.cn/20260520/9e1c4277ce324c8ab82a84da98da7980/c.html",
+      "source_org": "国家能源局",
+      "license_note": "政府公开发布文件，引用须给出原文链接。Mac 工作副本曾误把本文编号写成 policy-cn-136，生产登记表以本 id 为准。",
+      "verify_interval_days": 90,
+      "corroborated_by": [
+        "policy-cn-136"
+      ],
+      "countries": [
+        "cn"
+      ],
+      "evidence_status": "legacy_unreviewed",
+      "needs_human_verification": "标题与链接来自 2026-10 工作副本，入库前须对照国家能源局原文。"
     }
-  ]
+  ],
+  "id_aliases": {
+    "note": "policy-cn-136 remains 发改价格〔2025〕136号. The 688 document is policy-cn-688."
+  }
 }

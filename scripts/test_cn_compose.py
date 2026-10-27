@@ -29,8 +29,10 @@ class DomesticComposeTests(unittest.TestCase):
 
     def test_no_foreign_provider_credentials_and_domestic_payment_retained(self):
         env = self.cn['services']['backend']['environment']
-        for key in ('OPENAI_API_KEY', 'ANTHROPIC_API_KEY', 'OPENROUTER_API_KEY', 'STRIPE_SECRET_KEY'):
+        for key in ('OPENAI_API_KEY', 'ANTHROPIC_API_KEY', 'OPENROUTER_API_KEY', 'STRIPE_SECRET_KEY', 'SENTRY_DSN'):
             self.assertNotIn(key, env)
+        self.assertEqual(env['APP_EDITION'], 'cn')
+        self.assertEqual(env['NENGJIAN_OVERSEAS_LIVE'], 'disabled')
         for key in ('DASHSCOPE_API_KEY', 'DEEPSEEK_API_KEY', 'GLM_API_KEY', 'ALIPAY_PRIVATE_KEY'):
             self.assertIn(key, env)
         self.assertIn('database', str(self.cn['services']['backend']['healthcheck']))

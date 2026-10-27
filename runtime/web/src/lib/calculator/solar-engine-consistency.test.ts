@@ -14,6 +14,7 @@ import { calculateSolar, simulateSolar } from './solar';
 import { SolarCalculatorV2 } from './solar-v2';
 import { calculateSolarOutput } from '@/lib/api/nrel';
 import { poaDaily, empiricalOptimalTilt } from './transposition';
+import { clearVerifiedSolarCache, seedVerifiedSolarCache } from '@/lib/api/verified-solar';
 
 const YEAR = new Date().getUTCFullYear() - 1;
 const DAYS_IN_YEAR = new Date(Date.UTC(YEAR, 1, 29)).getUTCMonth() === 1 ? 366 : 365;
@@ -32,9 +33,10 @@ function nasaFixture() {
 }
 
 beforeEach(() => {
+    seedVerifiedSolarCache(LAT, LNG, YEAR, JSON.stringify(nasaFixture()));
     jest.spyOn(global, 'fetch').mockImplementation(async () => new Response(JSON.stringify(nasaFixture())));
 });
-afterEach(() => jest.restoreAllMocks());
+afterEach(() => { clearVerifiedSolarCache(); jest.restoreAllMocks(); });
 
 function within(actual: number, expected: number, tolerance: number) {
     expect(Math.abs(actual - expected) / Math.abs(expected)).toBeLessThanOrEqual(tolerance);

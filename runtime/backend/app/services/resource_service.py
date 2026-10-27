@@ -1,5 +1,6 @@
 import httpx
 from app.schemas.resource import SolarResourceRequest, SolarResourceResponse, WindResourceRequest, WindResourceResponse
+from app.services.overseas_gate import refuse_if_cn
 from collections import defaultdict
 import math
 
@@ -87,6 +88,7 @@ async def fetch_solar_resource(req: SolarResourceRequest) -> SolarResourceRespon
     """Fetch solar resource from Open-Meteo Climate API.
     GHI + temperature from Open-Meteo; DNI/DHI estimated via Orgill-Hollands.
     Provider failures are surfaced; production calculations never use synthetic data."""
+    refuse_if_cn()
     try:
         async with httpx.AsyncClient(timeout=15.0) as client:
             r1 = await client.get(
@@ -180,6 +182,7 @@ async def fetch_solar_resource(req: SolarResourceRequest) -> SolarResourceRespon
 
 async def fetch_wind_resource(req: WindResourceRequest) -> WindResourceResponse:
     """Fetch wind resource from Open-Meteo without synthetic fallback."""
+    refuse_if_cn()
     try:
         async with httpx.AsyncClient(timeout=60.0) as client:
             # Use 1-month sample for speed, extrapolate to annual

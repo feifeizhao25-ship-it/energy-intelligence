@@ -1,11 +1,11 @@
 """
-报告生成路由 — 专业投资分析报告生成器
+报告生成路由 — 测算报告生成器
 ========================================
 依赖: python-docx, reportlab (pip install python-docx reportlab)
 可选: jinja2 (模板渲染)
 
 功能:
-  - 4 种专业报告模板: 可行性研究 / 投资分析 / 合规 / ESG
+  - 4 种报告模板: 可行性研究 / 测算结果 / 合规 / ESG
   - Word (.docx) 专业排版: 封面 + 目录 + 正文 + 表格 + 页眉页脚
   - PDF 生成: reportlab 流式布局
   - 项目数据查询 → fallback demo 数据
@@ -177,7 +177,7 @@ def _confidential_label_cn(confidential: str) -> str:
 class ReportTemplateType(str, Enum):
     """报告模板类型"""
     FEASIBILITY = "feasibility"    # 可行性研究报告
-    INVESTMENT = "investment"      # 投资分析报告
+    INVESTMENT = "investment"      # 测算报告（历史模板 id 仍为 investment）
     COMPLIANCE = "compliance"      # 合规报告
     ESG = "esg"                    # ESG报告
 
@@ -259,11 +259,11 @@ TEMPLATES: Dict[str, TemplateInfo] = {
         id="feasibility",
         name_zh="可行性研究报告",
         name_en="Feasibility Study Report",
-        description_zh="资源评估、技术方案、财务分析(NPV/IRR/LCOE)、风险评估、结论建议",
+        description_zh="资源评估、技术方案、财务分析(NPV/IRR/LCOE)、风险评估、方法与假设",
         description_en="Resource assessment, technical design, financial analysis (NPV/IRR/LCOE), risk assessment, recommendations",
         sections_zh=[
             "项目概述", "资源评估", "技术方案",
-            "财务分析", "风险评估", "结论与建议",
+            "财务分析", "风险评估", "方法与假设",
         ],
         sections_en=[
             "Project Overview", "Resource Assessment", "Technical Design",
@@ -273,13 +273,13 @@ TEMPLATES: Dict[str, TemplateInfo] = {
     ),
     "investment": TemplateInfo(
         id="investment",
-        name_zh="投资分析报告",
+        name_zh="测算报告",
         name_en="Investment Analysis Report",
-        description_zh="执行摘要、市场分析、财务模型、敏感性分析、ESG评估、投资建议",
+        description_zh="执行摘要、已发布数据、财务测算、敏感性分析、排放核算、测算结果",
         description_en="Executive summary, market analysis, financial modeling, sensitivity analysis, ESG assessment, investment recommendation",
         sections_zh=[
-            "执行摘要", "市场分析", "财务模型",
-            "敏感性分析", "ESG评估", "投资建议",
+            "执行摘要", "已发布数据", "财务测算",
+            "敏感性分析", "排放核算", "测算结果",
         ],
         sections_en=[
             "Executive Summary", "Market Analysis", "Financial Model",
@@ -389,7 +389,7 @@ REQUIRED_FINANCIAL_INPUTS = {
 
 
 def validate_financial_evidence(data: Dict[str, Any]) -> None:
-    """Reject investment conclusions unless assumptions and traceable sources exist."""
+    """Reject a calculation report unless assumptions and traceable sources exist."""
     financial = data.get("financial") or {}
     missing = sorted(REQUIRED_FINANCIAL_INPUTS - set(financial))
     if missing:
@@ -400,7 +400,7 @@ def validate_financial_evidence(data: Dict[str, Any]) -> None:
     verified = [s for s in sources if isinstance(s, dict) and s.get("title") and s.get("url") and s.get("retrieved_at")]
     if not verified:
         raise HTTPException(status_code=422, detail="财务模型缺少可核验的数据来源（标题、URL、获取日期）")
-    # fail-closed：已标记过期（stale）的政策类来源不得支撑投资结论，
+    # fail-closed：已标记过期（stale）的政策类来源不得进入测算引用，
     # 必须重新核验后才能生成报告。
     stale_policy = [
         s for s in sources
@@ -410,7 +410,7 @@ def validate_financial_evidence(data: Dict[str, Any]) -> None:
         titles = ", ".join(str(s.get("title", "<untitled>")) for s in stale_policy)
         raise HTTPException(
             status_code=422,
-            detail=f"政策类数据来源已过期（stale），需重新核验后方可生成投资结论: {titles}",
+            detail=f"政策类数据来源已过期（stale），需重新核验后方可生成测算引用: {titles}",
         )
 
 
@@ -919,7 +919,7 @@ def _add_cover_page(doc, title: str, report_type: str, confidential: str, data: 
     # 报告类型
     type_names = {
         "feasibility": "可行性研究报告",
-        "investment": "投资分析报告",
+        "investment": "测算报告",
         "compliance": "合规审查报告",
         "esg": "ESG 专项报告",
     }
@@ -1283,9 +1283,9 @@ def _add_feasibility_content(doc, data: Dict, metrics: Dict):
     annual_gen = fin.get("annual_generation_mwh", 0)
     utilization_hours = annual_gen / cap if cap > 0 else 0
     _add_body(doc,
-        f"根据气象数据评估，项目场址年等效利用小时数约 {utilization_hours:,.0f} 小时，"
-        f"首年预计发电量 {annual_gen:,.0f} MWh。"
-        f"资源等级评定为「良好」，具备开发价值。"
+        f"按输入的气象数据，项目场址年等效利用小时数约 {utilization_hours:,.0f} 小时，"
+        f"首年发电量（按输入）{annual_gen:,.0f} MWh。"
+        "资源等级需对照所引气象数据源的分级标准，本报告不另作评级。"
     )
 
     _add_heading(doc, "2.2 发电量预测", level=2)
@@ -1304,9 +1304,9 @@ def _add_feasibility_content(doc, data: Dict, metrics: Dict):
 
     _add_heading(doc, "3.1 系统设计", level=2)
     _add_body(doc,
-        f"推荐采用分块发电、集中并网方案。"
+        f"本方案按分块发电、集中并网描述。"
         f"主设备包括光伏组件/风力发电机组、逆变器、升压变压器及监控系统。"
-        f"总装机容量 {cap:.0f} MW，建议配置适当比例的储能系统以提高消纳率。"
+        f"总装机容量 {cap:.0f} MW。储能容量若纳入测算，须在财务假设中单独列出。"
     )
 
     _add_heading(doc, "3.2 主要设备选型", level=2)
@@ -1375,56 +1375,50 @@ def _add_feasibility_content(doc, data: Dict, metrics: Dict):
         {"name": "市场风险", "level": "中", "description": "电力市场化交易电价不确定性"},
     ])
 
-    # 第6章 结论
-    _add_heading(doc, "第六章  结论与建议", level=1)
-    npv_ok = metrics["npv"] > 0
-    irr_ok = metrics["irr"] > 0.08
+    # 第6章 方法与假设
+    _add_heading(doc, "第六章  方法与假设", level=1)
     _add_body(doc,
-        f"综合以上分析，项目净现值为 {fmt_money(metrics['npv'])}，"
-        f"内部收益率为 {irr_display}，投资回收期为 {metrics['payback_years']:.1f} 年。"
+        f"按所列假设测算，项目净现值为 {fmt_money(metrics['npv'])}，"
+        f"内部收益率为 {irr_display}，静态回收期为 {metrics['payback_years']:.1f} 年。"
+        "8% 只作为读数对照，不是结论门槛。"
     )
-    if npv_ok and irr_ok:
-        _add_body(doc,
-            "结论：项目各项财务指标均达到投资要求，财务可行性良好，"
-            "建议推进项目开发。",
-            bold=True,
-        )
-    else:
-        _add_body(doc,
-            "结论：项目部分财务指标未达预期，建议优化方案后重新评估。",
-            bold=True,
-        )
+    _add_body(doc,
+        "主要假设见财务分析与资源评估章节。改变电价、造价、发电量或折现率后须重算。"
+        "本报告给出测算结果与方法，不给出开发或配置结论。",
+        bold=True,
+    )
 
 
-# ── 投资分析报告 正文 ──
+# ── 测算报告 正文 ──
 
 def _add_investment_content(doc, data: Dict, metrics: Dict):
-    """投资分析报告"""
+    """测算报告：只列方法、假设与计算结果。"""
     cap = data.get("capacity_mw", 0)
 
     _add_heading(doc, "第一章  执行摘要", level=1)
     _add_body(doc,
-        f"本报告对「{data['name']}」进行发电量与财务指标测算分析。"
+        f"本报告对「{data['name']}」进行发电量与财务指标测算。"
         f"项目装机容量 {cap:.0f} MW，总投资 {fmt_money(metrics['initial_investment'])}。"
-        f"经测算，项目 IRR 为 {fmt_pct(metrics['irr'])}，"
+        f"按本章所列假设，IRR 为 {fmt_pct(metrics['irr'])}，"
         f"NPV 为 {fmt_money(metrics['npv'])}，"
-        f"投资回收期 {metrics['payback_years']:.1f} 年。"
+        f"静态回收期 {metrics['payback_years']:.1f} 年。"
+        "以上为测算值，随电价、造价与发电量假设变化。"
     )
 
-    _add_heading(doc, "第二章  市场分析", level=1)
-    _add_heading(doc, "2.1 行业概况", level=2)
+    _add_heading(doc, "第二章  已发布数据", level=1)
+    _add_heading(doc, "2.1 已发布装机统计", level=2)
     _add_body(doc,
-        "在国家「双碳」目标驱动下，新能源行业持续高速增长。"
-        "2024年全国光伏新增装机超 200GW，风电新增超 70GW。"
-        "预计 2025-2030 年复合增长率维持在 15-20%。"
+        "本章只转述已发布统计，不外推未来装机或电价。"
+        "国家能源局已发布数据：2024 年全国光伏新增装机超过 200GW，风电新增超过 70GW。"
+        "引用时须核对国家能源局当年统计公报的口径与发布日期。"
     )
-    _add_heading(doc, "2.2 电价趋势", level=2)
+    _add_heading(doc, "2.2 电价数据来源", level=2)
     _add_body(doc,
-        "随着电力市场化改革推进，新能源上网电价逐步从标杆电价向市场化电价过渡。"
-        "绿电交易和绿证制度为新能源项目提供额外溢价空间。"
+        "电价取自用户输入或已收录的省级代理购电价格表，并标注来源与数据截至日期。"
+        "本报告不预测电价涨跌，也不把历史电价外推为未来价格。"
     )
 
-    _add_heading(doc, "第三章  财务模型", level=1)
+    _add_heading(doc, "第三章  财务测算", level=1)
     _add_styled_table(
         doc, ["核心指标", "数值", "行业基准"],
         [
@@ -1458,27 +1452,28 @@ def _add_investment_content(doc, data: Dict, metrics: Dict):
         caption="电价敏感性分析 (±10%)",
     )
 
-    _add_heading(doc, "第五章  ESG 评估", level=1)
+    _add_heading(doc, "第五章  排放核算", level=1)
     annual_gen_kwh = fin.get("annual_generation_mwh", 0) * 1000
-    co2_reduction = annual_gen_kwh * 0.585  # kg CO2/kWh
+    co2_reduction = annual_gen_kwh * 0.585  # kg CO2/kWh，电网排放因子假设
     _add_body(doc,
-        f"项目年发电量约 {annual_gen_kwh / 1e6:,.1f} GWh，"
+        f"按年发电量约 {annual_gen_kwh / 1e6:,.1f} GWh、"
+        f"电网排放因子假设 0.585 kg CO₂/kWh 核算，"
         f"年等效减排 CO₂ 约 {co2_reduction / 1e6:,.2f} 万吨。"
-        "符合国家碳中和战略方向，ESG 评级为 A 级。"
+        "排放因子为方法假设，不是评级结果。"
     )
 
-    _add_heading(doc, "第六章  投资建议", level=1)
+    _add_heading(doc, "第六章  测算结果", level=1)
     _add_body(doc,
-        f"综合财务模型和风险分析，项目 IRR ({fmt_pct(metrics['irr'])}) "
-        f"{'高于' if metrics['irr'] > 0.08 else '低于'}行业基准 (8%)，"
-        f"NPV {'为正' if metrics['npv'] > 0 else '为负'}。"
+        f"按本报告输入与假设：IRR 为 {fmt_pct(metrics['irr'])}，"
+        f"对照常用折现基准 8% {'高于' if metrics['irr'] > 0.08 else '低于'}该基准；"
+        f"NPV {'为正' if metrics['npv'] > 0 else '为负'}（{fmt_money(metrics['npv'])}）。"
+        "对照基准只用于读数，不是投资结论。"
     )
-    recommendation = (
-        "建议：推荐投资。项目财务指标良好，政策风险可控，ESG 效益显著。"
-        if metrics["npv"] > 0 and metrics["irr"] > 0.08
-        else "建议：暂缓投资。需优化成本结构或提升电价水平后再行评估。"
+    _add_body(doc,
+        "方法与假设见财务测算与敏感性分析章节。结果随电价、造价、发电量与折现率变化。"
+        "数据来源见附录。本报告不给出买入、暂缓或配置结论。",
+        bold=True,
     )
-    _add_body(doc, recommendation, bold=True)
 
 
 # ── 合规报告 正文 ──
@@ -1782,7 +1777,7 @@ def generate_pdf(
 
     type_names = {
         "feasibility": "可行性研究报告",
-        "investment": "投资分析报告",
+        "investment": "测算报告",
         "compliance": "合规审查报告",
         "esg": "ESG 专项报告",
     }
@@ -1980,15 +1975,11 @@ def _build_pdf_content(story, data, metrics, report_type, style_h1, style_h2, st
                                 caption="主要风险识别与等级评定"))
 
         # Ch6
-        story.append(Paragraph("第六章  结论与建议", style_h1))
-        npv_ok = metrics["npv"] > 0
-        irr_ok = metrics["irr"] > 0.08
-        if npv_ok and irr_ok:
-            story.append(Paragraph(
-                "项目各项财务指标均达到投资要求，建议推进项目开发。", style_body))
-        else:
-            story.append(Paragraph(
-                "部分指标未达预期，建议优化方案后重新评估。", style_body))
+        story.append(Paragraph("第六章  方法与假设", style_h1))
+        story.append(Paragraph(
+            f"IRR {fmt_pct(metrics['irr'])}，NPV {fmt_money(metrics['npv'])}，"
+            f"静态回收期 {metrics['payback_years']:.1f} 年。对照基准只用于读数，改变假设后须重算。",
+            style_body))
 
     elif report_type == "investment":
         story.append(Paragraph("第一章  执行摘要", style_h1))
@@ -1996,11 +1987,12 @@ def _build_pdf_content(story, data, metrics, report_type, style_h1, style_h2, st
             f"项目装机 {cap:.0f} MW，总投资 {fmt_money(metrics['initial_investment'])}。"
             f"IRR {fmt_pct(metrics['irr'])}，NPV {fmt_money(metrics['npv'])}。", style_body))
 
-        story.append(Paragraph("第二章  市场分析", style_h1))
+        story.append(Paragraph("第二章  已发布数据", style_h1))
         story.append(Paragraph(
-            "2024年全国光伏新增装机超200GW。预计2025-2030年CAGR 15-20%。", style_body))
+            "2024年全国光伏新增装机超200GW（国家能源局已发布统计，引用须核对原文）。本报告不外推未来装机或电价。",
+            style_body))
 
-        story.append(Paragraph("第三章  财务模型", style_h1))
+        story.append(Paragraph("第三章  财务测算", style_h1))
         story.append(make_table(
             ["核心指标", "数值", "基准"],
             [["NPV", fmt_money(metrics["npv"]), "> 0"],
@@ -2021,15 +2013,17 @@ def _build_pdf_content(story, data, metrics, report_type, style_h1, style_h2, st
         story.append(make_table(["电价变动", "IRR", "变化"], sens_rows, [5, 5, 5],
                                 caption="电价敏感性分析"))
 
-        story.append(Paragraph("第五章  ESG 评估", style_h1))
+        story.append(Paragraph("第五章  排放核算", style_h1))
         co2 = fin.get("annual_generation_mwh", 0) * 1000 * 0.585 / 1e6
         story.append(Paragraph(
-            f"年减排 CO₂ 约 {co2:,.2f} 万吨，ESG 评级 A 级。", style_body))
+            f"按排放因子假设 0.585 kg CO₂/kWh 核算，年减排 CO₂ 约 {co2:,.2f} 万吨。此为核算值，不是评级。",
+            style_body))
 
-        story.append(Paragraph("第六章  投资建议", style_h1))
-        ok = metrics["npv"] > 0 and metrics["irr"] > 0.08
+        story.append(Paragraph("第六章  测算结果", style_h1))
         story.append(Paragraph(
-            "推荐投资。" if ok else "暂缓投资，需优化后重新评估。", style_body))
+            f"IRR {fmt_pct(metrics['irr'])}，NPV {fmt_money(metrics['npv'])}。"
+            "结果随假设变化。本报告不给出买入或配置结论。",
+            style_body))
 
     elif report_type == "compliance":
         story.append(Paragraph("第一章  法规清单", style_h1))
@@ -2275,7 +2269,7 @@ async def get_report_templates(market: str = "cn"):
         legacy = [
             {"id": "t1", "name": "财务分析报告", "description": "IRR、NPV、LCOE完整分析", "category": "financial"},
             {"id": "t2", "name": "资源评估报告", "description": "GHI、发电量、站址评分", "category": "resource"},
-            {"id": "t3", "name": "投资决策建议书", "description": "可行性分析与投资建议", "category": "comprehensive"},
+            {"id": "t3", "name": "测算结果说明", "description": "方法、假设与测算结果", "category": "comprehensive"},
             {"id": "t4", "name": "项目尽职调查", "description": "技术、财务、法务尽调", "category": "due_diligence"},
             {"id": "t5", "name": "年度运营报告", "description": "发电量、收益、运维总结", "category": "annual"},
         ]
@@ -2297,7 +2291,7 @@ async def generate_report(
     db: AsyncSession = Depends(get_db),
 ):
     """
-    生成专业投资分析报告
+    生成测算、合规或排放核算报告
 
     - 支持 4 种模板: feasibility / investment / compliance / esg
     - 支持两种格式: pdf / docx

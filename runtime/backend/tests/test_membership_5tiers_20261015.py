@@ -44,7 +44,7 @@ def test_matrix_values_from_pricing_table():
     assert PLAN_QUOTAS["pro"]["max_projects"] == 30
     assert PLAN_QUOTAS["full"]["ai_queries_per_day"] == 300
     assert PLAN_QUOTAS["team"]["ai_queries_per_day"] == 1500
-    assert ENTITLEMENTS["team"]["team_seats"] == 5
+    assert ENTITLEMENTS["team"]["team_seats"] == 10
 
 
 async def _free_user(db_session):

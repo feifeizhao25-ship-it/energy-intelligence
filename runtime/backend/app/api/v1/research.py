@@ -4,10 +4,13 @@ from typing import Optional
 import httpx
 from fastapi import APIRouter, Depends, Query
 from app.core.dependencies import get_current_user_id
+from app.services.overseas_gate import overseas_live_allowed
 
 router = APIRouter(prefix='/research')
 
 async def search_arxiv(q: str, max_results: int = 10) -> list:
+    if not overseas_live_allowed():
+        return []
     try:
         url = 'https://export.arxiv.org/api/query'
         params = {

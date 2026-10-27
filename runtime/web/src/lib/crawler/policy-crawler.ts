@@ -1,3 +1,4 @@
+import portals from './policy-portals.json';
 import { simpleChat } from '@/lib/ai/unified';
 import * as cheerio from 'cheerio';
 import { PoliteFetcher } from './robots';
@@ -23,29 +24,7 @@ export class PolicyCrawler {
         // In a real implementation, this would use a search API (e.g., Google Custom Search, Bing API)
         // For now, we'll return some known government policy URLs
 
-        const knownSources: Record<string, string[]> = {
-            '上海': [
-                'https://www.shanghai.gov.cn/nw12344/index.html',
-                'https://fgw.sh.gov.cn/',
-            ],
-            '北京': [
-                'https://www.beijing.gov.cn/',
-                'https://fgw.beijing.gov.cn/',
-            ],
-            '江苏': [
-                'https://www.jiangsu.gov.cn/',
-                'https://fgw.jiangsu.gov.cn/',
-            ],
-            '浙江': [
-                'https://www.zj.gov.cn/',
-                'https://fzggw.zj.gov.cn/',
-            ],
-            '广东': [
-                'https://www.gd.gov.cn/',
-                'https://fzggw.gd.gov.cn/',
-            ],
-        };
-
+        const knownSources = portals as Record<string, string[]>;
         return knownSources[region] || [];
     }
 

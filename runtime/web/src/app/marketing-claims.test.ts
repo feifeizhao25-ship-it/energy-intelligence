@@ -39,7 +39,7 @@ describe('首页价格预览与权益注册表一致', () => {
         const { homePricingPreview } = require('@/lib/entitlements/preview');
         const registry = require('@/lib/entitlements/entitlements.json');
         const preview = homePricingPreview();
-        expect(preview.map((p: any) => p.name)).toEqual(['免费版', '专业版', '企业版']);
+        expect(preview.map((p: any) => p.name)).toEqual(['免费', '标准·数据库订阅', '上限档']);
         expect(preview[1].features).toEqual(registry.tiers.pro.features_zh.slice(0, 4));
         expect(preview[1].price).toBe('¥1,980/年');
         expect(preview[2].price).toBe('¥33,000/年');

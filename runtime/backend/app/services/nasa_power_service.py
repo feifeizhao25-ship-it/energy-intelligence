@@ -5,6 +5,8 @@ NASA POWER API 服务
 import httpx
 from typing import Optional, List, Dict, Union
 
+from app.services.overseas_gate import refuse_if_cn
+
 
 class NASAPowerService:
     """NASA POWER API 服务"""
@@ -22,6 +24,7 @@ class NASAPowerService:
         Returns:
             包含GHI、DNI、DHI等数据的字典
         """
+        refuse_if_cn()
         params = {
             "parameters": "ALLSKY_SFC_SW_DWN",  # GHI
             "community": "RE",  # Renewable Energy

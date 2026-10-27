@@ -98,8 +98,8 @@ function getModelMapping(model: AIModel): string {
         'glm-4-plus': 'Pro/zai-org/GLM-4.7',
         'glm-4-flash': 'Pro/zai-org/GLM-4.7',
         // 使用 Kimi K2 Thinking 模型
-        'kimi-v1': 'Pro/moonshotai/Kimi-K2-Thinking',
-        'moonshot-v1-auto': 'Pro/moonshotai/Kimi-K2-Thinking',
+        'kimi-v1': 'deepseek-ai/DeepSeek-V3',
+        'moonshot-v1-auto': 'deepseek-ai/DeepSeek-V3',
         // 使用 Qwen3 VL 32B Thinking 模型（支持视觉）
         'minimax-abab6.5': 'Qwen/Qwen3-VL-32B-Thinking',
         // DeepSeek V3 保持原样
@@ -107,7 +107,7 @@ function getModelMapping(model: AIModel): string {
         'deepseek-chat': 'deepseek-ai/DeepSeek-V3',
         // 旧内部标识在 SiliconFlow 路径映射到可用的通用质量模型；
         // 国内版固定走硅基流动境内端点。
-        'claude-sonnet': 'Pro/zai-org/GLM-4.7'
+        'claude-sonnet': 'deepseek-ai/DeepSeek-V3'
     };
     return mapping[model] || mapping['glm-4-plus'];
 }

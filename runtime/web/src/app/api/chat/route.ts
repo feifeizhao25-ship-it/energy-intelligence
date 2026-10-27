@@ -9,6 +9,7 @@ import { getDefaultModel, getAvailableModels } from "@/lib/membership/plans";
 import { Plan } from "@/lib/membership/plans";
 import { safeErrorMessage } from '@/lib/api/safe-error';
 import { aigcMeta, AIGC_HEADER } from '@/lib/ai/aigc';
+import { BOTTOM_LINE_NOTICE_ZH, neutralizeCnText } from '@/lib/compliance/bottom-line';
 import { collectSourcesFromToolResult, verifySources, type EvidenceSource } from '@/lib/evidence/verification';
 
 export const runtime = 'nodejs';
@@ -27,6 +28,19 @@ export async function POST(request: NextRequest) {
             model?: any;
             isAssistant?: boolean;
         };
+
+        const latestUser = [...(body.messages || [])].reverse().find((item: Message) => item?.role === 'user');
+        if (latestUser && neutralizeCnText(String(latestUser.content || '')) === BOTTOM_LINE_NOTICE_ZH) {
+            const encoder = new TextEncoder();
+            const blocked = new ReadableStream({
+                start(controller) {
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'content', data: BOTTOM_LINE_NOTICE_ZH })}\n\n`));
+                    controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+                    controller.close();
+                },
+            });
+            return new Response(blocked, { headers: { 'Content-Type': 'text/event-stream', [AIGC_HEADER]: '1' } });
+        }
 
         if (!messages || !Array.isArray(messages) || messages.length === 0 || messages.length > 50) {
             return new Response(
@@ -80,11 +94,13 @@ export async function POST(request: NextRequest) {
                     }
 
                     const evidenceSources: EvidenceSource[] = [];
+                    const textParts: string[] = [];
                     for await (const event of chatSource) {
                         // 转换事件类型以匹配前端期望
                         let transformedEvent = event;
                         if (event.type === 'text') {
-                            transformedEvent = { type: 'content', data: event.data };
+                            textParts.push(String(event.data || ''));
+                            continue;
                         } else if (event.type === 'tool_call') {
                             // 发送工具调用状态
                             controller.enqueue(encoder.encode(`data: ${JSON.stringify({
@@ -104,6 +120,10 @@ export async function POST(request: NextRequest) {
 
                         const data = JSON.stringify(transformedEvent);
                         controller.enqueue(encoder.encode(`data: ${data}\n\n`));
+                    }
+                    const answer = neutralizeCnText(textParts.join(''));
+                    if (answer) {
+                        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'content', data: answer })}\n\n`));
                     }
                     // 审计 7-5：回答结束时按多源验证规则给出核验状态（前端引用卡显示 已核验/待核验/冲突）
                     controller.enqueue(encoder.encode(`data: ${JSON.stringify({
