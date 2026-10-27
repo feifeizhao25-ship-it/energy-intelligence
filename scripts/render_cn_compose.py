@@ -55,7 +55,11 @@ def domestic_config(source):
     environment['NENGJIAN_POLICY_ALERT_LOG'] = '${NENGJIAN_POLICY_ALERT_LOG:-/var/lib/nengjian/policy-alerts.jsonl}'
     environment['NENGJIAN_POLICY_DB'] = '${NENGJIAN_POLICY_DB:-/var/lib/nengjian/policy.sqlite}'
     environment['NENGJIAN_POLICY_PENDING'] = '${NENGJIAN_POLICY_PENDING:-/var/lib/nengjian/policy-pending.json}'
+    environment['NENGJIAN_POLICY_FIXTURE'] = '${NENGJIAN_POLICY_FIXTURE:-}'
+    environment['NENGJIAN_POLICY_SUBSCRIBERS'] = '${NENGJIAN_POLICY_SUBSCRIBERS:-}'
     environment['NENGJIAN_KILL_FILE'] = '${NENGJIAN_KILL_FILE:-/var/lib/nengjian/kill}'
+    for key in ('SMTP_HOST', 'SMTP_PORT', 'SMTP_FROM', 'SMTP_USER', 'SMTP_PASSWORD', 'TIANDITU_KEY', 'GAODE_MAP_KEY', 'MAP_TILE_PROVIDER'):
+        environment[key] = '${%s:-}' % key
     environment['CRAWLER_CONTACT_EMAIL'] = '${CRAWLER_CONTACT_EMAIL:?CRAWLER_CONTACT_EMAIL is required}'
     for switch in (
         'PUBLISH_A', 'PUBLISH_B', 'PUBLISH_C', 'BAIDU_PUSH', 'EMAIL_OPT_IN',
@@ -76,7 +80,10 @@ def domestic_config(source):
     web['APP_EDITION'] = 'cn'
     web['NENGJIAN_INTERNAL_TOKEN'] = '${NENGJIAN_INTERNAL_TOKEN:-}'
     web['NENGJIAN_PUBLIC_ORIGIN'] = '${NENGJIAN_PUBLIC_ORIGIN:-}'
+    web['NENGJIAN_ACCOUNT_EMAIL_DOMAIN'] = '${NENGJIAN_ACCOUNT_EMAIL_DOMAIN:-account.internal}'
     web['CRAWLER_CONTACT_EMAIL'] = '${CRAWLER_CONTACT_EMAIL:?CRAWLER_CONTACT_EMAIL is required}'
+    for key in ('TIANDITU_KEY', 'GAODE_MAP_KEY', 'MAP_TILE_PROVIDER'):
+        web[key] = '${%s:-}' % key
     backend = config['services']['backend']
     backend['volumes'] = list(backend.get('volumes') or []) + ['nengjian_shared:/var/lib/nengjian']
     config.setdefault('volumes', {})
@@ -94,6 +101,7 @@ def domestic_config(source):
     }
     beat = copy.deepcopy(backend)
     # 只能有一个 beat，否则到期降级会被重复扫描。不要扩成多副本。
+    # 政策快照 cron 在 app.tasks.celery_app：policy-snapshot-daily，每天 02:15 Asia/Shanghai。
     beat['command'] = ['celery', '-A', 'app.tasks.celery_app', 'beat', '--loglevel=info', '--pidfile=/tmp/celery-beat.pid', '--schedule', '/tmp/celerybeat-schedule']
     beat['healthcheck'] = {'disable': True}
     beat['depends_on'] = {
@@ -118,6 +126,23 @@ def domestic_config(source):
     return config
 
 
+def cn_caddy(source_text: str) -> str:
+    """国内站只把企微回调交给后端。其余路径仍到 web-cn，避免把后端账号和支付接口公开出去。"""
+    head = source_text.split('\n{$INT_DOMAIN} {', 1)[0].rstrip() + '\n'
+    needle = '    reverse_proxy web-cn:3000\n'
+    route = (
+        '    handle /api/v1/wecom/callback* {\n'
+        '        reverse_proxy backend:8000\n'
+        '    }\n'
+        '    handle {\n'
+        '        reverse_proxy web-cn:3000\n'
+        '    }\n'
+    )
+    if needle not in head:
+        raise SystemExit('国内网关模板缺少 web-cn 反代')
+    return head.replace(needle, route, 1)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--check', action='store_true')
@@ -125,7 +150,7 @@ def main():
     source = yaml.safe_load((ROOT / 'runtime/docker-compose.production.yml').read_text())
     config = domestic_config(source)
     caddy_source = (ROOT / 'runtime/Caddyfile').read_text()
-    caddy = caddy_source.split('\n{$INT_DOMAIN} {', 1)[0].rstrip() + '\n'
+    caddy = cn_caddy(caddy_source)
     if args.check:
         if not TARGET.exists() or yaml.safe_load(TARGET.read_text()) != config:
             raise SystemExit('国内 Compose 已偏离主配置，请重新生成并审核')

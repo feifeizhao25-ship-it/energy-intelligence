@@ -7,6 +7,16 @@ import { prismaCodeStore } from "./sms-store";
 import { consentRecord, CONSENT_REQUIRED_MESSAGE } from "@/lib/legal/consent";
 import { refreshToken, type AppToken, type DbUser } from "./token-refresh";
 
+/** 手机号登录没有真实邮箱。后缀来自配置，空值用 account.internal，不写产品域名。 */
+export function accountEmailDomain(): string {
+    const raw = (process.env.NENGJIAN_ACCOUNT_EMAIL_DOMAIN || '').trim();
+    return raw || 'account.internal';
+}
+
+export function syntheticAccountEmail(phone: string): string {
+    return `${phone}@${accountEmailDomain()}`;
+}
+
 function loadDbUser(id: string): Promise<DbUser | null> {
     // 已注销的账号视为不存在：会话在下一次刷新时失效
     return prisma.user.findFirst({
@@ -36,7 +46,7 @@ export async function authorizeSms(credentials: Record<string, string> | undefin
         user = await prisma.user.create({
             data: {
                 phone,
-                email: `${phone}@xinnengyuan.ai`,
+                email: syntheticAccountEmail(phone),
                 name: `用户_${phone.slice(-4)}`,
                 plan: 'FREE',
                 referralCode: `SNY-${randomBytes(4).toString('hex').toUpperCase()}`,

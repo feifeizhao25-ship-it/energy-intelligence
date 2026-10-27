@@ -251,13 +251,21 @@ class Settings(BaseSettings):
     NENGJIAN_GUARDRAIL_AK_SECRET: Optional[str] = None
     # TODO: 阿里云内容安全的地域 endpoint 以控制台为准，空值时模块保持关闭。
     NENGJIAN_GUARDRAIL_ENDPOINT: str = ""
+    # 空字符串视为未设置（env_ignore_empty）。Compose 的 ${VAR:-} 因此保留这里的默认值。
+    NENGJIAN_GUARDRAIL_SERVICE: str = "comment_detection_pro"
+    WECOM_SHA_CONTROL_ID: str = "Text-sha256"
+    NENGJIAN_GEO_QWEN_MODEL: str = "qwen3.5-plus"
+    NENGJIAN_GEO_WENXIN_MODEL: str = "ernie-4.5-turbo-32k"
     NENGJIAN_ARK_API_KEY: Optional[str] = None
     NENGJIAN_ARK_BASE_URL: str = "https://ark.cn-beijing.volces.com/api/v3"
-    # 方舟模型列表（2026-10-24）：Seedream 5.0 pro 为 doubao-seedream-5-0-pro-260628，
-    # Seedance 2.5 为 doubao-seedance-2-5-260628。4.0 / 1.0 pro 已标注即将下线。
-    # 控制台推理接入点若是 ep- 前缀，用环境变量覆盖，不要把接入点写进仓库。
-    NENGJIAN_SEEDREAM_MODEL: str = "doubao-seedream-5-0-pro-260628"
-    NENGJIAN_SEEDANCE_MODEL: str = "doubao-seedance-2-5-260628"
+    # 方舟模型列表与 Seedream 教程（2026-10-27 核对
+    # https://ark.volcengine.com/region:cn-beijing/docs/model-list
+    # https://ark.volcengine.com/region:cn-beijing/docs/seedream-5-0-pro）：
+    # Seedream 5.0 flash 为 doubao-seedream-5-0-flash-260915，文档写明速度更快、价格更低。
+    # 视频侧没有 Seedance 2.5 的 lite/mini 号；成本档是 Seedance 2.0 mini
+    # doubao-seedance-2-0-mini-260615。控制台 ep- 接入点用环境变量覆盖，不要写进仓库。
+    NENGJIAN_SEEDREAM_MODEL: str = "doubao-seedream-5-0-flash-260915"
+    NENGJIAN_SEEDANCE_MODEL: str = "doubao-seedance-2-0-mini-260615"
     NENGJIAN_EMBEDDING_MODEL: str = "text-embedding-v4"
     NENGJIAN_RERANK_MODEL: str = "qwen3-rerank"
     # TODO: qwen3-rerank 的 HTTP 路径以百炼当前文档为准。

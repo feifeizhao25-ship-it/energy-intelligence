@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
+import DomesticTileMap from './DomesticTileMap';
 
 // 设置高德地图安全配置
 if (typeof window !== 'undefined') {
@@ -23,8 +24,9 @@ interface ResourceMapProps {
  * 这些服务境内常不可达，而且会把用户查询的位置发往境外。这里只提示「地图服务暂不可用」，并允许手动输入经纬度继续。
  */
 export const MAP_UNAVAILABLE_TEXT = '地图服务暂不可用';
+export const MAP_KEY_UNSET_TEXT = '地图未配置密钥，请直接填写经纬度';
 
-const MapUnavailable = ({ onSelect }: { onSelect: (location: { lat: number; lng: number; name: string }) => void }) => {
+const MapUnavailable = ({ onSelect, keyUnset = false }: { onSelect: (location: { lat: number; lng: number; name: string }) => void; keyUnset?: boolean }) => {
     const [lat, setLat] = useState('');
     const [lng, setLng] = useState('');
     const latNum = Number(lat);
@@ -34,7 +36,7 @@ const MapUnavailable = ({ onSelect }: { onSelect: (location: { lat: number; lng:
     return (
         <div role="status" className="flex h-full w-full items-center justify-center bg-slate-100 p-6">
             <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-lg">
-                <p className="text-base font-bold text-slate-800">{MAP_UNAVAILABLE_TEXT}</p>
+                <p className="text-base font-bold text-slate-800">{keyUnset ? MAP_KEY_UNSET_TEXT : MAP_UNAVAILABLE_TEXT}</p>
                 <p className="mt-2 text-sm leading-6 text-slate-500">请稍后刷新重试，或直接输入项目经纬度继续查询。</p>
                 <div className="mt-4 grid grid-cols-2 gap-2 text-left text-xs text-slate-600">
                     <label>纬度<input value={lat} onChange={e => setLat(e.target.value)} inputMode="decimal" placeholder="例如 32.06" className="mt-1 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm" /></label>
@@ -54,6 +56,8 @@ export default function ResourceMap({ layer, mapStyle, onSelectLocation }: Resou
     const [AMap, setAMap] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isMock, setIsMock] = useState(false);
+    const [keyUnset, setKeyUnset] = useState(false);
+    const [domestic, setDomestic] = useState(false);
     const [resourceData, setResourceData] = useState<any[]>([]);
     const selectionMarkerRef = useRef<any>(null);
 
@@ -72,6 +76,21 @@ export default function ResourceMap({ layer, mapStyle, onSelectLocation }: Resou
             }, 5000);
 
             try {
+                const status = await fetch('/api/map-tiles').then((response) => response.json()).catch(() => ({ enabled: false, reason: 'unset' }));
+                if (!isMounted) return;
+                if (status?.enabled) {
+                    clearTimeout(timeoutId);
+                    setDomestic(true);
+                    setIsLoading(false);
+                    return;
+                }
+                if (status?.reason === 'key-unset' || status?.reason === 'unset' || status?.reason === 'osm-blocked') {
+                    clearTimeout(timeoutId);
+                    setKeyUnset(true);
+                    setIsLoading(false);
+                    setIsMock(true);
+                    return;
+                }
                 const { default: AMapLoader } = await import('@amap/amap-jsapi-loader');
                 const AMapNamespace = await AMapLoader.load({
                     key: process.env.NEXT_PUBLIC_AMAP_KEY || '',
@@ -239,8 +258,18 @@ export default function ResourceMap({ layer, mapStyle, onSelectLocation }: Resou
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    if (domestic) {
+        return (
+            <DomesticTileMap onPick={(location) => onSelectLocation({
+                lat: location.lat,
+                lng: location.lng,
+                name: `位置 (${location.lat.toFixed(4)}, ${location.lng.toFixed(4)})`,
+            })} />
+        );
+    }
+
     if (isMock) {
-        return <MapUnavailable onSelect={onSelectLocation} />;
+        return <MapUnavailable onSelect={onSelectLocation} keyUnset={keyUnset} />;
     }
 
     return (

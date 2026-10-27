@@ -260,14 +260,14 @@ TEMPLATES: Dict[str, TemplateInfo] = {
         name_zh="可行性研究报告",
         name_en="Feasibility Study Report",
         description_zh="资源评估、技术方案、财务分析(NPV/IRR/LCOE)、风险评估、方法与假设",
-        description_en="Resource assessment, technical design, financial analysis (NPV/IRR/LCOE), risk assessment, recommendations",
+        description_en="Resource assessment, technical design, financial analysis (NPV/IRR/LCOE), risk assessment, methods and assumptions",
         sections_zh=[
             "项目概述", "资源评估", "技术方案",
             "财务分析", "风险评估", "方法与假设",
         ],
         sections_en=[
             "Project Overview", "Resource Assessment", "Technical Design",
-            "Financial Analysis", "Risk Assessment", "Conclusions & Recommendations",
+            "Financial Analysis", "Risk Assessment", "Methods and Assumptions",
         ],
         icon="📊",
     ),
@@ -276,14 +276,14 @@ TEMPLATES: Dict[str, TemplateInfo] = {
         name_zh="测算报告",
         name_en="Investment Analysis Report",
         description_zh="执行摘要、已发布数据、财务测算、敏感性分析、排放核算、测算结果",
-        description_en="Executive summary, market analysis, financial modeling, sensitivity analysis, ESG assessment, investment recommendation",
+        description_en="Executive summary, published data, financial model, sensitivity analysis, emissions accounting, calculation result",
         sections_zh=[
             "执行摘要", "已发布数据", "财务测算",
             "敏感性分析", "排放核算", "测算结果",
         ],
         sections_en=[
             "Executive Summary", "Market Analysis", "Financial Model",
-            "Sensitivity Analysis", "ESG Assessment", "Investment Recommendation",
+            "Sensitivity Analysis", "Emissions Accounting", "Calculation Result",
         ],
         icon="💰",
     ),
@@ -592,13 +592,17 @@ def _global_section_body(section: str, data: Dict[str, Any], metrics: Dict[str, 
             "Sensitivity is assessed on electricity price, capex and capacity "
             "factor within +/-20% bands."
         ),
-        "ESG Assessment": (
-            "ESG screening covers land use, grid impact and community "
-            "consultation status as declared in the project register."
+        "Emissions Accounting": (
+            "Emissions figures repeat the project register and the stated grid factor. "
+            "They are a calculation under those inputs."
         ),
-        "Investment Recommendation": (
-            "The recommendation is conditional on the validation items listed "
-            "below being completed by qualified parties."
+        "Calculation Result": (
+            "The figures above repeat the inputs and the stated formula. "
+            "They are a calculation record, not a rating."
+        ),
+        "Methods and Assumptions": (
+            "Methods and numeric assumptions are listed with the project inputs. "
+            "Changing an input changes the result."
         ),
     }
     return bodies.get(section, f"{section}: see project documentation for {name}.")
@@ -1311,7 +1315,7 @@ def _add_feasibility_content(doc, data: Dict, metrics: Dict):
 
     _add_heading(doc, "3.2 主要设备选型", level=2)
     _add_styled_table(
-        doc, ["设备类别", "规格建议", "数量"],
+        doc, ["设备类别", "规格（示例）", "数量"],
         [
             ["发电组件", "高效单晶硅 / 双面组件", f"{cap:.0f} MW"],
             ["逆变器", "组串式 / 集中式逆变器", f"{cap * 1.1:.0f} MW"],
@@ -1319,7 +1323,7 @@ def _add_feasibility_content(doc, data: Dict, metrics: Dict):
             ["监控系统", "SCADA 远程监控", "1 套"],
         ],
         col_widths=[5, 8, 4],
-        caption="主要设备选型建议",
+        caption="主要设备选型（示例规格）",
     )
 
     # 第4章 财务分析
@@ -1341,29 +1345,29 @@ def _add_feasibility_content(doc, data: Dict, metrics: Dict):
     _add_heading(doc, "4.2 核心财务指标", level=2)
     irr_display = fmt_pct(metrics["irr"])
     _add_styled_table(
-        doc, ["指标", "数值", "评价"],
+        doc, ["指标", "数值", "对照"],
         [
             ["净现值 (NPV)", fmt_money(metrics["npv"]),
-             "✓ 达标" if metrics["npv"] > 0 else "✗ 不达标"],
+             "相对 0 为正" if metrics["npv"] > 0 else "相对 0 为负"],
             ["内部收益率 (IRR)", irr_display,
-             "✓ 良好" if metrics["irr"] > 0.08 else "⚠ 一般"],
+             "高于对照折现率 8%" if metrics["irr"] > 0.08 else "不高于对照折现率 8%"],
             ["投资回收期", f"{metrics['payback_years']:.1f} 年",
-             "✓ 合理" if metrics["payback_years"] < 10 else "⚠ 偏长"],
+             "短于 10 年" if metrics["payback_years"] < 10 else "不少于 10 年"],
             ["LCOE 度电成本", f"{metrics['lcoe']:.4f} 元/kWh",
-             "✗ 偏高" if metrics["lcoe"] > 0.35 else "✓ 合理"],
-            ["投资回报率 (ROI)", fmt_pct(metrics["roi"]), "—"],
+             "高于 0.35 元/kWh" if metrics["lcoe"] > 0.35 else "不高于 0.35 元/kWh"],
+            ["投资回报率 (ROI)", fmt_pct(metrics["roi"]), "按输入假设"],
         ],
         col_widths=[5, 5, 6],
-        caption="核心财务指标评价",
+        caption="核心财务指标（对照输入假设，不是评级）",
     )
 
-    _add_heading(doc, "4.3 现金流预测 (前10年)", level=2)
+    _add_heading(doc, "4.3 前10年净现金流", level=2)
     cf_rows = []
     for y in range(1, min(11, len(metrics["cashflows"]))):
         cf = metrics["cashflows"][y]
         cf_rows.append([f"第 {y} 年", fmt_money(cf)])
     _add_styled_table(doc, ["年度", "净现金流"], cf_rows, col_widths=[6, 10],
-                      caption="前10年净现金流预测")
+                      caption="前10年净现金流（按输入假设）")
 
     # 第5章 风险评估
     _add_heading(doc, "第五章  风险评估", level=1)
@@ -1513,20 +1517,20 @@ def _add_compliance_content(doc, data: Dict, metrics: Dict):
     _add_body(doc,
         "项目建设和运营对环境的影响主要为：施工期噪声和扬尘、"
         "运营期电磁辐射和生态影响。"
-        "建议委托具有资质的环评机构开展详细评估，并编制水土保持方案。"
+        "环评与水土保持以有资质机构出具的评估文件为准。"
     )
 
     _add_heading(doc, "第四章  土地使用分析", level=1)
     _add_body(doc,
         f"项目选址位于{_format_location(data)}，"
         "需确认土地性质（未利用地/农用地/建设用地），"
-        "办理建设用地审批手续。建议优先使用未利用地或戈壁荒漠。"
+        "用地范围以建设用地审批文件为准。"
     )
 
     _add_heading(doc, "第五章  电网接入方案", level=1)
     cap = data.get("capacity_mw", 0)
     _add_body(doc,
-        f"项目装机 {cap:.0f} MW，建议接入 110kV 或 220kV 变电站。"
+        f"项目装机 {cap:.0f} MW。接入电压等级以电网答复为准，本测算按 110kV 或 220kV 记入假设。"
         "需与当地电网公司签订并网协议，明确接入系统方案、"
         "计量点及电价结算方式。"
     )
@@ -1597,7 +1601,7 @@ def _add_esg_content(doc, data: Dict, metrics: Dict):
 
     _add_heading(doc, "第五章  持续改进", level=1)
     _add_body(doc,
-        "建议建立全生命周期 ESG 管理体系，"
+        "本段记录 ESG 管理范围，具体制度以项目单位文件为准。"
         "定期开展碳排放核查、社会影响评估和治理审计，"
         "持续提升项目 ESG 绩效水平。"
     )
@@ -1946,7 +1950,7 @@ def _build_pdf_content(story, data, metrics, report_type, style_h1, style_h2, st
         # Ch3
         story.append(Paragraph("第三章  技术方案", style_h1))
         story.append(Paragraph(
-            f"推荐分块发电、集中并网方案。总装机 {cap:.0f} MW。", style_body))
+            f"技术方案按分块发电、集中并网记录。总装机 {cap:.0f} MW。", style_body))
 
         # Ch4
         story.append(Paragraph("第四章  财务分析", style_h1))
@@ -1959,11 +1963,11 @@ def _build_pdf_content(story, data, metrics, report_type, style_h1, style_h2, st
              ["LCOE", f"{metrics['lcoe']:.4f} 元/kWh", "✓" if metrics["lcoe"] < 0.35 else "✗"]],
             [5, 5, 5], caption="核心财务指标评价"))
         story.append(Spacer(1, 10))
-        story.append(Paragraph("4.2 现金流预测 (前5年)", style_h2))
+        story.append(Paragraph("4.2 前5年净现金流", style_h2))
         cf_rows = [[f"第 {y} 年", fmt_money(metrics["cashflows"][y])]
                     for y in range(1, min(6, len(metrics["cashflows"])))]
         story.append(make_table(["年度", "净现金流"], cf_rows, [6, 10],
-                                caption="前5年净现金流预测"))
+                                caption="前5年净现金流（按输入假设）"))
 
         # Ch5
         story.append(Paragraph("第五章  风险评估", style_h1))
@@ -2053,7 +2057,7 @@ def _build_pdf_content(story, data, metrics, report_type, style_h1, style_h2, st
 
         story.append(Paragraph("第五章  电网接入方案", style_h1))
         story.append(Paragraph(
-            f"装机 {cap:.0f} MW，建议接入 110kV/220kV 变电站。", style_body))
+            f"装机 {cap:.0f} MW。接入电压等级以电网答复为准，本测算按 110kV/220kV 记入假设。", style_body))
 
     elif report_type == "esg":
         annual_gen_kwh = fin.get("annual_generation_mwh", 0) * 1000

@@ -472,20 +472,15 @@ export class ReportGenerator {
         const recommendations: string[] = [];
 
         if (riskLevel === "LOW") {
-            recommendations.push("建议尽快推进项目实施");
-            recommendations.push("可考虑适度扩大装机规模");
+            recommendations.push("风险读数为低。装机规模与成本取自本次输入。");
         } else if (riskLevel === "MEDIUM") {
-            recommendations.push("建议进行更详细的技术方案优化");
-            recommendations.push("密切关注电价政策变化");
-            recommendations.push("加强成本控制");
+            recommendations.push("风险读数为中。电价与成本仍是输入假设，换一组假设会得到另一组结果。");
         } else {
-            recommendations.push("建议重新评估项目可行性");
-            recommendations.push("考虑调整装机规模或更换选址");
-            recommendations.push("探索降低初始投资的方案");
+            recommendations.push("风险读数为高。装机规模与选址取自本次输入。");
         }
 
         if (data.paybackPeriod > 10) {
-            recommendations.push(`投资回收期较长(${data.paybackPeriod.toFixed(1)}年)，建议评估长期运营风险`);
+            recommendations.push(`静态回收期 ${data.paybackPeriod.toFixed(1)} 年，长于 10 年对照值。`);
         }
 
         return recommendations;

@@ -27,9 +27,9 @@ interface ConclusionCardProps {
         trend?: 'UP' | 'DOWN' | 'STABLE';
         benchmark?: string;
     }>;
-    recommendation: {
-        level: 'HIGHLY_RECOMMENDED' | 'RECOMMENDED' | 'NEUTRAL' | 'CAUTION' | 'NOT_RECOMMENDED';
-        reason: string;
+    reading: {
+        level: 'ABOVE_BAND' | 'UPPER_BAND' | 'MID_BAND' | 'LOWER_BAND' | 'BELOW_BAND';
+        note: string;
         confidence: number;
     };
     risks?: Array<{
@@ -59,7 +59,7 @@ export function ConclusionCard({
     headline,
     summary,
     keyMetrics,
-    recommendation,
+    reading,
     risks = [],
     nextSteps = [],
     audit,
@@ -68,14 +68,14 @@ export function ConclusionCard({
     onViewAudit,
 }: ConclusionCardProps) {
     const levelConfig = {
-        HIGHLY_RECOMMENDED: { color: 'text-green-600', bg: 'bg-green-50', icon: CheckCircle, label: '测算读数偏高' },
-        RECOMMENDED: { color: 'text-emerald-600', bg: 'bg-emerald-50', icon: CheckCircle, label: '高于对照基准' },
-        NEUTRAL: { color: 'text-gray-600', bg: 'bg-gray-50', icon: Info, label: '接近对照基准' },
-        CAUTION: { color: 'text-yellow-600', bg: 'bg-yellow-50', icon: AlertTriangle, label: '低于对照基准' },
-        NOT_RECOMMENDED: { color: 'text-red-600', bg: 'bg-red-50', icon: XCircle, label: '测算读数偏低' },
+        ABOVE_BAND: { color: 'text-green-600', bg: 'bg-green-50', icon: CheckCircle, label: '测算读数偏高' },
+        UPPER_BAND: { color: 'text-emerald-600', bg: 'bg-emerald-50', icon: CheckCircle, label: '高于对照基准' },
+        MID_BAND: { color: 'text-gray-600', bg: 'bg-gray-50', icon: Info, label: '接近对照基准' },
+        LOWER_BAND: { color: 'text-yellow-600', bg: 'bg-yellow-50', icon: AlertTriangle, label: '低于对照基准' },
+        BELOW_BAND: { color: 'text-red-600', bg: 'bg-red-50', icon: XCircle, label: '测算读数偏低' },
     };
 
-    const config = levelConfig[recommendation.level];
+    const config = levelConfig[reading.level];
     const Icon = config.icon;
 
     const trendIcons = {
@@ -98,7 +98,7 @@ export function ConclusionCard({
                         <div>
                             <span className={`text-sm font-medium ${config.color}`}>{config.label}</span>
                             <div className="text-xs text-gray-500">
-                                置信度: {Math.round(recommendation.confidence * 100)}%
+                                置信度: {Math.round(reading.confidence * 100)}%
                             </div>
                         </div>
                     </div>
@@ -139,7 +139,7 @@ export function ConclusionCard({
                 {/* 测算说明 */}
                 <div className="bg-blue-50 rounded-xl p-4 mb-6">
                     <div className="text-sm font-medium text-blue-800 mb-1">测算说明</div>
-                    <div className="text-blue-700">{recommendation.reason}</div>
+                    <div className="text-blue-700">{reading.note}</div>
                 </div>
 
                 {/* 风险提示 */}

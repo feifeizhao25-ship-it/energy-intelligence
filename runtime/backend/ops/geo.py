@@ -36,21 +36,23 @@ assert len(QUESTIONS) == 60
 
 
 def _endpoints() -> dict:
-    # 文心模型号以千帆控制台为准，未确认时用 ernie-4.5-turbo-32k，可用 NENGJIAN_GEO_WENXIN_MODEL 覆盖。
-    # 豆包常用推理接入点 ep-，由 NENGJIAN_GEO_DOUBAO_MODEL 提供。
+    # 文心模型号以千帆控制台为准。豆包推理接入点 ep- 由 NENGJIAN_GEO_DOUBAO_MODEL 提供。
+    # 模型名和方舟地址走 Settings：空环境变量保留代码默认值，不把 compose 的空字符串当成模型号。
+    from app.config import Settings
+    cfg = Settings()
     return {
         "qwen": {
             "url": "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
-            "model": os.environ.get("NENGJIAN_GEO_QWEN_MODEL", "qwen3.5-plus"),
+            "model": cfg.NENGJIAN_GEO_QWEN_MODEL or "qwen3.5-plus",
             "key": os.environ.get("NENGJIAN_GEO_QWEN_API_KEY", ""),
         },
         "wenxin": {
             "url": "https://qianfan.baidubce.com/v2/chat/completions",
-            "model": os.environ.get("NENGJIAN_GEO_WENXIN_MODEL", "ernie-4.5-turbo-32k"),
+            "model": cfg.NENGJIAN_GEO_WENXIN_MODEL or "ernie-4.5-turbo-32k",
             "key": os.environ.get("NENGJIAN_GEO_WENXIN_API_KEY", ""),
         },
         "doubao": {
-            "url": os.environ.get("NENGJIAN_ARK_BASE_URL", "https://ark.cn-beijing.volces.com/api/v3").rstrip("/") + "/chat/completions",
+            "url": (cfg.NENGJIAN_ARK_BASE_URL or "https://ark.cn-beijing.volces.com/api/v3").rstrip("/") + "/chat/completions",
             "model": os.environ.get("NENGJIAN_GEO_DOUBAO_MODEL", ""),
             "key": os.environ.get("NENGJIAN_GEO_DOUBAO_API_KEY", ""),
         },
@@ -66,7 +68,10 @@ def chat_payload(provider: str, model: str, question: str) -> dict:
     elif provider == "wenxin":
         payload["web_search"] = {"enable": True, "enable_citation": True, "enable_trace": True}
     elif provider == "doubao":
-        payload["tools"] = [{"type": "web_search", "max_keyword": 2}]
+        # Chat API（POST /api/v3/chat/completions）的联网开关是 web_search_options。
+        # 文档写明：同时传 tools 时自定义工具优先，联网搜索不会执行。
+        # Responses API 的 web_search 工具属于 /responses，不是这条 Chat 请求。
+        payload["web_search_options"] = {}
     return payload
 
 

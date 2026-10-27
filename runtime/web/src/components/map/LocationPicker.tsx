@@ -4,6 +4,9 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { MapPin, Search, X, Crosshair, Loader2, AlertTriangle } from 'lucide-react';
 import { safeErrorMessage } from '@/lib/api/safe-error';
+import DomesticTileMap from './DomesticTileMap';
+
+const MAP_KEY_UNSET = '地图未配置密钥，请直接填写经纬度';
 
 interface LocationData {
     lat: number;
@@ -32,10 +35,33 @@ export default function LocationPicker({ value, onChange, placeholder = "点击�
     const [isSearching, setIsSearching] = useState(false);
     const [selectedLocation, setSelectedLocation] = useState<LocationData | null>(null);
     const [tempLocation, setTempLocation] = useState<LocationData | null>(null);
+    const [tileMode, setTileMode] = useState<'loading' | 'domestic' | 'disabled' | 'amap'>('loading');
+    const [manualLat, setManualLat] = useState('');
+    const [manualLng, setManualLng] = useState('');
 
-    // 初始化地图
     useEffect(() => {
         if (!isMapOpen) return;
+        let cancelled = false;
+        setTileMode('loading');
+        setIsLoading(true);
+        fetch('/api/map-tiles')
+            .then((response) => response.json())
+            .then((data) => {
+                if (cancelled) return;
+                setTileMode(data?.enabled ? 'domestic' : 'disabled');
+                setIsLoading(false);
+            })
+            .catch(() => {
+                if (cancelled) return;
+                setTileMode('disabled');
+                setIsLoading(false);
+            });
+        return () => { cancelled = true; };
+    }, [isMapOpen]);
+
+    // 初始化地图。国内页走瓦片或手动坐标，不在密钥缺失时加载高德 JS。
+    useEffect(() => {
+        if (!isMapOpen || tileMode !== 'amap') return;
 
         const loadMap = async () => {
             // 配置安全密钥
@@ -319,8 +345,43 @@ export default function LocationPicker({ value, onChange, placeholder = "点击�
                             </div>
                         </div>
 
+                        {tileMode === 'loading' && (
+                            <div className="flex h-40 items-center justify-center">
+                                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                            </div>
+                        )}
+                        {tileMode === 'disabled' && (
+                            <div className="p-6" role="status">
+                                <p className="text-base font-medium text-slate-800">{MAP_KEY_UNSET}</p>
+                                <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                                    <label>纬度
+                                        <input value={manualLat} onChange={(event) => setManualLat(event.target.value)} inputMode="decimal" placeholder="例如 31.23" className="mt-1 w-full rounded border px-2 py-1.5" />
+                                    </label>
+                                    <label>经度
+                                        <input value={manualLng} onChange={(event) => setManualLng(event.target.value)} inputMode="decimal" placeholder="例如 121.47" className="mt-1 w-full rounded border px-2 py-1.5" />
+                                    </label>
+                                </div>
+                                <button
+                                    type="button"
+                                    className="mt-4 rounded bg-blue-600 px-4 py-2 text-sm text-white disabled:opacity-50"
+                                    onClick={() => {
+                                        const lat = Number(manualLat);
+                                        const lng = Number(manualLng);
+                                        if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) return;
+                                        setTempLocation({ lat, lng });
+                                    }}
+                                >使用这两个坐标</button>
+                            </div>
+                        )}
+                        {tileMode === 'domestic' && (
+                            <DomesticTileMap
+                                initial={value?.lat && value?.lng ? { lat: parseFloat(value.lat), lng: parseFloat(value.lng) } : undefined}
+                                onPick={(location) => setTempLocation(location)}
+                            />
+                        )}
+
                         {/* 地图容器 */}
-                        <div className="relative h-[400px]">
+                        {tileMode === 'amap' && <div className="relative h-[400px]">
                             {isLoading && (
                                 <div className="absolute inset-0 flex items-center justify-center bg-gray-100 z-10">
                                     <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
@@ -371,7 +432,7 @@ export default function LocationPicker({ value, onChange, placeholder = "点击�
                                     </div>
                                 </div>
                             )}
-                        </div>
+                        </div>}
 
                         {/* 底部操作栏 */}
                         <div className="p-4 border-t bg-gray-50 flex justify-end gap-3">

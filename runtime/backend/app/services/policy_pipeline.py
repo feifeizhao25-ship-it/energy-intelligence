@@ -65,12 +65,14 @@ def publish_approved(conn: sqlite3.Connection, source_id: str, content_sha256: s
         (approval.get("approval_id") or "", row["id"]),
     )
     conn.commit()
+    alerts = []
     try:
-        from app.services.policy_alerts import note_published
+        from app.services.policy_alerts import note_published, notify_published
         note_published(source_id, content_sha256, body="")
+        alerts = notify_published(source_id, content_sha256)
     except Exception:
-        pass
-    return {"status": "published", "content_sha256": content_sha256}
+        alerts = []
+    return {"status": "published", "content_sha256": content_sha256, "alerts": alerts}
 
 
 def load_portals(path: Path) -> dict:
@@ -167,7 +169,7 @@ def ingest_pages(conn: sqlite3.Connection, pages: list[dict], created_at: str, s
     return {"status": "pending_approval", "published": 0, "items": items}
 
 
-def run_scheduled_cycle(conn: sqlite3.Connection | None = None, created_at: str = "2026-10-27") -> dict:
+def run_scheduled_cycle(conn: sqlite3.Connection | None = None, created_at: str = "2026-10-27", fetcher=None, portals=None, sleep=None, clock=None) -> dict:
     """Celery 入口。没有联系邮箱且没有夹具时不访问外网。"""
     import os
     fixture = os.environ.get("NENGJIAN_POLICY_FIXTURE", "").strip()
@@ -175,11 +177,14 @@ def run_scheduled_cycle(conn: sqlite3.Connection | None = None, created_at: str 
     if not fixture and not contact:
         return {"status": "skipped", "reason": "CRAWLER_CONTACT_EMAIL required", "published": 0}
     pages = []
+    crawl = None
     if fixture:
         payload = json.loads(Path(fixture).read_text(encoding="utf-8"))
         pages = payload if isinstance(payload, list) else payload.get("pages") or []
     else:
-        return {"status": "skipped", "reason": "no fixture page; live crawl stays behind the contact gate", "published": 0, "contact_set": True}
+        from app.services.policy_crawl import crawl_portals
+        crawl = crawl_portals(contact, portals=portals, fetcher=fetcher, sleep=sleep, clock=clock)
+        pages = [page for page in crawl.get("pages") or [] if "body" in page]
     own_conn = conn is None
     if conn is None:
         path = Path(os.environ.get("NENGJIAN_POLICY_DB", "/var/lib/nengjian/policy.sqlite"))
@@ -194,4 +199,6 @@ def run_scheduled_cycle(conn: sqlite3.Connection | None = None, created_at: str 
     pending_path = os.environ.get("NENGJIAN_POLICY_PENDING", "").strip()
     if pending_path:
         Path(pending_path).write_text(json.dumps(result, ensure_ascii=False), encoding="utf-8")
+    if crawl is not None:
+        result = {**result, "crawl": {"fetched": len(crawl.get("fetched") or []), "status": crawl.get("status")}}
     return result

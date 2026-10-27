@@ -28,10 +28,10 @@ export interface ConclusionCard {
         benchmark?: string;
         calibration?: string; // 引用的口径ID
     }>;
-    // 推荐等级
-    recommendation: {
-        level: 'HIGHLY_RECOMMENDED' | 'RECOMMENDED' | 'NEUTRAL' | 'CAUTION' | 'NOT_RECOMMENDED';
-        reason: string;
+    // 相对对照带的读数。不是评级，也不表示该不该做。
+    reading: {
+        level: 'ABOVE_BAND' | 'UPPER_BAND' | 'MID_BAND' | 'LOWER_BAND' | 'BELOW_BAND';
+        note: string;
         confidence: number;
     };
     // 风险提示
@@ -155,7 +155,7 @@ export function createConclusionCard(params: {
     headline: string;
     summary: string;
     keyMetrics: ConclusionCard['keyMetrics'];
-    recommendation: ConclusionCard['recommendation'];
+    reading: ConclusionCard['reading'];
     risks?: RiskWarning[];
     nextSteps?: ConclusionCard['nextSteps'];
     auditId: string;
@@ -172,7 +172,7 @@ export function createConclusionCard(params: {
         headline: params.headline,
         summary: params.summary,
         keyMetrics: params.keyMetrics,
-        recommendation: params.recommendation,
+        reading: params.reading,
         risks: params.risks || [],
         nextSteps: params.nextSteps || [],
         audit: {
@@ -235,26 +235,26 @@ export function createDiagnosticSummary(params: {
 }
 
 /**
- * 为结论卡片生成推荐等级
+ * 把 IRR、回收期和风险分放到对照带。返回的是读数位置，不是推荐等级。
  */
-export function determineRecommendationLevel(
+export function determineReadingBand(
     irr: number,
     paybackYears: number,
     riskScore: number
-): ConclusionCard['recommendation']['level'] {
+): ConclusionCard['reading']['level'] {
     if (irr > 0.12 && paybackYears < 7 && riskScore < 30) {
-        return 'HIGHLY_RECOMMENDED';
+        return 'ABOVE_BAND';
     }
     if (irr > 0.08 && paybackYears < 10 && riskScore < 50) {
-        return 'RECOMMENDED';
+        return 'UPPER_BAND';
     }
     if (irr > 0.05 && paybackYears < 15) {
-        return 'NEUTRAL';
+        return 'MID_BAND';
     }
     if (irr > 0 || riskScore > 70) {
-        return 'CAUTION';
+        return 'LOWER_BAND';
     }
-    return 'NOT_RECOMMENDED';
+    return 'BELOW_BAND';
 }
 
 /**

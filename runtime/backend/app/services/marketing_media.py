@@ -3,9 +3,10 @@
 图像：POST {NENGJIAN_ARK_BASE_URL}/images/generations
 视频：POST {NENGJIAN_ARK_BASE_URL}/contents/generations/tasks
 content 为 [{"type":"text","text":...}]。
-模型号可用环境变量覆盖。方舟模型列表（2026-10-24）当前为
-doubao-seedream-5-0-pro-260628 与 doubao-seedance-2-5-260628。
-控制台推理接入点常为 ep- 前缀，用环境变量覆盖。
+模型号可用 NENGJIAN_SEEDREAM_MODEL / NENGJIAN_SEEDANCE_MODEL 覆盖。
+默认是成本档：Seedream 5.0 flash（doubao-seedream-5-0-flash-260915）
+与 Seedance 2.0 mini（doubao-seedance-2-0-mini-260615）。
+Seedance 2.5 没有 mini/lite 模型号。控制台 ep- 接入点用环境变量覆盖。
 只有 NENGJIAN_MEDIA_ENABLED=1 或开关 marketing_media，并且配置了方舟密钥时才请求。
 """
 from __future__ import annotations

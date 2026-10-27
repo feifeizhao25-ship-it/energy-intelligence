@@ -21,9 +21,6 @@ export class PolicyCrawler {
      * Search for policy documents using web search
      */
     async searchPolicyDocuments(region: string, policyType: 'subsidy' | 'electricity_price'): Promise<string[]> {
-        // In a real implementation, this would use a search API (e.g., Google Custom Search, Bing API)
-        // For now, we'll return some known government policy URLs
-
         const knownSources = portals as Record<string, string[]>;
         return knownSources[region] || [];
     }

@@ -105,12 +105,49 @@ def _send_email(address: str, title: str, description: str, transport) -> str:
     message["Subject"] = title[:80]
     message.set_content(description[:500])
     port = int(os.environ.get("SMTP_PORT", "587") or "587")
+    user = os.environ.get("SMTP_USER", "").strip()
+    password = os.environ.get("SMTP_PASSWORD", "")
     try:
         with smtplib.SMTP(host, port, timeout=10) as client:
+            if user:
+                client.starttls()
+                client.login(user, password)
             client.send_message(message)
     except Exception:
         return "failed"
     return "sent"
+
+
+def _subscriber_rows() -> list[dict]:
+    raw = os.environ.get("NENGJIAN_POLICY_SUBSCRIBERS", "").strip()
+    if not raw:
+        return []
+    path = Path(raw)
+    text = path.read_text(encoding="utf-8") if path.is_file() else raw
+    data = json.loads(text)
+    return list(data if isinstance(data, list) else data.get("subscribers") or [])
+
+
+def notify_published(source_id: str, content_sha256: str, subscribers: list[dict] | None = None, email_transport=None, wecom_transport=None) -> list[dict]:
+    """审批发布之后，只给选入了邮件或企微的订阅者发提醒。没有订阅名单就不外发。"""
+    people = _subscriber_rows() if subscribers is None else subscribers
+    title = f"政策快照已发布 {source_id}"[:80]
+    description = f"摘要 {content_sha256[:16]}。通知不含正文。"
+    sent = []
+    for person in people:
+        email_on = bool(person.get("channel_email") if "channel_email" in person else person.get("channelEmail"))
+        wecom_on = bool(person.get("channel_wecom") if "channel_wecom" in person else person.get("channelWecom"))
+        address = str(person.get("address") or person.get("email") or "")
+        wecom_user = str(person.get("wecom_user") or person.get("wecomUser") or "")
+        user_id = str(person.get("user_id") or person.get("userId") or "")
+        if not user_id or not (email_on or wecom_on):
+            continue
+        sent.append(deliver_alert(
+            user_id, title, description,
+            email=email_on, wecom=wecom_on, address=address, wecom_user=wecom_user,
+            email_transport=email_transport, wecom_transport=wecom_transport,
+        ))
+    return sent
 
 
 def _send_wecom(user_id: str, title: str, description: str, transport) -> str:

@@ -34,8 +34,8 @@ def review_text(text: str, poster=None) -> dict:
     secret = settings.NENGJIAN_GUARDRAIL_AK_SECRET or ""
     if not endpoint or not ak or not secret:
         return {"status": "disabled", "provider": "aliyun-content-security", "checked": False}
-    import os
-    service = os.environ.get("NENGJIAN_GUARDRAIL_SERVICE", "comment_detection_pro")
+    from app.config import Settings
+    service = Settings().NENGJIAN_GUARDRAIL_SERVICE or "comment_detection_pro"
     params = {
         "Action": "TextModerationPlus",
         "Version": "2022-03-02",

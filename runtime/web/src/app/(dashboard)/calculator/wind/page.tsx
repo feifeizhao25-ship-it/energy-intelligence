@@ -113,7 +113,7 @@ export default function WindCalculatorPage() {
                                 <div className="mb-4">
                                     <LocationPicker
                                         value={{ lat: formData.lat.toString(), lng: formData.lng.toString(), province: formData.province }}
-                                        onChange={v => setFormData({ ...formData, lat: v.lat, lng: v.lng, province: v.province || formData.province })}
+                                        onChange={v => setFormData({ ...formData, lat: v.lat, lng: v.lng, province: v.province || '' })}
                                     />
                                 </div>
                                 <p data-testid="wind-location-summary" className="text-sm leading-6 text-slate-300">
