@@ -80,9 +80,9 @@ export default function LibraryPage() {
     });
 
     return (
-        <div className="min-h-screen bg-slate-50/50 p-6 lg:p-10 flex flex-col gap-8">
+        <div className="min-h-screen overflow-x-hidden bg-slate-50/50 p-4 lg:p-10 flex flex-col gap-8">
             {/* Top Navigation / Breadcrumbs */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-4">
                     <Link href="/papers" className="w-10 h-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center text-slate-400 hover:text-green-600 hover:border-green-100 transition-all shadow-sm">
                         <ArrowLeft className="w-5 h-5" />
@@ -109,9 +109,9 @@ export default function LibraryPage() {
                 </button>
             </div>
 
-            <div className="flex-1 flex gap-8 min-h-0">
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-8 lg:flex-row">
                 {/* Sidebar */}
-                <div className="w-72 flex-shrink-0 flex flex-col gap-6">
+                <div className="flex w-full flex-shrink-0 flex-col gap-6 lg:w-72">
                     <div className="bg-white rounded-[32px] border border-slate-100 shadow-sm p-4 overflow-hidden flex flex-col">
                         <div className="px-4 py-2 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">目录列表</div>
                         <div className="flex-1 overflow-y-auto space-y-1">
@@ -210,7 +210,7 @@ export default function LibraryPage() {
                                         <div className="flex-1 space-y-2">
                                             <div className="flex items-center gap-3 mb-2">
                                                 <span className="text-[10px] font-black text-slate-400 bg-slate-50 px-2 py-0.5 rounded uppercase tracking-widest">
-                                                    {paper.journal || (paper.source === 'upload' ? 'LOCAL UPLOAD' : 'GLOBAL INDEX')}
+                                                    {paper.journal || (paper.source === 'upload' ? '本地上传' : '站内条目')}
                                                 </span>
                                                 <span className="w-1 h-1 bg-slate-200 rounded-full"></span>
                                                 <span className="text-[10px] font-black text-green-600">{paper.year ?? '年份未提供'}</span>

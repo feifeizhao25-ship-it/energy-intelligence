@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
             allowed: result.allowed,
             usage: result.usage,
             upgradeMessage: !result.allowed
-                ? `${quotaType} 配额已用尽，升级到 Pro 获取更多额度`
+                ? `${quotaType} 配额已用尽，更高档位的额度见会员页`
                 : null,
         });
 

@@ -12,7 +12,7 @@
         {"symbol": "r", "meaning": "折现率", "unit": "小数"},
         {"symbol": "N", "meaning": "评估年限", "unit": "年"}
       ],
-      "source": "NREL 简化口径。含税差别默认未计，待方法卡核对。",
+      "source": "NREL 简化折现口径。含税差别默认未计。https://www.nrel.gov/analysis/tech-lcoe-documentation.html",
       "review_status": "pending_wecom"
     },
     {
@@ -34,7 +34,7 @@
         {"symbol": "D_t", "meaning": "第 t 年放电量", "unit": "千瓦时"},
         {"symbol": "Ch_t", "meaning": "第 t 年充电成本", "unit": "元"}
       ],
-      "source": "Schmidt 折现口径的简化实现。",
+      "source": "Schmidt 等，Joule，2019，折现口径的简化实现。https://doi.org/10.1016/j.joule.2019.06.012 充电成本是否计入要在假设里写明。",
       "review_status": "pending_wecom"
     },
     {
@@ -45,7 +45,7 @@
         {"symbol": "h", "meaning": "海拔", "unit": "米"},
         {"symbol": "T", "meaning": "气温", "unit": "摄氏度"}
       ],
-      "source": "参照 IEC 61400-12-1 的密度思路，不是现场实测。",
+      "source": "海平面密度按气温和海拔作指数近似。8434.5 米这一常数是否写进 IEC 61400-12-1 正文，待核实，不能当成条款编号。",
       "review_status": "pending_wecom"
     }
   ]

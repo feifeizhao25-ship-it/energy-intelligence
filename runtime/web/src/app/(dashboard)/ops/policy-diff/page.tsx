@@ -6,7 +6,7 @@ export default function PolicyDiffPage() {
         <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900">夹具 · 待审批 · 尚未发布。{pending.note}</p>
         <ul className="space-y-3">
             {pending.items.map((item) => <li key={item.source_id} className="rounded-xl border p-4">
-                <p className="font-medium">{item.source_id}</p>
+                <p className="font-medium">{item.label}</p>
                 <p className="text-sm text-slate-600">{item.label} · {item.region} · {item.published}</p>
                 <p className="mt-2 text-sm">适用期：{item.applicability}</p>
                 <p className="mt-2 text-sm text-slate-700">{item.diff.excerpt}</p>

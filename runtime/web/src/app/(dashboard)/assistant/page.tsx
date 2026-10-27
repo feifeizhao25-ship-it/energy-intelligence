@@ -288,7 +288,7 @@ export default function AssistantPage() {
                                     : "bg-surface-dark border border-border-dark text-primary"
                             )}>
                                 {msg.role === 'user' ? (
-                                    <span>{session?.user?.name?.[0] || 'U'}</span>
+                                    <span>{session?.user?.name?.[0] || '我'}</span>
                                 ) : (
                                     <Sparkles className="w-5 h-5" />
                                 )}

@@ -7,11 +7,8 @@ import {
     ShieldCheck,
     Palette,
     FileSpreadsheet,
-    ArrowUpRight,
     Plus,
     Settings,
-    Mail,
-    ChevronRight,
     Sparkles,
     Layout
 } from 'lucide-react';
@@ -21,11 +18,7 @@ import { ProcurementForm } from '@/components/enterprise/ProcurementForm';
 export default function EnterpriseCenterPage() {
     const [activeTab, setActiveTab] = useState('accounts');
 
-    const accounts = [
-        { name: '李明', email: 'liming@example.com', role: '项目经理', status: '已启用', projects: 12 },
-        { name: '王芳', email: 'wangfang@example.com', role: '分析师', status: '已启用', projects: 5 },
-        { name: '张伟', email: 'zhangwei@example.com', role: '审阅员', status: '待确认', projects: 0 },
-    ];
+    const accounts: { name: string; email: string; role: string; status: string }[] = [];
 
     return (
         <div className="min-h-screen bg-[#FBFDFF] pb-24">
@@ -48,9 +41,9 @@ export default function EnterpriseCenterPage() {
                                 上限档含 10 个席位，更多席位按合同增加。本页不提供白标报告或单点登录。
                             </p>
                         </div>
-                        <button className="bg-white text-slate-900 px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-500 hover:text-white transition-all shadow-xl flex items-center gap-2">
+                        <button type="button" disabled className="bg-white/70 text-slate-500 px-8 py-4 rounded-2xl font-black text-xs tracking-widest shadow-xl flex items-center gap-2 cursor-not-allowed">
                             <Plus className="w-4 h-4" />
-                            添加企业成员
+                            添加成员尚未开放
                         </button>
                     </div>
 
@@ -109,7 +102,7 @@ export default function EnterpriseCenterPage() {
                                 <div className="flex justify-between items-center px-4">
                                     <h3 className="text-2xl font-black text-slate-900 tracking-tight">成员管理</h3>
                                     <div className="text-xs font-bold text-slate-400 bg-slate-100 px-4 py-2 rounded-full">
-                                        可用席位剩余: 32
+                                        席位上限 10，成员名单未连接
                                     </div>
                                 </div>
                                 <div className="bg-white rounded-[40px] border border-slate-100 shadow-sm overflow-hidden">
@@ -123,6 +116,11 @@ export default function EnterpriseCenterPage() {
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-50">
+                                            {accounts.length === 0 && (
+                                                <tr>
+                                                    <td colSpan={4} className="px-8 py-10 text-sm text-slate-500">还没有企业成员。这里不展示示例姓名。</td>
+                                                </tr>
+                                            )}
                                             {accounts.map((acc, i) => (
                                                 <tr key={i} className="hover:bg-slate-50/50 transition-colors group">
                                                     <td className="px-8 py-6">
@@ -159,49 +157,11 @@ export default function EnterpriseCenterPage() {
                         )}
 
                         {activeTab === 'whitelabel' && (
-                            <div className="space-y-8 animate-in fade-in slide-in-from-right-4">
-                                <div className="bg-white rounded-[48px] p-12 border border-slate-100 shadow-sm space-y-12">
-                                    <div className="space-y-2">
-                                        <h3 className="text-2xl font-black text-slate-900">报告品牌设置</h3>
-                                        <p className="text-slate-400 text-sm font-medium">配置您生成的所有 PDF 报告、分享链接的品牌展示风格。</p>
-                                    </div>
-                                    <div className="grid md:grid-cols-2 gap-12">
-                                        <div className="space-y-6">
-                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">企业标志（建议 PNG 或 SVG 格式）</label>
-                                            <div className="border-2 border-dashed border-slate-100 rounded-[32px] p-12 flex flex-col items-center gap-4 hover:border-blue-500 hover:bg-blue-50/50 transition-all cursor-pointer group">
-                                                <div className="p-4 bg-slate-50 rounded-2xl group-hover:bg-blue-500 group-hover:text-white transition-all">
-                                                    <Plus className="w-6 h-6" />
-                                                </div>
-                                                <span className="text-xs font-bold text-slate-400">点击上传或拖拽文件</span>
-                                            </div>
-                                        </div>
-                                        <div className="space-y-8">
-                                            <div className="space-y-4">
-                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">主色调设置</label>
-                                                <div className="flex gap-4">
-                                                    {['#22C55E', '#3B82F6', '#6366F1', '#EC4899', '#0F172A'].map(c => (
-                                                        <button key={c} className="w-12 h-12 rounded-2xl shadow-lg hover:scale-110 transition-transform" style={{ backgroundColor: c }}></button>
-                                                    ))}
-                                                    <button className="w-12 h-12 rounded-2xl border-2 border-slate-100 flex items-center justify-center text-slate-300 hover:border-slate-900 transition-colors">
-                                                        <Plus className="w-5 h-5" />
-                                                    </button>
-                                                </div>
-                                            </div>
-                                            <div className="space-y-4">
-                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">报告页脚水印文本</label>
-                                                <input type="text" placeholder="例如：© 2026 技术支持由某某能源公司提供" className="w-full bg-slate-50 p-4 rounded-2xl border-none outline-none font-bold text-sm" />
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="pt-8 border-t border-slate-50">
-                                        <button className="bg-slate-900 text-white px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl hover:scale-105 hover:bg-blue-600 transition-all">
-                                            品牌定制未开通
-                                        </button>
-                                    </div>
-                                </div>
+                            <div className="bg-white rounded-3xl p-10 border border-slate-100 shadow-sm">
+                                <h3 className="text-2xl font-black text-slate-900">报告品牌设置</h3>
+                                <p className="mt-3 text-sm leading-6 text-slate-600">本页不提供白标报告或标志上传。未开通的设置不在这里做成可点击的表单。</p>
                             </div>
                         )}
-
                         {activeTab === 'procurement' && <ProcurementForm />}
 
                         {(activeTab !== 'accounts' && activeTab !== 'whitelabel' && activeTab !== 'procurement') && (
@@ -213,9 +173,7 @@ export default function EnterpriseCenterPage() {
                                 <p className="text-slate-500 font-medium max-w-sm mx-auto">
                                     此企业管理模块尚未开放；当前页面不会模拟已完成的功能或返回伪造结果。
                                 </p>
-                                <button className="text-blue-500 font-black text-[10px] uppercase tracking-widest hover:underline">
-                                    查看开发进度看板 <ArrowUpRight className="inline w-3 h-3 ml-1" />
-                                </button>
+                                <p className="text-sm text-slate-500">没有单独的进度看板。</p>
                             </div>
                         )}
                     </div>

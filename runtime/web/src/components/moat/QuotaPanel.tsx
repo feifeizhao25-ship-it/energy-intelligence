@@ -192,7 +192,7 @@ export function QuotaPanel({ onUpgrade }: QuotaPanelProps) {
                 <div className="px-6 py-4 bg-gradient-to-r from-primary-50 to-blue-50 border-t border-primary-100">
                     <div className="flex items-center justify-between">
                         <div>
-                            <div className="text-sm font-medium text-primary-800">升级到 Pro 套餐</div>
+                            <div className="text-sm font-medium text-primary-800">查看更高档位</div>
                             <div className="text-xs text-primary-600">获得更多配额和高级功能</div>
                         </div>
                         <Link href="/pricing">

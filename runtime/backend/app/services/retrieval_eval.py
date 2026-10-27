@@ -2,13 +2,17 @@
 
 数字由 hybrid_scores 现算，不写死目标值。
 公开数据的实时库不在仓库里时，用登记表、离线样本和结构样本作为干扰文档。
+向量来自 embed_texts：有密钥走国内接口，否则走本地模型或字符 n-gram。
 """
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
-from app.services.hybrid_retrieval import hybrid_scores, recall_at_k, rerank
+from app.services.embeddings_cn import embed_texts
+from app.services.hybrid_retrieval import contextual_chunk, hybrid_scores, recall_at_k, rerank
+from app.services.local_embeddings import pairwise_query_scores
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -76,6 +80,30 @@ def load_questions(root: Path | None = None) -> list[dict]:
     return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
 
 
+def _query_uses_vectors(query: str, docs: list[dict]) -> bool:
+    if re.search(r"[\u4e00-\u9fff]", query or ""):
+        return True
+    tokens = set(re.findall(r"[A-Za-z0-9]{2,}", (query or "").lower()))
+    if not tokens:
+        return False
+    blob = "\n".join(contextual_chunk(doc) for doc in docs).lower()
+    return any(token in blob for token in tokens)
+
+
+def vector_scores_for(query: str, docs: list[dict]) -> dict:
+    if not docs or not _query_uses_vectors(query, docs):
+        return {"applied": False, "model": None, "scores": {}}
+    embedded = embed_texts([query, *[contextual_chunk(doc) for doc in docs]])
+    if embedded.get("status") != "ok" or len(embedded.get("vectors") or []) != len(docs) + 1:
+        return {"applied": False, "model": embedded.get("model"), "scores": {}, "reason": embedded.get("reason") or embedded.get("status")}
+    vectors = embedded["vectors"]
+    raw = {
+        doc["source_id"]: score
+        for doc, score in zip(docs, pairwise_query_scores(vectors[0], vectors[1:]))
+    }
+    return {"applied": True, "model": embedded.get("model"), "engine": embedded.get("engine") or embedded.get("provider"), "scores": {key: max(0.0, value) for key, value in raw.items()}}
+
+
 def evaluate(docs: list[dict], questions: list[dict], k: int = 8) -> dict:
     known = {doc["source_id"] for doc in docs}
     per_question = []
@@ -95,7 +123,9 @@ def evaluate(docs: list[dict], questions: list[dict], k: int = 8) -> dict:
                 "reason": "语料中没有要求的来源",
             })
             continue
-        ranked = rerank(question.get("question") or "", hybrid_scores(question.get("question") or "", docs))
+        query = question.get("question") or ""
+        vectors = vector_scores_for(query, docs)
+        ranked = rerank(query, hybrid_scores(query, docs, vectors["scores"]))
         # 得分为 0 的文档只是稳定排序留在前面，不算检索命中。
         hits = [row for row in ranked["rows"] if row.get("score", 0) > 0]
         if not hits:
@@ -110,6 +140,7 @@ def evaluate(docs: list[dict], questions: list[dict], k: int = 8) -> dict:
         })
     measured = [item["recall"] for item in per_question if item["recall"] is not None]
     macro = sum(measured) / len(measured) if measured else None
+    probe = vector_scores_for(questions[0].get("question") or "", docs) if questions else {"applied": False, "model": None, "engine": None}
     return {
         "k": k,
         "questions": len(questions),
@@ -117,24 +148,35 @@ def evaluate(docs: list[dict], questions: list[dict], k: int = 8) -> dict:
         "missing_source": missing,
         "corpus_size": len(docs),
         "corpus_origins": sorted({doc["origin"] for doc in docs}),
-        "engine": "local-lexical",
-        "vector_weight_applied": False,
+        "engine": probe.get("engine") or probe.get("model") or "local-lexical",
+        "embedding_model": probe.get("model"),
+        "vector_weight_applied": bool(probe.get("applied")),
         "zero_score_not_counted": True,
         "recall_at_8": macro,
         "zero_score_questions": zero_score,
         "by_category": {key: (sum(values) / len(values)) for key, values in by_category.items()},
         "hardcoded": False,
-        "note": "语料是已入库的登记文本、离线样本和结构样本，不是一次新的网络抓取。向量分为 0。得分为 0 的文档不计入前 8。",
+        "note": "语料是已入库的登记文本、离线样本和结构样本，不是一次新的网络抓取。向量权重 0.45，词面权重 0.55。无中文且与语料无共同词的查询不使用向量。得分为 0 的文档不计入前 8。embedding_model 为 local-char-ngram 时表示本机没有加载 bge 权重，用的是字符 n-gram，不是文本嵌入模型。",
         "rows": per_question,
     }
 
 
 def write_report(path: Path, root: Path | None = None) -> dict:
-    report = evaluate(load_corpus(root), load_questions(root))
+    docs = load_corpus(root)
+    report = evaluate(docs, load_questions(root))
     stored = {key: value for key, value in report.items() if key != "rows"}
     stored["sample_top"] = [
         {"id": item["id"], "recall": item["recall"], "top": item.get("top")}
         for item in report["rows"][:3]
     ]
     path.write_text(json.dumps(stored, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    index_path = path.with_name("vector_index_meta.json")
+    index_path.write_text(json.dumps({
+        "corpus_size": len(docs),
+        "source_ids": [doc["source_id"] for doc in docs],
+        "embedding_model": stored.get("embedding_model"),
+        "engine": stored.get("engine"),
+        "vector_weight_applied": stored.get("vector_weight_applied"),
+        "note": "索引在评测时按 source_id 现算，不把向量数值写入仓库。",
+    }, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return stored

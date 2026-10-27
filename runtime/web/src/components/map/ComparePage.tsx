@@ -101,13 +101,13 @@ export default function ComparePage() {
     };
 
     return (
-        <div className="p-6 bg-gray-900 min-h-screen text-white">
+        <div className="min-h-screen overflow-x-hidden bg-gray-900 p-4 text-white sm:p-6">
             <h1 className="text-2xl font-bold mb-6 flex items-center gap-2">
                 <BarChart2 className="w-6 h-6 text-blue-400" /> 多点资源对比分析
             </h1>
 
             {/* 输入区 */}
-            <div className="flex gap-4 mb-8">
+            <div className="mb-8 flex flex-col gap-3 sm:flex-row">
                 <input
                     type="text"
                     value={input}
