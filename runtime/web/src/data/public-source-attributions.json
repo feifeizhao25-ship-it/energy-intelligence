@@ -1,0 +1,397 @@
+{
+  "title": "公开来源署名",
+  "sources": [
+    {
+      "id": "pub-01",
+      "name": "中国能源转型政策多层级数据集 2000–2024（亦作国内文献/RAG冷启动语料）",
+      "enabled": true,
+      "attribution": "数据来自中国能源转型政策多层级数据集 2000–2024（亦作国内文献/RAG冷启动语料）。许可为 CC BY 4.0，使用时请保留作者与许可声明。 原文：https://doi.org/10.6084/m9.figshare.32182515。",
+      "reason": "CC BY 4.0，署名后可商用"
+    },
+    {
+      "id": "pub-02",
+      "name": "MEVR 中国电网代理购电价格汇总（带各省官方原文链接）",
+      "enabled": false,
+      "attribution": "",
+      "reason": "汇总页条款未审，不作为默认抓取源"
+    },
+    {
+      "id": "pub-03",
+      "name": "各省电网公司「代理购电价格」月度公示（一手源）",
+      "enabled": true,
+      "attribution": "数据来自各省电网公司「代理购电价格」月度公示（一手源）。政府公开信息。请保留文号与原文链接，不得冒充发布机关。",
+      "reason": "政府公开的价格事实，可以引用"
+    },
+    {
+      "id": "pub-04",
+      "name": "ronaldowzy/price_forecast（山东现货样例，MIT）",
+      "enabled": false,
+      "attribution": "",
+      "reason": "现货数据需要交易平台登录，不把口令写入仓库"
+    },
+    {
+      "id": "pub-05",
+      "name": "能源数据中心 energydc.cn（付费汇总）",
+      "enabled": false,
+      "attribution": "",
+      "reason": "付费汇总，禁止抓取付费内容"
+    },
+    {
+      "id": "pub-06",
+      "name": "中国能源转型政策多层级数据集 2000–2024（Scientific Data / Figshare）",
+      "enabled": true,
+      "attribution": "数据来自中国能源转型政策多层级数据集 2000–2024（Scientific Data / Figshare）。许可为 CC BY 4.0，使用时请保留作者与许可声明。 原文：https://doi.org/10.6084/m9.figshare.32182515。",
+      "reason": "CC BY 4.0，署名后可商用"
+    },
+    {
+      "id": "pub-07",
+      "name": "国家能源局 / 发改委 / 各省发改委政策门户（一手）",
+      "enabled": true,
+      "attribution": "数据来自国家能源局 / 发改委 / 各省发改委政策门户（一手）。政府公开信息。请保留文号与原文链接，不得冒充发布机关。 原文：https://www.nea.gov.cn/。",
+      "reason": "政府信息公开，可以引用事实"
+    },
+    {
+      "id": "pub-08",
+      "name": "GovDoc-CN 国务院公文语料（MIT）",
+      "enabled": true,
+      "attribution": "数据来自GovDoc-CN 国务院公文语料（MIT）。整理稿许可为 MIT，原文按政府公开信息引用并保留链接。 原文：https://github.com/ruilinxu/govdoc-cn。",
+      "reason": "整理集可以商用，原文按公开信息引用"
+    },
+    {
+      "id": "pub-09",
+      "name": "中国低碳政策强度数据集 2007–2022（Scientific Data）",
+      "enabled": false,
+      "attribution": "",
+      "reason": "数据文件许可尚未核验"
+    },
+    {
+      "id": "pub-10",
+      "name": "OpenStreetMap 中国提取（Geofabrik）power=*",
+      "enabled": true,
+      "attribution": "数据来自OpenStreetMap 中国提取（Geofabrik）power=*。许可为 ODbL 1.0，请署名开放街图贡献者。 原文：https://download.geofabrik.de/asia/china.html。",
+      "reason": "ODbL，署名后可商用"
+    },
+    {
+      "id": "pub-11",
+      "name": "Global Energy Monitor — Global Integrated Power Tracker",
+      "enabled": true,
+      "attribution": "数据来自Global Energy Monitor — Global Integrated Power Tracker。许可为 CC BY 4.0，使用时请保留作者与许可声明。请署名全球能源监测。 原文：https://globalenergymonitor.org/projects/global-integrated-power-tracker。",
+      "reason": "CC BY 4.0，署名后可商用"
+    },
+    {
+      "id": "pub-12",
+      "name": "WRI Global Power Plant Database",
+      "enabled": true,
+      "attribution": "数据来自WRI Global Power Plant Database。许可为 CC BY 4.0，使用时请保留作者与许可声明。请署名世界资源研究所。 原文：https://github.com/wri/global-power-plant-database。",
+      "reason": "CC BY 4.0，署名后可商用"
+    },
+    {
+      "id": "pub-13",
+      "name": "ESA WorldCover 10m 土地覆盖",
+      "enabled": true,
+      "attribution": "数据来自ESA WorldCover 10m 土地覆盖。许可为 CC BY 4.0，使用时请保留作者与许可声明。请署名欧洲空间局世界覆盖产品。 原文：https://esa-worldcover.org/en/data-access。",
+      "reason": "CC BY 4.0，署名后可商用"
+    },
+    {
+      "id": "pub-14",
+      "name": "天地图 / 高德底图与部分兴趣点",
+      "enabled": false,
+      "attribution": "",
+      "reason": "底图需要商用授权后才能启用"
+    },
+    {
+      "id": "pub-15",
+      "name": "PVOD v1.0 中国光伏出力数据集（Science Data Bank）",
+      "enabled": false,
+      "attribution": "",
+      "reason": "数据集声明仅用于科学研究"
+    },
+    {
+      "id": "pub-16",
+      "name": "NREL PVDAQ Public Datasets（OEDI）",
+      "enabled": true,
+      "attribution": "数据来自NREL PVDAQ Public Datasets（OEDI）。许可为 CC BY 4.0，使用时请保留作者与许可声明。请署名国家可再生能源实验室。 原文：https://data.openei.org/submissions/4568。",
+      "reason": "CC BY 4.0，署名后可商用"
+    },
+    {
+      "id": "pub-17",
+      "name": "DKA Solar Centre / Kaggle DKA solar dataset",
+      "enabled": false,
+      "attribution": "",
+      "reason": "原始站点条款尚未核验"
+    },
+    {
+      "id": "pub-18",
+      "name": "用户自有 SCADA / 设备商接口",
+      "enabled": false,
+      "attribution": "",
+      "reason": "客户合同数据，不是公开来源"
+    },
+    {
+      "id": "pub-19",
+      "name": "NASA POWER API",
+      "enabled": true,
+      "attribution": "数据来自NASA POWER API。请按 NASA POWER 的公开引用要求署名。 原文：https://power.larc.nasa.gov/docs/services/api/。",
+      "reason": "公开数据，可以商用"
+    },
+    {
+      "id": "pub-20",
+      "name": "PVGIS（欧盟JRC）",
+      "enabled": true,
+      "attribution": "数据来自PVGIS（欧盟JRC）。使用时请致谢光伏地理信息系统与欧盟联合研究中心。 原文：https://joint-research-centre.ec.europa.eu/photovoltaic-geographical-information-system-pvgis_en。",
+      "reason": "致谢后可以商用"
+    },
+    {
+      "id": "pub-21",
+      "name": "Global Solar Atlas（World Bank / Solargis）",
+      "enabled": true,
+      "attribution": "数据来自Global Solar Atlas（World Bank / Solargis）。许可为 CC BY 4.0，使用时请保留作者与许可声明。 原文：https://globalsolaratlas.info/download。",
+      "reason": "CC BY 4.0，署名后可商用"
+    },
+    {
+      "id": "pub-22",
+      "name": "ERA5（Copernicus CDS）",
+      "enabled": true,
+      "attribution": "数据来自ERA5（Copernicus CDS）。许可为 CC BY 4.0，使用时请保留作者与许可声明。请署名哥白尼计划与欧洲中期天气预报中心。 原文：https://cds.climate.copernicus.eu/。",
+      "reason": "CC BY 4.0，署名后可商用"
+    },
+    {
+      "id": "pub-23",
+      "name": "中国气象数据网 data.cma.cn",
+      "enabled": false,
+      "attribution": "",
+      "reason": "商用再分发需要另行授权"
+    },
+    {
+      "id": "pub-24",
+      "name": "Solcast Free API",
+      "enabled": false,
+      "attribution": "",
+      "reason": "免费档不可商用"
+    },
+    {
+      "id": "pub-25",
+      "name": "OpenAlex Works API（元数据 CC0；全文按篇许可）",
+      "enabled": true,
+      "attribution": "数据来自OpenAlex Works API（元数据 CC0；全文按篇许可）。元数据为 CC0。全文仅在单篇许可允许商用时另存，定时任务不保存全文。 原文：https://api.openalex.org/。",
+      "reason": "元数据为 CC0，可以商用"
+    },
+    {
+      "id": "pub-26",
+      "name": "arXiv API",
+      "enabled": true,
+      "attribution": "数据来自arXiv API。元数据为 CC0。定时任务不保存论文文件。 原文：https://info.arxiv.org/help/api/user-manual.html。",
+      "reason": "元数据可以商用，论文文件默认不收录"
+    },
+    {
+      "id": "pub-27",
+      "name": "CORE API",
+      "enabled": false,
+      "attribution": "",
+      "reason": "接口条款未按 CC0 或 CC BY 核验"
+    },
+    {
+      "id": "pub-28",
+      "name": "Semantic Scholar Academic Graph API",
+      "enabled": false,
+      "attribution": "",
+      "reason": "部分字段限制商用，未核对前关闭"
+    },
+    {
+      "id": "pub-29",
+      "name": "Crossref REST API",
+      "enabled": true,
+      "attribution": "数据来自Crossref REST API。收录元数据，不保存全文。 原文：https://api.crossref.org/。",
+      "reason": "元数据可以商用"
+    },
+    {
+      "id": "pub-30",
+      "name": "DOAJ（开放获取期刊目录）API",
+      "enabled": true,
+      "attribution": "数据来自DOAJ（开放获取期刊目录）API。收录目录元数据。定时任务不保存全文。 原文：https://doaj.org/api/。",
+      "reason": "元数据可以商用"
+    },
+    {
+      "id": "pub-31",
+      "name": "Zenodo",
+      "enabled": true,
+      "attribution": "数据来自Zenodo。只保留 CC BY 或 CC0 记录，其余许可跳过。 原文：https://zenodo.org/。",
+      "reason": "仅允许商用的记录可以入库"
+    },
+    {
+      "id": "pub-32",
+      "name": "IEA / IRENA / NREL 公开报告与数据",
+      "enabled": false,
+      "attribution": "",
+      "reason": "整库许可未逐条核验"
+    },
+    {
+      "id": "pub-33",
+      "name": "PubMed Central / Europe PMC（相关生物医学交叉时）",
+      "enabled": false,
+      "attribution": "",
+      "reason": "只覆盖开放子集，且不是能源主路径"
+    },
+    {
+      "id": "pub-34",
+      "name": "ChinaXiv（中科院预印本）",
+      "enabled": true,
+      "attribution": "数据来自ChinaXiv（中科院预印本）。只收录开放档案元数据。全文入库需要书面授权，定时任务不保存全文。 原文：https://chinaxiv.org/。",
+      "reason": "元数据可以收录，全文需要授权"
+    },
+    {
+      "id": "pub-35",
+      "name": "中国科技论文在线 paper.edu.cn",
+      "enabled": false,
+      "attribution": "",
+      "reason": "未默认允许商用"
+    },
+    {
+      "id": "pub-36",
+      "name": "国家科技报告服务系统 nstrs.cn",
+      "enabled": false,
+      "attribution": "",
+      "reason": "全文商用再分发需要另行审定条款"
+    },
+    {
+      "id": "pub-37",
+      "name": "国家哲学社会科学文献中心 NCPSSD",
+      "enabled": false,
+      "attribution": "",
+      "reason": "平台限制未授权的商业再分发"
+    },
+    {
+      "id": "pub-38",
+      "name": "中国科技期刊开放获取平台 COAJ 等中文OA门户",
+      "enabled": false,
+      "attribution": "",
+      "reason": "逐篇许可未核验，默认不批量抓取"
+    },
+    {
+      "id": "pub-39",
+      "name": "CNKI 中国知网",
+      "enabled": false,
+      "attribution": "",
+      "reason": "付费墙，禁止未授权爬取与再分发"
+    },
+    {
+      "id": "pub-40",
+      "name": "万方数据 / 维普",
+      "enabled": false,
+      "attribution": "",
+      "reason": "付费墙，仅授权范围可用"
+    },
+    {
+      "id": "pub-41",
+      "name": "Hugging Face ZhongMingTech/EKS-Eval（中文能源评测）",
+      "enabled": false,
+      "attribution": "",
+      "reason": "数据集卡片许可尚未核验"
+    },
+    {
+      "id": "pub-42",
+      "name": "上海环境能源交易所 全国碳市场每日概况（CEA）",
+      "enabled": true,
+      "attribution": "数据来自上海环境能源交易所 全国碳市场每日概况（CEA）。公开行情。请注明上海环境能源交易所与行情日期。不得把本系统写成交易通道。 原文：https://overview.cneeex.com/qgtpfqjy/mrgk/。",
+      "reason": "公开行情可以引用，不转售行情流"
+    },
+    {
+      "id": "pub-43",
+      "name": "InfoLink 光伏现货价格公示（部分免费）",
+      "enabled": false,
+      "attribution": "",
+      "reason": "条款禁止未授权抓取后转售"
+    },
+    {
+      "id": "pub-44",
+      "name": "储能电芯/系统价格指数（CNESA/鑫椤/百川等）",
+      "enabled": false,
+      "attribution": "",
+      "reason": "商业指数仅在付费合同内可用"
+    },
+    {
+      "id": "pub-45",
+      "name": "国家标准全文公开系统 openstd.samr.gov.cn",
+      "enabled": false,
+      "attribution": "",
+      "reason": "标准全文再分发受限"
+    },
+    {
+      "id": "pub-46",
+      "name": "住建部标准公告 / 建标库等（GB 50797 等）",
+      "enabled": false,
+      "attribution": "",
+      "reason": "全文需要授权，且没有单一稳定下载地址"
+    },
+    {
+      "id": "pub-47",
+      "name": "2024年减排项目中国区域电网二氧化碳基准线排放因子（国家气候战略中心）",
+      "enabled": true,
+      "attribution": "数据来自2024年减排项目中国区域电网二氧化碳基准线排放因子（国家气候战略中心）。主管部门公开发布。请注明文件名称与年份。区域基准线与碳足迹因子不要混用。 原文：https://www.ccn.ac.cn/wp-content/uploads/2024%E5%B9%B4%E5%87%8F%E6%8E%92%E9%A1%B9%E7%9B%AE%E4%B8%AD%E5%9B%BD%E5%8C%BA%E5%9F%9F%E7%94%B5%E7%BD%91%E4%BA%8C%E6%B0%A7%E5%8C%96%E7%A2%B3%E5%9F%BA%E5%87%86%E7%BA%BF%E6%8E%92%E6%94%BE%E5%9B%A0%E5%AD%90.pdf。",
+      "reason": "可以引用公开因子"
+    },
+    {
+      "id": "pub-48",
+      "name": "生态环境部等《关于发布2024年电力碳足迹因子数据的公告》",
+      "enabled": true,
+      "attribution": "数据来自生态环境部等《关于发布2024年电力碳足迹因子数据的公告》。政府公开公告。请注明公告名称与年份。区域基准线与碳足迹因子不要混用。 原文：https://www.mee.gov.cn/xxgk2018/xxgk/xxgk01/202510/t20251024_1130734.html。",
+      "reason": "政府公开公告，可以引用"
+    },
+    {
+      "id": "pub-49",
+      "name": "国家能源局 全国电力工业统计数据（月/年）",
+      "enabled": true,
+      "attribution": "数据来自国家能源局 全国电力工业统计数据（月/年）。政府公开统计。请注明发布机关与统计期。 原文：https://www.nea.gov.cn/。",
+      "reason": "政府公开统计，可以引用"
+    },
+    {
+      "id": "pub-50",
+      "name": "中国充电联盟 EVCIPA / 国家能源局充电设施通报",
+      "enabled": true,
+      "attribution": "数据来自中国充电联盟 EVCIPA / 国家能源局充电设施通报。只引用公开汇总。完整明细未授权，不入库。 原文：https://evcipa.com/。",
+      "reason": "公开汇总可以引用，完整明细不入库"
+    },
+    {
+      "id": "pub-51",
+      "name": "国家数据 data.stats.gov.cn",
+      "enabled": true,
+      "attribution": "数据来自国家数据 data.stats.gov.cn。国家统计局公开数据。请注明来源与统计期。 原文：https://data.stats.gov.cn/。",
+      "reason": "政府公开统计，可以引用"
+    },
+    {
+      "id": "pub-52",
+      "name": "支付宝/微信支付商户号与密钥",
+      "enabled": false,
+      "attribution": "",
+      "reason": "无法公开获得"
+    },
+    {
+      "id": "pub-53",
+      "name": "阿里云/腾讯云等短信模板与签名",
+      "enabled": false,
+      "attribution": "",
+      "reason": "无法公开获得"
+    },
+    {
+      "id": "pub-54",
+      "name": "客户场站 SCADA/EMS 接入合同与专线",
+      "enabled": false,
+      "attribution": "",
+      "reason": "无法公开获得"
+    },
+    {
+      "id": "pub-55",
+      "name": "法定用地红线/电网内部接线图全库",
+      "enabled": false,
+      "attribution": "",
+      "reason": "需要政务或电网授权"
+    },
+    {
+      "id": "pub-56",
+      "name": "DeepSeek 等模型 API Key、地图商用 Key",
+      "enabled": false,
+      "attribution": "",
+      "reason": "无法公开获得"
+    }
+  ]
+}

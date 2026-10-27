@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import attributions from '@/data/public-source-attributions.json';
+import { disabledReasons, enabledAttributions } from '@/lib/data/public-attributions';
 
 interface Dataset { id: string; title: string; kind: string; updated: string; columns: string[]; rows: string[][] }
 
@@ -49,5 +51,19 @@ export default function DatasetsPage() {
                 <button className="mt-2 rounded-xl border px-3 py-1 text-sm" onClick={() => download(item.id)}>下载 CSV</button>
             </li>)}
         </ul>
+        <section className="space-y-3">
+            <h2 className="text-xl font-bold">公开来源署名</h2>
+            <p className="text-sm text-slate-600">启用的来源在展示数据时保留下面的署名。未启用的来源不会入库。</p>
+            <ul className="space-y-2">
+                {enabledAttributions(attributions).map((item) => <li key={item.id} className="rounded-xl border p-3 text-sm">
+                    <p className="font-medium">{item.name}</p>
+                    <p className="mt-1 text-slate-600">{item.attribution}</p>
+                </li>)}
+            </ul>
+            <h3 className="font-medium">未启用</h3>
+            <ul className="space-y-1 text-sm text-slate-600">
+                {disabledReasons(attributions).map((item) => <li key={item.id}>{item.name}：{item.reason}</li>)}
+            </ul>
+        </section>
     </main>;
 }

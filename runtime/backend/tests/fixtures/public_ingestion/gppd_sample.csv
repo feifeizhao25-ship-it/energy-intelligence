@@ -1,0 +1,3 @@
+country,country_long,name,gppd_idnr,capacity_mw,latitude,longitude,primary_fuel
+AFG,Afghanistan,Other Plant,WRI1,10,34.5,69.1,Gas
+CHN,China,测试光伏电站,WRI100,50.5,31.2,121.5,Solar

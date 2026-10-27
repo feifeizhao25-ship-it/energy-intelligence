@@ -1,0 +1,5 @@
+{
+  "type": "Feature",
+  "geometry": {"type": "Point", "coordinates": [116.4074, 39.9042, 0]},
+  "properties": {"parameter": {"ALLSKY_SFC_SW_DWN": {"202301": 2.4, "202302": 3.0, "202303": 3.6}}}
+}

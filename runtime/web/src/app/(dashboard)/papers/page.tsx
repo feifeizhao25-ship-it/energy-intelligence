@@ -333,6 +333,7 @@ export default function PapersPage() {
                                     <p className="text-slate-500 text-sm line-clamp-2 mb-6 leading-relaxed">
                                         {paper.abstract}
                                     </p>
+                                    {paper.licenceNote ? <p className="mb-4 text-sm text-slate-500">署名：{paper.licenceNote}</p> : null}
 
                                     <div className="flex items-center gap-8 text-sm">
                                         <div className="flex items-center gap-2 text-slate-400">

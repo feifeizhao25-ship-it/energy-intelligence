@@ -1,0 +1,13 @@
+<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <ListRecords>
+    <record>
+      <header><identifier>oai:chinaxiv.org:10001</identifier></header>
+      <metadata>
+        <dc:title>分布式光伏并网研究</dc:title>
+        <dc:creator>周宁</dc:creator>
+        <dc:date>2025-04-01</dc:date>
+        <dc:identifier>10.1000/cnxiv</dc:identifier>
+      </metadata>
+    </record>
+  </ListRecords>
+</OAI-PMH>
