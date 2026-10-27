@@ -45,6 +45,19 @@ function fakeFetch(robots: { status: number; body?: string }) {
 
 describe('PoliteFetcher：先查 robots，真实 UA，不伪装浏览器', () => {
     const noSleep = async () => {};
+    const previous = process.env.CRAWLER_CONTACT_EMAIL;
+    beforeEach(() => { process.env.CRAWLER_CONTACT_EMAIL = 'ops@example.com'; });
+    afterEach(() => {
+        if (previous === undefined) delete process.env.CRAWLER_CONTACT_EMAIL;
+        else process.env.CRAWLER_CONTACT_EMAIL = previous;
+    });
+
+    it('没有联系邮箱时不抓页面', async () => {
+        delete process.env.CRAWLER_CONTACT_EMAIL;
+        const { fn, calls } = fakeFetch({ status: 200, body: 'User-agent: *\nDisallow:' });
+        await expect(new PoliteFetcher(fn, 0, noSleep).get('https://fgw.example.gov.cn/zcwj/1.html')).rejects.toThrow('CRAWLER_CONTACT_REQUIRED');
+        expect(calls).toHaveLength(0);
+    });
 
     it('robots 禁止的页面不抓，只请求了 robots.txt', async () => {
         const { fn, calls } = fakeFetch({ status: 200, body: 'User-agent: *\nDisallow: /' });

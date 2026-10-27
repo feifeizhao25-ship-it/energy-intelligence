@@ -8,8 +8,12 @@
 
 export const CRAWLER_PRODUCT = 'XinNengYuanZhiKu-PolicyBot';
 
+export function crawlerContact(): string {
+    return (process.env.CRAWLER_CONTACT_EMAIL || '').trim();
+}
+
 export function crawlerUserAgent(): string {
-    const contact = (process.env.CRAWLER_CONTACT_EMAIL || process.env.OPENALEX_CONTACT_EMAIL || '').trim();
+    const contact = (crawlerContact() || process.env.OPENALEX_CONTACT_EMAIL || '').trim();
     return `${CRAWLER_PRODUCT}/1.0 (新能源智库政策收录；只抓取政府公开栏目；${contact ? `联系 ${contact}` : '遵守 robots.txt'})`;
 }
 
@@ -107,6 +111,7 @@ export class PoliteFetcher {
 
     /** 先查 robots.txt，再以真实 UA 抓取；被 robots 禁止时抛出 ROBOTS_DISALLOWED，不抓页面 */
     async get(url: string): Promise<Response> {
+        if (!crawlerContact()) throw new Error('CRAWLER_CONTACT_REQUIRED');
         if (!(await this.canFetch(url))) throw new Error(`ROBOTS_DISALLOWED: ${url}`);
         await this.throttle(new URL(url).origin);
         return this.fetcher(url, { headers: { 'User-Agent': crawlerUserAgent() } });

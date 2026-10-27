@@ -41,22 +41,70 @@ def _cache_rows() -> list[dict]:
     return [row for row in rows if isinstance(row, dict) and "lat" in row and "lng" in row]
 
 
+def _stations() -> list[dict]:
+    return list(_cache_rows()) + list(_seed().get("stations") or [])
+
+
+def _distance(row: dict, lat: float, lng: float) -> float | None:
+    try:
+        return math.hypot(float(row["lat"]) - lat, float(row["lng"]) - lng)
+    except (TypeError, ValueError, KeyError):
+        return None
+
+
 def _nearest(lat: float, lng: float) -> dict | None:
     limit = float(_seed().get("match_degrees") or 0.85)
     best = None
     best_d = limit
-    for row in list(_cache_rows()) + list(_seed().get("stations") or []):
-        try:
-            d = math.hypot(float(row["lat"]) - lat, float(row["lng"]) - lng)
-        except (TypeError, ValueError, KeyError):
+    for row in _stations():
+        d = _distance(row, lat, lng)
+        if d is None:
             continue
         if d <= best_d:
             best, best_d = row, d
     return best
 
 
+def _interpolate(lat: float, lng: float) -> dict | None:
+    """31 个省级城市之外、许可不允许编造新测点时，用邻近样本插值并标明。"""
+    ranked = []
+    for row in _stations():
+        monthly = list(row.get("monthly_ghi") or [])
+        d = _distance(row, lat, lng)
+        if d is None or len(monthly) != 12:
+            continue
+        ranked.append((d, row))
+    ranked.sort(key=lambda item: item[0])
+    if len(ranked) < 2 or ranked[0][0] > 3.5:
+        return None
+    pair = ranked[:2]
+    weights = [1.0 / (d + 0.05) for d, _row in pair]
+    total = sum(weights)
+    monthly = []
+    for index in range(12):
+        monthly.append(sum(weights[i] * float(pair[i][1]["monthly_ghi"][index]) for i in range(2)) / total)
+    names = "、".join(f"{row.get('province') or ''}{row.get('city') or ''}" for _d, row in pair)
+    note = (_seed().get("license_note") or "") + " 数值由邻近省级城市样本按距离加权，不是该点实测，也不是 NASA POWER 实测。"
+    return {
+        "lat": lat,
+        "lng": lng,
+        "city": "插值",
+        "province": pair[0][1].get("province"),
+        "ghi_annual": sum(monthly),
+        "monthly_ghi": monthly,
+        "avg_temp": sum(weights[i] * float(pair[i][1].get("avg_temp") or 15) for i in range(2)) / total,
+        "monthly_temp": [sum(weights[i] * float((pair[i][1].get("monthly_temp") or [15] * 12)[index]) for i in range(2)) / total for index in range(12)],
+        "mean_wind_100m": sum(weights[i] * float(pair[i][1].get("mean_wind_100m") or 0) for i in range(2)) / total,
+        "monthly_wind_100m": [sum(weights[i] * float((pair[i][1].get("monthly_wind_100m") or [0] * 12)[index]) for i in range(2)) / total for index in range(12)],
+        "provenance": "邻近样本插值（不是该坐标实测）",
+        "license_note": note,
+        "station_note": f"由 {names} 插值，请求坐标为 {lat},{lng}",
+        "interpolated": True,
+    }
+
+
 def lookup(lat: float, lng: float) -> dict:
-    row = _nearest(lat, lng)
+    row = _nearest(lat, lng) or _interpolate(lat, lng)
     if row is None:
         raise DomesticResourceNotLoaded(DomesticResourceNotLoaded.message)
     monthly = list(row.get("monthly_ghi") or [])
@@ -75,7 +123,7 @@ def lookup(lat: float, lng: float) -> dict:
         "monthly_wind_100m": [float(v) for v in (row.get("monthly_wind_100m") or [float(row.get("mean_wind_100m") or 0)] * 12)],
         "data_source": row.get("provenance") or "国内离线辐照与风速样本（省级城市）",
         "license_note": row.get("license_note") or _seed().get("license_note"),
-        "station_note": f"匹配 {row.get('province') or ''}{row.get('city') or ''}，返回坐标为请求坐标",
+        "station_note": row.get("station_note") or f"匹配 {row.get('province') or ''}{row.get('city') or ''}，返回坐标为请求坐标",
     }
 
 

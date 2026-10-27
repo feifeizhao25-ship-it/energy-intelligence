@@ -59,7 +59,16 @@ class DomesticComposeTests(unittest.TestCase):
                     'NENGJIAN_INTERNAL_TOKEN', 'WECOM_TPL_POLICY', 'WECOM_TPL_FINANCE'):
             self.assertIn(key, backend)
         self.assertEqual(backend['GLM_MODEL'], 'glm-4.7-flash')
-        self.assertEqual(self.cn['volumes'], self.source['volumes'])
+        self.assertEqual(backend['NENGJIAN_NASA_BATCH_IMPORT'], '${NENGJIAN_NASA_BATCH_IMPORT:-0}')
+        self.assertIn('CRAWLER_CONTACT_EMAIL:?', backend['CRAWLER_CONTACT_EMAIL'])
+        self.assertEqual(backend['NENGJIAN_RESOURCE_CACHE'], '${NENGJIAN_RESOURCE_CACHE:-/var/lib/nengjian/nasa-cache.json}')
+        self.assertIn('NENGJIAN_SWITCH_GEO_MONITOR', backend)
+        self.assertIn('nengjian_shared:/var/lib/nengjian', self.cn['services']['backend']['volumes'])
+        self.assertIn('nengjian_shared:/var/lib/nengjian', self.cn['services']['celery-worker']['volumes'])
+        self.assertIn('nengjian_shared:/var/lib/nengjian', self.cn['services']['celery-beat']['volumes'])
+        self.assertEqual(set(self.cn['volumes']), set(self.source['volumes']) | {'nengjian_shared'})
+        example = (ROOT / 'runtime/.env.production.example').read_text()
+        self.assertIn('NENGJIAN_INTERNAL_TOKEN', example)
 
     def test_actual_compose_config_without_international_variables(self):
         executable = shutil.which('docker-compose')

@@ -29,9 +29,49 @@ export function nearestDomesticStation(lat: number, lng: number): DomesticStatio
     return best;
 }
 
+export interface ResolvedStation extends DomesticStation {
+    interpolated?: boolean;
+    station_note?: string;
+}
+
+const INTERP_DEGREES = 3.5;
+
+/** 0.85° 内用样本点；更远但落在两个省级城市之间时按距离加权，并标明不是实测。 */
+export function resolveDomesticStation(lat: number, lng: number): ResolvedStation | null {
+    const near = nearestDomesticStation(lat, lng);
+    if (near) return near;
+    const ranked = stations
+        .map((station) => ({ station, distance: Math.hypot(station.lat - lat, station.lng - lng) }))
+        .filter((item) => item.station.monthly_daily_ghi.length === 12 && item.station.monthly_temp.length === 12 && item.station.monthly_wind_100m.length === 12)
+        .sort((left, right) => left.distance - right.distance);
+    if (ranked.length < 2 || ranked[0].distance > INTERP_DEGREES) return null;
+    const pair = ranked.slice(0, 2);
+    const weights = pair.map((item) => 1 / (item.distance + 0.05));
+    const total = weights[0] + weights[1];
+    const mix = (pick: (station: DomesticStation) => number[]) => Array.from({ length: 12 }, (_, index) => (
+        weights[0] * pick(pair[0].station)[index] + weights[1] * pick(pair[1].station)[index]
+    ) / total);
+    const daily = mix((station) => station.monthly_daily_ghi);
+    const names = pair.map((item) => `${item.station.province}${item.station.city}`).join('、');
+    return {
+        province: pair[0].station.province,
+        city: '插值',
+        lat,
+        lng,
+        ghi_annual: daily.reduce((sum, value) => sum + value, 0),
+        monthly_daily_ghi: daily,
+        monthly_temp: mix((station) => station.monthly_temp),
+        monthly_wind_100m: mix((station) => station.monthly_wind_100m),
+        provenance: '邻近样本插值（不是该坐标实测）',
+        license_note: `${seed.license_note} 数值由邻近省级城市样本按距离加权，不是该点实测，也不是 NASA POWER 实测。`,
+        interpolated: true,
+        station_note: `由 ${names} 插值，请求坐标为 ${lat},${lng}`,
+    };
+}
+
 /** NASA 月度 JSON 形状，坐标用请求值，避免 0.001 度核验把邻近城市判成另一地点。 */
 export function domesticNasaMonthly(lat: number, lng: number, year: number): string | null {
-    const station = nearestDomesticStation(lat, lng);
+    const station = resolveDomesticStation(lat, lng);
     if (!station || station.monthly_daily_ghi.length !== 12 || station.monthly_temp.length !== 12) return null;
     const ghi: Record<string, number> = {};
     const temp: Record<string, number> = {};
@@ -43,6 +83,7 @@ export function domesticNasaMonthly(lat: number, lng: number, year: number): str
     return JSON.stringify({
         provenance: station.provenance,
         license_note: station.license_note,
+        station_note: station.station_note || '',
         station: { province: station.province, city: station.city },
         geometry: { coordinates: [lng, lat] },
         parameters: { ALLSKY_SFC_SW_DWN: { units: 'kW-hr/m^2/day' }, T2M: { units: 'C' } },

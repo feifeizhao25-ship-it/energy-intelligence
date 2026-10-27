@@ -57,10 +57,47 @@ def _endpoints() -> dict:
     }
 
 
-def _post_chat(url: str, key: str, model: str, question: str) -> str:
+def chat_payload(provider: str, model: str, question: str) -> dict:
+    """打开各家文档里的联网搜索，便于从回答里收集引用 URL。豆包模型号用 ep- 环境变量。"""
+    payload = {"model": model, "messages": [{"role": "user", "content": question}]}
+    if provider == "qwen":
+        payload["enable_search"] = True
+        payload["search_options"] = {"enable_source": True, "enable_citation": True}
+    elif provider == "wenxin":
+        payload["web_search"] = {"enable": True, "enable_citation": True, "enable_trace": True}
+    elif provider == "doubao":
+        payload["tools"] = [{"type": "web_search", "max_keyword": 2}]
+    return payload
+
+
+def _urls_from(data: dict, text: str) -> list[str]:
+    import re
+    found = re.findall(r"https?://[^\s\]\)\"']+", text or "")
+    for key in ("citations", "search_results", "references"):
+        for item in data.get(key) or []:
+            if isinstance(item, str):
+                found.append(item)
+            elif isinstance(item, dict):
+                url = item.get("url") or item.get("link") or ""
+                if url:
+                    found.append(url)
+    message = ((data.get("choices") or [{}])[0].get("message") or {})
+    for item in message.get("annotations") or message.get("citations") or []:
+        if isinstance(item, dict):
+            url = item.get("url") or (item.get("url_citation") or {}).get("url") or ""
+            if url:
+                found.append(url)
+    deduped = []
+    for url in found:
+        if url not in deduped:
+            deduped.append(url)
+    return deduped
+
+
+def _post_chat(provider: str, url: str, key: str, model: str, question: str) -> tuple[str, list[str]]:
     import json
     import urllib.request
-    payload = {"model": model, "messages": [{"role": "user", "content": question}]}
+    payload = chat_payload(provider, model, question)
     req = urllib.request.Request(
         url,
         data=json.dumps(payload).encode(),
@@ -69,7 +106,8 @@ def _post_chat(url: str, key: str, model: str, question: str) -> str:
     )
     with urllib.request.urlopen(req, timeout=30) as resp:
         data = json.loads(resp.read().decode() or "{}")
-    return ((data.get("choices") or [{}])[0].get("message") or {}).get("content") or ""
+    text = ((data.get("choices") or [{}])[0].get("message") or {}).get("content") or ""
+    return text, _urls_from(data, text)
 
 
 def run_monitor(questions: list[str] | None = None, transport=None) -> dict:
@@ -89,12 +127,13 @@ def run_monitor(questions: list[str] | None = None, transport=None) -> dict:
             called = True
             try:
                 if transport is None:
-                    answer = _post_chat(spec["url"], spec["key"], spec["model"], question)
+                    answer, urls = _post_chat(name, spec["url"], spec["key"], spec["model"], question)
                 else:
                     answer = transport(name, spec["url"], spec["model"], question)
+                    urls = []
             except Exception as exc:
-                cited.append({"provider": name, "error": exc.__class__.__name__, "cited": False})
+                cited.append({"provider": name, "error": exc.__class__.__name__, "cited": False, "urls": []})
                 continue
             text = answer or ""
-            cited.append({"provider": name, "cited": "新能源智库" in text, "chars": len(text)})
+            cited.append({"provider": name, "cited": "新能源智库" in text, "chars": len(text), "urls": urls})
     return {"status": "ok", "questions": len(asked), "cited": cited, "called": called}

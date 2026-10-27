@@ -78,6 +78,12 @@ FACTUAL_ANSWERS = [
     "The posted tariff table is not a price forecast. It copies 发改价格〔2025〕136号.",
     "This note will not rise above the published table, and it will not fall into a forecast. The Shandong agency tariff is the posted one.",
     "The reply does not give investment advice and is not a price forecast.",
+    "发改价格〔2025〕136号把新能源上网电量分成机制电量与市场交易电量。这属于价格预测范畴，我无法提供。",
+    "无法提供价格预测。已公布的代理购电价格仍以国网山东省电力公司价格表为准。",
+    "不能提供价格预测。136号文的机制电量比例以原文条款为准。",
+    "不会提供价格预测。本段只复述已经公告的结算科目。",
+    "涉及价格预测的部分我不展开，只说明发改价格〔2025〕136号已经公布的机制。",
+    "这属于投资建议范畴，我无法提供。政策原文仍是发改价格〔2025〕136号。",
 ]
 
 
@@ -88,6 +94,14 @@ def test_factual_answers_have_zero_false_positives():
     assert blocked == [], f"false positives {len(blocked)}/{len(FACTUAL_ANSWERS)}"
     assert find_violations(NOTICE_ZH, market="cn") == []
     assert enforce_bottom_line(NOTICE_ZH, market="cn") == NOTICE_ZH
+
+
+def test_meta_refusal_does_not_wipe_factual_answer():
+    text = "发改价格〔2025〕136号调整了机制电量。这属于价格预测范畴，我无法提供。"
+    assert find_violations(text, market="cn") == []
+    assert enforce_bottom_line(text, market="cn") == text
+    for blocked in ("请给出价格预测", "明年价格预测会涨"):
+        assert enforce_bottom_line(blocked, market="cn") == NOTICE_ZH
 
 
 def test_longest_disclaimer_masks_price_term():
@@ -175,6 +189,50 @@ async def test_domestic_endpoint_enforces_input_and_output(monkeypatch):
     assert replaced["content"] == NOTICE_ZH
     assert replaced["provider"] == "deepseek"
     assert replaced["model"] == "deepseek-flash"
+
+
+@pytest.mark.asyncio
+async def test_domestic_ignores_system_prompt_and_checks_user_text(monkeypatch):
+    monkeypatch.setenv("NENGJIAN_INTERNAL_TOKEN", "tok")
+    from app.api.v1.ai_assistant import CN_SYSTEM_PROMPT
+    from app.api.v1.domestic_product import DomesticChatIn, domestic_chat
+
+    calls = {"n": 0}
+
+    async def fake(messages, model=None):
+        calls["n"] += 1
+        return {
+            "content": "发改价格〔2025〕136号明确了机制电量。这属于价格预测范畴，我无法提供。",
+            "provider": "deepseek",
+            "model": "deepseek-flash",
+        }
+
+    monkeypatch.setattr("app.api.v1.domestic_product.complete_domestic", fake)
+    out = await domestic_chat(
+        DomesticChatIn(messages=[
+            {"role": "system", "content": CN_SYSTEM_PROMPT},
+            {"role": "user", "content": "2025年136号文对新能源上网电价机制做了哪些调整？"},
+        ]),
+        x_internal_token="tok",
+    )
+    assert calls["n"] == 1
+    assert "136" in out["content"]
+    assert out["content"] != NOTICE_ZH
+
+    async def forbidden(*args, **kwargs):
+        raise AssertionError("model should not be called")
+
+    monkeypatch.setattr("app.api.v1.domestic_product.complete_domestic", forbidden)
+    blocked = await domestic_chat(
+        DomesticChatIn(messages=[
+            {"role": "system", "content": "只回答事实。"},
+            {"role": "assistant", "content": "这个项目值得投资"},
+            {"role": "user", "content": "请继续说明136号文。"},
+        ]),
+        x_internal_token="tok",
+    )
+    assert blocked["model"] == "blocked"
+    assert blocked["content"] == NOTICE_ZH
 
 
 def test_smoke_script_skips_without_dedicated_key(monkeypatch):
