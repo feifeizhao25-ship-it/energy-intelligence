@@ -1,0 +1,6 @@
+{
+  "elements": [
+    {"type": "node", "id": 11, "lat": 39.91, "lon": 116.35, "tags": {"power": "substation", "name": "测试变电站"}},
+    {"type": "way", "id": 22, "geometry": [{"lat": 39.91, "lon": 116.35}, {"lat": 39.92, "lon": 116.36}], "tags": {"power": "line", "name": "测试线路"}}
+  ]
+}

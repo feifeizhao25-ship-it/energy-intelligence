@@ -1,0 +1,8 @@
+{
+  "hits": {
+    "hits": [
+      {"id": 101, "metadata": {"title": "可商用记录", "publication_date": "2024-05-01", "doi": "10.1000/zen", "license": {"id": "cc-by-4.0"}, "creators": [{"name": "陈亮"}]}},
+      {"id": 102, "metadata": {"title": "非商用记录", "publication_date": "2024-05-01", "license": {"id": "cc-by-nc-4.0"}, "creators": [{"name": "陈亮"}]}}
+    ]
+  }
+}

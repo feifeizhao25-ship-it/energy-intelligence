@@ -1,0 +1,13 @@
+{
+  "message": {
+    "items": [
+      {
+        "DOI": "10.1000/soiling",
+        "title": ["光伏组件积灰综述"],
+        "author": [{"given": "微", "family": "李"}],
+        "issued": {"date-parts": [[2024, 3, 1]]},
+        "reference": [{"DOI": "10.1000/cited", "article-title": "被引论文"}]
+      }
+    ]
+  }
+}

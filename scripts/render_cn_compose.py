@@ -61,6 +61,9 @@ def domestic_config(source):
     for key in ('SMTP_HOST', 'SMTP_PORT', 'SMTP_FROM', 'SMTP_USER', 'SMTP_PASSWORD', 'TIANDITU_KEY', 'GAODE_MAP_KEY', 'MAP_TILE_PROVIDER'):
         environment[key] = '${%s:-}' % key
     environment['CRAWLER_CONTACT_EMAIL'] = '${CRAWLER_CONTACT_EMAIL:?CRAWLER_CONTACT_EMAIL is required}'
+    environment['PUBLIC_INGESTION_ENABLED'] = '${PUBLIC_INGESTION_ENABLED:-}'
+    environment['NENGJIAN_PUBLIC_SNAPSHOT_DIR'] = '${NENGJIAN_PUBLIC_SNAPSHOT_DIR:-/var/lib/nengjian/public-snapshots}'
+    environment['NENGJIAN_PUBLIC_INGEST_DB'] = '${NENGJIAN_PUBLIC_INGEST_DB:-/var/lib/nengjian/public-ingest.sqlite}'
     for switch in (
         'PUBLISH_A', 'PUBLISH_B', 'PUBLISH_C', 'BAIDU_PUSH', 'EMAIL_OPT_IN',
         'GITHUB_METHODOLOGY', 'SEO_GENERATE', 'GEO_MONITOR', 'WECOM_SUBMIT', 'MARKETING_MEDIA',
