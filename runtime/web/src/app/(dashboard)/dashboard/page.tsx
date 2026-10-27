@@ -69,7 +69,7 @@ function orderQuickActions(order?: string[]) {
 function FocusCardView({ focus, roleLabel }: { focus: NonNullable<Personalization['focus']>; roleLabel: string | null }) {
     return (
         <Link href={focus.href} data-testid="focus-card" className="block bg-gradient-to-br from-green-600 to-emerald-600 rounded-2xl p-4 text-white shadow-sm">
-            <div className="text-[11px] text-white/70 mb-1">为{roleLabel ?? '你'}推荐</div>
+            <div className="text-[11px] text-white/70 mb-1">当前关注{roleLabel ? `：${roleLabel}` : ''}</div>
             <div className="font-bold">{focus.title}</div>
             <div className="text-xs text-white/80 mt-1">{focus.reason}</div>
         </Link>

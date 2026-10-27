@@ -13,13 +13,21 @@ import { tariffDefaults, type TariffDefaults } from '@/lib/pricing/tariff-defaul
 import { normalizeProvince } from '@/lib/pricing/tariffs';
 
 export const ROLES = ['investor', 'owner', 'engineer', 'researcher', 'government'] as const;
-export type Role = typeof ROLES[number];
+/** 现行 7 类角色。旧的 5 个标识仍可读取，避免已保存的偏好失效。 */
+export const PRODUCT_ROLES = ['ci_owner', 'residential_owner', 'developer', 'epc', 'om', 'researcher', 'government'] as const;
+export type ProductRole = typeof PRODUCT_ROLES[number];
+export type Role = typeof ROLES[number] | ProductRole;
 export const ROLE_LABELS: Record<Role, string> = {
     investor: '投资者/开发商',
     owner: '电站业主/运维',
     engineer: '工程师/设计院',
-    researcher: '研究人员/学生',
+    researcher: '研究员/学生',
     government: '政府/园区',
+    ci_owner: '工商业业主',
+    residential_owner: '户用业主',
+    developer: '项目开发',
+    epc: 'EPC/设计院',
+    om: '运维',
 };
 
 export const INTERESTS = ['solar', 'wind', 'storage', 'all'] as const;
@@ -63,7 +71,9 @@ function cleanTags(value: unknown): PreferenceTag[] {
     });
 }
 
-const isRole = (v: unknown): v is Role => typeof v === 'string' && (ROLES as readonly string[]).includes(v);
+const isRole = (v: unknown): v is Role => typeof v === 'string' && (
+    (ROLES as readonly string[]).includes(v) || (PRODUCT_ROLES as readonly string[]).includes(v)
+);
 const isInterest = (v: unknown): v is Interest => typeof v === 'string' && (INTERESTS as readonly string[]).includes(v);
 
 export function cleanProvince(v: unknown): string | null {
@@ -174,6 +184,11 @@ export const ROLE_MODULE_ORDER: Record<Role | 'default', ModuleId[]> = {
     engineer: ['focus', 'nextActions', 'tariff', 'projects', 'usage', 'policies', 'stationAlerts'],
     researcher: ['focus', 'policies', 'nextActions', 'usage', 'projects', 'tariff', 'stationAlerts'],
     government: ['policies', 'focus', 'tariff', 'projects', 'nextActions', 'usage', 'stationAlerts'],
+    ci_owner: ['tariff', 'focus', 'projects', 'nextActions', 'policies', 'usage', 'stationAlerts'],
+    residential_owner: ['focus', 'tariff', 'nextActions', 'projects', 'usage', 'policies', 'stationAlerts'],
+    developer: ['tariff', 'policies', 'projects', 'focus', 'nextActions', 'usage', 'stationAlerts'],
+    epc: ['focus', 'nextActions', 'projects', 'tariff', 'usage', 'policies', 'stationAlerts'],
+    om: ['stationAlerts', 'focus', 'projects', 'nextActions', 'tariff', 'usage', 'policies'],
 };
 
 export interface FocusCard { title: string; reason: string; href: string }
@@ -199,7 +214,22 @@ function focusCard(role: Role, province: string | null, interest: Interest | nul
                 : noPolicies
                     ? { title: `${where}的电价规则`, reason: '你是政府/园区用户：政策库暂无该省已审核通过的政策，先看电价与分时规则', href: '#tariff' }
                     : { title: `${where}的电价规则与已审核政策`, reason: '你是政府/园区用户：政策与电价规则变化排在最前', href: '#tariff' };
+        case 'ci_owner':
+            return { title: `${where}分时电价与用电曲线`, reason: '你是工商业业主：先看已公布电价和本厂用电', href: '#tariff' };
+        case 'residential_owner':
+            return { title: '先看三个输入的家用测算', reason: '你是户用业主：默认新手展示', href: '/calculator/solar' };
+        case 'developer':
+            return { title: `${where}已公布电价与测算输入`, reason: '项目开发只列事实、数据与计算方法', href: calc };
+        case 'epc':
+            return { title: '核对系统损耗与衰减假设', reason: '你是 EPC/设计院：逐项对照假设', href: '/calculator/solar' };
+        case 'om':
+            return { title: '查看电站运行与告警', reason: '你是运维：先看告警，再看发电记录', href: '/my/stations' };
     }
+}
+
+export function defaultReadingMode(role: Role | null): 'beginner' | 'professional' {
+    if (role === 'researcher' || role === 'residential_owner') return 'beginner';
+    return 'professional';
 }
 
 /** 今日测算次数已用完时，原本指向测算页的主卡改为提示额度与可做的事 */

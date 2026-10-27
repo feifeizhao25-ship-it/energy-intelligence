@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 export function OfficeExportButtons({ title, rows }: { title: string; rows: string[][] }) {
     const [message, setMessage] = useState('');
-    async function download(format: 'xlsx' | 'pptx') {
+    async function download(format: 'xlsx' | 'pptx' | 'docx') {
         setMessage('');
         const response = await fetch('/api/exports/office', {
             method: 'POST',
@@ -20,7 +20,7 @@ export function OfficeExportButtons({ title, rows }: { title: string; rows: stri
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        const ext = format === 'xlsx' ? 'xlsx' : 'pptx';
+        const ext = format === 'xlsx' ? 'xlsx' : format === 'docx' ? 'docx' : 'pptx';
         link.download = `新能源智库.${ext}`;
         link.click();
         setTimeout(() => URL.revokeObjectURL(url), 1000);
@@ -28,6 +28,7 @@ export function OfficeExportButtons({ title, rows }: { title: string; rows: stri
     return <div className="flex flex-wrap items-center gap-2">
         <button type="button" className="rounded-xl border border-slate-300 px-3 py-2 text-sm" onClick={() => download('xlsx')}>导出 Excel</button>
         <button type="button" className="rounded-xl border border-slate-300 px-3 py-2 text-sm" onClick={() => download('pptx')}>导出 PPT</button>
+        <button type="button" className="rounded-xl border border-slate-300 px-3 py-2 text-sm" onClick={() => download('docx')}>导出公文</button>
         {message && <p className="text-sm text-amber-800">{message}</p>}
     </div>;
 }

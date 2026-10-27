@@ -315,8 +315,8 @@ class TestReportGenerationOracle:
             project=dict(_PROJECT), report_type="investment",
             market="global", output_format="docx",
         )
-        assert result["template_name"] == "Investment Analysis Report"
-        assert "Investment Analysis Report" in result["title"]
+        assert result["template_name"] == "Calculation Report"
+        assert "Calculation Report" in result["title"]
         assert result["file_size_bytes"] > 5_000
         assert result["estimated"] is False
 

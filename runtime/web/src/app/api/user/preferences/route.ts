@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/auth-options';
 import { prisma } from '@/lib/prisma';
 import { parsePreferences, validatePreferences, PREFERENCE_LOG_TYPES } from '@/lib/dashboard/personalization';
+import { profileFromUsageMetadata } from '@/lib/dashboard/user-profile';
 import { safeErrorMessage } from '@/lib/api/safe-error';
 
 /**
@@ -17,7 +18,9 @@ export async function GET() {
     const log = await prisma.usageLog.findFirst({
         where: { userId, type: { in: [...PREFERENCE_LOG_TYPES] } }, orderBy: { date: 'desc' }, select: { metadata: true },
     });
-    return NextResponse.json({ success: true, preferences: log ? parsePreferences(log.metadata) : parsePreferences(null) });
+    const preferences = log ? parsePreferences(log.metadata) : parsePreferences(null);
+    const profile = profileFromUsageMetadata(log?.metadata ?? null);
+    return NextResponse.json({ success: true, preferences, profile });
 }
 
 export async function PUT(req: Request) {
@@ -25,13 +28,16 @@ export async function PUT(req: Request) {
     const userId = session?.user?.id;
     if (!userId) return NextResponse.json({ error: '请先登录' }, { status: 401 });
     let preferences;
+    let profile;
     try {
-        preferences = validatePreferences(await req.json().catch(() => null));
+        const body = await req.json().catch(() => null);
+        preferences = validatePreferences(body);
+        profile = profileFromUsageMetadata(body);
     } catch (e) {
         return NextResponse.json({ error: safeErrorMessage(e, '偏好设置无效') }, { status: 400 });
     }
     await prisma.usageLog.create({
-        data: { userId, type: 'PROFILE_PREFERENCES', count: 0, metadata: JSON.parse(JSON.stringify({ preferences })) },
+        data: { userId, type: 'PROFILE_PREFERENCES', count: 0, metadata: JSON.parse(JSON.stringify({ preferences, profile })) },
     });
-    return NextResponse.json({ success: true, preferences });
+    return NextResponse.json({ success: true, preferences, profile });
 }

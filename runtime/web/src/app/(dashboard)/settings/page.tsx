@@ -16,6 +16,7 @@ import {
 import { motion } from 'framer-motion';
 import { AccountDataPanel } from '@/components/account/AccountDataPanel';
 import PersonalizationSettings from '@/components/dashboard/PersonalizationSettings';
+import { ProfileDraftFields } from '@/components/dashboard/ProfileDraftFields';
 
 export default function ProfileSettingsPage() {
     const { data: session, update } = useSession();
@@ -173,6 +174,7 @@ export default function ProfileSettingsPage() {
                         </div>
                     </form>
                     <PersonalizationSettings />
+                    <ProfileDraftFields />
                 </div>
 
                 {/* Right Info Sidebar */}

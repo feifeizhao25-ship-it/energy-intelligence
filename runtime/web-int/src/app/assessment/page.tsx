@@ -14,7 +14,7 @@ export default function Assessment() {
   const result = calculated && Object.values(calculated).every(value => typeof value !== 'number' || Number.isFinite(value)) ? calculated : null;
   return <main className="shell">
     <div className="eyebrow">Screening assessment</div>
-    <h1>Test the assumptions before the investment case.</h1>
+    <h1>Test the assumptions before you calculate.</h1>
     <div className="grid two">
       <section className="card stack">
         <label>Technology<select value="solar" onChange={() => {}}>

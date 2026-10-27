@@ -616,6 +616,17 @@ export async function executeTool(toolName: string, toolInput: Record<string, un
                 };
             }
 
+            case 'calculate':
+            case 'query_policy':
+            case 'get_electricity_price':
+            case 'compare_scenarios':
+            case 'generate_report': {
+                const { AI_TOOLS } = await import('@/lib/ai/tools');
+                const defined = AI_TOOLS[toolName as keyof typeof AI_TOOLS];
+                if (!defined?.handler) return { error: `未知工具: ${toolName}` };
+                return await defined.handler(toolInput as never);
+            }
+
             default:
                 return { error: `未知工具: ${toolName}` };
         }

@@ -13,8 +13,12 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
+import re
 
 from app.config import settings
+from app.services.answer_cache import AnswerCache
+from app.services.empty_answer_stats import record_completion
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +66,10 @@ RETRY_MAX_TOKENS = 4096
 LENGTH_RETRY_MAX_TOKENS = 8192
 SECOND_RETRY_BACKOFF_SECONDS = 1.0
 EMPTY_ANSWER = "这次没有生成可用回答。请缩短问题后再试一次。"
+SHORT_SYSTEM = "用中文回答事实。不确定就说明未收录。"
+REWRITE_ZH = "请用中文重写上一则回答。专有名词保留，并在括号里写出中文。"
+_SENTENCE_SPLIT = re.compile(r"[^。！？.!?\n]+[。！？.!?]?")
+_ANSWER_CACHE = AnswerCache()
 # 默认思考会把正文挤空。事实回答关掉思考，思考过程也不返回给用户。
 DEEPSEEK_EXTRA_BODY = {"thinking": {"type": "disabled"}}
 
@@ -124,6 +132,37 @@ def log_empty_completion(provider: str, model: str, finish_reason: str, attempt:
     )
 
 
+def english_sentence_ratio(text: str) -> float:
+    """英文句子占比。含汉字的句子不算英文句。"""
+    parts = [part.strip() for part in _SENTENCE_SPLIT.findall(text or "") if part.strip()]
+    if not parts:
+        return 0.0
+    english = 0
+    for part in parts:
+        if re.search(r"[\u4e00-\u9fff]", part):
+            continue
+        if len(re.findall(r"[A-Za-z]{2,}", part)) >= 4:
+            english += 1
+    return english / len(parts)
+
+
+def shorten_messages(messages: list[dict]) -> list[dict]:
+    """空回答重试时缩短系统提示，避免长提示把正文挤空。"""
+    shortened = []
+    for message in messages:
+        if message.get("role") == "system":
+            shortened.append({"role": "system", "content": SHORT_SYSTEM})
+        else:
+            shortened.append(dict(message))
+    if not any(item.get("role") == "system" for item in shortened):
+        shortened.insert(0, {"role": "system", "content": SHORT_SYSTEM})
+    return shortened
+
+
+def _cache_on() -> bool:
+    return os.environ.get("NENGJIAN_ANSWER_CACHE", "").strip() == "1"
+
+
 async def _invoke(transport, base, key, use_model, messages, max_tokens: int, extra_body) -> tuple[str, str, str]:
     result = await transport(base, key, use_model, messages, max_tokens, extra_body=extra_body)
     if not isinstance(result, tuple):
@@ -134,10 +173,36 @@ async def _invoke(transport, base, key, use_model, messages, max_tokens: int, ex
     return str(content or "").strip(), str(reported), str(finish or "")
 
 
+async def _rewrite_if_needed(transport, base, key, use_model, messages, content, extra_body):
+    """英文句子超过一成时，用中文重写一次。"""
+    if not content or english_sentence_ratio(content) <= 0.10:
+        return content
+    payload = list(messages) + [{"role": "user", "content": REWRITE_ZH}]
+    rewritten, _reported, _finish = await _invoke(
+        transport, base, key, use_model, payload, RETRY_MAX_TOKENS, extra_body,
+    )
+    if rewritten and english_sentence_ratio(rewritten) <= english_sentence_ratio(content):
+        return rewritten
+    return content
+
+
+async def _finish_content(transport, base, key, name, use_model, messages, content, reported, extra_body):
+    content = await _rewrite_if_needed(transport, base, key, use_model, messages, content, extra_body)
+    record_completion(reported or use_model, empty=False)
+    result = {"content": content, "provider": name, "model": reported or use_model}
+    if _cache_on():
+        _ANSWER_CACHE.put(messages, result)
+    return result
+
+
 async def complete_domestic(messages: list[dict], model: str | None = None, transport=None, pause=None) -> dict:
     chain = provider_chain()
     if not chain:
         raise RuntimeError("CN AI provider is not configured")
+    if _cache_on():
+        cached = _ANSWER_CACHE.get(messages)
+        if cached is not None:
+            return cached
     wait = pause or asyncio.sleep
     if transport is None:
         from openai import AsyncOpenAI
@@ -170,9 +235,32 @@ async def complete_domestic(messages: list[dict], model: str | None = None, tran
                     transport, base, key, use_model, messages, budget, extra_body,
                 )
                 if content:
-                    return {"content": content, "provider": name, "model": reported or use_model}
+                    return await _finish_content(
+                        transport, base, key, name, use_model, messages, content, reported, extra_body,
+                    )
                 log_empty_completion(name, reported or use_model, last_reason, attempt, budget)
+            record_completion(use_model, empty=True)
         except Exception as exc:
             logger.warning("domestic_provider_error provider=%s error=%s", name, exc.__class__.__name__)
             continue
+    # 整链都是空正文：缩短系统提示，再按指数退避重试一轮。
+    await wait(SECOND_RETRY_BACKOFF_SECONDS)
+    short = shorten_messages(messages)
+    for name, base, key, default_model in chain:
+        use_model = model_for(name, model, default_model)
+        extra_body = dict(DEEPSEEK_EXTRA_BODY) if name == "deepseek" else None
+        try:
+            await wait(SECOND_RETRY_BACKOFF_SECONDS * 2)
+            content, reported, last_reason = await _invoke(
+                transport, base, key, use_model, short, RETRY_MAX_TOKENS, extra_body,
+            )
+            if content:
+                return await _finish_content(
+                    transport, base, key, name, use_model, short, content, reported, extra_body,
+                )
+            log_empty_completion(name, reported or use_model, last_reason, 4, RETRY_MAX_TOKENS)
+        except Exception as exc:
+            logger.warning("domestic_provider_error provider=%s error=%s", name, exc.__class__.__name__)
+            continue
+    record_completion("unavailable", empty=True)
     return {"content": EMPTY_ANSWER, "provider": "domestic", "model": "unavailable"}

@@ -73,6 +73,17 @@ def calc_irr(cashflows: List[float], max_iter: int = 300, tol: float = 1e-12) ->
     return round((low + high) / 2 * 100, 4)
 
 
+def tax_assumptions(vat: str | None = None, income_tax: str | None = None) -> dict:
+    """税费默认未计。方法卡同时列出简化度电成本与含税口径的差别。"""
+    counted = bool(vat or income_tax)
+    return {
+        "增值税": vat or "未计",
+        "所得税优惠": income_tax or "未计",
+        "LCOE口径": "NREL 简化 LCOE（投资与运维折现，除以折现发电量）",
+        "含税LCOE": "与简化口径的差额需把税额单独列入分子" if counted else "未计",
+    }
+
+
 def calc_npv(rate: float, cashflows: List[float]) -> float:
     """Net Present Value — iterative to avoid overflow."""
     npv = 0.0

@@ -142,6 +142,12 @@ def notify_published(source_id: str, content_sha256: str, subscribers: list[dict
         user_id = str(person.get("user_id") or person.get("userId") or "")
         if not user_id or not (email_on or wecom_on):
             continue
+        from app.services.follow_schedule import allows_send
+        last_sent = person.get("last_sent")
+        parsed_last = datetime.fromisoformat(last_sent) if isinstance(last_sent, str) else last_sent
+        if not allows_send(person.get("frequency"), parsed_last, datetime.now(timezone.utc)):
+            sent.append({"sent": False, "reason": "frequency", "user_id": user_id})
+            continue
         sent.append(deliver_alert(
             user_id, title, description,
             email=email_on, wecom=wecom_on, address=address, wecom_user=wecom_user,
