@@ -12,7 +12,11 @@ import re
 def contextual_header(doc: dict) -> str:
     number = doc.get("doc_number") or "无文号"
     issuer = doc.get("issuer") or doc.get("source_org") or "未标注机关"
-    return f"文号：{number}；发文机关：{issuer}"
+    title = str(doc.get("title") or "").strip()
+    head = f"文号：{number}；发文机关：{issuer}"
+    if title:
+        head += f"；标题：{title}"
+    return head
 
 
 def contextual_chunk(doc: dict) -> str:

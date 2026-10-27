@@ -25,6 +25,12 @@ _DEFAULTS = {
 _TRUE = {"1", "true", "yes", "on"}
 
 
+def allow_push(moment, kind: str = "即时"):
+    """发布开关不管发送时刻。窗口和节假日在 ops.push_cadence。"""
+    from ops.push_cadence import allow_push as decide
+    return decide(moment, kind)
+
+
 def _apply_yaml(values: dict) -> None:
     path = Path(__file__).with_name("nengjian.yaml")
     if not path.is_file():

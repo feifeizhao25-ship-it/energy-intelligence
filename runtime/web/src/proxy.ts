@@ -45,6 +45,7 @@ const publicPaths = [
   '/developer/docs',
   '/preview/p0',
   '/preview/p1',
+  '/preview/p2',
   '/auth/error' // 中文认证错误页必须始终可访问（尤其登录未配置时）
 ];
 
@@ -95,7 +96,7 @@ function isDemoDashboardPreview(pathname: string): boolean {
 
 // 只在本地截图时放行这些页。生产 compose 不设置 NENGJIAN_SCREENSHOT。
 const screenshotPaths = new Set([
-  '/datasets', '/daily', '/briefs', '/alerts', '/preview/p0', '/preview/p1',
+  '/datasets', '/daily', '/briefs', '/alerts', '/preview/p0', '/preview/p1', '/preview/p2',
   '/ops/policy-diff', '/ops/preflight', '/ops/solar-sample',
 ]);
 
@@ -103,6 +104,10 @@ function isScreenshotPreview(pathname: string): boolean {
   if (process.env.NENGJIAN_SCREENSHOT !== '1') return false;
   const normalized = pathname.replace(/^\/(?:zh|en)(?=\/|$)/, '') || '/';
   return screenshotPaths.has(normalized);
+}
+
+function isLanguageScan(pathname: string): boolean {
+  return process.env.NENGJIAN_LANGUAGE_SCAN === '1' && isKnownRoute(pathname);
 }
 
 const authMiddleware = withAuth(
@@ -128,7 +133,7 @@ const authMiddleware = withAuth(
       authorized: ({ token, req }) => {
         const path = req.nextUrl.pathname;
         // 所有公开路径都允许访问
-        if (isPublicPath(path) || path.startsWith('/api/auth') || isDemoDashboardPreview(path) || isScreenshotPreview(path)) {
+        if (isPublicPath(path) || path.startsWith('/api/auth') || isDemoDashboardPreview(path) || isScreenshotPreview(path) || isLanguageScan(path)) {
           return true;
         }
         return !!token;
@@ -174,7 +179,7 @@ export default async function proxy(req: NextRequest) {
   if (isPublicPath(path)) {
     return NextResponse.next();
   }
-  if (isDemoDashboardPreview(path) || isScreenshotPreview(path)) {
+  if (isDemoDashboardPreview(path) || isScreenshotPreview(path) || isLanguageScan(path)) {
     return domesticRoute(req);
   }
 

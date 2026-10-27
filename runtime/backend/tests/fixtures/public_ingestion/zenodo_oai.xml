@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <ListRecords>
+    <record>
+      <header><identifier>oai:zenodo.org:1</identifier></header>
+      <metadata>
+        <dc:title xmlns:dc="http://purl.org/dc/elements/1.1/">可商用记录</dc:title>
+        <dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">甲</dc:creator>
+        <dc:date xmlns:dc="http://purl.org/dc/elements/1.1/">2024</dc:date>
+        <dc:rights xmlns:dc="http://purl.org/dc/elements/1.1/">https://creativecommons.org/licenses/by/4.0/</dc:rights>
+      </metadata>
+    </record>
+    <record>
+      <header><identifier>oai:zenodo.org:2</identifier></header>
+      <metadata>
+        <dc:title xmlns:dc="http://purl.org/dc/elements/1.1/">不可商用记录</dc:title>
+        <dc:rights xmlns:dc="http://purl.org/dc/elements/1.1/">https://creativecommons.org/licenses/by-nc/4.0/</dc:rights>
+      </metadata>
+    </record>
+  </ListRecords>
+</OAI-PMH>

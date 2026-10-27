@@ -58,6 +58,33 @@
 /* Smooth Scrolling */
 html {
   scroll-behavior: smooth;
+  text-spacing-trim: space-all;
+}
+
+.prose-cn {
+  line-height: 1.7;
+  max-width: 40em;
+}
+
+.num-unit {
+  white-space: nowrap;
+}
+
+.dark {
+  --paper: #0b1514;
+  --moss: #12201f;
+  --ink: #e7f0ee;
+  --ink-soft: #b7c7c2;
+  --line: #243330;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* Base Styles */

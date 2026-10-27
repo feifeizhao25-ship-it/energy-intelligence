@@ -519,11 +519,33 @@ def parse_openalex(body: bytes, page_url: str) -> list[dict]:
     return records
 
 
+def _arxiv_rss(root: ET.Element, page_url: str) -> list[dict]:
+    channel = root.find("channel")
+    if channel is None:
+        raise SchemaDrift("arXiv RSS 缺少频道")
+    records = []
+    for item in channel.findall("item"):
+        title = " ".join((item.findtext("title") or "").split())
+        work_id = (item.findtext("guid") or item.findtext("link") or "").strip()
+        if not title or not work_id:
+            continue
+        published = item.findtext("pubDate") or ""
+        year_match = re.search(r"(20\d{2})", published)
+        year = int(year_match.group(1)) if year_match else None
+        creator = item.findtext(DC + "creator") or ""
+        authors = [part.strip() for part in creator.split(",") if part.strip()]
+        # 摘要在 description 里。元数据任务不保存摘要和全文。
+        records.append(_literature("arxiv", work_id, title, _authors(authors), year, "", page_url, []))
+    return records
+
+
 def parse_arxiv(body: bytes, page_url: str) -> list[dict]:
     try:
         root = ET.fromstring(body)
     except ET.ParseError as exc:
-        raise SchemaDrift("arXiv 响应不是 Atom") from exc
+        raise SchemaDrift("arXiv 响应不是可解析的元数据") from exc
+    if root.tag == "rss" or root.find("channel") is not None:
+        return _arxiv_rss(root, page_url)
     entries = root.findall(ATOM + "entry")
     if root.tag != ATOM + "feed" and not entries:
         raise SchemaDrift("arXiv 响应不是 Atom")
@@ -594,7 +616,59 @@ def parse_doaj(body: bytes, page_url: str) -> list[dict]:
     return records
 
 
+def _rights_commercial(text: str) -> bool:
+    low = (text or "").lower()
+    if not low.strip():
+        return False
+    if "nc" in low or "noncommercial" in low or "non-commercial" in low:
+        return False
+    if "publicdomain/zero" in low or "cc0" in low or "/zero/1.0" in low:
+        return True
+    return "/licenses/by" in low or "cc-by" in low or "cc by" in low
+
+
+def _zenodo_oai(body: bytes, page_url: str) -> list[dict]:
+    try:
+        root = ET.fromstring(body)
+    except ET.ParseError as exc:
+        raise SchemaDrift("Zenodo 响应不是 OAI") from exc
+    if root.tag != OAI + "OAI-PMH":
+        raise SchemaDrift("Zenodo 响应不是 OAI")
+    error = root.find(OAI + "error")
+    if error is not None and (error.get("code") or "") in {"noRecordsMatch"}:
+        return []
+    if root.find(OAI + "Identify") is not None and root.find(OAI + "ListRecords") is None:
+        return []
+    records = []
+    for record in root.findall(".//" + OAI + "record"):
+        header = record.find(OAI + "header")
+        identifier = header.findtext(OAI + "identifier") if header is not None else ""
+        metadata = record.find(OAI + "metadata")
+        if metadata is None or not identifier:
+            continue
+        rights = " ".join(node.text or "" for node in metadata.iter(DC + "rights"))
+        if not _rights_commercial(rights):
+            continue
+        titles = [node.text or "" for node in metadata.iter(DC + "title")]
+        creators = [node.text or "" for node in metadata.iter(DC + "creator")]
+        dates = [node.text or "" for node in metadata.iter(DC + "date")]
+        identifiers = [node.text or "" for node in metadata.iter(DC + "identifier")]
+        title = (titles[0] if titles else "").strip()
+        doi = next((item for item in identifiers if str(item).lower().startswith("10.")), "")
+        year = None
+        for value in dates:
+            if re.match(r"20\d{2}", value or ""):
+                year = int((value or "")[:4])
+                break
+        if not title:
+            continue
+        records.append(_literature("zenodo", identifier, title, _authors(creators), year, doi, page_url, []))
+    return records
+
+
 def parse_zenodo(body: bytes, page_url: str) -> list[dict]:
+    if body.lstrip().startswith(b"<"):
+        return _zenodo_oai(body, page_url)
     try:
         payload = json.loads(_text(body))
     except json.JSONDecodeError as exc:

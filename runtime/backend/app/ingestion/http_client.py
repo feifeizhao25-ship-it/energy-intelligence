@@ -13,6 +13,7 @@ HOST_INTERVALS = {
     "arxiv.org": 3.0,
     "overpass-api.de": 8.0,
     "download.geofabrik.de": 2.0,
+    "zenodo.org": 10.0,
 }
 DEFAULT_INTERVAL = 1.0
 

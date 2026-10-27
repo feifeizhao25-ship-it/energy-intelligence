@@ -260,7 +260,7 @@
     {
       "category": "gis",
       "category_sheet": "3_GIS电网用地",
-      "name": "WRI Global Power Plant Database",
+      "name": "WRI 全球电厂数据库",
       "url": "https://github.com/wri/global-power-plant-database",
       "summary": "全球电厂点位 CSV；中国样本已过滤80行（如 APP Zhenjiang… Coal 290MW）。另有 S3 zip v1.3。",
       "coverage": "全球；中国数千条（库内）",
@@ -548,7 +548,7 @@
     {
       "category": "literature_international",
       "category_sheet": "6a_文献_国际",
-      "name": "Semantic Scholar Academic Graph API",
+      "name": "Semantic Scholar 学术图谱接口",
       "url": "https://www.semanticscholar.org/product/api",
       "summary": "论文图、引用、摘要字段；有速率与密钥。数据项可能带 CC-BY-NC 等，商用需逐项看条款。",
       "coverage": "全球",

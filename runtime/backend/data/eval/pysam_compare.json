@@ -1,0 +1,18 @@
+{
+  "pysam_installed": true,
+  "wind": {
+    "pysam_version": "5.1.0",
+    "config": "WindPowerNone",
+    "weibull_k": 2,
+    "weibull_mean_mps": 7.5,
+    "hub_height_m": 80,
+    "losses_zeroed": true,
+    "local_capacity_factor": 0.3360168080448208,
+    "pysam_capacity_factor": 0.336078639913017,
+    "relative_abs_diff": 0.00018398035713366656
+  },
+  "battery": {
+    "compared": false,
+    "reason": "PySAM 储能默认算例在没有负荷和电价序列时放电量为 0。不为了凑差值编造调度曲线，因此不报告年放电量或平准化成本差。"
+  }
+}

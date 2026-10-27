@@ -6,8 +6,8 @@
   "contact_env": "CRAWLER_CONTACT_EMAIL",
   "enabled_env": "PUBLIC_INGESTION_ENABLED",
   "source_count": 56,
-  "enabled_count": 26,
-  "disabled_count": 30,
+  "enabled_count": 25,
+  "disabled_count": 31,
   "note": "未启用的来源不会发起抓取。启用项在联系邮箱为空或总开关未打开时也不会由定时任务访问网络。",
   "schedules": [
     {
@@ -71,7 +71,6 @@
       "source_ids": [
         "pub-08",
         "pub-11",
-        "pub-12",
         "pub-13",
         "pub-16"
       ]
@@ -402,13 +401,12 @@
       "fulltext_allowed": false,
       "attribution": "数据来自OpenStreetMap 中国提取（Geofabrik）power=*。许可为 ODbL 1.0，请署名开放街图贡献者。 原文：https://download.geofabrik.de/asia/china.html。",
       "sample_urls": [
-        "https://download.geofabrik.de/asia/china.html",
-        "https://overpass-api.de/api/interpreter?data=%5Bout%3Ajson%5D%5Btimeout%3A25%5D%3B%28node%5B%22power%22%3D%22substation%22%5D%2839.90%2C116.30%2C39.95%2C116.40%29%3Bway%5B%22power%22%3D%22line%22%5D%2839.90%2C116.30%2C39.95%2C116.40%29%3B%29%3Bout%20geom%203%3B"
+        "https://download.geofabrik.de/asia/china.html"
       ],
       "max_bytes": 1500000,
       "timeout": 20,
       "needs_human": false,
-      "human_note": "定时任务不下载全国提取包，只抓取 Geofabrik 索引页。Overpass 的 robots.txt 禁止 /api/，小范围查询因此跳过。",
+      "human_note": "2026-10-27 核对：download.geofabrik.de 的 robots.txt 禁止 *.osm.pbf，因此不下载提取包，只抓取索引页。Overpass 的 robots.txt 禁止 /api/，不再请求。",
       "schedule": {
         "bucket": "daily_osm",
         "cron": "50 3 * * *",
@@ -453,38 +451,31 @@
     },
     {
       "source_id": "pub-12",
-      "name": "WRI Global Power Plant Database",
+      "name": "WRI 全球电厂数据库",
       "category": "gis",
       "url": "https://github.com/wri/global-power-plant-database",
       "license_terms": "CC BY 4.0",
       "commercial_use": "是（署名 WRI）",
       "update_frequency": "版本化（v1.3 等）",
       "priority": "P1",
-      "enabled": true,
-      "reason": "CC BY 4.0，署名后可商用",
-      "code": "cc_by",
-      "parser": "gppd",
-      "kind": "plant",
-      "sla_type": "standard",
-      "interval_days": 90,
-      "scope": "dataset",
-      "source_tier": "协会",
-      "jurisdiction": "海外",
+      "enabled": false,
+      "reason": "来源条目与闸门登记不一致",
+      "code": "mismatch",
+      "parser": "",
+      "kind": "",
+      "sla_type": "",
+      "interval_days": null,
+      "scope": "",
+      "source_tier": "",
+      "jurisdiction": "",
       "fulltext_allowed": false,
-      "attribution": "数据来自WRI Global Power Plant Database。许可为 CC BY 4.0，使用时请保留作者与许可声明。请署名世界资源研究所。 原文：https://github.com/wri/global-power-plant-database。",
-      "sample_urls": [
-        "https://raw.githubusercontent.com/wri/global-power-plant-database/master/output_database/global_power_plant_database.csv"
-      ],
+      "attribution": "",
+      "sample_urls": [],
       "max_bytes": 20000000,
       "timeout": 60,
       "needs_human": false,
       "human_note": "",
-      "schedule": {
-        "bucket": "quarterly_geo",
-        "cron": "40 5 1 1,4,7,10 *",
-        "label": "每季首日 05:40",
-        "timezone": "Asia/Shanghai"
-      }
+      "schedule": null
     },
     {
       "source_id": "pub-13",
@@ -689,13 +680,11 @@
       "jurisdiction": "海外",
       "fulltext_allowed": false,
       "attribution": "数据来自NASA POWER API。请按 NASA POWER 的公开引用要求署名。 原文：https://power.larc.nasa.gov/docs/services/api/。",
-      "sample_urls": [
-        "https://power.larc.nasa.gov/api/temporal/monthly/point?parameters=ALLSKY_SFC_SW_DWN,T2M,WS50M&community=RE&start=2023&end=2023&latitude=39.9042&longitude=116.4074&time-standard=UTC&format=JSON"
-      ],
+      "sample_urls": [],
       "max_bytes": 1500000,
       "timeout": 40,
-      "needs_human": false,
-      "human_note": "",
+      "needs_human": true,
+      "human_note": "2026-10-27 核对：robots.txt 只允许 /api/pages/（接口说明页），禁止 /api/。文档中的数据接口在 /api/temporal，不请求。未找到 robots 允许的官方整包文件。",
       "schedule": {
         "bucket": "yearly_reference",
         "cron": "40 6 8 1 *",
@@ -921,12 +910,12 @@
       "fulltext_allowed": false,
       "attribution": "数据来自arXiv API。元数据为 CC0。定时任务不保存论文文件。 原文：https://info.arxiv.org/help/api/user-manual.html。",
       "sample_urls": [
-        "https://export.arxiv.org/api/query?search_query=all:photovoltaic&start=0&max_results=5"
+        "https://arxiv.org/rss/physics.app-ph"
       ],
       "max_bytes": 1500000,
       "timeout": 20,
       "needs_human": false,
-      "human_note": "",
+      "human_note": "2026-10-27 核对：export.arxiv.org 的 robots.txt 全部禁止，arxiv.org 禁止 /api 与 /oai2。不绕过。按接口使用条款改用 robots 允许的 RSS，每 3 秒最多 1 次，只收元数据。Kaggle 整包需要账号，未配置密钥时不下载。",
       "schedule": {
         "bucket": "daily_literature",
         "cron": "20 3 * * *",
@@ -964,7 +953,7 @@
     },
     {
       "source_id": "pub-28",
-      "name": "Semantic Scholar Academic Graph API",
+      "name": "Semantic Scholar 学术图谱接口",
       "category": "literature_international",
       "url": "https://www.semanticscholar.org/product/api",
       "license_terms": "API 与数据许可混合；部分字段非商用",
@@ -1082,12 +1071,12 @@
       "fulltext_allowed": false,
       "attribution": "数据来自Zenodo。只保留 CC BY 或 CC0 记录，其余许可跳过。 原文：https://zenodo.org/。",
       "sample_urls": [
-        "https://zenodo.org/api/records?q=photovoltaic&size=5"
+        "https://zenodo.org/oai2d?verb=ListRecords&metadataPrefix=oai_dc&from={from}&until={until}"
       ],
       "max_bytes": 1500000,
       "timeout": 20,
       "needs_human": false,
-      "human_note": "",
+      "human_note": "2026-10-27 核对：robots.txt 禁止 /api，因此不调用检索接口。开发者文档中的 OAI-PMH（/oai2d）不在禁止列表，且与 REST 同一限速。只保留权利声明为 CC BY 或 CC0 的记录。",
       "schedule": {
         "bucket": "daily_literature",
         "cron": "20 3 * * *",

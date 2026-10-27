@@ -7,6 +7,7 @@ import re
 from pathlib import Path
 from urllib.parse import quote
 
+from app.ingestion.access_routes import permitted_urls
 from app.ingestion.license_gate import align
 from app.ingestion.schedule import BUCKETS
 from app.services.freshness_board import load_sla
@@ -90,25 +91,21 @@ def _sample_urls(item: dict, decision: dict, portals: dict) -> list[str]:
         match = re.search(r"figshare\.(\d+)", item.get("url") or "")
         return ["https://api.figshare.com/v2/articles/%s" % match.group(1)] if match else []
     if parser == "osm":
-        return ["https://download.geofabrik.de/asia/china.html", OVERPASS_URL]
+        return permitted_urls("osm")
     if parser == "gppd":
         return [
             "https://raw.githubusercontent.com/wri/global-power-plant-database/master/output_database/global_power_plant_database.csv"
         ]
     if parser == "nasa":
-        # 与 nasa_batch_import.planned_monthly_url(39.9042, 116.4074, 2023) 相同，避免登记表导入配置。
-        return [
-            "https://power.larc.nasa.gov/api/temporal/monthly/point"
-            "?parameters=ALLSKY_SFC_SW_DWN,T2M,WS50M&community=RE&start=2023&end=2023"
-            "&latitude=39.9042&longitude=116.4074&time-standard=UTC&format=JSON"
-        ]
+        # 数据接口在 robots 禁止的 /api/ 下。说明页不是辐照数据，不拿来冒充抓取。
+        return permitted_urls("nasa")
     if parser == "openalex":
         return [
             "https://api.openalex.org/works?per-page=5&search=photovoltaic"
             "&select=id,display_name,publication_year,doi,authorships,referenced_works"
         ]
     if parser == "arxiv":
-        return ["https://export.arxiv.org/api/query?search_query=all:photovoltaic&start=0&max_results=5"]
+        return permitted_urls("arxiv")
     if parser == "crossref":
         return ["https://api.crossref.org/works?rows=5&query.bibliographic=photovoltaic"]
     if parser == "doaj":
@@ -116,7 +113,7 @@ def _sample_urls(item: dict, decision: dict, portals: dict) -> list[str]:
     if parser == "chinaxiv":
         return ["http://www.chinaxiv.org/oai?verb=ListRecords&metadataPrefix=oai_dc&from=2026-10-26&until=2026-10-27"]
     if parser == "zenodo":
-        return ["https://zenodo.org/api/records?q=photovoltaic&size=5"]
+        return permitted_urls("zenodo")
     urls = http_urls(item.get("url") or "")
     if parser == "policy_html":
         return urls[:2]
