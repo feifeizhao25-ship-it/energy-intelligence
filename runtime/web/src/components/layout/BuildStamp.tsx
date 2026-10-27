@@ -2,7 +2,7 @@
 export function BuildStamp() {
     const sha = process.env.NEXT_PUBLIC_GIT_SHA?.trim() || '未写入';
     return (
-        <footer data-testid="build-stamp" className="px-4 py-3 text-center text-xs text-slate-500">
+        <footer data-testid="build-stamp" className="bg-white px-4 py-2 text-center text-xs font-bold text-slate-900">
             新能源智库 · 版本 {sha}
         </footer>
     );
