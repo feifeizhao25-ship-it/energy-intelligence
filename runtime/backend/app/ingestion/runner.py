@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import quote, urljoin, urlsplit, urlunsplit, parse_qsl, urlencode
 
@@ -16,6 +16,17 @@ from app.services.freshness_board import badge
 
 def _fetched_date(moment: str) -> str:
     return moment[:10]
+
+
+def expand_dated_url(url: str, moment: str) -> str:
+    """把 {from}/{until} 换成抓取日的前一天和当天。没有占位符时原样返回。"""
+    if "{from}" not in url and "{until}" not in url:
+        return url
+    try:
+        day = datetime.fromisoformat(moment).date()
+    except ValueError:
+        day = datetime.now(timezone.utc).date()
+    return url.replace("{from}", (day - timedelta(days=1)).isoformat()).replace("{until}", day.isoformat())
 
 
 def emission_attachment(page_url: str, body: bytes) -> str:
@@ -134,7 +145,7 @@ def run_source(source: dict, *, contact: str = "", client: PoliteClient | None =
     failed = False
     records = []
     for url in urls[: max(limit_urls, 0)]:
-        target = _with_mailto(url, contact)
+        target = expand_dated_url(_with_mailto(url, contact), moment)
         result = polite.get(target, max_bytes=int(source.get("max_bytes") or 1_500_000), timeout=int(source.get("timeout") or 20))
         safe_url = redact(result.get("url") or target, contact)
         if result["status"] == "skipped":

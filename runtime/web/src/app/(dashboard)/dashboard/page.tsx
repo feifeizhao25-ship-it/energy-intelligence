@@ -6,28 +6,19 @@ import {
     Zap,
     Wind,
     Battery,
-    Sparkles,
-    ArrowRight,
     FileText,
-    Settings,
     ChevronRight,
-    Target,
-    TrendingUp,
-    BarChart3,
-    Activity,
     Bell,
     Calendar,
-    LineChart,
-    Layers,
     Plug,
     Landmark,
     Gauge,
-    ClipboardList,
     CloudOff,
     RefreshCw,
-    BadgeAlert
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { PageShell, type ShellFact } from '@/components/layout/PageShell';
+import { BuildStamp } from '@/components/layout/BuildStamp';
 import type { Personalization, ModuleId } from '@/lib/dashboard/personalization';
 import { DISMISSIBLE_TIPS as DISMISSIBLE } from '@/lib/dashboard/personal-summary';
 
@@ -182,65 +173,44 @@ function DashboardContent() {
     }
 
     const paid = data && data.plan.code !== 'FREE';
+    const facts: [ShellFact, ShellFact, ShellFact] = [
+        { label: '项目', value: data ? String(data.counts.projects) : '—' },
+        { label: '测算', value: data ? String(data.counts.calculations) : '—' },
+        { label: '档位', value: data ? (PLAN_NAMES[data.plan.code] ?? '免费') : '—' },
+    ];
 
     return (
-        <div className="min-h-screen bg-slate-50 pb-12">
-            <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white pt-6 pb-20 px-4">
-                <div className="max-w-md mx-auto">
-                    <div className="flex items-center justify-between mb-6">
-                        <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-emerald-500 rounded-2xl flex items-center justify-center shadow-lg">
-                                <Target className="w-6 h-6" />
-                            </div>
-                            <div>
-                                <div className="font-bold text-lg">{data ? data.greeting : '我的工作台'}</div>
-                                {data && (
-                                    <div className="text-slate-400 text-xs">
-                                        {PLAN_NAMES[data.plan.code] ?? data.plan.code}
-                                        {data.plan.expiresOn && ` · ${data.plan.expiresOn} 到期`}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                        <Link href="/settings" className="p-2 bg-white/10 rounded-xl" aria-label="设置">
-                            <Settings className="w-5 h-5" />
+        <PageShell
+            summary={data?.greeting || '工作台按角色模板排列已审核的事实和测算入口。'}
+            facts={facts}
+            aside={(
+                <div className="space-y-3">
+                    <Link href="/settings" className="block rounded-xl border border-[var(--line)] px-3 py-2 text-sm">设置</Link>
+                    {data ? <p className="text-xs text-[var(--ink-soft)]">到期日 {data.plan.expiresOn || '未设置'}</p> : null}
+                    {!paid && (
+                        <Link href="/pricing" className="block rounded-xl bg-[var(--moss)] px-3 py-3 text-sm text-white">
+                            查看档位说明
                         </Link>
-                    </div>
-
-                    {data && (
-                        <div className="grid grid-cols-4 gap-2 mb-5 text-center">
-                            {[
-                                ['项目', data.counts.projects],
-                                ['测算', data.counts.calculations],
-                                ['文献', data.counts.savedPapers],
-                                ['电站', data.counts.stations],
-                            ].map(([label, value]) => (
-                                <div key={label as string} className="rounded-xl bg-white/10 py-2">
-                                    <div className="text-lg font-black tabular-nums">{value}</div>
-                                    <div className="text-[11px] text-slate-400">{label}</div>
-                                </div>
+                    )}
+                    <div className="rounded-xl border border-[var(--line)] p-3">
+                        <div className="mb-2 text-sm font-semibold">快速操作</div>
+                        <div className="grid grid-cols-2 gap-2">
+                            {orderQuickActions(data?.personalization?.quickActionOrder).map(action => (
+                                <Link key={action.id} href={action.link} className="rounded-lg bg-[var(--paper)] px-2 py-2 text-xs font-semibold">
+                                    {action.title}
+                                </Link>
                             ))}
                         </div>
-                    )}
-
-                    {!paid && (
-                        <Link href="/pricing" className="flex items-center justify-between p-4 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl shadow-lg shadow-green-500/20">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                                    <Sparkles className="w-5 h-5" />
-                                </div>
-                                <div className="text-left">
-                                    <div className="font-bold text-sm">升级专业版</div>
-                                    <div className="text-xs text-white/70">更多测算与 AI 分析额度</div>
-                                </div>
-                            </div>
-                            <ArrowRight className="w-5 h-5 text-white/70" />
-                        </Link>
-                    )}
+                    </div>
+                    <Link href="/assistant" className="block rounded-xl border border-[var(--line)] p-3 text-sm">
+                        <div className="font-semibold">能源助手</div>
+                        <div className="text-xs text-[var(--ink-soft)]">解答已收录范围内的问题</div>
+                    </Link>
+                    <BuildStamp />
                 </div>
-            </div>
-
-            <div className="max-w-md mx-auto px-4 -mt-12 space-y-4">
+            )}
+        >
+            <div className="space-y-4">
                 {status === 'error' || !data ? (
                     <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-100 flex flex-col items-center text-center">
                         <div className="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center mb-4">
@@ -340,64 +310,8 @@ function DashboardContent() {
                     </>
                 )}
 
-                {/* Quick Actions（静态导航） */}
-                <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
-                    <div className="flex items-center justify-between mb-4">
-                        <span className="font-bold text-slate-900">快速操作</span>
-                        <Link href="/calculator" className="text-xs text-green-600 font-bold flex items-center gap-0.5">
-                            更多
-                            <ChevronRight className="w-3 h-3" />
-                        </Link>
-                    </div>
-                    <div className="grid grid-cols-4 gap-2">
-                        {orderQuickActions(data?.personalization?.quickActionOrder).map(action => (
-                            <Link
-                                key={action.id}
-                                href={action.link}
-                                className="flex flex-col items-center gap-1 p-2 rounded-xl hover:bg-slate-50 transition-colors"
-                            >
-                                <div className={cn(
-                                    'w-10 h-10 rounded-xl flex items-center justify-center',
-                                    action.color === 'amber' && 'bg-amber-100',
-                                    action.color === 'cyan' && 'bg-cyan-100',
-                                    action.color === 'emerald' && 'bg-emerald-100',
-                                    action.color === 'purple' && 'bg-purple-100'
-                                )}>
-                                    <action.icon className={cn(
-                                        'w-5 h-5',
-                                        action.color === 'amber' && 'text-amber-600',
-                                        action.color === 'cyan' && 'text-cyan-600',
-                                        action.color === 'emerald' && 'text-emerald-600',
-                                        action.color === 'purple' && 'text-purple-600'
-                                    )} />
-                                </div>
-                                <span className="text-[10px] font-bold text-slate-700">
-                                    {action.title}
-                                </span>
-                            </Link>
-                        ))}
-                    </div>
-                </div>
-
-                {/* AI Assistant（静态导航） */}
-                <Link href="/assistant" className="block bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl p-4 text-white shadow-lg shadow-purple-500/20">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                                <Sparkles className="w-6 h-6" />
-                            </div>
-                            <div>
-                                <div className="font-bold">AI 能源助手</div>
-                                <div className="text-xs text-white/70">
-                                    解答新能源项目问题
-                                </div>
-                            </div>
-                        </div>
-                        <ArrowRight className="w-5 h-5 text-white/70" />
-                    </div>
-                </Link>
             </div>
-        </div>
+        </PageShell>
     );
 }
 

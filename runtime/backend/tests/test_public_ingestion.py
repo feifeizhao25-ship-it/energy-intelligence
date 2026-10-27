@@ -91,8 +91,20 @@ def test_registry_matches_generator_and_blocks_noncommercial_sources():
             assert row["sample_urls"] == []
             assert row["attribution"] == ""
     assert json.loads(WEB_ATTRIBUTIONS.read_text(encoding="utf-8")) == attribution_catalog(registry)
-    nasa = by_name["NASA POWER API"]["sample_urls"][0]
-    assert nasa == planned_monthly_url(39.9042, 116.4074, 2023)
+    nasa = by_name["NASA POWER API"]
+    assert nasa["sample_urls"] == []
+    assert nasa["needs_human"] is True
+    assert "robots" in nasa["human_note"]
+    assert planned_monthly_url(39.9042, 116.4074, 2023) not in nasa["sample_urls"]
+    assert by_name["OpenStreetMap 中国提取（Geofabrik）power=*"]["sample_urls"] == [
+        "https://download.geofabrik.de/asia/china.html"
+    ]
+    assert by_name["arXiv API"]["sample_urls"] == ["https://arxiv.org/rss/physics.app-ph"]
+    assert "{from}" in by_name["Zenodo"]["sample_urls"][0]
+    from app.ingestion.access_routes import blocked_reason
+    for row in registry["sources"]:
+        for url in row["sample_urls"]:
+            assert blocked_reason(url) == ""
 
 
 def test_schedule_does_not_reuse_the_province_crawl_slot():
@@ -169,10 +181,15 @@ def test_fixtures_normalise_into_existing_shapes(tmp_path):
     assert crossref[0]["literature"]["doi"] == "10.1000/soiling"
     arxiv = parse("arxiv", _read("arxiv_atom.xml"), "https://export.arxiv.org/api/query")
     assert arxiv[0]["literature"]["source"] == "arxiv"
+    rss = parse("arxiv", _read("arxiv_rss.xml"), "https://arxiv.org/rss/physics.app-ph")
+    assert rss[0]["title"] == "光伏积灰示例"
+    assert rss[0]["literature"]["abstract"] == ""
     doaj = parse("doaj", _read("doaj_articles.json"), "https://doaj.org/api")
     assert doaj[0]["title"] == "储能调度综述"
     zenodo = parse("zenodo", _read("zenodo_records.json"), "https://zenodo.org/api/records")
     assert [item["title"] for item in zenodo] == ["可商用记录"]
+    oai = parse("zenodo", _read("zenodo_oai.xml"), "https://zenodo.org/oai2d")
+    assert [item["title"] for item in oai] == ["可商用记录"]
     chinaxiv = parse("chinaxiv", _read("chinaxiv_oai.xml"), "http://www.chinaxiv.org/oai")
     assert chinaxiv[0]["literature"]["source"] == "chinaxiv"
     assert chinaxiv[0]["literature"].get("pdfUrl") is None

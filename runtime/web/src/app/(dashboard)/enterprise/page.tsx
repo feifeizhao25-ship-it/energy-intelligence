@@ -16,14 +16,15 @@ import {
     Layout
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ProcurementForm } from '@/components/enterprise/ProcurementForm';
 
 export default function EnterpriseCenterPage() {
     const [activeTab, setActiveTab] = useState('accounts');
 
     const accounts = [
-        { name: '李明', email: 'liming@example.com', role: '项目经理', status: 'Active', projects: 12 },
-        { name: '王芳', email: 'wangfang@example.com', role: '分析师', status: 'Active', projects: 5 },
-        { name: '张伟', email: 'zhangwei@example.com', role: '审阅员', status: 'Pending', projects: 0 },
+        { name: '李明', email: 'liming@example.com', role: '项目经理', status: '已启用', projects: 12 },
+        { name: '王芳', email: 'wangfang@example.com', role: '分析师', status: '已启用', projects: 5 },
+        { name: '张伟', email: 'zhangwei@example.com', role: '审阅员', status: '待确认', projects: 0 },
     ];
 
     return (
@@ -83,6 +84,7 @@ export default function EnterpriseCenterPage() {
                             { id: 'templates', label: '报告模板库', icon: Layout },
                             { id: 'security', label: '安全与审计', icon: ShieldCheck },
                             { id: 'api', label: 'API 接口管理', icon: Settings },
+                            { id: 'procurement', label: '对公采购', icon: FileSpreadsheet },
                         ].map((m) => (
                             <button
                                 key={m.id}
@@ -138,7 +140,7 @@ export default function EnterpriseCenterPage() {
                                                     <td className="px-8 py-6">
                                                         <span className={cn(
                                                             "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter",
-                                                            acc.status === 'Active' ? "bg-green-50 text-green-600" : "bg-amber-50 text-amber-600"
+                                                            acc.status === '已启用' ? "bg-green-50 text-green-600" : "bg-amber-50 text-amber-600"
                                                         )}>
                                                             {acc.status}
                                                         </span>
@@ -200,7 +202,9 @@ export default function EnterpriseCenterPage() {
                             </div>
                         )}
 
-                        {(activeTab !== 'accounts' && activeTab !== 'whitelabel') && (
+                        {activeTab === 'procurement' && <ProcurementForm />}
+
+                        {(activeTab !== 'accounts' && activeTab !== 'whitelabel' && activeTab !== 'procurement') && (
                             <div className="bg-slate-100 rounded-[48px] p-20 text-center space-y-6 border border-dashed border-slate-300">
                                 <div className="w-20 h-20 bg-white rounded-3xl mx-auto flex items-center justify-center">
                                     <Sparkles className="w-10 h-10 text-blue-500 animate-pulse" />

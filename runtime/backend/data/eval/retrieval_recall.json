@@ -1,0 +1,58 @@
+{
+  "k": 8,
+  "questions": 260,
+  "evaluated": 260,
+  "missing_source": 0,
+  "corpus_size": 69,
+  "corpus_origins": [
+    "cn_datasets",
+    "domestic_resources",
+    "public_registry",
+    "rag_sources"
+  ],
+  "engine": "local-lexical",
+  "vector_weight_applied": false,
+  "zero_score_not_counted": true,
+  "recall_at_8": 0.5,
+  "zero_score_questions": 123,
+  "by_category": {
+    "policy": 0.75,
+    "calculation": 0.3333333333333333,
+    "timeliness": 0.5,
+    "refusal": 0.0
+  },
+  "hardcoded": false,
+  "note": "语料是已入库的登记文本、离线样本和结构样本，不是一次新的网络抓取。向量分为 0。得分为 0 的文档不计入前 8。",
+  "sample_top": [
+    {
+      "id": "P001",
+      "recall": 1.0,
+      "top": [
+        "policy-cn-136",
+        "policy-cn-storage",
+        "policy-us-itc",
+        "policy-cn-688"
+      ]
+    },
+    {
+      "id": "P002",
+      "recall": 1.0,
+      "top": [
+        "policy-cn-136",
+        "policy-cn-storage",
+        "policy-us-itc",
+        "policy-cn-688"
+      ]
+    },
+    {
+      "id": "P003",
+      "recall": 1.0,
+      "top": [
+        "policy-cn-136",
+        "policy-cn-storage",
+        "policy-us-itc",
+        "policy-cn-688"
+      ]
+    }
+  ]
+}
