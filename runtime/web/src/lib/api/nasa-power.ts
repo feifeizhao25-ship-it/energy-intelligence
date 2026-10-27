@@ -21,9 +21,9 @@ export interface NASAApiParams {
  * 获取太阳能资源数据
  */
 export const getSolarResource = withCache('nasa:solar', async (lat: number, lng: number): Promise<SolarResource> => {
-  const { nearestDomesticStation } = await import('@/lib/api/domestic-station');
+  const { resolveDomesticStation } = await import('@/lib/api/domestic-station');
   const { toSolarResource, verifiedSolar } = await import('@/lib/api/verified-solar');
-  if (!nearestDomesticStation(lat, lng)) throw new Error('DOMESTIC_RESOURCE_NOT_LOADED');
+  if (!resolveDomesticStation(lat, lng)) throw new Error('DOMESTIC_RESOURCE_NOT_LOADED');
   return toSolarResource(await verifiedSolar(lat, lng), lat);
 });
 

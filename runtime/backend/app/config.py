@@ -40,6 +40,8 @@ class Settings(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         extra="ignore",
+        # Compose 的 ${VAR:-} 会传入空字符串。空字符串视为未设置，保留代码默认值。
+        env_ignore_empty=True,
     )
     
     # 基础配置
@@ -251,10 +253,11 @@ class Settings(BaseSettings):
     NENGJIAN_GUARDRAIL_ENDPOINT: str = ""
     NENGJIAN_ARK_API_KEY: Optional[str] = None
     NENGJIAN_ARK_BASE_URL: str = "https://ark.cn-beijing.volces.com/api/v3"
-    # TODO: 方舟控制台里的接入点 ID 可能是 ep- 前缀，模型名以 Seedream / Seedance 文档为准。
-    # 文档示例。控制台推理接入点若是 ep- 前缀，用环境变量覆盖，不要把接入点写进仓库。
-    NENGJIAN_SEEDREAM_MODEL: str = "doubao-seedream-4-0-250828"
-    NENGJIAN_SEEDANCE_MODEL: str = "doubao-seedance-1-0-pro-250528"
+    # 方舟模型列表（2026-10-24）：Seedream 5.0 pro 为 doubao-seedream-5-0-pro-260628，
+    # Seedance 2.5 为 doubao-seedance-2-5-260628。4.0 / 1.0 pro 已标注即将下线。
+    # 控制台推理接入点若是 ep- 前缀，用环境变量覆盖，不要把接入点写进仓库。
+    NENGJIAN_SEEDREAM_MODEL: str = "doubao-seedream-5-0-pro-260628"
+    NENGJIAN_SEEDANCE_MODEL: str = "doubao-seedance-2-5-260628"
     NENGJIAN_EMBEDDING_MODEL: str = "text-embedding-v4"
     NENGJIAN_RERANK_MODEL: str = "qwen3-rerank"
     # TODO: qwen3-rerank 的 HTTP 路径以百炼当前文档为准。
@@ -299,11 +302,14 @@ class Settings(BaseSettings):
     MILVUS_HOST: str = "localhost"
     MILVUS_PORT: int = 19530
     
-    # 第三方服务
-    # 高德地图
+    # 地图瓦片。国内路径只用天地图或高德，密钥为空则关闭，不回退到 OSM。
+    MAP_TILE_PROVIDER: str = ""
+    MAP_TILE_URL: str = ""
+    TIANDITU_KEY: Optional[str] = None
     GAODE_MAP_KEY: Optional[str] = None
-    # OpenWeatherMap
+    # OpenWeatherMap 仅国际路径。国内版在校验里清空。
     OPENWEATHER_API_KEY: Optional[str] = None
+    CRAWLER_CONTACT_EMAIL: Optional[str] = None
     
     # 支付 - Stripe (国际)
     STRIPE_SECRET_KEY: Optional[str] = None
@@ -369,6 +375,22 @@ class Settings(BaseSettings):
         ):
             if getattr(self, src) and not getattr(self, dest):
                 setattr(self, dest, getattr(self, src))
+        if (self.APP_EDITION or "").lower() == "cn":
+            for name in (
+                "ANTHROPIC_API_KEY", "OPENAI_API_KEY", "OPENROUTER_API_KEY",
+                "STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET", "STRIPE_PRO_PRICE_ID",
+                "STRIPE_ENTERPRISE_PRICE_ID", "STRIPE_SUCCESS_URL", "STRIPE_CANCEL_URL",
+                "STRIPE_PORTAL_RETURN_URL", "PINECONE_API_KEY", "OPENWEATHER_API_KEY",
+                "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "APPLE_CLIENT_ID",
+                "APPLE_CLIENT_SECRET", "GITHUB_CLIENT_ID", "GITHUB_CLIENT_SECRET",
+                "FCM_SERVER_KEY", "SENTRY_DSN", "DATADOG_API_KEY",
+            ):
+                if getattr(self, name, None):
+                    setattr(self, name, None)
+            tile = (self.MAP_TILE_URL or "").lower()
+            if "openstreetmap.org" in tile or "tile.openstreetmap" in tile:
+                self.MAP_TILE_URL = ""
+                self.MAP_TILE_PROVIDER = ""
         return self
 
     # 功能开关

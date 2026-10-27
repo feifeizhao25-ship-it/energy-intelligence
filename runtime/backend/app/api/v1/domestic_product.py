@@ -38,6 +38,9 @@ def _authorize(token: str | None) -> None:
         raise HTTPException(status_code=401, detail="未授权")
 
 
+_CHECKED_ROLES = {"user", "assistant"}
+
+
 def _message_text(message: dict) -> str:
     content = message.get("content") if isinstance(message, dict) else None
     if isinstance(content, str):
@@ -58,7 +61,11 @@ async def domestic_chat(body: DomesticChatIn, x_internal_token: str | None = Hea
     _authorize(x_internal_token)
     if not body.messages:
         raise HTTPException(status_code=400, detail="需要提供对话内容")
-    incoming = "\n".join(_message_text(item) for item in body.messages)
+    incoming = "\n".join(
+        _message_text(item)
+        for item in body.messages
+        if isinstance(item, dict) and str(item.get("role") or "user").lower() in _CHECKED_ROLES
+    )
     if find_violations(incoming, market="cn"):
         return {
             "content": enforce_bottom_line(incoming, market="cn"),

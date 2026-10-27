@@ -27,7 +27,8 @@ def skill_improvement() -> dict:
 
 @celery_app.task(name="energy.domestic.policy_snapshot")
 def policy_snapshot() -> dict:
-    return {"status": "noop", "reason": "awaiting approved portal fetch; nothing published"}
+    from app.services.policy_pipeline import run_scheduled_cycle
+    return run_scheduled_cycle()
 
 
 @celery_app.task(name="energy.domestic.rag_refresh")
@@ -45,13 +46,33 @@ def geo_monitor() -> dict:
 
 @celery_app.task(name="energy.domestic.wecom_reconcile")
 def wecom_reconcile() -> dict:
-    from ops.wecom import fetch_approval_detail
-    detail = fetch_approval_detail("")
-    return {"status": "noop" if detail.get("error") else "checked", "detail_status": detail.get("status")}
+    """十五分钟回查。没有待审批单号时不访问企业微信。"""
+    import os
+    from pathlib import Path
+
+    from app.services.policy_pipeline import connect, publish_matching_approval
+    from app.services.wecom_callback import fetch_detail
+
+    path = Path(os.environ.get("NENGJIAN_POLICY_DB", "/var/lib/nengjian/policy.sqlite"))
+    if not path.is_file():
+        return {"status": "noop", "checked": 0, "published": 0}
+    conn = connect(path)
+    try:
+        rows = conn.execute(
+            """SELECT DISTINCT approval_id FROM policy_snapshots
+               WHERE status = 'pending_approval' AND approval_id IS NOT NULL AND approval_id != ''"""
+        ).fetchall()
+        published = 0
+        for row in rows:
+            detail = fetch_detail(row["approval_id"])
+            result = publish_matching_approval(conn, detail, row["approval_id"])
+            published += 1 if result.get("published") else 0
+        return {"status": "checked", "checked": len(rows), "published": published}
+    finally:
+        conn.close()
 
 
 @celery_app.task(name="energy.domestic.nasa_batch")
 def nasa_batch() -> dict:
-    from app.services.nasa_batch_import import run_batch
-    from pathlib import Path
-    return run_batch([], Path("/tmp/nengjian-nasa-batch.json"))
+    from app.services.nasa_batch_import import cache_path, default_points, run_batch
+    return run_batch(default_points(), cache_path())

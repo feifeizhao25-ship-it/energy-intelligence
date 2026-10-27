@@ -3,8 +3,9 @@
 图像：POST {NENGJIAN_ARK_BASE_URL}/images/generations
 视频：POST {NENGJIAN_ARK_BASE_URL}/contents/generations/tasks
 content 为 [{"type":"text","text":...}]。
-模型号可用环境变量覆盖。文档示例为 doubao-seedream-4-0-250828 与
-doubao-seedance-1-0-pro-250528；控制台推理接入点常为 ep- 前缀。
+模型号可用环境变量覆盖。方舟模型列表（2026-10-24）当前为
+doubao-seedream-5-0-pro-260628 与 doubao-seedance-2-5-260628。
+控制台推理接入点常为 ep- 前缀，用环境变量覆盖。
 只有 NENGJIAN_MEDIA_ENABLED=1 或开关 marketing_media，并且配置了方舟密钥时才请求。
 """
 from __future__ import annotations

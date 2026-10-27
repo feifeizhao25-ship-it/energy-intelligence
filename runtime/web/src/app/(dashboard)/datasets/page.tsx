@@ -36,6 +36,16 @@ export default function DatasetsPage() {
             {items.map((item) => <li key={item.id} className="rounded-xl border p-4">
                 <h2 className="font-medium">{item.title}</h2>
                 <p className="text-sm text-slate-500">{item.updated} · {item.rows.length} 行</p>
+                <div className="mt-3 overflow-x-auto">
+                    <table className="w-full text-left text-sm">
+                        <thead><tr>{item.columns.map((column) => <th key={column} className="border-b px-2 py-1 font-medium">{column}</th>)}</tr></thead>
+                        <tbody>
+                            {item.rows.map((row, index) => <tr key={index}>
+                                {row.map((cell, cellIndex) => <td key={cellIndex} className="border-b px-2 py-1">{cell || '样本（未载入已核验电价）'}</td>)}
+                            </tr>)}
+                        </tbody>
+                    </table>
+                </div>
                 <button className="mt-2 rounded-xl border px-3 py-1 text-sm" onClick={() => download(item.id)}>下载 CSV</button>
             </li>)}
         </ul>

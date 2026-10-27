@@ -70,7 +70,7 @@ const knownSegments = new Set([
   'enterprise', 'login', 'maintenance', 'map', 'membership', 'my',
   'onboarding', 'papers', 'pricing', 'privacy', 'project', 'projects',
   'quick-calc', 'referral', 'resource', 'settings', 'terms',
-  'policies', 'datasets', 'daily', 'alerts', 'briefs',
+  'policies', 'datasets', 'daily', 'alerts', 'briefs', 'ops',
 ]);
 
 function firstSegment(pathname: string): string {
@@ -88,6 +88,18 @@ function isKnownRoute(pathname: string): boolean {
 // 放行 /dashboard 单页用于个性化人设 demo 预览（不含 /dashboard 子路径）
 function isDemoDashboardPreview(pathname: string): boolean {
   return process.env.NEXT_PUBLIC_DEMO_PERSONA_PREVIEW === '1' && pathname === '/dashboard';
+}
+
+// 只在本地截图时放行这些页。生产 compose 不设置 NENGJIAN_SCREENSHOT。
+const screenshotPaths = new Set([
+  '/datasets', '/daily', '/briefs', '/alerts',
+  '/ops/policy-diff', '/ops/preflight', '/ops/solar-sample',
+]);
+
+function isScreenshotPreview(pathname: string): boolean {
+  if (process.env.NENGJIAN_SCREENSHOT !== '1') return false;
+  const normalized = pathname.replace(/^\/(?:zh|en)(?=\/|$)/, '') || '/';
+  return screenshotPaths.has(normalized);
 }
 
 const authMiddleware = withAuth(
@@ -113,7 +125,7 @@ const authMiddleware = withAuth(
       authorized: ({ token, req }) => {
         const path = req.nextUrl.pathname;
         // 所有公开路径都允许访问
-        if (isPublicPath(path) || path.startsWith('/api/auth') || isDemoDashboardPreview(path)) {
+        if (isPublicPath(path) || path.startsWith('/api/auth') || isDemoDashboardPreview(path) || isScreenshotPreview(path)) {
           return true;
         }
         return !!token;
@@ -159,7 +171,7 @@ export default async function proxy(req: NextRequest) {
   if (isPublicPath(path)) {
     return NextResponse.next();
   }
-  if (isDemoDashboardPreview(path)) {
+  if (isDemoDashboardPreview(path) || isScreenshotPreview(path)) {
     return domesticRoute(req);
   }
 

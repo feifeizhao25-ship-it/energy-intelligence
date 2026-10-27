@@ -2,7 +2,7 @@
 // 护城河：把OpenClaw变成分发渠道
 
 import { NextRequest, NextResponse } from 'next/server';
-import { handleOpenClawRequest, XINNENGYUAN_SKILL } from '@/lib/audit/openclaw-skill';
+import { handleOpenClawRequest, publicUrl, XINNENGYUAN_SKILL } from '@/lib/audit/openclaw-skill';
 
 /**
  * GET /api/v1/openclaw
@@ -15,7 +15,7 @@ export async function GET() {
             manifest: '/api/v1/openclaw',
             execute: '/api/v1/openclaw',
         },
-        docs: 'https://xinnengyuan.ai/docs/openclaw',
+        docs: publicUrl('/docs/openclaw'),
     });
 }
 
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
             data: result.data,
             quotaRemaining: result.quotaRemaining,
             poweredBy: 'XinNengYuan AI',
-            upgradeUrl: 'https://xinnengyuan.ai/pricing',
+            upgradeUrl: publicUrl('/pricing'),
         });
 
     } catch (error) {

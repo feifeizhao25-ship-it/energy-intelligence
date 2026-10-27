@@ -24,7 +24,7 @@ def domestic_config(source):
         environment.pop(key, None)
     environment['APP_EDITION'] = 'cn'
     environment['NENGJIAN_OVERSEAS_LIVE'] = 'disabled'
-    environment['NENGJIAN_NASA_BATCH_IMPORT'] = '0'
+    environment['NENGJIAN_NASA_BATCH_IMPORT'] = '${NENGJIAN_NASA_BATCH_IMPORT:-0}'
     environment['DASHSCOPE_MODEL'] = 'qwen3.5-plus'
     environment['DEEPSEEK_MODEL'] = 'deepseek-flash'
     for key in (
@@ -42,9 +42,26 @@ def domestic_config(source):
         'NENGJIAN_GEO_QWEN_API_KEY', 'NENGJIAN_GEO_WENXIN_API_KEY', 'NENGJIAN_GEO_DOUBAO_API_KEY',
         'NENGJIAN_GEO_DOUBAO_MODEL', 'NENGJIAN_GEO_WENXIN_MODEL', 'NENGJIAN_GEO_QWEN_MODEL',
         'NENGJIAN_BAIDU_PUSH_TOKEN', 'NENGJIAN_BAIDU_SITE',
-        'NENGJIAN_INTERNAL_TOKEN', 'NENGJIAN_FEEDBACK_PATH',
+        'NENGJIAN_INTERNAL_TOKEN',
+        'NENGJIAN_GUARDRAIL_SERVICE',
+        'NENGJIAN_KILL_SWITCH',
+        'DASHSCOPE_REVIEW_MODEL',
+        'NENGJIAN_NASA_GRID', 'NENGJIAN_NASA_POINTS',
+        'NENGJIAN_PUBLIC_ORIGIN',
     ):
         environment[key] = '${%s:-}' % key
+    environment['NENGJIAN_FEEDBACK_PATH'] = '${NENGJIAN_FEEDBACK_PATH:-/var/lib/nengjian/feedback.jsonl}'
+    environment['NENGJIAN_RESOURCE_CACHE'] = '${NENGJIAN_RESOURCE_CACHE:-/var/lib/nengjian/nasa-cache.json}'
+    environment['NENGJIAN_POLICY_ALERT_LOG'] = '${NENGJIAN_POLICY_ALERT_LOG:-/var/lib/nengjian/policy-alerts.jsonl}'
+    environment['NENGJIAN_POLICY_DB'] = '${NENGJIAN_POLICY_DB:-/var/lib/nengjian/policy.sqlite}'
+    environment['NENGJIAN_POLICY_PENDING'] = '${NENGJIAN_POLICY_PENDING:-/var/lib/nengjian/policy-pending.json}'
+    environment['NENGJIAN_KILL_FILE'] = '${NENGJIAN_KILL_FILE:-/var/lib/nengjian/kill}'
+    environment['CRAWLER_CONTACT_EMAIL'] = '${CRAWLER_CONTACT_EMAIL:?CRAWLER_CONTACT_EMAIL is required}'
+    for switch in (
+        'PUBLISH_A', 'PUBLISH_B', 'PUBLISH_C', 'BAIDU_PUSH', 'EMAIL_OPT_IN',
+        'GITHUB_METHODOLOGY', 'SEO_GENERATE', 'GEO_MONITOR', 'WECOM_SUBMIT', 'MARKETING_MEDIA',
+    ):
+        environment['NENGJIAN_SWITCH_%s' % switch] = '${NENGJIAN_SWITCH_%s:-}' % switch
     environment['GLM_MODEL'] = 'glm-4.7-flash'
     environment['NENGJIAN_USER_DAILY_BUDGET_CNY'] = '${NENGJIAN_USER_DAILY_BUDGET_CNY:-20}'
     environment['NENGJIAN_USER_MONTHLY_BUDGET_CNY'] = '${NENGJIAN_USER_MONTHLY_BUDGET_CNY:-200}'
@@ -58,7 +75,12 @@ def domestic_config(source):
     web.pop('OPENWEATHERMAP_API_KEY', None)
     web['APP_EDITION'] = 'cn'
     web['NENGJIAN_INTERNAL_TOKEN'] = '${NENGJIAN_INTERNAL_TOKEN:-}'
+    web['NENGJIAN_PUBLIC_ORIGIN'] = '${NENGJIAN_PUBLIC_ORIGIN:-}'
+    web['CRAWLER_CONTACT_EMAIL'] = '${CRAWLER_CONTACT_EMAIL:?CRAWLER_CONTACT_EMAIL is required}'
     backend = config['services']['backend']
+    backend['volumes'] = list(backend.get('volumes') or []) + ['nengjian_shared:/var/lib/nengjian']
+    config.setdefault('volumes', {})
+    config['volumes']['nengjian_shared'] = {}
     worker = copy.deepcopy(backend)
     worker['command'] = ['celery', '-A', 'app.tasks.celery_app', 'worker', '--loglevel=info', '--concurrency=2', '--pidfile=/tmp/celery-worker.pid']
     worker['healthcheck'] = {
