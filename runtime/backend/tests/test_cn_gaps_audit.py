@@ -227,8 +227,10 @@ def test_preflight_lists_overseas_providers_and_ignores_empty(monkeypatch):
     assert "CORE_API_KEY" in found
     assert "OPENAI_API_KEY" not in found
     assert "DASHSCOPE_API_KEY" not in found
-    web = (ROOT.parents[1] / "runtime/web/src/lib/ops/banned-overseas.ts").read_text(encoding="utf-8")
-    assert set(re.findall(r"'([A-Z0-9_]+)'", web)) == set(BANNED_OVERSEAS)
+    web_src = (ROOT.parents[1] / "runtime/web/src/lib/ops/banned-overseas.ts").read_text(encoding="utf-8")
+    web_names = json.loads((ROOT.parents[1] / "runtime/web/src/lib/ops/banned-overseas.json").read_text(encoding="utf-8"))
+    assert "banned-overseas.json" in web_src
+    assert set(web_names) == set(BANNED_OVERSEAS)
 
 
 def test_cn_map_tiles_need_a_domestic_key_and_block_osm():
