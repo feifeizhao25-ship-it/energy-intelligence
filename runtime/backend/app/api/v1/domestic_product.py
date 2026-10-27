@@ -32,20 +32,20 @@ def _authorize(token: str | None) -> None:
     if not expected:
         if os.environ.get("ENVIRONMENT", "development") == "development":
             return
-        raise HTTPException(status_code=401, detail="internal token not configured")
+        raise HTTPException(status_code=401, detail="内部令牌未配置")
     if token != expected:
-        raise HTTPException(status_code=401, detail="unauthorized")
+        raise HTTPException(status_code=401, detail="未授权")
 
 
 @router.post("/ai/domestic")
 async def domestic_chat(body: DomesticChatIn, x_internal_token: str | None = Header(default=None)):
     _authorize(x_internal_token)
     if not body.messages:
-        raise HTTPException(status_code=400, detail="messages required")
+        raise HTTPException(status_code=400, detail="需要提供对话内容")
     try:
         result = await complete_domestic(body.messages, body.model)
     except RuntimeError as exc:
-        raise HTTPException(status_code=503, detail=str(exc)) from exc
+        raise HTTPException(status_code=503, detail="国内模型暂不可用") from exc
     return result
 
 
@@ -54,7 +54,7 @@ async def domestic_embeddings(body: EmbedIn, x_internal_token: str | None = Head
     _authorize(x_internal_token)
     result = embed_texts(body.input)
     if result.get("status") != "ok":
-        raise HTTPException(status_code=503, detail=result.get("status") or "disabled")
+        raise HTTPException(status_code=503, detail="向量服务未启用")
     return {"vectors": result.get("vectors") or [], "model": result.get("model")}
 
 
@@ -62,5 +62,5 @@ async def domestic_embeddings(body: EmbedIn, x_internal_token: str | None = Head
 async def internal_feedback(body: FeedbackIn, x_internal_token: str | None = Header(default=None)):
     _authorize(x_internal_token)
     if body.kind not in KINDS:
-        raise HTTPException(status_code=400, detail="unknown kind")
+        raise HTTPException(status_code=400, detail="未知的反馈类型")
     return record_sample(body.kind, body.text)

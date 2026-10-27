@@ -71,7 +71,7 @@ export async function chat(messages: Message[], model: string = DEFAULT_MODEL): 
         const { callAI } = await import('./router');
         const response = await callAI({ messages: messages as any, model: 'deepseek-flash' });
         const content = (response as { choices?: { message?: { content?: string } }[] }).choices?.[0]?.message?.content || '';
-        return { content, role: 'assistant' } as SiliconFlowChatResponse;
+        return { content, model: 'deepseek-flash' };
     }
     if (!SILICONFLOW_API_KEY) {
         throw new Error('SILICONFLOW_API_KEY 未配置');

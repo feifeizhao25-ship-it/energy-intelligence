@@ -21,7 +21,7 @@ function withCache<T extends (...args: any[]) => Promise<any>>(fn: T): T {
   }) as T;
 }
 
-const BASE_URL = '';
+const BASE_URL = 'https://export.arxiv.org/api/query';
 
 /**
  * 搜索arXiv论文

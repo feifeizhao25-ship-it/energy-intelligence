@@ -24,7 +24,7 @@ afterAll(async()=>{
  await prisma.user.deleteMany({where:{id:{in:[owner,other]}}}); await prisma.$disconnect();
 });
 test('real database: deletion before cursor and new payment do not skip older records',async()=>{
- const first=(await (await GET()).json()).data;
+ const first=(await (await GET(new Request('http://localhost/api/membership/me'))).json()).data;
  expect(first.subscription.payments.map((p:any)=>p.id)).toEqual(expected.slice(0,20));
  await prisma.payment.delete({where:{id:expected[0]}});
  await prisma.payment.create({data:{id:owner+'-new',userId:owner,subscriptionId:sub,orderNo:owner+'-new',plan:'PRO',billingPeriod:'yearly',amount:1980,status:'completed',createdAt:new Date('2026-10-21')}});
