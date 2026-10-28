@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-28T15:13:12.093Z",
+  "generatedAt": "2026-10-28T23:15:56.329Z",
   "base": "http://127.0.0.1:3101",
   "routeCount": 70,
   "roles": [
@@ -9,7 +9,7 @@
     "researcher",
     "government"
   ],
-  "checks": 700,
+  "checks": 1400,
   "issueCounts": {},
   "note": "五个角色使用种子账号的登录态访问。署名原文里的外文机构名不记为英文泄漏。浏览器对已解释的 403/404/503 只记页面是否说明原因。",
   "rows": [
@@ -575,6 +575,566 @@
     },
     {
       "route": "/",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/achievements",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/admin",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/admin/improvements",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/admin/policies",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/alerts",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/assistant",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/audit",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/audit/demo",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/auth/error",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/briefs",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/carbon",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/charging",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/result",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/solar",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/storage",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/wind",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/checkout",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/community",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/daily",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/dashboard",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/datasets",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/demo-request",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/developer",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/developer/docs",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/contract",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/invoice",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/quote",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/freshness",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/login",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/maintenance",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/map",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/map/compare",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/map/report",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/membership",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/my/achievements",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/my/stations",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/onboarding",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/ops/policy-diff",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/ops/preflight",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/ops/solar-sample",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/papers",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/papers/demo",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/papers/graph",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/papers/library",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/policies",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/preview/p0",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/preview/p1",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/preview/p2",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/pricing",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/privacy",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/project/seed-investor-project/dashboard",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/projects",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/projects/seed-investor-project",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/projects/seed-investor-project/compare",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/projects/seed-investor-project/om",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/projects/timeline",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/quick-calc/compare",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/quick-calc/result/solar",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/quick-calc/solar",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/quick-calc/storage",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/quick-calc/wind",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/referral",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/resource/map",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/settings",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/status",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/team",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/terms",
+      "viewport": "1280",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/",
       "viewport": "390",
       "role": "investor",
       "status": 200,
@@ -1135,6 +1695,566 @@
     },
     {
       "route": "/",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/achievements",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/admin",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/admin/improvements",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/admin/policies",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/alerts",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/assistant",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/audit",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/audit/demo",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/auth/error",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/briefs",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/carbon",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/charging",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/result",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/solar",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/storage",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/wind",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/checkout",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/community",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/daily",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/dashboard",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/datasets",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/demo-request",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/developer",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/developer/docs",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/contract",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/invoice",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/quote",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/freshness",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/login",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/maintenance",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/map",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/map/compare",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/map/report",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/membership",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/my/achievements",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/my/stations",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/onboarding",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/ops/policy-diff",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/ops/preflight",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/ops/solar-sample",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/papers",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/papers/demo",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/papers/graph",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/papers/library",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/policies",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/preview/p0",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/preview/p1",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/preview/p2",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/pricing",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/privacy",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/project/seed-investor-project/dashboard",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/projects",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/projects/seed-investor-project",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/projects/seed-investor-project/compare",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/projects/seed-investor-project/om",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/projects/timeline",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/quick-calc/compare",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/quick-calc/result/solar",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/quick-calc/solar",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/quick-calc/storage",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/quick-calc/wind",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/referral",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/resource/map",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/settings",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/status",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/team",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/terms",
+      "viewport": "360",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/",
       "viewport": "1440",
       "role": "owner",
       "status": 200,
@@ -1695,6 +2815,566 @@
     },
     {
       "route": "/",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/achievements",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/admin",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/admin/improvements",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/admin/policies",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/alerts",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/assistant",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/audit",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/audit/demo",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/auth/error",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/briefs",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/carbon",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/charging",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/result",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/solar",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/storage",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/wind",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/checkout",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/community",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/daily",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/dashboard",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/datasets",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/demo-request",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/developer",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/developer/docs",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/contract",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/invoice",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/quote",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/freshness",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/login",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/maintenance",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/map",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/map/compare",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/map/report",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/membership",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/my/achievements",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/my/stations",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/onboarding",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/ops/policy-diff",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/ops/preflight",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/ops/solar-sample",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/papers",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/papers/demo",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/papers/graph",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/papers/library",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/policies",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/preview/p0",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/preview/p1",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/preview/p2",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/pricing",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/privacy",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/project/seed-owner-project/dashboard",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/projects",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/projects/seed-owner-project",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/projects/seed-owner-project/compare",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/projects/seed-owner-project/om",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/projects/timeline",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/quick-calc/compare",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/quick-calc/result/solar",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/quick-calc/solar",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/quick-calc/storage",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/quick-calc/wind",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/referral",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/resource/map",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/settings",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/status",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/team",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/terms",
+      "viewport": "1280",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/",
       "viewport": "390",
       "role": "owner",
       "status": 200,
@@ -2248,6 +3928,566 @@
     {
       "route": "/terms",
       "viewport": "390",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/achievements",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/admin",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/admin/improvements",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/admin/policies",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/alerts",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/assistant",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/audit",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/audit/demo",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/auth/error",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/briefs",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/carbon",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/charging",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/result",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/solar",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/storage",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/wind",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/checkout",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/community",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/daily",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/dashboard",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/datasets",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/demo-request",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/developer",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/developer/docs",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/contract",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/invoice",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/quote",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/freshness",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/login",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/maintenance",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/map",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/map/compare",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/map/report",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/membership",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/my/achievements",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/my/stations",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/onboarding",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/ops/policy-diff",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/ops/preflight",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/ops/solar-sample",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/papers",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/papers/demo",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/papers/graph",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/papers/library",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/policies",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/preview/p0",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/preview/p1",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/preview/p2",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/pricing",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/privacy",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/project/seed-owner-project/dashboard",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/projects",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/projects/seed-owner-project",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/projects/seed-owner-project/compare",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/projects/seed-owner-project/om",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/projects/timeline",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/quick-calc/compare",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/quick-calc/result/solar",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/quick-calc/solar",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/quick-calc/storage",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/quick-calc/wind",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/referral",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/resource/map",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/settings",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/status",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/team",
+      "viewport": "360",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/terms",
+      "viewport": "360",
       "role": "owner",
       "status": 200,
       "issues": [],
@@ -2815,6 +5055,566 @@
     },
     {
       "route": "/",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/achievements",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/admin",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/admin/improvements",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/admin/policies",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/alerts",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/assistant",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/audit",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/audit/demo",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/auth/error",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/briefs",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/carbon",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/charging",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/result",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/solar",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/storage",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/wind",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/checkout",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/community",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/daily",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/dashboard",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/datasets",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/demo-request",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/developer",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/developer/docs",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/contract",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/invoice",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/quote",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/freshness",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/login",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/maintenance",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/map",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/map/compare",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/map/report",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/membership",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/my/achievements",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/my/stations",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/onboarding",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/ops/policy-diff",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/ops/preflight",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/ops/solar-sample",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/papers",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/papers/demo",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/papers/graph",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/papers/library",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/policies",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/preview/p0",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/preview/p1",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/preview/p2",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/pricing",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/privacy",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/project/seed-engineer-project/dashboard",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/projects",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/projects/seed-engineer-project",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/projects/seed-engineer-project/compare",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/projects/seed-engineer-project/om",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/projects/timeline",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/quick-calc/compare",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/quick-calc/result/solar",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/quick-calc/solar",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/quick-calc/storage",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/quick-calc/wind",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/referral",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/resource/map",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/settings",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/status",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/team",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/terms",
+      "viewport": "1280",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/",
       "viewport": "390",
       "role": "engineer",
       "status": 200,
@@ -3375,6 +6175,566 @@
     },
     {
       "route": "/",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/achievements",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/admin",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/admin/improvements",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/admin/policies",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/alerts",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/assistant",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/audit",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/audit/demo",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/auth/error",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/briefs",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/carbon",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/charging",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/result",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/solar",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/storage",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/wind",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/checkout",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/community",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/daily",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/dashboard",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/datasets",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/demo-request",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/developer",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/developer/docs",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/contract",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/invoice",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/quote",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/freshness",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/login",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/maintenance",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/map",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/map/compare",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/map/report",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/membership",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/my/achievements",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/my/stations",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/onboarding",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/ops/policy-diff",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/ops/preflight",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/ops/solar-sample",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/papers",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/papers/demo",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/papers/graph",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/papers/library",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/policies",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/preview/p0",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/preview/p1",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/preview/p2",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/pricing",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/privacy",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/project/seed-engineer-project/dashboard",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/projects",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/projects/seed-engineer-project",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/projects/seed-engineer-project/compare",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/projects/seed-engineer-project/om",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/projects/timeline",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/quick-calc/compare",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/quick-calc/result/solar",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/quick-calc/solar",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/quick-calc/storage",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/quick-calc/wind",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/referral",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/resource/map",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/settings",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/status",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/team",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/terms",
+      "viewport": "360",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/",
       "viewport": "1440",
       "role": "researcher",
       "status": 200,
@@ -3935,6 +7295,566 @@
     },
     {
       "route": "/",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/achievements",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/admin",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/admin/improvements",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/admin/policies",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/alerts",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/assistant",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/audit",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/audit/demo",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/auth/error",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/briefs",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/carbon",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/charging",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/result",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/solar",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/storage",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/wind",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/checkout",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/community",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/daily",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/dashboard",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/datasets",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/demo-request",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/developer",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/developer/docs",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/contract",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/invoice",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/quote",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/freshness",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/login",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/maintenance",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/map",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/map/compare",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/map/report",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/membership",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/my/achievements",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/my/stations",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/onboarding",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/ops/policy-diff",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/ops/preflight",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/ops/solar-sample",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/papers",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/papers/demo",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/papers/graph",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/papers/library",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/policies",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/preview/p0",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/preview/p1",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/preview/p2",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/pricing",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/privacy",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/project/seed-researcher-project/dashboard",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/projects",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/projects/seed-researcher-project",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/projects/seed-researcher-project/compare",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/projects/seed-researcher-project/om",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/projects/timeline",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/quick-calc/compare",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/quick-calc/result/solar",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/quick-calc/solar",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/quick-calc/storage",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/quick-calc/wind",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/referral",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/resource/map",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/settings",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/status",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/team",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/terms",
+      "viewport": "1280",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/",
       "viewport": "390",
       "role": "researcher",
       "status": 200,
@@ -4488,6 +8408,566 @@
     {
       "route": "/terms",
       "viewport": "390",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/achievements",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/admin",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/admin/improvements",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/admin/policies",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/alerts",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/assistant",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/audit",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/audit/demo",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/auth/error",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/briefs",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/carbon",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/charging",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/result",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/solar",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/storage",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/wind",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/checkout",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/community",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/daily",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/dashboard",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/datasets",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/demo-request",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/developer",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/developer/docs",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/contract",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/invoice",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/quote",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/freshness",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/login",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/maintenance",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/map",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/map/compare",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/map/report",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/membership",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/my/achievements",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/my/stations",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/onboarding",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/ops/policy-diff",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/ops/preflight",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/ops/solar-sample",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/papers",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/papers/demo",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/papers/graph",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/papers/library",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/policies",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/preview/p0",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/preview/p1",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/preview/p2",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/pricing",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/privacy",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/project/seed-researcher-project/dashboard",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/projects",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/projects/seed-researcher-project",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/projects/seed-researcher-project/compare",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/projects/seed-researcher-project/om",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/projects/timeline",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/quick-calc/compare",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/quick-calc/result/solar",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/quick-calc/solar",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/quick-calc/storage",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/quick-calc/wind",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/referral",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/resource/map",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/settings",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/status",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/team",
+      "viewport": "360",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/terms",
+      "viewport": "360",
       "role": "researcher",
       "status": 200,
       "issues": [],
@@ -5055,6 +9535,566 @@
     },
     {
       "route": "/",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/achievements",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/admin",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/admin/improvements",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/admin/policies",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/alerts",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/assistant",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/audit",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/audit/demo",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/auth/error",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/briefs",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/carbon",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/charging",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/result",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/solar",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/storage",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/wind",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/checkout",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/community",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/daily",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/dashboard",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/datasets",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/demo-request",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/developer",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/developer/docs",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/contract",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/invoice",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/quote",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/freshness",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/login",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/maintenance",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/map",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/map/compare",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/map/report",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/membership",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/my/achievements",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/my/stations",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/onboarding",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/ops/policy-diff",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/ops/preflight",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/ops/solar-sample",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/papers",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/papers/demo",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/papers/graph",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/papers/library",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/policies",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/preview/p0",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/preview/p1",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/preview/p2",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/pricing",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/privacy",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/project/seed-government-project/dashboard",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/projects",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/projects/seed-government-project",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/projects/seed-government-project/compare",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/projects/seed-government-project/om",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/projects/timeline",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/quick-calc/compare",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/quick-calc/result/solar",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/quick-calc/solar",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/quick-calc/storage",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/quick-calc/wind",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/referral",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/resource/map",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/settings",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/status",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/team",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/terms",
+      "viewport": "1280",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/",
       "viewport": "390",
       "role": "government",
       "status": 200,
@@ -5608,6 +10648,566 @@
     {
       "route": "/terms",
       "viewport": "390",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/achievements",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/admin",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/admin/improvements",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/admin/policies",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/alerts",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/assistant",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/audit",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/audit/demo",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/auth/error",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/briefs",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/carbon",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/charging",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/result",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/solar",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/storage",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/calculator/wind",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/checkout",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/community",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/daily",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/dashboard",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/datasets",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/demo-request",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/developer",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/developer/docs",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/contract",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/invoice",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/quote",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/freshness",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/login",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/maintenance",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/map",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/map/compare",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/map/report",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/membership",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/my/achievements",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/my/stations",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/onboarding",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/ops/policy-diff",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/ops/preflight",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/ops/solar-sample",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/papers",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/papers/demo",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/papers/graph",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/papers/library",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/policies",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/preview/p0",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/preview/p1",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/preview/p2",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/pricing",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/privacy",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/project/seed-government-project/dashboard",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/projects",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/projects/seed-government-project",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/projects/seed-government-project/compare",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/projects/seed-government-project/om",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/projects/timeline",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/quick-calc/compare",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/quick-calc/result/solar",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/quick-calc/solar",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/quick-calc/storage",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/quick-calc/wind",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/referral",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/resource/map",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/settings",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/status",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/team",
+      "viewport": "360",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/terms",
+      "viewport": "360",
       "role": "government",
       "status": 200,
       "issues": [],

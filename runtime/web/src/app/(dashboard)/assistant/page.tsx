@@ -205,7 +205,7 @@ export default function AssistantPage() {
     };
 
     return (
-        <div className="flex h-[calc(100vh-4rem)] overflow-hidden bg-background-dark text-white">
+        <div className="flex h-[calc(100dvh-4rem-env(safe-area-inset-bottom))] overflow-hidden bg-background-dark text-white">
             {/* Left Sidebar: History & Attachments */}
             <aside className="w-80 bg-surface-dark border-r border-border-dark flex-col shrink-0 overflow-hidden hidden md:flex">
                 {/* Upload Area */}

@@ -1,8 +1,7 @@
 'use client';
 
-import { Suspense } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
 import {
     Bell,
     FolderKanban,
@@ -53,8 +52,11 @@ function RoleLandingBody({
         export: string;
         forbidden_modules?: string[];
     }>;
-    const requested = useSearchParams().get('role');
-    const role: RoleKey = requested && requested in templates ? requested as RoleKey : 'ci_owner';
+    const [role, setRole] = useState<RoleKey>('ci_owner');
+    useEffect(() => {
+        const requested = new URLSearchParams(window.location.search).get('role');
+        if (requested && requested in templates) setRole(requested as RoleKey);
+    }, [templates]);
     const current = templates[role];
     const rows = PRODUCT_ROLES.map((key) => ({
         role: templates[key].label,
@@ -128,9 +130,7 @@ export function RoleLanding(props: {
 }) {
     return (
         <AppChrome>
-            <Suspense fallback={<p className="text-sm text-[var(--ink-soft)]">正在读取首页。</p>}>
-                <RoleLandingBody {...props} />
-            </Suspense>
+            <RoleLandingBody {...props} />
         </AppChrome>
     );
 }

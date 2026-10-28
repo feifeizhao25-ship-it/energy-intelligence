@@ -2,6 +2,7 @@ import { PageShell } from '@/components/layout/PageShell';
 import { Term } from '@/components/glossary/Term';
 import { CalloutView } from '@/components/ai/CalloutView';
 import { ChartSpecView } from '@/components/charts/ChartSpecView';
+import AiMarkdown from '@/components/ai/AiMarkdown';
 import { FreshnessBoard } from '@/components/ops/FreshnessBoard';
 import { ReadingModePanel } from '@/components/calculator/ReadingModePanel';
 import { BuildStamp } from '@/components/layout/BuildStamp';
@@ -42,6 +43,7 @@ export default function P1PreviewPage() {
                 <ReadingModePanel />
                 <p className="text-sm leading-6 text-[var(--ink)]">第一次出现的<Term name="机制电量" open />可以展开解释。</p>
                 <CalloutView markdown={markdown} />
+                <AiMarkdown content="年发电量 $E = H × P × K$。" />
                 <ChartSpecView source={chart} />
                 <BuildStamp />
             </div>

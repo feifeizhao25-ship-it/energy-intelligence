@@ -88,7 +88,9 @@ async function main() {
     }
     const viewports = [
         { name: '1440', width: 1440, height: 900 },
+        { name: '1280', width: 1280, height: 800 },
         { name: '390', width: 390, height: 844 },
+        { name: '360', width: 360, height: 740 },
     ].filter((item) => !process.env.AUDIT_VIEWPORTS || process.env.AUDIT_VIEWPORTS.split(',').includes(item.name));
     mkdirSync(shotDir, { recursive: true });
     const browser = await chromium.launch({ headless: true });

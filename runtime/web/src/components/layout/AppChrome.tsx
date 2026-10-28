@@ -15,9 +15,9 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
             <div className="min-h-screen bg-[var(--paper)] text-[var(--ink)]">
                 <Sidebar />
                 <OnboardingFlow />
-                <div className="min-h-screen min-w-0 pt-14 lg:ml-64 lg:pt-0">
+                <div className="ei-shell-offset min-h-screen min-w-0 lg:ml-64">
                     <TopBar />
-                    <main className="min-w-0 p-4 pb-24 lg:p-8 lg:pb-8">
+                    <main className="ei-main min-w-0 p-4 lg:p-8 lg:pb-8">
                         {children}
                     </main>
                 </div>

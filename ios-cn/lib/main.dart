@@ -18,6 +18,7 @@ import 'screens/research/research_screen.dart';
 import 'screens/settings/settings_screen.dart';
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   await ApiService.init(region: 'CN');
   runApp(const NewEnergyApp());
 }

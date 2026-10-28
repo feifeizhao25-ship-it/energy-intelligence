@@ -36,7 +36,7 @@ export default function ResourceMapPage() {
     };
 
     return (
-        <div className="flex flex-col h-[calc(100vh-48px)] bg-slate-950 text-white relative overflow-hidden">
+        <div className="relative flex h-[calc(100dvh-48px-env(safe-area-inset-bottom))] flex-col overflow-hidden bg-slate-950 text-white">
             {/* Minimal High-Tech Search & Layer Controls */}
             <div className="absolute top-8 left-8 right-8 z-20 pointer-events-none flex justify-between items-start">
                 <div className="space-y-4 pointer-events-auto">
