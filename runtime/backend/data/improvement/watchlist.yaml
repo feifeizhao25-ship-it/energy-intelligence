@@ -6,7 +6,7 @@ schedule:
   cron: '0 1 * * 1'   # 周一 09:00 (Asia/Shanghai)，GitHub cron 为 UTC
   window_days: 8      # 与 SJTU weekly-arxiv 一致，重叠 1 天防漏
 gates:
-  - ragas_faithfulness_min: 0.85   # 建议初始值（非来源数据），先测基线后校准
+  - ragas_faithfulness_min: 0.90   # 与现有门禁一致，不是新标定的来源数据
   - promptfoo_redteam_pass: true
   - license_check: [non-commercial, agpl, gpl, unknown]
   - human_approval: wecom+pr

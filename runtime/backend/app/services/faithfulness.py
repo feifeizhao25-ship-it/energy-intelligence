@@ -1,14 +1,14 @@
 """检索回答的忠实度。
 
 用回答里的短句是否被给定上下文覆盖来打分，不调用外部评审模型。
-0.85 只是暂定门槛，标在结果里，不写成已经标定的正式标准。
+0.90 与现有门禁一致，标在结果里，不写成已经重新标定的正式标准。
 """
 from __future__ import annotations
 
 import os
 import re
 
-PROVISIONAL_THRESHOLD = 0.85
+PROVISIONAL_THRESHOLD = 0.90
 
 
 def faithfulness_threshold() -> float:

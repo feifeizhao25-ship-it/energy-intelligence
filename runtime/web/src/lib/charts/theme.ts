@@ -22,7 +22,7 @@ export function chartOption(spec: ChartSpec) {
     return {
         color: CHART_COLORS.slice(0, 8),
         aria: { enabled: true, decal: { show: true } },
-        title: { text: spec.title, left: 'center', textStyle: { fontSize: 14, fontWeight: 500, color: '#1F2937' } },
+        title: { text: spec.title, left: 'center', textStyle: { fontSize: 14, fontWeight: 500, color: '#0E2A2B' } },
         tooltip: {
             trigger: 'axis' as const,
             valueFormatter: (value: unknown) => `${value ?? ''} ${spec.unit}`,
@@ -33,15 +33,15 @@ export function chartOption(spec: ChartSpec) {
             type: 'category' as const,
             name: '序号',
             data: spec.series[0].data.map((_, index) => String(index + 1)),
-            nameTextStyle: { color: '#4B5563' },
-            axisLabel: { color: '#4B5563' },
+            nameTextStyle: { color: '#0E2A2B' },
+            axisLabel: { color: '#3E5C5A' },
         },
         yAxis: {
             type: 'value' as const,
             name: spec.unit,
             min: barLike ? 0 : undefined,
-            nameTextStyle: { color: '#4B5563' },
-            axisLabel: { color: '#4B5563' },
+            nameTextStyle: { color: '#0E2A2B' },
+            axisLabel: { color: '#3E5C5A' },
         },
         series: spec.series.map((item) => ({
             type: spec.type === 'line' || spec.type === 'scatter' ? spec.type : 'bar',

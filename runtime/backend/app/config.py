@@ -297,7 +297,7 @@ class Settings(BaseSettings):
     LOCAL_RERANK_MODEL: str = "BAAI/bge-reranker-v2-m3"
     EMBEDDING_AB_MODEL: str = "Qwen/Qwen3-Embedding-0.6B"
     EMBEDDING_AB_ENABLED: str = "0"
-    RAGAS_FAITHFULNESS_MIN: float = 0.85
+    RAGAS_FAITHFULNESS_MIN: float = 0.90
     OPENAI_EMBEDDING_MODEL: str = "text-embedding-3-large"  # 国际
     
     # 向量库

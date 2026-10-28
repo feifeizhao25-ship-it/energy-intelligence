@@ -25,12 +25,12 @@
 
   --radius: 12px;
 
-  --navy: #0f172a;
-  --navy-2: #1b2437;
-  --teal: #1677ff;
-  --teal-2: #4c9aff;
-  --moss: #0f172a;
-  --accent-solid: #1677ff;
+  --navy: #0e2a2b;
+  --navy-2: #163e40;
+  --teal: #0e2a2b;
+  --teal-2: #1f6f6a;
+  --moss: #0e2a2b;
+  --accent-solid: #0e2a2b;
   --ink: #1f2937;
   --ink-soft: #4b5563;
   --line: #e5e7eb;
@@ -99,8 +99,8 @@ html {
   --navy: #0b1220;
   --navy-2: #1b2437;
   --moss: #0b1220;
-  --teal: #4c9aff;
-  --accent-solid: #4c9aff;
+  --teal: #d5e7e4;
+  --accent-solid: #d5e7e4;
   --ink: #e5e7eb;
   --ink-soft: #9ca3af;
   --line: #2d3748;

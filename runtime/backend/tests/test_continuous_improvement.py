@@ -202,7 +202,7 @@ def test_faithfulness_gate_stays_provisional():
 
     good = faithfulness_gate("新来源只写入待审队列。", ["新来源只写入待审队列。"])
     assert good["passed"] is True
-    assert good["threshold"] == 0.85
+    assert good["threshold"] == 0.90
     assert good["applied"] is False
     bad = faithfulness_gate("明天电价一定上涨并保证收益。", ["只复述已发布的政策原文。"])
     assert bad["passed"] is False
