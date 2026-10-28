@@ -12,6 +12,8 @@ export const chartSpecSchema = z.object({
     type: z.enum(CHART_TYPES),
     title: z.string().min(1).max(40),
     unit: z.string().min(1).max(20),
+    source: z.string().min(1).max(80).optional(),
+    asOf: z.string().min(1).max(20).optional(),
     series: z.array(z.object({
         name: z.string().min(1).max(40),
         data: z.array(point).min(1).max(500),

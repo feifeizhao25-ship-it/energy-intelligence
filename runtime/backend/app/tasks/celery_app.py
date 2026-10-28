@@ -6,11 +6,32 @@ from celery.schedules import crontab
 from app.config import settings
 from app.ingestion.schedule import beat_entries
 
+
+def _improvement_beat() -> dict:
+    from app.services.continuous_improvement import schedule_kwargs
+
+    spec = schedule_kwargs()
+    if not spec.get("enabled"):
+        return {}
+    return {
+        "continuous-improvement": {
+            "task": "energy.domestic.continuous_improvement",
+            "schedule": crontab(**spec["crontab"]),
+        }
+    }
+
+
 celery_app = Celery(
     "energy",
     broker=settings.REDIS_URL.replace("redis://", "redis://"),
     backend=settings.REDIS_URL,
-    include=["app.tasks.gdpr", "app.tasks.subscriptions", "app.tasks.domestic_loops", "app.tasks.public_ingestion"],
+    include=[
+        "app.tasks.gdpr",
+        "app.tasks.subscriptions",
+        "app.tasks.domestic_loops",
+        "app.tasks.public_ingestion",
+        "app.tasks.continuous_improvement",
+    ],
 )
 
 celery_app.conf.update(
@@ -43,6 +64,7 @@ celery_app.conf.update(
             "schedule": crontab(day_of_week=0, hour=5, minute=0),
         },
         **beat_entries(),
+        **_improvement_beat(),
     },
     task_serializer="json",
     accept_content=["json"],
@@ -54,6 +76,7 @@ celery_app.conf.update(
     # GEO 周一 04:00 CST = 周日 20:00 UTC；
     # NASA 批量周日 05:00 CST = 周六 21:00 UTC。
     # 公开数据任务另表错峰，不占用 02:15 的省级门户抓取。总开关见 PUBLIC_INGESTION_ENABLED。
+    # 持续改进默认每周一 03:30，与 03:20 文献抓取错开。可用 IMPROVEMENT_SCHEDULE 关闭。
     timezone="Asia/Shanghai",
     enable_utc=True,
     task_track_started=True,
@@ -63,3 +86,4 @@ celery_app.conf.update(
 
 # include 要到 worker 启动才导入。这里显式导入，保证 beat 与进程内调用能登记任务名。
 from app.tasks import public_ingestion as _public_ingestion  # noqa: E402,F401
+from app.tasks import continuous_improvement as _continuous_improvement  # noqa: E402,F401

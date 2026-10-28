@@ -65,16 +65,16 @@ export function DataTable({
                 />
             </label>
             <div
-                className={virtual ? 'overflow-auto' : 'overflow-x-auto'}
+                className={virtual ? 'max-w-full overflow-auto' : 'max-w-full overflow-x-auto'}
                 style={virtual ? { maxHeight: windowHeight } : undefined}
                 onScroll={(event) => setScrollTop(event.currentTarget.scrollTop)}
             >
             {virtual ? <div style={{ height: start * rowHeight }} /> : null}
-            <table className="w-full text-left text-sm">
+            <table className="ei-table">
                 <thead>
                     <tr>
                         {columns.map((column) => (
-                            <th key={column.key} className="py-1 pr-2">
+                            <th key={column.key}>
                                 <button
                                     type="button"
                                     onClick={() => {
@@ -95,7 +95,7 @@ export function DataTable({
                     {visible.map((row, index) => (
                         <tr key={`${row[columns[0]?.key] ?? ''}-${index}`} data-testid="table-row">
                             {columns.map((column) => (
-                                <td key={column.key} className="py-1 pr-2">{row[column.key]}</td>
+                                <td key={column.key}>{row[column.key]}</td>
                             ))}
                         </tr>
                     ))}

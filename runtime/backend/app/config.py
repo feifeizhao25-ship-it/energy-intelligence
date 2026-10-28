@@ -293,7 +293,11 @@ class Settings(BaseSettings):
     EMBEDDING_API_KEY: Optional[str] = None
     EMBEDDING_DIMENSIONS: int = 1024
     ALLOW_MOCK_EMBEDDINGS: bool = False
-    EMBEDDING_MODEL: str = "BAAI/bge-m3"  # 国内
+    EMBEDDING_MODEL: str = "BAAI/bge-m3"  # 国内本地默认
+    LOCAL_RERANK_MODEL: str = "BAAI/bge-reranker-v2-m3"
+    EMBEDDING_AB_MODEL: str = "Qwen/Qwen3-Embedding-0.6B"
+    EMBEDDING_AB_ENABLED: str = "0"
+    RAGAS_FAITHFULNESS_MIN: float = 0.90
     OPENAI_EMBEDDING_MODEL: str = "text-embedding-3-large"  # 国际
     
     # 向量库

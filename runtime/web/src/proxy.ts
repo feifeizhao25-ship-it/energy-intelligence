@@ -68,7 +68,7 @@ function isPublicPath(pathname: string): boolean {
 // /api/auth/error?error=Configuration 并返回 500）。
 // 新增页面路由时必须同步加入本表——宁可 404 也不绕过鉴权。
 const knownSegments = new Set([
-  'achievements', 'assistant', 'audit', 'auth', 'calculator', 'checkout',
+  'achievements', 'admin', 'assistant', 'audit', 'auth', 'calculator', 'checkout',
   'community', 'dashboard', 'demo-request', 'developer', 'education',
   'enterprise', 'login', 'maintenance', 'map', 'membership', 'my',
   'freshness', 'onboarding', 'papers', 'preview', 'pricing', 'privacy', 'project', 'projects',

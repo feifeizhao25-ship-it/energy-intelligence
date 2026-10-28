@@ -11,17 +11,17 @@ module.exports = {
       colors: {
         // 主色 - 新能源绿
         primary: {
-          DEFAULT: '#22C55E',
-          50: '#F0FDF4',
-          100: '#DCFCE7',
-          200: '#BBF7D0',
-          300: '#86EFAC',
-          400: '#4ADE80',
-          500: '#22C55E',
-          600: '#16A34A',
-          700: '#15803D',
-          800: '#166534',
-          900: '#14532D',
+          DEFAULT: '#0E2A2B',
+          50: '#E7F2F1',
+          100: '#C5DEDC',
+          200: '#8FB8B6',
+          300: '#5A918E',
+          400: '#2F6A68',
+          500: '#0E2A2B',
+          600: '#0C2425',
+          700: '#091C1D',
+          800: '#061415',
+          900: '#040D0E',
         },
         // 辅助色 - 光伏橙黄
         solar: {
@@ -83,8 +83,8 @@ module.exports = {
         },
         // Theme colors
         border: '#E2E8F0',
-        background: '#FFFFFF',
-        foreground: '#0F172A',
+        background: '#F5F7FA',
+        foreground: '#1F2937',
         // Dark mode colors (for AI Assistant)
         'background-dark': '#0A0F14',
         'surface-dark': '#121A23',
@@ -92,7 +92,7 @@ module.exports = {
         'text-secondary': 'rgba(255, 255, 255, 0.5)',
       },
       fontFamily: {
-        sans: ['Inter', '-apple-system', '"PingFang SC"', 'sans-serif'],
+        sans: ['"PingFang SC"', '"Microsoft YaHei"', '"Noto Sans SC"', '"Source Han Sans SC"', 'system-ui', 'sans-serif'],
         display: ['"DIN Pro"', 'Inter', 'sans-serif'],
       },
       borderRadius: {

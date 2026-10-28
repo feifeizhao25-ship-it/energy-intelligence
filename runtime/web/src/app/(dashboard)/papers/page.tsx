@@ -203,20 +203,19 @@ export default function PapersPage() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 pb-24">
-            {/* Header */}
-            <div className="bg-gradient-to-br from-indigo-500 to-purple-600 px-6 py-10 text-white">
+        <div className="min-w-0 pb-8">
+            <div className="ei-page-head px-4 py-8 sm:px-6">
                 <div className="max-w-6xl mx-auto">
                     <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
                         <div className="flex items-center gap-3">
                             <BookOpen className="w-8 h-8" />
-                            <h1 className="text-2xl sm:text-3xl font-black tracking-tight">专业文献库</h1>
+                            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">专业文献库</h1>
                         </div>
                         <Link href="/papers/library" className="flex items-center gap-2 px-5 py-2.5 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-2xl transition-all border border-white/10 font-black text-sm">
                             <Bookmark className="w-4 h-4" /> 我的文献库
                         </Link>
                     </div>
-                    <p className="text-indigo-100 mb-6">公开学术资源检索 · AI 辅助检索与摘要</p>
+                    <p className="mb-6 text-sm">公开学术资源检索。摘要只复述已返回的文献信息。</p>
 
                     {/* Search */}
                     <form
@@ -224,20 +223,20 @@ export default function PapersPage() {
                             e.preventDefault();
                             handleSearch();
                         }}
-                        className="relative group"
+                        className="flex flex-col gap-2 sm:relative sm:block"
                     >
-                        <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-400 group-focus-within:text-green-500 transition-colors" />
+                        <Search className="pointer-events-none absolute left-5 top-5 hidden h-6 w-6 text-slate-400 sm:block" />
                         <input
                             type="text"
                             placeholder="输入关键词，如钙钛矿电池稳定性、海上风电尾流效应"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-14 pr-32 py-5 rounded-[24px] text-slate-900 bg-white border-none shadow-2xl focus:ring-4 focus:ring-green-500/20 text-lg transition-all"
+                            className="w-full rounded-2xl border border-white/20 bg-white px-4 py-4 text-base text-slate-900 shadow-lg sm:py-5 sm:pl-14 sm:pr-32 sm:text-lg"
                         />
                         <button
                             type="submit"
                             disabled={isSearching}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl font-black text-sm transition-all shadow-lg shadow-green-100 disabled:opacity-50"
+                            className="rounded-xl bg-[var(--teal)] px-6 py-3 text-sm font-semibold text-white disabled:opacity-50 sm:absolute sm:right-3 sm:top-1/2 sm:-translate-y-1/2"
                         >
                             {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : '立即检索'}
                         </button>
@@ -246,7 +245,7 @@ export default function PapersPage() {
             </div>
 
             {/* Filters */}
-            <div className="bg-white border-b border-slate-100 px-6 sticky top-0 z-40">
+            <div className="sticky top-0 z-30 border-b border-[var(--line)] bg-[var(--surface)] px-4 sm:px-6">
                 <div className="max-w-6xl mx-auto flex items-center gap-2 overflow-x-auto py-4">
                     {searchFilters.map((filter) => (
                         <button
@@ -292,20 +291,26 @@ export default function PapersPage() {
                 </div>
             </div>
 
-            {searchError && <p role="alert" className="max-w-6xl mx-auto px-6 py-4 text-red-700">{searchError}</p>}
+            {searchError && (
+                <div role="alert" className="ei-error mx-auto mt-4 max-w-6xl">
+                    <p>{searchError}</p>
+                    <button type="button" className="mt-3 rounded-xl bg-[var(--navy)] px-3 py-2 text-sm text-white" onClick={() => handleSearch()}>重试</button>
+                </div>
+            )}
             {unavailableSources.length > 0 && <p role="status" className="max-w-6xl mx-auto px-6 py-4 text-amber-800">部分学术来源暂时不可用，本次仅展示可用来源的结果。</p>}
             {/* Papers List */}
             <div className="px-6 py-8">
                 <div className="max-w-6xl mx-auto space-y-4">
                     {isSearching ? (
-                        <div className="py-20 flex flex-col items-center justify-center gap-4">
-                            <div className="w-12 h-12 border-4 border-green-500 border-t-transparent rounded-full animate-spin"></div>
-                            <p className="font-black text-slate-400 uppercase tracking-widest text-xs">正在检索已入库文献...</p>
+                        <div data-testid="loading-skeleton" className="space-y-3 py-6" aria-busy="true">
+                            <div className="ei-skeleton h-28 w-full" />
+                            <div className="ei-skeleton h-28 w-full" />
+                            <p className="text-sm text-[var(--ink-soft)]">正在检索已入库文献...</p>
                         </div>
-                    ) : papers.length === 0 && !searchError ? <p className="py-8 text-slate-600">本次未检索到匹配论文，可以调整关键词后重试。</p> : papers.slice(0, visibleCount).map((paper) => (
+                    ) : papers.length === 0 && !searchError ? <p className="ei-empty py-8 text-[var(--ink-soft)]">本次未检索到匹配论文，可以调整关键词后重试。</p> : papers.slice(0, visibleCount).map((paper) => (
                         <div
                             key={paper.id}
-                            className="bg-white rounded-[32px] border border-slate-100 p-8 hover:shadow-2xl hover:shadow-slate-200/50 transition-all group"
+                            className="ei-panel transition-shadow hover:shadow-md"
                         >
                             <div className="flex items-start justify-between gap-8">
                                 <div className="flex-1 min-w-0">

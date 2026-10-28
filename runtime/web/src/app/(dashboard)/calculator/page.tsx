@@ -58,9 +58,9 @@ export default function CalculatorHomePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0f172a] text-slate-200">
+    <div className="min-w-0 text-[var(--ink)]">
       {/* Hero Section */}
-      <section className="relative pt-20 pb-16 px-6 overflow-hidden">
+      <section className="relative overflow-hidden px-2 pb-16 pt-4 sm:px-4">
         {/* Background glow */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-blue-600/10 blur-[120px] rounded-full" />
 
@@ -70,17 +70,17 @@ export default function CalculatorHomePage() {
             animate={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
           >
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-sm font-medium mb-6">
+            <div className="ei-badge mb-6">
               <Zap className="w-4 h-4" />
               <span>智能收益测算引擎 2.0</span>
             </div>
-            <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 tracking-tight">
+            <h1 className="mb-6 text-4xl font-bold tracking-tight text-[var(--navy)] md:text-5xl">
               让每一个瓦特<br />
-              <span className="bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 bg-clip-text text-transparent">
+              <span className="text-[var(--teal)]">
                 都产生明确价值
               </span>
             </h1>
-            <p className="text-slate-400 text-lg max-w-2xl mx-auto">
+            <p className="mx-auto max-w-2xl text-lg text-[var(--ink-soft)]">
               基于公开气象数据与省级参考电价表（标注来源与数据截至日期）做初步测算，结果仅供参考，不构成投资建议。
             </p>
           </motion.div>
@@ -94,36 +94,36 @@ export default function CalculatorHomePage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
                 onClick={() => router.push(engine.path)}
-                className={`group relative p-8 rounded-3xl bg-slate-800/40 border border-slate-700/50 hover:bg-slate-800/60 transition-all cursor-pointer ${engine.borderColor}`}
+                className="ei-panel group relative cursor-pointer p-8 transition-shadow hover:shadow-md"
               >
                 <div className={`absolute inset-0 bg-gradient-to-br ${engine.color} opacity-0 group-hover:opacity-100 transition-opacity rounded-3xl`} />
 
                 <div className="relative z-10">
                   <div className="flex justify-between items-start mb-6">
-                    <div className="p-3 rounded-2xl bg-slate-900/50 border border-slate-700/50">
+                    <div className="rounded-2xl border border-[var(--line)] bg-[var(--paper)] p-3">
                       {engine.icon}
                     </div>
-                    <span className="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-[10px] font-bold tracking-widest uppercase text-white/50">
+                    <span className="ei-badge">
                       {engine.tag}
                     </span>
                   </div>
 
-                  <h3 className="text-2xl font-bold text-white mb-3 flex items-center gap-2">
+                  <h3 className="mb-3 flex items-center gap-2 text-2xl font-bold text-[var(--navy)]">
                     {engine.title}
                     <ArrowRight className="w-5 h-5 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all text-blue-400" />
                   </h3>
-                  <p className="text-slate-400 text-sm leading-relaxed mb-8">
+                  <p className="mb-8 text-sm leading-relaxed text-[var(--ink-soft)]">
                     {engine.description}
                   </p>
 
-                  <div className="grid grid-cols-2 gap-4 border-t border-slate-700/50 pt-6">
+                  <div className="grid grid-cols-2 gap-4 border-t border-[var(--line)] pt-6">
                     <div>
-                      <div className="text-[10px] text-slate-500 uppercase font-bold mb-1">平均内部收益率</div>
-                      <div className="text-lg font-bold text-white">{engine.stats.irr}</div>
+                      <div className="mb-1 text-xs font-bold text-[var(--ink-soft)]">平均内部收益率</div>
+                      <div className="text-lg font-bold tabular-nums text-[var(--ink)]">{engine.stats.irr}</div>
                     </div>
                     <div>
-                      <div className="text-[10px] text-slate-500 uppercase font-bold mb-1">平均回收期</div>
-                      <div className="text-lg font-bold text-white">{engine.stats.payback}</div>
+                      <div className="mb-1 text-xs font-bold text-[var(--ink-soft)]">平均回收期</div>
+                      <div className="text-lg font-bold tabular-nums text-[var(--ink)]">{engine.stats.payback}</div>
                     </div>
                   </div>
                 </div>
@@ -132,7 +132,7 @@ export default function CalculatorHomePage() {
           </div>
 
           {/* Features / Social Proof */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 py-12 border-y border-slate-800/50">
+          <div className="grid grid-cols-1 gap-6 border-y border-[var(--line)] py-12 md:grid-cols-2 xl:grid-cols-4">
             {[
               { icon: <TrendingUp className="w-5 h-5" />, title: '动态政策库', desc: '电价标注来源与数据截至日期' },
               { icon: <ShieldCheck className="w-5 h-5" />, title: '假设透明', desc: '损耗、衰减、折现率等假设逐项列出' },
@@ -142,8 +142,8 @@ export default function CalculatorHomePage() {
               <div key={i} className="flex gap-4 items-start">
                 <div className="text-blue-400 mt-1">{feature.icon}</div>
                 <div>
-                  <h4 className="text-white font-semibold mb-1 text-sm">{feature.title}</h4>
-                  <p className="text-slate-500 text-xs">{feature.desc}</p>
+                  <h4 className="mb-1 text-sm font-semibold text-[var(--ink)]">{feature.title}</h4>
+                  <p className="text-xs text-[var(--ink-soft)]">{feature.desc}</p>
                 </div>
               </div>
             ))}
@@ -152,7 +152,7 @@ export default function CalculatorHomePage() {
           {/* 原来这里是写死的「最近的项目测算」表（河北保定光伏 IRR 18.5%、山东德州风电、江苏盐城储能），
               每个用户看到的都是同样的虚构项目，已删除；用户自己的项目在「我的项目」页。 */}
           <div className="mt-12 text-center">
-            <Link href="/projects" className="inline-flex items-center gap-1 text-sm text-slate-400 hover:text-white">
+            <Link href="/projects" className="inline-flex items-center gap-1 text-sm text-[var(--teal)]">
               查看我的项目 <ChevronRight className="w-4 h-4" />
             </Link>
           </div>

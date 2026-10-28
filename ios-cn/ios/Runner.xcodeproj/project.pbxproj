@@ -368,7 +368,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.energyApp; /* TODO: keep this bundle id; display name is 新能源智库 */
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.energyApp; /* TODO: keep com.example.energyApp until a human ties the bundle id to the store account */
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
@@ -547,7 +547,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.energyApp; /* TODO: keep this bundle id; display name is 新能源智库 */
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.energyApp; /* TODO: keep com.example.energyApp until a human ties the bundle id to the store account */
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -569,7 +569,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.energyApp; /* TODO: keep this bundle id; display name is 新能源智库 */
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.energyApp; /* TODO: keep com.example.energyApp until a human ties the bundle id to the store account */
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;

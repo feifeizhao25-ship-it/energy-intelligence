@@ -137,6 +137,13 @@ async function main() {
             const handled = /尚未|未接入|未返回|未连接|暂时没有|不展示|没有发现|没有可对照|时间线尚未|页面不存在|从团队档|不含季度|不画模拟/.test(text);
             const apiFails = failed.filter((item) => item.includes('/api/') && !item.includes('/api/auth/session'));
             if (apiFails.length && !handled) issues.push({ type: 'api', detail: apiFails.slice(0, 3).join(' | ') });
+            let overflow = false;
+            try {
+                overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1);
+            } catch {
+                overflow = false;
+            }
+            if (overflow) issues.push({ type: 'overflow', detail: '横向溢出' });
             const english = englishHits(text.replace(/数据来自[^\n。]+。?/g, ''));
             if (english.length) issues.push({ type: 'english', detail: english.join(', ') });
             if (/lorem|placeholder text|TODO/i.test(text)) issues.push({ type: 'placeholder', detail: '占位文本' });

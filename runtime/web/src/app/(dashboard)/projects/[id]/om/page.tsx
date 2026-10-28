@@ -128,7 +128,7 @@ export default function OperationsMaintenancePage(props: OmPageProps) {
             <div className="min-h-screen flex items-center justify-center bg-slate-50">
                 <div className="text-center">
                     <div className="animate-spin w-8 h-8 border-4 border-green-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-                    <div className="text-sm text-slate-500">加载运维数据...</div>
+                    <div className="text-sm text-slate-500">加载运维数据。遥测未接入时不展示模拟告警。</div>
                 </div>
             </div>
         );
@@ -164,7 +164,7 @@ export default function OperationsMaintenancePage(props: OmPageProps) {
                         <div className="h-8 w-[1px] bg-slate-200"></div>
                         <div>
                             <h1 className="text-lg font-bold text-slate-900">{project?.name || '电站'} - 运维中心</h1>
-                            <div className="text-xs text-slate-500">实时监控与智能运维管理</div>
+                            <div className="text-xs text-slate-500">遥测未接入时不展示模拟告警。</div>
                         </div>
                     </div>
                     <div className="flex items-center gap-3">

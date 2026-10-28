@@ -17,7 +17,7 @@ export default function Skeleton({
     height,
     animation = 'shimmer',
 }: SkeletonProps) {
-    const baseClasses = 'bg-slate-200 relative overflow-hidden';
+    const baseClasses = 'ei-skeleton relative overflow-hidden';
 
     const variantClasses = {
         text: 'rounded h-4',

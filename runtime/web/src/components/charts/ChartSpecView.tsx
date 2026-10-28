@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef } from 'react';
 import { parseChartSpec, specToTable, type ChartSpec } from '@/lib/charts/chart-spec';
+import { chartFootnote, chartOption } from '@/lib/charts/theme';
 
 const TYPE_LABEL: Record<ChartSpec['type'], string> = {
     line: '折线',
@@ -14,18 +15,7 @@ const TYPE_LABEL: Record<ChartSpec['type'], string> = {
 };
 
 function optionOf(spec: ChartSpec) {
-    return {
-        title: { text: spec.title, left: 'center', textStyle: { fontSize: 14 } },
-        tooltip: { trigger: 'axis' as const },
-        xAxis: { type: 'category' as const, data: spec.series[0].data.map((_, index) => String(index + 1)) },
-        yAxis: { type: 'value' as const, name: spec.unit },
-        series: spec.series.map((item) => ({
-            type: spec.type === 'line' || spec.type === 'scatter' ? spec.type : 'bar',
-            name: item.name,
-            stack: spec.type === 'stack' ? '合计' : undefined,
-            data: item.data.map((value) => (typeof value === 'number' ? value : Array.isArray(value) ? value[1] : value.value)),
-        })),
-    };
+    return chartOption(spec);
 }
 
 export function ChartSpecView({ source }: { source: unknown }) {
@@ -53,17 +43,21 @@ export function ChartSpecView({ source }: { source: unknown }) {
         return <p role="alert">{parsed.message}</p>;
     }
     const table = specToTable(parsed.spec);
+    const note = chartFootnote(parsed.spec);
     return (
-        <figure aria-labelledby={labelId} className="space-y-2">
+        <figure aria-labelledby={labelId} className="ei-panel space-y-2">
             <figcaption id={labelId} className="text-sm font-semibold">{parsed.spec.title}（{TYPE_LABEL[parsed.spec.type]}，单位 {parsed.spec.unit}）</figcaption>
-            <div ref={host} className="h-56 w-full" />
-            <table className="w-full text-left text-sm">
+            <div ref={host} className="h-56 w-full min-w-0" />
+            <p data-testid="chart-footnote" className="text-xs leading-5 text-[var(--ink-soft)]">来源：{note.source}。数据日期：{note.asOf}。</p>
+            <div className="max-w-full overflow-x-auto">
+            <table className="ei-table">
                 <tbody>
                     {table.map((row, index) => (
                         <tr key={row.join('-')}>{row.map((cell) => index === 0 ? <th key={cell} className="border-b px-2 py-1">{cell}</th> : <td key={cell} className="px-2 py-1 tabular-nums">{cell}</td>)}</tr>
                     ))}
                 </tbody>
             </table>
+            </div>
         </figure>
     );
 }

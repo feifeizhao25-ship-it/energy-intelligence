@@ -62,7 +62,7 @@ export default function PricingPage() {
       <div className="mx-auto max-w-4xl">
         <div className="mx-auto inline-flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700"><Crown className="h-4 w-4" />会员方案与权益</div>
         <h1 className="mt-6 text-4xl font-black sm:text-6xl">选择与项目阶段匹配的能力</h1>
-        <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-slate-600">价格、额度和导出权益直接来自统一会员配置；最终金额、续费与退款以下单确认页为准。</p>
+        <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-slate-600">价格、额度和导出权益直接来自统一会员配置；最终金额、续费与退款以下单确认页为准。权益服务未连接时，展示本页已核对的档位说明。</p>
       </div>
     </header>
 

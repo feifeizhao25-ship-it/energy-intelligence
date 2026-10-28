@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-27T13:36:31.512Z",
+  "generatedAt": "2026-10-28T13:06:20.630Z",
   "base": "http://127.0.0.1:3101",
-  "routeCount": 66,
+  "routeCount": 67,
   "roles": [
     "investor",
     "owner",
@@ -9,7 +9,7 @@
     "researcher",
     "government"
   ],
-  "checks": 660,
+  "checks": 670,
   "issueCounts": {},
   "note": "五个角色使用种子账号的登录态访问。署名原文里的外文机构名不记为英文泄漏。浏览器对已解释的 403/404/503 只记页面是否说明原因。",
   "rows": [
@@ -38,6 +38,14 @@
       "shot": ""
     },
     {
+      "route": "/admin/improvements",
+      "viewport": "1440",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
       "route": "/admin/policies",
       "viewport": "1440",
       "role": "investor",
@@ -566,6 +574,14 @@
       "shot": ""
     },
     {
+      "route": "/admin/improvements",
+      "viewport": "390",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
       "route": "/admin/policies",
       "viewport": "390",
       "role": "investor",
@@ -1087,6 +1103,14 @@
     },
     {
       "route": "/admin",
+      "viewport": "1440",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/admin/improvements",
       "viewport": "1440",
       "role": "owner",
       "status": 200,
@@ -1622,6 +1646,14 @@
       "shot": ""
     },
     {
+      "route": "/admin/improvements",
+      "viewport": "390",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
       "route": "/admin/policies",
       "viewport": "390",
       "role": "owner",
@@ -2150,6 +2182,14 @@
       "shot": ""
     },
     {
+      "route": "/admin/improvements",
+      "viewport": "1440",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
       "route": "/admin/policies",
       "viewport": "1440",
       "role": "engineer",
@@ -2678,6 +2718,14 @@
       "shot": ""
     },
     {
+      "route": "/admin/improvements",
+      "viewport": "390",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
       "route": "/admin/policies",
       "viewport": "390",
       "role": "engineer",
@@ -3199,6 +3247,14 @@
     },
     {
       "route": "/admin",
+      "viewport": "1440",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/admin/improvements",
       "viewport": "1440",
       "role": "researcher",
       "status": 200,
@@ -3734,6 +3790,14 @@
       "shot": ""
     },
     {
+      "route": "/admin/improvements",
+      "viewport": "390",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
       "route": "/admin/policies",
       "viewport": "390",
       "role": "researcher",
@@ -4255,6 +4319,14 @@
     },
     {
       "route": "/admin",
+      "viewport": "1440",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/admin/improvements",
       "viewport": "1440",
       "role": "government",
       "status": 200,
@@ -4783,6 +4855,14 @@
     },
     {
       "route": "/admin",
+      "viewport": "390",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/admin/improvements",
       "viewport": "390",
       "role": "government",
       "status": 200,

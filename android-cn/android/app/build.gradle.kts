@@ -9,7 +9,7 @@ plugins {
 }
 
 android {
-    // TODO: do not rename namespace or applicationId here; a signing change needs its own release.
+    // TODO: namespace stays com.example.energy_app. Changing it is a human decision tied to the store account, not a code cleanup.
     namespace = "com.example.energy_app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion

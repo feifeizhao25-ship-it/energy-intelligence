@@ -41,6 +41,42 @@ def local_capacity_factor(v_avg=7.5, v_in=3.0, v_rated=12.0, v_out=25.0, k=2.0) 
     return total
 
 
+def pvlib_yield_crosscheck() -> dict:
+    """有光伏仿真库时只报标准测试点功率。没有同一组小时辐照时不编造年发电量。"""
+    try:
+        import pvlib
+        from pvlib.pvsystem import pvwatts_dc
+    except ImportError:
+        return {
+            "pvlib_installed": False,
+            "compared": False,
+            "reason": "未安装光伏仿真库，不做发电量交叉校验",
+        }
+    try:
+        stc_w = float(pvwatts_dc(1000, 25, 1000, -0.0034))
+    except Exception as exc:
+        return {
+            "pvlib_installed": True,
+            "pvlib_version": getattr(pvlib, "__version__", ""),
+            "compared": False,
+            "reason": exc.__class__.__name__,
+        }
+    pysam_pv = False
+    try:
+        import PySAM.Pvwattsv8  # noqa: F401
+        pysam_pv = True
+    except ImportError:
+        pysam_pv = False
+    return {
+        "pvlib_installed": True,
+        "pvlib_version": getattr(pvlib, "__version__", ""),
+        "pysam_pv_installed": pysam_pv,
+        "pvlib_stc_w": stc_w,
+        "compared": False,
+        "reason": "没有同一组小时辐照，不把标准测试点换算成年发电量",
+    }
+
+
 def compare() -> dict:
     report = {
         "pysam_installed": False,
@@ -53,6 +89,7 @@ def compare() -> dict:
     try:
         import PySAM.Windpower as windpower
     except ImportError:
+        report["pvlib"] = pvlib_yield_crosscheck()
         return report
     report["pysam_installed"] = True
     import PySAM
@@ -93,6 +130,7 @@ def compare() -> dict:
         "compared": False,
         "reason": "PySAM 储能默认算例在没有负荷和电价序列时放电量为 0。不为了凑差值编造调度曲线，因此不报告年放电量或平准化成本差。",
     }
+    report["pvlib"] = pvlib_yield_crosscheck()
     return report
 
 
