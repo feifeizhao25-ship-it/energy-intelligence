@@ -48,5 +48,8 @@ local.properties
 tmp/
 # 网页导出的临时文件含用户数据，只存在于运行目录
 .exports/
+# 持续改进队列由定时任务写入，不入库
+runtime/backend/data/improvement/proposals.jsonl
+runtime/backend/data/improvement/latest_metrics.json
 *.tsbuildinfo
 **/android/build/

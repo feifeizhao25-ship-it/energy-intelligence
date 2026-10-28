@@ -16,11 +16,11 @@ export function detailOpenPreference(): boolean {
     return window.localStorage.getItem(PREFERENCE_KEY) === '1';
 }
 
-export function EmptyState({ title }: { title: string }) {
+export function EmptyState({ title, detail }: { title: string; detail?: string }) {
     return (
-        <div data-testid="empty-state" className="rounded-xl border border-dashed border-[var(--line)] p-4">
+        <div data-testid="empty-state" className="ei-empty">
             <p className="font-semibold">{title}</p>
-            <p className="mt-1 text-sm text-[var(--ink-soft)]">{emptyNextStep(false)}</p>
+            <p className="mt-1 text-sm leading-6 text-[var(--ink-soft)]">{detail || emptyNextStep(false)}</p>
         </div>
     );
 }

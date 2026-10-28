@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import AuthProvider from '@/components/providers/AuthProvider'
 import { BuildStamp } from '@/components/layout/BuildStamp'
+import { ThemeProvider } from '@/components/providers/ThemeProvider'
 import { isAuthConfigured } from '@/lib/auth/availability'
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -14,7 +15,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#22c55e',
+  themeColor: '#0B1F33',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
@@ -32,18 +33,20 @@ export default async function RootLayout({
   const messages = await getMessages();
 
   return (
-    <html lang={locale} className="dark">
+    <html lang={locale} suppressHydrationWarning>
       <head>
         <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192x192.png" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
       </head>
       <body className="font-sans">
-        <NextIntlClientProvider locale={locale} messages={messages}>
-          <AuthProvider configured={isAuthConfigured()}>
-            <BuildStamp />
-            {children}
-          </AuthProvider>
-        </NextIntlClientProvider>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
+          <NextIntlClientProvider locale={locale} messages={messages}>
+            <AuthProvider configured={isAuthConfigured()}>
+              <BuildStamp />
+              {children}
+            </AuthProvider>
+          </NextIntlClientProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

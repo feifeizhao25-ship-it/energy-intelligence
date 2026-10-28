@@ -58,7 +58,18 @@ export function MermaidBlock({ source }: { source: string }) {
         import('mermaid')
             .then((mod) => {
                 const mermaid = mod.default;
-                mermaid.initialize({ startOnLoad: false, securityLevel: 'strict', theme: 'neutral' });
+                mermaid.initialize({
+                    startOnLoad: false,
+                    securityLevel: 'strict',
+                    theme: 'base',
+                    themeVariables: {
+                        primaryColor: '#E7F5F4',
+                        primaryTextColor: '#102033',
+                        primaryBorderColor: '#0F766E',
+                        lineColor: '#0B3A4A',
+                        fontFamily: 'PingFang SC, Noto Sans SC, sans-serif',
+                    },
+                });
                 return mermaid.render(`flow${reactId}`, source);
             })
             .then((result) => {

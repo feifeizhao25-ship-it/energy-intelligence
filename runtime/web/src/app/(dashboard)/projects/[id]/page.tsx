@@ -90,11 +90,9 @@ export default function ProjectDetailPage(props: ProjectDetailProps) {
                         value: Number(item.generationActual),
                     })));
                     setAlerts(p.alerts || []);
-                } else {
-                    console.error('没有找到这个项目');
                 }
-            } catch (e) {
-                console.error('项目详情没有读到', e);
+            } catch {
+                setProject(null);
             } finally {
                 setLoading(false);
             }

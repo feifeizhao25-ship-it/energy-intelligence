@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PageShell, type ShellFact } from '@/components/layout/PageShell';
+import { DashboardSkeleton } from '@/components/ui/Skeleton';
 import { BuildStamp } from '@/components/layout/BuildStamp';
 import type { Personalization, ModuleId } from '@/lib/dashboard/personalization';
 import { DISMISSIBLE_TIPS as DISMISSIBLE } from '@/lib/dashboard/personal-summary';
@@ -165,11 +166,7 @@ function DashboardContent() {
     }, []);
 
     if (status === 'loading') {
-        return (
-            <div className="min-h-screen bg-gradient-to-br from-slate-50 to-green-50 flex items-center justify-center">
-                <div className="animate-spin w-8 h-8 border-4 border-green-500 border-t-transparent rounded-full" />
-            </div>
-        );
+        return <DashboardSkeleton />;
     }
 
     const paid = data && data.plan.code !== 'FREE';
@@ -181,6 +178,8 @@ function DashboardContent() {
 
     return (
         <PageShell
+            title="总览"
+            crumbs={[{ href: '/', label: '首页' }, { href: '/dashboard', label: '总览' }]}
             summary={data?.greeting || '工作台按角色模板排列已审核的事实和测算入口。'}
             facts={facts}
             aside={(
@@ -212,7 +211,7 @@ function DashboardContent() {
         >
             <div className="space-y-4">
                 {status === 'error' || !data ? (
-                    <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-100 flex flex-col items-center text-center">
+                    <div className="ei-error flex flex-col items-center p-8 text-center">
                         <div className="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center mb-4">
                             <CloudOff className="w-7 h-7 text-slate-400" />
                         </div>

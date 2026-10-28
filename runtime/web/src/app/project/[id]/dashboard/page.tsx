@@ -115,7 +115,6 @@ export default function ProjectDashboard() {
                 throw new Error(result.error || '获取数据失败');
             }
         } catch (err: any) {
-            console.error('获取项目监测数据失败:', err);
             setError(safeErrorMessage(err, '获取数据失败，请稍后重试'));
         } finally {
             setLoading(false);

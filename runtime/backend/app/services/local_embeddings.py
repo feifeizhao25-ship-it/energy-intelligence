@@ -1,7 +1,8 @@
 """本地向量。
 
-优先加载环境变量 LOCAL_EMBEDDING_MODEL（默认 BAAI/bge-small-zh-v1.5）。
-模型或依赖不在本机时，改用字符二元组、三元组的余弦，不访问外网，也不把结果称作 bge。
+优先级：LOCAL_EMBEDDING_MODEL，其次 EMBEDDING_MODEL / 配置里的 BAAI/bge-m3，
+再其次 BAAI/bge-small-zh-v1.5。模型或依赖不在本机时，改用字符二元组、三元组的余弦，
+不访问外网，也不把回退结果称作 bge。
 """
 from __future__ import annotations
 
@@ -11,10 +12,30 @@ import re
 from functools import lru_cache
 
 DEFAULT_LOCAL_MODEL = "BAAI/bge-small-zh-v1.5"
+BGE_M3 = "BAAI/bge-m3"
+
+
+def _normalize_bge(name: str) -> str:
+    key = (name or "").strip()
+    if key.lower() in {"bge-m3", "baai/bge-m3"}:
+        return BGE_M3
+    return key
 
 
 def local_model_name() -> str:
-    return (os.environ.get("LOCAL_EMBEDDING_MODEL") or DEFAULT_LOCAL_MODEL).strip() or DEFAULT_LOCAL_MODEL
+    explicit = (os.environ.get("LOCAL_EMBEDDING_MODEL") or "").strip()
+    if explicit:
+        return _normalize_bge(explicit)
+    configured = (os.environ.get("EMBEDDING_MODEL") or "").strip()
+    if not configured:
+        try:
+            from app.config import settings
+            configured = (getattr(settings, "EMBEDDING_MODEL", "") or "").strip()
+        except Exception:
+            configured = ""
+    if configured and "bge" in configured.lower():
+        return _normalize_bge(configured)
+    return DEFAULT_LOCAL_MODEL
 
 
 def _l2(vec: list[float]) -> list[float]:

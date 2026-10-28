@@ -31,10 +31,10 @@ export default function DiagnosticsWorkbench() {
     }
 
     return <div className="mx-auto max-w-3xl space-y-8 text-slate-900">
-        <div>
-            <h1 className="text-2xl font-black">运维诊断</h1>
-            <p className="mt-2 text-sm leading-6 text-slate-600">性能比、组件曲线和故障代码只使用本页填写的数字。结果是比值或手册对照，不是维修投资建议。项目工单和遥测在具体项目的运维页。</p>
-            <Link href="/projects" className="mt-2 inline-block text-sm font-bold text-emerald-700">前往项目</Link>
+        <div className="ei-panel">
+            <h2 className="text-lg font-bold">填写后计算</h2>
+            <p className="mt-2 text-sm leading-6 text-[var(--ink-soft)]">性能比、组件曲线和故障代码只使用本页填写的数字。结果是比值或手册对照，不是维修投资建议。项目工单和遥测在具体项目的运维页。</p>
+            <Link href="/projects" className="mt-2 inline-block text-sm font-bold text-[var(--teal)]">前往项目</Link>
         </div>
         <section className="rounded-2xl border border-slate-200 bg-white p-5 space-y-3">
             <h2 className="font-bold">性能比</h2>

@@ -101,9 +101,9 @@ export default function ComparePage() {
     };
 
     return (
-        <div className="min-h-screen overflow-x-hidden bg-gray-900 p-4 text-white sm:p-6">
-            <h1 className="text-2xl font-bold mb-6 flex items-center gap-2">
-                <BarChart2 className="w-6 h-6 text-blue-400" /> 多点资源对比分析
+        <div className="min-w-0 overflow-x-hidden text-[var(--ink)]">
+            <h1 className="mb-6 flex items-center gap-2 text-2xl font-bold text-[var(--navy)]">
+                <BarChart2 className="h-6 w-6 text-[var(--teal)]" /> 多点资源对比分析
             </h1>
 
             {/* 输入区 */}
@@ -113,12 +113,12 @@ export default function ComparePage() {
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     placeholder="输入坐标（纬度,经度）或地点名称"
-                    className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                    className="w-full flex-1 rounded-lg border border-[var(--line)] bg-[var(--surface)] px-4 py-2 outline-none focus:ring-2 focus:ring-[var(--teal)]"
                 />
                 <button
                     onClick={addLocation}
                     disabled={loading}
-                    className="bg-blue-600 hover:bg-blue-500 px-6 py-2 rounded-lg font-medium flex items-center gap-2 disabled:opacity-50"
+                    className="flex items-center justify-center gap-2 rounded-lg bg-[var(--navy)] px-6 py-2 font-medium text-white disabled:opacity-50"
                 >
                     <Plus className="w-5 h-5" />
                     {loading ? '分析中...' : '添加对比'}
@@ -131,7 +131,7 @@ export default function ComparePage() {
             {locations.length > 0 ? (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     {/* 雷达图 */}
-                    <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                    <div className="ei-panel">
                         <h3 className="text-lg font-semibold mb-4">综合评分对比</h3>
                         <div className="h-[400px]">
                             <ResponsiveContainer width="100%" height="100%">
@@ -164,7 +164,7 @@ export default function ComparePage() {
                     {/* 数据表格 */}
                     <div className="space-y-4">
                         {locations.map((loc, index) => (
-                            <div key={loc.id} className="bg-gray-800 rounded-xl p-6 border border-gray-700 relative group transition-all hover:bg-gray-750">
+                            <div key={loc.id} className="ei-panel relative">
                                 <button
                                     onClick={() => setLocations(locations.filter(l => l.id !== loc.id))}
                                     className="absolute top-4 right-4 text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
@@ -183,19 +183,19 @@ export default function ComparePage() {
                                 </div>
 
                                 <div className="grid grid-cols-3 gap-4">
-                                    <div className="bg-gray-900/50 p-3 rounded-lg">
+                                    <div className="rounded-lg bg-[var(--paper)] p-3">
                                         <div className="flex items-center gap-2 text-sm text-gray-400 mb-1">
                                             <Zap className="w-4 h-4 text-yellow-400" /> 光伏评分
                                         </div>
                                         <div className="text-2xl font-bold">{loc.scores.solar}</div>
                                     </div>
-                                    <div className="bg-gray-900/50 p-3 rounded-lg">
+                                    <div className="rounded-lg bg-[var(--paper)] p-3">
                                         <div className="flex items-center gap-2 text-sm text-gray-400 mb-1">
                                             <Wind className="w-4 h-4 text-blue-400" /> 风电评分
                                         </div>
                                         <div className="text-2xl font-bold">{loc.scores.wind}</div>
                                     </div>
-                                    <div className="bg-gray-900/50 p-3 rounded-lg">
+                                    <div className="rounded-lg bg-[var(--paper)] p-3">
                                         <div className="flex items-center gap-2 text-sm text-gray-400 mb-1">
                                             <Thermometer className="w-4 h-4 text-green-400" /> 年均温
                                         </div>
@@ -203,7 +203,7 @@ export default function ComparePage() {
                                     </div>
                                 </div>
 
-                                <div className="mt-4 grid grid-cols-2 gap-4 text-sm text-gray-300">
+                                <div className="mt-4 grid grid-cols-1 gap-4 text-sm text-[var(--ink-soft)] sm:grid-cols-2">
                                     <div className="flex justify-between border-b border-gray-700 pb-1">
                                         <span>年总辐照量</span>
                                         <span>{Math.round(loc.solar.annual.ghi)} kWh/m²</span>
@@ -228,7 +228,7 @@ export default function ComparePage() {
             ) : (
                 <div className="space-y-4">
                 <VectorLayerPanel />
-                <div className="flex flex-col items-center justify-center size-full h-96 text-gray-500 border-2 border-dashed border-gray-700 rounded-xl">
+                <div className="ei-empty flex h-72 flex-col items-center justify-center text-[var(--ink-soft)]">
                     <Layers className="w-16 h-16 mb-4 opacity-20" />
                     <p>添加地点开始对比分析</p>
                 </div>

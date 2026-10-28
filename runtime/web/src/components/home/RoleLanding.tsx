@@ -54,6 +54,8 @@ export function RoleLanding({
     }));
     return (
         <PageShell
+            title="新能源智库"
+            crumbs={[{ href: '/', label: '首页' }]}
             summary="按角色查看已收录的事实、数据和可复核的计算方法。"
             facts={[
                 { label: '角色', value: current.label },
@@ -78,7 +80,7 @@ export function RoleLanding({
                             key={key}
                             type="button"
                             onClick={() => setRole(key)}
-                            className="rounded-full border border-[var(--line)] px-3 py-1 text-sm"
+                            className={key === role ? 'ei-tab is-on' : 'ei-tab'}
                             aria-pressed={key === role}
                         >
                             {templates[key].label}
@@ -90,7 +92,7 @@ export function RoleLanding({
                 </ol>
                 <div className="grid gap-3 sm:grid-cols-3" data-testid="home-pricing">
                     {plans.map((plan) => (
-                        <section key={plan.name} className="rounded-xl border border-[var(--line)] p-3">
+                        <section key={plan.name} className="ei-panel">
                             <h2 className="font-semibold">{plan.name}</h2>
                             <p className="mt-1 text-sm">{plan.price}</p>
                             <ul className="mt-2 space-y-1 text-xs text-[var(--ink-soft)]">

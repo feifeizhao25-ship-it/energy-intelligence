@@ -1,8 +1,14 @@
 import type { ReactNode } from 'react';
+import Link from 'next/link';
 
 export interface ShellFact {
     label: string;
     value: string;
+}
+
+export interface Crumb {
+    href: string;
+    label: string;
 }
 
 /** 顶部一句事实和三个关键数，下面主栏与辅栏，底部合规条。 */
@@ -12,32 +18,47 @@ export function PageShell({
     children,
     aside,
     sample = false,
+    crumbs,
+    title,
 }: {
     summary: string;
     facts: [ShellFact, ShellFact, ShellFact];
     children: ReactNode;
     aside: ReactNode;
     sample?: boolean;
+    crumbs?: Crumb[];
+    title?: string;
 }) {
     return (
-        <div data-testid="page-shell" className="mx-auto w-full max-w-[1440px] overflow-x-hidden px-3 py-4 text-[var(--ink)]">
-            <header className="rounded-2xl bg-[var(--moss)] px-4 py-3 text-white">
+        <div data-testid="page-shell" className="ei-shell overflow-x-hidden px-1 py-2 sm:px-2">
+            {crumbs && crumbs.length > 0 ? (
+                <nav aria-label="面包屑" className="mb-3 flex flex-wrap gap-1 text-xs text-[var(--ink-soft)]">
+                    {crumbs.map((crumb, index) => (
+                        <span key={crumb.href} className="inline-flex items-center gap-1">
+                            {index > 0 ? <span aria-hidden="true">/</span> : null}
+                            <Link href={crumb.href} className="underline-offset-2 hover:underline">{crumb.label}</Link>
+                        </span>
+                    ))}
+                </nav>
+            ) : null}
+            <header className="ei-hero">
+                {title ? <h1>{title}</h1> : null}
                 <p className="text-sm leading-6">{summary}</p>
                 {sample ? <p className="mt-1 text-xs text-amber-200">示例</p> : null}
-                <dl className="mt-3 grid grid-cols-3 gap-2 text-center">
+                <dl className="ei-stats">
                     {facts.map((fact) => (
-                        <div key={fact.label}>
-                            <dt className="text-xs text-white/80">{fact.label}</dt>
-                            <dd className="text-sm font-semibold tabular-nums">{fact.value}</dd>
+                        <div key={fact.label} className="ei-stat">
+                            <dt>{fact.label}</dt>
+                            <dd>{fact.value}</dd>
                         </div>
                     ))}
                 </dl>
             </header>
-            <div className="mt-4 grid items-start gap-4 lg:grid-cols-[minmax(0,62fr)_minmax(0,38fr)]">
+            <div className="ei-split">
                 <div className="min-w-0">{children}</div>
                 <aside className="min-w-0 space-y-3">{aside}</aside>
             </div>
-            <footer data-testid="compliance-bar" className="mt-4 rounded-xl border border-[var(--line)] px-3 py-2 text-xs leading-5 text-[var(--ink-soft)]">
+            <footer data-testid="compliance-bar" className="ei-compliance">
                 测算值不是承诺。示例数据会标明「示例」。个性化可在设置里关闭。人工智能生成内容会单独标明。
             </footer>
         </div>

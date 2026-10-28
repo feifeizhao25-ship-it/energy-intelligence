@@ -3,6 +3,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { formatGbt7714 } from '@/lib/citation/gbt7714';
 import { successionLabel } from '@/lib/policy/succession';
+import { DataState } from '@/components/ui/design-system';
 
 interface PolicyRow {
     id?: string;
@@ -50,6 +51,7 @@ export function PolicyTools({
     const [query, setQuery] = useState('');
     const [rows, setRows] = useState<PolicyRow[]>([]);
     const [note, setNote] = useState('正在读取政策。');
+    const [phase, setPhase] = useState<'loading' | 'ready' | 'error'>('loading');
     const [cohorts, setCohorts] = useState<CohortGroup[]>([]);
     const [cohortNote, setCohortNote] = useState('');
     const [provinces, setProvinces] = useState<ProvinceRow[]>([]);
@@ -60,10 +62,22 @@ export function PolicyTools({
 
     async function load(event?: FormEvent) {
         event?.preventDefault();
-        const response = await fetch(`/api/policies?q=${encodeURIComponent(query)}&asOf=${encodeURIComponent(asOf)}`);
-        const body = await response.json().catch(() => null);
-        setRows(body?.data || []);
-        setNote(body?.note || '检索没有完成');
+        setPhase('loading');
+        try {
+            const response = await fetch(`/api/policies?q=${encodeURIComponent(query)}&asOf=${encodeURIComponent(asOf)}`);
+            const body = await response.json().catch(() => null);
+            if (!response.ok && !body?.data) {
+                setPhase('error');
+                setNote('检索没有完成');
+                return;
+            }
+            setRows(body?.data || []);
+            setNote(body?.note || '检索没有完成');
+            setPhase('ready');
+        } catch {
+            setPhase('error');
+            setNote('检索没有完成');
+        }
     }
 
     useEffect(() => {
@@ -91,7 +105,7 @@ export function PolicyTools({
 
     const province = provinces.find((item) => item.province === provinceName) || provinces[0];
     return (
-        <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700">
+        <section className="ei-panel space-y-4 text-sm text-[var(--ink)]">
             <h2 className="font-bold text-slate-900">政策版本与引用</h2>
             <p>历史快照库未连接时，按日期回看只使用已审核记录或标明的示例条目。</p>
             {replaced && <p>{replaced}</p>}
@@ -99,7 +113,7 @@ export function PolicyTools({
             <button type="button" className="rounded-xl bg-slate-900 px-3 py-2 text-white" onClick={copy}>复制引用格式</button>
             {copied && <p>{copied}</p>}
 
-            <form onSubmit={load} className="grid gap-2 sm:grid-cols-[1fr_auto_auto]">
+            <form onSubmit={load} className="ei-filter grid gap-2 sm:grid-cols-[1fr_auto_auto]">
                 <label className="text-xs">
                     关键词
                     <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="省份、文号或标题" className="mt-1 w-full rounded-xl border px-3 py-2 text-sm" />
@@ -111,6 +125,7 @@ export function PolicyTools({
                 <button className="self-end rounded-xl bg-slate-900 px-4 py-2 text-white">按日期回看</button>
             </form>
             <p>{note}</p>
+            <DataState status={phase === 'loading' ? 'loading' : phase === 'error' ? 'error' : rows.length === 0 ? 'empty' : 'ready'} emptyTitle="这一天没有匹配的生效条目。" errorTitle="政策暂时没有加载成功" onRetry={() => void load()}>
             <ul className="space-y-2">
                 {rows.map((row) => {
                     const name = row.sourceTitle || row.title || row.type || '未命名条目';
@@ -123,8 +138,8 @@ export function PolicyTools({
                         </li>
                     );
                 })}
-                {rows.length === 0 && <li className="text-sm text-slate-500">这一天没有匹配的生效条目。</li>}
             </ul>
+            </DataState>
 
             <div>
                 <h3 className="font-bold text-slate-900">同类浏览</h3>

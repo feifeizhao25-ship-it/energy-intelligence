@@ -11,17 +11,17 @@ module.exports = {
       colors: {
         // 主色 - 新能源绿
         primary: {
-          DEFAULT: '#22C55E',
-          50: '#F0FDF4',
-          100: '#DCFCE7',
-          200: '#BBF7D0',
-          300: '#86EFAC',
-          400: '#4ADE80',
-          500: '#22C55E',
-          600: '#16A34A',
-          700: '#15803D',
-          800: '#166534',
-          900: '#14532D',
+          DEFAULT: '#0F766E',
+          50: '#F0FDFA',
+          100: '#CCFBF1',
+          200: '#99F6E4',
+          300: '#5EEAD4',
+          400: '#2DD4BF',
+          500: '#0F766E',
+          600: '#115E59',
+          700: '#134E4A',
+          800: '#134E4A',
+          900: '#042F2E',
         },
         // 辅助色 - 光伏橙黄
         solar: {
@@ -83,8 +83,8 @@ module.exports = {
         },
         // Theme colors
         border: '#E2E8F0',
-        background: '#FFFFFF',
-        foreground: '#0F172A',
+        background: '#F4F7F8',
+        foreground: '#102033',
         // Dark mode colors (for AI Assistant)
         'background-dark': '#0A0F14',
         'surface-dark': '#121A23',
@@ -92,7 +92,7 @@ module.exports = {
         'text-secondary': 'rgba(255, 255, 255, 0.5)',
       },
       fontFamily: {
-        sans: ['Inter', '-apple-system', '"PingFang SC"', 'sans-serif'],
+        sans: ['"PingFang SC"', '"HarmonyOS Sans SC"', '"Noto Sans SC"', '"Source Han Sans SC"', 'sans-serif'],
         display: ['"DIN Pro"', 'Inter', 'sans-serif'],
       },
       borderRadius: {

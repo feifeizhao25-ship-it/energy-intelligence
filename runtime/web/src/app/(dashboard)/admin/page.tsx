@@ -11,5 +11,6 @@ export default async function AdminPage() {
         <h1 className="text-2xl font-black">管理台</h1>
         <p className="text-sm leading-6 text-slate-600">名单来自服务端配置。本页不展示密钥，也不改会员价格。支付、短信和模型是否就绪见服务状态页。</p>
         <p className="text-sm">当前账号已通过名单校验。</p>
+        <p className="text-sm"><a className="underline" href="/admin/improvements">查看持续改进队列</a></p>
     </div>;
 }
