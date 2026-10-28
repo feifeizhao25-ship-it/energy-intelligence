@@ -9,6 +9,7 @@ export const LATIN_ALLOWLIST = new Set([
   'doi', 'pv', 'bess', 'ems', 'bms', 'pcs', 'scada', 'om', 'o&m', 'icp', 'sms', 'ip',
   'kwh/m', 'kwh/m²', 'w/m', 'w/m²', 'm/s', 'docx', 'png', 'svg', 'capex', 'opex', 'v1', 'v3', 'openapi', 'x-api-key',
   'pro', 'deepseek', 'deepseek-v3', 'pdf/word', 'glm', 'kimi', 'qwen', 'iso', 'gdpr', 'pipl', 'cn', 'utc',
+  'get', 'post', 'put', 'patch', 'delete', 'head', 'options',
 ]);
 /** 这些缩写首次出现必须和中文写在同一段，例如「内部收益率（IRR）」。单位（kWh、MW）不在此列。 */
 export const GLOSS_ON_FIRST = new Set(['irr', 'lcoe', 'pr', 'npv', 'lcos', 'roi', 'api', 'pdf', 'word', 'excel']);

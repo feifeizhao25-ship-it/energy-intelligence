@@ -62,21 +62,7 @@
   --font-sans: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Source Han Sans SC", system-ui, sans-serif;
 }
 
-@font-face {
-  font-family: "Noto Sans SC";
-  src: url("/fonts/noto-sans-sc/noto-sans-sc-chinese-simplified-400-normal.woff") format("woff");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "Noto Sans SC";
-  src: url("/fonts/noto-sans-sc/noto-sans-sc-chinese-simplified-700-normal.woff") format("woff");
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
+/* 页面用系统里的中文字体。完整字库大约 3 MB，只留给导出报告，不在首屏下载。 */
 
 /* Smooth Scrolling */
 html {

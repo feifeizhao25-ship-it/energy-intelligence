@@ -1,7 +1,6 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 
 // Types
 export interface Station {
@@ -203,7 +202,7 @@ export function StationProvider({ children }: { children: React.ReactNode }) {
     const addStation = (stationData: Omit<Station, 'id'>) => {
         const newStation: Station = {
             ...stationData,
-            id: uuidv4(),
+            id: crypto.randomUUID(),
         };
         setStations(prev => [...prev, newStation]);
         return newStation.id;
@@ -222,7 +221,7 @@ export function StationProvider({ children }: { children: React.ReactNode }) {
     const addIssue = (issueData: Omit<Issue, 'id' | 'createdAt' | 'solved'>) => {
         const newIssue: Issue = {
             ...issueData,
-            id: uuidv4(),
+            id: crypto.randomUUID(),
             createdAt: new Date().toISOString(),
             solved: false,
         };

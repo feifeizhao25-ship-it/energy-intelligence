@@ -6,13 +6,10 @@
  * 链接新窗口打开并带 rel="noopener noreferrer"。
  * 定义、定理、公式、注意框，以及流程图、图表、图片和视频代码块在这里一起渲染。
  */
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
-import rehypeKatex from 'rehype-katex';
-import 'katex/dist/katex.min.css';
-import 'katex/contrib/mhchem';
 import { MermaidBlock } from '@/components/ai/MermaidBlock';
 import { ChartSpecView } from '@/components/charts/ChartSpecView';
 import { MediaFrame } from '@/components/media/MediaFrame';
@@ -59,11 +56,23 @@ function fence(className: string | undefined, children: ReactNode) {
 }
 
 function MarkdownBody({ content, className }: { content: string; className?: string }) {
+    const [rehypeKatex, setRehypeKatex] = useState<typeof import('rehype-katex').default | null>(null);
+    useEffect(() => {
+        let cancelled = false;
+        Promise.all([
+            import('rehype-katex'),
+            import('katex/dist/katex.min.css'),
+            import('katex/contrib/mhchem'),
+        ]).then(([mod]) => {
+            if (!cancelled) setRehypeKatex(() => mod.default);
+        }).catch(() => undefined);
+        return () => { cancelled = true; };
+    }, []);
     return (
         <div className={[WRAP, className].filter(Boolean).join(' ')}>
             <ReactMarkdown
                 remarkPlugins={[remarkGfm, remarkMath]}
-                rehypePlugins={[[rehypeKatex, { throwOnError: false, strict: 'ignore' }]]}
+                rehypePlugins={rehypeKatex ? [[rehypeKatex, { throwOnError: false, strict: 'ignore' }]] : []}
                 components={{
                     a: ({ node: _node, ...props }) => <a {...props} target="_blank" rel="noopener noreferrer" />,
                     img: ({ src, alt }) => {
