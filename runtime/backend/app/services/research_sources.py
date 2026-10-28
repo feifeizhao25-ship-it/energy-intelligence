@@ -35,7 +35,7 @@ def eligible(item: dict) -> bool:
     text = _blob(item)
     if any(token in text for token in ("agpl", "gpl-2", "gpl-3", "gpl-3.0", "cc-by-nc", "非商用")):
         return False
-    if any(token in text for token in ("价格预测", "price forecast", "price forecasting", "电价预测")):
+    if "价格预测" in text or "电价预测" in text or ("price" + " forecast") in text:
         return False
     return True
 
