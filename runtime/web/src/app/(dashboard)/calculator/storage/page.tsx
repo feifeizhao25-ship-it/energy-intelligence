@@ -184,10 +184,12 @@ export default function StorageCalculatorPage() {
                         {result.financial.cashFlows && <section aria-label="完整年度现金流" className="space-y-3">
                             <h3 className="font-bold text-white">全部年度现金流</h3>
                             <p className="text-sm leading-7 text-slate-300">第0年为初始投入，负数表示支出。后续金额已按本次模型扣除运维费用并计入衰减。展示全部年份，不省略中间年份。</p>
-                            <table className="w-full text-left text-sm" data-testid="storage-cashflows">
+                            <div className="max-w-full overflow-x-auto">
+                            <table className="w-full min-w-[20rem] text-left text-sm" data-testid="storage-cashflows">
                                 <thead><tr><th className="py-3">年份</th><th className="py-3">净现金流（元）</th></tr></thead>
                                 <tbody>{result.financial.cashFlows.map((amount, year) => <tr key={year} className="border-t border-slate-700"><th scope="row" className="py-3 font-normal">第{year}年</th><td className="py-3 break-all">{fmt(amount, 2)}</td></tr>)}</tbody>
                             </table>
+                            </div>
                         </section>}
                         <p className="text-xs leading-6 text-slate-400" data-testid="storage-pricing">{describePricing(result.pricing)}</p>
                         <p className="text-xs leading-6 text-slate-500">评估期 10 年，每年运行 330 天；未计税费、融资、容量补偿与辅助服务收益，不构成投资建议。</p>

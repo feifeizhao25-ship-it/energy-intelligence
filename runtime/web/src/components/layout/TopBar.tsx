@@ -1,19 +1,21 @@
 'use client';
 
-import { FormEvent, Suspense, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { FormEvent, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Search } from 'lucide-react';
 import { BuildStamp } from '@/components/layout/BuildStamp';
 import { PRODUCT_ROLES, ROLE_LABELS, type ProductRole } from '@/lib/dashboard/personalization';
 
 function TopBarInner() {
     const router = useRouter();
-    const search = useSearchParams();
-    const current = search.get('role');
-    const role: ProductRole = current && (PRODUCT_ROLES as readonly string[]).includes(current)
-        ? current as ProductRole
-        : 'ci_owner';
-    const [query, setQuery] = useState(search.get('q') || '');
+    const [role, setRole] = useState<ProductRole>('ci_owner');
+    const [query, setQuery] = useState('');
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const current = params.get('role');
+        if (current && (PRODUCT_ROLES as readonly string[]).includes(current)) setRole(current as ProductRole);
+        setQuery(params.get('q') || '');
+    }, []);
 
     function submit(event: FormEvent) {
         event.preventDefault();
@@ -56,9 +58,5 @@ function TopBarInner() {
 }
 
 export function TopBar() {
-    return (
-        <Suspense fallback={<div className="ei-topbar" aria-hidden="true" />}>
-            <TopBarInner />
-        </Suspense>
-    );
+    return <TopBarInner />;
 }

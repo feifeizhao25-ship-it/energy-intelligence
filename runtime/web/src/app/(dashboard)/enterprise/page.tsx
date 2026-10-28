@@ -105,8 +105,8 @@ export default function EnterpriseCenterPage() {
                                         席位上限 10，成员名单未连接
                                     </div>
                                 </div>
-                                <div className="bg-white rounded-[40px] border border-slate-100 shadow-sm overflow-hidden">
-                                    <table className="w-full text-left">
+                                <div className="max-w-full overflow-x-auto rounded-[40px] border border-slate-100 bg-white shadow-sm">
+                                    <table className="w-full min-w-[36rem] text-left">
                                         <thead>
                                             <tr className="bg-slate-50 border-b border-slate-100">
                                                 <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">成员信息</th>

@@ -12,7 +12,8 @@ export function FreshnessBoard({ rows, escalated = [], sample = true }: { rows: 
                 <h2 className="text-base font-semibold text-[var(--ink)]">时效看板</h2>
                 {sample ? <span className="rounded-full bg-[var(--paper)] px-2 py-1 text-xs text-[var(--warn)]">示例</span> : null}
             </header>
-            <table className="w-full text-left text-sm">
+            <div className="max-w-full overflow-x-auto">
+            <table className="ei-table">
                 <thead>
                     <tr className="text-[var(--ink-soft)]">
                         <th className="py-1">类型</th>
@@ -30,6 +31,7 @@ export function FreshnessBoard({ rows, escalated = [], sample = true }: { rows: 
                     ))}
                 </tbody>
             </table>
+            </div>
             <p className="mt-3 text-xs leading-5 text-[var(--ink-soft)]">企业微信未配置时只记在本地，不外发。</p>
         </section>
     );

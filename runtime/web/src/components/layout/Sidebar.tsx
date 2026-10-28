@@ -110,7 +110,7 @@ export default function Sidebar() {
     return (
         <>
             {/* 顶部移动端导航栏 - Only visible on mobile */}
-            <header className="fixed top-0 left-0 right-0 z-50 flex h-14 items-center border-b border-white/10 bg-[var(--navy)] px-4 text-white lg:hidden">
+            <header className="ei-mobile-header">
                 {/* Logo */}
                 <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
@@ -142,7 +142,7 @@ export default function Sidebar() {
                             </div>
                             <h1 className="text-lg font-bold tracking-tight text-white">新能源智库</h1>
                         </div>
-                        <p className="text-xs font-normal text-white/60">事实、数据与可复核方法</p>
+                        <p className="text-xs font-normal text-white/80">事实、数据与可复核方法</p>
                     </div>
                 </div>
 
@@ -153,7 +153,7 @@ export default function Sidebar() {
 
                         return (
                             <div key={group.label} className="flex flex-col gap-1">
-                                <h3 className="mb-1 px-3 text-[11px] font-semibold text-white/45">
+                                <h3 className="mb-1 px-3 text-[11px] font-semibold text-white/80">
                                     {group.label}
                                 </h3>
                                 <div className="flex flex-col gap-1">

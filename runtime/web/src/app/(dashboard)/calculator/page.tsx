@@ -16,7 +16,6 @@ import {
   Zap,
   ChevronRight
 } from 'lucide-react';
-import { motion } from 'framer-motion';
 
 export default function CalculatorHomePage() {
   const router = useRouter();
@@ -65,34 +64,27 @@ export default function CalculatorHomePage() {
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-blue-600/10 blur-[120px] rounded-full" />
 
         <div className="max-w-6xl mx-auto relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center mb-16"
-          >
+          <div className="text-center mb-16">
             <div className="ei-badge mb-6">
               <Zap className="w-4 h-4" />
-              <span>智能收益测算引擎 2.0</span>
+              <span>初步测算</span>
             </div>
             <h1 className="mb-6 text-4xl font-bold tracking-tight text-[var(--navy)] md:text-5xl">
-              让每一个瓦特<br />
+              按公开数据估算<br />
               <span className="text-[var(--teal)]">
-                都产生明确价值
+                发电量与成本
               </span>
             </h1>
             <p className="mx-auto max-w-2xl text-lg text-[var(--ink-soft)]">
               基于公开气象数据与省级参考电价表（标注来源与数据截至日期）做初步测算，结果仅供参考，不构成投资建议。
             </p>
-          </motion.div>
+          </div>
 
           {/* Calculator Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-20">
-            {engines.map((engine, index) => (
-              <motion.div
+            {engines.map((engine) => (
+              <div
                 key={engine.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
                 onClick={() => router.push(engine.path)}
                 className="ei-panel group relative cursor-pointer p-8 transition-shadow hover:shadow-md"
               >
@@ -118,16 +110,16 @@ export default function CalculatorHomePage() {
 
                   <div className="grid grid-cols-2 gap-4 border-t border-[var(--line)] pt-6">
                     <div>
-                      <div className="mb-1 text-xs font-bold text-[var(--ink-soft)]">平均内部收益率</div>
+                      <div className="mb-1 text-xs font-bold text-[var(--ink-soft)]">内部收益率</div>
                       <div className="text-lg font-bold tabular-nums text-[var(--ink)]">{engine.stats.irr}</div>
                     </div>
                     <div>
-                      <div className="mb-1 text-xs font-bold text-[var(--ink-soft)]">平均回收期</div>
+                      <div className="mb-1 text-xs font-bold text-[var(--ink-soft)]">回收期</div>
                       <div className="text-lg font-bold tabular-nums text-[var(--ink)]">{engine.stats.payback}</div>
                     </div>
                   </div>
                 </div>
-              </motion.div>
+              </div>
             ))}
           </div>
 
