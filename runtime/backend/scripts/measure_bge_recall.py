@@ -40,37 +40,40 @@ def main() -> int:
     reranker = None
     rerank_reason = None
     try:
-        reranker = CrossEncoder(RERANK)
+        reranker = CrossEncoder(RERANK, max_length=256)
     except Exception as exc:
         rerank_reason = exc.__class__.__name__
     docs = load_corpus()
     questions = load_questions()
     doc_texts = [f"{doc.get('title') or ''}\n{doc.get('content') or ''}" for doc in docs]
     doc_vectors = _dense(embedder, doc_texts)
+    query_texts = [question.get("question") or "" for question in questions]
+    query_vectors = _dense(embedder, query_texts)
     per = []
     faith_scores = []
     by_category: dict[str, list[float]] = {}
-    for question in questions:
+    for index, question in enumerate(questions):
         relevant = {item["source_id"] for item in question.get("required_sources") or []}
         known = {doc["source_id"] for doc in docs}
         present = relevant & known
         if not present:
             per.append({"id": question.get("id"), "recall": None})
             continue
-        query = question.get("question") or ""
-        qvec = _dense(embedder, [query])[0]
+        query = query_texts[index]
+        qvec = query_vectors[index]
+        if index % 40 == 0:
+            print(json.dumps({"progress": index, "of": len(questions)}), flush=True)
         vector_scores = {
             doc["source_id"]: max(0.0, cosine_dense(qvec, vec))
             for doc, vec in zip(docs, doc_vectors)
         }
         ranked = hybrid_scores(query, docs, vector_scores)
         if reranker is not None:
-            pairs = [(query, row.get("chunk") or "") for row in ranked[:24]]
-            raw = reranker.predict(pairs)
-            order = sorted(range(len(pairs)), key=lambda index: float(raw[index]), reverse=True)
-            head = [ranked[index] for index in order]
-            tail = ranked[24:]
-            ranked = head + tail
+            window = ranked[:8]
+            pairs = [(query, (row.get("chunk") or "")[:800]) for row in window]
+            raw = reranker.predict(pairs, batch_size=8, show_progress_bar=False)
+            order = sorted(range(len(pairs)), key=lambda item: float(raw[item]), reverse=True)
+            ranked = [window[item] for item in order] + ranked[8:]
         else:
             ranked = rerank(query, ranked)["rows"]
         hits = [row for row in ranked if row.get("score", 0) > 0 or reranker is not None]
