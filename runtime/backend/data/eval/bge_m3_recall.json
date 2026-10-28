@@ -14,6 +14,15 @@
   "questions": 260,
   "evaluated": 260,
   "faithfulness_mean": 1.0,
+  "heldout_recall_at_8": 0.9833333333333333,
+  "heldout_by_category": {
+    "policy": 0.96875,
+    "timeliness": 1.0,
+    "calculation": 1.0
+  },
+  "heldout_questions": 120,
+  "heldout_evaluated": 120,
+  "heldout_faithfulness_mean": 1.0,
   "faithfulness_threshold": 0.9,
   "previous_char_ngram_recall_at_8": 0.9615,
   "previous_bge_recall_at_8": 0.9076923076923077,
@@ -21,5 +30,5 @@
   "previous_faithfulness_mean": 0.8861788617886179,
   "rerank_window": 16,
   "lexical": "bm25-zh-bigram",
-  "note": "previous_* 是改写问句、双字 BM25 和发布日期进入分块之前的 bge-m3 实测。分块现在包含来源记录里的发布日期和生效日期，忠实度按这份上下文计算。本次数字只在 status=ok 且模型名称为 bge-m3 时有效。字符 n-gram 的 Recall@8 仍是 0.9615。"
+  "note": "黄金集和留出集用同一次 bge-m3 编码。留出集是自然问法，不沿用黄金集套话。previous_* 是留出集出现之前的黄金集实测。本次数字只在 status=ok 且模型名称为 bge-m3 时有效。"
 }
