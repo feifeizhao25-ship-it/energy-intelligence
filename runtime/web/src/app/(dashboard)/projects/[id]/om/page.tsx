@@ -128,7 +128,7 @@ export default function OperationsMaintenancePage(props: OmPageProps) {
             <div className="min-h-screen flex items-center justify-center bg-slate-50">
                 <div className="text-center">
                     <div className="animate-spin w-8 h-8 border-4 border-green-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-                    <div className="text-sm text-slate-500">加载运维数据...</div>
+                    <div className="text-sm text-slate-500">加载运维数据。遥测未接入时不展示模拟告警。</div>
                 </div>
             </div>
         );
