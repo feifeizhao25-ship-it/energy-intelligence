@@ -1,10 +1,12 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import Sidebar from '@/components/layout/Sidebar';
 import { MobileNav } from '@/components/layout/MobileNav';
 import { TopBar } from '@/components/layout/TopBar';
-import OnboardingFlow from '@/components/onboarding/OnboardingFlow';
 import { StationProvider } from '@/contexts/StationContext';
+
+const OnboardingFlow = dynamic(() => import('@/components/onboarding/OnboardingFlow'), { ssr: false });
 
 /** 首页与工作台共用的侧栏、顶栏和移动导航。 */
 export function AppChrome({ children }: { children: React.ReactNode }) {

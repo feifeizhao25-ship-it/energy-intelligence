@@ -85,6 +85,31 @@ def load_questions(root: Path | None = None) -> list[dict]:
     return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
 
 
+def load_heldout_questions(root: Path | None = None) -> list[dict]:
+    """留出集。问法不沿用黄金集套话，调参时要和黄金集一起看。"""
+    path = (root or ROOT) / "data" / "eval" / "heldout_v1.jsonl"
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
+def claim_overlap(docs: list[dict], questions: list[dict]) -> dict:
+    """主张和所要求来源的分块是否重合。没有可切分主张的题不计入平均。"""
+    from app.services.faithfulness import faithfulness_gate, faithfulness_threshold
+
+    by_id = {doc["source_id"]: doc for doc in docs}
+    scores = []
+    for question in questions:
+        claims = "。".join(question.get("must_include") or [])
+        if not claims:
+            continue
+        present = {item["source_id"] for item in question.get("required_sources") or []}
+        contexts = [contextual_chunk(by_id[source_id]) for source_id in present if source_id in by_id]
+        gate = faithfulness_gate(claims + "。", contexts, faithfulness_threshold())
+        if gate.get("score") is not None:
+            scores.append(gate["score"])
+    mean = sum(scores) / len(scores) if scores else None
+    return {"claim_overlap": mean, "scored_claims": len(scores), "threshold": faithfulness_threshold()}
+
+
 def _query_uses_vectors(query: str, docs: list[dict]) -> bool:
     if re.search(r"[\u4e00-\u9fff]", query or ""):
         return True

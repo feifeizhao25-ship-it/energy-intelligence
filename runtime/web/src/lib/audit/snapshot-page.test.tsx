@@ -5,6 +5,9 @@ import Library from '@/app/audit/page';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 jest.mock('next-auth', () => ({ getServerSession: jest.fn() }));
+jest.mock('@/components/layout/AppChrome', () => ({
+    AppChrome: ({ children }: { children: React.ReactNode }) => children,
+}));
 jest.mock('@/lib/auth/auth-options', () => ({ authOptions: {} }));
 jest.mock('next/navigation', () => ({ redirect: jest.fn(() => { throw new Error('LOGIN_REQUIRED'); }) }));
 jest.mock('@/lib/prisma', () => ({ prisma: { calculationSnapshot: { findFirst: jest.fn(), findMany: jest.fn() } } }));

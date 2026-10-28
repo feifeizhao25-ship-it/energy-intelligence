@@ -31,7 +31,7 @@ export default async function SnapshotPage({ params }: { params: Promise<{ snaps
         <AppChrome>
             <main className="ei-panel mx-auto max-w-3xl space-y-2">
                 <h1 className="text-xl font-bold">计算记录</h1>
-                <p>这条计算记录不存在，或当前账号无法访问。请回到计算记录列表，打开一条已经保存的记录。这里不展示示例结果。</p>
+                <p>计算记录不存在或无法访问。请回到计算记录列表，打开一条已经保存的记录。这里不展示示例结果。</p>
             </main>
         </AppChrome>
     );

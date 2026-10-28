@@ -421,10 +421,19 @@ def run_ingestion(ingest=None) -> dict:
 def run_retrieval_eval(evaluate=None) -> dict:
     if evaluate is not None:
         return evaluate()
-    from app.services.retrieval_eval import evaluate as measure
-    from app.services.retrieval_eval import load_corpus, load_questions
-    report = measure(load_corpus(), load_questions())
-    return {key: value for key, value in report.items() if key != "rows"}
+    from app.services.retrieval_eval import claim_overlap, evaluate as measure, load_corpus, load_heldout_questions, load_questions
+    docs = load_corpus()
+    golden_questions = load_questions()
+    heldout_questions = load_heldout_questions()
+    report = measure(docs, golden_questions)
+    heldout = measure(docs, heldout_questions)
+    stored = {key: value for key, value in report.items() if key != "rows"}
+    stored["heldout_recall_at_8"] = heldout.get("recall_at_8")
+    stored["heldout_questions"] = heldout.get("questions")
+    stored["heldout_by_category"] = heldout.get("by_category")
+    stored["claim_overlap"] = claim_overlap(docs, golden_questions).get("claim_overlap")
+    stored["heldout_claim_overlap"] = claim_overlap(docs, heldout_questions).get("claim_overlap")
+    return stored
 
 
 def run_display_audit(runner=None) -> dict:
@@ -475,13 +484,26 @@ def _previous_metrics(directory: Path) -> dict | None:
     return data if isinstance(data, dict) else None
 
 
-def _diff(current: dict, previous: dict | None) -> dict:
-    recall = current.get("recall_at_8")
-    before = None if not previous else previous.get("recall_at_8")
+def _pair(current: dict, previous: dict | None, key: str) -> tuple[float | None, float | None, float | None]:
+    recall = current.get(key)
+    before = None if not previous else previous.get(key)
     delta = None
     if isinstance(recall, (int, float)) and isinstance(before, (int, float)):
         delta = recall - before
-    return {"recall_at_8": recall, "previous_recall_at_8": before, "recall_delta": delta}
+    return recall if isinstance(recall, (int, float)) else None, before if isinstance(before, (int, float)) else None, delta
+
+
+def _diff(current: dict, previous: dict | None) -> dict:
+    recall, before, delta = _pair(current, previous, "recall_at_8")
+    heldout, heldout_before, heldout_delta = _pair(current, previous, "heldout_recall_at_8")
+    return {
+        "recall_at_8": recall,
+        "previous_recall_at_8": before,
+        "recall_delta": delta,
+        "heldout_recall_at_8": heldout,
+        "previous_heldout_recall_at_8": heldout_before,
+        "heldout_recall_delta": heldout_delta,
+    }
 
 
 def _suggestions(diff: dict, candidates: list[dict], ingestion: dict, audit: dict) -> list[str]:
@@ -490,6 +512,12 @@ def _suggestions(diff: dict, candidates: list[dict], ingestion: dict, audit: dic
         notes.append("本次记下检索召回，尚无上一份可对照。")
     else:
         notes.append("检索召回相对上次的差值已写入指标。")
+    heldout = diff.get("heldout_recall_at_8")
+    golden = diff.get("recall_at_8")
+    if isinstance(heldout, (int, float)) and isinstance(golden, (int, float)) and heldout + 0.05 < golden:
+        notes.append("留出题召回低于黄金集。不要只按黄金集调整问句改写或加权。")
+    elif isinstance(heldout, (int, float)):
+        notes.append("留出题召回已一并写入，黄金集不能单独当作调参依据。")
     fetched = [item for item in ingestion.get("buckets") or [] if item.get("status") == "done"]
     if not fetched:
         notes.append("公开抓取未执行或未开启，候选不来自新入库文本。")
@@ -571,7 +599,10 @@ def run_cycle(
     body = {
         "created_at": moment.isoformat(),
         "metrics": diff,
-        "retrieval": {key: retrieval.get(key) for key in ("recall_at_8", "k", "questions", "evaluated", "engine", "embedding_model", "status", "reason") if key in retrieval or key == "recall_at_8"},
+        "retrieval": {key: retrieval.get(key) for key in (
+            "recall_at_8", "heldout_recall_at_8", "claim_overlap", "heldout_claim_overlap",
+            "k", "questions", "heldout_questions", "evaluated", "engine", "embedding_model", "status", "reason",
+        ) if key in retrieval or key == "recall_at_8"},
         "ingestion": ingestion,
         "display_audit": display,
         "faithfulness": faith,
@@ -593,7 +624,11 @@ def run_cycle(
     try:
         folder.mkdir(parents=True, exist_ok=True)
         _metrics_path(folder).write_text(
-            json.dumps({"recall_at_8": diff.get("recall_at_8"), "created_at": body["created_at"]}, ensure_ascii=False) + "\n",
+            json.dumps({
+                "recall_at_8": diff.get("recall_at_8"),
+                "heldout_recall_at_8": diff.get("heldout_recall_at_8"),
+                "created_at": body["created_at"],
+            }, ensure_ascii=False) + "\n",
             encoding="utf-8",
         )
         _append(folder, proposal)
