@@ -89,7 +89,7 @@ export default function LibraryPage() {
                     </Link>
                     <div>
                         <h1 className="text-2xl font-black text-slate-900">我的文献智库</h1>
-                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">个人文献库</p>
+                        <p className="mt-1 text-xs text-slate-500">还没有保存的文献时，先去检索。不展示示例论文。</p>
                     </div>
                 </div>
 

@@ -13,7 +13,7 @@ export default function ChargingPage() {
 
     return <div className="mx-auto max-w-xl space-y-4 text-slate-900">
         <h1 className="text-2xl font-black">充电测算</h1>
-        <p className="text-sm leading-6 text-slate-600">电量、电价和服务费都由你填写。这里不算利用率，也不预测电价。</p>
+        <p className="text-sm leading-6 text-slate-600">电量、电价和服务费都由你填写。这里不算利用率，也不预测电价。没有填写电价时不展示结果。</p>
         <label className="block text-sm">充电次数<input value={sessions} onChange={(event) => setSessions(event.target.value)} className="mt-1 w-full rounded-lg border px-3 py-2" /></label>
         <label className="block text-sm">每次电量（千瓦时）<input value={kwh} onChange={(event) => setKwh(event.target.value)} className="mt-1 w-full rounded-lg border px-3 py-2" /></label>
         <label className="block text-sm">电价（元每千瓦时）<input value={price} onChange={(event) => setPrice(event.target.value)} className="mt-1 w-full rounded-lg border px-3 py-2" /></label>

@@ -199,6 +199,7 @@ export default function OnboardingPage() {
                             {step.title}
                         </h1>
                         <p className="text-slate-400">{step.subtitle}</p>
+                        <p className="mt-2 text-sm text-slate-500">尚未完成引导时可以稍后继续，工作台先用通用首页。</p>
                     </div>
 
                     {/* Options */}

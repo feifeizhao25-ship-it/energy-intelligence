@@ -217,6 +217,7 @@ export default function AssistantPage() {
                             </div>
                             <div>
                                 <p className="text-sm font-bold text-white">上传文件</p>
+                                <p className="text-xs text-white/70">还没有对话时，从下面的问题开始。不会编造未收录的数字。</p>
                                 <p className="text-xs text-text-secondary mt-1">支持 PDF / Excel / 图片</p>
                             </div>
                         </div>
