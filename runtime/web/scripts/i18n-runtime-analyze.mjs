@@ -13,6 +13,8 @@ export function nonAllowlistedWords(text) {
   for (const w of stripped.match(/(?<![0-9])[A-Za-z][A-Za-z0-9&/.-]*[A-Za-z0-9]|[A-Za-z]/g) ?? []) {
     const clean = w.replace(/[./-]+$/, '');
     if (/^(https?:|www\.)/i.test(clean) || /@/.test(clean)) continue;
+    // 构建时写入的提交号是十六进制，不是英文单词。
+    if (/^[0-9a-f]{7,40}$/i.test(clean)) continue;
     if (!isAllowed(clean)) out.push(clean);
   }
   return out;

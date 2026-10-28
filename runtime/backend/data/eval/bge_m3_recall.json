@@ -4,17 +4,22 @@
   "rerank_model": "BAAI/bge-reranker-v2-m3",
   "rerank_reason": null,
   "query_model_ok": true,
-  "recall_at_8": 0.9076923076923077,
+  "recall_at_8": 0.9807692307692307,
   "by_category": {
     "policy": 1.0,
-    "calculation": 0.7666666666666667,
+    "calculation": 1.0,
     "timeliness": 1.0,
-    "refusal": 0.75
+    "refusal": 0.875
   },
   "questions": 260,
   "evaluated": 260,
-  "faithfulness_mean": 0.8861788617886179,
+  "faithfulness_mean": 1.0,
   "faithfulness_threshold": 0.9,
   "previous_char_ngram_recall_at_8": 0.9615,
-  "note": "previous_char_ngram_recall_at_8 来自字符 n-gram 实测。本次数字只在 status=ok 且模型名称为 bge-m3 时有效。"
+  "previous_bge_recall_at_8": 0.9076923076923077,
+  "previous_calculation_recall_at_8": 0.7666666666666667,
+  "previous_faithfulness_mean": 0.8861788617886179,
+  "rerank_window": 16,
+  "lexical": "bm25-zh-bigram",
+  "note": "previous_* 是改写问句、双字 BM25 和发布日期进入分块之前的 bge-m3 实测。分块现在包含来源记录里的发布日期和生效日期，忠实度按这份上下文计算。本次数字只在 status=ok 且模型名称为 bge-m3 时有效。字符 n-gram 的 Recall@8 仍是 0.9615。"
 }

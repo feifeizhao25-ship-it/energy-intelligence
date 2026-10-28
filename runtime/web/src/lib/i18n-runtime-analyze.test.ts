@@ -9,7 +9,7 @@ function run(expr: string): unknown {
 
 describe('运行时语言检查（白名单制）', () => {
   it('白名单词与网址不计入', () => {
-    expect(run(`m.nonAllowlistedWords('光伏 IRR LCOE https://www.mee.gov.cn kWh')`)).toEqual([]);
+    expect(run(`m.nonAllowlistedWords('光伏 IRR LCOE https://www.mee.gov.cn kWh 版本 ad4efba')`)).toEqual([]);
   });
   it('新加的英文（不在旧黑名单里）也会被拦下', () => {
     expect(JSON.stringify(run(`m.analyzeVisibleText('/x', '中文 Welcome to our amazing platform today')`))).toContain('非白名单拉丁词');

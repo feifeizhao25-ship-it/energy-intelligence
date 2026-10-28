@@ -137,6 +137,13 @@ def test_hybrid_recall_and_local_rerank(monkeypatch):
     rows = hybrid_scores("机制电量", docs, {"a": 0.9, "b": 0.1})
     assert rows[0]["source_id"] == "a"
     assert "文号：" in rows[0]["chunk"]
+    formula_docs = [
+        {"source_id": "formula", "title": "光伏发电站设计标准", "locator": "6.6 发电量计算", "content": "发电量 Ep = H_A × P_AZ × K"},
+        {"source_id": "other", "content": "电价市场化交易"},
+    ]
+    formula_rows = hybrid_scores("只复述已收录公式。发电量计算公式 Ep = H_A × P_AZ × K（第 3 题）不要补充未收录内容。", formula_docs, {"formula": 0.1, "other": 0.95})
+    assert formula_rows[0]["source_id"] == "formula"
+    assert "定位：" in formula_rows[0]["chunk"]
     assert recall_at_k(rows, {"a"}) >= 0.85
     monkeypatch.delenv("DASHSCOPE_API_KEY", raising=False)
     called = []

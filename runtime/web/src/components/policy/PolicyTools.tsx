@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, type FormEvent } from 'react';
-import { formatGbt7714 } from '@/lib/citation/gbt7714';
+import { citationFieldsReady, formatGbt7714 } from '@/lib/citation/gbt7714';
 import { successionLabel } from '@/lib/policy/succession';
 import { DataState } from '@/components/ui/design-system';
 
@@ -57,14 +57,16 @@ export function PolicyTools({
     const [provinces, setProvinces] = useState<ProvinceRow[]>([]);
     const [provinceName, setProvinceName] = useState('山东');
     const [provinceNote, setProvinceNote] = useState('');
-    const citation = formatGbt7714({ title, docNumber, locator: '待核实' });
+    const citationInput = { title, docNumber, locator: null };
+    const citationReady = citationFieldsReady(citationInput);
+    const citation = citationReady ? formatGbt7714(citationInput) : '';
     const replaced = successionLabel({ supersededBy });
 
-    async function load(event?: FormEvent) {
+    async function load(event?: FormEvent, nextQuery = query) {
         event?.preventDefault();
         setPhase('loading');
         try {
-            const response = await fetch(`/api/policies?q=${encodeURIComponent(query)}&asOf=${encodeURIComponent(asOf)}`);
+            const response = await fetch(`/api/policies?q=${encodeURIComponent(nextQuery)}&asOf=${encodeURIComponent(asOf)}`);
             const body = await response.json().catch(() => null);
             if (!response.ok && !body?.data) {
                 setPhase('error');
@@ -81,7 +83,9 @@ export function PolicyTools({
     }
 
     useEffect(() => {
-        void load();
+        const initial = new URLSearchParams(window.location.search).get('q') || '';
+        if (initial) setQuery(initial);
+        void load(undefined, initial);
         void fetch('/api/policies/cohorts').then((response) => response.json()).then((body) => {
             setCohorts(body.groups || []);
             setCohortNote(body.note || '');
@@ -109,9 +113,15 @@ export function PolicyTools({
             <h2 className="font-bold text-slate-900">政策版本与引用</h2>
             <p>历史快照库未连接时，按日期回看只使用已审核记录或标明的示例条目。</p>
             {replaced && <p>{replaced}</p>}
-            <p className="break-all">{citation}</p>
-            <button type="button" className="rounded-xl bg-slate-900 px-3 py-2 text-white" onClick={copy}>复制引用格式</button>
-            {copied && <p>{copied}</p>}
+            {citationReady ? (
+                <>
+                    <p className="break-all">{citation}</p>
+                    <button type="button" className="rounded-xl bg-[var(--navy)] px-3 py-2 text-white" onClick={copy}>复制引用格式</button>
+                    {copied && <p>{copied}</p>}
+                </>
+            ) : (
+                <p>文号或出处未齐，暂不生成引用。</p>
+            )}
 
             <form onSubmit={load} className="ei-filter grid gap-2 sm:grid-cols-[1fr_auto_auto]">
                 <label className="text-xs">
@@ -161,14 +171,30 @@ export function PolicyTools({
                         {provinces.map((item) => <option key={item.province}>{item.province}</option>)}
                     </select>
                 </label>
-                <dl className="mt-2 space-y-1">
-                    {province && Object.entries(province.fields).map(([name, field]) => (
-                        <div key={name} className="grid grid-cols-1 gap-1 sm:grid-cols-[8rem_1fr]">
-                            <dt className="text-slate-500">{name}</dt>
-                            <dd className="break-words">{field.display || field.value || '待核实'}</dd>
-                        </div>
-                    ))}
-                </dl>
+                <div className="mt-3 max-w-full overflow-x-auto">
+                    <table className="ei-table">
+                        <thead>
+                            <tr>
+                                <th>栏目</th>
+                                <th>内容</th>
+                                <th>状态</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {province && Object.entries(province.fields).map(([name, field]) => {
+                                const value = (field.display || field.value || '').trim();
+                                const pending = !value || value === '待核实';
+                                return (
+                                    <tr key={name}>
+                                        <td>{name}</td>
+                                        <td className="break-words">{pending ? '—' : value}</td>
+                                        <td><span className="ei-badge" data-tone={pending ? 'warn' : 'up'}>{pending ? '待核实' : '已填写'}</span></td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </section>
     );

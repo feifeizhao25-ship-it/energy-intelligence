@@ -7,6 +7,18 @@ export interface CitationFields {
     locator?: string | null;
 }
 
+const PLACEHOLDER = new Set(['', '待核实', '政策原文', '未命名条目']);
+
+/** 标题和至少一项出处都齐，才生成引用。空字段不拼成一串待核实。 */
+export function citationFieldsReady(item: CitationFields): boolean {
+    const title = item.title?.trim() || '';
+    if (!title || PLACEHOLDER.has(title)) return false;
+    return [item.authors, item.source, item.year, item.docNumber].some((value) => {
+        const text = value?.trim() || '';
+        return Boolean(text) && !PLACEHOLDER.has(text);
+    });
+}
+
 /** GB/T 7714 顺序编码的可复制条目。缺字段写待核实，不补作者或年份。 */
 export function formatGbt7714(item: CitationFields): string {
     const authors = item.authors?.trim() || '待核实';

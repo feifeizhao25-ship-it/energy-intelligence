@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth/auth-options';
 import { prisma } from '@/lib/prisma';
+import { AppChrome } from '@/components/layout/AppChrome';
 
 const object = (value: unknown): Record<string, any> => value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, any> : {};
 const display = (value: unknown, unit: string, empty = '暂无可确认数值') => typeof value === 'number' && Number.isFinite(value) ? `${value.toLocaleString('zh-CN', { maximumFractionDigits: 3 })}${unit}` : empty;
@@ -17,9 +18,23 @@ export default async function SnapshotPage({ params }: { params: Promise<{ snaps
     try {
         snapshot = await prisma.calculationSnapshot.findFirst({ where: { id: snapshotId, userId: session.user.id } });
     } catch {
-        return <p role="alert" className="p-8 text-center">计算记录暂时无法读取，请稍后重试。</p>;
+        return (
+            <AppChrome>
+                <main role="alert" className="ei-panel mx-auto max-w-3xl space-y-2">
+                    <h1 className="text-xl font-bold">计算记录</h1>
+                    <p>计算记录暂时无法读取，请稍后重试。读取失败不代表记录已丢失。</p>
+                </main>
+            </AppChrome>
+        );
     }
-    if (!snapshot) return <p className="p-8 text-center">计算记录不存在或无法访问。</p>;
+    if (!snapshot) return (
+        <AppChrome>
+            <main className="ei-panel mx-auto max-w-3xl space-y-2">
+                <h1 className="text-xl font-bold">计算记录</h1>
+                <p>这条计算记录不存在，或当前账号无法访问。请回到计算记录列表，打开一条已经保存的记录。这里不展示示例结果。</p>
+            </main>
+        </AppChrome>
+    );
     const output = object(snapshot.outputSnapshot);
     const trace = object(snapshot.calculationTrace);
     const assumptions = object(trace.assumptions);
@@ -27,7 +42,7 @@ export default async function SnapshotPage({ params }: { params: Promise<{ snaps
     const solar = object(object(evidence.dataProvenance).solarResource);
     const coverage = object(solar.temporalCoverage);
     const risks = Array.isArray(snapshot.risks) ? snapshot.risks.filter((v): v is string => typeof v === 'string') : [];
-    return <main className="mx-auto max-w-4xl space-y-6 px-5 py-10 text-slate-800">
+    return <AppChrome><main className="mx-auto max-w-4xl space-y-6 text-[var(--ink)]">
         <Link href="/audit" className="text-sm text-blue-600">返回我的计算记录</Link>
         <header className="rounded-2xl bg-slate-900 p-6 text-white">
             <p className="text-sm text-amber-200">已保存的计算快照</p>
@@ -56,5 +71,5 @@ export default async function SnapshotPage({ params }: { params: Promise<{ snaps
             <p>本页读取已存数据，不代表数据已更新到今天；新决策前请重新核对实际价格、设备和现场条件。</p>
             {risks.length > 0 && <ul className="list-disc space-y-2 pl-5">{risks.map((risk, index) => <li key={index}>{risk}</li>)}</ul>}
         </section>
-    </main>;
+    </main></AppChrome>;
 }

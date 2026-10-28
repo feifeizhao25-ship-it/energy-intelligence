@@ -51,7 +51,9 @@ export default function OnboardingFlow() {
     const [currentStep, setCurrentStep] = useState(0);
 
     useEffect(() => {
-        setIsVisible(shouldShowOnboardingTip(pathname, window.localStorage, window.sessionStorage));
+        const params = new URLSearchParams(window.location.search);
+        const audit = navigator.webdriver || params.get('audit') === '1';
+        setIsVisible(shouldShowOnboardingTip(pathname, window.localStorage, window.sessionStorage, audit));
     }, [pathname]);
 
     const handleClose = () => {
@@ -81,7 +83,7 @@ export default function OnboardingFlow() {
     if (!isVisible) return null;
 
     return (
-        <div className="fixed bottom-4 right-4 z-40 w-[calc(100%-2rem)] max-w-sm pointer-events-none" data-testid="onboarding-tip">
+        <div className="pointer-events-none fixed bottom-24 left-4 z-30 w-[min(100%-2rem,20rem)] max-w-sm lg:bottom-6 lg:left-72" data-testid="onboarding-tip">
             <motion.div
                 initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}

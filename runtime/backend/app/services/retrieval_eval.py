@@ -11,19 +11,22 @@ import re
 from pathlib import Path
 
 from app.services.embeddings_cn import embed_texts
-from app.services.hybrid_retrieval import contextual_chunk, hybrid_scores, recall_at_k, rerank
+from app.services.hybrid_retrieval import contextual_chunk, hybrid_scores, recall_at_k, rerank, rewrite_query
 from app.services.local_embeddings import pairwise_query_scores
 
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def _doc(source_id: str, title: str, content: str, origin: str, doc_number: str = "", issuer: str = "") -> dict:
+def _doc(source_id: str, title: str, content: str, origin: str, doc_number: str = "", issuer: str = "", locator: str = "", publish_date: str = "", effective_date: str = "") -> dict:
     return {
         "source_id": source_id,
         "title": title,
         "content": content,
         "doc_number": doc_number,
         "issuer": issuer,
+        "locator": locator,
+        "publish_date": publish_date,
+        "effective_date": effective_date,
         "origin": origin,
     }
 
@@ -40,7 +43,9 @@ def load_corpus(root: Path | None = None) -> list[dict]:
         )
         docs.append(_doc(
             source["source_id"], source.get("title") or "", content, "rag_sources",
-            source.get("doc_number") or "", source.get("issuer") or "",
+            source.get("doc_number") or "", source.get("issuer") or "", source.get("locator") or "",
+            source.get("publish_date") or source.get("published_at") or "",
+            source.get("effective_date") or "",
         ))
     registry_path = base / "data" / "public_sources" / "registry.json"
     if registry_path.is_file():
@@ -123,7 +128,7 @@ def evaluate(docs: list[dict], questions: list[dict], k: int = 8) -> dict:
                 "reason": "语料中没有要求的来源",
             })
             continue
-        query = question.get("question") or ""
+        query = rewrite_query(question.get("question") or "")
         vectors = vector_scores_for(query, docs)
         ranked = rerank(query, hybrid_scores(query, docs, vectors["scores"]))
         # 得分为 0 的文档只是稳定排序留在前面，不算检索命中。
@@ -156,7 +161,7 @@ def evaluate(docs: list[dict], questions: list[dict], k: int = 8) -> dict:
         "zero_score_questions": zero_score,
         "by_category": {key: (sum(values) / len(values)) for key, values in by_category.items()},
         "hardcoded": False,
-        "note": "语料是已入库的登记文本、离线样本和结构样本，不是一次新的网络抓取。向量权重 0.45，词面权重 0.55。无中文且与语料无共同词的查询不使用向量。得分为 0 的文档不计入前 8。embedding_model 为 local-char-ngram 时表示本机没有加载 bge 权重，用的是字符 n-gram，不是文本嵌入模型。",
+        "note": "语料是已入库的登记文本、离线样本和结构样本，不是一次新的网络抓取。词面是中文双字 BM25。含公式、标准或文号的问句用词面 0.82、向量 0.18，其余问句用词面 0.55、向量 0.45。无中文且与语料无共同词的查询不使用向量。得分为 0 的文档不计入前 8。embedding_model 为 local-char-ngram 时表示本机没有加载 bge 权重，用的是字符 n-gram，不是文本嵌入模型。",
         "rows": per_question,
     }
 

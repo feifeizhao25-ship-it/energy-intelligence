@@ -1,6 +1,16 @@
+const { execSync } = require('child_process');
 const withNextIntl = require('next-intl/plugin')(
   './src/i18n/request.ts'
 );
+
+function gitShort() {
+  if (process.env.NEXT_PUBLIC_GIT_SHA) return process.env.NEXT_PUBLIC_GIT_SHA;
+  try {
+    return execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+  } catch {
+    return '';
+  }
+}
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -20,6 +30,8 @@ const nextConfig = {
   },
   env: {
     CUSTOM_KEY: 'solarwind-pro',
+    NEXT_PUBLIC_GIT_SHA: gitShort(),
+    NEXT_PUBLIC_BUILD_DATE: process.env.NEXT_PUBLIC_BUILD_DATE || new Date().toISOString().slice(0, 10),
   },
   transpilePackages: ['@react-pdf/renderer'],
   // pdf-parse 含 pdfjs worker，保持在服务端外部依赖，避免打包期动态依赖告警

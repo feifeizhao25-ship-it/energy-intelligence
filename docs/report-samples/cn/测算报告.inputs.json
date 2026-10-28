@@ -1,0 +1,56 @@
+{
+  "inputs": {
+    "label": "示例",
+    "note": "下列输入是脚本里的假设，用来演示计算器。不是实测电站，不读取省级电价表，不构成投资建议。",
+    "capacityKw": 100,
+    "installationType": "roof",
+    "moduleType": "standard",
+    "tiltDeg": 0,
+    "azimuthDeg": 180,
+    "annualGhiKWhPerM2": 1500,
+    "monthlyDailyGhiKWhPerM2": 4.109589041095891,
+    "temperatureC": 15,
+    "selfUsePriceYuanPerKwh": 0.6,
+    "feedInPriceYuanPerKwh": 0.35,
+    "selfUseRatio": 0.7,
+    "unitCostYuanPerKw": 3000
+  },
+  "energy": {
+    "year1KWh": 125194,
+    "equivalentHours": 1251.94,
+    "pr": 0.8346266666666663,
+    "planeIrradiation": 1500.0000000000005,
+    "monthlyKWh": [
+      10499,
+      9539,
+      10629,
+      10348,
+      10739,
+      10414,
+      10752,
+      10715,
+      10313,
+      10588,
+      10178,
+      10480
+    ],
+    "lifetimeKWh": 2936563
+  },
+  "financial": {
+    "irr": 19.945139573544946,
+    "paybackYears": 4.878959984726575,
+    "lcoe": 0.2649173283925613,
+    "investmentYuan": 300000
+  },
+  "environmental": {
+    "co2Year1": 72950.5438,
+    "co2Lifetime": 1711135.2601,
+    "treesEquivalent": 77779,
+    "emissionFactor": 0.5827,
+    "emissionFactorYear": 2023,
+    "emissionFactorSource": "生态环境部、国家统计局公告 2025 年第 47 号",
+    "emissionFactorScope": "江苏省级电力平均二氧化碳排放因子"
+  },
+  "generatedAt": "2026-10-27T02:00:00.000Z",
+  "engine": "simulateSolar"
+}

@@ -615,6 +615,60 @@ html {
   }
 }
 
+.ei-topbar {
+  position: sticky;
+  top: 3.5rem;
+  z-index: 30;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  backdrop-filter: blur(10px);
+}
+
+@media (min-width: 1024px) {
+  .ei-topbar { top: 0; }
+}
+
+.ei-tile {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  padding: 14px;
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+}
+
+.ei-tile:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--teal) 45%, var(--line));
+  box-shadow: 0 8px 20px rgba(14, 42, 43, 0.06);
+}
+
+.ei-tile-icon {
+  display: inline-flex;
+  height: 32px;
+  width: 32px;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--teal) 14%, var(--paper));
+  color: var(--navy);
+}
+
+.dark .ei-tile:hover {
+  box-shadow: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .ei-skeleton { animation: none; }
+  .ei-tile, .ei-tile:hover { transition: none; transform: none; }
 }

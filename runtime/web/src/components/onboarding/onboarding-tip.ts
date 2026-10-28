@@ -11,7 +11,8 @@ export const TIP_SUPPRESSED_PREFIXES = ['/calculator', '/quick-calc', '/checkout
 
 type KV = Pick<Storage, 'getItem'>;
 
-export function shouldShowOnboardingTip(pathname: string | null | undefined, local: KV | null, session: KV | null): boolean {
+export function shouldShowOnboardingTip(pathname: string | null | undefined, local: KV | null, session: KV | null, audit = false): boolean {
+  if (audit) return false;
   const path = pathname || '/';
   if (TIP_SUPPRESSED_PREFIXES.some((p) => path === p || path.startsWith(`${p}/`))) return false;
   if (local?.getItem(TIP_DISMISSED_KEY)) return false;

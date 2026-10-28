@@ -47,6 +47,7 @@ export default function Sidebar() {
         {
             label: '主控制台',
             items: [
+                { name: '智库首页', href: '/', icon: 'bolt', tier: 'L1' },
                 { name: '测算首页', href: '/dashboard', icon: 'bolt', tier: 'L1' },
                 { name: 'AI 能源专家', href: '/assistant', icon: 'smart_toy', tier: 'L1' },
                 { name: '资源地图', href: '/map', icon: 'map', tier: 'L2' },
