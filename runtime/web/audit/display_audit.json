@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-28T13:06:20.630Z",
+  "generatedAt": "2026-10-28T14:49:03.433Z",
   "base": "http://127.0.0.1:3101",
-  "routeCount": 67,
+  "routeCount": 70,
   "roles": [
     "investor",
     "owner",
@@ -9,7 +9,7 @@
     "researcher",
     "government"
   ],
-  "checks": 670,
+  "checks": 700,
   "issueCounts": {},
   "note": "五个角色使用种子账号的登录态访问。署名原文里的外文机构名不记为英文泄漏。浏览器对已解释的 403/404/503 只记页面是否说明原因。",
   "rows": [
@@ -230,6 +230,30 @@
       "shot": ""
     },
     {
+      "route": "/enterprise/contract",
+      "viewport": "1440",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/invoice",
+      "viewport": "1440",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/quote",
+      "viewport": "1440",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
       "route": "/freshness",
       "viewport": "1440",
       "role": "investor",
@@ -766,6 +790,30 @@
       "shot": ""
     },
     {
+      "route": "/enterprise/contract",
+      "viewport": "390",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/invoice",
+      "viewport": "390",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/quote",
+      "viewport": "390",
+      "role": "investor",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
       "route": "/freshness",
       "viewport": "390",
       "role": "investor",
@@ -1295,6 +1343,30 @@
     },
     {
       "route": "/enterprise",
+      "viewport": "1440",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/contract",
+      "viewport": "1440",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/invoice",
+      "viewport": "1440",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/quote",
       "viewport": "1440",
       "role": "owner",
       "status": 200,
@@ -1838,6 +1910,30 @@
       "shot": ""
     },
     {
+      "route": "/enterprise/contract",
+      "viewport": "390",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/invoice",
+      "viewport": "390",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/quote",
+      "viewport": "390",
+      "role": "owner",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
       "route": "/freshness",
       "viewport": "390",
       "role": "owner",
@@ -2374,6 +2470,30 @@
       "shot": ""
     },
     {
+      "route": "/enterprise/contract",
+      "viewport": "1440",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/invoice",
+      "viewport": "1440",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/quote",
+      "viewport": "1440",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
       "route": "/freshness",
       "viewport": "1440",
       "role": "engineer",
@@ -2910,6 +3030,30 @@
       "shot": ""
     },
     {
+      "route": "/enterprise/contract",
+      "viewport": "390",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/invoice",
+      "viewport": "390",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/quote",
+      "viewport": "390",
+      "role": "engineer",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
       "route": "/freshness",
       "viewport": "390",
       "role": "engineer",
@@ -3439,6 +3583,30 @@
     },
     {
       "route": "/enterprise",
+      "viewport": "1440",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/contract",
+      "viewport": "1440",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/invoice",
+      "viewport": "1440",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/quote",
       "viewport": "1440",
       "role": "researcher",
       "status": 200,
@@ -3982,6 +4150,30 @@
       "shot": ""
     },
     {
+      "route": "/enterprise/contract",
+      "viewport": "390",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/invoice",
+      "viewport": "390",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/quote",
+      "viewport": "390",
+      "role": "researcher",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
       "route": "/freshness",
       "viewport": "390",
       "role": "researcher",
@@ -4511,6 +4703,30 @@
     },
     {
       "route": "/enterprise",
+      "viewport": "1440",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/contract",
+      "viewport": "1440",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/invoice",
+      "viewport": "1440",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/quote",
       "viewport": "1440",
       "role": "government",
       "status": 200,
@@ -5047,6 +5263,30 @@
     },
     {
       "route": "/enterprise",
+      "viewport": "390",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/contract",
+      "viewport": "390",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/invoice",
+      "viewport": "390",
+      "role": "government",
+      "status": 200,
+      "issues": [],
+      "shot": ""
+    },
+    {
+      "route": "/enterprise/quote",
       "viewport": "390",
       "role": "government",
       "status": 200,
