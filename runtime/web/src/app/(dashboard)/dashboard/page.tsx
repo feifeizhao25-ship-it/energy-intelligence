@@ -70,8 +70,8 @@ function FocusCardView({ focus, roleLabel }: { focus: NonNullable<Personalizatio
 
 function TariffCard({ tariff, provinceSource }: { tariff: NonNullable<Personalization['tariff']>; provinceSource: Personalization['provinceSource'] }) {
     return (
-        <div id="tariff" data-testid="tariff-card" className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
-            <div className="flex items-center gap-2 font-bold text-slate-900 mb-1"><Plug className="w-4 h-4 text-green-600" />{tariff.province}电价</div>
+        <div id="tariff" data-testid="tariff-card" className="ei-panel">
+            <div className="flex items-center gap-2 font-bold text-[var(--ink)] mb-1"><Plug className="w-4 h-4 text-green-600" />{tariff.province}电价</div>
             <p className="text-[11px] text-slate-400 mb-2">{provinceSource === '项目所在地' ? '省份根据你最近项目的所在地推断，可在设置中修改' : '省份来自你的设置'}</p>
             {tariff.status === 'ok' ? (
                 <>
@@ -97,8 +97,8 @@ function TariffCard({ tariff, provinceSource }: { tariff: NonNullable<Personaliz
 
 function PolicyCard({ p }: { p: Personalization }) {
     return (
-        <div id="policies" data-testid="policy-card" className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
-            <div className="flex items-center gap-2 font-bold text-slate-900 mb-1"><Landmark className="w-4 h-4 text-green-600" />{p.province}政策</div>
+        <div id="policies" data-testid="policy-card" className="ei-panel">
+            <div className="flex items-center gap-2 font-bold text-[var(--ink)] mb-1"><Landmark className="w-4 h-4 text-green-600" />{p.province}政策</div>
             <p className="text-[11px] text-slate-400 mb-2">只显示经人工审核通过的政策</p>
             {p.milestones.length > 0 && (
                 <div className="mb-2">
@@ -130,7 +130,7 @@ function PolicyCard({ p }: { p: Personalization }) {
 
 function PersonalizationNote({ p }: { p: Personalization }) {
     return (
-        <details className="rounded-2xl bg-white/60 px-4 py-3 text-[11px] text-slate-500 border border-slate-100">
+        <details className="ei-panel px-4 py-3 text-[11px] text-[var(--ink-soft)]">
             <summary className="cursor-pointer font-bold text-slate-600">{p.personalized ? '为什么这样展示' : '个性化已关闭'}</summary>
             <ul className="mt-2 list-disc pl-4 space-y-1">{p.reasons.map(r => <li key={r}>{r}</li>)}</ul>
             <Link href="/settings#personalization" className="mt-2 inline-block text-green-700 underline">在设置中修改角色、省份或关闭个性化</Link>
@@ -215,7 +215,7 @@ function DashboardContent() {
                         <div className="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center mb-4">
                             <CloudOff className="w-7 h-7 text-slate-400" />
                         </div>
-                        <div className="font-bold text-slate-900 mb-1">工作台暂时无法加载</div>
+                        <div className="font-bold text-[var(--ink)] mb-1">工作台暂时无法加载</div>
                         <p className="text-xs text-slate-400 mb-5">请稍后重试；如果刚刚登录，可刷新页面。</p>
                         <button onClick={load} className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm font-bold rounded-xl hover:bg-green-700 transition-colors">
                             <RefreshCw className="w-4 h-4" />重试
@@ -229,8 +229,8 @@ function DashboardContent() {
                                 focus: p?.focus ? <FocusCardView key="focus" focus={p.focus} roleLabel={p.roleLabel} /> : null,
                                 nextActions: (<>
                         {data.nextActions.length > 0 && (
-                            <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
-                                <div className="font-bold text-slate-900 mb-1">接下来可以做</div>
+                            <div className="ei-panel">
+                                <div className="font-bold text-[var(--ink)] mb-1">接下来可以做</div>
                                 <p className="text-[11px] text-slate-400 mb-2">根据你自己的项目、测算与额度生成</p>
                                 <div className="divide-y divide-slate-100">
                                     {data.nextActions.filter(a => !hidden.includes(a.id)).map(action => (
@@ -257,8 +257,8 @@ function DashboardContent() {
                                 </>),
                                 stationAlerts: (<>
                         {data.stationAlerts.length > 0 && (
-                            <div className="bg-white rounded-2xl p-4 shadow-sm border border-rose-100">
-                                <div className="flex items-center gap-2 font-bold text-slate-900 mb-2"><Bell className="w-4 h-4 text-rose-500" />电站告警</div>
+                            <div className="ei-panel border-rose-200">
+                                <div className="flex items-center gap-2 font-bold text-[var(--ink)] mb-2"><Bell className="w-4 h-4 text-rose-500" />电站告警</div>
                                 {data.stationAlerts.map(s => (
                                     <div key={s.id} className="flex justify-between py-1 text-sm">
                                         <span className="text-slate-700">{s.name}</span>
@@ -269,9 +269,9 @@ function DashboardContent() {
                         )}
                                 </>),
                                 projects: (<>
-                        <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+                        <div className="ei-panel">
                             <div className="flex items-center justify-between mb-2">
-                                <span className="font-bold text-slate-900">最近的项目</span>
+                                <span className="font-bold text-[var(--ink)]">最近的项目</span>
                                 <Link href="/projects" className="text-xs text-green-600 font-bold flex items-center gap-0.5">全部<ChevronRight className="w-3 h-3" /></Link>
                             </div>
                             {data.recentProjects.length === 0 ? (
@@ -286,8 +286,8 @@ function DashboardContent() {
                                 </>),
                                 usage: (<>
                         {data.usage.length > 0 && (
-                            <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
-                                <div className="flex items-center gap-2 font-bold text-slate-900 mb-2"><Gauge className="w-4 h-4 text-green-600" />今日额度</div>
+                            <div className="ei-panel">
+                                <div className="flex items-center gap-2 font-bold text-[var(--ink)] mb-2"><Gauge className="w-4 h-4 text-green-600" />今日额度</div>
                                 {data.usage.map(u => (
                                     <div key={u.type} className="flex justify-between py-1 text-sm">
                                         <span className="text-slate-600">{u.type}</span>

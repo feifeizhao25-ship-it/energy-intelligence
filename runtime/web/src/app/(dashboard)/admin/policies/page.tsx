@@ -35,9 +35,15 @@ export default function PolicyReviewPage() {
         setState('loading');
         try {
             const res = await fetch(`/api/admin/policies?status=${s}`, { cache: 'no-store' });
-            if (res.status === 404 || res.status === 401) { setState('forbidden'); return; }
+            if (res.status === 401) { setState('forbidden'); return; }
             const body = await res.json();
             if (!res.ok) throw new Error();
+            if (body.roleFallback) {
+                setItems([]);
+                setMessage(body.note || '当前角色不能审核政策，这里不展示待审列表。');
+                setState('forbidden');
+                return;
+            }
             setItems(body.items);
             setCounts(body.counts ?? {});
             setState('ready');

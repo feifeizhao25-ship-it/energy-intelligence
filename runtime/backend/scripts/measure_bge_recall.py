@@ -12,12 +12,19 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from app.services.faithfulness import faithfulness_gate, faithfulness_threshold
-from app.services.hybrid_retrieval import hybrid_scores, recall_at_k, rerank
+from app.services.hybrid_retrieval import contextual_chunk, hybrid_scores, recall_at_k, rerank, rewrite_query
 from app.services.local_embeddings import cosine_dense
 from app.services.retrieval_eval import load_corpus, load_questions
 
 EMBED = "BAAI/bge-m3"
 RERANK = "BAAI/bge-reranker-v2-m3"
+# 只重排前 8 名不会改变 Recall@8 的成员。窗口放大到 16，才可能把第 9–16 名换进前 8。
+RERANK_WINDOW = 16
+BEFORE = {
+    "recall_at_8": 0.9076923076923077,
+    "calculation_recall_at_8": 0.7666666666666667,
+    "faithfulness_mean": 0.8861788617886179,
+}
 
 
 def _dense(model, texts: list[str]) -> list[list[float]]:
@@ -45,9 +52,9 @@ def main() -> int:
         rerank_reason = exc.__class__.__name__
     docs = load_corpus()
     questions = load_questions()
-    doc_texts = [f"{doc.get('title') or ''}\n{doc.get('content') or ''}" for doc in docs]
+    doc_texts = [contextual_chunk(doc) for doc in docs]
     doc_vectors = _dense(embedder, doc_texts)
-    query_texts = [question.get("question") or "" for question in questions]
+    query_texts = [rewrite_query(question.get("question") or "") for question in questions]
     query_vectors = _dense(embedder, query_texts)
     per = []
     faith_scores = []
@@ -69,11 +76,11 @@ def main() -> int:
         }
         ranked = hybrid_scores(query, docs, vector_scores)
         if reranker is not None:
-            window = ranked[:8]
+            window = ranked[:RERANK_WINDOW]
             pairs = [(query, (row.get("chunk") or "")[:800]) for row in window]
             raw = reranker.predict(pairs, batch_size=8, show_progress_bar=False)
             order = sorted(range(len(pairs)), key=lambda item: float(raw[item]), reverse=True)
-            ranked = [window[item] for item in order] + ranked[8:]
+            ranked = [window[item] for item in order] + ranked[RERANK_WINDOW:]
         else:
             ranked = rerank(query, ranked)["rows"]
         hits = [row for row in ranked if row.get("score", 0) > 0 or reranker is not None]
@@ -84,7 +91,7 @@ def main() -> int:
         by_category.setdefault(category, []).append(score)
         per.append({"id": question.get("id"), "recall": score})
         claims = "。".join(question.get("must_include") or [])
-        contexts = [doc.get("content") or "" for doc in docs if doc.get("source_id") in present]
+        contexts = [contextual_chunk(doc) for doc in docs if doc.get("source_id") in present]
         gate = faithfulness_gate(claims + "。", contexts, faithfulness_threshold()) if claims else {"score": None}
         if gate.get("score") is not None:
             faith_scores.append(gate["score"])
@@ -103,7 +110,12 @@ def main() -> int:
         "faithfulness_mean": (sum(faith_scores) / len(faith_scores)) if faith_scores else None,
         "faithfulness_threshold": faithfulness_threshold(),
         "previous_char_ngram_recall_at_8": 0.9615,
-        "note": "previous_char_ngram_recall_at_8 来自字符 n-gram 实测。本次数字只在 status=ok 且模型名称为 bge-m3 时有效。",
+        "previous_bge_recall_at_8": BEFORE["recall_at_8"],
+        "previous_calculation_recall_at_8": BEFORE["calculation_recall_at_8"],
+        "previous_faithfulness_mean": BEFORE["faithfulness_mean"],
+        "rerank_window": RERANK_WINDOW if reranker is not None else 0,
+        "lexical": "bm25-zh-bigram",
+        "note": "previous_* 是改写问句、双字 BM25 和发布日期进入分块之前的 bge-m3 实测。分块现在包含来源记录里的发布日期和生效日期，忠实度按这份上下文计算。本次数字只在 status=ok 且模型名称为 bge-m3 时有效。字符 n-gram 的 Recall@8 仍是 0.9615。",
     }
     target = ROOT / "data" / "eval" / "bge_m3_recall.json"
     target.write_text(json.dumps(out, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

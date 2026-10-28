@@ -47,11 +47,15 @@ describe('审核员名单', () => {
 });
 
 describe('政策审核接口', () => {
-    it('未登录 401；普通用户 404（不暴露后台）', async () => {
+    it('未登录 401；普通用户看列表得到空回落，审核操作仍拒绝', async () => {
         sessionUser = null;
         expect((await list()).status).toBe(401);
         sessionUser = { id: 'u-normal' };
-        expect((await list()).status).toBe(404);
+        const fallback = await list();
+        expect(fallback.status).toBe(200);
+        const body = await fallback.json();
+        expect(body.roleFallback).toBe(true);
+        expect(body.items).toEqual([]);
         expect((await decide('p1', { decision: 'APPROVED' })).status).toBe(404);
         expect(updates).toHaveLength(0);
     });
