@@ -56,8 +56,17 @@ def embedding_target() -> dict:
         return {"enabled": False, "reason": "missing-dashscope-key", "provider": "dashscope", "model": settings.NENGJIAN_EMBEDDING_MODEL, **rerank}
     if provider == "ark":
         return {"enabled": False, "reason": "missing-ark-embedding", "provider": "ark", **rerank}
-    from app.services.local_embeddings import local_model_name
-    return {"enabled": True, "provider": "local", "model": local_model_name(), **rerank}
+    from app.services.local_embeddings import embedding_ab_candidate, local_model_name, local_rerank_name
+    ab = embedding_ab_candidate()
+    return {
+        "enabled": True,
+        "provider": "local",
+        "model": local_model_name(),
+        "local_rerank_model": local_rerank_name(),
+        "ab_model": ab["model"],
+        "ab_enabled": ab["enabled"],
+        **rerank,
+    }
 
 
 def _key(target: dict) -> str:

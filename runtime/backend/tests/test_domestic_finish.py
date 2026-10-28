@@ -139,12 +139,17 @@ def test_pysam_wind_difference_is_measured_when_installed():
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     report = module.compare()
+    cross = module.pvlib_yield_crosscheck()
+    assert cross["compared"] is False
+    assert "pvlib_annual_kwh" not in cross
     if not report["pysam_installed"]:
         assert report["wind"] is None
         assert report["battery"]["compared"] is False
+        assert report["pvlib"]["compared"] is False
         return
     assert report["wind"]["relative_abs_diff"] < 0.02
     assert report["battery"]["compared"] is False
+    assert report["pvlib"]["compared"] is False
 
 
 def test_cleaning_interval_matches_the_closed_form():

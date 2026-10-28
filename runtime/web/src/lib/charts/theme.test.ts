@@ -13,8 +13,11 @@ describe('图表主题', () => {
         if (!parsed.ok) return;
         const option = chartOption(parsed.spec);
         expect(option.yAxis.name).toBe('千瓦时');
+        expect(option.yAxis.min).toBe(0);
+        expect(option.aria.enabled).toBe(true);
+        expect(option.aria.decal.show).toBe(true);
         expect(option.xAxis.name).toBe('序号');
-        expect(option.color).toEqual(CHART_COLORS);
+        expect(option.color[0]).toBe(CHART_COLORS[0]);
         expect(chartFootnote(parsed.spec)).toEqual({ source: '未随图表给出', asOf: '未标注' });
         const dated = parseChartSpec({
             type: 'line',

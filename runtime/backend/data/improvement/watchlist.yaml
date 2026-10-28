@@ -1,0 +1,181 @@
+# 新能源智库 · 每周自我完善监测清单（2026-10-28 生成）
+# 由 GitHub Actions 每周 cron 读取；产出 PR 由人工审批，禁止直接部署。
+# 约束：国产/开源模型；不含投资建议与价格预测；许可非商用/AGPL 需人工确认。
+version: 1
+schedule:
+  cron: '0 1 * * 1'   # 周一 09:00 (Asia/Shanghai)，GitHub cron 为 UTC
+  window_days: 8      # 与 SJTU weekly-arxiv 一致，重叠 1 天防漏
+gates:
+  - ragas_faithfulness_min: 0.85   # 建议初始值（非来源数据），先测基线后校准
+  - promptfoo_redteam_pass: true
+  - license_check: [non-commercial, agpl, gpl, unknown]
+  - human_approval: wecom+pr
+
+github:
+  repos_core:   # 直接集成：监控 release/license 变化
+    - apache/echarts
+    - HKUDS/LightRAG
+    - pvlib/pvlib-python
+    - NatLabRockies/PySAM
+    - FlagOpen/FlagEmbedding
+    - explodinggradients/ragas
+    - confident-ai/deepeval
+    - docling-project/docling
+    - peter-evans/create-pull-request
+    - antvis/G2
+    - antvis/L7
+    - KaTeX/KaTeX
+    - mermaid-js/mermaid
+    - wind-python/windpowerlib
+    - caylent/tufte-data-viz
+    - promptfoo/promptfoo
+    - PaddlePaddle/PaddleOCR
+    - microsoft/markitdown
+    - antvis/S2
+
+  repos_watch:  # 加入自动监测清单：监控 star 增速、新版本、许可变更
+    - VoltAgent/awesome-agent-skills
+    - cuge1995/awesome-energy-forecasting
+    - rebase-energy/awesome-energy-datasets
+    - shiyu-coder/WindFM
+    - amazon-science/chronos-forecasting
+    - google-research/timesfm
+    - ibm-granite/granite-tsfm
+    - sickn33/agentic-awesome-skills
+    - github/awesome-copilot
+    - recharts/recharts
+    - ecomfe/vue-echarts
+    - ecomfe/echarts-for-weixin
+    - heilcheng/awesome-agent-skills
+    - hustcc/echarts-for-react
+    - bergside/awesome-design-skills
+    - rohitg00/awesome-claude-design
+    - Grid2op/grid2op
+    - open-energy-transition/MapYourGrid
+    - chairulridjaal/awesome-ml-for-power-grids
+    - LSB-dev/Publicly-Available-Datasets-For-Electric-Load-Forecasting
+    - BiaPri/awesome-energy-tools
+    - SalesforceAIResearch/uni2ts
+    - NX-AI/tirex
+    - dream-num/univer
+
+  topics:
+    - photovoltaic
+    - solar-energy
+    - wind-energy
+    - wind-turbine
+    - energy-storage
+    - battery-management-system
+    - power-system
+    - smart-grid
+    - electricity-load-forecasting
+    - carbon-emission
+    - energy-llm
+    - energy-rag
+    - chinese-rag
+    - agent-skills
+    - time-series-foundation-model
+    - echarts
+    - dashboard
+  search_queries:   # 每条取 pushed 近 30 天，stars>=30
+    - "photovoltaic forecasting stars:>30 pushed:>{since}"
+    - "wind power forecasting stars:>30 pushed:>{since}"
+    - "battery energy storage optimization stars:>30 pushed:>{since}"
+    - "RAG 中文 知识库 stars:>200 pushed:>{since}"
+    - "SKILL.md agent skills energy stars:>20 pushed:>{since}"
+  auth: 必须使用 GITHUB_TOKEN（未认证搜索仅 10 次/分，核心 API 共享 IP 60 次/小时，本次已触发 403）
+
+huggingface:
+  models_watch:
+    - BAAI/bge-m3
+    - BAAI/bge-reranker-v2-m3
+    - Qwen/Qwen3-Embedding-0.6B
+    - opendatalab/MinerU2.5-Pro-2605-1.2B
+    - Qwen/Qwen3-Reranker-0.6B
+    - Qwen/Qwen3-8B
+    - PaddlePaddle/PaddleOCR-VL-1.6
+    - Qwen/Qwen3-Embedding-4B
+    - deepseek-ai/DeepSeek-V3.2
+    - deepseek-ai/DeepSeek-V4-Flash
+    - amazon/chronos-2
+    - google/timesfm-2.5-200m-pytorch
+    - Qwen/Qwen3-Embedding-8B
+    - Qwen/Qwen3-Reranker-4B
+    - Qwen/Qwen3-VL-Embedding-2B
+    - TencentBAC/Conan-embedding-v2
+    - HIT-TMG/KaLM-embedding-multilingual-mini-v1
+    - tencent/KaLM-Embedding-Gemma3-12B-2511
+    - Qwen/Qwen3-14B
+    - deepseek-ai/DeepSeek-OCR
+    - zai-org/GLM-4.7-Flash
+    - amazon/chronos-bolt-small
+    - ibm-granite/granite-timeseries-ttm-r3
+    - NX-AI/TiRex-2
+    - Maple728/TimeMoE-50M
+    - time-series-foundation-models/Lag-Llama
+  model_queries:
+    - {q: "bge", filter: feature-extraction, sort: lastModified}
+    - {q: "Qwen3-Embedding", sort: lastModified}
+    - {q: "reranker", sort: lastModified}
+    - {q: "timesfm OR chronos OR tirex OR moirai", sort: lastModified}
+    - {q: "MinerU OR PaddleOCR OR docling", sort: lastModified}
+  dataset_queries:
+    - {q: "electric power", sort: lastModified}
+    - {q: "photovoltaic", sort: lastModified}
+    - {q: "wind turbine", sort: lastModified}
+    - {q: "energy forecasting", sort: lastModified}
+    - {q: "IndustryCorpus2", author: BAAI}
+  license_policy: 记录 cardData.license；cc-by-nc* / agpl / other 自动标红
+  api: https://huggingface.co/api/models?search=<q>&sort=lastModified&direction=-1&limit=50
+
+arxiv:
+  # 使用 rss.arxiv.org 订阅 + 关键词过滤；export.arxiv.org API 本次实测超时，勿依赖
+  feeds:
+    - https://rss.arxiv.org/rss/eess.SY
+    - https://rss.arxiv.org/rss/cs.CL
+    - https://rss.arxiv.org/rss/cs.IR
+  keywords_any:
+    - photovoltaic
+    - solar power forecasting
+    - wind power forecasting
+    - battery energy storage
+    - power grid LLM
+    - retrieval-augmented generation energy
+    - agent skills
+    - time series foundation model
+  html_search_fallback: https://arxiv.org/search/?searchtype=all&size=50&order=-announced_date_first&query=<kw>   # 不加引号，size 取 25/50/100/200，间隔≥5s
+openalex:
+  endpoint: https://api.openalex.org/works
+  sort: relevance_score:desc     # 不要用 cited_by_count 排序（实测噪声大）
+  from_publication_date: "{since}"
+  queries:
+    - photovoltaic power forecasting
+    - wind power forecasting deep learning
+    - battery energy storage degradation
+    - large language model power system
+    - retrieval-augmented generation energy
+    - 碳排放因子 电网
+    - China renewable energy policy
+rss_and_pages:
+  - {name: arXiv eess.SY, url: "https://rss.arxiv.org/rss/eess.SY"}
+  - {name: 商务部公告（技术进出口管制类）, url: "https://www.mofcom.gov.cn/zcfb/blgg/", note: 出口技术目录 2026 年第 48 号征求意见至 2026-11-15，需跟踪正式修订}
+  - {name: 国家能源局, url: "https://www.nea.gov.cn/"}
+  - {name: 国家发改委政策, url: "https://www.ndrc.gov.cn/xxgk/zcfb/"}
+  - {name: 中国政府网政策, url: "https://www.gov.cn/zhengce/"}
+  - {name: HN energy dashboard (Algolia), url: "https://hn.algolia.com/api/v1/search_by_date?query=energy%20dashboard&tags=story"}
+  - {name: MTEB 排行榜, url: "https://huggingface.co/spaces/mteb/leaderboard"}
+  - {name: Ember 数据, url: "https://ember-energy.org/data/"}
+  - {name: Global Energy Monitor 光伏追踪, url: "https://globalenergymonitor.org/projects/global-solar-power-tracker/"}
+x_queries:   # X MCP search_posts_all，限 30 次/分、1000 次/日；结果须人工核对来源
+  - "光伏 看板 设计 lang:zh"
+  - "energy dashboard design solar"
+  - "agent skills evaluation"
+  - "时序基础模型 电力"
+  - "Qwen3-Embedding OR bge-m3 RAG"
+blocked_or_flaky:
+  - Reddit 403（需 OAuth）
+  - 知乎 400（需登录/签名）
+  - Semantic Scholar 匿名 429
+  - export.arxiv.org API 超时
+  - OpenGridWorks 条款禁止抓取，仅人工浏览
+  - app.electricitymaps.com 403

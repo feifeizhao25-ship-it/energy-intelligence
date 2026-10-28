@@ -1,7 +1,7 @@
 import type { ChartSpec } from '@/lib/charts/chart-spec';
 
-/** 色相拉开，不单靠红绿区分序列。 */
-export const CHART_COLORS = ['#0F766E', '#0B3A4A', '#C2410C', '#1D4E89', '#6D597A', '#A16207', '#3F6212', '#9F1239'];
+/** AntV 分类色。明暗交替，单图高亮不超过 8 个，不用红绿成对表示涨跌。 */
+export const CHART_COLORS = ['#5B8FF9', '#61DDAA', '#65789B', '#F6BD16', '#7262FD', '#78D3F8', '#9661BC', '#F6903D', '#008685', '#F08BB4'];
 
 export function chartFootnote(spec: Pick<ChartSpec, 'source' | 'asOf'>) {
     return {
@@ -18,9 +18,11 @@ function pointValue(value: ChartSpec['series'][number]['data'][number]) {
 
 export function chartOption(spec: ChartSpec) {
     const note = chartFootnote(spec);
+    const barLike = spec.type !== 'line' && spec.type !== 'scatter';
     return {
-        color: CHART_COLORS,
-        title: { text: spec.title, left: 'center', textStyle: { fontSize: 14, color: '#102033' } },
+        color: CHART_COLORS.slice(0, 8),
+        aria: { enabled: true, decal: { show: true } },
+        title: { text: spec.title, left: 'center', textStyle: { fontSize: 14, fontWeight: 500, color: '#1F2937' } },
         tooltip: {
             trigger: 'axis' as const,
             valueFormatter: (value: unknown) => `${value ?? ''} ${spec.unit}`,
@@ -31,14 +33,15 @@ export function chartOption(spec: ChartSpec) {
             type: 'category' as const,
             name: '序号',
             data: spec.series[0].data.map((_, index) => String(index + 1)),
-            nameTextStyle: { color: '#52606D' },
-            axisLabel: { color: '#52606D' },
+            nameTextStyle: { color: '#4B5563' },
+            axisLabel: { color: '#4B5563' },
         },
         yAxis: {
             type: 'value' as const,
             name: spec.unit,
-            nameTextStyle: { color: '#52606D' },
-            axisLabel: { color: '#52606D' },
+            min: barLike ? 0 : undefined,
+            nameTextStyle: { color: '#4B5563' },
+            axisLabel: { color: '#4B5563' },
         },
         series: spec.series.map((item) => ({
             type: spec.type === 'line' || spec.type === 'scatter' ? spec.type : 'bar',

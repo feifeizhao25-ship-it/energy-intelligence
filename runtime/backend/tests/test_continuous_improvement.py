@@ -64,12 +64,12 @@ def test_schedule_defaults_to_weekly(monkeypatch):
     monkeypatch.delenv("IMPROVEMENT_DAY_OF_WEEK", raising=False)
     spec = schedule_kwargs()
     assert spec["enabled"] is True
-    assert spec["crontab"] == {"day_of_week": "1", "hour": 3, "minute": 30}
+    assert spec["crontab"] == {"day_of_week": "1", "hour": 9, "minute": 0}
     monkeypatch.setenv("IMPROVEMENT_SCHEDULE", "off")
     assert schedule_kwargs()["enabled"] is False
     monkeypatch.setenv("IMPROVEMENT_SCHEDULE", "daily")
     monkeypatch.setenv("IMPROVEMENT_HOUR", "4")
-    assert schedule_kwargs()["crontab"] == {"hour": 4, "minute": 30}
+    assert schedule_kwargs()["crontab"] == {"hour": 4, "minute": 0}
 
 
 def test_beat_registers_weekly_job():
@@ -77,8 +77,8 @@ def test_beat_registers_weekly_job():
 
     entry = celery_app.conf.beat_schedule["continuous-improvement"]
     assert entry["task"] == "energy.domestic.continuous_improvement"
-    assert entry["schedule"].hour == {3}
-    assert entry["schedule"].minute == {30}
+    assert entry["schedule"].hour == {9}
+    assert entry["schedule"].minute == {0}
     assert 1 in set(entry["schedule"].day_of_week)
     assert "energy.domestic.continuous_improvement" in celery_app.tasks
 
@@ -88,9 +88,12 @@ def test_watchlist_keeps_a_vetted_slot():
     assert "vetted" in data
     assert data["github_topics"]
     assert data["arxiv_queries"]
+    assert "pvlib/pvlib-python" in data["github_repos"]
+    assert "apache/echarts" in data["github_repos"]
 
 
-def test_discovery_keeps_license_and_survives_errors():
+def test_discovery_keeps_license_and_survives_errors(monkeypatch):
+    monkeypatch.setenv("GITHUB_TOKEN", "test-token")
     found = discover_candidates(_watch(), _fetch)
     licenses = {item["license"] for item in found["candidates"]}
     assert "MIT" in licenses
@@ -162,6 +165,62 @@ def test_cycle_queues_proposal_and_approval_does_not_go_live(tmp_path, monkeypat
     assert stored[0]["approval_note"].startswith("审批已通过")
 
 
+def test_github_without_token_does_not_call(monkeypatch):
+    calls = []
+
+    def fetch(url):
+        calls.append(url)
+        return "{}"
+
+    monkeypatch.delenv("GITHUB_TOKEN", raising=False)
+    found = discover_candidates({"github_topics": ["photovoltaic"], "github_repos": ["apache/echarts"], "vetted": []}, fetch)
+    assert found["candidates"] == []
+    assert found["errors"][0]["reason"] == "未配置代码托管令牌"
+    assert calls == []
+
+
+def test_research_seed_skips_blocked_items():
+    from app.services.research_sources import eligible, load_items, research_candidates
+
+    items = load_items()
+    seeded = research_candidates(items)
+    names = {item["name"] for item in seeded}
+    assert "apache/echarts" in names
+    assert "pvlib/pvlib-python" in names
+    assert "BAAI/bge-m3" in names or any("bge-m3" in name for name in names)
+    blocked = [item for item in items if item.get("recommendation") == "不建议"]
+    assert blocked
+    assert not any(item["name"] in names for item in blocked)
+    assert not any("PriceFM" in name for name in names)
+    assert eligible({"recommendation": "直接集成", "name": "a", "license": "AGPL-3.0", "license_flags": []}) is False
+    assert eligible({"recommendation": "加入自动监测清单", "name": "PriceFM", "license": "Apache-2.0", "summary_zh": "电价预测", "license_flags": []}) is False
+    assert all(item["auto_apply"] is False for item in seeded)
+
+
+def test_faithfulness_gate_stays_provisional():
+    from app.services.faithfulness import faithfulness_gate
+
+    good = faithfulness_gate("新来源只写入待审队列。", ["新来源只写入待审队列。"])
+    assert good["passed"] is True
+    assert good["threshold"] == 0.85
+    assert good["applied"] is False
+    bad = faithfulness_gate("明天电价一定上涨并保证收益。", ["只复述已发布的政策原文。"])
+    assert bad["passed"] is False
+    assert bad["applied"] is False
+
+
+def test_pull_request_stays_draft_without_branch(monkeypatch):
+    from app.services.continuous_improvement import open_pull_request
+
+    monkeypatch.setenv("GITHUB_TOKEN", "test-token")
+    monkeypatch.delenv("IMPROVEMENT_OPEN_PR", raising=False)
+    result = open_pull_request({"metrics": {"recall_at_8": 0.5}, "suggestions": ["只写入待审提案"]})
+    assert result["opened"] is False
+    assert result["applied"] is False
+    assert result["draft"]["draft"] is True
+    assert result["draft"]["auto_merge"] is False
+
+
 def test_disabled_cycle_and_ingestion_flag(monkeypatch, tmp_path):
     monkeypatch.setenv("IMPROVEMENT_ENABLED", "0")
     assert run_cycle(directory=tmp_path)["status"] == "noop"
@@ -174,8 +233,13 @@ def test_disabled_cycle_and_ingestion_flag(monkeypatch, tmp_path):
 def test_embedding_targets_and_bge_fallback(monkeypatch):
     from app.config import settings
 
+    from app.services.local_embeddings import embedding_ab_candidate, local_rerank_name
+    monkeypatch.delenv("EMBEDDING_AB_ENABLED", raising=False)
     monkeypatch.setenv("LOCAL_EMBEDDING_MODEL", "bge-m3")
     assert local_model_name() == "BAAI/bge-m3"
+    assert local_rerank_name() == "BAAI/bge-reranker-v2-m3"
+    assert embedding_ab_candidate()["model"] == "Qwen/Qwen3-Embedding-0.6B"
+    assert embedding_ab_candidate()["enabled"] is False
     monkeypatch.delenv("LOCAL_EMBEDDING_MODEL", raising=False)
     monkeypatch.setenv("EMBEDDING_MODEL", "BAAI/bge-m3")
     assert local_model_name() == "BAAI/bge-m3"

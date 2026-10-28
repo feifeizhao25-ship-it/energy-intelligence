@@ -16,17 +16,17 @@ from app.ingestion.schedule import BUCKETS
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_DIR = Path("/var/lib/nengjian/improvement")
-WATCHLIST = ROOT / "data" / "improvement" / "watchlist.json"
+WATCHLIST = ROOT / "data" / "improvement" / "watchlist.yaml"
 ATOM = "{http://www.w3.org/2005/Atom}"
 
 
 def schedule_kwargs() -> dict:
-    """默认每周一 03:30（上海）。IMPROVEMENT_SCHEDULE=daily|off 可改。"""
+    """默认每周一 09:00（上海）。IMPROVEMENT_SCHEDULE=daily|off 可改。"""
     mode = (os.environ.get("IMPROVEMENT_SCHEDULE") or "weekly").strip().lower()
     if mode in {"0", "off", "false", "disabled"}:
         return {"enabled": False, "crontab": {}}
-    hour = _int_env("IMPROVEMENT_HOUR", 3)
-    minute = _int_env("IMPROVEMENT_MINUTE", 30)
+    hour = _int_env("IMPROVEMENT_HOUR", 9)
+    minute = _int_env("IMPROVEMENT_MINUTE", 0)
     if mode == "daily":
         return {"enabled": True, "crontab": {"hour": hour, "minute": minute}}
     day = (os.environ.get("IMPROVEMENT_DAY_OF_WEEK") or "1").strip() or "1"
@@ -55,15 +55,67 @@ def watchlist_path() -> Path:
     return Path(raw) if raw else WATCHLIST
 
 
+def _empty_watchlist() -> dict:
+    return {
+        "github_repos": [],
+        "github_topics": [],
+        "github_search_queries": [],
+        "huggingface_dataset_queries": [],
+        "huggingface_model_queries": [],
+        "arxiv_queries": [],
+        "arxiv_feeds": [],
+        "vetted": [],
+    }
+
+
+def _query_text(row) -> str:
+    if isinstance(row, dict):
+        return str(row.get("q") or row.get("query") or "")
+    return str(row or "")
+
+
+def normalize_watchlist(data: dict) -> dict:
+    """兼容旧的扁平清单和监测清单里的分组。"""
+    if not isinstance(data, dict):
+        return _empty_watchlist()
+    if "github" not in data and "huggingface" not in data and "arxiv" not in data:
+        flat = _empty_watchlist()
+        flat.update({key: data.get(key) or flat[key] for key in flat})
+        return flat
+    github = data.get("github") or {}
+    hf = data.get("huggingface") or {}
+    arxiv = data.get("arxiv") or {}
+    keywords = [str(item) for item in (arxiv.get("keywords_any") or []) if item]
+    return {
+        "github_repos": [str(item) for item in list(github.get("repos_core") or []) + list(github.get("repos_watch") or [])],
+        "github_topics": [str(item) for item in (github.get("topics") or [])],
+        "github_search_queries": [str(item) for item in (github.get("search_queries") or [])],
+        "huggingface_dataset_queries": [_query_text(item) for item in (hf.get("dataset_queries") or []) if _query_text(item)],
+        "huggingface_model_queries": [_query_text(item) for item in (hf.get("model_queries") or []) if _query_text(item)],
+        "arxiv_queries": keywords,
+        "arxiv_feeds": [str(item) for item in (arxiv.get("feeds") or [])],
+        "vetted": data.get("vetted") or [],
+    }
+
+
 def load_watchlist(path: Path | None = None) -> dict:
     file = path or watchlist_path()
     if not file.is_file():
-        return {"github_topics": [], "huggingface_dataset_queries": [], "huggingface_model_queries": [], "arxiv_queries": [], "vetted": []}
+        return _empty_watchlist()
     try:
-        data = json.loads(file.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return {"github_topics": [], "huggingface_dataset_queries": [], "huggingface_model_queries": [], "arxiv_queries": [], "vetted": []}
-    return data if isinstance(data, dict) else {"vetted": []}
+        text = file.read_text(encoding="utf-8")
+        if file.suffix in {".yaml", ".yml"}:
+            import yaml
+            data = yaml.safe_load(text)
+        else:
+            data = json.loads(text)
+    except Exception:
+        return _empty_watchlist()
+    return normalize_watchlist(data if isinstance(data, dict) else {})
+
+
+def github_token() -> str:
+    return (os.environ.get("GITHUB_TOKEN") or "").strip()
 
 
 def _proposal_path(directory: Path) -> Path:
@@ -165,6 +217,48 @@ def _parse_hf(payload: str, query: str, kind: str) -> list[dict]:
     return rows
 
 
+def _parse_github_repo(payload: str, query: str) -> list[dict]:
+    data = json.loads(payload or "{}")
+    if isinstance(data, dict) and data.get("items"):
+        return _parse_github(payload, query)
+    if not isinstance(data, dict):
+        return []
+    return [_candidate(
+        "code",
+        data.get("full_name") or query,
+        data.get("html_url") or "",
+        data.get("license") or "",
+        query,
+    )]
+
+
+def _parse_feed(payload: str, query: str) -> list[dict]:
+    root = ET.fromstring(payload)
+    keywords = [part.lower() for part in query.split() if part]
+    rows = []
+    for node in list(root.iter()):
+        tag = node.tag.rsplit("}", 1)[-1]
+        if tag not in {"item", "entry"}:
+            continue
+        title = ""
+        link = ""
+        for child in list(node):
+            name = child.tag.rsplit("}", 1)[-1]
+            if name == "title" and not title:
+                title = " ".join((child.text or "").split())
+            if name == "link" and not link:
+                link = child.text or child.attrib.get("href") or ""
+            if name == "id" and not link:
+                link = child.text or ""
+        if keywords and not any(word in title.lower() for word in keywords):
+            continue
+        if title:
+            rows.append(_candidate("paper", title, link, "未标明", query or "feed"))
+        if len(rows) >= 5:
+            break
+    return rows
+
+
 def _parse_arxiv(payload: str, query: str) -> list[dict]:
     root = ET.fromstring(payload)
     rows = []
@@ -177,10 +271,11 @@ def _parse_arxiv(payload: str, query: str) -> list[dict]:
 
 def _http_get(url: str) -> str:
     import urllib.request
-    req = urllib.request.Request(
-        url,
-        headers={"User-Agent": "nengjian-improvement/1.0", "Accept": "application/json, application/atom+xml, */*"},
-    )
+    headers = {"User-Agent": "nengjian-improvement/1.0", "Accept": "application/json, application/atom+xml, */*"}
+    token = github_token()
+    if token and "api.github.com" in url:
+        headers["Authorization"] = "Bearer " + token
+    req = urllib.request.Request(url, headers=headers)
     with urllib.request.urlopen(req, timeout=20) as resp:
         return resp.read(200_000).decode("utf-8", errors="replace")
 
@@ -201,12 +296,23 @@ def discover_candidates(watchlist: dict, fetch) -> dict:
         except Exception as exc:
             errors.append({"url": url, "reason": exc.__class__.__name__})
 
-    for topic in watchlist.get("github_topics") or []:
-        pull(
-            "https://api.github.com/search/repositories?q=topic:%s&sort=updated&per_page=5" % quote(str(topic)),
-            _parse_github,
-            str(topic),
-        )
+    if not github_token() and any(watchlist.get(key) for key in ("github_topics", "github_repos", "github_search_queries")):
+        errors.append({"url": "https://api.github.com", "reason": "未配置代码托管令牌"})
+    else:
+        for repo in (watchlist.get("github_repos") or [])[:8]:
+            pull("https://api.github.com/repos/%s" % str(repo).strip("/"), _parse_github_repo, str(repo))
+        for topic in (watchlist.get("github_topics") or [])[:4]:
+            pull(
+                "https://api.github.com/search/repositories?q=topic:%s&sort=updated&per_page=5" % quote(str(topic)),
+                _parse_github,
+                str(topic),
+            )
+        for query in (watchlist.get("github_search_queries") or [])[:2]:
+            pull(
+                "https://api.github.com/search/repositories?q=%s&sort=updated&per_page=5" % quote(str(query)),
+                _parse_github,
+                str(query),
+            )
     for query in watchlist.get("huggingface_dataset_queries") or []:
         pull(
             "https://huggingface.co/api/datasets?search=%s&limit=5" % quote(str(query)),
@@ -221,12 +327,17 @@ def discover_candidates(watchlist: dict, fetch) -> dict:
             str(query),
             "model",
         )
-    for query in watchlist.get("arxiv_queries") or []:
-        pull(
-            "https://export.arxiv.org/api/query?search_query=%s&start=0&max_results=5" % quote(str(query)),
-            _parse_arxiv,
-            str(query),
-        )
+    if watchlist.get("arxiv_feeds"):
+        keyword_text = " ".join(str(item) for item in (watchlist.get("arxiv_queries") or []))
+        for feed in watchlist.get("arxiv_feeds") or []:
+            pull(str(feed), _parse_feed, keyword_text)
+    else:
+        for query in watchlist.get("arxiv_queries") or []:
+            pull(
+                "https://export.arxiv.org/api/query?search_query=%s&start=0&max_results=5" % quote(str(query)),
+                _parse_arxiv,
+                str(query),
+            )
     for item in watchlist.get("vetted") or []:
         if not isinstance(item, dict):
             continue
@@ -240,6 +351,54 @@ def discover_candidates(watchlist: dict, fetch) -> dict:
             "note": "已在观察名单中，仍须审批后由人工合并。",
         })
     return {"candidates": found[:40], "errors": errors}
+
+
+def pull_request_draft(proposal: dict) -> dict:
+    suggestions = proposal.get("suggestions") or []
+    lines = [
+        "这是待审提案，不会自动合并，也不会改线上配置。",
+        "检索召回：%s" % ((proposal.get("metrics") or {}).get("recall_at_8")),
+        "忠实度门槛为暂定值，未通过只留在队列里。",
+    ]
+    lines.extend(str(item) for item in suggestions[:6])
+    return {
+        "title": "持续改进提案",
+        "body": "\n".join(lines),
+        "draft": True,
+        "auto_merge": False,
+        "applied": False,
+    }
+
+
+def open_pull_request(proposal: dict, transport=None) -> dict:
+    """默认只保留提案。同时具备令牌、仓库、分支和开关时才提交草稿。"""
+    draft = pull_request_draft(proposal)
+    token = github_token()
+    repo = (os.environ.get("IMPROVEMENT_PR_REPO") or "").strip()
+    head = (os.environ.get("IMPROVEMENT_PR_HEAD") or "").strip()
+    base = (os.environ.get("IMPROVEMENT_PR_BASE") or "fixes/energy-p0-2026-10-15").strip()
+    if not token:
+        return {"opened": False, "reason": "未配置代码托管令牌", "applied": False, "draft": draft}
+    if (os.environ.get("IMPROVEMENT_OPEN_PR") or "").strip() != "1" or not repo or not head:
+        return {"opened": False, "reason": "只写入待审提案", "applied": False, "draft": draft}
+    payload = {"title": draft["title"], "body": draft["body"], "head": head, "base": base, "draft": True}
+    try:
+        if transport is None:
+            import json as _json
+            import urllib.request
+            req = urllib.request.Request(
+                "https://api.github.com/repos/%s/pulls" % repo.strip("/"),
+                data=_json.dumps(payload).encode(),
+                headers={"Authorization": "Bearer " + token, "Accept": "application/vnd.github+json", "User-Agent": "nengjian-improvement/1.0"},
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=20) as resp:
+                data = _json.loads(resp.read().decode() or "{}")
+        else:
+            data = transport(payload)
+    except Exception as exc:
+        return {"opened": False, "reason": exc.__class__.__name__, "applied": False, "draft": draft}
+    return {"opened": bool((data or {}).get("number") or (data or {}).get("html_url")), "applied": False, "draft": draft, "number": (data or {}).get("number")}
 
 
 def _default_ingest(bucket: str) -> dict:
@@ -385,6 +544,28 @@ def run_cycle(
             watchlist if watchlist is not None else load_watchlist(),
             fetch or _http_get,
         )
+    from app.services.faithfulness import faithfulness_gate, faithfulness_threshold
+    from app.services.research_sources import research_candidates
+    seen = {item.get("name") for item in discovered["candidates"]}
+    for item in research_candidates():
+        if item.get("name") not in seen:
+            discovered["candidates"].append(item)
+            seen.add(item.get("name"))
+    if retrieval.get("faithfulness_answer"):
+        faith = faithfulness_gate(
+            str(retrieval.get("faithfulness_answer") or ""),
+            list(retrieval.get("faithfulness_contexts") or []),
+            faithfulness_threshold(),
+        )
+    else:
+        faith = {
+            "score": None,
+            "passed": False,
+            "threshold": faithfulness_threshold(),
+            "provisional": True,
+            "applied": False,
+            "reason": "没有可评的回答",
+        }
     previous = _previous_metrics(folder)
     diff = _diff(retrieval, previous)
     body = {
@@ -393,6 +574,7 @@ def run_cycle(
         "retrieval": {key: retrieval.get(key) for key in ("recall_at_8", "k", "questions", "evaluated", "engine", "embedding_model", "status", "reason") if key in retrieval or key == "recall_at_8"},
         "ingestion": ingestion,
         "display_audit": display,
+        "faithfulness": faith,
         "candidates": discovered["candidates"],
         "discovery_errors": discovered["errors"],
         "suggestions": _suggestions(diff, discovered["candidates"], ingestion, display),
@@ -407,6 +589,7 @@ def run_cycle(
         "status": "pending_review",
         "approval": approval,
     }
+    proposal["pull_request"] = open_pull_request(proposal)
     try:
         folder.mkdir(parents=True, exist_ok=True)
         _metrics_path(folder).write_text(

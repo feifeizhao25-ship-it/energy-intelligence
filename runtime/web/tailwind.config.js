@@ -11,17 +11,17 @@ module.exports = {
       colors: {
         // 主色 - 新能源绿
         primary: {
-          DEFAULT: '#0F766E',
-          50: '#F0FDFA',
-          100: '#CCFBF1',
-          200: '#99F6E4',
-          300: '#5EEAD4',
-          400: '#2DD4BF',
-          500: '#0F766E',
-          600: '#115E59',
-          700: '#134E4A',
-          800: '#134E4A',
-          900: '#042F2E',
+          DEFAULT: '#1677FF',
+          50: '#E6F4FF',
+          100: '#BAE0FF',
+          200: '#91CAFF',
+          300: '#69B1FF',
+          400: '#4096FF',
+          500: '#1677FF',
+          600: '#0958D9',
+          700: '#003EB3',
+          800: '#002C8C',
+          900: '#001D66',
         },
         // 辅助色 - 光伏橙黄
         solar: {
@@ -83,8 +83,8 @@ module.exports = {
         },
         // Theme colors
         border: '#E2E8F0',
-        background: '#F4F7F8',
-        foreground: '#102033',
+        background: '#F5F7FA',
+        foreground: '#1F2937',
         // Dark mode colors (for AI Assistant)
         'background-dark': '#0A0F14',
         'surface-dark': '#121A23',
@@ -92,7 +92,7 @@ module.exports = {
         'text-secondary': 'rgba(255, 255, 255, 0.5)',
       },
       fontFamily: {
-        sans: ['"PingFang SC"', '"HarmonyOS Sans SC"', '"Noto Sans SC"', '"Source Han Sans SC"', 'sans-serif'],
+        sans: ['"PingFang SC"', '"Microsoft YaHei"', '"Noto Sans SC"', '"Source Han Sans SC"', 'system-ui', 'sans-serif'],
         display: ['"DIN Pro"', 'Inter', 'sans-serif'],
       },
       borderRadius: {
