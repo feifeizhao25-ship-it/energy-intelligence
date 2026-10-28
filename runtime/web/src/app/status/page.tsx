@@ -25,7 +25,7 @@ export default function StatusPage() {
     return <main className="mx-auto min-h-screen max-w-3xl bg-slate-50 px-4 py-10 text-slate-900">
         <p className="text-sm text-slate-500">新能源智库</p>
         <h1 className="mt-2 text-3xl font-black">服务状态</h1>
-        <p className="mt-2 text-sm text-slate-600">这里只显示是否已配置和最近更新时间，不显示密钥，也不编造在线率。</p>
+        <p className="mt-2 text-sm text-slate-600">这里只显示是否已配置和最近更新时间，不显示密钥，也不编造在线率。状态未连接时不展示虚构心跳。</p>
         <Link href="/" className="mt-3 inline-block text-sm font-bold text-emerald-700">返回首页</Link>
         {error && <p className="mt-6 text-sm text-rose-700">{error}</p>}
         {data && <dl className="mt-6 space-y-3 rounded-2xl border border-slate-200 bg-white p-5 text-sm">

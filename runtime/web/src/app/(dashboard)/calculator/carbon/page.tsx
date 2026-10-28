@@ -9,7 +9,7 @@ export default function CarbonPage() {
     const [result, setResult] = useState<ReturnType<typeof estimateGridEmission> | null>(null);
     return <div className="mx-auto max-w-xl space-y-4 text-slate-900">
         <h1 className="text-2xl font-black">排放测算</h1>
-        <p className="text-sm leading-6 text-slate-600">用公开的全国电力平均因子把上网电量换算成排放量。不填写碳资产售价，也不计算额外收益。</p>
+        <p className="text-sm leading-6 text-slate-600">用公开的全国电力平均因子把上网电量换算成排放量。不填写碳资产售价，也不计算额外收益。没有填写电量时不展示结果。</p>
         <label className="block text-sm">年上网电量（兆瓦时）<input value={mwh} onChange={(event) => setMwh(event.target.value)} className="mt-1 w-full rounded-lg border px-3 py-2" /></label>
         <button type="button" className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-bold text-white" onClick={() => {
             setError('');

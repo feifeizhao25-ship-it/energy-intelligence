@@ -31,8 +31,14 @@ export function calculationReport(): ReportSpec {
 export function policyBrief(): ReportSpec {
     return spec('政策速读', ['只复述已审核原文中的条款。']);
 }
+export const GAZETTE_APPROVAL = {
+    status: 'pending_wecom' as const,
+    approved: false,
+    note: '公文模板待企业微信审批，未签字，不能当正式公文发出。',
+};
+
 export function dossier(): ReportSpec {
-    return spec('资料汇编', ['封面写明资料汇编，非正式文件。']);
+    return spec('资料汇编', ['封面写明资料汇编，非正式文件。', GAZETTE_APPROVAL.note]);
 }
 export function teamWeekly(): ReportSpec {
     return spec('团队周报', ['只统计操作次数，不做排名。']);

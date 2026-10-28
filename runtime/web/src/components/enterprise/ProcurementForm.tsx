@@ -1,49 +1,54 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
+import { PageHeader } from '@/components/ui/design-system';
+import { PROCUREMENT_FIELDS, PROCUREMENT_KINDS, reviewProcurement, type ProcurementKind } from '@/lib/procurement/requests';
 
-const FIELDS = [
-    { key: 'account_name', label: '户名' },
-    { key: 'bank_name', label: '开户行' },
-    { key: 'account_number', label: '账号' },
-    { key: 'tax_id', label: '税号' },
-] as const;
-
-/** 只收集四项。未发送、未批准，不写入审批记录。 */
-export function ProcurementForm() {
+/** 报价、合同、发票只登记申请。不创建支付。 */
+export function ProcurementForm({ kind = 'quote' }: { kind?: ProcurementKind }) {
     const [values, setValues] = useState<Record<string, string>>({});
     const [note, setNote] = useState('');
+    const title = PROCUREMENT_KINDS[kind];
 
     function submit() {
-        const missing = FIELDS.filter((field) => !(values[field.key] || '').trim()).map((field) => field.label);
-        setNote(missing.length
-            ? `还缺${missing.join('、')}。审批尚未发送。`
-            : '四项已记下。审批尚未发送，状态为待企业微信审批。');
+        setNote(reviewProcurement(kind, values).note);
     }
 
     return (
         <form
             data-testid="procurement-form"
-            className="space-y-4 rounded-3xl border border-slate-100 bg-white p-8"
+            className="ei-panel mx-auto max-w-xl space-y-4"
             onSubmit={(event) => {
                 event.preventDefault();
                 submit();
             }}
         >
-            <h3 className="text-2xl font-black text-slate-900">对公采购</h3>
-            <p className="text-sm text-slate-500">一次填写户名、开户行、账号和税号。合同与发票模板待企业微信审批后才会发出。</p>
-            {FIELDS.map((field) => (
-                <label key={field.key} className="block text-sm font-bold text-slate-700">
+            <PageHeader
+                kicker="对公"
+                title={title}
+                crumbs={[{ href: '/enterprise', label: '企业空间' }, { href: `/enterprise/${kind}`, label: title }]}
+                summary="一次填写户名、开户行、账号和税号。这里不产生支付，也不生成发票号。合同与发票模板待企业微信审批后才会发出。"
+            />
+            {PROCUREMENT_FIELDS.map((field) => (
+                <label key={field.key} className="block text-sm">
                     {field.label}
                     <input
                         value={values[field.key] || ''}
                         onChange={(event) => setValues((current) => ({ ...current, [field.key]: event.target.value }))}
-                        className="mt-1 w-full rounded-2xl bg-slate-50 p-3 font-medium outline-none"
+                        className="mt-1 w-full rounded-xl border border-[var(--line)] bg-[var(--paper)] px-3 py-2"
                     />
                 </label>
             ))}
-            <button type="submit" className="rounded-2xl bg-slate-900 px-6 py-3 text-sm font-bold text-white">提交材料</button>
+            <button type="submit" className="rounded-xl bg-[var(--navy)] px-4 py-2 text-sm text-white">提交申请</button>
             {note ? <p data-testid="procurement-note">{note}</p> : null}
+            <p className="text-sm text-[var(--ink-soft)]">
+                <Link href="/enterprise/quote" className="underline">报价</Link>
+                {' · '}
+                <Link href="/enterprise/contract" className="underline">合同</Link>
+                {' · '}
+                <Link href="/enterprise/invoice" className="underline">发票</Link>
+            </p>
         </form>
     );
 }

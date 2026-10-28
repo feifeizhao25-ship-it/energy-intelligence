@@ -42,7 +42,7 @@ export default function SolarCalculatorPage() {
         <header className="rounded-3xl bg-slate-900 p-6 text-white sm:p-8">
             <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-amber-400/15 px-3 py-1 text-sm text-amber-200"><Sun size={16} />光伏初步估算</div>
             <h1 className="text-2xl font-bold sm:text-3xl">先算清投入，再看回收可能</h1>
-            <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300">使用上一完整年的历史辐照资料和您填写的成本、电价，估算发电量与现金流。结果包含简化假设，不代表未来收益承诺或工程审计。</p>
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300">使用上一完整年的历史辐照资料和您填写的成本、电价，估算发电量与现金流。结果包含简化假设，不代表未来收益承诺或工程审计。没有填写地址和电价时不展示测算结果。</p>
         </header>
         <div className="grid items-start gap-6 lg:grid-cols-[1fr_0.8fr]">
             <form onSubmit={calculate} className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-7">

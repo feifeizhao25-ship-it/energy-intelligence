@@ -86,7 +86,7 @@ export function gazetteBuffer(title: string, rows: string[][]): Buffer {
     <w:p><w:r><w:rPr><w:rFonts w:ascii="SimHei" w:hAnsi="SimHei" w:eastAsia="黑体"/><w:sz w:val="32"/></w:rPr><w:t>资料汇编 · 非正式文件</w:t></w:r></w:p>
     <w:p><w:r><w:rPr><w:rFonts w:ascii="SimHei" w:hAnsi="SimHei" w:eastAsia="黑体"/></w:rPr><w:t>${xmlText(title)}</w:t></w:r></w:p>
     ${body}
-    <w:p><w:r><w:rPr><w:rFonts w:ascii="FangSong" w:hAnsi="FangSong" w:eastAsia="仿宋"/></w:rPr><w:t>本文件不是行政机关公文，测算值不是承诺。</w:t></w:r></w:p>
+    <w:p><w:r><w:rPr><w:rFonts w:ascii="FangSong" w:hAnsi="FangSong" w:eastAsia="仿宋"/></w:rPr><w:t>本文件不是行政机关公文，测算值不是承诺。公文模板待企业微信审批，未签字。</w:t></w:r></w:p>
   </w:body>
 </w:document>`;
     return zipStore([

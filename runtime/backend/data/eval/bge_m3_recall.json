@@ -1,0 +1,20 @@
+{
+  "status": "ok",
+  "embedding_model": "BAAI/bge-m3",
+  "rerank_model": "BAAI/bge-reranker-v2-m3",
+  "rerank_reason": null,
+  "query_model_ok": true,
+  "recall_at_8": 0.9076923076923077,
+  "by_category": {
+    "policy": 1.0,
+    "calculation": 0.7666666666666667,
+    "timeliness": 1.0,
+    "refusal": 0.75
+  },
+  "questions": 260,
+  "evaluated": 260,
+  "faithfulness_mean": 0.8861788617886179,
+  "faithfulness_threshold": 0.9,
+  "previous_char_ngram_recall_at_8": 0.9615,
+  "note": "previous_char_ngram_recall_at_8 来自字符 n-gram 实测。本次数字只在 status=ok 且模型名称为 bge-m3 时有效。"
+}

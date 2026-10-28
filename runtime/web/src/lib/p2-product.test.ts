@@ -9,6 +9,7 @@ import { canonicalPlanId, storedPlanId } from '@/lib/membership/plan-alias';
 import { chartMotionMs, chartPalette } from '@/lib/charts/motion';
 import { spaceCjkLatin } from '@/lib/typography/spacing';
 import { gazetteCoverOk } from '@/lib/reports/gazette-check';
+import { GAZETTE_APPROVAL } from '@/lib/reports/report-builders';
 
 const flows = [
     'flowchart TD\n  甲[准备材料] --> 乙[核对原文]',
@@ -74,5 +75,7 @@ describe('国内版 P2', () => {
         expect(chartPalette(true)[0]).not.toBe(chartPalette(false)[0]);
         expect(gazetteCoverOk('资料汇编 · 非正式文件')).toBe(true);
         expect(gazetteCoverOk('资料汇编')).toBe(false);
+        expect(GAZETTE_APPROVAL.approved).toBe(false);
+        expect(GAZETTE_APPROVAL.status).toBe('pending_wecom');
     });
 });
