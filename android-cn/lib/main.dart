@@ -20,17 +20,21 @@ import 'screens/settings/settings_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await ApiService.init(region: 'CN');
-  runApp(const NewEnergyApp());
+  runApp(NewEnergyApp(configError: ApiService.configError));
 }
 
 class NewEnergyApp extends StatelessWidget {
-  const NewEnergyApp({super.key});
+  const NewEnergyApp({super.key, this.configError});
+
+  final String? configError;
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: '新能源智库',
       theme: AppTheme.buildTheme(),
+      darkTheme: AppTheme.buildDarkTheme(),
+      themeMode: ThemeMode.system,
       locale: const Locale('zh', 'CN'),
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
@@ -39,7 +43,8 @@ class NewEnergyApp extends StatelessWidget {
       ],
       supportedLocales: const [Locale('zh', 'CN')],
       debugShowCheckedModeBanner: false,
-      initialRoute: '/login',
+      home: configError == null ? null : ConfigErrorScreen(message: configError!),
+      initialRoute: configError == null ? '/login' : null,
       routes: {
         '/login': (context) => const LoginScreen(),
         '/register': (context) => const RegisterScreen(),

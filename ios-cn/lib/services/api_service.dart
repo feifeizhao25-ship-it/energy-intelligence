@@ -4,6 +4,7 @@
 library;
 
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -21,12 +22,21 @@ class ApiService {
   static const _secureStorage = FlutterSecureStorage();
   static String? _token;
   static final String _baseUrl = const String.fromEnvironment('API_BASE_URL');
+  static String? _configError;
 
-  /// Initialize with region — call from main() before runApp
+  /// 未配置或不是 HTTPS 时的说明。正式版不使用默认地址。
+  static String? get configError => _configError;
+
+  /// Initialize with region — call from main() before runApp.
+  /// 缺少地址时不抛异常，避免启动白屏；由界面展示配置错误。
   static Future<void> init({String region = 'CN'}) async {
-    if (_baseUrl.isEmpty || !_baseUrl.startsWith('https://')) {
-      throw StateError('API_BASE_URL 必须配置为 HTTPS 地址');
+    if (!_baseUrl.startsWith('https://')) {
+      _configError = kReleaseMode
+          ? '正式版未配置接口地址，应用无法连接服务器。'
+          : '调试构建还没有配置接口地址。请使用 --dart-define=API_BASE_URL=https://你的域名 重新启动。';
+      return;
     }
+    _configError = null;
     final prefs = await SharedPreferences.getInstance();
     _token = prefs.getString('energy_token');
   }
