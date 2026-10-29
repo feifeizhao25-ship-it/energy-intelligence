@@ -173,6 +173,64 @@ class AppTheme {
     );
   }
 
+  static LinearGradient nightGradient() {
+    return LinearGradient(
+      colors: [Color(0xFF020617), Color(0xFF0E2A2B)],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+  }
+
+  static ThemeData buildDarkTheme() {
+    const primary = Color(0xFF93C5FD);
+    const surface = Color(0xFF0F172A);
+    const card = Color(0xFF1E293B);
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: primaryColor,
+        brightness: Brightness.dark,
+        primary: primary,
+        secondary: secondaryColor,
+        surface: surface,
+        error: errorColor,
+      ),
+      scaffoldBackgroundColor: surface,
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Color(0xFF0E2A2B),
+        foregroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: false,
+      ),
+      cardTheme: CardThemeData(
+        color: card,
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: primary,
+          foregroundColor: const Color(0xFF0F172A),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        filled: true,
+        fillColor: const Color(0xFF0F172A),
+        hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 14),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+      tabBarTheme: const TabBarThemeData(
+        labelColor: primary,
+        unselectedLabelColor: Color(0xFF94A3B8),
+        indicatorSize: TabBarIndicatorSize.label,
+      ),
+    );
+  }
+
   static LinearGradient solarGradient() {
     return LinearGradient(
       colors: [Color(0xFFFCD34D), Color(0xFFF97316)],
