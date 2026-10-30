@@ -65,6 +65,7 @@ def publish_approved(conn: sqlite3.Connection, source_id: str, content_sha256: s
         (approval.get("approval_id") or "", row["id"]),
     )
     conn.commit()
+    log_error = log_event({"stage": "published", "source_id": source_id, "content_sha256": content_sha256, "approval_id": approval.get("approval_id") or ""})
     alerts = []
     try:
         from app.services.policy_alerts import note_published, notify_published
@@ -72,7 +73,10 @@ def publish_approved(conn: sqlite3.Connection, source_id: str, content_sha256: s
         alerts = notify_published(source_id, content_sha256)
     except Exception:
         alerts = []
-    return {"status": "published", "content_sha256": content_sha256, "alerts": alerts}
+    out = {"status": "published", "content_sha256": content_sha256, "alerts": alerts}
+    if log_error:
+        out["changelog_error"] = log_error
+    return out
 
 
 def load_portals(path: Path) -> dict:
@@ -90,13 +94,38 @@ def _plain(html: str) -> str:
 def diff_text(previous: str, current: str) -> dict:
     if previous == current:
         return {"changed": False, "added": 0, "removed": 0, "excerpt": current[:180]}
+    from app.services.policy_diff import diff_clauses
+
     return {
         "changed": True,
         "added": max(0, len(current) - len(previous)),
         "removed": max(0, len(previous) - len(current)),
         "excerpt": current[:180],
         "previous_excerpt": previous[:180],
+        # 条款级结构化差异：复核人看到的是哪几条变了，而不只是字数
+        "clauses": diff_clauses(previous, current),
     }
+
+
+def changelog_path() -> Path:
+    import os
+
+    raw = os.environ.get("NENGJIAN_POLICY_CHANGELOG", "").strip()
+    if raw:
+        return Path(raw)
+    db = Path(os.environ.get("NENGJIAN_POLICY_DB", "/var/lib/nengjian/policy.sqlite"))
+    return db.with_name("policy_changelog.jsonl")
+
+
+def log_event(event: dict, path: Path | None = None) -> str | None:
+    """每个环节（快照、提交审批、发布、拒绝）都写一行哈希链日志。写失败返回错误名，不吞掉也不中断。"""
+    try:
+        from app.self_improve.store import Ledger
+
+        Ledger(path or changelog_path()).append(event)
+        return None
+    except Exception as exc:  # noqa: BLE001 — 日志不可用时由调用方在结果里报告
+        return exc.__class__.__name__
 
 
 def _metadata_gap(page: dict) -> str:
@@ -139,6 +168,7 @@ def ingest_pages(conn: sqlite3.Connection, pages: list[dict], created_at: str, s
         source_id = str(page.get("source_id") or "")
         gap = _metadata_gap(page)
         if gap:
+            log_event({"stage": "rejected", "source_id": source_id, "reason": f"缺少{gap}"})
             items.append({
                 "source_id": source_id,
                 "status": "rejected",
@@ -165,6 +195,10 @@ def ingest_pages(conn: sqlite3.Connection, pages: list[dict], created_at: str, s
                     (sp_no, staged["content_sha256"]),
                 )
                 conn.commit()
+        log_event({
+            "stage": "staged", "source_id": source_id, "content_sha256": staged["content_sha256"], "changed": staged["changed"],
+            "clauses": (delta.get("clauses") or {}).get("summary", ""), "submitted": bool(approval.get("submitted")), "sp_no": str(approval.get("sp_no") or ""),
+        })
         items.append({**staged, "diff": delta, "approval": approval, "label": "待审批，尚未发布"})
     return {"status": "pending_approval", "published": 0, "items": items}
 

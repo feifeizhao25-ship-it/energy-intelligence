@@ -68,3 +68,16 @@ def wecom_reconcile() -> dict:
 def nasa_batch() -> dict:
     from app.services.nasa_batch_import import cache_path, default_points, run_batch
     return run_batch(default_points(), cache_path())
+
+
+@celery_app.task(name="energy.domestic.self_improvement")
+def self_improvement() -> dict:
+    """每周自改进（默认关闭，SIL_ENABLED=1 才运行）。用户可见改动必须经企业微信审批，超时作废。"""
+    from app.self_improve.hooks import run_weekly
+    return run_weekly()
+
+
+@celery_app.task(name="energy.domestic.self_improvement_monthly")
+def self_improvement_monthly() -> dict:
+    from app.self_improve.hooks import run_monthly
+    return run_monthly()

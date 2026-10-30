@@ -1,7 +1,7 @@
 """三条底线：事实、数据、政策分析与可复核计算。
 
 精确词表来自 data/bottom_line_terms.json（与前端副本由测试校验一致）。
-国内路径另有一层不调用模型的正则，覆盖改写后的投资结论、收益承诺和价格预测。
+国内路径另有两层不调用模型的检查：改写正则，以及归一化后的词族匹配（bottom_line_semantic，覆盖拆字、全半角、繁体、评级、保本类、数字化收益承诺、点位预测）。
 可选模型复核由 NENGJIAN_BOTTOM_LINE_MODEL_REVIEW=1 打开；没有密钥时不外呼。
 命中后整段替换为标准说明，不做局部删词。
 """
@@ -132,10 +132,20 @@ def find_paraphrase_violations(text: str) -> list[str]:
     return found
 
 
+def find_semantic_violations(text: str) -> list[str]:
+    """第三层：归一化 + 词族（见 bottom_line_semantic）。先抹免责声明，再匹配。"""
+    from app.services.bottom_line_semantic import find_semantic_violations as _find
+
+    return [f"语义:{family}" for family in _find(_mask(text or ""))]
+
+
 def find_violations(text: str, *, market: str = "cn") -> list[str]:
     found = find_exact_violations(text)
     if market != "global":
         for label in find_paraphrase_violations(text):
+            if label not in found:
+                found.append(label)
+        for label in find_semantic_violations(text):
             if label not in found:
                 found.append(label)
     return found

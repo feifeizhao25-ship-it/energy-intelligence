@@ -18,6 +18,8 @@ os.environ.setdefault(
 os.environ.setdefault("APP_ENV", "test")
 os.environ.setdefault("ENVIRONMENT", "test")
 os.environ["ENERGY_TEST_MODE"] = "1"  # 见 app.database：测试使用 NullPool
+# 政策流水线的哈希链日志不写到 /var/lib（测试环境可能是 root）
+os.environ.setdefault("NENGJIAN_POLICY_CHANGELOG", "/tmp/energy_pytest_policy_changelog.jsonl")
 
 import pytest  # noqa: E402
 import pytest_asyncio  # noqa: E402
