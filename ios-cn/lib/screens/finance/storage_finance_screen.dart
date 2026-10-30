@@ -150,7 +150,7 @@ class _StorageFinanceScreenState extends State<StorageFinanceScreen> {
                 '10年现金流 (万元)',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF0F172A),
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
               SizedBox(height: 12),
@@ -177,7 +177,7 @@ class _StorageFinanceScreenState extends State<StorageFinanceScreen> {
       style: TextStyle(
         fontSize: 16,
         fontWeight: FontWeight.bold,
-        color: Color(0xFF0F172A),
+        color: Theme.of(context).colorScheme.onSurface,
       ),
     );
   }

@@ -65,49 +65,6 @@ class ResourceScreen extends StatelessWidget {
                 ).push(MaterialPageRoute(builder: (_) => CompareScreen()));
               },
             ),
-            SizedBox(height: 24),
-            Text(
-              '最近评估',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF0F172A),
-              ),
-            ),
-            SizedBox(height: 12),
-            Card(
-              child: Padding(
-                padding: EdgeInsets.all(12),
-                child: Row(
-                  children: [
-                    Icon(Icons.assessment, color: AppTheme.primaryColor),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '山东德州100MW光伏',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
-                            ),
-                          ),
-                          Text(
-                            'GHI: 1456.8 kWh/m²/year',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: Color(0xFF64748B),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Icon(Icons.chevron_right, color: Color(0xFFCBD5E1)),
-                  ],
-                ),
-              ),
-            ),
           ],
         ),
       ),

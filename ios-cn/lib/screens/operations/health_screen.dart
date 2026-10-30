@@ -14,18 +14,44 @@ class HealthScreen extends StatefulWidget {
 class _HealthScreenState extends State<HealthScreen> {
   DiagnosticReport? _report;
   bool _isLoading = false;
-  String _selectedProject = 'proj_001';
+  List<Map<String, dynamic>> _projects = [];
+  String? _selectedProject;
 
   @override
   void initState() {
     super.initState();
-    _loadReport();
+    _loadProjects();
+  }
+
+  void _loadProjects() async {
+    setState(() => _isLoading = true);
+    try {
+      final projects = await ApiService.getProjects();
+      if (!mounted) return;
+      setState(() {
+        _projects = projects;
+        _selectedProject = projects.isEmpty ? null : '${projects.first['id']}';
+      });
+      if (_selectedProject == null) {
+        setState(() => _isLoading = false);
+      } else {
+        _loadReport();
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('项目列表加载失败')));
+      setState(() => _isLoading = false);
+    }
   }
 
   void _loadReport() async {
+    final projectId = _selectedProject;
+    if (projectId == null) return;
     setState(() => _isLoading = true);
     try {
-      final report = await ApiService.getHealthReport(_selectedProject);
+      final report = await ApiService.getHealthReport(projectId);
       if (!mounted) return;
       setState(() {
         _report = DiagnosticReport.fromJson(report);
@@ -51,34 +77,39 @@ class _HealthScreenState extends State<HealthScreen> {
           children: [
             Text('选择项目', style: Theme.of(context).textTheme.titleMedium),
             SizedBox(height: 12),
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                border: Border.all(color: Color(0xFFE2E8F0)),
-                borderRadius: BorderRadius.circular(8),
+            if (_projects.isEmpty && !_isLoading)
+              Card(
+                child: Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Text('暂无项目。请先在「项目」中创建电站项目，再查看健康诊断。'),
+                ),
+              )
+            else
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: DropdownButton<String>(
+                  value: _selectedProject,
+                  isExpanded: true,
+                  underline: SizedBox(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() => _selectedProject = value);
+                      _loadReport();
+                    }
+                  },
+                  items: [
+                    for (final p in _projects)
+                      DropdownMenuItem(
+                        value: '${p['id']}',
+                        child: Text('${p['name'] ?? p['id']}'),
+                      ),
+                  ],
+                ),
               ),
-              child: DropdownButton<String>(
-                value: _selectedProject,
-                isExpanded: true,
-                underline: SizedBox(),
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() => _selectedProject = value);
-                    _loadReport();
-                  }
-                },
-                items: [
-                  DropdownMenuItem(
-                    value: 'proj_001',
-                    child: Text('山东德州100MW光伏'),
-                  ),
-                  DropdownMenuItem(
-                    value: 'proj_002',
-                    child: Text('内蒙古乌兰察布50MW风电'),
-                  ),
-                ].toList(),
-              ),
-            ),
             SizedBox(height: 24),
             if (_isLoading)
               Center(child: CircularProgressIndicator())
@@ -140,7 +171,7 @@ class _HealthScreenState extends State<HealthScreen> {
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF475569),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -199,7 +230,7 @@ class _HealthScreenState extends State<HealthScreen> {
                   child: LinearProgressIndicator(
                     value: (d['value'] as double),
                     minHeight: 6,
-                    backgroundColor: Color(0xFFE2E8F0),
+                    backgroundColor: Theme.of(context).colorScheme.outlineVariant,
                     valueColor: AlwaysStoppedAnimation(AppTheme.primaryColor),
                   ),
                 ),
@@ -258,7 +289,7 @@ class _HealthScreenState extends State<HealthScreen> {
                         finding.description,
                         style: TextStyle(
                           fontSize: 12,
-                          color: Color(0xFF0F172A),
+                          color: Theme.of(context).colorScheme.onSurface,
                           fontWeight: FontWeight.w500,
                         ),
                         maxLines: 1,
@@ -297,7 +328,7 @@ class _HealthScreenState extends State<HealthScreen> {
             margin: EdgeInsets.only(bottom: 12),
             padding: EdgeInsets.all(12),
             decoration: BoxDecoration(
-              border: Border.all(color: Color(0xFFE2E8F0)),
+              border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Column(
@@ -335,7 +366,7 @@ class _HealthScreenState extends State<HealthScreen> {
                 SizedBox(height: 8),
                 Text(
                   rec.action,
-                  style: TextStyle(fontSize: 12, color: Color(0xFF475569)),
+                  style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
                 SizedBox(height: 4),
                 Text(

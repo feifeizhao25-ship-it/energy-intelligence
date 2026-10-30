@@ -84,45 +84,41 @@ class _SolarFinanceScreenState extends State<SolarFinanceScreen> {
   }
 
   Widget _buildStepIndicator() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: List.generate(4, (i) {
-        bool isActive = _currentStep >= i;
-        return Expanded(
-          child: Column(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: isActive ? AppTheme.primaryColor : Color(0xFFE2E8F0),
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Text(
-                    '${i + 1}',
-                    style: TextStyle(
-                      color: isActive ? Colors.white : Color(0xFF94A3B8),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
+    final track = Theme.of(context).colorScheme.outlineVariant;
+    final children = <Widget>[];
+    for (var i = 0; i < 4; i++) {
+      final isActive = _currentStep >= i;
+      children.add(
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: isActive ? AppTheme.primaryColor : track,
+            shape: BoxShape.circle,
+          ),
+          child: Center(
+            child: Text(
+              '${i + 1}',
+              style: TextStyle(
+                color: isActive ? Colors.white : Color(0xFF94A3B8),
+                fontWeight: FontWeight.bold,
               ),
-              if (i < 3)
-                Expanded(
-                  child: Container(
-                    height: 2,
-                    color: _currentStep > i
-                        ? AppTheme.primaryColor
-                        : Color(0xFFE2E8F0),
-                    margin: EdgeInsets.only(top: 8),
-                  ),
-                ),
-            ],
+            ),
+          ),
+        ),
+      );
+      if (i < 3) {
+        children.add(
+          Expanded(
+            child: Container(
+              height: 2,
+              color: _currentStep > i ? AppTheme.primaryColor : track,
+            ),
           ),
         );
-      }),
-    );
+      }
+    }
+    return Row(children: children);
   }
 
   Widget _buildStep1() {
@@ -254,26 +250,6 @@ class _SolarFinanceScreenState extends State<SolarFinanceScreen> {
           barColor: AppTheme.primaryColor,
           gradientStartColor: AppTheme.primaryColor,
           gradientEndColor: Color(0xFF06B6D4),
-        ),
-        SizedBox(height: 24),
-        Row(
-          children: [
-            Expanded(
-              child: ElevatedButton.icon(
-                onPressed: () {},
-                icon: Icon(Icons.description_outlined),
-                label: Text('生成报告'),
-              ),
-            ),
-            SizedBox(width: 12),
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () {},
-                icon: Icon(Icons.bookmark_border),
-                label: Text('保存方案'),
-              ),
-            ),
-          ],
         ),
       ],
     );

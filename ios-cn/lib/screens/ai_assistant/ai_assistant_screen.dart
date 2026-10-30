@@ -155,7 +155,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
             Container(
               padding: EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Color(0xFFF1F5F9),
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
@@ -169,7 +169,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                   SizedBox(width: 8),
                   Text(
                     '正在${message.toolName}...',
-                    style: TextStyle(fontSize: 12, color: Color(0xFF475569)),
+                    style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
                 ],
               ),
@@ -205,14 +205,14 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
               decoration: BoxDecoration(
                 color: message.isUser
                     ? AppTheme.primaryColor
-                    : Color(0xFFF1F5F9),
+                    : Theme.of(context).colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
                 message.content,
                 style: TextStyle(
                   fontSize: 13,
-                  color: message.isUser ? Colors.white : Color(0xFF0F172A),
+                  color: message.isUser ? Colors.white : Theme.of(context).colorScheme.onSurface,
                   height: 1.5,
                 ),
               ),
@@ -227,7 +227,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
     return Container(
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+        border: Border(top: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
       ),
       child: Row(
         children: [

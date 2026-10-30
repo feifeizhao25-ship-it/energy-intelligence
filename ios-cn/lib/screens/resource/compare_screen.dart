@@ -131,7 +131,7 @@ class _CompareScreenState extends State<CompareScreen> {
               padding: EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: Color(0xFFF8FAFC),
-                border: Border.all(color: Color(0xFFE2E8F0)),
+                border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
@@ -141,7 +141,7 @@ class _CompareScreenState extends State<CompareScreen> {
                     '添加站址',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF0F172A),
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                   SizedBox(height: 12),
@@ -220,7 +220,7 @@ class _CompareScreenState extends State<CompareScreen> {
               '待对比站址 (${_sites.length}/10)',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF0F172A),
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
             SizedBox(height: 8),
@@ -230,7 +230,7 @@ class _CompareScreenState extends State<CompareScreen> {
                 padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  border: Border.all(color: Color(0xFFE2E8F0)),
+                  border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
@@ -339,7 +339,7 @@ class _CompareScreenState extends State<CompareScreen> {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF0F172A),
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
               SizedBox(height: 12),
@@ -354,7 +354,7 @@ class _CompareScreenState extends State<CompareScreen> {
                   decoration: BoxDecoration(
                     color: isTop ? Color(0xFFFFFBEB) : Colors.white,
                     border: Border.all(
-                      color: isTop ? Color(0xFFF59E0B) : Color(0xFFE2E8F0),
+                      color: isTop ? Color(0xFFF59E0B) : Theme.of(context).colorScheme.outlineVariant,
                       width: isTop ? 2 : 1,
                     ),
                     borderRadius: BorderRadius.circular(12),
@@ -457,7 +457,7 @@ class _CompareScreenState extends State<CompareScreen> {
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 13,
-              color: Color(0xFF0F172A),
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
           SizedBox(height: 2),
