@@ -53,11 +53,13 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('iPad 登录卡片使用平板宽度', (tester) async {
+  testWidgets('iPad 登录卡片收成单列并居中，不随屏幕拉宽', (tester) async {
     await pumpLogin(tester, const Size(1032, 1376), top: 24);
     final card = tester.getSize(find.byKey(const Key('login-card')));
-    expect(card.width, greaterThan(640));
-    expect(card.width, lessThanOrEqualTo(720));
+    expect(card.width, greaterThan(400));
+    expect(card.width, lessThanOrEqualTo(480));
+    final center = tester.getCenter(find.byKey(const Key('login-card')));
+    expect(center.dx, closeTo(1032 / 2, 1));
     expect(tester.takeException(), isNull);
   });
 
