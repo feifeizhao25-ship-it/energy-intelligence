@@ -20,9 +20,12 @@ def write_eval(path: Path, metrics=GOOD_EVAL, at=None):
     return path
 
 
-def recall_file(tmp_path, v=0.96):
+def recall_file(tmp_path, v=1.0, refusal=1.0):
     p = tmp_path / "recall.json"
-    p.write_text(json.dumps({"recall_at_8": v}), encoding="utf-8")
+    payload = {"recall_at_8": v}
+    if refusal is not None:
+        payload["refusal_accuracy"] = refusal
+    p.write_text(json.dumps(payload), encoding="utf-8")
     return p
 
 
@@ -52,7 +55,7 @@ def test_measured_metrics_fail_closed(tmp_path):
     stale = write_eval(tmp_path / "old.json", at=datetime(2026, 10, 1, tzinfo=timezone.utc))
     assert eh.measured_metrics(stale, NOW) == {}
     ok = eh.measured_metrics(write_eval(tmp_path / "e.json"), NOW, recall_file(tmp_path))
-    assert ok["redteam_pass_rate"] == 1.0 and ok["calc_error"] == 0.0 and ok["recall_at_8"] == 0.96
+    assert ok["redteam_pass_rate"] == 1.0 and ok["calc_error"] == 0.0 and ok["recall_at_8"] == 1.0 and ok["refusal_accuracy"] == 1.0
 
 
 def make(tmp_path, eval_ok=True, reviewers="boss", gateway=None):

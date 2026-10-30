@@ -10,6 +10,14 @@ import os
 import re
 
 
+# 来源可信度先验：evidence_status 为 auto_extracted 的条目是脚本从官网摘录、还没经人工复核的文本，
+# 排序时打八折。题干没有具体线索（文号、地区、标准号）时，已人工登记的来源先出；
+# 题干有明确线索时词面分数差距远大于 20%，新来源照样排在前面（golden_expand_v1 22 题全部命中）。
+# 条目经人复核后 evidence_status 不再是 auto_extracted，折扣自动消失。没有该字段的文档不受影响。
+UNREVIEWED_PRIOR = 0.8
+UNREVIEWED_STATUS = "auto_extracted"
+
+
 def contextual_header(doc: dict) -> str:
     number = doc.get("doc_number") or "无文号"
     issuer = doc.get("issuer") or doc.get("source_org") or "未标注机关"
@@ -105,11 +113,13 @@ def hybrid_scores(query: str, docs: list[dict], vector_scores: dict[str, float] 
     rows = []
     for doc, lexical in zip(docs, lexical_scores):
         vector = float(vector_scores.get(doc.get("source_id"), 0.0))
+        prior = UNREVIEWED_PRIOR if doc.get("evidence_status") == UNREVIEWED_STATUS else 1.0
         rows.append({
             "source_id": doc.get("source_id"),
             "lexical": lexical,
             "vector": vector,
-            "score": lexical_weight * lexical + vector_weight * vector,
+            "prior": prior,
+            "score": (lexical_weight * lexical + vector_weight * vector) * prior,
             "chunk": contextual_chunk(doc),
         })
     rows.sort(key=lambda item: item["score"], reverse=True)

@@ -13,7 +13,7 @@ from app.services.ai_service import ai_assistant
 from app.core.subscription import QuotaExceeded, assert_ai_quota, consume_ai_quota
 from app.services.evidence_envelope import envelope_from_rag
 from app.services.rag_service import RAGService
-from app.services.bottom_line import NOTICE_EN, NOTICE_ZH, enforce_bottom_line, find_violations
+from app.services.bottom_line import NOTICE_EN, NOTICE_ZH, blocked_input_text, enforce_bottom_line, find_violations
 from app.services.budget_caps import BudgetExceeded, assert_product_budget, charge_product_budget
 from app.models.user import User
 import json
@@ -88,9 +88,7 @@ CN_SYSTEM_PROMPT = """你是新能源智库的分析助手，熟悉中国光伏�
 
 def blocked_model_text(text: str, market: str) -> Optional[str]:
     """国内输入和输出都过精确词 + 正则。命中则不再把原文交给模型。"""
-    if not find_violations(text or "", market=market):
-        return None
-    return NOTICE_EN if market == "global" else NOTICE_ZH
+    return blocked_input_text(text, market)
 
 
 def _charge_cn(user_id: str, market: str) -> None:

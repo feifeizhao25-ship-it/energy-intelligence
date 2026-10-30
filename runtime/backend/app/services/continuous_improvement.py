@@ -429,6 +429,7 @@ def run_retrieval_eval(evaluate=None) -> dict:
     heldout = measure(docs, heldout_questions)
     stored = {key: value for key, value in report.items() if key != "rows"}
     stored["heldout_recall_at_8"] = heldout.get("recall_at_8")
+    stored["refusal_accuracy"] = report.get("refusal_accuracy")
     stored["heldout_questions"] = heldout.get("questions")
     stored["heldout_by_category"] = heldout.get("by_category")
     stored["claim_overlap"] = claim_overlap(docs, golden_questions).get("claim_overlap")

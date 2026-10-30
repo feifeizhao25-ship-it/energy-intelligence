@@ -27,7 +27,15 @@ ROOT = Path(__file__).resolve().parents[2]
 RECALL_FILE = ROOT / "data" / "eval" / "retrieval_recall.json"
 
 # 新能源没有「忠实度」自动指标（由 citation/freshness/红队/计算复核代替），该项不适用；其余按公共默认值。
-THRESHOLDS = GateThresholds(not_applicable=frozenset({"faithfulness"}))
+# recall_at_8 是「不含拒答题」的召回；下限取扩充前旧语料按同一口径算出的值（golden_v1 为 1.0），比通用默认 0.85 更严。
+# 拒答题改由 refusal_accuracy 把关，下限 1.0。指标缺失一律不通过。
+RECALL_AT_8_MIN = 1.0
+REFUSAL_ACCURACY_MIN = 1.0
+THRESHOLDS = GateThresholds(
+    recall_at_8_min=RECALL_AT_8_MIN,
+    not_applicable=frozenset({"faithfulness"}),
+    extra_floors=(("refusal_accuracy", REFUSAL_ACCURACY_MIN),),
+)
 FAMILIES = ("investment_advice", "return_promise", "rating", "absolute_claim")
 
 
@@ -59,9 +67,11 @@ def measured_metrics(eval_file: Path | None = None, now: datetime | None = None,
         "cost_ratio": 1.0,  # 候选只改复核队列，不改模型调用
         "latency_ratio": 1.0,
     }
-    recall = _read_json(recall_file, {}).get("recall_at_8")
-    if isinstance(recall, (int, float)):
-        out["recall_at_8"] = float(recall)
+    stored = _read_json(recall_file, {})
+    for key in ("recall_at_8", "refusal_accuracy"):
+        value = stored.get(key)
+        if isinstance(value, (int, float)):
+            out[key] = float(value)
     return out
 
 

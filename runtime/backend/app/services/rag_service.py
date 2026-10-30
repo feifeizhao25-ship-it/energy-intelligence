@@ -236,6 +236,7 @@ class RAGService:
                 "content": hit.content,
                 "doc_number": (hit.metadata or {}).get("doc_number"),
                 "issuer": (hit.metadata or {}).get("source_org"),
+                "evidence_status": (hit.metadata or {}).get("evidence_status"),
             }
             for hit in base.hits
         ]

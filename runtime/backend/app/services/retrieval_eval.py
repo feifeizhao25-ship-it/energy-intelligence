@@ -17,8 +17,13 @@ from app.services.local_embeddings import pairwise_query_scores
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def _doc(source_id: str, title: str, content: str, origin: str, doc_number: str = "", issuer: str = "", locator: str = "", publish_date: str = "", effective_date: str = "") -> dict:
+# 拒答类题：要考的是系统有没有拒答，不是检索有没有命中某份文件，所以不进 Recall@8 的分母。
+REFUSAL_CATEGORY = "refusal"
+
+
+def _doc(source_id: str, title: str, content: str, origin: str, doc_number: str = "", issuer: str = "", locator: str = "", publish_date: str = "", effective_date: str = "", evidence_status: str = "") -> dict:
     return {
+        "evidence_status": evidence_status,
         "source_id": source_id,
         "title": title,
         "content": content,
@@ -49,6 +54,7 @@ def load_corpus(root: Path | None = None, include_auto_extracted: bool = True) -
             source.get("doc_number") or "", source.get("issuer") or "", source.get("locator") or "",
             source.get("publish_date") or source.get("published_at") or "",
             source.get("effective_date") or "",
+            source.get("evidence_status") or "",
         ))
     registry_path = base / "data" / "public_sources" / "registry.json"
     if registry_path.is_file():
@@ -91,6 +97,11 @@ def load_questions(root: Path | None = None) -> list[dict]:
 def load_heldout_questions(root: Path | None = None) -> list[dict]:
     """留出集。问法不沿用黄金集套话，调参时要和黄金集一起看。"""
     path = (root or ROOT) / "data" / "eval" / "heldout_v1.jsonl"
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
+def load_gate_questions(root: Path | None = None) -> list[dict]:
+    path = (root or ROOT) / "data" / "eval" / "golden_gate_v1.jsonl"
     return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
 
 
@@ -137,13 +148,47 @@ def vector_scores_for(query: str, docs: list[dict]) -> dict:
     return {"applied": True, "model": embedded.get("model"), "engine": embedded.get("engine") or embedded.get("provider"), "scores": {key: max(0.0, value) for key, value in raw.items()}}
 
 
+def refusal_check(question: dict) -> dict:
+    """拒答题：走线上输入层的拒答路径（blocked_input_text）。
+
+    通过要同时满足：命中底线并返回标准说明；回答里再扫一遍没有残留的投资建议、收益承诺、价格预测；
+    回答不含该题 forbidden 里的任何词。不看检索，也不调用模型。
+    """
+    from app.services.bottom_line import NOTICE_ZH, blocked_input_text, find_violations
+
+    answer = blocked_input_text(question.get("question") or "", "cn")
+    forbidden = [term for term in question.get("forbidden") or [] if term and term in (answer or "")]
+    residual = find_violations(answer or "", market="cn") if answer else []
+    ok = answer == NOTICE_ZH and not residual and not forbidden
+    return {"ok": ok, "refused": answer is not None, "residual": residual, "forbidden_hit": forbidden}
+
+
 def evaluate(docs: list[dict], questions: list[dict], k: int = 8) -> dict:
+    """recall_at_8 只统计非拒答题；拒答题另算 refusal_accuracy。
+
+    recall_at_8_incl_refusal 保留旧口径（拒答题也按检索命中计），仅供和 2026-10-30 之前的数字对照，不进任何门禁。
+    """
     known = {doc["source_id"] for doc in docs}
     per_question = []
     by_category: dict[str, list[float]] = {}
     missing = 0
     zero_score = 0
+    refusal_rows = []
+    legacy_rows = []
     for question in questions:
+        if (question.get("category") or "unknown") == REFUSAL_CATEGORY:
+            check = refusal_check(question)
+            refusal_rows.append({"id": question.get("id"), "category": REFUSAL_CATEGORY, "refusal_ok": check["ok"], **{key: check[key] for key in ("refused", "residual", "forbidden_hit")}})
+            # 旧口径只为对照：同样跑一遍检索。
+            relevant = {item["source_id"] for item in question.get("required_sources") or []}
+            present = relevant & known
+            if present:
+                query = rewrite_query(question.get("question") or "")
+                vectors = vector_scores_for(query, docs)
+                ranked = rerank(query, hybrid_scores(query, docs, vectors["scores"]))
+                hits = [row for row in ranked["rows"] if row.get("score", 0) > 0]
+                legacy_rows.append(recall_at_k(hits, present, k))
+            continue
         relevant = {item["source_id"] for item in question.get("required_sources") or []}
         present = relevant & known
         category = question.get("category") or "unknown"
@@ -165,6 +210,7 @@ def evaluate(docs: list[dict], questions: list[dict], k: int = 8) -> dict:
             zero_score += 1
         score = recall_at_k(hits, present, k)
         by_category.setdefault(category, []).append(score)
+        legacy_rows.append(score)
         per_question.append({
             "id": question.get("id"),
             "category": category,
@@ -173,10 +219,13 @@ def evaluate(docs: list[dict], questions: list[dict], k: int = 8) -> dict:
         })
     measured = [item["recall"] for item in per_question if item["recall"] is not None]
     macro = sum(measured) / len(measured) if measured else None
+    legacy = sum(legacy_rows) / len(legacy_rows) if legacy_rows else None
+    refusal_accuracy = (sum(1 for row in refusal_rows if row["refusal_ok"]) / len(refusal_rows)) if refusal_rows else None
     probe = vector_scores_for(questions[0].get("question") or "", docs) if questions else {"applied": False, "model": None, "engine": None}
     return {
         "k": k,
         "questions": len(questions),
+        "refusal_questions": len(refusal_rows),
         "evaluated": len(measured),
         "missing_source": missing,
         "corpus_size": len(docs),
@@ -186,11 +235,14 @@ def evaluate(docs: list[dict], questions: list[dict], k: int = 8) -> dict:
         "vector_weight_applied": bool(probe.get("applied")),
         "zero_score_not_counted": True,
         "recall_at_8": macro,
+        "recall_at_8_excludes": REFUSAL_CATEGORY,
+        "recall_at_8_incl_refusal": legacy,
+        "refusal_accuracy": refusal_accuracy,
         "zero_score_questions": zero_score,
         "by_category": {key: (sum(values) / len(values)) for key, values in by_category.items()},
         "hardcoded": False,
         "note": "语料是已入库的登记文本、离线样本和结构样本，不是一次新的网络抓取。词面是中文双字 BM25。含公式、标准或文号的问句用词面 0.82、向量 0.18，其余问句用词面 0.55、向量 0.45。无中文且与语料无共同词的查询不使用向量。得分为 0 的文档不计入前 8。embedding_model 为 local-char-ngram 时表示本机没有加载 bge 权重，用的是字符 n-gram，不是文本嵌入模型。",
-        "rows": per_question,
+        "rows": per_question + refusal_rows,
     }
 
 
@@ -206,13 +258,31 @@ def write_report(path: Path, root: Path | None = None) -> dict:
     docs = load_corpus(root)
     report = evaluate(docs, load_questions(root))
     stored = {key: value for key, value in report.items() if key != "rows"}
-    core = evaluate(load_corpus(root, include_auto_extracted=False), load_questions(root))
+    old_docs = load_corpus(root, include_auto_extracted=False)
+    sets = {"golden_v1": load_questions(root), "heldout_v1": load_heldout_questions(root), "gate_v1": load_gate_questions(root)}
+
+    def _summary(result: dict) -> dict:
+        return {
+            "corpus_size": result["corpus_size"],
+            "questions": result["questions"],
+            "refusal_questions": result["refusal_questions"],
+            "recall_at_8": result["recall_at_8"],
+            "recall_at_8_incl_refusal": result["recall_at_8_incl_refusal"],
+            "refusal_accuracy": result["refusal_accuracy"],
+            "by_category": result["by_category"],
+        }
+
+    core = evaluate(old_docs, sets["golden_v1"])
     stored["core_corpus_baseline"] = {
-        "corpus_size": core["corpus_size"],
-        "recall_at_8": core["recall_at_8"],
-        "by_category": core["by_category"],
-        "note": "只含扩充前已登记来源，用于和 2026-10-30 之前的 0.9615 对照。完整语料召回下降来自 refusal 类题（要求来源 policy-cn-136 原本靠小语料碰中）和少数未指明文件的留出题，policy/calculation/timeliness 类黄金题未下降。",
+        **_summary(core),
+        "note": "只含扩充前已登记来源。recall_at_8 与当前口径相同（不含拒答题），可直接对照；recall_at_8_incl_refusal 是 2026-10-30 之前的旧口径（0.9615）。",
     }
+    stored["by_set"] = {"golden_v1": {"old_corpus": _summary(core), "current_corpus": _summary(report)}}
+    for name in ("heldout_v1", "gate_v1"):
+        stored["by_set"][name] = {
+            "old_corpus": _summary(evaluate(old_docs, sets[name])),
+            "current_corpus": _summary(evaluate(docs, sets[name])),
+        }
     expand_questions = load_expand_questions(root)
     if expand_questions:
         expanded = evaluate(docs, expand_questions)

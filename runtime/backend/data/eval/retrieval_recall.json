@@ -1,7 +1,8 @@
 {
   "k": 8,
   "questions": 260,
-  "evaluated": 260,
+  "refusal_questions": 40,
+  "evaluated": 220,
   "missing_source": 0,
   "corpus_size": 182,
   "corpus_origins": [
@@ -14,26 +15,117 @@
   "embedding_model": "local-char-ngram",
   "vector_weight_applied": true,
   "zero_score_not_counted": true,
-  "recall_at_8": 0.8653846153846154,
+  "recall_at_8": 1.0,
+  "recall_at_8_excludes": "refusal",
+  "recall_at_8_incl_refusal": 0.9230769230769231,
+  "refusal_accuracy": 1.0,
   "zero_score_questions": 0,
   "by_category": {
     "policy": 1.0,
     "calculation": 1.0,
-    "timeliness": 1.0,
-    "refusal": 0.125
+    "timeliness": 1.0
   },
   "hardcoded": false,
   "note": "语料是已入库的登记文本、离线样本和结构样本，不是一次新的网络抓取。词面是中文双字 BM25。含公式、标准或文号的问句用词面 0.82、向量 0.18，其余问句用词面 0.55、向量 0.45。无中文且与语料无共同词的查询不使用向量。得分为 0 的文档不计入前 8。embedding_model 为 local-char-ngram 时表示本机没有加载 bge 权重，用的是字符 n-gram，不是文本嵌入模型。",
   "core_corpus_baseline": {
     "corpus_size": 69,
-    "recall_at_8": 0.9615384615384616,
+    "questions": 260,
+    "refusal_questions": 40,
+    "recall_at_8": 1.0,
+    "recall_at_8_incl_refusal": 0.9615384615384616,
+    "refusal_accuracy": 1.0,
     "by_category": {
       "policy": 1.0,
       "calculation": 1.0,
-      "timeliness": 1.0,
-      "refusal": 0.75
+      "timeliness": 1.0
     },
-    "note": "只含扩充前已登记来源，用于和 2026-10-30 之前的 0.9615 对照。完整语料召回下降来自 refusal 类题（要求来源 policy-cn-136 原本靠小语料碰中）和少数未指明文件的留出题，policy/calculation/timeliness 类黄金题未下降。"
+    "note": "只含扩充前已登记来源。recall_at_8 与当前口径相同（不含拒答题），可直接对照；recall_at_8_incl_refusal 是 2026-10-30 之前的旧口径（0.9615）。"
+  },
+  "by_set": {
+    "golden_v1": {
+      "old_corpus": {
+        "corpus_size": 69,
+        "questions": 260,
+        "refusal_questions": 40,
+        "recall_at_8": 1.0,
+        "recall_at_8_incl_refusal": 0.9615384615384616,
+        "refusal_accuracy": 1.0,
+        "by_category": {
+          "policy": 1.0,
+          "calculation": 1.0,
+          "timeliness": 1.0
+        }
+      },
+      "current_corpus": {
+        "corpus_size": 182,
+        "questions": 260,
+        "refusal_questions": 40,
+        "recall_at_8": 1.0,
+        "recall_at_8_incl_refusal": 0.9230769230769231,
+        "refusal_accuracy": 1.0,
+        "by_category": {
+          "policy": 1.0,
+          "calculation": 1.0,
+          "timeliness": 1.0
+        }
+      }
+    },
+    "heldout_v1": {
+      "old_corpus": {
+        "corpus_size": 69,
+        "questions": 120,
+        "refusal_questions": 0,
+        "recall_at_8": 0.975,
+        "recall_at_8_incl_refusal": 0.975,
+        "refusal_accuracy": null,
+        "by_category": {
+          "policy": 1.0,
+          "timeliness": 1.0,
+          "calculation": 0.875
+        }
+      },
+      "current_corpus": {
+        "corpus_size": 182,
+        "questions": 120,
+        "refusal_questions": 0,
+        "recall_at_8": 0.9583333333333334,
+        "recall_at_8_incl_refusal": 0.9583333333333334,
+        "refusal_accuracy": null,
+        "by_category": {
+          "policy": 0.96875,
+          "timeliness": 1.0,
+          "calculation": 0.875
+        }
+      }
+    },
+    "gate_v1": {
+      "old_corpus": {
+        "corpus_size": 69,
+        "questions": 70,
+        "refusal_questions": 11,
+        "recall_at_8": 1.0,
+        "recall_at_8_incl_refusal": 0.9285714285714286,
+        "refusal_accuracy": 1.0,
+        "by_category": {
+          "policy": 1.0,
+          "calculation": 1.0,
+          "timeliness": 1.0
+        }
+      },
+      "current_corpus": {
+        "corpus_size": 182,
+        "questions": 70,
+        "refusal_questions": 11,
+        "recall_at_8": 1.0,
+        "recall_at_8_incl_refusal": 0.8857142857142857,
+        "refusal_accuracy": 1.0,
+        "by_category": {
+          "policy": 1.0,
+          "calculation": 1.0,
+          "timeliness": 1.0
+        }
+      }
+    }
   },
   "expand_v1": {
     "questions": 22,
