@@ -21,6 +21,20 @@ def _improvement_beat() -> dict:
     }
 
 
+def _sil_beat() -> dict:
+    """每周自改进（SIL）。SIL_ENABLED 未打开时不登记，任务本身也会再检查一次。"""
+    import os
+
+    if str(os.environ.get("SIL_ENABLED", "0")).strip().lower() not in ("1", "true", "yes", "on"):
+        return {}
+    return {
+        # 周日 03:00（上海）= 周六 19:00 UTC；与 05:00 的 NASA 批量、周一 03:00 的技能改进错开
+        "self-improvement-weekly": {"task": "energy.domestic.self_improvement", "schedule": crontab(day_of_week=0, hour=3, minute=0)},
+        # 每月 1 日 04:00（上海）库清点，只出降级名单
+        "self-improvement-monthly": {"task": "energy.domestic.self_improvement_monthly", "schedule": crontab(day_of_month=1, hour=4, minute=0)},
+    }
+
+
 celery_app = Celery(
     "energy",
     broker=settings.REDIS_URL.replace("redis://", "redis://"),
@@ -65,6 +79,7 @@ celery_app.conf.update(
         },
         **beat_entries(),
         **_improvement_beat(),
+        **_sil_beat(),
     },
     task_serializer="json",
     accept_content=["json"],

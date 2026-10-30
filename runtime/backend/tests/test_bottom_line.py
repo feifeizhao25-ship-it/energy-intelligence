@@ -27,6 +27,8 @@ def test_backend_source_has_no_banned_phrases():
     allow = {
         "app/core/bottom_line.py",
         "app/services/bottom_line.py",
+        "app/services/bottom_line_semantic.py",
+        "app/self_improve/compliance.py",
         "app/api/v1/ai_assistant.py",
     }
     hits = []

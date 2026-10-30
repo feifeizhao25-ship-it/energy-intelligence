@@ -53,7 +53,7 @@
       "id": "pysam",
       "scope": "skills",
       "kind": "github",
-      "url": "https://github.com/NREL/pysam",
+      "url": "https://github.com/NatLabRockies/pysam",
       "license": "BSD-3-Clause",
       "trust_tier": 2,
       "ingestion_policy": "code_review_only",

@@ -216,7 +216,11 @@ def scenario_s15() -> dict:
 def scenario_s16() -> dict:
     doc = _registry().get("policy-cn-136")
     text = f"{doc['content']} 原文：{doc['source_url']}"
-    return {"ok": "2025年6月1日" in text and doc["source_url"] in text and "policy-cn-136" == doc["source_id"], "text": text}
+    # 114 号（发电侧容量电价）与 136 号并存：二者不是替代关系，各自带原文链接
+    cap = _registry().get("policy-cn-114")
+    cap_ok = bool(cap) and "不低于50%" in cap["content"] and cap["source_url"].startswith("https://www.ndrc.gov.cn/") and doc.get("superseded_by") is None
+    text += f" 另见 {cap['doc_number']}：{cap['source_url']}" if cap else ""
+    return {"ok": "2025年6月1日" in text and doc["source_url"] in text and "policy-cn-136" == doc["source_id"] and cap_ok, "text": text}
 
 
 def scenario_s17() -> dict:
@@ -347,7 +351,7 @@ SCENARIOS = [
     {"id": "S13", "covers": ["compare_locations"], "run": scenario_s13},
     {"id": "S14", "covers": ["generate_resource_report"], "run": scenario_s14},
     {"id": "S15", "covers": ["diagnose_system_health"], "run": scenario_s15},
-    {"id": "S16", "covers": ["query_knowledge_base", "policy-cn-136"], "run": scenario_s16},
+    {"id": "S16", "covers": ["query_knowledge_base", "policy-cn-136", "policy-cn-114"], "run": scenario_s16},
     {"id": "S17", "covers": ["std-gb50797"], "run": scenario_s17},
     {"id": "S18", "covers": ["policy-cn-storage"], "run": scenario_s18},
     {"id": "S19", "covers": ["std-iec61724"], "run": scenario_s19},

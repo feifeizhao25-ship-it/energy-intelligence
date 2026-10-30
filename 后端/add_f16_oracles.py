@@ -12,7 +12,7 @@ ORACLES = [
      "description": "Arizona Phoenix 100MW 公用事业 PV, PySAM PVWattsv8 模型 + NREL NSRDB 2024 真实气象, TOPCon 单轴跟踪",
      "inputs": {"region": "us_arizona_phoenix", "system_capacity_kw": 100000, "dc_ac_ratio": 1.3, "tilt": 20, "module_model": "TOPCon", "bifacial": True, "tracking": "single_axis"},
      "expected_outputs": {"annual_generation_gwh": 216, "capacity_factor": 24.7, "specific_yield_kwh_per_kwp": 2160, "lcoe_usd_mwh": 26, "pr": 0.85, "module_eff": 0.225},
-     "sources": {"primary": "NREL PySAM 5.1 + NSRDB 2024", "reference_urls": ["https://github.com/NREL/pysam", "https://nsrdb.nrel.gov"]}},
+     "sources": {"primary": "NREL PySAM 5.1 + NSRDB 2024", "reference_urls": ["https://github.com/NatLabRockies/pysam", "https://nsrdb.nrel.gov"]}},
 
     # 2. pvlib 实测 (青海)
     {"id": "PV-PVLIB-2024-CN-QH-50MW-001", "name": "青海格尔木 50MW PV pvlib 0.13 实测", "project_type": "pv",

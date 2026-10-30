@@ -15,7 +15,7 @@ def test_user_facing_copy_has_no_bottom_line_terms():
     for k in ("investment_advice","price_prediction","impersonating_official"):
         terms += data.get(k) or []
     # 守卫/提示词/测试本身 legitimately 引用禁词 (否定式), 豁免
-    allow = {"bottom-line.ts","bottom-line-terms.json","bottom_line.py","system-prompt.ts","ai_assistant.py","test_bottom_line_output_filter.py"}
+    allow = {"bottom-line.ts","bottom-line-terms.json","bottom_line.py","bottom_line_semantic.py","compliance.py","system-prompt.ts","ai_assistant.py","test_bottom_line_output_filter.py"}
     hits=[]
     for sub in ["web/src","web-int/src","backend/app"]:
         for f in (root/sub).rglob("*"):
