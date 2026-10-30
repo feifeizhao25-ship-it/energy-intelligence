@@ -96,13 +96,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
     child: ListView(
       padding: const EdgeInsets.fromLTRB(16, 52, 16, 24),
       children: [
-        const Row(
+        Row(
           children: [
-            Icon(Icons.bolt, color: AppTheme.primaryColor, size: 30),
-            SizedBox(width: 8),
-            Text(
-              '新能源智库',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
+            const Icon(Icons.bolt, color: AppTheme.primaryColor, size: 30),
+            const SizedBox(width: 8),
+            const Expanded(
+              child: Text(
+                '新能源智库',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
+              ),
+            ),
+            IconButton(
+              tooltip: '设置',
+              icon: const Icon(Icons.account_circle_outlined),
+              onPressed: () => Navigator.of(context).pushNamed('/settings'),
             ),
           ],
         ),

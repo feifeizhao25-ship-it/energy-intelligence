@@ -88,7 +88,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         Container(
           width: 40,
           height: 2,
-          color: _currentStep > 0 ? AppTheme.primaryColor : Color(0xFFE2E8F0),
+          color: _currentStep > 0 ? AppTheme.primaryColor : Theme.of(context).colorScheme.outlineVariant,
         ),
         SizedBox(width: 24),
         _buildStepCircle(1, '公司信息'),
@@ -104,7 +104,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: isActive ? AppTheme.primaryColor : Color(0xFFE2E8F0),
+            color: isActive ? AppTheme.primaryColor : Theme.of(context).colorScheme.outlineVariant,
             shape: BoxShape.circle,
           ),
           child: Center(
@@ -215,7 +215,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   border: Border.all(
                     color: isSelected
                         ? AppTheme.primaryColor
-                        : Color(0xFFE2E8F0),
+                        : Theme.of(context).colorScheme.outlineVariant,
                     width: isSelected ? 2 : 1,
                   ),
                   borderRadius: BorderRadius.circular(12),
@@ -235,7 +235,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         fontWeight: FontWeight.w600,
                         color: isSelected
                             ? AppTheme.primaryColor
-                            : Color(0xFF475569),
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                       textAlign: TextAlign.center,
                     ),

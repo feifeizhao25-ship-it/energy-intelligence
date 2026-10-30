@@ -119,7 +119,7 @@ class _WindFinanceScreenState extends State<WindFinanceScreen> {
                     margin: EdgeInsets.symmetric(horizontal: 2),
                     height: 4,
                     decoration: BoxDecoration(
-                      color: active ? Color(0xFF1D4ED8) : Color(0xFFE2E8F0),
+                      color: active ? Color(0xFF1D4ED8) : Theme.of(context).colorScheme.outlineVariant,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -133,7 +133,7 @@ class _WindFinanceScreenState extends State<WindFinanceScreen> {
               '装机容量 (MW)',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF0F172A),
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
             SizedBox(height: 8),
@@ -153,7 +153,7 @@ class _WindFinanceScreenState extends State<WindFinanceScreen> {
               '年利用小时数 (容量系数)',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF0F172A),
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
             SizedBox(height: 8),
@@ -173,7 +173,7 @@ class _WindFinanceScreenState extends State<WindFinanceScreen> {
               '单位投资成本 (万元/MW)',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF0F172A),
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
             SizedBox(height: 8),
@@ -193,7 +193,7 @@ class _WindFinanceScreenState extends State<WindFinanceScreen> {
               '年度运维成本 (万元/MW)',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF0F172A),
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
             SizedBox(height: 8),
@@ -213,7 +213,7 @@ class _WindFinanceScreenState extends State<WindFinanceScreen> {
               '上网电价 (元/kWh)',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF0F172A),
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
             SizedBox(height: 8),
@@ -289,7 +289,7 @@ class _WindFinanceScreenState extends State<WindFinanceScreen> {
                 '未来10年现金流 (万元)',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF0F172A),
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
               SizedBox(height: 12),

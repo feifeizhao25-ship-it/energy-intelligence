@@ -83,7 +83,7 @@ class ProjectDetailScreen extends StatelessWidget {
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF0F172A),
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         SizedBox(height: 12),
@@ -117,14 +117,6 @@ class ProjectDetailScreen extends StatelessWidget {
               onTap: () => Navigator.of(
                 context,
               ).push(MaterialPageRoute(builder: (_) => HealthScreen())),
-            ),
-            _buildActionCard(
-              title: 'AI分析',
-              icon: Icons.smart_toy,
-              color: Color(0xFF3B82F6),
-              onTap: () => ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(SnackBar(content: Text('功能开发中'))),
             ),
           ],
         ),
