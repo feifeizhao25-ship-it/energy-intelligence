@@ -406,7 +406,7 @@ class _CompareScreenState extends State<CompareScreen> {
                         children: [
                           Expanded(
                             child: _buildResourceMetric(
-                              'GHI',
+                              '水平面总辐照量',
                               '${r['ghi']} kWh/m²',
                               '太阳资源 ${r['solarClass']}类',
                               _classColor(r['solarClass'] as String),
@@ -415,7 +415,7 @@ class _CompareScreenState extends State<CompareScreen> {
                           SizedBox(width: 12),
                           Expanded(
                             child: _buildResourceMetric(
-                              'WPD',
+                              '风功率密度',
                               '${r['wpd']} W/m²',
                               '风资源 ${r['windClass']}类',
                               _classColor(r['windClass'] as String),

@@ -91,7 +91,7 @@ class _CleaningScreenState extends State<CleaningScreen> {
                   ),
                   SizedBox(height: 4),
                   Text(
-                    'N* = √(2C / (Rs × s))\n\nC=单次清洗成本, Rs=日发电收益, s=日积灰率',
+                    'N* = √(2C / (R × s))\n\nC=单次清洗成本, R=日发电收益, s=日积灰率',
                     style: TextStyle(
                       fontSize: 12,
                       color: Color(0xFF0C4A6E),

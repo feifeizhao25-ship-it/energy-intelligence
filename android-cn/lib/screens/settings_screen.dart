@@ -43,7 +43,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 value: _language,
                 items: const [
                   DropdownMenuItem(value: 'zh-CN', child: Text('简体中文')),
-                  DropdownMenuItem(value: 'en-US', child: Text('English')),
                 ],
                 onChanged: (v) => setState(() => _language = v!),
               ),

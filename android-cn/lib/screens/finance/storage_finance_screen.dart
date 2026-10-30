@@ -215,7 +215,7 @@ class _StorageFinanceScreenState extends State<StorageFinanceScreen> {
   Widget _buildResultCards() {
     final items = [
       {
-        'label': '项目IRR',
+        'label': '项目内部收益率',
         'value': '${(_result!['irr'] as double).toStringAsFixed(2)}%',
         'color': Color(0xFF059669),
       },

@@ -39,7 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
         'change': '0',
       },
       {
-        'label': '平均IRR',
+        'label': '平均内部收益率',
         'value':
             '${((metrics['total_irr'] ?? 0.0) as num).toStringAsFixed(1)}%',
         'trend': 'up',
@@ -228,7 +228,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               title: Text(p['name']),
               subtitle: Text(
-                '${p['status']} | ${p['capacity']}MW | IRR: ${p['irr']}%',
+                '${p['status']} | ${p['capacity']}MW | 内部收益率: ${p['irr']}%',
               ),
               trailing: Chip(
                 label: Text('健康 ${p['healthScore']}%'),

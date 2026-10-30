@@ -147,7 +147,7 @@ class _WindResourceScreenState extends State<WindResourceScreen> {
                     'W/m²',
                   ),
                   _buildDataCard(
-                    'Weibull k',
+                    '韦布尔形状参数',
                     _result!.weibullK.toStringAsFixed(2),
                     '-',
                   ),
