@@ -144,7 +144,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                   constraints: BoxConstraints(minHeight: constraints.maxHeight - 36 - keyboard),
                   child: Center(
                     child: ConstrainedBox(
-                      constraints: BoxConstraints(maxWidth: wide ? 720 : 480),
+                      // iPad / 宽屏：登录卡片收成一列居中，不随屏幕拉宽。
+                      constraints: const BoxConstraints(maxWidth: 480),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.stretch,
