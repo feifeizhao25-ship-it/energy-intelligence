@@ -335,6 +335,49 @@ def research_write_allowed(path: str) -> bool:
     return "/data/research/" in f"/{norm}" and "rag_sources.json" not in norm
 
 
+_OFFICIAL_HOSTS = {
+    "www.ndrc.gov.cn", "zfxxgk.nea.gov.cn", "www.nea.gov.cn", "www.stats.gov.cn",
+    "drc.gd.gov.cn", "www.shanghai.gov.cn", "fgw.sh.gov.cn", "fgw.beijing.gov.cn",
+    "www.beijing.gov.cn", "gb.shandong.gov.cn", "fgw.weihai.gov.cn",
+}
+_AUTO_TRACE = ("source_url", "publish_date", "retrieved_at", "review_due", "last_verified_at", "verify_interval_days", "snapshot_sha256")
+
+
+def _auto_extracted_ids() -> list:
+    return sorted(row["source_id"] for row in _registry().sources if row.get("evidence_status") == "auto_extracted")
+
+
+def scenario_s33() -> dict:
+    """自动提取来源必须逐条满足：可追溯字段齐全、哈希一致、官方域名、待人工核验标注、按核验期变陈旧。"""
+    import hashlib
+    from datetime import timedelta
+    from urllib.parse import urlparse
+
+    problems = []
+    rows = [row for row in _registry().sources if row.get("evidence_status") == "auto_extracted"]
+    for row in rows:
+        sid = row["source_id"]
+        if any(row.get(field) in (None, "") for field in _AUTO_TRACE):
+            problems.append(f"{sid}: 缺可追溯字段")
+            continue
+        retrieved = date.fromisoformat(row["retrieved_at"])
+        if date.fromisoformat(row["review_due"]) != retrieved + timedelta(days=int(row["verify_interval_days"])):
+            problems.append(f"{sid}: review_due 与核验周期不一致")
+        if row["snapshot_sha256"] != hashlib.sha256(row["content"].encode()).hexdigest():
+            problems.append(f"{sid}: 快照哈希不一致")
+        if urlparse(row["source_url"]).hostname not in _OFFICIAL_HOSTS:
+            problems.append(f"{sid}: 非官方域名")
+        if not row.get("needs_human_verification") or row.get("expert_signed") not in (None, False):
+            problems.append(f"{sid}: 人工核验标注缺失或被代签")
+        today_status = freshness_status(row["last_verified_at"], int(row["verify_interval_days"]), today=retrieved)
+        late_status = freshness_status(row["last_verified_at"], int(row["verify_interval_days"]), today=retrieved + timedelta(days=int(row["verify_interval_days"]) + 1))
+        if today_status != "current" or late_status != "stale":
+            problems.append(f"{sid}: 新鲜度判定异常 {today_status}/{late_status}")
+        if row.get("expiry") and row["expiry"] < row["retrieved_at"] and row.get("status") != "待核实":
+            problems.append(f"{sid}: 已到期但仍标现行")
+    return {"ok": bool(rows) and not problems, "checked": len(rows), "problems": problems[:5]}
+
+
 SCENARIOS = [
     {"id": "S01", "covers": ["RA-001", "domestic_resources"], "run": scenario_s01},
     {"id": "S02", "covers": ["RA-002"], "run": scenario_s02},
@@ -368,6 +411,7 @@ SCENARIOS = [
     {"id": "S30", "covers": ["redteam"], "run": scenario_s30},
     {"id": "S31", "covers": ["freshness"], "run": scenario_s31},
     {"id": "S32", "covers": ["cn-energy-evidence"], "run": scenario_s32},
+    {"id": "S33", "covers": _auto_extracted_ids(), "run": scenario_s33},
 ]
 
 
@@ -446,6 +490,7 @@ def write_yaml(path: Path | None = None) -> Path:
         "S30": "拒绝冒充官方",
         "S31": "未来核验日期按过期",
         "S32": "维护技能不写生产语料",
+        "S33": "自动提取来源逐条守门（追溯字段、哈希、官方域名、核验期）",
     }
     for spec in SCENARIOS:
         lines.append(f"- id: {spec['id']}\n")

@@ -31,11 +31,14 @@ def _doc(source_id: str, title: str, content: str, origin: str, doc_number: str 
     }
 
 
-def load_corpus(root: Path | None = None) -> list[dict]:
+def load_corpus(root: Path | None = None, include_auto_extracted: bool = True) -> list[dict]:
+    """include_auto_extracted=False 只取 2026-10-30 扩充前已人工登记的来源，用来和旧基线对照。"""
     base = root or ROOT
     docs = []
     rag = json.loads((base / "data" / "rag_sources.json").read_text(encoding="utf-8"))
     for source in rag.get("sources") or []:
+        if not include_auto_extracted and source.get("evidence_status") == "auto_extracted":
+            continue
         content = "\n".join(
             part for part in (
                 source.get("title"), source.get("locator"), source.get("content"), source.get("version"),
@@ -191,10 +194,34 @@ def evaluate(docs: list[dict], questions: list[dict], k: int = 8) -> dict:
     }
 
 
+def load_expand_questions(root: Path | None = None) -> list[dict]:
+    """2026-10-30 扩充来源后的题集，每题的 must_include 都能在所要求来源的收录文本里逐字找到。"""
+    path = (root or ROOT) / "data" / "eval" / "golden_expand_v1.jsonl"
+    if not path.is_file():
+        return []
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
 def write_report(path: Path, root: Path | None = None) -> dict:
     docs = load_corpus(root)
     report = evaluate(docs, load_questions(root))
     stored = {key: value for key, value in report.items() if key != "rows"}
+    core = evaluate(load_corpus(root, include_auto_extracted=False), load_questions(root))
+    stored["core_corpus_baseline"] = {
+        "corpus_size": core["corpus_size"],
+        "recall_at_8": core["recall_at_8"],
+        "by_category": core["by_category"],
+        "note": "只含扩充前已登记来源，用于和 2026-10-30 之前的 0.9615 对照。完整语料召回下降来自 refusal 类题（要求来源 policy-cn-136 原本靠小语料碰中）和少数未指明文件的留出题，policy/calculation/timeliness 类黄金题未下降。",
+    }
+    expand_questions = load_expand_questions(root)
+    if expand_questions:
+        expanded = evaluate(docs, expand_questions)
+        stored["expand_v1"] = {
+            "questions": expanded["questions"],
+            "evaluated": expanded["evaluated"],
+            "recall_at_8": expanded["recall_at_8"],
+            "by_category": expanded["by_category"],
+        }
     stored["sample_top"] = [
         {"id": item["id"], "recall": item["recall"], "top": item.get("top")}
         for item in report["rows"][:3]

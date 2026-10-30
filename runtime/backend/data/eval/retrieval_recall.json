@@ -3,7 +3,7 @@
   "questions": 260,
   "evaluated": 260,
   "missing_source": 0,
-  "corpus_size": 68,
+  "corpus_size": 182,
   "corpus_origins": [
     "cn_datasets",
     "domestic_resources",
@@ -14,29 +14,49 @@
   "embedding_model": "local-char-ngram",
   "vector_weight_applied": true,
   "zero_score_not_counted": true,
-  "recall_at_8": 0.9615384615384616,
-  "zero_score_questions": 5,
+  "recall_at_8": 0.8653846153846154,
+  "zero_score_questions": 0,
   "by_category": {
     "policy": 1.0,
     "calculation": 1.0,
     "timeliness": 1.0,
-    "refusal": 0.75
+    "refusal": 0.125
   },
   "hardcoded": false,
-  "note": "语料是已入库的登记文本、离线样本和结构样本，不是一次新的网络抓取。向量权重 0.45，词面权重 0.55。无中文且与语料无共同词的查询不使用向量。得分为 0 的文档不计入前 8。embedding_model 为 local-char-ngram 时表示本机没有加载 bge 权重，用的是字符 n-gram，不是文本嵌入模型。",
+  "note": "语料是已入库的登记文本、离线样本和结构样本，不是一次新的网络抓取。词面是中文双字 BM25。含公式、标准或文号的问句用词面 0.82、向量 0.18，其余问句用词面 0.55、向量 0.45。无中文且与语料无共同词的查询不使用向量。得分为 0 的文档不计入前 8。embedding_model 为 local-char-ngram 时表示本机没有加载 bge 权重，用的是字符 n-gram，不是文本嵌入模型。",
+  "core_corpus_baseline": {
+    "corpus_size": 69,
+    "recall_at_8": 0.9615384615384616,
+    "by_category": {
+      "policy": 1.0,
+      "calculation": 1.0,
+      "timeliness": 1.0,
+      "refusal": 0.75
+    },
+    "note": "只含扩充前已登记来源，用于和 2026-10-30 之前的 0.9615 对照。完整语料召回下降来自 refusal 类题（要求来源 policy-cn-136 原本靠小语料碰中）和少数未指明文件的留出题，policy/calculation/timeliness 类黄金题未下降。"
+  },
+  "expand_v1": {
+    "questions": 22,
+    "evaluated": 22,
+    "recall_at_8": 1.0,
+    "by_category": {
+      "policy": 1.0,
+      "statistic": 1.0
+    }
+  },
   "sample_top": [
     {
       "id": "P001",
       "recall": 1.0,
       "top": [
         "policy-cn-136",
-        "policy-cn-688",
-        "policy-us-itc",
-        "policy-cn-storage",
-        "pub-48",
-        "std-gb50797",
-        "price-cn-module",
-        "pub-01"
+        "policy-cn-gd-yfgjg-2025-263",
+        "policy-cn-sh-hfgjg-2025-45",
+        "policy-cn-sd-lfgjg-2025-871",
+        "policy-cn-sh-hfgjg-2026-42",
+        "policy-cn-gd-yfgjgh-2025-2137",
+        "policy-cn-gd-yfgjgh-2026-1805",
+        "policy-cn-sd-lfgjg-2025-576"
       ]
     },
     {
@@ -44,13 +64,13 @@
       "recall": 1.0,
       "top": [
         "policy-cn-136",
-        "policy-cn-688",
-        "policy-us-itc",
-        "policy-cn-storage",
-        "pub-48",
-        "std-gb50797",
-        "price-cn-module",
-        "pub-01"
+        "policy-cn-gd-yfgjg-2025-263",
+        "policy-cn-sh-hfgjg-2025-45",
+        "policy-cn-sd-lfgjg-2025-871",
+        "policy-cn-sh-hfgjg-2026-42",
+        "policy-cn-gd-yfgjgh-2025-2137",
+        "policy-cn-gd-yfgjgh-2026-1805",
+        "policy-cn-sd-lfgjg-2025-576"
       ]
     },
     {
@@ -58,13 +78,13 @@
       "recall": 1.0,
       "top": [
         "policy-cn-136",
-        "policy-cn-688",
-        "policy-cn-storage",
-        "policy-us-itc",
-        "pub-48",
-        "std-gb50797",
-        "price-cn-module",
-        "pub-01"
+        "policy-cn-gd-yfgjg-2025-263",
+        "policy-cn-sh-hfgjg-2025-45",
+        "policy-cn-sd-lfgjg-2025-871",
+        "policy-cn-sh-hfgjg-2026-42",
+        "policy-cn-gd-yfgjgh-2025-2137",
+        "policy-cn-gd-yfgjgh-2026-1805",
+        "policy-cn-sd-lfgjg-2025-576"
       ]
     }
   ]
