@@ -151,6 +151,16 @@ def find_violations(text: str, *, market: str = "cn") -> list[str]:
     return found
 
 
+def blocked_input_text(text: str, market: str = "cn"):
+    """输入层的拒答路径：命中底线则返回标准说明，且不再把原文交给模型；否则返回 None。
+
+    接口层 blocked_model_text 和评测的 refusal_accuracy 共用这一个函数，评测测的就是线上走的路径。
+    """
+    if not find_violations(text or "", market=market):
+        return None
+    return NOTICE_EN if market == "global" else NOTICE_ZH
+
+
 def enforce_bottom_line(text: str, market: str = "cn") -> str:
     if find_violations(text, market=market):
         try:

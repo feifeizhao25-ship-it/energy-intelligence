@@ -54,7 +54,7 @@ REQUIRED_FIELDS = (
 # 这些字段必须出现，但允许 JSON null（表示原文未写截止日期，或尚未被替代）。
 NULLABLE_FIELDS = ("expiry_date", "superseded_by")
 
-VALID_TYPES = ("policy", "standard", "price")
+VALID_TYPES = ("policy", "standard", "price", "statistic")
 VALID_STATUS = ("现行", "征求意见", "废止", "被替代", "待核实")
 VALID_JURISDICTION = ("全国", "省", "市", "海外")
 VALID_TIERS = ("一手官方", "协会", "媒体", "学术")
