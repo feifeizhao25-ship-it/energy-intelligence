@@ -71,7 +71,7 @@ router = APIRouter(prefix="/auth")
 
 
 @router.post("/register", response_model=SuccessResponse[TokenResponse], status_code=201)
-async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
+async def register(body: RegisterRequest, request: Request, db: AsyncSession = Depends(get_db)):
     """Register new user account."""
     # Check if email already exists
     result = await db.execute(select(User).where(User.email == body.email))
@@ -99,6 +99,19 @@ async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
     db.add(user)
     await db.flush()
     await db.refresh(user)
+    # Commit the user row BEFORE emitting analytics: the emitter opens its own
+    # session and the FK product_events.user_id needs the committed row.
+    await db.commit()
+
+    # Server-side lifecycle analytics (fire-and-forget, never blocks signup)
+    from app.services.product_metrics import emit_product_event
+    await emit_product_event(
+        user_id,
+        "user_signed_up",
+        channel=request.query_params.get("utm_source"),
+        campaign=request.query_params.get("utm_campaign"),
+        properties={"method": "password"},
+    )
 
     access_token = create_access_token(subject=user_id)
     refresh_token = create_refresh_token(subject=user_id)
@@ -209,6 +222,7 @@ async def google_oauth(code: str, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Invalid Google profile")
     
     # 3. Find or create user
+    created_new_google_user = False
     result = await db.execute(select(User).where(User.google_id == google_id))
     user = result.scalar_one_or_none()
     
@@ -232,10 +246,18 @@ async def google_oauth(code: str, db: AsyncSession = Depends(get_db)):
                 updated_at=now,
             )
             db.add(user)
+            created_new_google_user = True
     
     await db.flush()
     await db.refresh(user)
-    
+    await db.commit()  # commit before analytics emission (FK visibility)
+
+    if created_new_google_user:
+        from app.services.product_metrics import emit_product_event
+        await emit_product_event(
+            str(user.id), "user_signed_up", properties={"method": "google"}
+        )
+
     access_token = create_access_token(subject=str(user.id))
     refresh_token = create_refresh_token(subject=str(user.id))
     return success(data=TokenResponse(access_token=access_token, refresh_token=refresh_token))

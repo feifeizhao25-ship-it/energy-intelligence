@@ -2297,6 +2297,17 @@ async def _generate_report_task(
                     report.file_path = filepath
                     report.completed_at = datetime.utcnow()
                     await db.commit()
+                    # Server-side lifecycle analytics (fire-and-forget)
+                    from app.services.product_metrics import emit_product_event
+                    await emit_product_event(
+                        str(report.user_id),
+                        "report_generated",
+                        properties={
+                            "report_id": str(report_id),
+                            "report_type": str(getattr(report, "report_type", "") or ""),
+                            "format": str(output_format or ""),
+                        },
+                    )
             except Exception as e:
                 logger.warning(f"更新 DB 报告状态失败: {e}")
 
