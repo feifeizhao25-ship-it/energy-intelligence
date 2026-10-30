@@ -109,7 +109,7 @@ def test_scenarios_cover_and_pass():
     report = run_all()
     assert report["gaps"] == []
     assert report["passed"] is True
-    assert len(report["results"]) == 33
+    assert len(report["results"]) == 34
 
 
 def test_calc_reference_tolerances():

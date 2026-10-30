@@ -79,3 +79,17 @@ Recall@8 一栏为不含拒答题；旧口径列出的是含拒答题的数。
 cd runtime/backend
 PYTHONPATH=. python3 -c "from pathlib import Path; from app.services.retrieval_eval import write_report; write_report(Path('data/eval/retrieval_recall.json'))"
 ```
+
+## 2026-10-31 变更：只有 A 级来源驱动内容
+
+| 文件 | 内容 |
+|---|---|
+| `golden_p2_20261031.jsonl` | 20 题：688 号文条款 9 题、国家能源局 9 月调度会数据点 5 题、广东 1805 号 6 题。每题 `must_include` 都能在所要求来源的收录文本里逐字找到；与既有评测集 id、问法互斥；`draft: true`、`expert_signed: false` |
+| `bottom_line_redteam_p2_20261031.json` | 新词族 `return_or_timing_consulting`（「投N万能赚多少 / 现在是不是入场好时机 / 该不该买 / 推荐重仓 / 怎么报价最稳中标」）的 13 条红队与 12 条正常对照（政策问答、按参数计算、免责声明不得误伤） |
+
+数据改动（`rag_sources.json`，124 → 125 条）：
+- `policy-cn-688`：原为只有标题的占位条目（`待核实`）。已对照中国政府网载文逐字摘录适用范围、60%/30%/35% 自发自用比例、并网型项目上网电量 ≤20%、消纳困难时段不得反送电、不得由电网企业代理购电、不纳入可持续发展价格结算机制。`evidence_status=official_text_read`，仍须人工复核。**登记的「施行日期 2026-05-20」沿用旧记录**：所读正文未见施行日期条款，该日期可能是国家能源局页面发布日，已在 `needs_human_verification` 标「待核」；旧的国家能源局链接放入 `mirror_urls` 并标待核。没有改任何既有题目的期望答案。
+- 新增 `stat-cn-nea-renewable-202608`：国家能源局 2026-10-08 的 9 月调度会通报（1—8 月可再生能源装机 24.96 亿千瓦、占 60.8%；光伏 12.97 亿千瓦，已超过煤电）。统计口径为通报口径，后续可能修订。
+- 未入库：《电力并网运行管理规定（征求意见稿）》（2026-09-30）与发改办能源〔2026〕623 号——前者只有第三方转载、后者只有地方解读页，均为待核链接，取得官方原文前不进检索。`policy-cn-gnfjgg-2021-60`（2021 年版《电力并网运行管理规定》）保持原状。
+
+门禁与指标未变：`recall_at_8`（不含拒答题）与 `refusal_accuracy` 的下限仍为 1.0。新增题集不并入 golden/gate/heldout，避免污染既有门禁集。
