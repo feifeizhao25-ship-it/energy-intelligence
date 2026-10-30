@@ -159,7 +159,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           const _Status(
             icon: Icons.monitor_heart_outlined,
             title: '运行指标待接入',
-            detail: '接入经过授权的 SCADA/IoT 数据后，才会展示发电量、收益、碳减排、健康度和告警。',
+            detail: '接入经过授权的监控系统与物联网数据后，才会展示发电量、收益、碳减排、健康度和告警。',
           ),
         ],
       ],

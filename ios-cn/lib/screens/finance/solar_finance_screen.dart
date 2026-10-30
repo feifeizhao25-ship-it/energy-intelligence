@@ -138,7 +138,7 @@ class _SolarFinanceScreenState extends State<SolarFinanceScreen> {
             SizedBox(height: 12),
             TextField(
               controller: _ghiController,
-              decoration: InputDecoration(labelText: '年均GHI (kWh/m²)'),
+              decoration: InputDecoration(labelText: '年均水平面总辐照量 (kWh/m²)'),
               keyboardType: TextInputType.numberWithOptions(decimal: true),
             ),
           ],
@@ -158,7 +158,7 @@ class _SolarFinanceScreenState extends State<SolarFinanceScreen> {
             SizedBox(height: 16),
             TextField(
               controller: _prController,
-              decoration: InputDecoration(labelText: '性能系数 (PR)'),
+              decoration: InputDecoration(labelText: '性能系数'),
               keyboardType: TextInputType.numberWithOptions(decimal: true),
             ),
             SizedBox(height: 12),
@@ -167,7 +167,7 @@ class _SolarFinanceScreenState extends State<SolarFinanceScreen> {
               style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
             ),
             Text(
-              'DC/AC比: 1.2',
+              '直流/交流容配比: 1.2',
               style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
             ),
           ],
@@ -187,13 +187,13 @@ class _SolarFinanceScreenState extends State<SolarFinanceScreen> {
             SizedBox(height: 16),
             TextField(
               controller: _capexController,
-              decoration: InputDecoration(labelText: 'CAPEX总额 (万元)'),
+              decoration: InputDecoration(labelText: '初始投资总额 (万元)'),
               keyboardType: TextInputType.numberWithOptions(decimal: true),
             ),
             SizedBox(height: 12),
             TextField(
               controller: _opexController,
-              decoration: InputDecoration(labelText: '年OPEX (万元)'),
+              decoration: InputDecoration(labelText: '年运维成本 (万元)'),
               keyboardType: TextInputType.numberWithOptions(decimal: true),
             ),
             SizedBox(height: 12),
@@ -221,17 +221,17 @@ class _SolarFinanceScreenState extends State<SolarFinanceScreen> {
           crossAxisSpacing: 12,
           children: [
             _buildResultCard(
-              'IRR',
+              '内部收益率',
               '${_result!.irrEquity.toStringAsFixed(2)}%',
               Color(0xFF10B981),
             ),
             _buildResultCard(
-              'NPV',
+              '净现值',
               '¥${_result!.npv.toStringAsFixed(1)}M',
               Color(0xFF3B82F6),
             ),
             _buildResultCard(
-              'LCOE',
+              '度电成本',
               '¥${_result!.lcoe.toStringAsFixed(4)}/kWh',
               Color(0xFFF59E0B),
             ),

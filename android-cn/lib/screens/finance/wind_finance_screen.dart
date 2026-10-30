@@ -313,17 +313,17 @@ class _WindFinanceScreenState extends State<WindFinanceScreen> {
   Widget _buildResultGrid() {
     final items = [
       {
-        'label': 'IRR (内部收益率)',
+        'label': '内部收益率',
         'value': '${_result!['irr'].toStringAsFixed(2)}%',
         'color': Color(0xFF059669),
       },
       {
-        'label': 'NPV (净现值 @8%)',
+        'label': '净现值（折现率 8%）',
         'value': '${(_result!['npv'] as double).toStringAsFixed(0)} 万元',
         'color': Color(0xFF1D4ED8),
       },
       {
-        'label': 'LCOE (度电成本)',
+        'label': '度电成本',
         'value':
             '${((_result!['lcoe'] as double) * 1000).toStringAsFixed(2)} 元/kWh',
         'color': Color(0xFF7C3AED),

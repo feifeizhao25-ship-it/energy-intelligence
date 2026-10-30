@@ -12,6 +12,8 @@ on:
       - 'android-global/**'
       - 'ios-global/**'
       - 'scripts/verify_language_isolation.py'
+      - 'scripts/verify_zh_ui_dart.py'
+      - 'scripts/zh_ui_allow.json'
       - 'scripts/gradle-cn-mirrors.init.gradle'
       - '.github/workflows/mobile-quality.yml'
   pull_request:
@@ -21,6 +23,8 @@ on:
       - 'android-global/**'
       - 'ios-global/**'
       - 'scripts/verify_language_isolation.py'
+      - 'scripts/verify_zh_ui_dart.py'
+      - 'scripts/zh_ui_allow.json'
       - 'scripts/gradle-cn-mirrors.init.gradle'
       - '.github/workflows/mobile-quality.yml'
 
@@ -30,6 +34,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: python3 scripts/verify_language_isolation.py
+      - run: python3 scripts/verify_zh_ui_dart.py --app android-cn --app ios-cn --allow scripts/zh_ui_allow.json
 
   flutter:
     runs-on: ubuntu-latest

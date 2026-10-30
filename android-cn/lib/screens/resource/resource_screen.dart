@@ -94,7 +94,7 @@ class ResourceScreen extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            'GHI: 1456.8 kWh/m²/year',
+                            '水平面总辐照量: 1456.8 kWh/m²/年',
                             style: TextStyle(
                               fontSize: 11,
                               color: Color(0xFF64748B),

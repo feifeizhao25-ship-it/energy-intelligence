@@ -159,7 +159,7 @@ class _HealthScreenState extends State<HealthScreen> {
       {'label': '组件', 'value': 0.78},
       {'label': '通信', 'value': 0.92},
       {'label': '积灰', 'value': 0.65},
-      {'label': '综合PR', 'value': 0.88},
+      {'label': '综合性能比', 'value': 0.88},
     ];
 
     return Column(

@@ -168,12 +168,12 @@ class _SolarResourceScreenState extends State<SolarResourceScreen> {
                 crossAxisSpacing: 12,
                 children: [
                   _buildDataCard(
-                    'GHI',
+                    '水平面总辐照量',
                     _result!.ghiAnnual.toStringAsFixed(1),
                     'kWh/m²',
                   ),
                   _buildDataCard(
-                    'DNI',
+                    '直射辐照量',
                     _result!.dniAnnual.toStringAsFixed(1),
                     'kWh/m²',
                   ),
@@ -191,7 +191,7 @@ class _SolarResourceScreenState extends State<SolarResourceScreen> {
               ),
               SizedBox(height: 24),
               BarChart(
-                title: '月均GHI分布',
+                title: '月均水平面总辐照量分布',
                 values: _result!.ghiMonthly,
                 labels: [
                   '1',

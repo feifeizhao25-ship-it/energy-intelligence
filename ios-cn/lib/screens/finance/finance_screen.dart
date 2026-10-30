@@ -25,7 +25,7 @@ class FinanceScreen extends StatelessWidget {
             _buildFinanceCard(
               context,
               title: '光伏电站',
-              subtitle: 'PV项目财务分析',
+              subtitle: '光伏项目财务分析',
               icon: Icons.wb_sunny,
               color: Color(0xFFFCD34D),
               onTap: () {

@@ -1,5 +1,5 @@
 /// ApiService — real HTTP client for Energy backend v2
-/// 生产 HTTPS 地址通过 --dart-define=API_BASE_URL=... 注入。
+/// 生产 HTTPS 地址通过 --dart-define=API_BASE_URL=... 注入。 // zh-gate:allow 仅调试构建里给开发者的启动参数提示，正式版已是中文
 /// Import http: ^1.6.0 (already in pubspec.yaml)
 library;
 
@@ -33,7 +33,7 @@ class ApiService {
     if (!_baseUrl.startsWith('https://')) {
       _configError = kReleaseMode
           ? '正式版未配置接口地址，应用无法连接服务器。'
-          : '调试构建还没有配置接口地址。请使用 --dart-define=API_BASE_URL=https://你的域名 重新启动。';
+          : '调试构建还没有配置接口地址。请使用 --dart-define=API_BASE_URL=https://你的域名 重新启动。'; // zh-gate:allow 仅调试构建里给开发者的启动参数提示，正式版已是中文
       return;
     }
     _configError = null;
@@ -46,7 +46,7 @@ class ApiService {
 
   static Map<String, String> get _headers {
     final h = <String, String>{'Content-Type': 'application/json'};
-    if (_token != null) h['Authorization'] = 'Bearer $_token';
+    if (_token != null) h['Authorization'] = 'Bearer $_token'; // zh-gate:allow HTTP 头
     return h;
   }
 
