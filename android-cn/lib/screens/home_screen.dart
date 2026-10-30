@@ -28,28 +28,29 @@ class _HomeScreenState extends State<HomeScreen> {
     final metricCards = [
       {
         'label': '项目总数',
-        'value': '${metrics['total_projects'] ?? 0}',
-        'trend': 'up',
-        'change': '0',
+        'value': metrics['total_projects'] == null ? '暂无数据' : '${metrics['total_projects']}',
+        'trend': 'none',
+        'change': null,
       },
       {
         'label': '总装机容量',
-        'value': '${metrics['total_capacity_mw'] ?? 0.0}MW',
-        'trend': 'up',
-        'change': '0',
+        'value': metrics['total_capacity_mw'] == null ? '暂无数据' : '${metrics['total_capacity_mw']}MW',
+        'trend': 'none',
+        'change': null,
       },
       {
         'label': '平均内部收益率',
-        'value':
-            '${((metrics['total_irr'] ?? 0.0) as num).toStringAsFixed(1)}%',
-        'trend': 'up',
-        'change': '0',
+        'value': metrics['total_irr'] == null
+            ? '暂无数据'
+            : '${(metrics['total_irr'] as num).toStringAsFixed(1)}%',
+        'trend': 'none',
+        'change': null,
       },
       {
         'label': '活跃告警',
-        'value': '${metrics['alerts_count'] ?? 0}',
-        'trend': 'down',
-        'change': '0',
+        'value': metrics['alerts_count'] == null ? '暂无数据' : '${metrics['alerts_count']}',
+        'trend': 'none',
+        'change': null,
       },
     ];
     setState(() {
@@ -147,6 +148,7 @@ class _HomeScreenState extends State<HomeScreen> {
               metric['value'],
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
+            if (metric['change'] != null)
             Row(
               children: [
                 Icon(
