@@ -43,37 +43,46 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return Scaffold(
       appBar: AppBar(title: Text('创建账号'), elevation: 0),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(20),
-        child: Column(
-          children: [
-            _buildStepIndicator(),
-            SizedBox(height: 32),
-            _currentStep == 0 ? _buildStep1() : _buildStep2(),
-            SizedBox(height: 24),
-            Row(
+        padding: EdgeInsets.symmetric(
+          horizontal: MediaQuery.sizeOf(context).width >= 700 ? 48 : 20,
+          vertical: 20,
+        ),
+        child: Center(
+          child: ConstrainedBox(
+            // iPad / 宽屏：注册表单收成一列居中，不随屏幕拉宽。
+            constraints: const BoxConstraints(maxWidth: 480),
+            child: Column(
               children: [
-                if (_currentStep > 0)
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => setState(() => _currentStep = 0),
-                      child: Text('上一步'),
+                _buildStepIndicator(),
+                SizedBox(height: 32),
+                _currentStep == 0 ? _buildStep1() : _buildStep2(),
+                SizedBox(height: 24),
+                Row(
+                  children: [
+                    if (_currentStep > 0)
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => setState(() => _currentStep = 0),
+                          child: Text('上一步'),
+                        ),
+                      ),
+                    if (_currentStep > 0) SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: _handleNextStep,
+                        child: Text(_currentStep == 0 ? '下一步' : '注册'),
+                      ),
                     ),
-                  ),
-                if (_currentStep > 0) SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: _handleNextStep,
-                    child: Text(_currentStep == 0 ? '下一步' : '注册'),
-                  ),
+                  ],
+                ),
+                SizedBox(height: 16),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text('返回登录'),
                 ),
               ],
             ),
-            SizedBox(height: 16),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text('返回登录'),
-            ),
-          ],
+          ),
         ),
       ),
     );
