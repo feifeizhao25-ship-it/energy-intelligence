@@ -5,21 +5,23 @@ import {
     StorageConsistencyInput, StorageConsistencyResult
 } from './types-advanced';
 
+/**
+ * 储能健康度（SOH）估算：只按循环次数做线性老化估计，同样的输入永远得到同样的结果。
+ * 这是粗略估算，不是实测，也不构成保修或安全结论；原来混入了随机数和人为等待，已删除。
+ */
 export async function analyzeSOH(input: SohInput): Promise<SohResult> {
-    await new Promise(resolve => setTimeout(resolve, 800));
-
-    // Simple degradation model
-    const degradedSoh = 100 - (input.cycleCount * 0.005) - (Math.random() * 2);
+    const degradedSoh = 100 - (input.cycleCount * 0.005);
     const soh = Math.max(0, Math.min(100, degradedSoh));
     const agingRate = soh < 80 ? 'accelerated' : 'normal';
 
     return {
         soh: Number(soh.toFixed(2)),
-        remainingCycles: Math.floor((soh - 60) / 0.005), // Cycles until 60% SOH
+        remainingCycles: Math.max(0, Math.floor((soh - 60) / 0.005)), // 估算到 60% SOH 还剩的循环数，不为负
         agingRate,
+        // 只依据循环次数估算，不能据此断定「高温」「大电流」等具体原因
         factors: agingRate === 'accelerated'
-            ? ['高温操作', '大电流充放电']
-            : ['正常日历老化', '循环损耗']
+            ? ['循环次数较多，老化偏快（仅按循环次数估算，需结合实测数据复核）']
+            : ['日历老化与循环损耗（仅按循环次数估算）']
     };
 }
 

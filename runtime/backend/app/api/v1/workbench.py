@@ -138,6 +138,18 @@ def _public_prefs(prefs: Dict) -> Dict:
     }
 
 
+def _library_card(user: User, usage: Dict, profile, facts, today: date) -> Optional[Dict]:
+    try:
+        from app.library import service as library_service
+
+        return library_service.workbench_card(str(user.id), user.market, usage, profile, facts, today)
+    except Exception:  # noqa: BLE001 — 资料库的任何问题都不能影响工作台
+        import logging
+
+        logging.getLogger(__name__).warning("library workbench card skipped", exc_info=True)
+        return None
+
+
 @router.get("/workbench")
 async def get_workbench(
     tz: Optional[str] = Query(None, description="IANA time zone, e.g. Asia/Shanghai"),
@@ -161,8 +173,19 @@ async def get_workbench(
         projects=facts, last_active=max([f.last_touched for f in facts if f.last_touched], default=None),
         open_days=tuple(prefs.get("open_days", [])), seen=dict(prefs.get("seen", {})),
     )
-    data = pw.compose(_profile(user, prefs, facts, zone), act, now, user_key=str(user_id))
+    profile = _profile(user, prefs, facts, zone)
+    data = pw.compose(profile, act, now, user_key=str(user_id))
     today = data["date"]
+    # 同一天刷新保持同一个顺序：昨天出现过的卡今天第一次排名时要扣分，记入「已看过」后再刷新就不扣了，顺序会变。
+    board = prefs.get("board") or {}
+    if board.get("date") == today:
+        order = {cid: i for i, cid in enumerate(board.get("ids", []))}
+        data["cards"].sort(key=lambda c: order.get(c["id"], len(order)))  # 稳定排序：没见过的卡保持原有相对顺序
+    prefs["board"] = {"date": today, "ids": [c["id"] for c in data["cards"]]}
+    # 资料库有「新增/更新」或和你很相关的一篇时，多一张卡（工作台个性化关了就不会走到这里；资料库推荐关了、没有已审核条目、出任何问题都不出卡）
+    card = _library_card(user, usage, profile, facts, date.fromisoformat(today))
+    if card:
+        data["cards"].insert(min(1, len(data["cards"])), card)
     seen = dict(prefs.get("seen", {}))
     for c in data["cards"]:
         seen[c["id"]] = today  # last day shown; a same-day refresh keeps the same board

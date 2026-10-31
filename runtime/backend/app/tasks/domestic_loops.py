@@ -81,3 +81,17 @@ def self_improvement() -> dict:
 def self_improvement_monthly() -> dict:
     from app.self_improve.hooks import run_monthly
     return run_monthly()
+
+
+@celery_app.task(name="energy.domestic.library_check")
+def library_check() -> dict:
+    """资料库每日来源核对（挂在 SIL 的 daily_scan 槽，每日 02:00）。LIBRARY_FRESHNESS_ENABLED=1 才运行；只写状态文件，不改条目。"""
+    from app.self_improve.library_job import run_check
+    return run_check()
+
+
+@celery_app.task(name="energy.domestic.library_discover")
+def library_discover() -> dict:
+    """资料库每周发现新文件（挂在 SIL 的 weekly_cycle 槽，周日 03:00）。只暂存标题/链接为「待核实 + 待审核」候选。"""
+    from app.self_improve.library_job import run_discover
+    return run_discover()

@@ -1,7 +1,7 @@
 from typing import Optional
 from pydantic import BaseModel, Field
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,12 +13,19 @@ from app.services.ai_service import ai_assistant
 from app.core.subscription import QuotaExceeded, assert_ai_quota, consume_ai_quota
 from app.services.evidence_envelope import envelope_from_rag
 from app.services.rag_service import RAGService
+from app.services.answer_structure import STYLES, structure_answer, style_instruction
 from app.services.bottom_line import NOTICE_EN, NOTICE_ZH, blocked_input_text, enforce_bottom_line, find_violations
 from app.services.budget_caps import BudgetExceeded, assert_product_budget, charge_product_budget
 from app.models.user import User
 import json
+import os
 
 router = APIRouter(prefix="/ai")
+
+# Retrieval scores are normalised to 0-1. Below this line the "match" is a stray word overlap
+# (an unrelated question scored 0.31, a North Sea wind question scored 0.14 against US tax credits),
+# and attaching such a source to an answer is worse than attaching none. Override with RAG_MIN_RELEVANCE.
+MIN_SOURCE_RELEVANCE = float(os.getenv("RAG_MIN_RELEVANCE", "0.35"))
 
 _AI_LIMITATIONS = ["AI 生成内容仅供辅助核对方法与来源，关键数据需人工复核"]
 _RAG_SERVICE = RAGService()
@@ -34,11 +41,34 @@ def _retrieve(query: str, market: str) -> list:
         hits = _RAG_SERVICE.search(query, top_k=3, market=market, exclude_stale=True).hits
     except Exception:
         return []
-    return [h for h in hits if h.score > 0]
+    return [h for h in hits if h.score >= MIN_SOURCE_RELEVANCE]
 
 
-def _grounded_prompt(base_prompt: str, hits: list, market: str) -> str:
+_CITE = __import__("re").compile(r"[ \t]?\[S(\d+)\]")
+
+
+def _scrub_citations(answer: str, n_sources: int) -> str:
+    """Drop [S#] markers that point at a source we did not retrieve (the model sometimes invents [S3]).
+
+    A marker the reader cannot open is a false claim of support, so it is removed; markers 1..n stay."""
+    if not answer:
+        return answer
+    return _CITE.sub(lambda m: m.group(0) if 1 <= int(m.group(1)) <= n_sources else "", answer)
+
+
+def _style_for(style: Optional[str], market: str) -> str:
+    return style if style in STYLES else ("pro" if market == "global" else "plain")
+
+
+def _structured(answer: str, hits: list, market: str, style: Optional[str]) -> dict:
+    sources = _evidence_for(answer, hits).get("sources", [])
+    return structure_answer(answer, market, sources, _style_for(style, market), limitations=_AI_LIMITATIONS if market != "global" else [
+        "AI-generated content is meant for checking methods and sources; verify key figures yourself."])
+
+
+def _grounded_prompt(base_prompt: str, hits: list, market: str, style: Optional[str] = None) -> str:
     """把检索到的证据编号注入系统提示，要求模型按 [S1] 形式引用。"""
+    base_prompt = base_prompt + style_instruction(market, _style_for(style, market))
     if market == "global":
         if not hits:
             return base_prompt + "\n\nRetrieved sources: none. Say the source library has no matching document; do not cite anything."
@@ -64,6 +94,8 @@ def _evidence_for(answer: str, hits: list) -> dict:
 
 class MobileChatRequest(BaseModel):
     message: str = Field(..., min_length=1, max_length=4000)
+    # plain = everyday words with jargon explained, pro = technical wording. Default: plain (cn) / pro (global).
+    style: Optional[str] = Field(default=None, pattern="^(plain|pro)$")
 
 SYSTEM_PROMPT = """You are the Energy Intelligence AI Assistant for renewable energy (solar PV, wind, storage, project finance).
 Use only tool results or retrieved sources for specific figures, and cite source and date. If a tool fails or no source is
@@ -74,6 +106,10 @@ Bottom lines you must always follow:
 3. Never speak as or impersonate a government or official body; quote official documents with a link to the original.
 If asked for investment advice or a price prediction, reply: "I can provide facts, data, primary policy sources and
 verifiable calculations, but not investment advice or price predictions."
+Explaining terms, methods and formulas (what IRR, NPV, LCOE, payback or a break-even price means, how a metric is
+calculated, how storage earns revenue in general) is education, not advice: answer it fully and do not append that
+refusal. Refuse only when asked what to buy or invest in, whether something is worth investing in, what return is
+guaranteed, or where prices will go. If a question mixes both, answer the educational part and say the rest cannot be provided.
 Respond in the user's language."""
 
 CN_SYSTEM_PROMPT = """你是新能源智库的分析助手，熟悉中国光伏、风电、储能和项目财务。
@@ -83,7 +119,18 @@ CN_SYSTEM_PROMPT = """你是新能源智库的分析助手，熟悉中国光伏�
 2. 不做价格预测（电价、组件价格、碳价）；
 3. 不冒充官方，引用政府文件写"转引自……"并给出原文链接。
 用户要求投资建议或价格预测时回答："我只能提供事实、数据、政策原文和可验证的计算，不提供投资建议或价格预测。"
+解释术语、方法和公式（例如收益率、IRR、净现值、度电成本、投资回收期、保本电价、储能的收益来源）属于科普，不是投资建议：必须正常回答，且不要附加上面的拒答声明。
+只有用户问该不该投、买哪个、能保证多少收益或未来价格会怎样时才拒答。问题里两者都有时，回答科普部分，并说明其余部分无法提供。
 使用通俗中文回答。"""
+
+
+def _quota_detail(error: QuotaExceeded, market: str) -> dict:
+    """429 body in the account's language (the plain str(error) was an English code string for everyone)."""
+    if market == "global":
+        message = f"You have used today's AI questions ({error.limit} per day). Try again tomorrow or upgrade your plan."
+    else:
+        message = f"今日 AI 对话次数已用完（{error.limit} 次/日），可明日再试或升级会员获取更多次数。"
+    return {"error": "AI_QUOTA_EXCEEDED", "message": message, "upgrade_url": "/pricing", "limit": error.limit}
 
 
 def blocked_model_text(text: str, market: str) -> Optional[str]:
@@ -105,6 +152,7 @@ async def _market_for_user(user_id: str, db: AsyncSession) -> str:
 async def chat(
     message: str,
     project_id: Optional[str] = None,
+    style: Optional[str] = Query(default=None, pattern="^(plain|pro)$"),
     user_id: str = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db),
 ):
@@ -118,12 +166,7 @@ async def chat(
     except QuotaExceeded as error:
         raise HTTPException(
             status_code=429,
-            detail={
-                "error": "AI_QUOTA_EXCEEDED",
-                "message": f"今日 AI 对话次数已用完（{error.limit} 次/日），可明日再试或升级会员获取更多次数。",
-                "upgrade_url": "/pricing",
-                "limit": error.limit,
-            },
+            detail=_quota_detail(error, await _market_for_user(user_id, db)),
         ) from error
     market = await _market_for_user(user_id, db)
     blocked = blocked_model_text(message, market)
@@ -137,7 +180,7 @@ async def chat(
     except BudgetExceeded as error:
         raise HTTPException(status_code=429, detail={"error": "PRODUCT_BUDGET_EXCEEDED", "message": str(error)}) from error
     hits = _retrieve(message, market)
-    prompt = _grounded_prompt(SYSTEM_PROMPT if market == "global" else CN_SYSTEM_PROMPT, hits, market)
+    prompt = _grounded_prompt(SYSTEM_PROMPT if market == "global" else CN_SYSTEM_PROMPT, hits, market, style)
     sources = _evidence_for("", hits)["sources"]
 
     async def stream():
@@ -148,9 +191,10 @@ async def chat(
         async for chunk in ai_assistant.stream_openai(message, prompt, market=market):
             if chunk:
                 chunks.append(chunk)
-        full = enforce_bottom_line("".join(chunks), market=market)
+        full = _scrub_citations(enforce_bottom_line("".join(chunks), market=market), len(hits))
         if full:
             yield f"data: {json.dumps({'content': full}, ensure_ascii=False)}\n\n"
+            yield f"data: {json.dumps({'structured': _structured(full, hits, market, style)}, ensure_ascii=False)}\n\n"
             await consume_ai_quota(user, db)
             _charge_cn(user_id, market)
         yield "data: [DONE]\n\n"
@@ -172,7 +216,7 @@ async def chat_json(
     try:
         user = await assert_ai_quota(user_id, db)
     except QuotaExceeded as error:
-        raise HTTPException(status_code=429, detail=str(error)) from error
+        raise HTTPException(status_code=429, detail=_quota_detail(error, await _market_for_user(user_id, db))) from error
     try:
         market = await _market_for_user(user_id, db)
         blocked = blocked_model_text(body.message, market)
@@ -180,7 +224,7 @@ async def chat_json(
             return {"message": blocked, "ai_metadata": {"blocked": "bottom_line"}, "evidence": _evidence_for("", [])}
         assert_product_budget(user_id, market)
         hits = _retrieve(body.message, market)
-        prompt = _grounded_prompt(SYSTEM_PROMPT if market == "global" else CN_SYSTEM_PROMPT, hits, market)
+        prompt = _grounded_prompt(SYSTEM_PROMPT if market == "global" else CN_SYSTEM_PROMPT, hits, market, body.style)
         result = await ai_assistant.chat_openai_with_metadata(body.message, prompt, market=market)
     except BudgetExceeded as error:
         raise HTTPException(status_code=429, detail={"error": "PRODUCT_BUDGET_EXCEEDED", "message": str(error)}) from error
@@ -188,10 +232,14 @@ async def chat_json(
         raise HTTPException(status_code=503, detail="AI 服务暂时不可用，请稍后重试") from error
     await consume_ai_quota(user, db)
     _charge_cn(user_id, market)
+    message = _scrub_citations(enforce_bottom_line(result["content"], market=market), len(hits))
+    evidence = _evidence_for(message, hits)
     return {
-        "message": enforce_bottom_line(result["content"], market=market),
+        "message": message,
         "ai_metadata": result["metadata"],
-        "evidence": _evidence_for(result["content"], hits),
+        "evidence": evidence,
+        "sources": evidence.get("sources", []),
+        "structured": _structured(message, hits, market, body.style),
     }
 
 
@@ -206,7 +254,7 @@ async def analyze(
     try:
         user = await assert_ai_quota(user_id, db)
     except QuotaExceeded as error:
-        raise HTTPException(status_code=429, detail=str(error)) from error
+        raise HTTPException(status_code=429, detail=_quota_detail(error, await _market_for_user(user_id, db))) from error
     try:
         market = await _market_for_user(user_id, db)
         blocked = blocked_model_text(query, market)
@@ -372,6 +420,7 @@ async def get_suggestions(
 class AskRequest(BaseModel):
     query: str = Field(min_length=1, max_length=4000)
     market: str = "cn"
+    style: Optional[str] = Field(default=None, pattern="^(plain|pro)$")
 
 
 @router.post("/ask")
@@ -394,15 +443,17 @@ async def ask(
                 f"[S{i}] {hit.title}（{hit.metadata.get('published_at') or hit.metadata.get('year')}）"
                 for i, hit in enumerate(hits, 1)
             )
-        return {"answer": answer, "sources": _evidence_for(answer, hits).get("sources", []), "model": None}
+        return {"answer": answer, "sources": _evidence_for(answer, hits).get("sources", []), "model": None,
+                "structured": _structured(answer, hits, market, body.style)}
     try:
         assert_product_budget(user_id, market)
-        prompt = _grounded_prompt(SYSTEM_PROMPT if market == "global" else CN_SYSTEM_PROMPT, hits, market)
+        prompt = _grounded_prompt(SYSTEM_PROMPT if market == "global" else CN_SYSTEM_PROMPT, hits, market, body.style)
         result = await ai_assistant.chat_openai_with_metadata(body.query, prompt, market=market)
     except BudgetExceeded as error:
         raise HTTPException(status_code=429, detail={"error": "PRODUCT_BUDGET_EXCEEDED", "message": str(error)}) from error
     except RuntimeError as error:
         raise HTTPException(status_code=503, detail="AI 服务暂时不可用，请稍后重试") from error
     _charge_cn(user_id, market)
-    answer = enforce_bottom_line(result["content"], market=market)
-    return {"answer": answer, "sources": _evidence_for(answer, hits).get("sources", []), "model": result["metadata"]}
+    answer = _scrub_citations(enforce_bottom_line(result["content"], market=market), len(hits))
+    return {"answer": answer, "sources": _evidence_for(answer, hits).get("sources", []), "model": result["metadata"],
+            "structured": _structured(answer, hits, market, body.style)}

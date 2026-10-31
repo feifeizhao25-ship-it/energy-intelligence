@@ -6,7 +6,7 @@ import 'package:energy_global/screens/dashboard/personal_home_binding.dart';
 /// Every in-app link the backend can put on a card (runtime/backend/app/services/personal_workbench.py).
 const backendHrefs = [
   '/dashboard', '/projects', '/projects/new', '/projects/timeline', '/resource', '/calculator', '/calculator/storage',
-  '/reports', '/maintenance', '/assistant', '/papers', '/policy', '/onboarding',
+  '/reports', '/maintenance', '/assistant', '/papers', '/policy', '/library', '/onboarding',
 ];
 
 void main() {

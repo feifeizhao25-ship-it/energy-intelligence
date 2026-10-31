@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../utils/project_display.dart';
 import '../../services/api_service.dart';
 import 'create_project_screen.dart';
 
@@ -138,10 +140,9 @@ class _ProjectCard extends StatelessWidget {
         .toString()
         .toLowerCase();
     final name = (project['name'] ?? 'Untitled project').toString();
-    final location = (project['location'] ?? 'Location not provided')
-        .toString();
-    final capacity =
-        project['capacity_mw'] ?? project['capacityMw'] ?? project['capacity'];
+    final location =
+        projectLocationText(project['location']) ?? 'Location not provided';
+    final capacity = projectCapacityText(project);
     final status = (project['status'] ?? 'planning').toString();
     return Semantics(
       button: true,
@@ -164,7 +165,7 @@ class _ProjectCard extends StatelessWidget {
           ),
           subtitle: Padding(
             padding: const EdgeInsets.only(top: 6),
-            child: Text(location + (capacity == null ? '' : '\n$capacity MW')),
+            child: Text(location + (capacity == null ? '' : '\n$capacity')),
           ),
           trailing: Text(
             status,

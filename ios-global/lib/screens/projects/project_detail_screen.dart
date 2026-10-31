@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../utils/project_display.dart';
 import 'report_sources_screen.dart';
 
 /// Real project details. The project comes from the Projects list (route arguments or constructor);
@@ -48,13 +49,13 @@ class ProjectDetailScreen extends StatelessWidget {
   Widget _content(BuildContext context, Map<String, dynamic> p) {
     final theme = Theme.of(context);
     final name = _text(p, 'name') ?? 'Untitled project';
-    final location = _text(p, 'location');
+    final location = projectLocationText(p['location']);
     final tech = _text(p, 'technology');
-    final capacity = _text(p, 'capacity_mw') ?? _text(p, 'capacityMw');
+    final capacity = projectCapacityText(p);
     final status = _text(p, 'status');
     final rows = <MapEntry<String, String>>[
       if (tech != null) MapEntry('Technology', _techNames[tech.toLowerCase()] ?? tech),
-      if (capacity != null) MapEntry('Capacity', '$capacity MW'),
+      if (capacity != null) MapEntry('Capacity', capacity),
       if (location != null) MapEntry('Location', location),
       if (status != null) MapEntry('Status', status[0].toUpperCase() + status.substring(1)),
     ];

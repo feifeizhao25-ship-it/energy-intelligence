@@ -1,0 +1,20 @@
+{
+  "note": "来源登记（给自动核对任务用）。抓取沿用 SIL 的白名单规则：仅 https、仅白名单域名、不跨域跳转；资料库额外放行的国际来源域名写在 extra_allowed_domains，不改 SIL 自己的白名单。",
+  "http_upgrade_hosts": [],
+  "manual_hosts": {
+    "www.npc.gov.cn": "全国人大网只能用 http 访问（https 不通），而抓取规则只允许 https；这些条目（能源法、可再生能源法、电力法）需要人工到浏览器核对，核对日期到期（90 天）后会自动提示"
+  },
+  "extra_allowed_domains": ["eia.gov", "iea.org", "ember-energy.org", "gov.uk"],
+  "watch": {
+    "cn": [
+      {"id": "ndrc-zcfb-tz", "name": "国家发展改革委·通知", "publisher": "国家发展和改革委员会", "listing_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/",
+       "title_include": ["能源", "电力", "光伏", "风电", "新能源", "可再生", "储能", "绿证", "电价", "电网", "碳排放"], "license_note": "国家机关公文，不适用著作权保护（《著作权法》第五条）", "category_hint": "法律法规"},
+      {"id": "gov-zhengce", "name": "中国政府网·政策", "publisher": "国务院", "listing_url": "https://www.gov.cn/zhengce/index.htm",
+       "title_include": ["能源", "电力", "光伏", "风电", "新能源", "可再生", "储能", "绿证", "电价", "碳排放"], "license_note": "国家机关公文，不适用著作权保护（《著作权法》第五条）", "category_hint": "法律法规"}
+    ],
+    "global": [
+      {"id": "eia-today", "name": "EIA · Today in Energy", "publisher": "U.S. Energy Information Administration", "listing_url": "https://www.eia.gov/todayinenergy/",
+       "title_include": ["solar", "wind", "battery", "storage", "wholesale", "electricity", "renewable", "power"], "license_note": "US government work, public domain", "category_hint": "Market data"}
+    ]
+  }
+}

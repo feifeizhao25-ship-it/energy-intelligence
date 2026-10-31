@@ -17,6 +17,7 @@ import 'screens/projects/projects_screen.dart';
 import 'screens/projects/create_project_screen.dart';
 import 'screens/research/research_screen.dart';
 import 'screens/settings/settings_screen.dart';
+import 'screens/library/energy_library.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -65,6 +66,7 @@ class NewEnergyApp extends StatelessWidget {
         '/projects/new': (context) => const CreateProjectScreen(),
         '/research': (context) => const ResearchScreen(),
         '/settings': (context) => const SettingsScreen(),
+        '/library': (context) => const EnergyLibraryPage(),
       },
     );
   }

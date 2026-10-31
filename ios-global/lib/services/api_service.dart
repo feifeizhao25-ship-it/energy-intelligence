@@ -73,7 +73,7 @@ class ApiService {
         'data_transfer_consent': dataTransferConsent,
       },
     );
-    final token = resp['access_token'] as String;
+    final token = accessTokenFrom(resp);
     _token = token;
     await _secureStorage.write(key: 'energy_token', value: token);
     return token;
@@ -87,10 +87,22 @@ class ApiService {
       '/api/v1/auth/login',
       body: {'email': email, 'password': password},
     );
-    final token = resp['access_token'] as String;
+    final token = accessTokenFrom(resp);
     _token = token;
     await _secureStorage.write(key: 'energy_token', value: token);
     return token;
+  }
+
+  /// 后端统一返回 {code, message, data: {access_token, ...}}；
+  /// 兼容旧格式（access_token 在顶层）。取不到时抛出带英文提示的 ApiException，
+  /// 不再让类型转换错误把登录页卡住且没有任何提示。
+  static String accessTokenFrom(Map<String, dynamic> resp) {
+    final data = resp['data'];
+    if (data is Map && data['access_token'] is String) {
+      return data['access_token'] as String;
+    }
+    if (resp['access_token'] is String) return resp['access_token'] as String;
+    throw ApiException(500, 'Sign-in failed. Please try again.');
   }
 
   static Future<void> logout() async {
@@ -470,6 +482,24 @@ class ApiService {
 
   static Future<void> setWorkbenchEnabled(bool enabled) async {
     await _put('/api/v1/home/workbench/preferences', body: {'enabled': enabled});
+  }
+
+  // ── Library (policy & data reference) ──────────────────────────────────────
+
+  static Future<Map<String, dynamic>> getLibraryEntries() async => await _get('/api/v1/library/entries', {'tz': _utcOffset()});
+
+  static Future<Map<String, dynamic>> getLibraryFeed() async => await _get('/api/v1/library/feed', {'tz': _utcOffset()});
+
+  static Future<void> setLibraryPrefs(Map<String, dynamic> body) async {
+    await _put('/api/v1/library/preferences', body: body);
+  }
+
+  static Future<void> libraryVisit() async {
+    await _post('/api/v1/library/visit', body: const {});
+  }
+
+  static Future<void> libraryOpened(String id) async {
+    await _post('/api/v1/library/opened/${Uri.encodeComponent(id)}', body: const {});
   }
 
   static Future<Map<String, dynamic>> _put(
