@@ -222,29 +222,38 @@ class _NavItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isActive = index == current;
-    return GestureDetector(
+    return Semantics(
+      button: true,
+      selected: isActive,
+      label: label,
+      excludeSemantics: true,
       onTap: () => onTap(index),
-      behavior: HitTestBehavior.opaque,
-      child: SizedBox(
-        width: 60,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 22,
-              color: isActive ? AppTheme.primary : const Color(0xFF94A3B8),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+      child: GestureDetector(
+        key: Key('navTab$index'),
+        onTap: () => onTap(index),
+        behavior: HitTestBehavior.opaque,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minWidth: 60, minHeight: 48),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 22,
                 color: isActive ? AppTheme.primary : const Color(0xFF94A3B8),
               ),
-            ),
-          ],
+              const SizedBox(height: 2),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+                  color: isActive ? AppTheme.primary : const Color(0xFF94A3B8),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

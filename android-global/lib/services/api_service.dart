@@ -35,7 +35,10 @@ class ApiService {
   static void clearToken() => _token = null;
 
   static Map<String, String> get _headers {
-    final h = <String, String>{'Content-Type': 'application/json'};
+    final h = <String, String>{
+      'Content-Type': 'application/json',
+      'X-App-Market': 'global', // lets the server count wrong-language responses per edition
+    };
     if (_token != null) h['Authorization'] = 'Bearer $_token';
     return h;
   }

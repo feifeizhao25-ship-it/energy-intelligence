@@ -5,7 +5,9 @@ import '../../widgets/project_card.dart';
 import 'project_detail_screen.dart';
 
 class ProjectsScreen extends StatefulWidget {
-  const ProjectsScreen({super.key});
+  /// Test hook: replaces the network call.
+  final Future<List<Map<String, dynamic>>> Function()? loader;
+  const ProjectsScreen({super.key, this.loader});
 
   @override
   State<ProjectsScreen> createState() => _ProjectsScreenState();
@@ -19,7 +21,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
   @override
   void initState() {
     super.initState();
-    _projectsFuture = ApiService.getProjects().then(
+    _projectsFuture = (widget.loader ?? ApiService.getProjects)().then(
       (maps) => maps.map((m) => Project.fromJson(m)).toList(),
     );
   }
@@ -44,7 +46,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                   Text('项目数据暂时不可用'),
                   TextButton(
                     onPressed: () => setState(() {
-                      _projectsFuture = ApiService.getProjects().then(
+                      _projectsFuture = (widget.loader ?? ApiService.getProjects)().then(
                         (maps) => maps.map((m) => Project.fromJson(m)).toList(),
                       );
                     }),
@@ -99,7 +101,42 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
               ),
               Expanded(
                 child: filtered.isEmpty
-                    ? Center(child: Text('没有找到匹配的项目'))
+                    ? (projects.isEmpty
+                          ? Center(
+                              key: Key('projectsEmpty'),
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 32),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.folder_open_outlined,
+                                      size: 56,
+                                      color: Color(0xFF94A3B8),
+                                    ),
+                                    SizedBox(height: 12),
+                                    Text(
+                                      '还没有项目',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    SizedBox(height: 6),
+                                    Text(
+                                      '请先在网页端创建项目，创建后会显示在这里；右下角的按钮可直接做资源评估。',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: Color(0xFF64748B),
+                                        height: 1.5,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )
+                          : Center(child: Text('没有找到匹配的项目')))
                     : ListView.builder(
                         padding: EdgeInsets.all(16),
                         itemCount: filtered.length,
@@ -127,6 +164,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
         },
       ),
       floatingActionButton: FloatingActionButton(
+        tooltip: '资源评估',
         onPressed: () => Navigator.pushNamed(context, '/resource'),
         child: Icon(Icons.add),
       ),
