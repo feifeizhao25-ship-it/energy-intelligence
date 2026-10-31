@@ -83,6 +83,14 @@ _NEGATION_PATTERNS = (
     re.compile(r"(?:无|零)风险\**\s*[：:，,]?\s*(?:意味着|是指|指的是|即|就是|表示|代表)"),
     # 判断规则里的否定：「NPV < 0：项目预期亏损，不建议投资」是教科书决策规则；后面带「该/本/这个/你」的仍是对具体项目的结论。
     re.compile(r"(?:NPV|净现值|IRR|内部收益率)\**\s*(?:[<>＜＞=＝≤≥]|小于|大于|低于|高于|为负|为正)[^。！？!?\n；;]{0,28}?不建议(?:进行)?投资(?!(?:(?![。！？!?\n；;]).){0,6}(?:该|本|此|这个|你|您))", re.I),
+    # 术语的名词用法：「无风险投资的年化回报率」「国债收益率也只是相对无风险」「几乎可以保证偿还债务」描述的是国债/基准，不是对某个项目的承诺。
+    re.compile(r"(?:相对|近似|几乎|基本)(?:无|零)风险"),
+    re.compile(r"(?:无|零)风险(?:投资|产品|债券|资产)?(?:的)?(?:年化)?(?:回报率|收益率|利率|基准)"),
+    re.compile(r"(?:几乎|基本|完全)?(?:可以|能够)?(?:保证|确保)(?:按时)?(?:偿还|兑付|还本付息|偿付)(?:债务|本息|债券)?"),
+    # 判断规则的省略写法：「如果为负，则不建议投资」承接上一句的 NPV/IRR。
+    re.compile(r"(?:如果|若|当)(?:其|它|结果|该值|数值)?(?:为负|为正|小于零|小于0|大于零|大于0|低于[^，,。！？\n]{0,8}|高于[^，,。！？\n]{0,8})[，,]?(?:则|就|那么)?不建议(?:进行)?投资(?!(?:(?![。！？!?\n；;]).){0,6}(?:该|本|此|这个|你|您))"),
+    re.compile(r"(?:完全|绝对|真正)(?:的)?(?:无|零)风险(?:的)?(?:投资|资产|产品)?(?:是|都)?不存在"),
+    re.compile(r"(?:是否|能否|有无|有没有)(?:具有|具备|拥有|有)?投资价值"),
     # 风险提示：「建议在做出投资决策前咨询专业的财务顾问」是让读者去核实，不是荐股。
     re.compile(r"建议(?:您|你|投资者|读者|用户|大家)?(?:在|先|务必|自行|于)?(?:(?![。！？!?\n；;]).){0,8}?(?:投资决策|做出决策|决策|投资)前[，,]?(?:先|务必)?(?:咨询|征求|听取|请教|参考)"),
     re.compile(r"does not give investment advice", re.I),
@@ -101,14 +109,21 @@ _WORTH = r"(?:不|没有|有)?(?:值得\s*(?:投资|入手|买|配置|布局)|�
 _CRITERION_PATTERNS = (
     re.compile(r"(?:如果|若|当|一旦|通常|一般(?:来说)?|往往|越高|越低).{0,50}?" + _METRIC + r".{0,50}?" + _WORTH),
     re.compile(_METRIC + r"\**.{0,30}?(?:高于|低于|大于|小于|超过|不足|为负|为正|[><＞＜]).{0,30}?" + _WORTH),
+    # 规则的省略写法：「如果是负数，说明项目可能不值得投资」「反之，则可能不值得投资」（句中没有「该/本/这个项目」「你」「建议」）。
+    re.compile(r"(?:如果|若|当|一旦|反之|否则)[^。！？!?\n；;]{0,50}?" + _WORTH),
+    # 指标的用途说明：「IRR 通常用来比较不同项目的投资价值」。
+    re.compile(_METRIC + r"[^。！？!?\n；;]{0,40}?(?:用来|用于|可以|能够|能)(?:比较|衡量|评估|判断|反映)[^。！？!?\n；;]{0,14}?投资价值"),
 )
-_SPECIFIC_PROJECT = re.compile(r"该项目|本项目|这个项目|此项目|你的项目|您的项目|你的方案|您的方案|你们的项目|建议|推荐")
+# 举例演算的收尾：「所以这个光伏电站项目是值得投资的」只在整段有「举例/假设/示例」时才算示例结论。
+_EXAMPLE_CONCLUSION = re.compile(r"(?:所以|因此|因而|由此可见|可见|故)[^。！？!?\n；;]{0,40}?" + _WORTH)
+_LIST_ITEM = re.compile(r"^\s*(?:[-*•]|\d+[.、])")
+_SPECIFIC_PROJECT = re.compile(r"该项目|本项目|这个项目|此项目|你的项目|您的项目|你的方案|您的方案|你们的项目|建议|推荐|你问我|我认为|我觉得|我的判断")
 # 举例/假设的演算里「这个项目」是示例项目，不是用户的项目；本项目、你的项目、建议、推荐仍照常算作具体结论。
-_EXAMPLE_MARKER = re.compile(r"举个例子|举例|例如|比如说|假设|示例|worked example|for example", re.I)
+_EXAMPLE_MARKER = re.compile(r"举个例子|举例|例如|比如说|假设|示例|这个例子|该例子|上面的例子|例子中|worked example|for example", re.I)
 _SPECIFIC_IN_EXAMPLE = re.compile(r"本项目|你的项目|您的项目|你的方案|您的方案|你们的项目|建议|推荐")
 _HYPOTHETICAL_SENTENCE = re.compile(r"假设|设想|比如|例如|举个例子|举例|示例|for example", re.I)
 _HYPOTHETICAL_NUMBERS = re.compile(
-    r"(?:每年|每月|每日|年)(?:稳定)?(?:收益|回报|分红|现金流)\d+(?:\.\d+)?\s*(?:万|亿|千)?(?:元|美元)?"
+    r"(?:每年|每月|每日|年)(?:稳定)?(?:收益|回报|分红|现金流)\s*[：:]?\s*\d+(?:\.\d+)?\s*(?:万|亿|千)?(?:元|美元)?"
     r"|(?:IRR|内部收益率|收益率|回报率)(?:是|为|约为|达到|超过)\s*\d+(?:\.\d+)?\s*%?", re.I)
 _SENTENCE = re.compile(r"[^。！？!?\n；;]+")
 
@@ -151,14 +166,17 @@ def _mask(text: str) -> str:
     spans: list[tuple[int, int]] = []
     for pattern in _NEGATION_PATTERNS:
         spans.extend((match.start(), match.end()) for match in pattern.finditer(text))
-    specific = _SPECIFIC_IN_EXAMPLE if _EXAMPLE_MARKER.search(text) else _SPECIFIC_PROJECT
+    has_example = bool(_EXAMPLE_MARKER.search(text))
+    specific = _SPECIFIC_IN_EXAMPLE if has_example else _SPECIFIC_PROJECT
     for sentence in _SENTENCE.finditer(text):
         if specific.search(sentence.group()):
             continue
-        if _HYPOTHETICAL_SENTENCE.search(sentence.group()):
+        if _HYPOTHETICAL_SENTENCE.search(sentence.group()) or (has_example and _LIST_ITEM.match(sentence.group())):
             spans.extend((sentence.start() + m.start(), sentence.start() + m.end()) for m in _HYPOTHETICAL_NUMBERS.finditer(sentence.group()))
         for pattern in _CRITERION_PATTERNS:
             spans.extend((sentence.start() + m.start(), sentence.start() + m.end()) for m in pattern.finditer(sentence.group()))
+        if has_example:
+            spans.extend((sentence.start() + m.start(), sentence.start() + m.end()) for m in _EXAMPLE_CONCLUSION.finditer(sentence.group()))
     for phrase in (NOTICE_ZH, NOTICE_EN):
         start = 0
         while True:
