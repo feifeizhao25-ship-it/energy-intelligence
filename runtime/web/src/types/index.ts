@@ -261,6 +261,9 @@ export interface Paper {
   licenceNote?: string;
   retrievedAt?: string;
   evidenceStatus?: 'provider_verified';
+  /** 中文译名（助手翻译，状态见 titleZhStatus）；title 始终是原文标题 */
+  titleZh?: string;
+  titleZhStatus?: string;
 }
 
 export interface SearchOptions {

@@ -1,5 +1,6 @@
 import { getPaper } from '@/lib/api/semantic-scholar';
 import { findBestPdf } from '@/lib/papers/pdf';
+import { withChineseTitle } from '@/lib/papers/title-zh';
 import PaperDetailView from '@/components/papers/PaperDetailView';
 
 interface PageProps {
@@ -11,7 +12,7 @@ interface PageProps {
 export default async function PaperDetailPage(props: PageProps) {
     const params = await props.params;
     try {
-        const paper = await getPaper(params.id);
+        const paper = withChineseTitle(await getPaper(params.id));
         const pdfStatus = await findBestPdf(paper);
         return (
             <div className="max-w-7xl mx-auto p-6">

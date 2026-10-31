@@ -32,3 +32,24 @@ it('国内构建默认不调用境外学术源', async () => {
   if (previousEdition === undefined) delete process.env.APP_EDITION; else process.env.APP_EDITION = previousEdition;
   if (previousCache === undefined) delete process.env.NENGJIAN_LITERATURE_CACHE; else process.env.NENGJIAN_LITERATURE_CACHE = previousCache;
 });
+
+it('国内语料里的英文论文带中文译名，原文标题保留，中文关键词也能检索到', async () => {
+  const previousEdition = process.env.APP_EDITION;
+  const previousCache = process.env.NENGJIAN_LITERATURE_CACHE;
+  process.env.APP_EDITION = 'cn';
+  delete process.env.OVERSEAS_LIVE;
+  delete process.env.OVERSEAS_PRIVACY_ACK;
+  const dir = mkdtempSync(join(tmpdir(), 'lit-'));
+  const file = join(dir, 'cache.json');
+  writeFileSync(file, JSON.stringify({
+    records: [{ source: 'arxiv-cache', externalId: '2408.08921', title: 'Graph Retrieval-Augmented Generation: A Survey', year: 2024, licence: 'arXiv', licenceNote: '批量缓存', abstract: 'survey' }],
+  }));
+  process.env.NENGJIAN_LITERATURE_CACHE = file;
+  const hit = await unifiedSearch('图检索增强');
+  expect(hit.papers).toHaveLength(1);
+  expect(hit.papers[0].title).toBe('Graph Retrieval-Augmented Generation: A Survey');
+  expect(hit.papers[0].titleZh).toBe('图检索增强生成：综述');
+  expect(hit.papers[0].titleZhStatus).toBe('待审核');
+  if (previousEdition === undefined) delete process.env.APP_EDITION; else process.env.APP_EDITION = previousEdition;
+  if (previousCache === undefined) delete process.env.NENGJIAN_LITERATURE_CACHE; else process.env.NENGJIAN_LITERATURE_CACHE = previousCache;
+});
