@@ -1,7 +1,7 @@
 from typing import Optional
 from pydantic import BaseModel, Field
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,6 +13,7 @@ from app.services.ai_service import ai_assistant
 from app.core.subscription import QuotaExceeded, assert_ai_quota, consume_ai_quota
 from app.services.evidence_envelope import envelope_from_rag
 from app.services.rag_service import RAGService
+from app.services.answer_structure import STYLES, structure_answer, style_instruction
 from app.services.bottom_line import NOTICE_EN, NOTICE_ZH, blocked_input_text, enforce_bottom_line, find_violations
 from app.services.budget_caps import BudgetExceeded, assert_product_budget, charge_product_budget
 from app.models.user import User
@@ -55,8 +56,19 @@ def _scrub_citations(answer: str, n_sources: int) -> str:
     return _CITE.sub(lambda m: m.group(0) if 1 <= int(m.group(1)) <= n_sources else "", answer)
 
 
-def _grounded_prompt(base_prompt: str, hits: list, market: str) -> str:
+def _style_for(style: Optional[str], market: str) -> str:
+    return style if style in STYLES else ("pro" if market == "global" else "plain")
+
+
+def _structured(answer: str, hits: list, market: str, style: Optional[str]) -> dict:
+    sources = _evidence_for(answer, hits).get("sources", [])
+    return structure_answer(answer, market, sources, _style_for(style, market), limitations=_AI_LIMITATIONS if market != "global" else [
+        "AI-generated content is meant for checking methods and sources; verify key figures yourself."])
+
+
+def _grounded_prompt(base_prompt: str, hits: list, market: str, style: Optional[str] = None) -> str:
     """把检索到的证据编号注入系统提示，要求模型按 [S1] 形式引用。"""
+    base_prompt = base_prompt + style_instruction(market, _style_for(style, market))
     if market == "global":
         if not hits:
             return base_prompt + "\n\nRetrieved sources: none. Say the source library has no matching document; do not cite anything."
@@ -82,6 +94,8 @@ def _evidence_for(answer: str, hits: list) -> dict:
 
 class MobileChatRequest(BaseModel):
     message: str = Field(..., min_length=1, max_length=4000)
+    # plain = everyday words with jargon explained, pro = technical wording. Default: plain (cn) / pro (global).
+    style: Optional[str] = Field(default=None, pattern="^(plain|pro)$")
 
 SYSTEM_PROMPT = """You are the Energy Intelligence AI Assistant for renewable energy (solar PV, wind, storage, project finance).
 Use only tool results or retrieved sources for specific figures, and cite source and date. If a tool fails or no source is
@@ -123,6 +137,7 @@ async def _market_for_user(user_id: str, db: AsyncSession) -> str:
 async def chat(
     message: str,
     project_id: Optional[str] = None,
+    style: Optional[str] = Query(default=None, pattern="^(plain|pro)$"),
     user_id: str = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db),
 ):
@@ -155,7 +170,7 @@ async def chat(
     except BudgetExceeded as error:
         raise HTTPException(status_code=429, detail={"error": "PRODUCT_BUDGET_EXCEEDED", "message": str(error)}) from error
     hits = _retrieve(message, market)
-    prompt = _grounded_prompt(SYSTEM_PROMPT if market == "global" else CN_SYSTEM_PROMPT, hits, market)
+    prompt = _grounded_prompt(SYSTEM_PROMPT if market == "global" else CN_SYSTEM_PROMPT, hits, market, style)
     sources = _evidence_for("", hits)["sources"]
 
     async def stream():
@@ -169,6 +184,7 @@ async def chat(
         full = _scrub_citations(enforce_bottom_line("".join(chunks), market=market), len(hits))
         if full:
             yield f"data: {json.dumps({'content': full}, ensure_ascii=False)}\n\n"
+            yield f"data: {json.dumps({'structured': _structured(full, hits, market, style)}, ensure_ascii=False)}\n\n"
             await consume_ai_quota(user, db)
             _charge_cn(user_id, market)
         yield "data: [DONE]\n\n"
@@ -198,7 +214,7 @@ async def chat_json(
             return {"message": blocked, "ai_metadata": {"blocked": "bottom_line"}, "evidence": _evidence_for("", [])}
         assert_product_budget(user_id, market)
         hits = _retrieve(body.message, market)
-        prompt = _grounded_prompt(SYSTEM_PROMPT if market == "global" else CN_SYSTEM_PROMPT, hits, market)
+        prompt = _grounded_prompt(SYSTEM_PROMPT if market == "global" else CN_SYSTEM_PROMPT, hits, market, body.style)
         result = await ai_assistant.chat_openai_with_metadata(body.message, prompt, market=market)
     except BudgetExceeded as error:
         raise HTTPException(status_code=429, detail={"error": "PRODUCT_BUDGET_EXCEEDED", "message": str(error)}) from error
@@ -213,6 +229,7 @@ async def chat_json(
         "ai_metadata": result["metadata"],
         "evidence": evidence,
         "sources": evidence.get("sources", []),
+        "structured": _structured(message, hits, market, body.style),
     }
 
 
@@ -393,6 +410,7 @@ async def get_suggestions(
 class AskRequest(BaseModel):
     query: str = Field(min_length=1, max_length=4000)
     market: str = "cn"
+    style: Optional[str] = Field(default=None, pattern="^(plain|pro)$")
 
 
 @router.post("/ask")
@@ -415,10 +433,11 @@ async def ask(
                 f"[S{i}] {hit.title}（{hit.metadata.get('published_at') or hit.metadata.get('year')}）"
                 for i, hit in enumerate(hits, 1)
             )
-        return {"answer": answer, "sources": _evidence_for(answer, hits).get("sources", []), "model": None}
+        return {"answer": answer, "sources": _evidence_for(answer, hits).get("sources", []), "model": None,
+                "structured": _structured(answer, hits, market, body.style)}
     try:
         assert_product_budget(user_id, market)
-        prompt = _grounded_prompt(SYSTEM_PROMPT if market == "global" else CN_SYSTEM_PROMPT, hits, market)
+        prompt = _grounded_prompt(SYSTEM_PROMPT if market == "global" else CN_SYSTEM_PROMPT, hits, market, body.style)
         result = await ai_assistant.chat_openai_with_metadata(body.query, prompt, market=market)
     except BudgetExceeded as error:
         raise HTTPException(status_code=429, detail={"error": "PRODUCT_BUDGET_EXCEEDED", "message": str(error)}) from error
@@ -426,4 +445,5 @@ async def ask(
         raise HTTPException(status_code=503, detail="AI 服务暂时不可用，请稍后重试") from error
     _charge_cn(user_id, market)
     answer = _scrub_citations(enforce_bottom_line(result["content"], market=market), len(hits))
-    return {"answer": answer, "sources": _evidence_for(answer, hits).get("sources", []), "model": result["metadata"]}
+    return {"answer": answer, "sources": _evidence_for(answer, hits).get("sources", []), "model": result["metadata"],
+            "structured": _structured(answer, hits, market, body.style)}
