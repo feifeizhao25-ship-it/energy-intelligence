@@ -20,7 +20,23 @@ class ProjectDetailScreen extends StatelessWidget {
             expandedHeight: 180,
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
-                decoration: BoxDecoration(gradient: _getProjectGradient()),
+                decoration: BoxDecoration(
+                  gradient: _getProjectGradient(),
+                  image: DecorationImage(
+                    image: AssetImage(
+                      project.projectType == 'solar_pv'
+                          ? 'assets/images/en_res_solar.webp'
+                          : project.projectType == 'wind'
+                              ? 'assets/images/en_res_wind.webp'
+                              : project.projectType == 'storage'
+                                  ? 'assets/images/en_res_storage.webp'
+                                  : 'assets/images/en_res_compare.webp',
+                    ),
+                    fit: BoxFit.cover,
+                    opacity: 0.65,
+                    colorFilter: const ColorFilter.mode(Color(0x59000000), BlendMode.darken),
+                  ),
+                ),
                 child: Padding(
                   padding: EdgeInsets.all(20),
                   child: Column(

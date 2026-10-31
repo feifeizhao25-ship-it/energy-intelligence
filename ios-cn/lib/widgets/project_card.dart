@@ -14,6 +14,19 @@ class ProjectCard extends StatelessWidget {
     return place.isEmpty ? mw : '$place · $mw';
   }
 
+  String _photo() {
+    switch (project.projectType) {
+      case 'solar_pv':
+        return 'assets/images/en_res_solar.webp';
+      case 'wind':
+        return 'assets/images/en_res_wind.webp';
+      case 'storage':
+        return 'assets/images/en_res_storage.webp';
+      default:
+        return 'assets/images/en_res_compare.webp';
+    }
+  }
+
   IconData _getTypeIcon() {
     switch (project.projectType) {
       case 'solar_pv':
@@ -75,6 +88,12 @@ class ProjectCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Image.asset(_photo(), height: 96, width: double.infinity, fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => SizedBox(height: 96)),
+              ),
+              SizedBox(height: 12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [

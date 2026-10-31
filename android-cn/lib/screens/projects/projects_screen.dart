@@ -133,12 +133,12 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                                 child: Column(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(
-                                      Icons.folder_open_outlined,
-                                      size: 56,
-                                      color: Color(0xFF94A3B8),
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(16),
+                                      child: Image.asset('assets/images/en_empty_substation.webp', height: 150, fit: BoxFit.cover,
+                                          errorBuilder: (_, __, ___) => SizedBox(height: 150)),
                                     ),
-                                    SizedBox(height: 12),
+                                    SizedBox(height: 14),
                                     Text(
                                       '还没有项目',
                                       style: TextStyle(

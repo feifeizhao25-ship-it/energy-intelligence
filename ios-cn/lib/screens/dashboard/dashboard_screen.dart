@@ -1,3 +1,4 @@
+import '../../widgets/photo_widgets.dart';
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../../services/api_service.dart';
@@ -121,6 +122,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
           style: TextStyle(color: Color(0xFF64748B)),
         ),
         const SizedBox(height: 20),
+        const EnBanner(
+          asset: 'assets/images/en_res_compare.webp',
+          caption: '光伏、风电、储能项目统一管理',
+          chips: [
+            (Icons.wb_sunny_outlined, '光伏'),
+            (Icons.air, '风电'),
+            (Icons.battery_charging_full, '储能'),
+          ],
+        ),
+        const SizedBox(height: 16),
         PersonalHomeSection(margin: EdgeInsets.zero, api: PersonalHomeBinding.api(), onOpen: (c) => PersonalHomeBinding.open(context, c)),
         const SizedBox(height: 20),
         if (_loading)
