@@ -6,15 +6,27 @@ import pytest
 from tests.test_reports_flow_20261031 import SOLAR, _generate, _project
 
 SRC = {"title": "Grid tariff notice 2026", "url": "https://example.gov/notice", "publisher": "State regulator", "published_at": "2026-09-01"}
-GLOBAL = {"X-App-Market": "global"}
+
+
+async def _global_user(db_session):
+    import uuid
+    from app.core.security import create_access_token, hash_password
+    from app.models.user import User
+    u = User(id=str(uuid.uuid4()), email=f"{uuid.uuid4().hex[:8]}@example.com", password_hash=hash_password("TestPass123!"),
+             name="g", role="user", market="global", subscription_plan="pro", usage_quota={})
+    db_session.add(u)
+    await db_session.commit()
+    return {"Authorization": f"Bearer {create_access_token(str(u.id))}"}
 
 
 @pytest.mark.asyncio
-async def test_sources_need_a_saved_model_first(client, auth_headers):
+async def test_sources_need_a_saved_model_first(client, auth_headers, db_session):
     pid = await _project(client, auth_headers)
+    gh = await _global_user(db_session)
+    gpid = await _project(client, gh)
     r = await client.put(f"/api/v1/finance/data-sources/{pid}", headers=auth_headers, json={"sources": [SRC]})
     assert r.status_code == 409 and "请先为该项目保存财务模型" in r.json()["detail"]
-    r = await client.put(f"/api/v1/finance/data-sources/{pid}", headers={**auth_headers, **GLOBAL}, json={"sources": [SRC]})
+    r = await client.put(f"/api/v1/finance/data-sources/{gpid}", headers=gh, json={"sources": [SRC]})
     assert r.status_code == 409 and not re.search(r"[\u4e00-\u9fff]", r.json()["detail"])
     g = await client.get(f"/api/v1/finance/data-sources/{pid}", headers=auth_headers)
     assert g.status_code == 200 and g.json()["has_financial_model"] is False and g.json()["sources"] == []
@@ -45,12 +57,15 @@ async def test_register_sources_then_generate_report(client, auth_headers, tmp_p
     ([{"title": "x" * 201}], "超过 200", "longer than 200"),
     ([{"title": "t"}] * 0 + ["nope"], "格式不正确", "is not valid"),
 ])
-async def test_invalid_sources_are_rejected_in_the_users_language(client, auth_headers, bad, zh_part, en_part):
+async def test_invalid_sources_are_rejected_in_the_users_language(client, auth_headers, db_session, bad, zh_part, en_part):
     pid = await _project(client, auth_headers)
     await client.post(f"/api/v1/finance/models/{pid}", headers=auth_headers, json=SOLAR)
+    gh = await _global_user(db_session)
+    gpid = await _project(client, gh)
+    await client.post(f"/api/v1/finance/models/{gpid}", headers=gh, json=SOLAR)
     zh = await client.put(f"/api/v1/finance/data-sources/{pid}", headers=auth_headers, json={"sources": bad})
     assert zh.status_code == 422 and zh_part in zh.json()["detail"]
-    en = await client.put(f"/api/v1/finance/data-sources/{pid}", headers={**auth_headers, **GLOBAL}, json={"sources": bad})
+    en = await client.put(f"/api/v1/finance/data-sources/{gpid}", headers=gh, json={"sources": bad})
     assert en.status_code == 422 and en_part in en.json()["detail"]
 
 

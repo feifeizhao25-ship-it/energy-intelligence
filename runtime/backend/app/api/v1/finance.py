@@ -1,6 +1,6 @@
 from typing import Union
 
-from fastapi import APIRouter, Depends, HTTPException, Body, Request
+from fastapi import APIRouter, Depends, HTTPException, Body
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.schemas.finance import (
     SolarFinanceRequest, WindFinanceRequest, FinancialModelResponse,
@@ -407,9 +407,13 @@ MAX_REPORT_SOURCES = 30
 _SOURCE_TEXT_LIMITS = {"title": 200, "url": 500, "publisher": 120, "published_at": 32, "retrieved_at": 32, "type": 40, "locator": 120}
 
 
-def _is_global_request(request) -> bool:
-    market = (request.headers.get("x-app-market") or "").strip().lower()
-    return market in ("global", "en", "int")
+async def _user_is_global(db, user_id: str) -> bool:
+    """The international edition is a property of the account (User.market), set at registration."""
+    from sqlalchemy import select
+    from app.models.user import User
+
+    market = await db.scalar(select(User.market).where(User.id == user_id))
+    return (market or "cn") == "global"
 
 
 def clean_report_sources(raw, en: bool):
@@ -467,12 +471,11 @@ async def _latest_cashflow(db, project_id: str, user_id: str, en: bool):
 @router.get("/data-sources/{project_id}")
 async def get_report_data_sources(
     project_id: str,
-    request: Request,
     user_id: str = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db),
 ):
     """Sources currently attached to the project's latest financial model (what reports cite)."""
-    en = _is_global_request(request)
+    en = await _user_is_global(db, user_id)
     cf = await _latest_cashflow(db, project_id, user_id, en)
     payload = cf.yearly_cashflows if cf is not None and isinstance(cf.yearly_cashflows, dict) else {}
     return {"project_id": project_id, "has_financial_model": cf is not None, "sources": list(payload.get("sources") or [])}
@@ -481,7 +484,6 @@ async def get_report_data_sources(
 @router.put("/data-sources/{project_id}")
 async def put_report_data_sources(
     project_id: str,
-    request: Request,
     body: dict = Body(...),
     user_id: str = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db),
@@ -490,7 +492,7 @@ async def put_report_data_sources(
 
     A report can only cite what a person registered here; nothing is invented. The project needs a
     saved financial model first because that is where the report reads its inputs."""
-    en = _is_global_request(request)
+    en = await _user_is_global(db, user_id)
     cf = await _latest_cashflow(db, project_id, user_id, en)
     if cf is None or not isinstance(cf.yearly_cashflows, dict):
         raise HTTPException(
