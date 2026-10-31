@@ -118,6 +118,15 @@ CN_SYSTEM_PROMPT = """你是新能源智库的分析助手，熟悉中国光伏�
 使用通俗中文回答。"""
 
 
+def _quota_detail(error: QuotaExceeded, market: str) -> dict:
+    """429 body in the account's language (the plain str(error) was an English code string for everyone)."""
+    if market == "global":
+        message = f"You have used today's AI questions ({error.limit} per day). Try again tomorrow or upgrade your plan."
+    else:
+        message = f"今日 AI 对话次数已用完（{error.limit} 次/日），可明日再试或升级会员获取更多次数。"
+    return {"error": "AI_QUOTA_EXCEEDED", "message": message, "upgrade_url": "/pricing", "limit": error.limit}
+
+
 def blocked_model_text(text: str, market: str) -> Optional[str]:
     """国内输入和输出都过精确词 + 正则。命中则不再把原文交给模型。"""
     return blocked_input_text(text, market)
@@ -151,12 +160,7 @@ async def chat(
     except QuotaExceeded as error:
         raise HTTPException(
             status_code=429,
-            detail={
-                "error": "AI_QUOTA_EXCEEDED",
-                "message": f"今日 AI 对话次数已用完（{error.limit} 次/日），可明日再试或升级会员获取更多次数。",
-                "upgrade_url": "/pricing",
-                "limit": error.limit,
-            },
+            detail=_quota_detail(error, await _market_for_user(user_id, db)),
         ) from error
     market = await _market_for_user(user_id, db)
     blocked = blocked_model_text(message, market)
@@ -206,7 +210,7 @@ async def chat_json(
     try:
         user = await assert_ai_quota(user_id, db)
     except QuotaExceeded as error:
-        raise HTTPException(status_code=429, detail=str(error)) from error
+        raise HTTPException(status_code=429, detail=_quota_detail(error, await _market_for_user(user_id, db))) from error
     try:
         market = await _market_for_user(user_id, db)
         blocked = blocked_model_text(body.message, market)
@@ -244,7 +248,7 @@ async def analyze(
     try:
         user = await assert_ai_quota(user_id, db)
     except QuotaExceeded as error:
-        raise HTTPException(status_code=429, detail=str(error)) from error
+        raise HTTPException(status_code=429, detail=_quota_detail(error, await _market_for_user(user_id, db))) from error
     try:
         market = await _market_for_user(user_id, db)
         blocked = blocked_model_text(query, market)
