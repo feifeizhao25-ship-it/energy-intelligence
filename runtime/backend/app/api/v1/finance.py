@@ -1,6 +1,6 @@
 from typing import Union
 
-from fastapi import APIRouter, Depends, HTTPException, Body
+from fastapi import APIRouter, Depends, HTTPException, Body, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.schemas.finance import (
     SolarFinanceRequest, WindFinanceRequest, FinancialModelResponse,
@@ -400,3 +400,107 @@ async def save_financial_model(
     await db.flush()
     await db.refresh(model)
     return model
+
+
+# ── Report data sources (evidence the user registers for a project's reports) ──────────────────
+MAX_REPORT_SOURCES = 30
+_SOURCE_TEXT_LIMITS = {"title": 200, "url": 500, "publisher": 120, "published_at": 32, "retrieved_at": 32, "type": 40, "locator": 120}
+
+
+def _is_global_request(request) -> bool:
+    market = (request.headers.get("x-app-market") or "").strip().lower()
+    return market in ("global", "en", "int")
+
+
+def clean_report_sources(raw, en: bool):
+    from datetime import date
+    """Validate user-entered sources. Returns a list of normalised dicts or raises 422 in the user's language."""
+    def fail(zh: str, eng: str):
+        raise HTTPException(status_code=422, detail=eng if en else zh)
+
+    if not isinstance(raw, list):
+        fail("sources 必须是列表", "sources must be a list")
+    if len(raw) > MAX_REPORT_SOURCES:
+        fail(f"最多登记 {MAX_REPORT_SOURCES} 条来源", f"At most {MAX_REPORT_SOURCES} sources can be registered")
+    out, seen = [], set()
+    for i, item in enumerate(raw, start=1):
+        if not isinstance(item, dict):
+            fail(f"第 {i} 条来源格式不正确", f"Source {i} is not valid")
+        row = {}
+        for key, limit in _SOURCE_TEXT_LIMITS.items():
+            value = item.get(key)
+            if value is None or str(value).strip() == "":
+                continue
+            value = str(value).strip()
+            if len(value) > limit:
+                fail(f"第 {i} 条来源的“{key}”超过 {limit} 字", f"Source {i}: '{key}' is longer than {limit} characters")
+            row[key] = value
+        if not row.get("title"):
+            fail(f"第 {i} 条来源缺少标题", f"Source {i} needs a title")
+        url = row.get("url")
+        if url and not url.lower().startswith(("http://", "https://")):
+            fail(f"第 {i} 条来源的链接必须以 http:// 或 https:// 开头", f"Source {i}: the link must start with http:// or https://")
+        row.setdefault("retrieved_at", date.today().isoformat())  # the day the person registered it
+        key = (row["title"].lower(), (url or "").lower())
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(row)
+    return out
+
+
+async def _latest_cashflow(db, project_id: str, user_id: str, en: bool):
+    from sqlalchemy import select
+    from app.models.cashflow import CashflowProjection
+    from app.models.database import Project
+
+    owned = await db.execute(select(Project).where(Project.id == project_id, Project.user_id == user_id))
+    if not owned.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail=("Project not found" if en else "项目不存在"))
+    cf = (await db.execute(
+        select(CashflowProjection).where(CashflowProjection.project_id == project_id)
+        .order_by(CashflowProjection.created_at.desc()).limit(1)
+    )).scalar_one_or_none()
+    return cf
+
+
+@router.get("/data-sources/{project_id}")
+async def get_report_data_sources(
+    project_id: str,
+    request: Request,
+    user_id: str = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+):
+    """Sources currently attached to the project's latest financial model (what reports cite)."""
+    en = _is_global_request(request)
+    cf = await _latest_cashflow(db, project_id, user_id, en)
+    payload = cf.yearly_cashflows if cf is not None and isinstance(cf.yearly_cashflows, dict) else {}
+    return {"project_id": project_id, "has_financial_model": cf is not None, "sources": list(payload.get("sources") or [])}
+
+
+@router.put("/data-sources/{project_id}")
+async def put_report_data_sources(
+    project_id: str,
+    request: Request,
+    body: dict = Body(...),
+    user_id: str = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+):
+    """Replace the sources attached to the project's latest financial model.
+
+    A report can only cite what a person registered here; nothing is invented. The project needs a
+    saved financial model first because that is where the report reads its inputs."""
+    en = _is_global_request(request)
+    cf = await _latest_cashflow(db, project_id, user_id, en)
+    if cf is None or not isinstance(cf.yearly_cashflows, dict):
+        raise HTTPException(
+            status_code=409,
+            detail=("Save a financial model for this project first, then add its data sources." if en
+                    else "请先为该项目保存财务模型，再登记数据来源"),
+        )
+    sources = clean_report_sources(body.get("sources"), en)
+    payload = dict(cf.yearly_cashflows)
+    payload["sources"] = sources
+    cf.yearly_cashflows = payload  # reassign so the JSON column is flagged dirty
+    await db.flush()
+    return {"project_id": project_id, "has_financial_model": True, "sources": sources, "count": len(sources)}
