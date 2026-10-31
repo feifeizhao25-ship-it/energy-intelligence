@@ -35,6 +35,21 @@ def _sil_beat() -> dict:
     }
 
 
+def _continuous_beat() -> dict:
+    """持续改进：金标准评测 / 陈旧扫描 / 雷达暂存 / 月报。SIL_ENABLED 未打开时不登记，任务本身也会再检查一次。"""
+    import os
+
+    if str(os.environ.get("SIL_ENABLED", "0")).strip().lower() not in ("1", "true", "yes", "on"):
+        return {}
+    return {
+        "stale-scan-daily": {"task": "energy.domestic.stale_scan", "schedule": crontab(hour=2, minute=30)},
+        "golden-eval-weekly": {"task": "energy.domestic.golden_eval", "schedule": crontab(day_of_week=0, hour=3, minute=30)},
+        "radar-weekly": {"task": "energy.domestic.radar", "schedule": crontab(day_of_week=3, hour=5, minute=0)},
+        "radar-stage-weekly": {"task": "energy.domestic.radar_stage", "schedule": crontab(day_of_week=3, hour=6, minute=0)},
+        "monthly-report": {"task": "energy.domestic.monthly_report", "schedule": crontab(day_of_month=1, hour=5, minute=0)},
+    }
+
+
 def _library_beat() -> dict:
     """资料库自动更新。LIBRARY_FRESHNESS_ENABLED 未打开时不登记，任务本身也会再检查一次。时间复用 SIL 的两个调度槽：daily_scan 每日 02:00、weekly_cycle 周日 03:00。"""
     import os
@@ -93,6 +108,7 @@ celery_app.conf.update(
         **_improvement_beat(),
         **_sil_beat(),
         **_library_beat(),
+        **_continuous_beat(),
     },
     task_serializer="json",
     accept_content=["json"],

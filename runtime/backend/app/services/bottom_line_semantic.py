@@ -100,9 +100,37 @@ FAMILIES: dict[str, tuple[str, ...]] = {
         r"(现在|此刻|当前|眼下)(入场|入手|建仓|进场)[^。]{0,8}(合适|划算|好)",
         r"(该不该|要不要|值不值得|应不应该)(买|入手|入场|购买|重仓|加仓)",
         r"(推荐|推介)[^。]{0,8}(重仓|买入|入手|加仓)",
+        # 2026-10-31（金标准评测发现的缺口）：「我想买光伏ETF，现在是买入的好时机吗」原来没被拦住。只认「买入/买进/入手/抄底 + 好/最佳/合适 + 时机/时点」。
+        r"(买入|买进|入手|抄底)[^。，]{0,6}的?(好|最佳|合适)(时机|时点)",
+        r"(现在|此刻|当前|眼下)(是|算)?(买入|买进)[^。]{0,10}(好时机|时机|合适|划算)",
         r"(报|出)(多少|什么)价[^。]{0,6}(最稳|最划算|保证|稳)[^。]{0,3}(中标|拿下|出清)",
     ),
 }
+
+
+# 国际版（英文）输入层：原来只有精确词表，英文的「推荐股票 / 保证收益 / 现在是不是买入时机」都拦不住（金标准评测 2026-10-31 发现）。
+# 这里只收明确的投资建议请求，必须同时出现“买卖/投资动作”和“证券或项目”名词；普通能源问题（"when should I buy a heat pump"）不受影响。
+EN_FAMILIES = {
+    "securities_consulting": (
+        r"\b(recommend|suggest|pick)\w*\b(?:\W+\w+){0,4}\W+(stock|stocks|shares|etf|etfs|fund|funds|bond|bonds|securities)\b",
+        r"\b(which|what)\b(?:\W+\w+){0,6}\W+(stock|stocks|shares|etf|etfs|fund|funds)\b(?:\W+\w+){0,6}\W+(buy|invest in|hold)\b",
+    ),
+    "return_or_timing_consulting": (
+        r"\b(should i|shall i|is it (?:a )?good time to|good time to|when (?:should|do) i)\W+(?:\w+\W+){0,4}(buy|sell|invest in|buy into)\W+(?:\w+\W+){0,6}(stock|stocks|shares|etf|etfs|fund|funds|bond|bonds|securities|project|company)\b",
+        r"\b(is|are)\b(?:\W+\w+){0,6}\W+(a )?(good|worth|safe)\W+(investment|to invest)\b",
+    ),
+    "return_promise": (
+        r"\bguarantee\w*\b(?:\W+\w+){0,6}\W+(return|returns|profit|profits|yield|roi)\b",
+    ),
+    "price_prediction_trade": (
+        r"\bpredict\w*\b(?:\W+\w+){0,8}\W+(price|prices)\b(?:\W+\w+){0,10}\W+(buy|sell|invest|trade)\b",
+    ),
+}
+
+
+def find_english_violations(text: str) -> list[str]:
+    low = (text or "").lower()
+    return [family for family, patterns in EN_FAMILIES.items() if any(re.search(p, low) for p in patterns)]
 
 
 def find_semantic_violations(masked_text: str) -> list[str]:
