@@ -1,0 +1,303 @@
+{
+  "schema_version": "1.0",
+  "library": "Energy Intelligence · Reference Library (Global, pending review)",
+  "generated_at": "2026-10-31",
+  "review_policy": "All entries are 'Pending review': not to be used as an answer basis and not to be indexed by RAG until reviewed.",
+  "entries": [
+    {
+      "id": "en-intl-001",
+      "title": "More new US solar is built with batteries attached",
+      "summary": "Over 16% of the utility-scale solar capacity added in the US in 2026 (through September) is co-located with battery storage, up from 2% in 2017, according to EIA.",
+      "points": [
+        "As of September 2026, over 16% of new utility-scale solar capacity added this year is co-located with operable battery storage; the 2017 share was 2%.",
+        "Reported plans for the last three months of 2026 could lift the 2026 share to 19%; plans submitted for 2027 and 2028 show more than 30%.",
+        "13% of total US utility-scale generating capacity is solar PV, and 18% of that is co-located with battery storage.",
+        "In California, Arizona, New Mexico and Nevada, the share of solar generation co-located with batteries is more than double the national average."
+      ],
+      "plain_tip": "A plant with both can send its output to the grid or into the battery depending on wholesale prices, which is why developers add storage where solar is large.",
+      "caution": "Figures are quoted from the publisher and may be revised. For understanding the market only; not investment or trading advice.",
+      "category": "Market data",
+      "tags": [
+        "solar",
+        "battery storage",
+        "co-location",
+        "EIA-860M"
+      ],
+      "source": {
+        "title": "Today in Energy: more new utility-scale solar is built with battery storage",
+        "publisher": "U.S. Energy Information Administration",
+        "doc_no": "Today in Energy, id 68384 (page dated late Oct 2026)",
+        "url": "https://www.eia.gov/todayinenergy/detail.php?id=68384",
+        "url_note": "",
+        "read_scope": "Full article",
+        "read_via": "Fetched directly (HTTP 200), full text read",
+        "tier": "A",
+        "license_note": "U.S. government work, public domain. EIA asks that reuse carry an acknowledgment with the publication date (\"Source: U.S. Energy Information Administration\"). This entry is a paraphrase with a link to the original."
+      },
+      "status": "In force",
+      "status_note": "Data point as of September 2026; EIA revises monthly. Exact publication day of the article not confirmed from the page text.",
+      "publish_date": "2026-10",
+      "effective_date": "2026-10",
+      "retrieved_at": "2026-10-31",
+      "review_status": "Pending review"
+    },
+    {
+      "id": "en-intl-002",
+      "title": "US wholesale power prices: what EIA expects for 2026",
+      "summary": "EIA's October 2026 outlook puts the average US wholesale electricity price at $52 per MWh in 2026, 11% above 2025, mostly because of extreme weather.",
+      "points": [
+        "Forecast average: $52/MWh in 2026, 11% more than in 2025, mainly due to winter storm Fern and higher-than-average summer temperatures.",
+        "Prices at most hubs have been relatively stable in 2026.",
+        "PJM wholesale prices are set to rise 41%, while Northwest Mid-Columbia prices are expected to fall 23%.",
+        "EIA finalised model inputs on October 1, 2026; the forecast does not account for later market events."
+      ],
+      "plain_tip": "Treat this as a forecast, not a price quote. The next STEO is scheduled for 2026-11-10 and may change the numbers.",
+      "caution": "Figures are quoted from the publisher and may be revised. For understanding the market only; not investment or trading advice.",
+      "category": "Market data",
+      "tags": [
+        "wholesale price",
+        "PJM",
+        "EIA outlook",
+        "forecast"
+      ],
+      "source": {
+        "title": "Short-Term Energy Outlook, October 2026",
+        "publisher": "U.S. Energy Information Administration",
+        "doc_no": "Release date 2026-10-06; next release 2026-11-10",
+        "url": "https://www.eia.gov/outlooks/steo/",
+        "url_note": "",
+        "read_scope": "Full text of the Highlights page (Wholesale electricity prices section)",
+        "read_via": "Fetched directly (HTTP 200), text read",
+        "tier": "A",
+        "license_note": "U.S. government work, public domain. EIA asks that reuse carry an acknowledgment with the publication date (\"Source: U.S. Energy Information Administration\"). This entry is a paraphrase with a link to the original."
+      },
+      "status": "In force",
+      "status_note": "Superseded by each monthly release; the next release is 2026-11-10.",
+      "publish_date": "2026-10-06",
+      "effective_date": "2026-10-06",
+      "retrieved_at": "2026-10-31",
+      "review_status": "Pending review"
+    },
+    {
+      "id": "en-intl-003",
+      "title": "Ember: solar met 75% of global demand growth in 2025",
+      "summary": "Ember's Global Electricity Review 2026 finds clean power met all growth in global electricity demand in 2025, with solar supplying about three quarters of it.",
+      "points": [
+        "Solar met 75% of the net rise in global electricity demand in 2025; its rise was 18 times larger than that of gas, the only fossil fuel that increased.",
+        "2025 was the first year since 2020 without an increase in fossil electricity generation.",
+        "Fossil generation fell in both China and India as record clean additions outpaced demand growth.",
+        "The analysis covers 215 countries, with 2025 data for 91 countries representing 93% of global electricity demand."
+      ],
+      "plain_tip": "Ember uses reported data and says the transition is uneven and incomplete; fossil fuels still play a significant role.",
+      "caution": "Figures are quoted from the publisher and may be revised. For understanding the market only; not investment or trading advice.",
+      "category": "Market reports",
+      "tags": [
+        "solar",
+        "global electricity",
+        "fossil generation",
+        "Ember"
+      ],
+      "source": {
+        "title": "Global Electricity Review 2026",
+        "publisher": "Ember",
+        "doc_no": "Published 2026-04-21",
+        "url": "https://ember-energy.org/latest-insights/global-electricity-review-2026/",
+        "url_note": "",
+        "read_scope": "Full overview page (key findings and headline numbers); the data tables were not read",
+        "read_via": "Fetched directly (HTTP 200), text read",
+        "tier": "A",
+        "license_note": "Licensed CC BY 4.0 (attribution required). This entry is a paraphrase with credit to the publisher and a link to the original."
+      },
+      "status": "In force",
+      "status_note": "Annual report; figures reflect reported 2025 data.",
+      "publish_date": "2026-04-21",
+      "effective_date": "2026-04-21",
+      "retrieved_at": "2026-10-31",
+      "review_status": "Pending review"
+    },
+    {
+      "id": "en-intl-004",
+      "title": "Ember: renewables overtook coal in 2025",
+      "summary": "Ember reports that renewables supplied 33.8% of global electricity in 2025, ahead of coal at 33.0%, the first time this has happened in the modern era.",
+      "points": [
+        "Renewables: 33.8% (10,730 TWh). Coal: 33.0% (10,476 TWh).",
+        "Solar and wind growth pushed renewables above a third of global generation.",
+        "Ember frames this as the world entering an era of clean growth in the power sector."
+      ],
+      "plain_tip": "Shares are of global generation, not capacity, and rounding follows Ember's overview page.",
+      "caution": "Figures are quoted from the publisher and may be revised. For understanding the market only; not investment or trading advice.",
+      "category": "Market reports",
+      "tags": [
+        "renewables",
+        "coal",
+        "TWh",
+        "Ember"
+      ],
+      "source": {
+        "title": "Global Electricity Review 2026",
+        "publisher": "Ember",
+        "doc_no": "Published 2026-04-21",
+        "url": "https://ember-energy.org/latest-insights/global-electricity-review-2026/",
+        "url_note": "",
+        "read_scope": "Full overview page (key findings and headline numbers); the data tables were not read",
+        "read_via": "Fetched directly (HTTP 200), text read",
+        "tier": "A",
+        "license_note": "Licensed CC BY 4.0 (attribution required). This entry is a paraphrase with credit to the publisher and a link to the original."
+      },
+      "status": "In force",
+      "status_note": "Annual report; figures reflect reported 2025 data.",
+      "publish_date": "2026-04-21",
+      "effective_date": "2026-04-21",
+      "retrieved_at": "2026-10-31",
+      "review_status": "Pending review"
+    },
+    {
+      "id": "en-intl-005",
+      "title": "IEA: world renewable capacity could double by 2030",
+      "summary": "IEA's Renewables 2025 expects global renewable power capacity to roughly double by 2030, adding 4,600 GW, with solar PV making up almost 80% of the increase.",
+      "points": [
+        "Growth of 4,600 GW is roughly the combined power generation capacity of China, the EU and Japan.",
+        "Wind capacity is expected to nearly double to over 2,000 GW by 2030; hydropower is 3% of new additions, with pumped storage growing faster than in the previous five years.",
+        "The 2025-2030 forecast is 5% lower than last year's, mainly because of policy changes in the United States and China.",
+        "Even so, the main case reaches 2.6 times the 2022 level by 2030, short of the COP28 tripling pledge; an accelerated case reaches 2.8 times."
+      ],
+      "plain_tip": "The IEA gives two cases (main and accelerated); say which one you are quoting.",
+      "caution": "Figures are quoted from the publisher and may be revised. For understanding the market only; not investment or trading advice.",
+      "category": "Market reports",
+      "tags": [
+        "IEA",
+        "renewable capacity",
+        "solar PV",
+        "COP28"
+      ],
+      "source": {
+        "title": "Renewables 2025: Executive summary",
+        "publisher": "International Energy Agency (IEA)",
+        "doc_no": "Renewables 2025",
+        "url": "https://www.iea.org/reports/renewables-2025/executive-summary",
+        "url_note": "",
+        "read_scope": "Full executive summary",
+        "read_via": "Fetched directly (HTTP 200), text read",
+        "tier": "A",
+        "license_note": "Licence stated on the page: CC BY 4.0. Paraphrase with credit to the IEA and a link to the original."
+      },
+      "status": "In force",
+      "status_note": "Published in October 2025 (month only; day not confirmed). A newer edition may supersede it.",
+      "publish_date": "2025-10",
+      "effective_date": "2025-10",
+      "retrieved_at": "2026-10-31",
+      "review_status": "Pending review"
+    },
+    {
+      "id": "en-intl-006",
+      "title": "IEA: where the forecast changed and why",
+      "summary": "The IEA cut its US renewables forecast by almost 50% but raised India and Europe, and notes that manufacturers are losing money despite record installations.",
+      "points": [
+        "US forecast revised down by almost 50% after the earlier phase-out of federal tax credits, new import restrictions, a pause on new offshore wind leasing and tighter permitting on federal land.",
+        "India is on track to meet its 2030 target, with capacity rising 2.5 times in five years; the EU forecast was revised up slightly on corporate PPA activity.",
+        "Corporate PPAs, utility contracts and merchant plants account for 30% of global renewable expansion to 2030, double the share in last year's forecast.",
+        "Chinese solar PV prices are down over 60% since 2023; the largest manufacturers' margins are around -10%, with cumulative losses of almost USD 5 billion since the start of 2024."
+      ],
+      "plain_tip": "Policy-driven forecasts move when laws change; check the report date before reusing a number.",
+      "caution": "Figures are quoted from the publisher and may be revised. For understanding the market only; not investment or trading advice.",
+      "category": "Market reports",
+      "tags": [
+        "IEA",
+        "policy",
+        "PPA",
+        "manufacturers"
+      ],
+      "source": {
+        "title": "Renewables 2025: Executive summary",
+        "publisher": "International Energy Agency (IEA)",
+        "doc_no": "Renewables 2025",
+        "url": "https://www.iea.org/reports/renewables-2025/executive-summary",
+        "url_note": "",
+        "read_scope": "Full executive summary",
+        "read_via": "Fetched directly (HTTP 200), text read",
+        "tier": "A",
+        "license_note": "Licence stated on the page: CC BY 4.0. Paraphrase with credit to the IEA and a link to the original."
+      },
+      "status": "In force",
+      "status_note": "Published in October 2025 (month only). US policy and market facts may have changed since.",
+      "publish_date": "2025-10",
+      "effective_date": "2025-10",
+      "retrieved_at": "2026-10-31",
+      "review_status": "Pending review"
+    },
+    {
+      "id": "en-intl-007",
+      "title": "UK offshore wind auction (AR7): 8.4 GW at about £91/MWh",
+      "summary": "The UK's seventh Contracts for Difference round awarded 8,437.5 MW of offshore wind. Fixed-bottom projects cleared at £91.20/MWh in 2024 prices.",
+      "points": [
+        "Total awarded: 8,437.5 MW (offshore wind 8,245 MW including 1,380 MW priced separately in Scotland, plus 192.5 MW of floating offshore wind).",
+        "Clearing strike prices (2012 prices / 2024 prices): offshore wind £65.45 / £91.20; Scotland £64.23 / £89.49; floating £155.37 / £216.49 per MWh.",
+        "Maximum saving against the administrative strike price: 19.29% (offshore wind), 20.81% (Scotland), 20.11% (floating).",
+        "By region: England 72.18%, Scotland 17.45%, Wales 10.37% of awarded capacity. First delivery years run from 2028/29 to 2030/31."
+      ],
+      "plain_tip": "Strike prices are quoted in 2012 and 2024 money; compare like with like.",
+      "caution": "Figures are quoted from the publisher and may be revised. For understanding the market only; not investment or trading advice.",
+      "category": "Auction results",
+      "tags": [
+        "UK",
+        "CfD",
+        "offshore wind",
+        "strike price"
+      ],
+      "source": {
+        "title": "Contracts for Difference Allocation Round 7 results (Pots 3 and 4)",
+        "publisher": "Department for Energy Security and Net Zero (DESNZ)",
+        "doc_no": "Published 2026-01-14",
+        "url": "https://www.gov.uk/government/publications/contracts-for-difference-cfd-allocation-round-7-results",
+        "url_note": "The results PDF is linked from this page.",
+        "read_scope": "Full results PDF (tables A to F) and the publication page",
+        "read_via": "PDF downloaded and read with pdftotext; page fetched directly (HTTP 200)",
+        "tier": "A",
+        "license_note": "Published under the Open Government Licence v3.0. This entry paraphrases the publication with credit to DESNZ and a link to the original."
+      },
+      "status": "In force",
+      "status_note": "Contracts were offered; they are signed with the Low Carbon Contracts Company. Results only, no bid detail was published.",
+      "publish_date": "2026-01-14",
+      "effective_date": "2026-01-14",
+      "retrieved_at": "2026-10-31",
+      "review_status": "Pending review"
+    },
+    {
+      "id": "en-intl-008",
+      "title": "UK solar and onshore wind auction (AR7a): 6.2 GW",
+      "summary": "Round 7a awarded 4,905 MW of solar PV at £65.23/MWh and 1,306 MW of onshore wind at £72.24/MWh (2024 prices), plus 20.9 MW of tidal stream.",
+      "points": [
+        "Solar PV: 4,905.01 MW at £46.82 (2012 prices) / £65.23 (2024 prices); maximum saving 13.03%.",
+        "Onshore wind: 1,306.18 MW at £51.85 / £72.24; maximum saving 21.48%. Tidal stream: 20.90 MW at £190.19 / £265.00.",
+        "Total 6,232.09 MW: England 68.60%, Scotland 22.88%, Wales 8.52%.",
+        "Awarded delivery years run from 2027/28 to 2029/30 (table E)."
+      ],
+      "plain_tip": "Compare with AR7 offshore wind (entry en-intl-007): onshore wind and solar cleared well below offshore.",
+      "caution": "Figures are quoted from the publisher and may be revised. For understanding the market only; not investment or trading advice.",
+      "category": "Auction results",
+      "tags": [
+        "UK",
+        "CfD",
+        "solar PV",
+        "onshore wind"
+      ],
+      "source": {
+        "title": "Contracts for Difference Allocation Round 7a results (Pots 1 and 2)",
+        "publisher": "Department for Energy Security and Net Zero (DESNZ)",
+        "doc_no": "Published 2026-02-10",
+        "url": "https://www.gov.uk/government/publications/contracts-for-difference-cfd-allocation-round-7-results",
+        "url_note": "The AR7a PDF is linked from this page.",
+        "read_scope": "Full results PDF (tables A to G) and the publication page",
+        "read_via": "PDF downloaded and read with pdftotext; page fetched directly (HTTP 200)",
+        "tier": "A",
+        "license_note": "Published under the Open Government Licence v3.0. This entry paraphrases the publication with credit to DESNZ and a link to the original."
+      },
+      "status": "In force",
+      "status_note": "Contracts offered; signing is with the Low Carbon Contracts Company.",
+      "publish_date": "2026-02-10",
+      "effective_date": "2026-02-10",
+      "retrieved_at": "2026-10-31",
+      "review_status": "Pending review"
+    }
+  ]
+}

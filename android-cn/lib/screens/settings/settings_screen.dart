@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
+import '../library/energy_library.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -52,6 +53,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             _buildSettingsSection(
               title: '其他',
               items: [
+                const EnergyLibraryEntry(),
                 _buildSettingItem('关于', Icons.info, () {}),
                 _buildSettingItem('帮助与反馈', Icons.help, () {}),
               ],

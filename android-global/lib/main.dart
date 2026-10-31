@@ -16,6 +16,7 @@ import 'screens/projects/projects_screen.dart';
 import 'screens/projects/project_detail_screen.dart';
 import 'screens/research/research_screen.dart';
 import 'screens/settings/settings_screen.dart';
+import 'screens/library/energy_library.dart';
 import 'services/api_service.dart';
 
 Future<void> main() async {
@@ -64,6 +65,7 @@ class EnergyIntelligenceApp extends StatelessWidget {
         '/project-detail': (context) => const ProjectDetailScreen(),
         '/research': (context) => const ResearchScreen(),
         '/settings': (context) => const SettingsScreen(),
+        '/library': (context) => const EnergyLibraryPage(),
       },
     );
   }
