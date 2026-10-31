@@ -28,6 +28,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 
 from app.core.dependencies import get_current_user_id
 from app.schemas.common import SuccessResponse
+from app.core.market import request_market
+from app.skills import global_view as gv
 from app.skills.base import SkillStatus
 from app.skills.registry import get_registry
 from app.utils.response import error as error_response, success
@@ -41,7 +43,7 @@ _tasks_store: Dict[str, Dict[str, Any]] = {}
 
 
 async def _run_skill_async(
-    task_id: str, skill_id: str, params: Dict[str, Any], user_id: str
+    task_id: str, skill_id: str, params: Dict[str, Any], user_id: str, market: str = "cn"
 ) -> None:
     """Execute a registered skill and persist a pollable terminal state."""
     task = _tasks_store[task_id]
@@ -55,19 +57,24 @@ async def _run_skill_async(
             skill_id, adapt_params(skill_id, params)
         )
         failed = result.get("status") == SkillStatus.FAILED.value
+        data = result.get("data")
+        error = result.get("error") if failed else None
+        if market == "global":
+            data = gv.localize_result(skill_id, data)
+            error = gv.localize_error(error) if failed else None
         task.update({
             "status": SkillStatus.FAILED.value if failed else SkillStatus.COMPLETED.value,
             "progress": 100,
-            "result": None if failed else result.get("data"),
-            "output": None if failed else result.get("data"),
-            "error": result.get("error") if failed else None,
+            "result": None if failed else data,
+            "output": None if failed else data,
+            "error": error,
         })
     except Exception as exc:
         logger.exception("Asynchronous skill execution failed")
         task.update({
             "status": SkillStatus.FAILED.value,
             "progress": 100,
-            "error": str(exc),
+            "error": gv.localize_error(exc) if market == "global" else str(exc),
         })
     finally:
         task["duration_ms"] = int((time.time() - started) * 1000)
@@ -80,6 +87,7 @@ async def _run_skill_async(
 
 @router.get("", response_model=SuccessResponse[dict])
 async def list_skills(
+    request: Request,
     category: Optional[str] = Query(None, description="按分类过滤"),
     service: Optional[str] = Query(None, description="按微服务过滤"),
     user_id: str = Depends(get_current_user_id),
@@ -89,13 +97,19 @@ async def list_skills(
     skills_meta = registry.list_skills(category=category, service=service)
 
     skills_list = [meta.to_dict() for meta in skills_meta]
+    categories = registry.list_categories()
+    services = registry.list_services()
+    if request_market(request) == "global":
+        skills_list = [e for e in (gv.localize_meta(d) for d in skills_list) if e]
+        categories = sorted({d["category"] for d in skills_list})
+        services = sorted({d["service"] for d in skills_list if d.get("service")})
 
     return success(data={
         "items": skills_list,
         "skills": skills_list,  # backward compat
         "total": len(skills_list),
-        "categories": registry.list_categories(),
-        "services": registry.list_services(),
+        "categories": categories,
+        "services": services,
     })
 
 
@@ -105,18 +119,25 @@ async def list_skills(
 
 @router.get("/categories", response_model=SuccessResponse[dict])
 async def list_categories(
+    request: Request,
     user_id: str = Depends(get_current_user_id),
 ):
     """获取所有 Skill 分类及其数量"""
     registry = get_registry()
     categories = registry.list_categories()
+    is_gl = request_market(request) == "global"
     result = []
     for cat in categories:
         skills = registry.list_skills(category=cat)
+        items = [s.to_dict() for s in skills]
+        if is_gl:
+            items = [e for e in (gv.localize_meta(d) for d in items) if e]
+            if not items:
+                continue
         result.append({
             "category": cat,
-            "count": len(skills),
-            "skills": [s.to_dict() for s in skills],
+            "count": len(items),
+            "skills": items,
         })
     return success(data={
         "categories": result,
@@ -154,6 +175,7 @@ async def list_executions(
 @router.get("/{skill_id}", response_model=SuccessResponse[dict])
 async def get_skill_detail(
     skill_id: str,
+    request: Request,
     user_id: str = Depends(get_current_user_id),
 ):
     """获取指定 Skill 的详情"""
@@ -167,9 +189,17 @@ async def get_skill_detail(
 
     wrapper = registry.get(skill_id)
     schema_info = wrapper.get_schema() if wrapper else {}
+    detail = meta.to_dict()
+    if request_market(request) == "global":
+        detail = gv.localize_meta(detail)
+        if detail is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Skill '{skill_id}' is not available in the international edition",
+            )
 
     return success(data={
-        **meta.to_dict(),
+        **detail,
         "schema": schema_info,
     })
 
@@ -254,6 +284,14 @@ async def execute_skill(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Skill '{skill_id}' not found",
         )
+    req_market = request_market(request)
+    is_gl = req_market == "global"
+    if is_gl and not gv.visible_in_global(skill_id):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Skill '{skill_id}' is not available in the international edition",
+        )
+    skill_name = gv.CATALOG[skill_id]["name"] if is_gl else (meta.name if meta else skill_id)
 
     if async_exec:
         # 异步模式: 创建后台任务
@@ -262,7 +300,7 @@ async def execute_skill(
             "id": task_id,
             "task_id": task_id,
             "skill_id": skill_id,
-            "skill_name": meta.name if meta else skill_id,
+            "skill_name": skill_name,
             "status": SkillStatus.PENDING.value,
             "progress": 0,
             "input": params,
@@ -275,7 +313,7 @@ async def execute_skill(
 
         # 在后台运行
         asyncio.create_task(
-            _run_skill_async(task_id, skill_id, params, user_id)
+            _run_skill_async(task_id, skill_id, params, user_id, req_market)
         )
 
         return success(data={
@@ -289,13 +327,17 @@ async def execute_skill(
     # P0 修复: 工程参数自动适配为 Skill 金融参数
     from app.skills.param_adapter_v2 import adapt_params
     adapted_params = adapt_params(skill_id, params)
-    market = request.headers.get("x-market", "cn").lower()
     if skill_id == "RA-001":
-        adapted_params["market"] = "global" if market in {"global", "int", "en"} else "cn"
+        adapted_params["market"] = req_market
     
     start_time = time.time()
     created_at = datetime.now().isoformat()
     result = await registry.execute(skill_id, adapted_params, timeout=timeout)
+    if is_gl:
+        result = dict(result)
+        result["data"] = gv.localize_result(skill_id, result.get("data"))
+        if result.get("error"):
+            result["error"] = gv.localize_error(result["error"])
     completed_at = datetime.now().isoformat()
     duration_ms = int((time.time() - start_time) * 1000)
 
@@ -304,7 +346,7 @@ async def execute_skill(
         "id": task_id,
         "task_id": task_id,
         "skill_id": skill_id,
-        "skill_name": meta.name if meta else skill_id,
+        "skill_name": skill_name,
         "status": "completed" if result.get("status") != SkillStatus.FAILED.value else "failed",
         "input": params,
         "output": result.get("data") if result.get("status") != SkillStatus.FAILED.value else None,

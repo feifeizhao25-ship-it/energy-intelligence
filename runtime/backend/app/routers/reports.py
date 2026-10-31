@@ -2139,11 +2139,14 @@ async def _generate_report_task(
 # ═══════════════════════════════════════════════════════════════
 
 @router.get("/templates")
-async def get_report_templates(market: str = "cn"):
+async def get_report_templates(request: Request, market: Optional[str] = None):
     """
-    获取可用报告模板列表 — 支持 market=cn|global 双语
+    获取可用报告模板列表 — 支持 market=cn|global 双语；未显式传 market 时看 X-App-Market / X-Market 头
     """
-    is_gl = market in ("global", "en", "int")
+    from app.core.market import request_market
+
+    market = request_market(request, market)
+    is_gl = market == "global"
 
     # 专业模板 — 根据 market 返回对应语言
     pro_templates = []

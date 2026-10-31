@@ -37,8 +37,12 @@ class RefundQuoteRequest(BaseModel):
     order_no: str
 
 @router.get("/rules")
-async def get_billing_rules():
-    """公开计费规则: 年付唯一, 续费顺延, 降级下周期生效, 退款按未使用比例 (quote)。"""
+async def get_billing_rules(request: Request):
+    """公开计费规则: 年付唯一, 续费顺延, 降级下周期生效, 退款按未使用比例 (quote)。global 市场返回英文规则。"""
+    from app.core.market import request_market
+    if request_market(request) == "global":
+        from app.services.market_localization import GLOBAL_BILLING_RULES
+        return dict(GLOBAL_BILLING_RULES)
     return {"billing_period": "yearly", "renewal": "到期按年付续; 未到期从现到期日顺延1年, 已过期从付款日起算",
             "downgrade": "到期切换续费档位，周期内权益不变、不退差价；付费档位须续费后开通", "refund": "按本人已支付订单的实付金额和服务周期测算未使用天数，向下取整到分；本接口只出测算，实际退款由财务人工执行"}
 

@@ -40,6 +40,20 @@ class StripeService:
         return session.url
 
     @staticmethod
+    def get_price(plan: str) -> Optional[dict]:
+        """Read the real recurring price of a plan from Stripe; None when Stripe or the price id is not configured."""
+        prices = {"pro": settings.STRIPE_PRO_PRICE_ID, "enterprise": settings.STRIPE_ENTERPRISE_PRICE_ID}
+        price_id = prices.get(plan)
+        if not price_id or not settings.STRIPE_SECRET_KEY:
+            return None
+        obj = stripe.Price.retrieve(price_id)
+        amount = obj.get("unit_amount")
+        if amount is None or not obj.get("currency"):
+            return None
+        recurring = obj.get("recurring") or {}
+        return {"amount_cents": int(amount), "currency": str(obj["currency"]), "interval": recurring.get("interval")}
+
+    @staticmethod
     def create_billing_portal_session(customer_id: str) -> str:
         """Create Stripe billing portal session."""
         if not settings.STRIPE_PORTAL_RETURN_URL:
