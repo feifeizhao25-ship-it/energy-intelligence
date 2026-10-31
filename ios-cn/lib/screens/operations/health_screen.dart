@@ -1,3 +1,4 @@
+import '../../widgets/photo_widgets.dart';
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../../services/api_service.dart';
@@ -81,7 +82,7 @@ class _HealthScreenState extends State<HealthScreen> {
               Card(
                 child: Padding(
                   padding: EdgeInsets.all(16),
-                  child: Text('暂无项目。请先在「项目」中创建电站项目，再查看健康诊断。'),
+                  child: EnEmptyState(title: '还没有项目', message: '请先在「项目」中创建电站项目，再查看健康诊断。'),
                 ),
               )
             else

@@ -1,3 +1,4 @@
+import '../../widgets/photo_widgets.dart';
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../../services/api_service.dart';
@@ -86,9 +87,9 @@ class _HealthScreenState extends State<HealthScreen> {
                   border: Border.all(color: Color(0xFFE2E8F0)),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Text(
-                  '还没有项目。请先在「项目」页新建一个项目，再回来做健康诊断。',
-                  style: TextStyle(color: Color(0xFF64748B), fontSize: 13, height: 1.5),
+                child: EnEmptyState(
+                  title: '还没有项目',
+                  message: '请先在「项目」页新建一个项目，再回来做健康诊断。',
                 ),
               )
             else if (_projects.isNotEmpty)
@@ -123,9 +124,9 @@ class _HealthScreenState extends State<HealthScreen> {
             else if (_report == null && _projects.isNotEmpty)
               Padding(
                 padding: EdgeInsets.symmetric(vertical: 8),
-                child: Text(
-                  '这个项目暂时没有可用的诊断报告。运行数据接入后会在这里生成，不会用示例数据代替。',
-                  style: TextStyle(color: Color(0xFF64748B), fontSize: 13, height: 1.5),
+                child: EnEmptyState(
+                  title: '暂无诊断报告',
+                  message: '这个项目暂时没有可用的诊断报告。运行数据接入后会在这里生成，不会用示例数据代替。',
                 ),
               )
             else if (_report != null)

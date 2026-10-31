@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/photo_widgets.dart';
 import 'solar_resource_screen.dart';
 import 'wind_resource_screen.dart';
 import 'compare_screen.dart';
@@ -20,11 +21,12 @@ class ResourceScreen extends StatelessWidget {
             SizedBox(height: 8),
             Text(
               '通过精准的资源评估为项目开发提供科学依据',
-              style: TextStyle(color: Color(0xFF64748B), fontSize: 13),
+              style: TextStyle(color: Color(0xFF64748B), fontSize: 14, height: 1.5),
             ),
             SizedBox(height: 24),
             _buildResourceCard(
               context,
+              asset: 'assets/images/en_res_solar.webp',
               title: '光伏资源',
               subtitle: '太阳辐照评估与预测',
               icon: Icons.wb_sunny,
@@ -38,6 +40,7 @@ class ResourceScreen extends StatelessWidget {
             SizedBox(height: 16),
             _buildResourceCard(
               context,
+              asset: 'assets/images/en_res_wind.webp',
               title: '风资源',
               subtitle: '风速与风能密度评估',
               icon: Icons.cloud,
@@ -51,6 +54,7 @@ class ResourceScreen extends StatelessWidget {
             SizedBox(height: 16),
             _buildResourceCard(
               context,
+              asset: 'assets/images/en_res_compare.webp',
               title: '多站址对比',
               subtitle: '最多10个站址横向评估',
               icon: Icons.compare_arrows,
@@ -72,6 +76,19 @@ class ResourceScreen extends StatelessWidget {
   }
 
   Widget _buildResourceCard(
+    BuildContext context, {
+    required String asset,
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required LinearGradient gradient,
+    required VoidCallback onTap,
+  }) {
+    return EnPhotoCard(asset: asset, title: title, subtitle: subtitle, icon: icon, onTap: onTap);
+  }
+
+  // ignore: unused_element
+  Widget _buildResourceCardGradient(
     BuildContext context, {
     required String title,
     required String subtitle,

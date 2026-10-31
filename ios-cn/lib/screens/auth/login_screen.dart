@@ -132,7 +132,10 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     return Scaffold(
       resizeToAvoidBottomInset: true,
       body: DecoratedBox(
-        decoration: BoxDecoration(gradient: dark ? AppTheme.nightGradient() : AppTheme.darkGradient()),
+        decoration: BoxDecoration(
+          gradient: dark ? AppTheme.nightGradient() : AppTheme.darkGradient(),
+          image: const DecorationImage(image: AssetImage('assets/images/en_login_bg.webp'), fit: BoxFit.cover, opacity: 0.5),
+        ),
         child: SafeArea(
           child: LayoutBuilder(
             builder: (context, constraints) {
