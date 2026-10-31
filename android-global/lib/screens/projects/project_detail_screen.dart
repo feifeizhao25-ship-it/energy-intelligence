@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../widgets/photo_widgets.dart';
 
 import '../../utils/project_display.dart';
 import 'report_sources_screen.dart';
@@ -62,6 +63,8 @@ class ProjectDetailScreen extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        EnTypePhoto(type: tech ?? _text(p, 'type')),
+        const SizedBox(height: 14),
         Text(name, style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
         if (location != null) ...[
           const SizedBox(height: 4),

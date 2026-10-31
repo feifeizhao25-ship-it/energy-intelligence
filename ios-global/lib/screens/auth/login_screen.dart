@@ -73,7 +73,11 @@ class _LoginScreenState extends State<LoginScreen>
             height: 220,
             width: double.infinity,
             decoration: BoxDecoration(
-              gradient: AppTheme.primaryGradient(),
+              image: const DecorationImage(
+                image: AssetImage('assets/images/eg_login_offshore.webp'),
+                fit: BoxFit.cover,
+                colorFilter: ColorFilter.mode(Color(0x99102A5C), BlendMode.darken),
+              ),
               borderRadius: const BorderRadius.only(
                 bottomLeft: Radius.circular(28),
                 bottomRight: Radius.circular(28),
