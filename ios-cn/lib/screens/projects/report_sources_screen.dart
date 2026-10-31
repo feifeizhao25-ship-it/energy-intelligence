@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../services/api_service.dart';
+import '../../widgets/photo_widgets.dart';
 
 /// Lets the user register the sources a project's reports cite (GET/PUT /api/v1/finance/data-sources/{id}).
 /// A report only ever cites what is registered here; the screen never invents or pre-fills a source.
@@ -155,8 +156,13 @@ class _ReportSourcesScreenState extends State<ReportSourcesScreen> {
         return ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            Text(widget.projectName, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
-            const SizedBox(height: 8),
+            EnBanner(
+              asset: 'assets/images/en_sources_desk.webp',
+              caption: widget.projectName,
+              chips: const [(Icons.fact_check_outlined, '报告只引用你登记的来源')],
+              height: 150,
+            ),
+            const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -168,12 +174,12 @@ class _ReportSourcesScreenState extends State<ReportSourcesScreen> {
             const SizedBox(height: 12),
             if (_sources.isEmpty)
               const Padding(
-                padding: EdgeInsets.only(top: 24),
-                child: _Message(
+                padding: EdgeInsets.only(top: 12),
+                child: EnEmptyState(
                   key: Key('sourcesEmpty'),
-                  icon: Icons.fact_check_outlined,
+                  asset: 'assets/images/eg_empty.webp',
                   title: '还没有登记来源',
-                  body: '添加政策文件、电价通知或数据报告的链接，报告才能通过来源核验。',
+                  message: '添加政策文件、电价通知或数据报告的链接，报告才能通过来源核验。',
                 ),
               )
             else ...[
