@@ -238,7 +238,13 @@ def blocked_input_text(text: str, market: str = "cn"):
 
     接口层 blocked_model_text 和评测的 refusal_accuracy 共用这一个函数，评测测的就是线上走的路径。
     """
-    if not find_violations(text or "", market=market):
+    hit = bool(find_violations(text or "", market=market))
+    if not hit and market == "global":
+        # 英文投资建议请求只在输入层拦（不进输出过滤：模型回答里的 “I do not recommend any stocks” 不能被误伤）
+        from app.services.bottom_line_semantic import find_english_violations
+
+        hit = bool(find_english_violations(_mask(text or "")))
+    if not hit:
         return None
     return NOTICE_EN if market == "global" else NOTICE_ZH
 

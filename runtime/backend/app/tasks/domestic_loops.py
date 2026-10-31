@@ -95,3 +95,38 @@ def library_discover() -> dict:
     """资料库每周发现新文件（挂在 SIL 的 weekly_cycle 槽，周日 03:00）。只暂存标题/链接为「待核实 + 待审核」候选。"""
     from app.self_improve.library_job import run_discover
     return run_discover()
+
+
+@celery_app.task(name="energy.domestic.golden_eval")
+def golden_eval() -> dict:
+    """每周金标准评测（周日 03:30）。SIL_ENABLED=1 才运行；只写评测结果和工作清单，不改任何内容、不当发布门禁。"""
+    from app.self_improve.continuous import run_golden
+    return run_golden()
+
+
+@celery_app.task(name="energy.domestic.stale_scan")
+def stale_scan() -> dict:
+    """每日陈旧扫描（02:30）：资料库 + 暂存区 + RAG 来源。只读，只写报告。"""
+    from app.self_improve.continuous import run_stale
+    return run_stale()
+
+
+@celery_app.task(name="energy.domestic.radar_stage")
+def radar_stage() -> dict:
+    """每周三 06:00：把雷达线索暂存成“待审核”线索（不是条目，不可见，不自动通过）。"""
+    from app.self_improve.continuous import run_radar_stage
+    return run_radar_stage()
+
+
+@celery_app.task(name="energy.domestic.monthly_report")
+def monthly_report() -> dict:
+    """每月 1 日 05:00：上月改进报告（md + json + pdf；国内版中文、国际版英文各一份）。"""
+    from app.self_improve.continuous import run_monthly_report
+    return run_monthly_report()
+
+
+@celery_app.task(name="energy.domestic.radar")
+def radar() -> dict:
+    """每周三 05:00：研究雷达（只访问 arXiv / GitHub / Hugging Face 白名单，只写摘要和结构化线索，不入库、不发消息）。"""
+    from app.self_improve.continuous import run_radar
+    return run_radar()

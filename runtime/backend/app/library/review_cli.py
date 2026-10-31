@@ -7,6 +7,7 @@
 
 审核人必须在 POLICY_REVIEWERS 名单里（和政策流水线同一份名单）。名单为空时无人能审——这是有意的：
 名单由负责人自己填写，代码和自动化流程不得代填，所以名单没填之前，资料库里没有任何条目能上线。
+  python -m app.library.review_cli --edition cn promote en-lib-s01 --reviewer <userid>   # 把暂存区候选复制进工作文档（仍是“待审核”，之后再 approve）
 写回 ENERGY_LIBRARY_DIR/reference_entries_<edition>.json（第一次会从包内文件复制），审计日志 library_review_log.jsonl。
 国际版条目的变更说明（--note）写英文，国内版写中文。
 """
@@ -29,7 +30,7 @@ LABELS = {"cn": {"review": ("已审核", "待审核"), "repeal": ("已废止",)}
 def main(argv=None, env=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--edition", choices=store.EDITIONS, required=True)
-    ap.add_argument("action", choices=["approve", "update", "confirm", "repeal"])
+    ap.add_argument("action", choices=["approve", "update", "confirm", "repeal", "promote"])
     ap.add_argument("entry_id")
     ap.add_argument("--reviewer", required=True)
     ap.add_argument("--note", default="")
@@ -51,7 +52,15 @@ def main(argv=None, env=None) -> int:
     log, snaps = d / "library_review_log.jsonl", d / "snapshots" / ed
     lab = LABELS[ed]
     try:
-        if a.action == "approve":
+        if a.action == "promote":
+            cand = next((e for e in store.load_staged(ed) if e["id"] == a.entry_id), None)
+            if cand is None:
+                raise review.ReviewError("not in staged area")
+            if any(e["id"] == a.entry_id for e in doc["entries"]):
+                raise review.ReviewError("already in document")
+            doc["entries"].append({**cand, "review_status": lab["review"][1]})
+            review._log(log, {"at": date.today().isoformat(), "action": "promote", "id": a.entry_id, "reviewer": a.reviewer})
+        elif a.action == "approve":
             review.approve(doc, st, a.entry_id, a.reviewer, today, review_labels=lab["review"], snapshots_dir=snaps, log_path=log)
         elif a.action == "update":
             review.update(doc, st, a.entry_id, a.reviewer, today, a.note, snapshots_dir=snaps, log_path=log)
