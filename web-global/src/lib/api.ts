@@ -47,14 +47,34 @@ export interface User {
   created_at?: string;
 }
 
+/** The backend returns {code, message, data: {access_token, refresh_token}}. */
+export interface AuthTokens {
+  access_token: string;
+  refresh_token?: string;
+  /** legacy field name, kept so older callers keep compiling */
+  token?: string;
+}
+
+/** Read the access token from a login/register response (wrapper or legacy shape). */
+export function accessTokenFrom(res: { data?: Partial<AuthTokens> } | Partial<AuthTokens>): string {
+  const wrapped = (res as { data?: Partial<AuthTokens> }).data;
+  const token =
+    wrapped?.access_token ??
+    wrapped?.token ??
+    (res as Partial<AuthTokens>).access_token ??
+    (res as Partial<AuthTokens>).token;
+  if (!token) throw new Error('Sign-in failed. Please try again.');
+  return token;
+}
+
 export const authApi = {
   login: (email: string, password: string) =>
-    fetchApi<ApiResponse<{ user: User; token: string }>>('/api/v1/auth/login', {
+    fetchApi<ApiResponse<AuthTokens>>('/api/v1/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     }),
   register: (data: Record<string, unknown> & { data_transfer_consent: true }) =>
-    fetchApi<ApiResponse<{ user: User; token: string }>>('/api/v1/auth/register', {
+    fetchApi<ApiResponse<AuthTokens>>('/api/v1/auth/register', {
       method: 'POST',
       body: JSON.stringify({ ...data, market: 'global' }),
     }),
