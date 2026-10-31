@@ -8,18 +8,21 @@ export interface ApiResponse<T> {
   error?: { code: string; message: string };
 }
 
-async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
+export function getAuthToken(): string | null {
   // V23: moresource token 探test (兼容 localStorage/sessionStorage/cookie)
-  let token: string | null = null;
-  if (typeof window !== 'undefined') {
-    token = localStorage.getItem('auth_token') || localStorage.getItem('token')
-         || sessionStorage.getItem('auth_token') || sessionStorage.getItem('token');
-    if (!token) {
-      // from cookie 找
-      const m = document.cookie.match(/(?:auth_token|access_token|token)=([^;]+)/);
-      if (m) token = decodeURIComponent(m[1]);
-    }
+  if (typeof window === 'undefined') return null;
+  let token: string | null = localStorage.getItem('auth_token') || localStorage.getItem('token')
+       || sessionStorage.getItem('auth_token') || sessionStorage.getItem('token');
+  if (!token) {
+    // from cookie 找
+    const m = document.cookie.match(/(?:auth_token|access_token|token)=([^;]+)/);
+    if (m) token = decodeURIComponent(m[1]);
   }
+  return token;
+}
+
+export async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  const token = getAuthToken();
   const res = await fetch(`${API_BASE}${endpoint}`, {
     headers: {
       'Content-Type': 'application/json',

@@ -10,12 +10,13 @@
  * All copy in English. Uses CSS Variables for theming.
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Button, Card, Badge, KPIRibbon, SegmentedControl, Progress } from '@energy-intelligence/ui-web';
 import { cn } from '@energy-intelligence/ui-web';
 import GlobalShell from '../components/GlobalShell';
 import DemoBadge from '../components/DemoBadge';
 import PersonalizedSection from '../components/dashboard/PersonalizedSection';
+import { trackLandingViewed } from '../lib/analytics';
 
 // ── Types ──────────────────────────────────────────────
 
@@ -121,6 +122,10 @@ const MiniLinePlaceholder: React.FC<{ label: string; value: string; trend: strin
 
 const DashboardPage: React.FC = () => {
   const [activeISO, setActiveISO] = useState<string>('ERCOT');
+
+  useEffect(() => {
+    trackLandingViewed();
+  }, []);
   const market = MARKET_DATA[activeISO];
 
   const projectRows = useMemo(() => RECENT_PROJECTS, []);

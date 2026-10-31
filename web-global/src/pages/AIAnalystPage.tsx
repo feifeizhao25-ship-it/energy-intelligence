@@ -15,6 +15,7 @@ import { Button, Card, cn } from '@energy-intelligence/ui-web';
 import GlobalShell from '../components/GlobalShell';
 import EmptyState from '../components/EmptyState';
 import { API_BASE, fetchJson } from '../lib/config';
+import { trackEvent } from '../lib/analytics';
 
 interface Message {
   role: 'user' | 'assistant' | 'system';
@@ -64,6 +65,10 @@ const AIAnalystPage: React.FC = () => {
       const reply = extractReply(payload);
       if (!reply) throw new Error('unrecognized payload');
       setMessages((prev) => [...prev, { role: 'assistant', text: reply }]);
+      void trackEvent('analysis_completed', {
+        conversation_id: conversationId.current,
+        question_chars: question.length,
+      });
     } catch {
       setMessages((prev) => [
         ...prev,
