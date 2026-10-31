@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../widgets/photo_widgets.dart';
 import '../../theme/app_theme.dart';
 import '../../services/api_service.dart';
 import '../../widgets/personal_home_section.dart';
@@ -70,14 +71,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            const Text(
-              'Portfolio overview',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
-            ),
-            const SizedBox(height: 6),
-            const Text(
-              'Only verified account and project data are shown.',
-              style: TextStyle(color: Color(0xFF64748B)),
+            const EnPhotoBanner(
+              asset: 'assets/images/eg_hero_solar.webp',
+              title: 'Portfolio overview',
+              subtitle: 'Only verified account and project data are shown.',
             ),
             const SizedBox(height: 20),
             PersonalHomeSection(margin: EdgeInsets.zero, api: PersonalHomeBinding.api(), strings: PersonalHomeBinding.strings, onOpen: (c) => PersonalHomeBinding.open(context, c)),
@@ -236,10 +233,18 @@ class _Action extends StatelessWidget {
   final String label;
   final String route;
   const _Action({required this.icon, required this.label, required this.route});
+
+  static const _photos = {
+    '/projects': 'eg_sites',
+    '/resource': 'eg_panels',
+    '/finance': 'eg_city',
+    '/ai': 'eg_grid',
+  };
+
   @override
-  Widget build(BuildContext context) => ActionChip(
-    avatar: Icon(icon, size: 18),
-    label: Text(label),
-    onPressed: () => Navigator.pushNamed(context, route),
-  );
+  Widget build(BuildContext context) => EnActionTile(
+        asset: 'assets/images/${_photos[route] ?? 'eg_grid'}.webp',
+        label: label,
+        onTap: () => Navigator.pushNamed(context, route),
+      );
 }

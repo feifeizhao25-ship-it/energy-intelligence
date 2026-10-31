@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../widgets/photo_widgets.dart';
 
 import '../../utils/project_display.dart';
 import '../../services/api_service.dart';
@@ -84,22 +85,12 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
             ? ListView(
                 key: const Key('projectsEmpty'),
                 children: [
-                  SizedBox(height: 180),
-                  Icon(
-                    Icons.folder_open_outlined,
-                    size: 48,
-                    color: Color(0xFF94A3B8),
-                  ),
-                  SizedBox(height: 12),
-                  Text(
-                    'No projects yet',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                  SizedBox(height: 6),
-                  Text(
-                    'Tap “New project” to add your first one. The button at the bottom right starts a resource assessment.',
-                    textAlign: TextAlign.center,
+                  const SizedBox(height: 40),
+                  EnEmptyPhoto(
+                    asset: 'assets/images/eg_empty.webp',
+                    title: 'No projects yet',
+                    message:
+                        'Tap “New project” to add your first one. The button at the bottom right starts a resource assessment.',
                   ),
                   const SizedBox(height: 16),
                   Center(
@@ -150,14 +141,7 @@ class _ProjectCard extends StatelessWidget {
         margin: EdgeInsets.zero,
         child: ListTile(
           contentPadding: const EdgeInsets.all(16),
-          leading: Text(
-            type.contains('solar')
-                ? '☀️'
-                : type.contains('wind')
-                ? '💨'
-                : '🔋',
-            style: const TextStyle(fontSize: 24),
-          ),
+          leading: EnTypeThumb(type: type),
           title: Text(
             name,
             style: const TextStyle(fontWeight: FontWeight.w700),
