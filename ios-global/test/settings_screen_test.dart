@@ -94,7 +94,7 @@ void main() {
     var signedOut = 0;
     await t.pumpWidget(_host(SettingsScreen(meLoader: () async => {}, signOut: () async => signedOut++)));
     await t.pumpAndSettle();
-    await t.ensureVisible(find.byKey(const Key('signOut')));
+    await t.scrollUntilVisible(find.byKey(const Key('signOut')), 200, scrollable: find.byType(Scrollable).first);
     await t.tap(find.byKey(const Key('signOut')));
     await t.pumpAndSettle();
     await t.tap(find.byKey(const Key('signOutConfirm')));
