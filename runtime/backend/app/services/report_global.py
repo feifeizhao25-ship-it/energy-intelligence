@@ -15,6 +15,8 @@ import re
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
+from app.services.geo_hint import COUNTRY_NAMES
+
 CJK = re.compile(r"[\u3000-\u303f\u3400-\u9fff\uff00-\uffef]")
 NOT_PROVIDED = "Not provided"
 NO_UNIQUE_IRR = "No unique value (cash flows change sign more than once)"
@@ -54,9 +56,47 @@ def _type_label(t: str) -> str:
     return {"solar_pv": "Solar PV", "wind": "Wind", "storage": "Energy storage", "hybrid": "Hybrid"}.get(t or "", (t or NOT_PROVIDED).replace("_", " ").title())
 
 
+def _country_name(data: Dict[str, Any]) -> str:
+    code = str(data.get("country_code") or "").upper()
+    return COUNTRY_NAMES.get(code, "") if code else ""
+
+
 def _location(data: Dict[str, Any]) -> str:
-    parts = [_en(data.get(k)) for k in ("city", "province_or_region", "country_code")]
-    return ", ".join(p for p in parts if p) or NOT_PROVIDED
+    """Address as typed on the project, then city/region, then the country name; coordinates when nothing is English."""
+    parts = [_en(data.get(k)) for k in ("address", "city", "province_or_region")]
+    country = _country_name(data)
+    if country and not any(country.lower() in p.lower() for p in parts if p):
+        parts.append(country)
+    text = ", ".join(p for p in parts if p)
+    if not text:
+        lat, lon = data.get("latitude"), data.get("longitude")
+        if isinstance(lat, (int, float)) and isinstance(lon, (int, float)):
+            text = f"{abs(lat):.2f}°{'N' if lat >= 0 else 'S'}, {abs(lon):.2f}°{'E' if lon >= 0 else 'W'}"
+    return text or NOT_PROVIDED
+
+
+_INTERCONNECTION = {
+    "US": ("Interconnection follows the rules of the utility or ISO/RTO that operates the grid at the site. IEEE 1547 is the "
+           "interconnection standard for distributed energy resources in the United States; larger projects follow the "
+           "transmission operator's study and queue process."),
+    "IN": ("Connection follows the Central Electricity Authority (CEA) technical standards for grid connectivity, the CERC "
+           "grid connectivity regulations for inter-State transmission and the applicable State grid code."),
+}
+
+_WHERE_TO_CHECK = {
+    "US": "Where to check: the ISO/RTO or utility interconnection queue, the state public utility commission, FERC for transmission-level interconnection, and the IRS for tax-credit rules.",
+    "IN": "Where to check: CEA, CERC, the State Electricity Regulatory Commission and State grid code, and MNRE for scheme eligibility.",
+}
+
+
+def _interconnection_text(data: Dict[str, Any]) -> str:
+    code = str(data.get("country_code") or "").upper()
+    base = "Interconnection capacity, voltage level and queue position were not supplied. "
+    if code in _INTERCONNECTION:
+        return base + _INTERCONNECTION[code]
+    if code and code in COUNTRY_NAMES:
+        return base + f"Check the grid code and connection procedure of the grid operator in {COUNTRY_NAMES[code]}; no country-specific standard is listed here."
+    return base + "The project's country is not recorded, so no country-specific standard is listed; add the project location to get the matching checklist."
 
 
 def citation(i: int, src: Dict[str, Any]) -> str:
@@ -89,7 +129,7 @@ def _sensitivity(fin: Dict[str, Any], calc) -> List[List[str]]:
 def build_report(data: Dict[str, Any], report_type: str, template, metrics: Dict[str, Any], title: str,
                  confidential: str, calc=None) -> Dict[str, Any]:
     fin = data.get("financial") or {}
-    cur = _en(data.get("currency")) or "USD"
+    cur = _en(data.get("currency")) or "(currency not stated)"
     name = _en(data.get("name")) or "the project"
     cap = data.get("capacity_mw")
     sources = [s for s in (data.get("data_sources") or []) if isinstance(s, dict)]
@@ -201,13 +241,16 @@ def build_report(data: Dict[str, Any], report_type: str, template, metrics: Dict
                  ("Generation licence or registration (if required)", "Energy regulator"),
                  ("Incentive or tax-credit eligibility", "Tax authority / programme administrator")]
         S += [("h", 1, "Regulatory Checklist"),
-              ("p", f"Items an international project in {_location(data)} normally has to address. Status is 'Not verified' until a person records evidence; this report does not determine compliance."),
+              ("p", f"Items a project in {_location(data)} normally has to address. Status is 'Not verified' until a person records evidence; this report does not determine compliance."),
               ("table", ["Requirement", "Authority", "Status"], [[a, b, "Not verified"] for a, b in items], "Regulatory checklist")]
+        where = _WHERE_TO_CHECK.get(str(data.get("country_code") or "").upper())
+        if where:
+            S += [("p", where)]
         S += [("h", 1, "Permit Status"), ("p", "No permit records were supplied. Add permit numbers, issue and expiry dates to the project to show status here."),
               ("table", ["Permit", "Status"], [[a, "No record"] for a, _ in items[:5]], "Permit register")]
         S += [("h", 1, "Environmental Impact Assessment"), ("p", "No assessment document is attached. Environmental studies are performed by qualified consultants and approved by the competent authority.")]
         S += [("h", 1, "Land Use Analysis"), ("p", "Land area, ownership and zoning were not supplied. Confirm title, lease terms and zoning with local counsel.")]
-        S += [("h", 1, "Grid Interconnection Plan"), ("p", "Interconnection capacity, voltage level and queue position were not supplied. Interconnection standards such as IEEE 1547 apply in the United States; confirm the standard for your market.")]
+        S += [("h", 1, "Grid Interconnection Plan"), ("p", _interconnection_text(data))]
     else:  # esg
         S += [("h", 1, "Carbon Emissions & Reduction")] + emissions()
         S += [("h", 1, "Social Impact"), ("p", "Employment, community engagement and local procurement were not supplied. Add these records to report on them."),
