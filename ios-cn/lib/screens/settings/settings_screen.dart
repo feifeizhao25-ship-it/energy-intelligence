@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../config/region_config.dart';
+import '../library/energy_library.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
 
@@ -41,6 +42,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             _buildUserProfile(context),
             const Divider(height: 24),
+            const EnergyLibraryEntry(),
             _buildSettingItem(
               context,
               '关于${RegionConfig.appName}',

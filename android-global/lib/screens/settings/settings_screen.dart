@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../library/energy_library.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -146,6 +147,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ],
             ),
+            const EnergyLibraryEntry(),
             _SettingSection(
               title: 'Data & Privacy',
               children: [
