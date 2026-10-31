@@ -44,7 +44,9 @@ class NewEnergyApp extends StatelessWidget {
       ],
       supportedLocales: const [Locale('zh', 'CN')],
       debugShowCheckedModeBanner: false,
-      home: configError == null ? null : ConfigErrorScreen(message: configError!),
+      home: configError == null
+          ? null
+          : ConfigErrorScreen(message: configError!),
       initialRoute: configError == null ? '/login' : null,
       routes: {
         '/login': (context) => const LoginScreen(),
@@ -134,32 +136,40 @@ class _MainNavigationState extends State<MainNavigation> {
                 final item = _navItems[i];
                 final selected = i == _selectedIndex;
                 return Expanded(
-                  child: InkWell(
+                  child: Semantics(
+                    button: true,
+                    selected: selected,
+                    label: item.label,
+                    excludeSemantics: true,
                     onTap: () => setState(() => _selectedIndex = i),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          selected ? item.activeIcon : item.icon,
-                          size: 22,
-                          color: selected
-                              ? const Color(0xFF1D4ED8)
-                              : const Color(0xFF94A3B8),
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          item.label,
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: selected
-                                ? FontWeight.w600
-                                : FontWeight.normal,
+                    child: InkWell(
+                      key: Key('navTab$i'),
+                      onTap: () => setState(() => _selectedIndex = i),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            selected ? item.activeIcon : item.icon,
+                            size: 22,
                             color: selected
                                 ? const Color(0xFF1D4ED8)
                                 : const Color(0xFF94A3B8),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 3),
+                          Text(
+                            item.label,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: selected
+                                  ? FontWeight.w600
+                                  : FontWeight.normal,
+                              color: selected
+                                  ? const Color(0xFF1D4ED8)
+                                  : const Color(0xFF94A3B8),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 );

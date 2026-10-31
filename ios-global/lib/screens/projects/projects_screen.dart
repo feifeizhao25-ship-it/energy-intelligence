@@ -77,7 +77,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                   ),
                   SizedBox(height: 6),
                   Text(
-                    'Create a project on the web or with the add button.',
+                    'Create a project on the website and it will appear here. The button below starts a resource assessment.',
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -91,6 +91,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
               ),
       ),
       floatingActionButton: FloatingActionButton(
+        tooltip: 'Resource assessment',
         onPressed: () => Navigator.pushNamed(context, '/resource'),
         child: const Icon(Icons.add),
       ),

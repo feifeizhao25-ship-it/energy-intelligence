@@ -45,7 +45,10 @@ class ApiService {
   static void clearToken() => _token = null;
 
   static Map<String, String> get _headers {
-    final h = <String, String>{'Content-Type': 'application/json'};
+    final h = <String, String>{
+      'Content-Type': 'application/json',
+      'X-App-Market': 'cn', // lets the server count wrong-language responses per edition
+    };
     if (_token != null) h['Authorization'] = 'Bearer $_token'; // zh-gate:allow HTTP 头
     return h;
   }
