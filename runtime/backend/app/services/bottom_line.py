@@ -57,6 +57,19 @@ _NEGATION_PATTERNS = (
     re.compile(r"保本(?:电价|点|价格|价|线)"),
     re.compile(r"无风险(?:收益率|利率|资产|回报率)"),
     re.compile(r"碳收益(?=是指|是什么|什么意思|指什么|怎么(?:算|理解)|如何(?:计算|核算|理解)|的(?:计算|核算|测算|来源|构成|定义|含义|概念)|主要来源|来源于|有哪些)"),
+    # 风险提示里的否定：「过去的表现不能保证未来的收益」「无法保证回报」「不承诺收益」不是承诺。
+    re.compile(r"(?:不能|无法|不可|不会|并不|不|没有|难以|从不)(?:对此|对其|做到)?(?:保证|承诺|确保)(?:(?![。！？!?\n；;，,、]|保证|承诺|确保|不).){0,8}?(?:收益|回报|盈利|赚钱|利润)"),
+    # 「是否/值不值得投资」是问句或评估对象，不是结论。
+    re.compile(r"(?:是否|能否|值不值得|要不要|该不该)\s*(?:值得\s*)?(?:投资|入手|买入|配置|布局)"),
+    # 定义/科普里的常见搭配（语义层会把它们当成承诺或建议）：
+    #  - 比较基准：「比无风险投资更有吸引力」；钱「可以投资并产生收益」；
+    #  - 行业基准：「IRR 达到 8%-12% 通常被认为是较好的水平」；
+    #  - 目的从句：「需要控制成本以确保盈利」（后面跟数字时不抹，「为了保证收益不低于8%」仍然拦截）。
+    re.compile(r"(?:比|相对于|对比|高于|优于|好于)无风险(?:投资|产品|债券|资产|收益|回报)"),
+    re.compile(r"(?:钱|资金|资本|现金|本金)可以投资"),
+    re.compile(r"(?:IRR|内部收益率|收益率|回报率)(?:(?![。！？!?\n；;]).){0,12}?(?:达到|超过|高于|不低于|至少)(?:(?![。！？!?\n；;]).){0,16}?"
+               r"(?:通常|一般|往往|普遍)(?:会)?(?:被)?(?:认为|视为|看作|算)", re.I),
+    re.compile(r"(?:以|来|从而|才能|为了|需要|旨在|便于)(?:便)?(?:保证|确保)(?:项目|电站|系统|运营)?(?:的)?(?:盈利|收益|回报|利润)(?!(?:(?![。！？!?\n；;]).){0,6}\d)"),
     re.compile(r"does not give investment advice", re.I),
     re.compile(r"not investment advice", re.I),
     re.compile(r"do not give investment advice", re.I),
@@ -64,6 +77,25 @@ _NEGATION_PATTERNS = (
     re.compile(r"will not rise", re.I),
     re.compile(r"will not fall", re.I),
 )
+
+# 解释判断规则不是对某个项目下结论：「IRR 高于资金成本，项目通常值得投资」「如果 NPV 为负就不值得投资」。
+# 逐句判断：句中出现「该/本/这个项目」「你的」「建议/推荐」就当作对具体项目的结论，不抹；否则只抹
+# 「指标 + 比较/条件 + 值得投资/投资价值」这一小段。
+_METRIC = r"(?:IRR|NPV|内部收益率|净现值|收益率|资金成本|折现率|回收期|度电成本|LCOE|基准收益率|预期收益率)"
+_WORTH = r"(?:不|没有|有)?(?:值得\s*(?:投资|入手|买|配置|布局)|投资价值)"
+_CRITERION_PATTERNS = (
+    re.compile(r"(?:如果|若|当|一旦|通常|一般(?:来说)?|往往|越高|越低).{0,50}?" + _METRIC + r".{0,50}?" + _WORTH),
+    re.compile(_METRIC + r"\**.{0,30}?(?:高于|低于|大于|小于|超过|不足|为负|为正|[><＞＜]).{0,30}?" + _WORTH),
+)
+_SPECIFIC_PROJECT = re.compile(r"该项目|本项目|这个项目|此项目|你的项目|您的项目|你的方案|您的方案|你们的项目|建议|推荐")
+# 举例/假设的演算里「这个项目」是示例项目，不是用户的项目；本项目、你的项目、建议、推荐仍照常算作具体结论。
+_EXAMPLE_MARKER = re.compile(r"举个例子|举例|例如|比如说|假设|示例|worked example|for example", re.I)
+_SPECIFIC_IN_EXAMPLE = re.compile(r"本项目|你的项目|您的项目|你的方案|您的方案|你们的项目|建议|推荐")
+_HYPOTHETICAL_SENTENCE = re.compile(r"假设|设想|比如|例如|举个例子|举例|示例|for example", re.I)
+_HYPOTHETICAL_NUMBERS = re.compile(
+    r"(?:每年|每月|每日|年)(?:稳定)?(?:收益|回报|分红|现金流)\d+(?:\.\d+)?\s*(?:万|亿|千)?(?:元|美元)?"
+    r"|(?:IRR|内部收益率|收益率|回报率)(?:是|为|约为|达到|超过)\s*\d+(?:\.\d+)?\s*%?", re.I)
+_SENTENCE = re.compile(r"[^。！？!?\n；;]+")
 
 # 不调用模型的改写层。只在国内市场启用，避免改变国际版既有精确匹配行为。
 _PATTERNS = (
@@ -104,6 +136,14 @@ def _mask(text: str) -> str:
     spans: list[tuple[int, int]] = []
     for pattern in _NEGATION_PATTERNS:
         spans.extend((match.start(), match.end()) for match in pattern.finditer(text))
+    specific = _SPECIFIC_IN_EXAMPLE if _EXAMPLE_MARKER.search(text) else _SPECIFIC_PROJECT
+    for sentence in _SENTENCE.finditer(text):
+        if specific.search(sentence.group()):
+            continue
+        if _HYPOTHETICAL_SENTENCE.search(sentence.group()):
+            spans.extend((sentence.start() + m.start(), sentence.start() + m.end()) for m in _HYPOTHETICAL_NUMBERS.finditer(sentence.group()))
+        for pattern in _CRITERION_PATTERNS:
+            spans.extend((sentence.start() + m.start(), sentence.start() + m.end()) for m in pattern.finditer(sentence.group()))
     for phrase in (NOTICE_ZH, NOTICE_EN):
         start = 0
         while True:
