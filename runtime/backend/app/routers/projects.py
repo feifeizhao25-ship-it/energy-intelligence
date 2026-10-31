@@ -18,7 +18,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_current_user_id
 from app.database import get_db
+from app.core.subscription import QuotaExceeded, assert_project_quota
 from app.models.database import Project
+from app.models.user import User
 from app.utils.response import success
 
 router = APIRouter(prefix="/projects")
@@ -82,6 +84,19 @@ async def create_project(
     user_id: str = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db),
 ):
+    # The plan's project limit is shown on Plan & usage; enforce it here, in the account's language.
+    try:
+        await assert_project_quota(user_id, db)
+    except QuotaExceeded as error:
+        market = (await db.execute(select(User.market).where(User.id == user_id))).scalar_one_or_none() or "cn"
+        if market == "global":
+            message = f"Your plan includes {error.limit} project{'s' if error.limit != 1 else ''}. Upgrade your plan to add more."
+        else:
+            message = f"当前套餐最多可创建 {error.limit} 个项目，如需更多请升级会员。"
+        raise HTTPException(
+            status_code=429,
+            detail={"error": "PROJECT_QUOTA_EXCEEDED", "message": message, "upgrade_url": "/pricing", "limit": error.limit},
+        ) from error
     now = datetime.now(timezone.utc)
     project = Project(
         id=str(uuid.uuid4()),
