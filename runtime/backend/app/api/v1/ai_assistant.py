@@ -17,8 +17,14 @@ from app.services.bottom_line import NOTICE_EN, NOTICE_ZH, blocked_input_text, e
 from app.services.budget_caps import BudgetExceeded, assert_product_budget, charge_product_budget
 from app.models.user import User
 import json
+import os
 
 router = APIRouter(prefix="/ai")
+
+# Retrieval scores are normalised to 0-1. Below this line the "match" is a stray word overlap
+# (an unrelated question scored 0.31, a North Sea wind question scored 0.14 against US tax credits),
+# and attaching such a source to an answer is worse than attaching none. Override with RAG_MIN_RELEVANCE.
+MIN_SOURCE_RELEVANCE = float(os.getenv("RAG_MIN_RELEVANCE", "0.35"))
 
 _AI_LIMITATIONS = ["AI 生成内容仅供辅助核对方法与来源，关键数据需人工复核"]
 _RAG_SERVICE = RAGService()
@@ -34,7 +40,19 @@ def _retrieve(query: str, market: str) -> list:
         hits = _RAG_SERVICE.search(query, top_k=3, market=market, exclude_stale=True).hits
     except Exception:
         return []
-    return [h for h in hits if h.score > 0]
+    return [h for h in hits if h.score >= MIN_SOURCE_RELEVANCE]
+
+
+_CITE = __import__("re").compile(r"[ \t]?\[S(\d+)\]")
+
+
+def _scrub_citations(answer: str, n_sources: int) -> str:
+    """Drop [S#] markers that point at a source we did not retrieve (the model sometimes invents [S3]).
+
+    A marker the reader cannot open is a false claim of support, so it is removed; markers 1..n stay."""
+    if not answer:
+        return answer
+    return _CITE.sub(lambda m: m.group(0) if 1 <= int(m.group(1)) <= n_sources else "", answer)
 
 
 def _grounded_prompt(base_prompt: str, hits: list, market: str) -> str:
@@ -148,7 +166,7 @@ async def chat(
         async for chunk in ai_assistant.stream_openai(message, prompt, market=market):
             if chunk:
                 chunks.append(chunk)
-        full = enforce_bottom_line("".join(chunks), market=market)
+        full = _scrub_citations(enforce_bottom_line("".join(chunks), market=market), len(hits))
         if full:
             yield f"data: {json.dumps({'content': full}, ensure_ascii=False)}\n\n"
             await consume_ai_quota(user, db)
@@ -188,10 +206,13 @@ async def chat_json(
         raise HTTPException(status_code=503, detail="AI 服务暂时不可用，请稍后重试") from error
     await consume_ai_quota(user, db)
     _charge_cn(user_id, market)
+    message = _scrub_citations(enforce_bottom_line(result["content"], market=market), len(hits))
+    evidence = _evidence_for(message, hits)
     return {
-        "message": enforce_bottom_line(result["content"], market=market),
+        "message": message,
         "ai_metadata": result["metadata"],
-        "evidence": _evidence_for(result["content"], hits),
+        "evidence": evidence,
+        "sources": evidence.get("sources", []),
     }
 
 
@@ -404,5 +425,5 @@ async def ask(
     except RuntimeError as error:
         raise HTTPException(status_code=503, detail="AI 服务暂时不可用，请稍后重试") from error
     _charge_cn(user_id, market)
-    answer = enforce_bottom_line(result["content"], market=market)
+    answer = _scrub_citations(enforce_bottom_line(result["content"], market=market), len(hits))
     return {"answer": answer, "sources": _evidence_for(answer, hits).get("sources", []), "model": result["metadata"]}

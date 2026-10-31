@@ -340,7 +340,7 @@ class ApiService {
   /// AI chat — calls POST /api/v1/ai/chat  (returns Map for assistant_screen)
   static Future<Map<String, dynamic>> chat(String message) async {
     try {
-      final resp = await _post('/api/v1/ai/chat', body: {'message': message});
+      final resp = await _post('/api/v1/ai/chat-json', body: {'message': message});
       return resp;
     } catch (_) {
       return {

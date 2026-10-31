@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../../services/api_service.dart';
+import '../../widgets/ai_message_body.dart';
 
 class Message {
   final String content;
   final bool isUser;
   final String? toolName;
+  final List<Map<String, dynamic>> sources;
 
-  Message({required this.content, required this.isUser, this.toolName});
+  Message({required this.content, required this.isUser, this.toolName, this.sources = const []});
 }
 
 class AiAssistantScreen extends StatefulWidget {
@@ -41,6 +43,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
     final result = await ApiService.chat(text);
     if (!mounted) return;
     final response = result['message'] as String?;
+    final sources = _sourcesOf(result);
     setState(() {
       _messages.add(
         Message(
@@ -48,12 +51,20 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
               ? response!
               : (result['error'] as String? ?? 'AI服务暂时不可用，请稍后重试。'),
           isUser: false,
+          sources: sources,
         ),
       );
       _isProcessing = false;
     });
 
     _scrollToBottom();
+  }
+
+  /// Sources the backend retrieved for this answer (evidence envelope), newest API first.
+  static List<Map<String, dynamic>> _sourcesOf(Map<String, dynamic> result) {
+    final raw = result['sources'] ?? (result['evidence'] is Map ? (result['evidence'] as Map)['sources'] : null);
+    if (raw is! List) return const [];
+    return raw.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
   }
 
   void _scrollToBottom() {
@@ -208,14 +219,16 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                     : Color(0xFFF1F5F9),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Text(
-                message.content,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: message.isUser ? Colors.white : Color(0xFF0F172A),
-                  height: 1.5,
-                ),
-              ),
+              child: message.isUser
+                  ? Text(
+                      message.content,
+                      style: TextStyle(fontSize: 13, color: Colors.white, height: 1.5),
+                    )
+                  : AiMessageBody(
+                      text: message.content,
+                      sources: message.sources,
+                      color: Color(0xFF0F172A),
+                    ),
             ),
           ),
         ],
