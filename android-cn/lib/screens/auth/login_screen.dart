@@ -186,14 +186,6 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                               ),
                             ),
                           ),
-                          const SizedBox(height: 20),
-                          Row(
-                            children: [
-                              Expanded(child: _buildSocialButton(Icons.chat, '客服')),
-                              const SizedBox(width: 12),
-                              Expanded(child: _buildSocialButton(Icons.business, '企业入口')),
-                            ],
-                          ),
                           const SizedBox(height: 8),
                           TextButton(
                             onPressed: () => Navigator.of(context).pushNamed('/register'),
@@ -313,18 +305,4 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     );
   }
 
-  Widget _buildSocialButton(IconData icon, String label) {
-    return OutlinedButton(
-      onPressed: () {},
-      style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.white30)),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: Colors.white, size: 18),
-          const SizedBox(width: 6),
-          Text(label, style: const TextStyle(color: Colors.white)),
-        ],
-      ),
-    );
-  }
 }

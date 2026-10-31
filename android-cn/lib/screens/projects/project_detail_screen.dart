@@ -136,9 +136,7 @@ class ProjectDetailScreen extends StatelessWidget {
               title: 'AI分析',
               icon: Icons.smart_toy,
               color: Color(0xFF3B82F6),
-              onTap: () => ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(SnackBar(content: Text('功能开发中'))),
+              onTap: () => Navigator.of(context).pushNamed('/ai-assistant'),
             ),
           ],
         ),

@@ -56,17 +56,6 @@ class FinanceScreen extends StatelessWidget {
                 context,
               ).push(MaterialPageRoute(builder: (_) => StorageFinanceScreen())),
             ),
-            SizedBox(height: 16),
-            _buildFinanceCard(
-              context,
-              title: '方案对比',
-              subtitle: '多个方案对比分析',
-              icon: Icons.compare_arrows,
-              color: Color(0xFF3B82F6),
-              onTap: () => ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(SnackBar(content: Text('功能开发中'))),
-            ),
           ],
         ),
       ),

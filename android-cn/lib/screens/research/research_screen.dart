@@ -152,11 +152,6 @@ class _ResearchScreenState extends State<ResearchScreen> {
                   '引用: ${paper['citations']}',
                   style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
                 ),
-                TextButton(
-                  onPressed: () {},
-                  style: TextButton.styleFrom(padding: EdgeInsets.zero),
-                  child: Text('AI摘要', style: TextStyle(fontSize: 11)),
-                ),
               ],
             ),
           ],

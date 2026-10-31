@@ -54,17 +54,6 @@ class OperationsScreen extends StatelessWidget {
                 context,
               ).push(MaterialPageRoute(builder: (_) => CleaningScreen())),
             ),
-            SizedBox(height: 16),
-            _buildModuleCard(
-              context,
-              title: '数据分析',
-              subtitle: '发电数据深度挖掘',
-              icon: Icons.analytics,
-              color: Color(0xFF10B981),
-              onTap: () => ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(SnackBar(content: Text('功能开发中'))),
-            ),
           ],
         ),
       ),
