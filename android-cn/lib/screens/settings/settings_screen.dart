@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 
 import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/photo_widgets.dart';
 import '../library/energy_library.dart';
 import 'plan_usage_screen.dart';
 
@@ -128,6 +129,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: ListView(
           padding: const EdgeInsets.only(bottom: 32),
           children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 12, 16, 0),
+              child: EnBanner(
+                asset: 'assets/images/en_settings_blade.webp',
+                caption: '我的账号',
+                chips: [(Icons.workspace_premium_outlined, '套餐'), (Icons.lock_outline, '数据与隐私')],
+                height: 130,
+              ),
+            ),
             Padding(
               padding: const EdgeInsets.all(20),
               child: Row(children: [

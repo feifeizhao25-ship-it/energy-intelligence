@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/photo_widgets.dart';
 import '../settings/plan_usage_screen.dart';
 
 /// Asks the server (POST /api/v1/ai/chat-json) and shows the answer as cards: one-sentence conclusion, key figures,
@@ -153,15 +154,13 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
       child: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-          Container(
-            width: 72,
-            height: 72,
-            decoration: BoxDecoration(color: AppTheme.primaryColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(20)),
-            child: Icon(Icons.auto_awesome, size: 36, color: AppTheme.primaryColor),
+          const EnBanner(
+            asset: 'assets/images/en_ai_control.webp',
+            caption: '新能源智库AI助手',
+            chips: [(Icons.wb_sunny_outlined, '光伏风电'), (Icons.trending_up, '收益测算'), (Icons.battery_charging_full_outlined, '储能')],
+            height: 150,
           ),
-          const SizedBox(height: 16),
-          const Text('新能源智库AI助手', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
-          const SizedBox(height: 6),
+          const SizedBox(height: 14),
           Text('有什么我可以帮助的吗？', textAlign: TextAlign.center, style: TextStyle(fontSize: 13, color: scheme.onSurfaceVariant, height: 1.4)),
           const SizedBox(height: 22),
           for (final p in prompts)
@@ -172,7 +171,11 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                 child: OutlinedButton(
                   onPressed: () => _send(p),
                   style: OutlinedButton.styleFrom(alignment: Alignment.centerLeft, padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12)),
-                  child: Text(p, style: const TextStyle(fontSize: 13)),
+                  child: Row(children: [
+                    Icon(prompts.indexOf(p) == 0 ? Icons.wb_sunny_outlined : (prompts.indexOf(p) == 1 ? Icons.trending_up : Icons.battery_charging_full_outlined), size: 18, color: AppTheme.primaryColor),
+                    const SizedBox(width: 10),
+                    Expanded(child: Text(p, style: const TextStyle(fontSize: 14, height: 1.4))),
+                  ]),
                 ),
               ),
             ),
