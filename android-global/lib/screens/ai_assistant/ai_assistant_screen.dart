@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 
+import '../../services/api_service.dart';
+
 class AiAssistantScreen extends StatefulWidget {
   const AiAssistantScreen({super.key});
   @override
@@ -26,8 +28,16 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
     setState(() {});
 
     setState(() => _isStreaming = true);
-    final response =
-        'Based on your query about solar resource assessment at 36°N 115°W, the location shows excellent solar potential with GHI of 5.8 kWh/m²/d. I recommend installing a 100MW solar facility with estimated IRR of 14.7% and LCOE of \$0.031/kWh.';
+    String response;
+    try {
+      final resp = await ApiService.chat(text);
+      response = (resp['reply'] as String?)?.isNotEmpty == true
+          ? resp['reply'] as String
+          : 'AI service is temporarily unavailable. Please try again shortly.';
+    } catch (_) {
+      response =
+          'AI service is temporarily unavailable. Please check your connection and try again.';
+    }
 
     String displayText = '';
     for (final char in response.characters) {

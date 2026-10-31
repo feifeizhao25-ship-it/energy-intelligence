@@ -31,6 +31,7 @@ class QuotaExceeded(Exception):
 
 PLAN_QUOTAS = {
     "free": {"report_exports_per_month": 5, "ai_queries_per_day": 20},
+    "starter": {"report_exports_per_month": 15, "ai_queries_per_day": 60},
     "pro": {"report_exports_per_month": 50, "ai_queries_per_day": 200},
     "enterprise": {"report_exports_per_month": -1, "ai_queries_per_day": -1},
 }
@@ -42,6 +43,15 @@ ENTITLEMENTS = {
         "report_exports_per_month": 5,
         "ai_queries_per_day": 20,
         "max_projects": 1,
+        "data_sources": ["basic"],
+        "export_formats": ["pdf"],
+        "team_seats": 1,
+        "support_level": "community",
+    },
+    "starter": {
+        "report_exports_per_month": 15,
+        "ai_queries_per_day": 60,
+        "max_projects": 3,
         "data_sources": ["basic"],
         "export_formats": ["pdf"],
         "team_seats": 1,
