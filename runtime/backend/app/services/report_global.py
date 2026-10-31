@@ -188,6 +188,10 @@ def build_report(data: Dict[str, Any], report_type: str, template, metrics: Dict
 
     S: List[Block] = []
     rt = report_type
+    if rt in ("compliance", "esg") and not any(src.get("title") and src.get("url") and src.get("retrieved_at") for src in sources):
+        # Said at the top of the report, not only in the appendix (B11).
+        S += [("p", "IMPORTANT: no verifiable data source is attached to this project. Do not rely on this report for a decision; "
+                    "add a source with a link on the project's data-sources screen and generate it again.")]
     if rt == "feasibility":
         S += [("h", 1, "Project Overview"), ("table", ["Item", "Value"], facts, "Project facts"),
               ("p", _en(data.get("description")) or "No project description was provided.")]
