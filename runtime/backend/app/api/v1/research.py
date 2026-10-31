@@ -2,7 +2,7 @@
 from datetime import datetime, timezone
 from typing import Optional
 import httpx
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 from app.core.dependencies import get_current_user_id
 from app.services.overseas_gate import overseas_live_allowed
 
@@ -138,9 +138,27 @@ async def get_trends(
 
 @router.get('/market-trends')
 async def market_trends(
+    request: Request,
     region: str = Query('global'),
     user_id: str = Depends(get_current_user_id),
 ):
+    from app.core.market import request_market
+
+    if request_market(request) == "global":
+        # International view: no China-only company list, no China capacity rows, no policy summary that predates
+        # the 2025 US law changes. Keep only the global cost/investment rows already cited to IEA/BNEF.
+        return {
+            'region': region,
+            'solar_capex_2024_usd_per_mw': 850000,
+            'wind_capex_2024_usd_per_mw': 1350000,
+            'battery_prices_usd_per_kwh': 98,
+            'battery_price_trend': 'declining 12% YoY',
+            'global_capacity_gw_2024': 2150,
+            'annual_investment_bn_usd_2024': 712,
+            'source': 'IEA WEO 2024, BNEF',
+            'note': 'Policy support differs by country and changes often; check each government source for the current rules.',
+            'updated_at': datetime.now(timezone.utc).isoformat(),
+        }
     return {
         'region': region,
         'solar_capex_2024_usd_per_mw': 850000,
