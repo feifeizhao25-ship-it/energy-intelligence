@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../services/api_service.dart';
+import '../../widgets/photo_widgets.dart';
 
 /// Lets the user register the sources a project's reports cite (GET/PUT /api/v1/finance/data-sources/{id}).
 /// A report only ever cites what is registered here; the screen never invents or pre-fills a source.
@@ -155,8 +156,13 @@ class _ReportSourcesScreenState extends State<ReportSourcesScreen> {
         return ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            Text(widget.projectName, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
-            const SizedBox(height: 8),
+            EnPhotoBanner(
+              asset: 'assets/images/en_sources_desk.webp',
+              title: widget.projectName,
+              subtitle: 'Sources your reports are allowed to cite',
+              height: 150,
+            ),
+            const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -168,12 +174,12 @@ class _ReportSourcesScreenState extends State<ReportSourcesScreen> {
             const SizedBox(height: 12),
             if (_sources.isEmpty)
               const Padding(
-                padding: EdgeInsets.only(top: 24),
-                child: _Message(
+                padding: EdgeInsets.only(top: 12),
+                child: EnEmptyPhoto(
                   key: Key('sourcesEmpty'),
-                  icon: Icons.fact_check_outlined,
+                  asset: 'assets/images/eg_empty.webp',
                   title: 'No sources yet',
-                  body: 'Add links to policy documents, tariff notices or data reports so reports can pass source verification.',
+                  message: 'Add links to policy documents, tariff notices or data reports so reports can pass source verification.',
                 ),
               )
             else ...[
