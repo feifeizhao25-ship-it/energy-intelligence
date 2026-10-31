@@ -17,6 +17,11 @@ from app.services.bottom_line import NOTICE_EN, NOTICE_ZH, blocked_input_text, e
 
 # What the model actually returned in the retest (shortened), including the appended disclaimer variants.
 EDU_ZH = [
+    "需要注意的是，所谓的无风险只是相对的，因为即使是最安全的资产也有通胀风险。",
+    "储能的建设和运营成本需要较低，才能保证套利的盈利空间；市场规则允许电力市场的价差套利。",
+    "无风险收益率是投资者在没有风险的情况下可以获得的回报率，通常用国债收益率近似。",
+    "1. **无风险**：意味着投资者几乎可以确定能够获得这个收益率，而不用担心本金损失或收益波动。",
+    "评估标准：\n- **NPV > 0**：项目预期盈利，可以考虑投资。\n- **NPV = 0**：项目盈亏平衡。\n- **NPV < 0**：项目预期亏损，不建议投资。",
     "如果NPV=0，项目预计不会产生收益，也不会亏损，理论上可以接受。",
     "需要注意的是，实际中并不存在真正的无风险投资，因为即使是政府债券也存在通胀风险；所谓的无风险并不是绝对的。",
     "无风险收益率常用国债收益率，也可以参考存款利率，特别是当存款受到政府担保时，在金融领域有广泛的应用。",
@@ -54,6 +59,10 @@ EDU_EN = [
     "A risk-free rate is the return on an asset with no default risk, usually a government bond yield, used as the base of a discount rate.",
 ]
 ADVICE_ZH = [
+    "只要现在买入，就保证盈利空间不低于15%，稳赚。",
+    "这个项目在没有风险的情况下稳赚，建议买入。",
+    "NPV < 0，所以不建议投资该项目，也不建议你买入。",
+    "无风险意味着稳赚不赔，建议买入这个项目。",
     "这个项目不会亏，建议买入。",
     "政府担保的项目，收益有保障，建议投资。",
     "该储能项目有国家背书，本金由政府担保，不会亏。",
