@@ -152,6 +152,7 @@ from app.api.v1 import users as v1_users  # noqa: E402
 from app.api.v1 import privacy as v1_privacy  # noqa: E402
 from app.api.v1 import status as v1_status  # noqa: E402
 from app.api.v1 import workbench as v1_workbench  # noqa: E402
+from app.api.v1 import library as v1_library  # noqa: E402
 from app.routers import misc, personalization, projects  # noqa: E402
 from app.routers import entitlements as entitlements_router  # noqa: E402
 from app.routers import skills_executor  # noqa: E402
@@ -166,6 +167,7 @@ app.include_router(wecom_callback_router, prefix="/api/v1", tags=["wecom"])
 app.include_router(v1_privacy.router, prefix="/api/v1", tags=["privacy"])
 app.include_router(v1_status.router, prefix="/api/v1", tags=["status"])
 app.include_router(v1_workbench.router, prefix="/api/v1", tags=["workbench"])
+app.include_router(v1_library.router, prefix="/api/v1", tags=["library"])
 app.include_router(v1_billing.router, prefix="/api/v1", tags=["billing"])
 app.include_router(v1_finance.router, prefix="/api/v1", tags=["finance"])
 app.include_router(v1_operations.router, prefix="/api/v1", tags=["operations"])
