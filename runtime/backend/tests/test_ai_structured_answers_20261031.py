@@ -121,3 +121,25 @@ async def test_stream_sends_the_structured_card_after_the_text(client, auth_head
     kinds = [list(json.loads(e))[0] for e in events[:-1]]
     assert kinds == ["sources", "content", "structured"]
     assert json.loads(events[-2])["structured"]["headline"].startswith("这个 20 MW")
+
+
+@pytest.mark.asyncio
+async def test_quota_exhausted_message_follows_the_account_language(client, db_session, monkeypatch):
+    import uuid
+    from app.core.security import create_access_token, hash_password
+    from app.models.user import User
+    from datetime import datetime, timezone
+    out = {}
+    for market in ("cn", "global"):
+        day = f"daily_{datetime.now(timezone.utc).strftime('%Y-%m-%d')}"
+        u = User(id=str(uuid.uuid4()), email=f"{uuid.uuid4().hex[:8]}@example.com", password_hash=hash_password("TestPass123!"),
+                 name="q", role="user", market=market, subscription_plan="free", usage_quota={"ai_calls": {day: 99}})
+        db_session.add(u)
+        await db_session.commit()
+        h = {"Authorization": f"Bearer {create_access_token(str(u.id))}"}
+        r = await client.post("/api/v1/ai/chat-json", headers=h, json={"message": "hi"})
+        assert r.status_code == 429
+        out[market] = r.json()["detail"]
+    assert "今日 AI 对话次数已用完" in out["cn"]["message"]
+    assert not re.search(r"[\u4e00-\u9fff]", out["global"]["message"]) and "per day" in out["global"]["message"]
+    assert out["global"]["upgrade_url"] == "/pricing"
