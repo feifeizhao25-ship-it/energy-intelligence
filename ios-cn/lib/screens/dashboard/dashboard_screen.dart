@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../../services/api_service.dart';
+import '../../widgets/personal_home_section.dart';
+import 'personal_home_binding.dart';
 import '../resource/resource_screen.dart';
 import '../finance/finance_screen.dart';
 import '../ai_assistant/ai_assistant_screen.dart';
@@ -118,6 +120,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           '仅展示当前账号中经过验证的项目数据',
           style: TextStyle(color: Color(0xFF64748B)),
         ),
+        const SizedBox(height: 20),
+        PersonalHomeSection(margin: EdgeInsets.zero, api: PersonalHomeBinding.api(), onOpen: (c) => PersonalHomeBinding.open(context, c)),
         const SizedBox(height: 20),
         if (_loading)
           const Center(

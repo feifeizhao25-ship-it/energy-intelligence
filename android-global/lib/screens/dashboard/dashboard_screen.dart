@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../../services/api_service.dart';
+import '../../widgets/personal_home_section.dart';
+import 'personal_home_binding.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -70,6 +72,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               'Only verified account and project data are shown.',
               style: TextStyle(color: Color(0xFF64748B)),
             ),
+            const SizedBox(height: 20),
+            PersonalHomeSection(margin: EdgeInsets.zero, api: PersonalHomeBinding.api(), onOpen: (c) => PersonalHomeBinding.open(context, c)),
             const SizedBox(height: 20),
             if (_loading)
               const Center(
