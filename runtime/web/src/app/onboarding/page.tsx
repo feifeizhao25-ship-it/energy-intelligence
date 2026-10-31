@@ -270,7 +270,7 @@ export default function OnboardingPage() {
 
                     <label className="mb-4 flex items-start gap-2 text-sm text-slate-300">
                         <input type="checkbox" checked={ageConfirmed} onChange={(event) => setAgeConfirmed(event.target.checked)} />
-                        <span>我已年满 14 周岁，或已取得监护人同意。未满 14 周岁不应单独注册。本条待法律顾问确认。</span>
+                        <span>我已年满 16 周岁；未满 16 周岁不得注册或使用。本条待法律顾问确认。</span>
                     </label>
                     {selections.role === 'researcher' && <p className="mb-4 text-sm text-slate-300">学生角色不接收营销推送。</p>}
                     {/* Buttons */}
