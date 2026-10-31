@@ -31,6 +31,10 @@ NOTICE_EN = "I can provide facts, data, primary policy sources and verifiable ca
 # 免责声明按最长跨度抹掉。「不提供投资建议」不能先于
 # 「不提供投资建议、收益承诺或价格预测」，否则「价格预测」会漏出来。
 _NEGATION_PATTERNS = (
+    # 免责声明的任意组合：「不提供投资建议或收益承诺」「不构成投资建议、价格预测」……（模型常把系统提示里的
+    # 固定句改写成这种变体附在正常回答后面，逐条枚举会漏，整段回答被误换成拒答）。
+    re.compile(r"(?:不构成|不提供|不做|不是|并非|不给|不作为|不会给出|不进行|无法提供|不能提供)(?:任何)?"
+               r"(?:投资建议|收益承诺|价格预测|投资结论)(?:\s*[、，,或和及与]\s*(?:投资建议|收益承诺|价格预测|投资结论))*"),
     re.compile(r"不提供投资建议、收益承诺或价格预测"),
     re.compile(r"不构成投资建议、收益承诺或价格预测"),
     re.compile(r"不提供投资建议或价格预测"),
@@ -48,6 +52,11 @@ _NEGATION_PATTERNS = (
     re.compile(r"不用于投资决策"),
     re.compile(r"不是投资结论"),
     re.compile(r"不(?:提供|承诺|给)碳收益"),
+    # 名词本身：解释术语不是建议。「保本电价/保本点」是盈亏平衡的算法，「无风险收益率」是折现基准，
+    # 「碳收益是指……」是概念说明。只抹这些固定搭配；「保本收益」「稳赚」「碳收益稳定」仍照常拦截。
+    re.compile(r"保本(?:电价|点|价格|价|线)"),
+    re.compile(r"无风险(?:收益率|利率|资产|回报率)"),
+    re.compile(r"碳收益(?=是指|是什么|什么意思|指什么|怎么(?:算|理解)|如何(?:计算|核算|理解)|的(?:计算|核算|测算|来源|构成|定义|含义|概念)|主要来源|来源于|有哪些)"),
     re.compile(r"does not give investment advice", re.I),
     re.compile(r"not investment advice", re.I),
     re.compile(r"do not give investment advice", re.I),
