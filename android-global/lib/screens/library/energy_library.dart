@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 
 import 'library_strings_en.dart';
+import 'library_binding.dart';
 import 'reference_library_page.dart';
 
 const String kEnergyLibraryAsset = 'assets/library/energy_library_intl_v1.json';
@@ -20,6 +21,7 @@ class EnergyLibraryPage extends StatelessWidget {
   Widget build(BuildContext context) => ReferenceLibraryPage(
         strings: kEnergyLibraryStrings,
         assetPath: kEnergyLibraryAsset,
+        live: energyLibraryLiveApi(),
       );
 }
 

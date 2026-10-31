@@ -2,10 +2,14 @@ import 'package:flutter/material.dart';
 
 import '../../services/api_service.dart';
 import '../../widgets/personal_home_section.dart';
+import '../../widgets/personal_home_strings_en.dart';
 
 /// Connects the personalised-home block to this app's API client and routes.
 class PersonalHomeBinding {
   const PersonalHomeBinding._();
+
+  /// This edition's text; the shared widget carries no language of its own.
+  static const PersonalHomeStrings strings = kPersonalHomeStringsEn;
 
   static PersonalHomeApi api() => const PersonalHomeApi(load: ApiService.getWorkbench, setEnabled: ApiService.setWorkbenchEnabled);
 
@@ -23,6 +27,7 @@ class PersonalHomeBinding {
     '/assistant': '/ai',
     '/papers': '/research',
     '/policy': '/research',
+    '/library': '/library',
     '/onboarding': '/settings',
   };
 

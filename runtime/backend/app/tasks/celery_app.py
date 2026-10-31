@@ -35,6 +35,18 @@ def _sil_beat() -> dict:
     }
 
 
+def _library_beat() -> dict:
+    """资料库自动更新。LIBRARY_FRESHNESS_ENABLED 未打开时不登记，任务本身也会再检查一次。时间复用 SIL 的两个调度槽：daily_scan 每日 02:00、weekly_cycle 周日 03:00。"""
+    import os
+
+    if str(os.environ.get("LIBRARY_FRESHNESS_ENABLED", "0")).strip().lower() not in ("1", "true", "yes", "on"):
+        return {}
+    return {
+        "library-check-daily": {"task": "energy.domestic.library_check", "schedule": crontab(hour=2, minute=0)},
+        "library-discover-weekly": {"task": "energy.domestic.library_discover", "schedule": crontab(day_of_week=0, hour=3, minute=0)},
+    }
+
+
 celery_app = Celery(
     "energy",
     broker=settings.REDIS_URL.replace("redis://", "redis://"),
@@ -80,6 +92,7 @@ celery_app.conf.update(
         **beat_entries(),
         **_improvement_beat(),
         **_sil_beat(),
+        **_library_beat(),
     },
     task_serializer="json",
     accept_content=["json"],

@@ -1,4 +1,5 @@
 // 资料库页面的英文文字（国际版专用）。国内版不包含这个文件，避免英文进入国内版界面。
+import 'library_live.dart';
 import 'reference_library_page.dart';
 
 String _enDate(String d) {
@@ -49,4 +50,33 @@ LibraryStrings libraryStringsEn({required String title, required String intro, r
       statusNoteLabel: 'Status note',
       footer: footer,
       formatDate: _enDate,
+      live: kLiveStringsEn,
+      colon: ': ',
     );
+
+const LiveStrings kLiveStringsEn = LiveStrings(
+  forYouTitle: 'For you',
+  whyLabel: 'Why you see this',
+  newBadge: 'New',
+  updatedBadge: 'Updated',
+  settingsTitle: 'Recommendation settings',
+  settingsTooltip: 'Recommendation settings',
+  switchTitle: 'Personalised picks',
+  switchOnHint: 'Picks use your role, region, the topics you follow and what you have read. They only appear in the app; nothing is sent to you.',
+  switchOffTitle: 'Personalised picks are off',
+  switchOffBody: 'We are not choosing entries for you or recording what you read. You can turn this on again at any time.',
+  topicsTitle: 'Topics you follow',
+  topicsHint: 'Tap to follow; new and updated entries on these topics come first. Long-press to stop seeing a topic.',
+  followAction: 'Follow',
+  followedState: 'Following',
+  mutedState: 'Hidden',
+  muteAction: 'Hide this topic',
+  unmuteAction: 'Show this topic',
+  changeNoteLabel: 'What changed',
+  offlineNote: 'You are seeing the copy saved in the app. It updates automatically when you are online.',
+  nothingForYou: 'Nothing new for you right now',
+  close: 'Done',
+  saveFailed: 'Could not save. Please try again.',
+  moreInLibrary: 'All entries',
+  colon: ': ',
+);
