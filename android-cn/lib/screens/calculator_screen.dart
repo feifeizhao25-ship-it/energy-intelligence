@@ -156,7 +156,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    (data['irr_percent'] ?? 0) >= 10 ? '✅ 建议投资' : '⚠️ 建议进一步评估',
+                    (data['irr_percent'] ?? 0) >= 10 ? '内部收益率不低于 10% 参考线' : '内部收益率低于 10% 参考线，请结合项目条件复核',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: (data['irr_percent'] ?? 0) >= 10

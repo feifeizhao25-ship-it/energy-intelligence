@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 
 import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
+import '../library/energy_library.dart';
 import 'plan_usage_screen.dart';
 
 /// Account screen. Every row does what it says: the profile is read from the server, export fetches the real
@@ -150,6 +151,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             _header('Data & privacy'),
             _tile(Icons.download_outlined, 'Export my data', 'Get a copy of your data in this app', const Key('exportData'), _export),
             _tile(Icons.delete_forever_outlined, 'Delete account', 'Permanently delete your account and data', const Key('deleteAccount'), _delete, danger: true),
+            const EnergyLibraryEntry(),
             const Divider(height: 28),
             _tile(Icons.info_outline, 'About', null, const Key('about'), () {
               showAboutDialog(context: context, applicationName: 'Energy Intelligence', applicationLegalese: 'Results depend on the inputs and sources used. They are for reference only and are not investment or engineering advice.');

@@ -52,6 +52,9 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+from app.services.language_guard import LanguageGuardMiddleware  # noqa: E402
+
+app.add_middleware(LanguageGuardMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,

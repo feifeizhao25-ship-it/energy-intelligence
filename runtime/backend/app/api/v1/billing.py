@@ -1,6 +1,6 @@
 import os
 import stripe
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from calendar import monthrange
 from decimal import Decimal, InvalidOperation
 from typing import Literal
@@ -8,7 +8,7 @@ from uuid import uuid4
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel, ConfigDict
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
@@ -127,10 +127,28 @@ async def get_usage(
 
     day_key = f"daily_{now.strftime('%Y-%m-%d')}"
     month_key = f"monthly_{now.strftime('%Y-%m')}"
-    return {"plan": user.plan, "items": [
-        usage_item("ai_queries", int(dict(usage.get("ai_calls", {})).get(day_key, 0) or 0), limits["ai_queries_per_day"], "day"),
-        usage_item("report_exports", int(dict(usage.get("report_exports", {})).get(month_key, 0) or 0), limits["report_exports_per_month"], "month"),
-    ]}
+    from app.models.database import Project
+    project_count = int(await db.scalar(select(func.count()).select_from(Project).where(Project.user_id == user_id)) or 0)
+    en = (user.market or "cn") == "global"
+    tier = {}
+    try:
+        from app.services.entitlements_registry import load_registry
+        tier = (load_registry().get("tiers") or {}).get(user.plan) or {}
+    except Exception:
+        tier = {}
+    tomorrow = (now + timedelta(days=1)).strftime("%Y-%m-%d")
+    next_month = (now.replace(day=1) + timedelta(days=32)).replace(day=1).strftime("%Y-%m-%d")
+    return {
+        "plan": user.plan,
+        "plan_name": (tier.get("name_en") if en else tier.get("name")) or user.plan,
+        "plan_features": list(tier.get("features_en" if en else "features_zh") or []),
+        "items": [
+            usage_item("ai_queries", int(dict(usage.get("ai_calls", {})).get(day_key, 0) or 0), limits["ai_queries_per_day"], "day"),
+            usage_item("report_exports", int(dict(usage.get("report_exports", {})).get(month_key, 0) or 0), limits["report_exports_per_month"], "month"),
+            usage_item("projects", project_count, limits.get("max_projects", -1), "total"),
+        ],
+        "resets": {"day": tomorrow, "month": next_month, "timezone": "UTC"},
+    }
 
 
 @router.post("/create-checkout")

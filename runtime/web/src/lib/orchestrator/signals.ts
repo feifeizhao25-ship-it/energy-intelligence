@@ -14,40 +14,7 @@ export async function aggregateSignals(
     projectId: string,
     userId: string
 ): Promise<Signals> {
-    // 如果是演示项目，返回模拟数据
-    if (projectId === 'demo-project') {
-        return {
-            hasLocation: true,
-            hasCapacity: true,
-            projectType: 'SOLAR' as ProjectType,
-            hasSolarResource: true,
-            hasWindResource: false,
-            resourceRating: 'GOOD',
-            hasCalculation: false,
-            calculationType: undefined,
-            calculationQuality: undefined,
-            lastCalculationDate: undefined,
-            irr: undefined,
-            paybackYears: undefined,
-            hasSiteComparison: false,
-            hasReport: false,
-            lastReportDate: undefined,
-            hasStation: false,
-            hasStationRecords: false,
-            recordCount: 0,
-            lastRecordDate: undefined,
-            totalGeneration: 0,
-            hasDiagnosis: false,
-            lastDiagnosisType: undefined,
-            lastDiagnosisSeverity: undefined,
-            lastPR: undefined,
-            paperCount: 0,
-            lastActiveAt: new Date().toISOString(),
-            streakDays: 0,
-            userPlan: 'FREE',
-            dailyLimitReached: false,
-        };
-    }
+    // 不再对 'demo-project' 返回模拟数据：没有真实项目就按真实查询的结果（空）处理。
 
     // 并行查询所有需要的数据
     const [

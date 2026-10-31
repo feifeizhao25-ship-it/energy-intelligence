@@ -25,81 +25,6 @@ import {
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 
-// 旧版界面样式参考；页面数据只使用 /api/papers/search 的真实响应。
-// 该常量不会进入任何展示或回退路径，待下一次页面拆分时物理移除。
-const legacyPaperLayoutReference = [
-    {
-        id: '1',
-        title: 'Perovskite Solar Cells: Recent Advances and Future Perspectives',
-        authors: ['Zhang, L.', 'Wang, H.', 'Chen, Q.'],
-        journal: 'Nature Energy',
-        year: 2024,
-        citations: 156,
-        downloads: 2340,
-        abstract: 'This review summarizes the recent progress in perovskite solar cells, focusing on efficiency improvements, stability enhancement, and scalable fabrication techniques.',
-        keywords: ['perovskite', 'solar cell', 'efficiency', 'stability'],
-        type: 'review',
-        impactFactor: 45.2,
-        openAccess: true
-    },
-    {
-        id: '2',
-        title: 'Machine Learning for Photovoltaic Power Prediction: A Comprehensive Survey',
-        authors: ['Li, X.', 'Zhang, Y.', 'Liu, J.'],
-        journal: 'Applied Energy',
-        year: 2024,
-        citations: 89,
-        downloads: 1567,
-        abstract: 'We present a comprehensive survey of machine learning approaches for photovoltaic power generation forecasting, including data preprocessing, model selection, and performance evaluation.',
-        keywords: ['machine learning', 'photovoltaic', 'power prediction', 'forecasting'],
-        type: 'survey',
-        impactFactor: 11.4,
-        openAccess: false
-    },
-    {
-        id: '3',
-        title: 'Hybrid Energy Storage Systems for Renewable Integration: Techno-Economic Analysis',
-        authors: ['Wang, S.', 'Johnson, M.', 'Chen, L.'],
-        journal: 'Energy Storage Materials',
-        year: 2023,
-        citations: 234,
-        downloads: 3456,
-        abstract: 'This study presents a comprehensive techno-economic analysis of hybrid energy storage systems combining batteries and supercapacitors for renewable energy integration.',
-        keywords: ['energy storage', 'hybrid system', 'techno-economic', 'renewable integration'],
-        type: 'research',
-        impactFactor: 20.4,
-        openAccess: true
-    },
-    {
-        id: '4',
-        title: 'Wind Turbine Blade Inspection Using UAV-based Thermal Imaging',
-        authors: ['Liu, Q.', 'Brown, R.', 'Zhang, X.'],
-        journal: 'Renewable Energy',
-        year: 2024,
-        citations: 67,
-        downloads: 1234,
-        abstract: 'We propose a novel UAV-based inspection system using thermal imaging for automated wind turbine blade damage detection and classification.',
-        keywords: ['wind turbine', 'UAV', 'thermal imaging', 'inspection'],
-        type: 'research',
-        impactFactor: 8.4,
-        openAccess: false
-    },
-    {
-        id: '5',
-        title: 'Carbon Neutrality Pathways: A Global Perspective',
-        authors: ['Green, A.'],
-        journal: 'Science',
-        year: 2024,
-        citations: 567,
-        downloads: 8901,
-        abstract: 'This paper analyzes global pathways to carbon neutrality by 2050, examining the role of renewable energy deployment and policy frameworks.',
-        keywords: ['carbon neutrality', 'climate change', 'renewable energy', 'policy'],
-        type: 'perspective',
-        impactFactor: 63.7,
-        openAccess: true
-    }
-];
-
 const searchFilters = [
     { id: 'all', name: '全部' },
     { id: 'solar', name: '光伏' },
@@ -325,8 +250,15 @@ export default function PapersPage() {
 
                                     {/* Title */}
                                     <Link href={`/papers/${paper.id}`} className="text-xl font-black text-slate-900 mb-3 hover:text-green-600 transition-colors block leading-tight">
-                                        {paper.title}
+                                        {paper.titleZh || paper.title}
                                     </Link>
+                                    {paper.titleZh && paper.titleZh !== paper.title ? (
+                                        <p className="mb-3 text-sm text-slate-500" data-testid="paper-original-title">
+                                            <span className="mr-2 rounded bg-amber-50 px-2 py-0.5 text-xs text-amber-800">译名{paper.titleZhStatus ? `（${paper.titleZhStatus}）` : ''}</span>
+                                            原文标题：{paper.title}
+                                            {paper.sourceUrl ? <a href={paper.sourceUrl} target="_blank" rel="noopener noreferrer" className="ml-2 text-[var(--teal)] underline">查看原文</a> : null}
+                                        </p>
+                                    ) : null}
 
                                     {/* Authors */}
                                     <div className="flex items-center gap-2 mb-4">
@@ -338,6 +270,7 @@ export default function PapersPage() {
                                     <p className="text-slate-500 text-sm line-clamp-2 mb-6 leading-relaxed">
                                         {paper.abstract}
                                     </p>
+                                    {paper.abstract && !/[\u4e00-\u9fff]/.test(paper.abstract) ? <p className="-mt-4 mb-4 text-xs text-slate-400">摘要为原文语言，暂无中文译文。</p> : null}
                                     {paper.licenceNote ? <p className="mb-4 text-sm text-slate-500">署名：{paper.licenceNote}</p> : null}
 
                                     <div className="flex items-center gap-8 text-sm">

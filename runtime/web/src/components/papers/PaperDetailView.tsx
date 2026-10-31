@@ -237,7 +237,13 @@ export default function PaperDetailView({ paper, pdfStatus }: PaperDetailViewPro
                                 <span className="text-[10px] font-black text-green-600 bg-green-50 px-2.5 py-1 rounded-lg uppercase tracking-widest mb-4 inline-block">
                                     {paper.venue || 'ACADEMIC ARTICLE'}
                                 </span>
-                                <h1 className="text-2xl font-black text-slate-900 leading-tight mb-6">{paper.title}</h1>
+                                <h1 className="text-2xl font-black text-slate-900 leading-tight mb-2">{paper.titleZh || paper.title}</h1>
+                                {paper.titleZh && paper.titleZh !== paper.title ? (
+                                    <p className="mb-6 text-sm text-slate-500">
+                                        <span className="mr-2 rounded bg-amber-50 px-2 py-0.5 text-xs text-amber-800">译名{paper.titleZhStatus ? `（${paper.titleZhStatus}）` : ''}</span>
+                                        原文标题：{paper.title}
+                                    </p>
+                                ) : <div className="mb-4" />}
 
                                 <div className="space-y-6">
                                     <div className="space-y-2">

@@ -17,7 +17,7 @@ void main() {
     await t.pumpWidget(const MaterialApp(home: ProjectDetailScreen(project: project)));
     expect(find.text('Arizona Solar Portfolio'), findsOneWidget);
     expect(find.text('Solar PV'), findsOneWidget);
-    expect(find.text('100.0 MW'), findsOneWidget);
+    expect(find.text('100 MW'), findsOneWidget);
     expect(find.text('Draft'), findsOneWidget);
     expect(find.textContaining('Delhi'), findsNothing);
     expect(find.textContaining('14.7'), findsNothing);

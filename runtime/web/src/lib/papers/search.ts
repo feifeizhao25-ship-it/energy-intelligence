@@ -3,15 +3,26 @@ import { searchPapers as searchSemantic } from '../api/semantic-scholar';
 import { searchArxiv } from '../api/arxiv';
 import { searchOpenAlex } from '../api/openalex'; // Add Import
 import { simpleChat } from '../ai/unified';
+import { withChineseTitles } from './title-zh';
 import { domesticSearchResult, isCnEdition, overseasLiveEnabled, readLiteratureCache, type CorpusRecord } from './domestic-corpus';
 
 /**
  * 统一搜索入口：AI优化查询 + 多源搜索 + 结果合并
  */
 /**
- * 统一搜索入口：AI优化查询 + 多源搜索 + 结果合并
+ * 统一搜索入口：在原结果上给英文论文附带中文译名（titleZh），原文标题 title 不变。
  */
 export async function unifiedSearch(
+    originalQuery: string,
+    options: SearchOptions = {}
+): Promise<SearchResult> {
+    return withChineseTitles(await unifiedSearchRaw(originalQuery, options));
+}
+
+/**
+ * 统一搜索入口：AI优化查询 + 多源搜索 + 结果合并
+ */
+async function unifiedSearchRaw(
     originalQuery: string,
     options: SearchOptions = {}
 ): Promise<SearchResult> {

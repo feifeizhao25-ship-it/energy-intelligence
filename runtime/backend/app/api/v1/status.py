@@ -5,6 +5,7 @@ import os
 from fastapi import APIRouter
 
 from app.config import settings
+from app.services.language_guard import snapshot as language_guard_snapshot
 from app.services.status_heartbeat import heartbeat_level, read_heartbeat
 from app.services.wechat_pay_service import WechatPayError, read_config
 
@@ -32,5 +33,6 @@ async def public_status():
         },
         "sms_configured": bool(os.environ.get("ALIYUN_SMS_ACCESS_KEY_ID") and os.environ.get("ALIYUN_SMS_ACCESS_KEY_SECRET") and os.environ.get("ALIYUN_SMS_TEMPLATE_CODE")),
         "domestic_model_configured": bool(settings.DEEPSEEK_API_KEY or os.environ.get("NENGJIAN_DEEPSEEK_API_KEY")),
+        "language_guard": language_guard_snapshot(),
         "heartbeat": {"level": level, "last_seen": heartbeat.get("lastSeen"), "note": notes[level]},
     }

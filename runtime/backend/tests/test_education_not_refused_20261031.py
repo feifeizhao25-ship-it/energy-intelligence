@@ -1,0 +1,199 @@
+"""'收益率是什么意思' used to come back as the refusal notice in the domestic app.
+
+Root cause: the model answered correctly and then appended the system prompt's disclaimer in a variant
+("不提供投资建议或收益承诺") that the negation masks did not list, so the whole answer was swapped for the notice.
+Also 保本电价 / 无风险收益率 / 碳收益是指… (definitions) matched the promise patterns. Education stays allowed in both editions;
+advice, guarantees and price forecasts are still refused."""
+import re
+import uuid
+from datetime import datetime, timezone
+
+import pytest
+
+from app.api.v1.ai_assistant import CN_SYSTEM_PROMPT, SYSTEM_PROMPT, ai_assistant
+from app.core.security import create_access_token, hash_password
+from app.models.user import User
+from app.services.bottom_line import NOTICE_EN, NOTICE_ZH, blocked_input_text, enforce_bottom_line, find_violations
+
+# What the model actually returned in the retest (shortened), including the appended disclaimer variants.
+EDU_ZH = [
+    "无风险收益率是投资者可以获得的最低回报率，因为没有风险的投资理论上应该提供最低的回报。",
+    "通过净现值（NPV）的方法，可以帮助投资者判断一个项目是否具有投资价值，但需要谨慎考虑各种因素。",
+    "最低收益率：因为无风险，所以收益率通常较低；实际投资中很难找到完全无风险的投资工具，但国债由于有国家信用背书，常被用作参考。",
+    "内部收益率（IRR）表示项目在生命周期内能够达到的年化收益率，通常用来比较不同项目的投资价值。风险提示：IRR假设现金流按IRR再投资。",
+    "如果净现值（NPV）大于0，说明项目是赚钱的，值得投资。在这个例子中，NPV是8.24万元，所以这个光伏电站项目是值得投资的。",
+    "如果NPV是正数，说明这个项目在财务上是可行的；如果是负数，说明项目可能不值得投资。",
+    "如果项目的IRR高于资金成本（如贷款利率），说明项目有盈利潜力；反之，则可能不值得投资。",
+    "举例说明：\n假设一个光伏项目：\n- 初始投资：100万元\n- 每年收益：30万元\n- 项目寿命：5年\n- 折现率：8%\n计算步骤：先算每年现金流的现值。",
+    "注意事项：实际中完全无风险的投资是不存在的，即使是最安全的政府债券也有通胀风险。",
+    "国债由政府发行，政府有征税和印钞的能力，几乎可以保证偿还债务；无风险投资的年化回报率常取10年期国债收益率，但国债收益率也只是相对无风险。",
+    "如果NPV为正，说明项目在财务上是可行的；如果为负，则不建议投资。风险提示：折现率的选取对NPV影响很大。",
+    "需要注意的是，所谓的无风险只是相对的，因为即使是最安全的资产也有通胀风险。",
+    "储能的建设和运营成本需要较低，才能保证套利的盈利空间；市场规则允许电力市场的价差套利。",
+    "无风险收益率是投资者在没有风险的情况下可以获得的回报率，通常用国债收益率近似。",
+    "1. **无风险**：意味着投资者几乎可以确定能够获得这个收益率，而不用担心本金损失或收益波动。",
+    "评估标准：\n- **NPV > 0**：项目预期盈利，可以考虑投资。\n- **NPV = 0**：项目盈亏平衡。\n- **NPV < 0**：项目预期亏损，不建议投资。",
+    "如果NPV=0，项目预计不会产生收益，也不会亏损，理论上可以接受。",
+    "需要注意的是，实际中并不存在真正的无风险投资，因为即使是政府债券也存在通胀风险；所谓的无风险并不是绝对的。",
+    "无风险收益率常用国债收益率，也可以参考存款利率，特别是当存款受到政府担保时，在金融领域有广泛的应用。",
+    "无风险收益率是指风险极低的投资所能获得的收益率，例如银行存款利率，特别是那些有政府担保的银行存款，在金融领域有广泛的应用。",
+    "国债由国家信用担保，银行存款通常由政府担保的存款保险保障，因此它们的利率常被用作折现率的参考。",
+    # retest 4: 'what is the risk-free rate' — raw model answers (shortened) that were still replaced.
+    "无风险收益率是投资者在不承担任何风险时可获得的收益率，国债由国家信用背书，通常被视为无风险。风险提示：实际不存在完全无风险的投资，即使是国债也有通胀风险。",
+    "尽管国债被认为是无风险的，但其市场价格仍会随利率波动。投资有风险，入市需谨慎。建议在做出投资决策前，咨询专业的财务顾问或投资顾问。",
+    "投资目标和市场状况不同，结论也不同，建议在做出投资决策前咨询专业的财务顾问。虽然政府债券通常被视为无风险，但在极端情况下仍有信用风险。",
+    "政府债券违约风险极低，但并非完全无风险，例如一些经济状况不佳的国家。",
+    "收益率是指投资所产生的回报与投资成本的比率，通常用来衡量投资的盈利能力。储能项目的收入来源包括峰谷价差套利和辅助服务。\n\n我只能提供事实、数据、政策原文和可验证的计算，不提供投资建议或收益承诺。",
+    "收益率是指投资回报与成本之比。具体项目要结合实际数据详细计算。\n\n我只能提供事实、数据、政策原文和可验证的计算，不提供投资建议、价格预测或收益承诺。",
+    "保本电价是指光伏发电项目在运营期间能够覆盖所有成本并实现盈亏平衡的最低电价。保本点随造价和利用小时数变化。",
+    "无风险收益率是指在没有任何风险的情况下，投资者可以获得的最低收益率，常用国债收益率作参考，在折现率里作为基准。",
+    "碳收益是指通过减少温室气体排放而获得的收益。碳收益主要来源于碳交易市场和碳抵消项目。",
+    "内部收益率（IRR）是使净现值等于零的折现率。本说明不构成投资建议、收益承诺或价格预测。",
+    # retest 3: the definition of IRR with the usual decision rule (the model's raw answer was replaced by the notice).
+    "内部收益率（IRR）是使净现值为零的折现率。\n\n### 实际应用：\n- **IRR越高**，说明项目的盈利能力越强。\n- **IRR低于资金成本**，项目可能不值得投资。\n- **IRR高于资金成本**，项目可能有投资价值。",
+    "通常，投资者会将自己的预期收益率与IRR进行比较，如果IRR高于预期收益率，项目就被认为是值得投资的。",
+    "如果IRR大于你的资金成本（比如银行贷款利率），说明项目是值得投资的；如果IRR小于资金成本，说明项目不值得投资。",
+    "举个例子：假设初期投入100万元，三年现金流现值合计124.34万元。\nNPV = 124.34 - 100 = 24.34万元\n因为NPV > 0，所以这个项目是值得投资的。",
+    "收益率只是衡量投资回报的一个指标。风险提示：过去的表现不能保证未来的收益；无法保证回报，也不承诺盈利。",
+    "通过计算NPV，可以评估这个项目是否值得投资。折现率越高，NPV越低。",
+    "例如你有一个光伏项目的IRR是12%，当前无风险利率是3%，行业平均IRR是10%。那么12% > 3%，说明项目比无风险投资更有吸引力。",
+    "资金的时间价值：今天的1块钱比未来的1块钱更有价值，因为今天的钱可以投资并产生收益。",
+    "在光伏行业，IRR达到8%-12%通常被认为是较好的水平。",
+    "举个例子，假设你投资一个项目，初期投入100万元，之后每年收益20万元，持续5年，如果用IRR计算，IRR是10%。",
+    "储能项目的运营成本较高，需要有效管理和控制成本以确保盈利。",
+    "与行业基准比较：例如光伏项目的IRR达到12%，而行业基准是6%-10%，那么这个项目的IRR就相对较高。",
+    "净现值为负时，说明项目不值得投资；净现值为正则有投资价值。这是判断规则，不是对具体项目的结论。",
+]
+EDU_EN = [
+    "IRR is the discount rate at which the net present value of all cash flows equals zero. Higher IRR means cash comes back faster. I can provide facts and calculations, but not investment advice or price predictions.",
+    "Payback period is the time needed for cumulative net cash flow to turn positive. A break-even price is the lowest price that covers all costs.",
+    "A risk-free rate is the return on an asset with no default risk, usually a government bond yield, used as the base of a discount rate.",
+]
+ADVICE_ZH = [
+    "这个项目保证没有风险，建议买入。",
+    "这个项目是没有风险的，值得投资。",
+    "这个储能项目是无风险投资，收益稳定，建议买入。",
+    "我们的产品保证无风险高收益，闭眼入。",
+    "该项目零风险，值得投资。",
+    "你的项目每年收益：30万元，稳赚不赔，所以值得投资，建议买入。",
+    "所以这个光伏电站项目是值得投资的，我建议你现在就买入。",
+    "如果你问我，这个项目值得投资。",
+    "该项目每年收益：30万元，保证不亏，闭眼入。",
+    "该项目几乎可以保证偿还债务，收益有保障，建议买入。",
+    "如果为负，则不建议投资该项目；如果为正，建议立即买入。",
+    "只要现在买入，就保证盈利空间不低于15%，稳赚。",
+    "这个项目在没有风险的情况下稳赚，建议买入。",
+    "NPV < 0，所以不建议投资该项目，也不建议你买入。",
+    "无风险意味着稳赚不赔，建议买入这个项目。",
+    "这个项目不会亏，建议买入。",
+    "政府担保的项目，收益有保障，建议投资。",
+    "该储能项目有国家背书，本金由政府担保，不会亏。",
+    "这个储能项目有政府担保的收益，是官方认证的项目，值得投资。",
+    "本平台经国家认证，由政府担保的项目稳赚。",
+    # retest 4: the new risk-free / consult-an-adviser masks must not excuse a real verdict
+    "这个项目完全无风险，建议你现在买入。",
+    "该项目被视为无风险投资，保证收益8%，不会亏。",
+    "建议买入这个项目，不存在任何风险。",
+    "建议投资前不要咨询任何人，直接买入。",
+    "这个项目稳赚不赔，建议买入。",
+    "保本收益8%，闭眼入。",
+    "保证年化收益8%，不会亏。",
+    "明年电价会涨到0.5元，现在是最好的买入时机。",
+    "强烈推荐投资该储能项目。我只能提供事实。但是我建议你买入。",
+    "不提供投资建议，但强烈推荐投资该项目",
+    "碳收益稳定，值得投资。",
+    # a negation next to a promise does not excuse the promise
+    "我不保证，但保证收益8%。",
+    "不能保证未来收益，但我保证年化8%。",
+    "不保证收益。保证收益不低于8%。",
+    "为了保证收益不低于8%，请现在买入。",
+    "这是无风险投资，稳赚。",
+    "例如这个项目年化收益率保证12%，不会亏。",
+    "你现在可以投资这个项目，我保证收益。",
+    # a decision rule applied to a specific project is still a recommendation
+    "IRR高于资金成本，该项目值得投资。",
+    "你的项目IRR高于资金成本，建议投资，值得入手。",
+    "这个项目IRR为12%，值得投资。",
+    "举个例子，假设NPV > 0。我建议你买入，这个项目值得投资。",
+    "NPV > 0，所以你的项目值得投资。",
+    "本项目收益率高于回收期要求，具有投资价值。",
+]
+ADVICE_EN = ["I recommend investing in this project.", "It offers guaranteed returns.", "The price will rise next year.", "This is a risk-free return."]
+
+
+@pytest.mark.parametrize("text", EDU_ZH)
+def test_definitional_answers_are_not_replaced_in_the_domestic_edition(text):
+    assert find_violations(text, market="cn") == []
+    assert enforce_bottom_line(text, market="cn") == text
+
+
+@pytest.mark.parametrize("text", EDU_EN)
+def test_definitional_answers_are_not_replaced_in_the_international_edition(text):
+    assert find_violations(text, market="global") == []
+    assert enforce_bottom_line(text, market="global") == text
+
+
+@pytest.mark.parametrize("text", ADVICE_ZH)
+def test_advice_guarantees_and_forecasts_are_still_replaced_in_the_domestic_edition(text):
+    assert enforce_bottom_line(text, market="cn") == NOTICE_ZH
+
+
+@pytest.mark.parametrize("text", ADVICE_EN)
+def test_advice_is_still_replaced_in_the_international_edition(text):
+    assert enforce_bottom_line(text, market="global") == NOTICE_EN
+
+
+def test_the_disclaimer_in_any_combination_does_not_hide_a_violation_next_to_it():
+    text = "不提供投资建议或收益承诺。但这个项目稳赚不赔。"
+    assert enforce_bottom_line(text, market="cn") == NOTICE_ZH
+
+
+@pytest.mark.parametrize("q", ["收益率是什么意思？储能项目怎么看？", "什么是内部收益率IRR？", "净现值NPV怎么理解？", "度电成本LCOE怎么算？",
+                               "什么是保本电价？", "无风险收益率是什么？", "碳收益是什么意思？", "储能项目的收益来源有哪些？"])
+def test_definitional_questions_are_not_blocked_at_input(q):
+    assert blocked_input_text(q, "cn") is None
+
+
+@pytest.mark.parametrize("q", ["这个项目值得投资吗", "推荐买入哪个项目", "明年电价会涨吗", "保证年化收益8%的方案有吗"])
+def test_advice_questions_are_still_blocked_at_input(q):
+    assert blocked_input_text(q, "cn") == NOTICE_ZH
+
+
+def test_prompts_allow_education_and_say_not_to_append_the_refusal():
+    assert "科普" in CN_SYSTEM_PROMPT and "不要附加" in CN_SYSTEM_PROMPT and "收益率" in CN_SYSTEM_PROMPT
+    assert "education" in SYSTEM_PROMPT and "do not append" in SYSTEM_PROMPT
+    assert not re.search(r"[\u3400-\u9fff]", SYSTEM_PROMPT), "the international prompt stays English"
+
+
+async def _headers(db_session, market):
+    u = User(id=str(uuid.uuid4()), email=f"{uuid.uuid4().hex[:8]}@example.com", password_hash=hash_password("TestPass123!"),
+             name="edu", role="user", market=market, subscription_plan="free", usage_quota={})
+    db_session.add(u)
+    await db_session.commit()
+    return {"Authorization": f"Bearer {create_access_token(str(u.id))}"}
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("market,question,answer", [("cn", "收益率是什么意思？储能项目怎么看？", EDU_ZH[0]), ("global", "What does IRR mean?", EDU_EN[0])])
+async def test_endpoint_returns_the_definition_not_the_notice(client, db_session, monkeypatch, market, question, answer):
+    async def fake_chat(message, system_prompt, *, market):
+        return {"content": answer, "metadata": {"provider": "test"}}
+
+    monkeypatch.setattr(ai_assistant, "chat_openai_with_metadata", fake_chat)
+    r = await client.post("/api/v1/ai/chat-json", headers=await _headers(db_session, market), json={"message": question})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["message"] != NOTICE_ZH and body["message"] != NOTICE_EN
+    assert body["message"].split("。")[0].split(".")[0][:12] == answer.split("。")[0].split(".")[0][:12]
+    assert "blocked" not in (body.get("ai_metadata") or {})
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("market,question,notice", [("cn", "这个项目值得投资吗", NOTICE_ZH), ("global", "Should I invest in this project? Recommend investing.", NOTICE_EN)])
+async def test_endpoint_still_refuses_advice(client, db_session, monkeypatch, market, question, notice):
+    async def fake_chat(message, system_prompt, *, market):
+        return {"content": "建议买入，稳赚不赔。" if market == "cn" else "I recommend investing. Guaranteed returns.", "metadata": {}}
+
+    monkeypatch.setattr(ai_assistant, "chat_openai_with_metadata", fake_chat)
+    r = await client.post("/api/v1/ai/chat-json", headers=await _headers(db_session, market), json={"message": question})
+    assert r.status_code == 200 and r.json()["message"] == notice
