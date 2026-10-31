@@ -13,6 +13,7 @@ import 'screens/operations/operations_screen.dart';
 import 'screens/operations/health_screen.dart';
 import 'screens/ai_assistant/ai_assistant_screen.dart';
 import 'screens/projects/projects_screen.dart';
+import 'screens/projects/create_project_screen.dart';
 import 'screens/projects/project_detail_screen.dart';
 import 'screens/research/research_screen.dart';
 import 'screens/settings/settings_screen.dart';
@@ -113,6 +114,7 @@ class EnergyIntelligenceApp extends StatelessWidget {
         '/operations/health': (context) => const HealthScreen(),
         '/ai': (context) => const AiAssistantScreen(),
         '/projects': (context) => const ProjectsScreen(),
+        '/projects/new': (context) => const CreateProjectScreen(),
         '/project-detail': (context) => const ProjectDetailScreen(),
         '/research': (context) => const ResearchScreen(),
         '/settings': (context) => const SettingsScreen(),

@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'project_wire.dart';
 
 class ApiException implements Exception {
   final int statusCode;
@@ -138,14 +139,10 @@ class ApiService {
 
   static Future<List<Map<String, dynamic>>> getProjects() async {
     final resp = await _get('/api/v1/projects');
-    if (resp is List) {
-      return (resp as List)
-          .map((e) => Map<String, dynamic>.from(e as Map))
-          .toList();
-    }
-    if (resp['data'] is List) {
-      return (resp['data'] as List)
-          .map((e) => Map<String, dynamic>.from(e as Map))
+    final rows = resp['data'];
+    if (rows is List) {
+      return rows
+          .map((e) => ProjectWire.fromWire(Map<String, dynamic>.from(e as Map)))
           .toList();
     }
     return [];
@@ -155,27 +152,9 @@ class ApiService {
     return await _get('/api/v1/projects/$id');
   }
 
-  static Future<Map<String, dynamic>> createProject({
-    required String name,
-    String? description,
-    String? technology,
-    double? latitude,
-    double? longitude,
-    double? capacityMw,
-    String? location,
-  }) async {
-    return await _post(
-      '/api/v1/projects',
-      body: {
-        'name': name,
-        'description': ?description,
-        'technology': ?technology,
-        'latitude': ?latitude,
-        'longitude': ?longitude,
-        'capacity_mw': ?capacityMw,
-        'location': ?location,
-      },
-    );
+  /// Creates a project. [body] comes from ProjectWire.toWire (the server's contract).
+  static Future<Map<String, dynamic>> createProject(Map<String, dynamic> body) async {
+    return await _post('/api/v1/projects', body: body);
   }
 
   static Future<void> deleteProject(String id) async {
@@ -550,7 +529,12 @@ class ApiService {
     }
     String msg = resp.body;
     try {
-      msg = jsonDecode(resp.body)['detail'] ?? msg;
+      final detail = jsonDecode(resp.body)['detail'];
+      if (detail is String) {
+        msg = detail;
+      } else if (detail is Map && detail['message'] is String) {
+        msg = detail['message'] as String;
+      }
     } catch (_) {}
     throw ApiException(resp.statusCode, msg);
   }

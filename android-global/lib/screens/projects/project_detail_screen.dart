@@ -8,7 +8,7 @@ class ProjectDetailScreen extends StatelessWidget {
   final Map<String, dynamic>? project;
   const ProjectDetailScreen({super.key, this.project});
 
-  static const _techNames = {'solar': 'Solar PV', 'wind': 'Wind', 'hybrid': 'Hybrid', 'storage': 'Storage'};
+  static const _techNames = {'solar': 'Solar PV', 'solar_pv': 'Solar PV', 'wind': 'Wind', 'hybrid': 'Hybrid', 'storage': 'Storage'};
 
   Map<String, dynamic>? _resolve(BuildContext context) {
     if (project != null) return project;
