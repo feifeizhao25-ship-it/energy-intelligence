@@ -73,7 +73,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               style: TextStyle(color: Color(0xFF64748B)),
             ),
             const SizedBox(height: 20),
-            PersonalHomeSection(margin: EdgeInsets.zero, api: PersonalHomeBinding.api(), onOpen: (c) => PersonalHomeBinding.open(context, c)),
+            PersonalHomeSection(margin: EdgeInsets.zero, api: PersonalHomeBinding.api(), strings: PersonalHomeBinding.strings, onOpen: (c) => PersonalHomeBinding.open(context, c)),
             const SizedBox(height: 20),
             if (_loading)
               const Center(

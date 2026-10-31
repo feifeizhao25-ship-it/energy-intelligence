@@ -452,6 +452,24 @@ class ApiService {
     await _put('/api/v1/home/workbench/preferences', body: {'enabled': enabled});
   }
 
+  // ── Library (policy & data reference) ──────────────────────────────────────
+
+  static Future<Map<String, dynamic>> getLibraryEntries() async => await _get('/api/v1/library/entries', {'tz': _utcOffset()});
+
+  static Future<Map<String, dynamic>> getLibraryFeed() async => await _get('/api/v1/library/feed', {'tz': _utcOffset()});
+
+  static Future<void> setLibraryPrefs(Map<String, dynamic> body) async {
+    await _put('/api/v1/library/preferences', body: body);
+  }
+
+  static Future<void> libraryVisit() async {
+    await _post('/api/v1/library/visit', body: const {});
+  }
+
+  static Future<void> libraryOpened(String id) async {
+    await _post('/api/v1/library/opened/${Uri.encodeComponent(id)}', body: const {});
+  }
+
   static Future<Map<String, dynamic>> _put(
     String path, {
     required Map<String, dynamic> body,
