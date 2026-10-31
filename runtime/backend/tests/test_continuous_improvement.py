@@ -1,159 +1,278 @@
-"""持续改进（金标准评测 / 陈旧扫描 / 雷达暂存 / 月报）测试：默认关闭、国内版与国际版分开、只写数据目录、候选永不自动通过。"""
+"""持续改进队列：只提案，不自动生效。发现接口用夹具，不访问外网。"""
+from __future__ import annotations
 
 import json
-from datetime import date, datetime, timedelta, timezone
-from pathlib import Path
 
-from app.library import store
-from app.self_improve import continuous as C
-from app.self_improve import golden as G
-from app.self_improve import radar_stage as RS
-from app.self_improve.config import SILConfig
+import pytest
 
-TZ = timezone(timedelta(hours=8))
-NOW = datetime(2026, 11, 1, 5, 0, tzinfo=TZ)
-
-
-def cfg(tmp_path, enabled=True):
-    return SILConfig(product="energy", enabled=enabled, data_dir=str(tmp_path / "sil"))
-
-
-def test_defaults_are_off(tmp_path):
-    c = cfg(tmp_path, enabled=False)
-    for fn in (C.run_golden, C.run_stale, C.run_radar, C.run_radar_stage, C.run_monthly_report):
-        assert fn(NOW, cfg=c) == {"status": "disabled"}
-    assert not (tmp_path / "sil").exists()
-    assert C.SLOTS["golden_eval"].startswith("weekly:") and C.SLOTS["monthly_report"].startswith("monthly:")
+from app.services.continuous_improvement import (
+    discover_candidates,
+    load_watchlist,
+    mark_approval,
+    read_queue,
+    run_cycle,
+    run_ingestion,
+    schedule_kwargs,
+    watchlist_path,
+)
+from app.services.embeddings_cn import embed_texts, embedding_target
+from app.services.local_embeddings import embed_local, local_model_name
 
 
-def test_golden_files_valid_cover_every_skill_and_are_language_isolated():
-    for ed, meta in C.EDITIONS.items():
-        cases = G.load(meta["golden"])
-        v = G.validate_all(cases, meta["lang"])
-        assert v["invalid"] == {} and v["duplicate_ids"] == [], v
-        assert G.coverage(cases, C.SKILLS[ed])["missing"] == []
-        for c in cases:
-            assert c["review_status"] in ("待审核", "Pending review")  # 没有专家签字
-            assert c["expect"] == "refuse" or c["sources"]
-    # 国际版全英文：任何题、必含词里都不能有汉字
-    for c in G.load(C.EDITIONS["global"]["golden"]):
-        assert not G.CJK.search(json.dumps(c, ensure_ascii=False)), c["id"]
+GITHUB = json.dumps({
+    "items": [{
+        "full_name": "example/solar",
+        "html_url": "https://example.com/solar",
+        "license": {"spdx_id": "MIT"},
+    }]
+})
+HF_SET = json.dumps([{"id": "org/solar-set", "cardData": {"license": "apache-2.0"}}])
+HF_MODEL = json.dumps([{"id": "org/bge", "license": ""}])
+ARXIV = """<?xml version="1.0"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <entry><title>光伏 容量</title><id>https://arxiv.org/abs/1</id></entry>
+</feed>
+"""
 
 
-def test_golden_run_passes_on_bundled_content(tmp_path):
-    out = C.run_golden(NOW, force=True, cfg=cfg(tmp_path))
-    assert out["status"] == "ok"
-    for ed, r in out["editions"].items():
-        assert r["pass_rate"] == 1.0, (ed, r["failures"])
-        assert r["coverage_missing"] == []
-    assert (tmp_path / "sil" / "cn" / "golden" / "last.json").exists() and (tmp_path / "sil" / "global" / "golden" / "last.json").exists()
+def _fetch(url: str) -> str:
+    if "api.github.com" in url:
+        return GITHUB
+    if "/api/datasets" in url:
+        return HF_SET
+    if "/api/models" in url:
+        return HF_MODEL
+    if "arxiv.org" in url:
+        return ARXIV
+    raise AssertionError(url)
 
 
-def test_golden_regression_goes_to_worklist(tmp_path):
-    c = cfg(tmp_path)
-    cases = G.load(C.EDITIONS["cn"]["golden"])[:3]
-    good = lambda case: {"text": " ".join(case["must_include"]), "citations": [s["url"] for s in case["sources"]]}
-    good.wants_case = True
-    bad = lambda case: {"text": "无关"}
-    bad.wants_case = True
-    assert C.run_golden(NOW, edition="cn", cases=cases, answer_fn=good, cfg=c)["editions"]["cn"]["regressions"] == []
-    second = C.run_golden(NOW + timedelta(days=7), edition="cn", cases=cases, answer_fn=bad, cfg=c)
-    assert set(second["editions"]["cn"]["regressions"]) == {x["id"] for x in cases}
-    assert len((tmp_path / "sil" / "cn" / "worklist.jsonl").read_text("utf-8").splitlines()) == 3
+def _watch():
+    return {
+        "github_topics": ["photovoltaic"],
+        "huggingface_dataset_queries": ["solar"],
+        "huggingface_model_queries": ["bge-m3"],
+        "arxiv_queries": ["photovoltaic"],
+        "vetted": [{"kind": "dataset", "name": "已核对样本", "url": "https://example.com/vetted", "license": "CC-BY-4.0"}],
+    }
 
 
-def test_calc_reference_is_independent_of_the_code_under_test():
-    import app.utils.financial_utils as F
-
-    cf = [-1000, 500, 500, 500]
-    assert abs(C._ref_irr(cf) - F.calc_irr(cf)) < 0.01
-
-
-def test_stale_flags_expiring_rag_sources_per_edition(tmp_path):
-    out = C.run_stale(datetime(2026, 12, 1, tzinfo=TZ), force=True, cfg=cfg(tmp_path))
-    assert out["status"] == "ok" and set(out["editions"]) == {"cn", "global"}
-    rep = json.loads((tmp_path / "sil" / "cn" / "stale_report.json").read_text("utf-8"))
-    assert any(f["kind"] == "expiring_soon" or f["kind"] == "expired" for f in rep["findings"])
-    assert all(not f["id"].startswith("en-intl") for f in rep["findings"])  # 国际版条目不进国内版报告
-
-
-def test_staged_entries_pending_and_never_visible():
-    staged = store.load_staged("cn")
-    assert {e["id"] for e in staged} == {"en-lib-s01", "en-lib-s02", "en-lib-s03"}
-    visible = {e["id"] for e in store.annotated("cn", date(2026, 11, 1), include_hidden=True)}
-    assert not visible & {e["id"] for e in staged}
-    for e in staged:
-        assert e["review_status"] == "待审核" and e["source"]["url"].startswith("https://") and e["source"]["tier"] == "A"
-    assert store.load_staged("global") == []
+def test_schedule_defaults_to_weekly(monkeypatch):
+    monkeypatch.delenv("IMPROVEMENT_SCHEDULE", raising=False)
+    monkeypatch.delenv("IMPROVEMENT_HOUR", raising=False)
+    monkeypatch.delenv("IMPROVEMENT_MINUTE", raising=False)
+    monkeypatch.delenv("IMPROVEMENT_DAY_OF_WEEK", raising=False)
+    spec = schedule_kwargs()
+    assert spec["enabled"] is True
+    assert spec["crontab"] == {"day_of_week": "1", "hour": 9, "minute": 0}
+    monkeypatch.setenv("IMPROVEMENT_SCHEDULE", "off")
+    assert schedule_kwargs()["enabled"] is False
+    monkeypatch.setenv("IMPROVEMENT_SCHEDULE", "daily")
+    monkeypatch.setenv("IMPROVEMENT_HOUR", "4")
+    assert schedule_kwargs()["crontab"] == {"hour": 4, "minute": 0}
 
 
-def test_promote_requires_listed_reviewer_and_stays_pending(monkeypatch, tmp_path):
-    from app.library import review_cli
+def test_beat_registers_weekly_job():
+    from app.tasks.celery_app import celery_app
 
-    monkeypatch.setenv("ENERGY_LIBRARY_DIR", str(tmp_path / "lib"))
-    assert review_cli.main(["--edition", "cn", "promote", "en-lib-s01", "--reviewer", "u1"], env={}) == 3  # 名单为空：谁也不能审
-    env = {"POLICY_REVIEWERS": "u1"}
-    assert review_cli.main(["--edition", "cn", "promote", "en-lib-s01", "--reviewer", "u1"], env=env) == 0
-    doc = json.loads((tmp_path / "lib" / "reference_entries_cn.json").read_text("utf-8"))
-    e = next(x for x in doc["entries"] if x["id"] == "en-lib-s01")
-    assert e["review_status"] == "待审核" and "reviewer" not in e
-    assert review_cli.main(["--edition", "cn", "promote", "en-lib-s01", "--reviewer", "u1"], env=env) == 2
+    entry = celery_app.conf.beat_schedule["continuous-improvement"]
+    assert entry["task"] == "energy.domestic.continuous_improvement"
+    assert entry["schedule"].hour == {9}
+    assert entry["schedule"].minute == {0}
+    assert 1 in set(entry["schedule"].day_of_week)
+    assert "energy.domestic.continuous_improvement" in celery_app.tasks
 
 
-def test_radar_stage_lead_only(tmp_path):
-    c = cfg(tmp_path)
-    rd = tmp_path / "sil" / "radar"
-    rd.mkdir(parents=True)
-    items = [
-        {"source": "arxiv", "id": "2611.1", "title": "Photovoltaic power forecasting benchmark", "summary": "solar", "url": "https://arxiv.org/abs/2611.1", "license": None},
-        {"source": "github", "id": "a/gpl", "title": "Wind farm optimiser", "summary": "wind", "url": "https://github.com/a/gpl", "license": "GPL-2.0"},
-        {"source": "arxiv", "id": "2611.2", "title": "Cooking", "summary": "recipes", "url": "https://arxiv.org/abs/2611.2", "license": None},
-    ]
-    (rd / "items_20261101.json").write_text(json.dumps(items), "utf-8")
-    out = C.run_radar_stage(NOW, force=True, cfg=c)
-    assert out["staged"] == 2
-    rows = RS.load_staged(tmp_path / "sil" / "library_staged.jsonl")
-    assert all(r["review_status"] == "待审核" and r["kind"] == "lead" and not r["visible"] and not r["auto_approved"] for r in rows)
-    assert {r["title"]: r["ingest_allowed"] for r in rows}["Wind farm optimiser"] is False
-    assert C.run_radar_stage(NOW, force=True, cfg=c)["staged"] == 0
+def test_watchlist_keeps_a_vetted_slot():
+    data = load_watchlist(watchlist_path())
+    assert "vetted" in data
+    assert data["github_topics"]
+    assert data["arxiv_queries"]
+    assert "pvlib/pvlib-python" in data["github_repos"]
+    assert "apache/echarts" in data["github_repos"]
 
 
-def test_monthly_report_per_edition_and_language(tmp_path):
-    c = cfg(tmp_path)
-    C.run_golden(datetime(2026, 10, 25, 3, 30, tzinfo=TZ), force=True, cfg=c)
-    out = C.run_monthly_report(NOW, force=True, cfg=c, env={})
-    assert out["month"] == "2026-10"
-    cn = Path(out["editions"]["cn"]["markdown"]).read_text("utf-8")
-    gl = Path(out["editions"]["global"]["markdown"]).read_text("utf-8")
-    assert "月度改进报告" in cn and "Monthly improvement report" in gl
-    assert not G.CJK.search(gl), "国际版报告必须全英文"
-    assert "人工批准" in cn
+def test_discovery_keeps_license_and_survives_errors(monkeypatch):
+    monkeypatch.setenv("GITHUB_TOKEN", "test-token")
+    found = discover_candidates(_watch(), _fetch)
+    licenses = {item["license"] for item in found["candidates"]}
+    assert "MIT" in licenses
+    assert "apache-2.0" in licenses
+    assert "CC-BY-4.0" in licenses
+    assert "未标明" in licenses
+    assert all(item["auto_apply"] is False for item in found["candidates"])
+
+    def broken(url):
+        raise TimeoutError(url)
+
+    failed = discover_candidates({"github_topics": ["x"], "vetted": []}, broken)
+    assert failed["candidates"] == []
+    assert failed["errors"]
 
 
-def test_english_input_layer_blocks_investment_requests_but_not_energy_questions():
-    """金标准评测发现：国际版输入层原来拦不住英文投资建议请求。只在输入层拦，不进输出过滤。"""
-    from app.services.bottom_line import blocked_input_text, enforce_bottom_line
+def test_cycle_queues_proposal_and_approval_does_not_go_live(tmp_path, monkeypatch):
+    monkeypatch.setenv("IMPROVEMENT_ENABLED", "1")
+    calls = []
 
-    for q in ("Which renewable energy stock should I buy now?", "Guarantee me a 12% annual return on this solar project", "Is it a good time to buy solar ETF?", "Recommend a stock to buy"):
-        assert blocked_input_text(q, market="global") is not None, q
-    for q in ("When should I buy a heat pump?", "What is the LCOE of utility-scale solar?", "Which stock exchange lists Chinese renewable companies?", "How do I calculate the IRR of a battery project?"):
-        assert blocked_input_text(q, market="global") is None, q
-    assert enforce_bottom_line("I do not recommend any stocks; this is general information only.", market="global").startswith("I do not recommend")
+    def ingest(bucket):
+        calls.append(bucket)
+        return {"status": "noop", "reason": "未开启", "bucket": bucket}
+
+    def evaluate():
+        return {"recall_at_8": 0.5, "k": 8, "questions": 2, "evaluated": 2, "engine": "char-ngram", "embedding_model": "local-char-ngram"}
+
+    first = run_cycle(
+        directory=tmp_path,
+        watchlist=_watch(),
+        fetch=_fetch,
+        ingest=ingest,
+        evaluate=evaluate,
+        audit=lambda: {"status": "skipped", "reason": "未配置页面地址"},
+        submit=lambda sha: {"submitted": False, "reason": "template id empty", "content_sha256": sha},
+    )
+    assert first["status"] == "queued"
+    assert first["applied"] is False
+    proposal = first["proposal"]
+    assert proposal["status"] == "pending_review"
+    assert proposal["live"] is False
+    assert proposal["approval"]["submitted"] is False
+    assert calls
+    assert "MIT" in {item["license"] for item in proposal["candidates"]}
+
+    def better():
+        return {"recall_at_8": 0.75, "k": 8, "questions": 2, "evaluated": 2, "engine": "char-ngram", "embedding_model": "local-char-ngram"}
+
+    second = run_cycle(
+        directory=tmp_path,
+        watchlist={"github_topics": [], "huggingface_dataset_queries": [], "huggingface_model_queries": [], "arxiv_queries": [], "vetted": []},
+        fetch=_fetch,
+        ingest=ingest,
+        evaluate=better,
+        audit=lambda: {"status": "skipped", "reason": "未配置页面地址"},
+        submit=lambda sha: {"submitted": False, "reason": "template id empty"},
+    )
+    assert second["proposal"]["metrics"]["previous_recall_at_8"] == 0.5
+    assert second["proposal"]["metrics"]["recall_delta"] == pytest.approx(0.25)
+
+    denied = mark_approval(proposal["id"], {"status": "rejected", "content_sha256": proposal["content_sha256"]}, tmp_path)
+    assert denied["status"] == "pending_review"
+    assert denied["applied"] is False
+    approved = mark_approval(proposal["id"], {"status": "approved", "content_sha256": proposal["content_sha256"]}, tmp_path)
+    assert approved["status"] == "approved"
+    assert approved["applied"] is False
+    stored = read_queue(tmp_path)
+    assert all(row["applied"] is False and row["live"] is False for row in stored)
+    assert stored[0]["approval_note"].startswith("审批已通过")
 
 
-def test_chinese_buy_timing_gap_is_closed():
-    from app.services.bottom_line import blocked_input_text
+def test_github_without_token_does_not_call(monkeypatch):
+    calls = []
 
-    assert blocked_input_text("我想买光伏ETF，现在是买入的好时机吗") is not None
-    assert blocked_input_text("光伏组件采购的最佳时机是什么季节") is None
-    assert blocked_input_text("政策原文：买入电价怎么确定") is None
+    def fetch(url):
+        calls.append(url)
+        return "{}"
+
+    monkeypatch.delenv("GITHUB_TOKEN", raising=False)
+    found = discover_candidates({"github_topics": ["photovoltaic"], "github_repos": ["apache/echarts"], "vetted": []}, fetch)
+    assert found["candidates"] == []
+    assert found["errors"][0]["reason"] == "未配置代码托管令牌"
+    assert calls == []
 
 
-def test_beat_entries_only_registered_when_sil_enabled(monkeypatch):
-    from app.tasks import celery_app
+def test_research_seed_skips_blocked_items():
+    from app.services.research_sources import eligible, load_items, research_candidates
 
-    monkeypatch.delenv("SIL_ENABLED", raising=False)
-    assert celery_app._continuous_beat() == {}
-    monkeypatch.setenv("SIL_ENABLED", "1")
-    beat = celery_app._continuous_beat()
-    assert {v["task"] for v in beat.values()} == {"energy.domestic.stale_scan", "energy.domestic.golden_eval", "energy.domestic.radar", "energy.domestic.radar_stage", "energy.domestic.monthly_report"}
+    items = load_items()
+    seeded = research_candidates(items)
+    names = {item["name"] for item in seeded}
+    assert "apache/echarts" in names
+    assert "pvlib/pvlib-python" in names
+    assert "BAAI/bge-m3" in names or any("bge-m3" in name for name in names)
+    blocked = [item for item in items if item.get("recommendation") == "不建议"]
+    assert blocked
+    assert not any(item["name"] in names for item in blocked)
+    assert not any("PriceFM" in name for name in names)
+    assert eligible({"recommendation": "直接集成", "name": "a", "license": "AGPL-3.0", "license_flags": []}) is False
+    assert eligible({"recommendation": "加入自动监测清单", "name": "PriceFM", "license": "Apache-2.0", "summary_zh": "电价预测", "license_flags": []}) is False
+    assert all(item["auto_apply"] is False for item in seeded)
+
+
+def test_faithfulness_gate_stays_provisional():
+    from app.services.faithfulness import faithfulness_gate
+
+    good = faithfulness_gate("新来源只写入待审队列。", ["新来源只写入待审队列。"])
+    assert good["passed"] is True
+    assert good["threshold"] == 0.90
+    assert good["applied"] is False
+    bad = faithfulness_gate("明天电价一定上涨并保证收益。", ["只复述已发布的政策原文。"])
+    assert bad["passed"] is False
+    assert bad["applied"] is False
+
+
+def test_pull_request_stays_draft_without_branch(monkeypatch):
+    from app.services.continuous_improvement import open_pull_request
+
+    monkeypatch.setenv("GITHUB_TOKEN", "test-token")
+    monkeypatch.delenv("IMPROVEMENT_OPEN_PR", raising=False)
+    result = open_pull_request({"metrics": {"recall_at_8": 0.5}, "suggestions": ["只写入待审提案"]})
+    assert result["opened"] is False
+    assert result["applied"] is False
+    assert result["draft"]["draft"] is True
+    assert result["draft"]["auto_merge"] is False
+
+
+def test_disabled_cycle_and_ingestion_flag(monkeypatch, tmp_path):
+    monkeypatch.setenv("IMPROVEMENT_ENABLED", "0")
+    assert run_cycle(directory=tmp_path)["status"] == "noop"
+    monkeypatch.delenv("PUBLIC_INGESTION_ENABLED", raising=False)
+    report = run_ingestion()
+    assert report["buckets"]
+    assert all(item.get("status") == "noop" for item in report["buckets"])
+
+
+def test_embedding_targets_and_bge_fallback(monkeypatch):
+    from app.config import settings
+
+    from app.services.local_embeddings import embedding_ab_candidate, local_rerank_name
+    monkeypatch.delenv("EMBEDDING_AB_ENABLED", raising=False)
+    monkeypatch.setenv("LOCAL_EMBEDDING_MODEL", "bge-m3")
+    assert local_model_name() == "BAAI/bge-m3"
+    assert local_rerank_name() == "BAAI/bge-reranker-v2-m3"
+    assert embedding_ab_candidate()["model"] == "Qwen/Qwen3-Embedding-0.6B"
+    assert embedding_ab_candidate()["enabled"] is False
+    monkeypatch.delenv("LOCAL_EMBEDDING_MODEL", raising=False)
+    monkeypatch.setenv("EMBEDDING_MODEL", "BAAI/bge-m3")
+    assert local_model_name() == "BAAI/bge-m3"
+
+    monkeypatch.setenv("EMBEDDING_PROVIDER", "openai")
+    assert embedding_target()["enabled"] is False
+
+    monkeypatch.setenv("EMBEDDING_PROVIDER", "dashscope")
+    monkeypatch.setattr(settings, "APP_EDITION", "cn", raising=False)
+    monkeypatch.setattr(settings, "NENGJIAN_DASHSCOPE_API_KEY", "test-key", raising=False)
+    monkeypatch.setattr(settings, "DASHSCOPE_API_KEY", "", raising=False)
+    monkeypatch.setattr(settings, "NENGJIAN_EMBEDDING_MODEL", "text-embedding-v4", raising=False)
+    target = embedding_target()
+    assert target["provider"] == "dashscope"
+    assert target["model"] == "text-embedding-v4"
+
+    monkeypatch.setenv("EMBEDDING_PROVIDER", "ark")
+    monkeypatch.setenv("NENGJIAN_ARK_EMBEDDING_MODEL", "doubao-embedding")
+    monkeypatch.setattr(settings, "NENGJIAN_ARK_API_KEY", "ark-key", raising=False)
+    ark = embedding_target()
+    assert ark["provider"] == "ark"
+    assert ark["model"] == "doubao-embedding"
+
+    monkeypatch.setenv("EMBEDDING_PROVIDER", "auto")
+    monkeypatch.setattr(settings, "NENGJIAN_DASHSCOPE_API_KEY", "test-key", raising=False)
+
+    def boom(*_args, **_kwargs):
+        raise TimeoutError("remote")
+
+    fallen = embed_texts(["光伏弃风"], poster=boom)
+    assert fallen["provider"] == "local"
+    assert fallen["status"] == "ok"
+    local = embed_local(["光伏弃风"])
+    assert local["status"] == "ok"
+    if local.get("engine") != "fastembed":
+        assert local["model"] == "local-char-ngram"
