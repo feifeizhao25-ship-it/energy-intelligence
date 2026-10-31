@@ -14,6 +14,7 @@ from dataclasses import dataclass, field
 from datetime import date
 from typing import Dict, List, Optional
 
+from app.services.policy_aliases import STOPWORDS, alias_score
 from app.services.rag_sources import SourceRegistry, verification_status
 
 
@@ -149,7 +150,9 @@ class RAGService:
         lang = "cn" if market == "cn" else "en"
         allow_overseas = market != "cn" or query_allows_overseas(query)
         countries = _detect_countries(query, market)
-        query_tokens = tokenize(query)
+        # Filler words (what, is, the, of ...) are in every document; counting them made "what is the capital of France"
+        # score 0.5 against a US tax-credit page. Only content words are scored.
+        query_tokens = tokenize(query) - STOPWORDS
         if not query_tokens:
             return RAGResult(hits=[])
         today = date.today()
@@ -186,6 +189,11 @@ class RAGService:
             )
             overlap = len(query_tokens & doc_tokens)
             score = overlap / max(len(query_tokens), 1)
+            alias = alias_score(query, doc_tokens)
+            if alias is not None and alias > score:
+                score = alias
+            elif overlap < 2 and len(query_tokens) > 1:
+                continue  # one stray shared word ("work" in "Physical Work Test" vs "how does IRR work") is not a match
             if score <= 0:
                 continue
             hit = RAGHit(
@@ -218,6 +226,7 @@ class RAGService:
                     "jurisdiction": doc.get("jurisdiction"),
                     "status": doc.get("status"),
                     "doc_number": doc.get("doc_number"),
+                    "key_dates": list(doc.get("key_dates") or []),
                 },
             )
             scored.append(hit)

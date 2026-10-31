@@ -1,7 +1,7 @@
 from typing import Optional
 from pydantic import BaseModel, Field
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,11 +14,13 @@ from app.core.subscription import QuotaExceeded, assert_ai_quota, consume_ai_quo
 from app.services.evidence_envelope import envelope_from_rag
 from app.services.rag_service import RAGService
 from app.services.answer_structure import STYLES, structure_answer, style_instruction
+from app.services import grounding
 from app.services.bottom_line import NOTICE_EN, NOTICE_ZH, blocked_input_text, enforce_bottom_line, find_violations
 from app.services.budget_caps import BudgetExceeded, assert_product_budget, charge_product_budget
 from app.models.user import User
 import json
 import os
+from datetime import date
 
 router = APIRouter(prefix="/ai")
 
@@ -29,6 +31,10 @@ MIN_SOURCE_RELEVANCE = float(os.getenv("RAG_MIN_RELEVANCE", "0.35"))
 
 _AI_LIMITATIONS = ["AI 生成内容仅供辅助核对方法与来源，关键数据需人工复核"]
 _RAG_SERVICE = RAGService()
+
+
+def _today() -> date:
+    return date.today()
 
 
 def _llm_configured() -> bool:
@@ -68,7 +74,7 @@ def _structured(answer: str, hits: list, market: str, style: Optional[str]) -> d
 
 def _grounded_prompt(base_prompt: str, hits: list, market: str, style: Optional[str] = None) -> str:
     """把检索到的证据编号注入系统提示，要求模型按 [S1] 形式引用。"""
-    base_prompt = base_prompt + style_instruction(market, _style_for(style, market))
+    base_prompt = base_prompt + style_instruction(market, _style_for(style, market)) + grounding.key_dates_prompt(hits, _today(), market)
     if market == "global":
         if not hits:
             return base_prompt + "\n\nRetrieved sources: none. Say the source library has no matching document; do not cite anything."
@@ -85,6 +91,31 @@ def _grounded_prompt(base_prompt: str, hits: list, market: str, style: Optional[
             f"{md.get('source_url') or ''}\n{h.content}"
         )
     return base_prompt + head + "\n" + "\n".join(lines)
+
+
+def _grounding(hits: list, status: Optional[str] = None) -> dict:
+    return {"status": status or ("sourced" if hits else "no_source"), "source_count": len(hits)}
+
+
+def _no_source_payload(market: str, style: Optional[str]) -> dict:
+    """Fixed reply for a policy/tax/legal question with no retrieved source. The model is not called."""
+    message = grounding.no_source_reply(market)
+    return {
+        "message": message,
+        "ai_metadata": {"grounding": "no_source", "model_called": False},
+        "evidence": _evidence_for("", []),
+        "sources": [],
+        "structured": _structured(message, [], market, style),
+        "grounding": _grounding([], "no_source_refused"),
+    }
+
+
+def _finish_answer(message: str, hits: list, market: str) -> tuple:
+    """Note any past deadline the answer still states. A policy question with no source never reaches here (it gets the
+    fixed no-source reply, status on line 1); general explanations carry ``grounding.status`` for the client to show."""
+    today = _today()
+    expired = grounding.date_check(message, today)
+    return message + grounding.time_note(expired, today, market), expired
 
 
 def _evidence_for(answer: str, hits: list) -> dict:
@@ -180,6 +211,15 @@ async def chat(
     except BudgetExceeded as error:
         raise HTTPException(status_code=429, detail={"error": "PRODUCT_BUDGET_EXCEEDED", "message": str(error)}) from error
     hits = _retrieve(message, market)
+    if not hits and grounding.is_policy_question(message):
+        refusal = _no_source_payload(market, style)
+
+        async def refusal_stream():
+            yield f"data: {json.dumps({'sources': []}, ensure_ascii=False)}\n\n"
+            yield f"data: {json.dumps({'content': refusal['message'], 'grounding': refusal['grounding']}, ensure_ascii=False)}\n\n"
+            yield f"data: {json.dumps({'structured': refusal['structured']}, ensure_ascii=False)}\n\n"
+            yield "data: [DONE]\n\n"
+        return StreamingResponse(refusal_stream(), media_type="text/event-stream", headers={"X-Accel-Buffering": "no"})
     prompt = _grounded_prompt(SYSTEM_PROMPT if market == "global" else CN_SYSTEM_PROMPT, hits, market, style)
     sources = _evidence_for("", hits)["sources"]
 
@@ -193,8 +233,10 @@ async def chat(
                 chunks.append(chunk)
         full = _scrub_citations(enforce_bottom_line("".join(chunks), market=market), len(hits))
         if full:
-            yield f"data: {json.dumps({'content': full}, ensure_ascii=False)}\n\n"
-            yield f"data: {json.dumps({'structured': _structured(full, hits, market, style)}, ensure_ascii=False)}\n\n"
+            structured = _structured(full, hits, market, style)
+            shown, expired = _finish_answer(full, hits, market)
+            yield f"data: {json.dumps({'content': shown, 'grounding': _grounding(hits), 'time_check': {'today': _today().isoformat(), 'expired_dates': expired}}, ensure_ascii=False)}\n\n"
+            yield f"data: {json.dumps({'structured': structured}, ensure_ascii=False)}\n\n"
             await consume_ai_quota(user, db)
             _charge_cn(user_id, market)
         yield "data: [DONE]\n\n"
@@ -224,6 +266,8 @@ async def chat_json(
             return {"message": blocked, "ai_metadata": {"blocked": "bottom_line"}, "evidence": _evidence_for("", [])}
         assert_product_budget(user_id, market)
         hits = _retrieve(body.message, market)
+        if not hits and grounding.is_policy_question(body.message):
+            return _no_source_payload(market, body.style)
         prompt = _grounded_prompt(SYSTEM_PROMPT if market == "global" else CN_SYSTEM_PROMPT, hits, market, body.style)
         result = await ai_assistant.chat_openai_with_metadata(body.message, prompt, market=market)
     except BudgetExceeded as error:
@@ -233,13 +277,17 @@ async def chat_json(
     await consume_ai_quota(user, db)
     _charge_cn(user_id, market)
     message = _scrub_citations(enforce_bottom_line(result["content"], market=market), len(hits))
+    structured = _structured(message, hits, market, body.style)
     evidence = _evidence_for(message, hits)
+    message, expired = _finish_answer(message, hits, market)
     return {
         "message": message,
         "ai_metadata": result["metadata"],
         "evidence": evidence,
         "sources": evidence.get("sources", []),
-        "structured": _structured(message, hits, market, body.style),
+        "structured": structured,
+        "grounding": _grounding(hits),
+        "time_check": {"today": _today().isoformat(), "expired_dates": expired},
     }
 
 
@@ -262,6 +310,9 @@ async def analyze(
             return {"analysis": blocked, "ai_metadata": {"blocked": "bottom_line"}, "evidence": _evidence_for("", [])}
         assert_product_budget(user_id, market)
         hits = _retrieve(query, market)
+        if not hits and grounding.is_policy_question(query):
+            return {"analysis": grounding.no_source_reply(market), "ai_metadata": {"grounding": "no_source", "model_called": False},
+                    "evidence": _evidence_for("", []), "grounding": _grounding([], "no_source_refused")}
         prompt = _grounded_prompt(SYSTEM_PROMPT if market == "global" else CN_SYSTEM_PROMPT, hits, market)
         result = await ai_assistant.chat_openai_with_metadata(query, prompt, market=market)
     except BudgetExceeded as error:
@@ -270,10 +321,13 @@ async def analyze(
         raise HTTPException(status_code=503, detail="AI 服务暂时不可用，请稍后重试") from error
     await consume_ai_quota(user, db)
     _charge_cn(user_id, market)
+    analysis, expired = _finish_answer(enforce_bottom_line(result["content"], market=market), hits, market)
     return {
-        "analysis": enforce_bottom_line(result["content"], market=market),
+        "analysis": analysis,
         "ai_metadata": result["metadata"],
         "evidence": _evidence_for(result["content"], hits),
+        "grounding": _grounding(hits),
+        "time_check": {"today": _today().isoformat(), "expired_dates": expired},
     }
 
 
@@ -426,13 +480,18 @@ class AskRequest(BaseModel):
 @router.post("/ask")
 async def ask(
     body: AskRequest,
+    request: Request,
     user_id: str = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db),
 ):
     """检索优先的问答。未配置国内模型时只返回已收录来源，不外呼。"""
-    market = "global" if body.market == "global" else "cn"
+    market = "global" if (body.market == "global" or (request.headers.get("x-app-market") or request.headers.get("x-market") or "").strip().lower() in ("global", "intl", "international", "en")) else "cn"
     blocked = blocked_model_text(body.query, market)
     hits = [] if blocked else _retrieve(body.query, market)
+    if not blocked and not hits and grounding.is_policy_question(body.query):
+        payload = _no_source_payload(market, body.style)
+        return {"answer": payload["message"], "sources": [], "model": None, "structured": payload["structured"],
+                "grounding": payload["grounding"]}
     if blocked or not _llm_configured():
         if blocked:
             answer = blocked
@@ -455,5 +514,8 @@ async def ask(
         raise HTTPException(status_code=503, detail="AI 服务暂时不可用，请稍后重试") from error
     _charge_cn(user_id, market)
     answer = _scrub_citations(enforce_bottom_line(result["content"], market=market), len(hits))
-    return {"answer": answer, "sources": _evidence_for(answer, hits).get("sources", []), "model": result["metadata"],
-            "structured": _structured(answer, hits, market, body.style)}
+    structured = _structured(answer, hits, market, body.style)
+    shown, expired = _finish_answer(answer, hits, market)
+    return {"answer": shown, "sources": _evidence_for(answer, hits).get("sources", []), "model": result["metadata"],
+            "structured": structured, "grounding": _grounding(hits),
+            "time_check": {"today": _today().isoformat(), "expired_dates": expired}}

@@ -184,6 +184,28 @@
       "effective_date": "2025-08-21",
       "expiry": null,
       "superseded_by": null,
+      "key_dates": [
+        {
+          "date": "2025-09-02",
+          "kind": "effective",
+          "event": "IRS Notice 2025-42 beginning-of-construction rules apply to facilities whose construction did not begin before this date."
+        },
+        {
+          "date": "2025-12-31",
+          "kind": "deadline",
+          "event": "Section 25D residential credit: not allowed for expenditures made after this date."
+        },
+        {
+          "date": "2026-07-04",
+          "kind": "deadline",
+          "event": "Last day to begin construction of a wind or solar facility so that it is not subject to the placed-in-service deadline below (P.L. 119-21)."
+        },
+        {
+          "date": "2027-12-31",
+          "kind": "deadline",
+          "event": "Wind and solar facilities (sections 48E and 45Y) that did not begin construction on or before 2026-07-04 must be placed in service by this date."
+        }
+      ],
       "evidence_status": "legacy_unreviewed",
       "doc_number": "IRS FS-2025-05 (Aug. 21, 2025); IRS Notice 2025-42",
       "issuer": "Internal Revenue Service; U.S. Department of the Treasury",
