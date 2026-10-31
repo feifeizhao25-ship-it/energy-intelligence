@@ -33,6 +33,20 @@ class SkillMeta:
     output_schema_class: Optional[str] = None
     tags: list = field(default_factory=list)
 
+    def to_dict(self) -> Dict[str, Any]:
+        """Catalog entry for GET /skills; the router called this method but it did not exist (HTTP 500)."""
+        return {
+            "skill_id": self.skill_id,
+            "name": self.name,
+            "description": self.description,
+            "category": self.category,
+            "service": self.service,
+            "source_file": self.source_file,
+            "input_schema_class": self.input_schema_class,
+            "output_schema_class": self.output_schema_class,
+            "tags": list(self.tags),
+        }
+
 
 @dataclass
 class SkillExecutionResult:
@@ -87,6 +101,38 @@ class SkillWrapper:
 
     def set_meta_fields(self, **fields: Any) -> None:
         self._meta_fields.update(fields)
+
+    def get_schema(self) -> Dict[str, Any]:
+        """Input/output JSON schema for GET /skills/{id}; the router called this but it did not exist (HTTP 500)."""
+        getter = getattr(self._instance, "get_schema", None) if self._instance is not None else None
+        if callable(getter):
+            try:
+                value = getter()
+                if isinstance(value, dict):
+                    return value
+            except Exception:
+                pass
+        out: Dict[str, Any] = {"input": None, "output": None}
+        for key, attrs in (("input", ("input_schema", "InputSchema")), ("output", ("output_schema", "OutputSchema"))):
+            for attr in attrs:
+                model = getattr(self._instance, attr, None) if self._instance is not None else None
+                dump = getattr(model, "model_json_schema", None)
+                if callable(dump):
+                    try:
+                        out[key] = dump()
+                        break
+                    except Exception:
+                        continue
+        if out["input"] is None and self._callable is not None:
+            try:
+                sig = inspect.signature(self._callable)
+                out["input"] = {
+                    "type": "object",
+                    "properties": {n: {"required": p.default is inspect.Parameter.empty} for n, p in sig.parameters.items()},
+                }
+            except (TypeError, ValueError):
+                pass
+        return out
 
     # ── 校验与执行 ─────────────────────────────────────────────────────────
     def validate(self, params: Dict[str, Any]) -> bool:

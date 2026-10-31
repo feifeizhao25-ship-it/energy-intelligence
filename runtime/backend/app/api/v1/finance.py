@@ -118,6 +118,7 @@ async def solar_finance(
             tax_rate=body.tax_rate, project_life=body.project_life,
         ),
         cashflows=cashflows[1:],
+        input_notes=body.price_notes,
         sensitivity={
             "capex_+10pct_irr": calc_irr(build_solar_cashflows(
                 capacity_mw=body.capacity_mw, capex_per_w=body.capex_per_w * 1.1, opex_per_kw_yr=body.opex_per_kw_yr,
@@ -171,6 +172,7 @@ async def wind_finance(
             tax_rate=body.tax_rate, project_life=body.project_life,
         ),
         cashflows=cashflows[1:],
+        input_notes=body.price_notes,
         sensitivity={
             "capex_+10pct_irr": calc_irr(build_wind_cashflows(**{**wind_kwargs, "capex_per_kw": body.capex_per_kw * 1.1})),
             "price_-10pct_irr": calc_irr(build_wind_cashflows(**{**wind_kwargs, "electricity_price": body.electricity_price * 0.9})),
@@ -351,7 +353,7 @@ async def save_financial_model(
         capex_per_w=getattr(body, 'capex_per_w', None),
         opex_per_kw_yr=body.opex_per_kw_yr,
         electricity_price=body.electricity_price,
-        irr=round(irr, 2),
+        irr=None if irr is None else round(irr, 2),  # no unique IRR -> null, not a 500
         npv=round(npv, 2),
         lcoe=round(lcoe, 4),
         payback_years=round(min(payback, 99), 1),
@@ -359,6 +361,42 @@ async def save_financial_model(
         created_at=datetime.now(timezone.utc),
     )
     db.add(model)
+
+    # Also keep what the report generator reads: inputs, the cash-flow series and the sources.
+    # Without this a saved model could never be turned into a report (reports saw an empty project).
+    from app.models.cashflow import CashflowProjection
+
+    life = body.project_life
+    if is_solar:
+        series = [float(c) for c in cashflows]
+        investment = capex_total
+        opex_year = opex_total
+        gen_mwh = annual_gen / 1000
+    else:
+        investment = capex
+        opex_year = annual_opex
+        gen_mwh = annual_gen / 1000
+        series = [-float(capex)] + [float(annual_cashflow)] * life
+    db.add(CashflowProjection(
+        id=str(uuid.uuid4()),
+        project_id=project_id,
+        scenario_name=scenario_name or "Default",
+        yearly_cashflows={
+            "assumptions": {
+                "initial_investment": float(investment),
+                "project_life_years": life,
+                "discount_rate": 0.08,
+                "annual_generation_mwh": float(gen_mwh),
+                "electricity_price": float(body.electricity_price) / 1000,  # per kWh in the report maths
+                "opex_annual": float(opex_year),
+                "currency": body.currency,
+            },
+            "values": series,
+            "sources": [dict(src) for src in (body.data_sources or []) if isinstance(src, dict)],
+        },
+        irr=model.irr, npv=model.npv, lcoe=model.lcoe, payback_years=model.payback_years,
+        created_at=datetime.now(timezone.utc),
+    ))
     await db.flush()
     await db.refresh(model)
     return model

@@ -1,278 +1,275 @@
 import 'package:flutter/material.dart';
-import 'dart:async';
+import '../../theme/app_theme.dart';
+import '../../services/api_service.dart';
+import '../../widgets/ai_message_body.dart';
+
+class Message {
+  final String content;
+  final bool isUser;
+  final String? toolName;
+  final List<Map<String, dynamic>> sources;
+
+  Message({required this.content, required this.isUser, this.toolName, this.sources = const []});
+}
 
 class AiAssistantScreen extends StatefulWidget {
   const AiAssistantScreen({super.key});
+
   @override
   State<AiAssistantScreen> createState() => _AiAssistantScreenState();
 }
 
 class _AiAssistantScreenState extends State<AiAssistantScreen> {
-  final _controller = TextEditingController();
-  final _messages = <_Message>[];
-  bool _isStreaming = false;
+  final _messageController = TextEditingController();
+  final List<Message> _messages = [];
+  bool _isProcessing = false;
+
+  final List<String> _quickPrompts = [
+    '🌞 Solar resource potential',
+    '💰 Project economics',
+    '⚙️ Equipment diagnostics',
+    '📊 Performance report',
+  ];
+
+  void _sendMessage(String text) async {
+    if (text.isEmpty) return;
+
+    setState(() {
+      _messages.add(Message(content: text, isUser: true));
+      _isProcessing = true;
+      _messageController.clear();
+    });
+
+    final result = await ApiService.chat(text);
+    if (!mounted) return;
+    final response = result['message'] as String?;
+    final sources = _sourcesOf(result);
+    setState(() {
+      _messages.add(
+        Message(
+          content: response?.trim().isNotEmpty == true
+              ? response!
+              : (result['error'] as String? ?? 'The AI service is temporarily unavailable. Please try again later.'),
+          isUser: false,
+          sources: sources,
+        ),
+      );
+      _isProcessing = false;
+    });
+
+    _scrollToBottom();
+  }
+
+  /// Sources the backend retrieved for this answer (evidence envelope), newest API first.
+  static List<Map<String, dynamic>> _sourcesOf(Map<String, dynamic> result) {
+    final raw = result['sources'] ?? (result['evidence'] is Map ? (result['evidence'] as Map)['sources'] : null);
+    if (raw is! List) return const [];
+    return raw.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+  }
+
+  void _scrollToBottom() {
+    Future.delayed(Duration(milliseconds: 100), () {
+      if (mounted) {
+        // Scroll simulation
+      }
+    });
+  }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _messageController.dispose();
     super.dispose();
-  }
-
-  Future<void> _sendMessage(String text) async {
-    if (text.isEmpty) return;
-
-    _messages.add(_Message(text: text, isUser: true));
-    _controller.clear();
-    setState(() {});
-
-    setState(() => _isStreaming = true);
-    final response =
-        'Based on your query about solar resource assessment at 36°N 115°W, the location shows excellent solar potential with GHI of 5.8 kWh/m²/d. I recommend installing a 100MW solar facility with estimated IRR of 14.7% and LCOE of \$0.031/kWh.';
-
-    String displayText = '';
-    for (final char in response.characters) {
-      await Future.delayed(const Duration(milliseconds: 20));
-      if (!mounted) return;
-      displayText += char;
-      _messages.add(
-        _Message(text: displayText, isUser: false, isStreaming: true),
-      );
-      setState(() {});
-    }
-
-    if (mounted) {
-      _messages[_messages.length - 1] = _Message(
-        text: displayText,
-        isUser: false,
-        isStreaming: false,
-      );
-      setState(() => _isStreaming = false);
-    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('AI Assistant'),
-        elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF1E293B),
-      ),
+      appBar: AppBar(title: Text('AI Assistant')),
       body: Column(
         children: [
           Expanded(
             child: _messages.isEmpty
-                ? Center(
-                    child: SingleChildScrollView(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            width: 80,
-                            height: 80,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF0F9FF),
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: const Icon(
-                              Icons.auto_awesome,
-                              size: 40,
-                              color: Color(0xFF1D4ED8),
-                            ),
+                ? _buildEmptyState()
+                : ListView.builder(
+                    padding: EdgeInsets.all(16),
+                    itemCount: _messages.length,
+                    itemBuilder: (context, index) =>
+                        _buildMessage(_messages[index]),
+                  ),
+          ),
+          _buildInputArea(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.smart_toy, size: 64, color: AppTheme.primaryColor),
+          SizedBox(height: 16),
+          Text(
+            'Energy Intelligence AI Assistant',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          SizedBox(height: 8),
+          Text(
+            'How can I help?',
+            style: TextStyle(fontSize: 14, color: Color(0xFF64748B)),
+          ),
+          SizedBox(height: 32),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _quickPrompts
+                  .map(
+                    (prompt) => GestureDetector(
+                      onTap: () => _sendMessage(prompt),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: AppTheme.primaryColor),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          prompt,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppTheme.primaryColor,
                           ),
-                          const SizedBox(height: 16),
-                          const Text(
-                            'Energy Intelligence AI',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF1E293B),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'Ask me about solar assessments, financial models, or plant health',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Color(0xFF64748B),
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: Column(
-                              children: [
-                                _PromptChip(
-                                  text: 'Solar assessment at 36°N 115°W',
-                                  onTap: () => _sendMessage(
-                                    'Solar assessment at 36°N 115°W',
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                _PromptChip(
-                                  text: 'Calculate IRR for 100MW',
-                                  onTap: () =>
-                                      _sendMessage('Calculate IRR for 100MW'),
-                                ),
-                                const SizedBox(height: 8),
-                                _PromptChip(
-                                  text: 'Diagnose gearbox fault',
-                                  onTap: () =>
-                                      _sendMessage('Diagnose gearbox fault'),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ),
                   )
-                : ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _messages.length,
-                    itemBuilder: (context, index) {
-                      final msg = _messages[index];
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: Row(
-                          mainAxisAlignment: msg.isUser
-                              ? MainAxisAlignment.end
-                              : MainAxisAlignment.start,
-                          children: [
-                            if (!msg.isUser)
-                              Container(
-                                width: 32,
-                                height: 32,
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFF0F9FF),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: const Icon(
-                                  Icons.auto_awesome,
-                                  size: 18,
-                                  color: Color(0xFF1D4ED8),
-                                ),
-                              ),
-                            const SizedBox(width: 8),
-                            Flexible(
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: msg.isUser
-                                      ? const Color(0xFF1D4ED8)
-                                      : Colors.white,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: msg.isUser
-                                      ? null
-                                      : Border.all(
-                                          color: const Color(0xFFE2E8F0),
-                                        ),
-                                  boxShadow: msg.isUser
-                                      ? null
-                                      : [
-                                          BoxShadow(
-                                            color: Colors.black.withValues(
-                                              alpha: 0.04,
-                                            ),
-                                            blurRadius: 4,
-                                          ),
-                                        ],
-                                ),
-                                padding: const EdgeInsets.all(12),
-                                child: Text(
-                                  msg.text,
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: msg.isUser
-                                        ? Colors.white
-                                        : const Color(0xFF1E293B),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    enabled: !_isStreaming,
-                    decoration: InputDecoration(
-                      hintText: 'Ask about energy projects...',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 12,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1D4ED8),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: IconButton(
-                    onPressed: _isStreaming
-                        ? null
-                        : () => _sendMessage(_controller.text),
-                    icon: const Icon(Icons.send, color: Colors.white, size: 20),
-                  ),
-                ),
-              ],
+                  .toList(),
             ),
           ),
         ],
       ),
     );
   }
-}
 
-class _Message {
-  final String text;
-  final bool isUser;
-  final bool isStreaming;
-
-  _Message({
-    required this.text,
-    required this.isUser,
-    this.isStreaming = false,
-  });
-}
-
-class _PromptChip extends StatelessWidget {
-  final String text;
-  final VoidCallback onTap;
-
-  const _PromptChip({required this.text, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
+  Widget _buildMessage(Message message) {
+    if (message.toolName != null) {
+      return Padding(
+        padding: EdgeInsets.only(bottom: 12),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Container(
+              padding: EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    'Running ${message.toolName}...',
+                    style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        child: Text(
-          text,
-          style: const TextStyle(fontSize: 13, color: Color(0xFF1E293B)),
-        ),
+      );
+    }
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: 12),
+      child: Row(
+        mainAxisAlignment: message.isUser
+            ? MainAxisAlignment.end
+            : MainAxisAlignment.start,
+        children: [
+          if (!message.isUser)
+            Padding(
+              padding: EdgeInsets.only(right: 8),
+              child: Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.smart_toy, color: Colors.white, size: 18),
+              ),
+            ),
+          Flexible(
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: message.isUser
+                    ? AppTheme.primaryColor
+                    : Theme.of(context).colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: message.isUser
+                  ? Text(
+                      message.content,
+                      style: TextStyle(fontSize: 13, color: Colors.white, height: 1.5),
+                    )
+                  : AiMessageBody(
+                      text: message.content,
+                      sources: message.sources,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInputArea() {
+    return Container(
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _messageController,
+              decoration: InputDecoration(
+                hintText: 'Ask a question...',
+                prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+              ),
+              enabled: !_isProcessing,
+            ),
+          ),
+          SizedBox(width: 8),
+          FloatingActionButton(
+            mini: true,
+            onPressed: _isProcessing
+                ? null
+                : () => _sendMessage(_messageController.text),
+            child: Icon(Icons.send),
+          ),
+        ],
       ),
     );
   }
