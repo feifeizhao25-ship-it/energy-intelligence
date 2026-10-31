@@ -263,3 +263,34 @@ def test_every_role_tech_goal_combination_always_gets_a_board(lang):
                     assert not pw.forbidden_hits(c["title"] + c["body"])
                     if lang == "en":
                         assert not CJK.search(c["title"] + c["body"] + c["reason"])
+
+
+def test_stored_utc_timestamps_are_read_as_the_users_local_day():
+    from datetime import timezone
+    from zoneinfo import ZoneInfo
+
+    from app.api.v1.workbench import _d
+
+    stamp = datetime(2026, 11, 1, 23, 0, tzinfo=timezone.utc)  # 07:00 on 2 Nov in Shanghai
+    assert _d(stamp, ZoneInfo("Asia/Shanghai")) == date(2026, 11, 2)
+    assert _d(stamp.replace(tzinfo=None), ZoneInfo("America/Los_Angeles")) == date(2026, 11, 1)
+    assert _d(None, ZoneInfo("UTC")) is None
+
+
+def test_fixed_utc_offset_is_accepted_for_apps_without_a_time_zone_database():
+    from app.api.v1.workbench import _zone
+
+    now = datetime(2026, 11, 2, 20, 0, tzinfo=__import__("datetime").timezone.utc)
+    assert now.astimezone(_zone("UTC+05:30")).hour == 1
+    assert now.astimezone(_zone("UTC-08:00")).hour == 12
+    assert now.astimezone(_zone("Europe/Berlin")).hour == 21
+    with pytest.raises(ValueError):
+        _zone("UTC+99:00")
+
+
+def test_the_users_own_next_step_comes_first_and_the_rhythm_tip_last():
+    profile, projects, hour = PERSONAS["chen"]
+    act = pw.Activity(projects=projects, last_active=MON)
+    d = pw.compose(profile, act, datetime(2026, 11, 2, hour, 0), "chen")
+    assert d["cards"][-1]["kind"] == "rhythm"
+    assert d["cards"][0]["kind"] != "rhythm"
