@@ -397,22 +397,35 @@ def _is_global(market: Optional[str]) -> bool:
     return (market or "cn").lower() in ("global", "en", "int")
 
 
+# Machine-readable hint so the report screen can offer "add a data source" instead of a bare 422 (B11).
+_MISSING_HDR = {"X-Error-Code": "MISSING_REPORT_INPUT", "X-Error-Action": "add_data_source_or_save_model"}
+
+NO_SOURCE_NOTICE_ZH = "【重要】本项目未登记任何可核验的数据来源，本报告不得作为决策依据；请先在项目的“数据来源”页添加带链接的来源后重新生成。"
+NO_SOURCE_NOTICE_EN = ("IMPORTANT: no verifiable data source is attached to this project. Do not rely on this report for a decision; "
+                       "add a source with a link on the project's data-sources screen and generate it again.")
+
+
+def has_verified_sources(data: Dict[str, Any]) -> bool:
+    return any(isinstance(s, dict) and s.get("title") and s.get("url") and s.get("retrieved_at")
+               for s in (data.get("data_sources") or []))
+
+
 def validate_financial_evidence(data: Dict[str, Any], market: str = "cn") -> None:
     """Reject a calculation report unless assumptions and traceable sources exist."""
     en = _is_global(market)
     financial = data.get("financial") or {}
     missing = sorted(REQUIRED_FINANCIAL_INPUTS - set(financial))
     if missing:
-        raise HTTPException(status_code=422, detail=(
+        raise HTTPException(status_code=422, headers=_MISSING_HDR, detail=(
             f"The project has no saved financial model (missing: {', '.join(missing)}). Save a model for this project first (POST /finance/models/{{project_id}}), then generate the report."
             if en else f"财务模型缺少必要输入: {', '.join(missing)}。请先为该项目保存财务模型，再生成报告。"))
     if not financial.get("yearly_cashflows"):
-        raise HTTPException(status_code=422, detail=(
+        raise HTTPException(status_code=422, headers=_MISSING_HDR, detail=(
             "The financial model has no yearly cash-flow series; save the model again." if en else "财务模型缺少年度现金流序列"))
     sources = data.get("data_sources") or []
     verified = [s for s in sources if isinstance(s, dict) and s.get("title") and s.get("url") and s.get("retrieved_at")]
     if not verified:
-        raise HTTPException(status_code=422, detail=(
+        raise HTTPException(status_code=422, headers=_MISSING_HDR, detail=(
             "The financial model has no verifiable data source (title, URL and retrieval date). Add a source with a link on the project's data-sources screen."
             if en else "财务模型缺少可核验的数据来源（标题、URL、获取日期）。请在项目的“数据来源”页添加带链接的来源。"))
     # fail-closed：已标记过期（stale）的政策类来源不得进入测算引用，
@@ -424,7 +437,7 @@ def validate_financial_evidence(data: Dict[str, Any], market: str = "cn") -> Non
     if stale_policy:
         titles = ", ".join(str(s.get("title", "<untitled>")) for s in stale_policy)
         raise HTTPException(
-            status_code=422,
+            status_code=422, headers={"X-Error-Code": "STALE_POLICY_SOURCE", "X-Error-Action": "reverify_source"},
             detail=(f"Policy sources are stale and must be re-verified before a report can cite them: {titles}"
                     if en else f"政策类数据来源已过期（stale），需重新核验后方可生成测算引用: {titles}"),
         )
@@ -646,6 +659,8 @@ def generate_docx(
 
     # ════ 正文 ════（目录函数已写入分页符）
 
+    if report_type in ("compliance", "esg") and not has_verified_sources(data):
+        _add_body(doc, NO_SOURCE_NOTICE_ZH, bold=True)  # first thing on the first content page, not only in the appendix
     if report_type == "feasibility":
         _add_feasibility_content(doc, data, metrics)
     elif report_type == "investment":
@@ -1831,6 +1846,8 @@ def _build_pdf_content(story, data, metrics, report_type, style_h1, style_h2, st
         t.setStyle(TableStyle(style_cmds))
         return t
 
+    if report_type in ("compliance", "esg") and not has_verified_sources(data):
+        story.append(Paragraph(NO_SOURCE_NOTICE_ZH, style_body))
     if report_type == "feasibility":
         # Ch1
         story.append(Paragraph("第一章  项目概述", style_h1))
