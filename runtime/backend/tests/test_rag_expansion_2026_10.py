@@ -24,7 +24,7 @@ def _new_sources():
 def test_registry_is_valid_and_larger_than_before():
     reg, new = _new_sources()
     assert reg.validate() == []
-    assert len(reg.sources) == 124
+    assert len(reg.sources) == 125  # 124 + stat-cn-nea-renewable-202608（2026-10-31）
     assert len(new) == 113
     assert "statistic" in VALID_TYPES
 
