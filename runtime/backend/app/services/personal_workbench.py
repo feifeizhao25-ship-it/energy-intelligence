@@ -376,6 +376,7 @@ def compose(profile: Profile, act: Activity, now: datetime, user_key: str, limit
             break
         if card["id"] not in {p[0]["id"] for p in picked} and card["kind"] not in kinds:
             picked.append((card, why)); kinds.add(card["kind"])
+    picked.sort(key=lambda x: x[0]["kind"] == "rhythm")  # the user's own next step leads; the rhythm tip closes the list
     lang = profile.lang
     cards = []
     for card, why in picked:

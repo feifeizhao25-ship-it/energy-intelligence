@@ -446,6 +446,34 @@ class ApiService {
     return _parse(resp);
   }
 
+  // ── Personalised home ──────────────────────────────────────────────────────
+
+  /// The device's UTC offset, e.g. "UTC+05:30": lets the server pick the user's local day and hour.
+  static String _utcOffset() {
+    final o = DateTime.now().timeZoneOffset;
+    final m = o.inMinutes.abs();
+    final sign = o.isNegative ? '-' : '+';
+    return 'UTC$sign${(m ~/ 60).toString().padLeft(2, '0')}:${(m % 60).toString().padLeft(2, '0')}';
+  }
+
+  static Future<Map<String, dynamic>> getWorkbench() async {
+    return await _get('/api/v1/home/workbench', {'tz': _utcOffset()});
+  }
+
+  static Future<void> setWorkbenchEnabled(bool enabled) async {
+    await _put('/api/v1/home/workbench/preferences', body: {'enabled': enabled});
+  }
+
+  static Future<Map<String, dynamic>> _put(
+    String path, {
+    required Map<String, dynamic> body,
+  }) async {
+    final resp = await _client
+        .put(_uri(path), headers: _headers, body: jsonEncode(body))
+        .timeout(const Duration(seconds: 15));
+    return _parse(resp);
+  }
+
   static Future<void> _delete(String path) async {
     final resp = await _client
         .delete(_uri(path), headers: _headers)

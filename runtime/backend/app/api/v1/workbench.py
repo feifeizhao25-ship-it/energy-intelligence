@@ -6,7 +6,8 @@ existing account export and deletion in privacy.py.
 """
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta
+import re
+from datetime import date, datetime, timedelta, timezone
 from typing import Dict, List, Optional
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
@@ -40,12 +41,26 @@ def _lang(user: User) -> str:
     return "en" if (user.market or "cn") == "global" else "zh"
 
 
-def _tz(user: User, prefs: Dict, override: Optional[str]) -> ZoneInfo:
+_FIXED = re.compile(r"^UTC([+-])(\d{2}):(\d{2})$")
+
+
+def _zone(name: str):
+    """IANA name, or a fixed offset such as ``UTC+05:30`` (what apps without a time-zone database send)."""
+    m = _FIXED.match(name.strip())
+    if m:
+        minutes = int(m.group(2)) * 60 + int(m.group(3))
+        if minutes > 14 * 60:
+            raise ValueError(name)
+        return timezone(timedelta(minutes=minutes if m.group(1) == "+" else -minutes))
+    return ZoneInfo(name)
+
+
+def _tz(user: User, prefs: Dict, override: Optional[str]):
     for name in (override, prefs.get("timezone"), "UTC" if (user.market or "cn") == "global" else "Asia/Shanghai"):
         if not name:
             continue
         try:
-            return ZoneInfo(name)
+            return _zone(name)
         except (ZoneInfoNotFoundError, ValueError):
             continue
     return ZoneInfo("UTC")
@@ -74,13 +89,18 @@ def _clean_prefs(body: PreferencesBody, prefs: Dict) -> Dict:
     return out
 
 
-def _d(v) -> Optional[date]:
+def _d(v, tz) -> Optional[date]:
+    """Calendar day in the *user's* time zone (stored timestamps are UTC)."""
     if v is None:
         return None
-    return v.date() if isinstance(v, datetime) else v
+    if isinstance(v, datetime):
+        if v.tzinfo is None:
+            v = v.replace(tzinfo=timezone.utc)
+        return v.astimezone(tz).date()
+    return v
 
 
-async def _facts(db: AsyncSession, user_id: str) -> List[pw.ProjectFacts]:
+async def _facts(db: AsyncSession, user_id: str, tz) -> List[pw.ProjectFacts]:
     projects = (await db.execute(select(Project).where(Project.user_id == user_id))).scalars().all()
     ids = [p.id for p in projects]
     res, fin, rep = {}, {}, {}
@@ -97,16 +117,16 @@ async def _facts(db: AsyncSession, user_id: str) -> List[pw.ProjectFacts]:
         facts.append(pw.ProjectFacts(
             id=p.id, name=p.name, technology=p.technology or "", location=p.location or "",
             has_resource=p.id in res, has_finance=p.id in fin, has_report=p.id in rep,
-            last_touched=_d(max(stamps)) if stamps else None,
+            last_touched=_d(max(stamps, key=lambda x: x.replace(tzinfo=timezone.utc) if x.tzinfo is None else x), tz) if stamps else None,
         ))
     return facts
 
 
-def _profile(user: User, prefs: Dict, facts: List[pw.ProjectFacts]) -> pw.Profile:
+def _profile(user: User, prefs: Dict, facts: List[pw.ProjectFacts], tz) -> pw.Profile:
     region = prefs.get("region") or (facts[0].location if facts and facts[0].location else "") or (user.country or "")
     return pw.Profile(
         lang=_lang(user), role=prefs.get("role", ""), tech_focus=tuple(prefs.get("tech_focus", [])),
-        goal=prefs.get("goal", ""), region=region, account_created=_d(user.created_at),
+        goal=prefs.get("goal", ""), region=region, account_created=_d(user.created_at, tz),
     )
 
 
@@ -134,13 +154,14 @@ async def get_workbench(
             "cards": [], "disclaimer": pw.DISCLAIMER[lang],
             "note": "个性化已关闭，可在设置里重新打开。" if lang == "zh" else "Personalisation is off; turn it on in settings.",
         }}
-    now = datetime.now(_tz(user, prefs, tz))
-    facts = await _facts(db, user_id)
+    zone = _tz(user, prefs, tz)
+    now = datetime.now(zone)
+    facts = await _facts(db, user_id, zone)
     act = pw.Activity(
         projects=facts, last_active=max([f.last_touched for f in facts if f.last_touched], default=None),
         open_days=tuple(prefs.get("open_days", [])), seen=dict(prefs.get("seen", {})),
     )
-    data = pw.compose(_profile(user, prefs, facts), act, now, user_key=str(user_id))
+    data = pw.compose(_profile(user, prefs, facts, zone), act, now, user_key=str(user_id))
     today = data["date"]
     seen = dict(prefs.get("seen", {}))
     for c in data["cards"]:
