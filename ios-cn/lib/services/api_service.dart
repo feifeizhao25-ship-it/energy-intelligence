@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'project_wire.dart';
 
 class ApiException implements Exception {
   final int statusCode;
@@ -45,7 +46,10 @@ class ApiService {
   static void clearToken() => _token = null;
 
   static Map<String, String> get _headers {
-    final h = <String, String>{'Content-Type': 'application/json'};
+    final h = <String, String>{
+      'Content-Type': 'application/json',
+      'X-App-Market': 'cn', // lets the server count wrong-language responses per edition
+    };
     if (_token != null) h['Authorization'] = 'Bearer $_token'; // zh-gate:allow HTTP 头
     return h;
   }
@@ -135,14 +139,10 @@ class ApiService {
 
   static Future<List<Map<String, dynamic>>> getProjects() async {
     final resp = await _get('/api/v1/projects');
-    if (resp is List) {
-      return (resp as List)
-          .map((e) => Map<String, dynamic>.from(e as Map))
-          .toList();
-    }
-    if (resp['data'] is List) {
-      return (resp['data'] as List)
-          .map((e) => Map<String, dynamic>.from(e as Map))
+    final rows = resp['data'];
+    if (rows is List) {
+      return rows
+          .map((e) => ProjectWire.fromWire(Map<String, dynamic>.from(e as Map)))
           .toList();
     }
     return [];
@@ -152,27 +152,9 @@ class ApiService {
     return await _get('/api/v1/projects/$id');
   }
 
-  static Future<Map<String, dynamic>> createProject({
-    required String name,
-    String? description,
-    String? technology,
-    double? latitude,
-    double? longitude,
-    double? capacityMw,
-    String? location,
-  }) async {
-    return await _post(
-      '/api/v1/projects',
-      body: {
-        'name': name,
-        'description': ?description,
-        'technology': ?technology,
-        'latitude': ?latitude,
-        'longitude': ?longitude,
-        'capacity_mw': ?capacityMw,
-        'location': ?location,
-      },
-    );
+  /// Creates a project. [body] comes from ProjectWire.toWire (the server's contract).
+  static Future<Map<String, dynamic>> createProject(Map<String, dynamic> body) async {
+    return await _post('/api/v1/projects', body: body);
   }
 
   static Future<void> deleteProject(String id) async {
@@ -443,6 +425,44 @@ class ApiService {
     return await getDashboardMetrics();
   }
 
+  // ── Report data sources ────────────────────────────────────────────────────
+
+  /// Sources attached to the project's latest financial model (what its reports cite).
+  static Future<Map<String, dynamic>> getReportSources(String projectId) async {
+    return await _get('/api/v1/finance/data-sources/$projectId');
+  }
+
+  /// Replaces the registered sources. The server validates and answers in the account's language.
+  static Future<Map<String, dynamic>> putReportSources(String projectId, List<Map<String, String>> sources) async {
+    return await _put('/api/v1/finance/data-sources/$projectId', body: {'sources': sources});
+  }
+
+  // ── Plan & usage, assistant, privacy ─────────────────────────────────────
+
+  /// Plan name, features, real usage and reset dates (GET /api/v1/billing/usage).
+  static Future<Map<String, dynamic>> getUsage() async {
+    return await _get('/api/v1/billing/usage');
+  }
+
+  /// Asks the assistant. [style] is "plain" (everyday words) or "pro" (technical). Throws [ApiException] on failure
+  /// so the screen can tell "quota used up" (429) from "service down".
+  static Future<Map<String, dynamic>> askAssistant(String message, String style) async {
+    final resp = await _client
+        .post(_uri('/api/v1/ai/chat-json'), headers: _headers, body: jsonEncode({'message': message, 'style': style}))
+        .timeout(const Duration(seconds: 90));
+    return _parse(resp);
+  }
+
+  /// A copy of the account's data (GET /api/v1/privacy/export).
+  static Future<Map<String, dynamic>> exportMyData() async {
+    return await _get('/api/v1/privacy/export');
+  }
+
+  /// Deletes the account and its data (POST /api/v1/privacy/delete-account).
+  static Future<void> deleteMyAccount() async {
+    await _post('/api/v1/privacy/delete-account', body: {'confirm': 'DELETE'});
+  }
+
   // ── HTTP helpers ──────────────────────────────────────────────────────────
 
   static Future<Map<String, dynamic>> _get(
@@ -527,7 +547,12 @@ class ApiService {
     }
     String msg = resp.body;
     try {
-      msg = jsonDecode(resp.body)['detail'] ?? msg;
+      final detail = jsonDecode(resp.body)['detail'];
+      if (detail is String) {
+        msg = detail;
+      } else if (detail is Map && detail['message'] is String) {
+        msg = detail['message'] as String;
+      }
     } catch (_) {}
     throw ApiException(resp.statusCode, msg);
   }

@@ -7,6 +7,13 @@ class ProjectCard extends StatelessWidget {
 
   const ProjectCard({super.key, required this.project, this.onTap});
 
+  /// 省份优先，没有省份时显示用户填的地点；两者都没有就只显示容量，不留空的「 · 」。
+  String _placeAndCapacity() {
+    final place = project.province.trim().isNotEmpty ? project.province.trim() : project.address.trim();
+    final mw = '${project.capacityMw.toStringAsFixed(0)}MW';
+    return place.isEmpty ? mw : '$place · $mw';
+  }
+
   IconData _getTypeIcon() {
     switch (project.projectType) {
       case 'solar_pv':
@@ -118,7 +125,7 @@ class ProjectCard extends StatelessWidget {
                   SizedBox(width: 4),
                   Expanded(
                     child: Text(
-                      '${project.province} · ${project.capacityMw.toStringAsFixed(0)}MW',
+                      _placeAndCapacity(),
                       style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
                       overflow: TextOverflow.ellipsis,
                     ),

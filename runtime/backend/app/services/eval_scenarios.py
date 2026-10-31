@@ -335,6 +335,27 @@ def research_write_allowed(path: str) -> bool:
     return "/data/research/" in f"/{norm}" and "rag_sources.json" not in norm
 
 
+def scenario_s34() -> dict:
+    """2026-10-31 新增的官方原文已读来源：字段、哈希、官方域名、人工核验标注必须齐全，且不得被代签。"""
+    import hashlib
+    from urllib.parse import urlparse
+
+    problems = []
+    for row in _registry().sources:
+        if row["source_id"] != "stat-cn-nea-renewable-202608":
+            continue
+        if row.get("evidence_status") != "official_text_read":
+            problems.append("状态不是 official_text_read")
+        if row.get("snapshot_sha256") != hashlib.sha256(row["content"].encode()).hexdigest():
+            problems.append("快照哈希不一致")
+        if urlparse(row["source_url"]).hostname not in _OFFICIAL_HOSTS:
+            problems.append("非官方域名")
+        if not row.get("needs_human_verification") or row.get("expert_signed") not in (None, False):
+            problems.append("人工核验标注缺失或被代签")
+        return {"ok": not problems, "problems": problems}
+    return {"ok": False, "problems": ["来源不存在"]}
+
+
 _OFFICIAL_HOSTS = {
     "www.ndrc.gov.cn", "zfxxgk.nea.gov.cn", "www.nea.gov.cn", "www.stats.gov.cn",
     "drc.gd.gov.cn", "www.shanghai.gov.cn", "fgw.sh.gov.cn", "fgw.beijing.gov.cn",
@@ -412,6 +433,7 @@ SCENARIOS = [
     {"id": "S31", "covers": ["freshness"], "run": scenario_s31},
     {"id": "S32", "covers": ["cn-energy-evidence"], "run": scenario_s32},
     {"id": "S33", "covers": _auto_extracted_ids(), "run": scenario_s33},
+    {"id": "S34", "covers": ["stat-cn-nea-renewable-202608"], "run": scenario_s34},
 ]
 
 

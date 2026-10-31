@@ -17,7 +17,7 @@ class PersonalHomeBinding {
   static const Map<String, String> _routes = {
     '/dashboard': '/dashboard',
     '/projects': '/projects',
-    '/projects/new': '/projects',
+    '/projects/new': '/projects/new',
     '/projects/timeline': '/projects',
     '/resource': '/resource',
     '/calculator': '/finance',

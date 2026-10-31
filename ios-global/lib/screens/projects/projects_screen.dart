@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+
+import '../../utils/project_display.dart';
 import '../../services/api_service.dart';
+import 'create_project_screen.dart';
 
 class ProjectsScreen extends StatefulWidget {
-  const ProjectsScreen({super.key});
+  /// Test hook: replaces the network call.
+  final Future<List<Map<String, dynamic>>> Function()? loader;
+  const ProjectsScreen({super.key, this.loader});
   @override
   State<ProjectsScreen> createState() => _ProjectsScreenState();
 }
@@ -24,7 +29,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
       _error = null;
     });
     try {
-      final projects = await ApiService.getProjects();
+      final projects = await (widget.loader ?? ApiService.getProjects)();
       if (mounted) setState(() => _projects = projects);
     } on ApiException catch (error) {
       if (mounted) setState(() => _error = error.message);
@@ -36,10 +41,27 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
     }
   }
 
+  Future<void> _create() async {
+    final created = await Navigator.of(context).push<Map<String, dynamic>>(
+      MaterialPageRoute(builder: (_) => const CreateProjectScreen()),
+    );
+    if (created != null && mounted) await _load();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Projects')),
+      appBar: AppBar(
+        title: const Text('Projects'),
+        actions: [
+          IconButton(
+            key: const Key('createProjectButton'),
+            tooltip: 'New project',
+            icon: const Icon(Icons.add_business_outlined),
+            onPressed: _create,
+          ),
+        ],
+      ),
       body: RefreshIndicator(
         onRefresh: _load,
         child: _loading
@@ -60,7 +82,8 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
               )
             : _projects.isEmpty
             ? ListView(
-                children: const [
+                key: const Key('projectsEmpty'),
+                children: [
                   SizedBox(height: 180),
                   Icon(
                     Icons.folder_open_outlined,
@@ -75,8 +98,17 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                   ),
                   SizedBox(height: 6),
                   Text(
-                    'Create a project on the web or with the add button.',
+                    'Tap “New project” to add your first one. The button at the bottom right starts a resource assessment.',
                     textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  Center(
+                    child: FilledButton.icon(
+                      key: const Key('createProjectEmptyCta'),
+                      onPressed: _create,
+                      icon: const Icon(Icons.add),
+                      label: const Text('New project'),
+                    ),
                   ),
                 ],
               )
@@ -89,8 +121,9 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
               ),
       ),
       floatingActionButton: FloatingActionButton(
+        tooltip: 'Resource assessment',
         onPressed: () => Navigator.pushNamed(context, '/resource'),
-        child: const Icon(Icons.add),
+        child: const Icon(Icons.travel_explore),
       ),
     );
   }
@@ -106,10 +139,9 @@ class _ProjectCard extends StatelessWidget {
         .toString()
         .toLowerCase();
     final name = (project['name'] ?? 'Untitled project').toString();
-    final location = (project['location'] ?? 'Location not provided')
-        .toString();
-    final capacity =
-        project['capacity_mw'] ?? project['capacityMw'] ?? project['capacity'];
+    final location =
+        projectLocationText(project['location']) ?? 'Location not provided';
+    final capacity = projectCapacityText(project);
     final status = (project['status'] ?? 'planning').toString();
     return Semantics(
       button: true,
@@ -132,10 +164,7 @@ class _ProjectCard extends StatelessWidget {
           ),
           subtitle: Padding(
             padding: const EdgeInsets.only(top: 6),
-            child: Text(
-              location +
-                  (capacity == null ? '' : '\n' + capacity.toString() + ' MW'),
-            ),
+            child: Text(location + (capacity == null ? '' : '\n$capacity')),
           ),
           trailing: Text(
             status,

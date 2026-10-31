@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Paper, SearchOptions, SearchResult } from '@/types';
+import { lookupTitleZh } from './title-zh';
 
 export const DOMESTIC_SOURCE_NOTICE = '未配置国内学术源/未开启境外';
 
@@ -47,7 +48,8 @@ export function searchCorpus(records: CorpusRecord[], query: string, options: Se
   const limit = options.limit ?? 10;
   const offset = options.offset ?? 0;
   const matched = records.filter((record) => {
-    const haystack = `${record.title} ${record.abstract || ''} ${record.authors || ''} ${record.doi || ''}`.toLowerCase();
+    const zh = lookupTitleZh({ id: record.externalId, title: record.title, doi: record.doi || undefined, sourceUrl: undefined, pdfUrl: record.pdfUrl || undefined })?.titleZh || '';
+    const haystack = `${record.title} ${zh} ${record.abstract || ''} ${record.authors || ''} ${record.doi || ''}`.toLowerCase();
     if (needle && !haystack.includes(needle)) return false;
     if (options.yearFrom !== undefined && !(record.year != null && record.year >= options.yearFrom)) return false;
     if (options.yearTo !== undefined && !(record.year != null && record.year <= options.yearTo)) return false;
