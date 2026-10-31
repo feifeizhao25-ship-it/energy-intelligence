@@ -8,6 +8,8 @@ Skill 基础类型 — SkillMeta / SkillWrapper / SkillStatus / SkillExecutionRe
 from __future__ import annotations
 
 import inspect
+import json
+from pathlib import Path
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Callable, Dict, Optional
@@ -21,6 +23,25 @@ class SkillStatus(Enum):
     TIMEOUT = "timeout"
 
 
+_REVIEW_REGISTER_PATH = Path(__file__).with_name("review_register.json")
+_review_register: Optional[Dict[str, Any]] = None
+
+
+def review_register() -> Dict[str, Any]:
+    """Human review records: {skill_id: {references: [...], reviewed_by, reviewed_at}}.
+
+    The file starts empty on purpose. An entry is added only when a named person has actually reviewed that
+    skill; nothing is filled in automatically, so an unreviewed skill is shown as unreviewed."""
+    global _review_register
+    if _review_register is None:
+        try:
+            raw = json.loads(_REVIEW_REGISTER_PATH.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            raw = {}
+        _review_register = raw if isinstance(raw, dict) else {}
+    return _review_register
+
+
 @dataclass
 class SkillMeta:
     skill_id: str
@@ -32,6 +53,17 @@ class SkillMeta:
     input_schema_class: Optional[str] = None
     output_schema_class: Optional[str] = None
     tags: list = field(default_factory=list)
+    references: list = field(default_factory=list)
+    reviewed_by: Optional[str] = None
+    reviewed_at: Optional[str] = None
+
+    def __post_init__(self) -> None:
+        entry = review_register().get(self.skill_id)
+        if isinstance(entry, dict):
+            if not self.references:
+                self.references = [dict(r) if isinstance(r, dict) else r for r in entry.get("references") or []]
+            self.reviewed_by = self.reviewed_by or entry.get("reviewed_by") or None
+            self.reviewed_at = self.reviewed_at or entry.get("reviewed_at") or None
 
     def to_dict(self) -> Dict[str, Any]:
         """Catalog entry for GET /skills; the router called this method but it did not exist (HTTP 500)."""
@@ -45,6 +77,10 @@ class SkillMeta:
             "input_schema_class": self.input_schema_class,
             "output_schema_class": self.output_schema_class,
             "tags": list(self.tags),
+            "references": [dict(r) if isinstance(r, dict) else r for r in self.references],
+            "reviewed_by": self.reviewed_by,
+            "reviewed_at": self.reviewed_at,
+            "review_status": "reviewed" if self.reviewed_by and self.reviewed_at else "unreviewed",
         }
 
 
