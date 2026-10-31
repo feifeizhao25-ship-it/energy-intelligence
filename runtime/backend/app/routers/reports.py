@@ -413,8 +413,8 @@ def validate_financial_evidence(data: Dict[str, Any], market: str = "cn") -> Non
     verified = [s for s in sources if isinstance(s, dict) and s.get("title") and s.get("url") and s.get("retrieved_at")]
     if not verified:
         raise HTTPException(status_code=422, detail=(
-            "The financial model has no verifiable data source (title, URL and retrieval date). Add data_sources when saving the model."
-            if en else "财务模型缺少可核验的数据来源（标题、URL、获取日期）。保存模型时请附上 data_sources。"))
+            "The financial model has no verifiable data source (title, URL and retrieval date). Add a source with a link on the project's data-sources screen."
+            if en else "财务模型缺少可核验的数据来源（标题、URL、获取日期）。请在项目的“数据来源”页添加带链接的来源。"))
     # fail-closed：已标记过期（stale）的政策类来源不得进入测算引用，
     # 必须重新核验后才能生成报告。
     stale_policy = [
@@ -1364,6 +1364,35 @@ def _add_investment_content(doc, data: Dict, metrics: Dict):
     )
 
 
+# ── 合规清单：只做能核对的事 ──
+_LAWS = ("《可再生能源法》", "《电力法》", "《环境保护法》", "《土地管理法》")
+
+
+def _source_titles(data: Dict[str, Any]) -> str:
+    return " ".join(str(s.get("title", "")) for s in (data.get("data_sources") or []) if isinstance(s, dict))
+
+
+def compliance_rows(data: Dict[str, Any]) -> List[List[str]]:
+    """Legal checklist rows. We cannot judge whether a project complies, so there is no
+    "符合" claim: each row says whether the user has registered a source for that law
+    (a real check on the project's own data) and that a person must confirm."""
+    titles = _source_titles(data)
+    rows: List[List[str]] = []
+    for law in _LAWS:
+        name = law.strip("《》")
+        registered = name in titles
+        rows.append([law, "全国", "已登记来源，待人工确认" if registered else "未登记来源，待核对"])
+    region = str(data.get("province_or_region") or "").strip()
+    if not region:
+        rows.append(["地方新能源规划", "未填写所在省份", "无法核对，请先填写项目所在省份"])
+    else:
+        registered = region in titles
+        rows.append(["地方新能源规划", region, "已登记来源，待人工确认" if registered else "未登记来源，待核对"])
+    return rows
+
+
+COMPLIANCE_TABLE_CAPTION = "适用法规清单（本表只核对是否登记来源，符合性须人工确认）"
+
 # ── 合规报告 正文 ──
 
 def _add_compliance_content(doc, data: Dict, metrics: Dict):
@@ -1371,21 +1400,15 @@ def _add_compliance_content(doc, data: Dict, metrics: Dict):
 
     _add_heading(doc, "第一章  法规清单", level=1)
     _add_styled_table(
-        doc, ["法规名称", "适用范围", "合规状态"],
-        [
-            ["《可再生能源法》", "全国", "✓ 符合"],
-            ["《电力法》", "全国", "✓ 符合"],
-            ["《环境保护法》", "全国", "✓ 符合"],
-            ["《土地管理法》", "全国", "⚠ 待确认"],
-            ["地方新能源规划", data.get("province_or_region", ""), "✓ 符合"],
-        ],
-        col_widths=[6, 4, 5],
-        caption="适用法规合规性清单",
+        doc, ["法规名称", "适用范围", "核对状态"],
+        compliance_rows(data),
+        col_widths=[5, 4, 6],
+        caption=COMPLIANCE_TABLE_CAPTION,
     )
 
     _add_heading(doc, "第二章  许可证状态", level=1)
     _add_styled_table(
-        doc, ["许可证/批文", "主管部门", "状态", "预计取得时间"],
+        doc, ["许可证/批文", "主管部门", "状态", "参考周期（经验估计）"],
         [
             ["项目核准/备案", "发改委", "待办理", "T+3 月"],
             ["环评批复", "生态环境局", "待办理", "T+6 月"],
@@ -1394,7 +1417,7 @@ def _add_compliance_content(doc, data: Dict, metrics: Dict):
             ["施工许可证", "住建局", "待办理", "T+8 月"],
         ],
         col_widths=[5, 4, 3, 4],
-        caption="许可证/批文办理状态",
+        caption="许可证/批文办理状态（周期仅作参考，以主管部门答复为准）",
     )
 
     _add_heading(doc, "第三章  环境影响评估", level=1)
@@ -1920,19 +1943,16 @@ def _build_pdf_content(story, data, metrics, report_type, style_h1, style_h2, st
         story.append(Paragraph("第一章  法规清单", style_h1))
         story.append(make_table(
             ["法规名称", "适用", "状态"],
-            [["《可再生能源法》", "全国", "√ 符合"],
-             ["《电力法》", "全国", "√ 符合"],
-             ["《环境保护法》", "全国", "√ 符合"],
-             ["《土地管理法》", "全国", "待确认"]],
-            [7, 3, 4], caption="适用法规合规性清单"))
+            compliance_rows(data),
+            [5, 3, 6], caption=COMPLIANCE_TABLE_CAPTION))
 
         story.append(Paragraph("第二章  许可证状态", style_h1))
         story.append(make_table(
-            ["许可证", "主管部门", "状态", "预计时间"],
+            ["许可证", "主管部门", "状态", "参考周期"],
             [["项目核准", "发改委", "待办理", "T+3月"],
              ["环评批复", "生态环境局", "待办理", "T+6月"],
              ["土地预审", "自然资源局", "待办理", "T+4月"]],
-            [4, 4, 3, 3], caption="许可证办理状态"))
+            [4, 4, 3, 3], caption="许可证办理状态（周期仅作参考）"))
 
         story.append(Paragraph("第三章  环境影响评估", style_h1))
         story.append(Paragraph(
@@ -2218,7 +2238,7 @@ async def generate_report(
         validate_financial_evidence(data, market)
 
     # 统一证据封装（19 项要求第 1 项）：来源/假设/计算轨迹随响应透出
-    evidence = _build_report_evidence(title, data)
+    evidence = _build_report_evidence(title, data, en)
 
     # 初始化状态
     _report_store[report_id] = {
@@ -2283,7 +2303,7 @@ async def generate_report(
     }
 
 
-def _build_report_evidence(title: str, data: Dict[str, Any]) -> Dict[str, Any]:
+def _build_report_evidence(title: str, data: Dict[str, Any], en: bool = False) -> Dict[str, Any]:
     """为报告生成响应组装 evidence_envelope。
 
     sources 复用项目/财务模型已有的来源元数据（标题/URL/作者/版本/发布日期/
@@ -2307,20 +2327,22 @@ def _build_report_evidence(title: str, data: Dict[str, Any]) -> Dict[str, Any]:
         trace = [
             {"formula": "NPV = Σ CF_t / (1 + r)^t", "inputs": inputs,
              "result": round(metrics["npv"], 2)},
-            {"formula": "IRR: NPV(r) = 0（Newton-Raphson 求解）", "inputs": inputs,
+            {"formula": "IRR: NPV(r) = 0 (solved with Newton-Raphson)" if en else "IRR: NPV(r) = 0（Newton-Raphson 求解）", "inputs": inputs,
              "result": round(metrics["irr"], 6)},
-            {"formula": "LCOE = 全生命周期成本现值 / 总发电量", "inputs": inputs,
+            {"formula": "LCOE = present value of lifetime cost / total generation" if en else "LCOE = 全生命周期成本现值 / 总发电量", "inputs": inputs,
              "result": round(metrics["lcoe"], 6)},
-            {"formula": "静态回收期 = 累计现金流转正年份", "inputs": inputs,
+            {"formula": "Simple payback = first year cumulative cash flow turns positive" if en else "静态回收期 = 累计现金流转正年份", "inputs": inputs,
              "result": metrics["payback_years"]},
         ]
 
     return build_envelope(
-        f"报告生成任务已受理：{title}",
+        f"Report job accepted: {title}" if en else f"报告生成任务已受理：{title}",
         sources,
         assumptions=assumptions,
         calculation_trace=trace,
-        limitations=["报告基于用户提供的项目假设与来源生成，仅供辅助分析，不构成投资建议"],
+        lang="en" if en else "zh",
+        limitations=["The report is built from the project assumptions and sources you provided. It is an aid to analysis and is not investment advice."] if en
+        else ["报告基于用户提供的项目假设与来源生成，仅供辅助分析，不构成投资建议"],
     )
 
 
