@@ -4,6 +4,7 @@ import '../../theme/app_theme.dart';
 import '../resource/solar_resource_screen.dart';
 import '../finance/solar_finance_screen.dart';
 import '../operations/health_screen.dart';
+import 'report_sources_screen.dart';
 
 class ProjectDetailScreen extends StatelessWidget {
   final Project project;
@@ -94,6 +95,19 @@ class ProjectDetailScreen extends StatelessWidget {
           mainAxisSpacing: 12,
           crossAxisSpacing: 12,
           children: [
+            _buildActionCard(
+              title: '报告数据来源',
+              icon: Icons.fact_check,
+              color: Color(0xFF6366F1),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => ReportSourcesScreen(
+                    projectId: project.id,
+                    projectName: project.name,
+                  ),
+                ),
+              ),
+            ),
             _buildActionCard(
               title: '资源评估',
               icon: Icons.terrain,

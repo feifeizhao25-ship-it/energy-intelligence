@@ -422,6 +422,18 @@ class ApiService {
     return await getDashboardMetrics();
   }
 
+  // ── Report data sources ────────────────────────────────────────────────────
+
+  /// Sources attached to the project's latest financial model (what its reports cite).
+  static Future<Map<String, dynamic>> getReportSources(String projectId) async {
+    return await _get('/api/v1/finance/data-sources/$projectId');
+  }
+
+  /// Replaces the registered sources. The server validates and answers in the account's language.
+  static Future<Map<String, dynamic>> putReportSources(String projectId, List<Map<String, String>> sources) async {
+    return await _put('/api/v1/finance/data-sources/$projectId', body: {'sources': sources});
+  }
+
   // ── HTTP helpers ──────────────────────────────────────────────────────────
 
   static Future<Map<String, dynamic>> _get(
