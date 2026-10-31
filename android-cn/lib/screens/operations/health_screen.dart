@@ -14,18 +14,45 @@ class HealthScreen extends StatefulWidget {
 class _HealthScreenState extends State<HealthScreen> {
   DiagnosticReport? _report;
   bool _isLoading = false;
-  String _selectedProject = 'proj_001';
+  List<Map<String, dynamic>> _projects = [];
+  String? _selectedProject;
+  bool _projectsLoaded = false;
 
   @override
   void initState() {
     super.initState();
-    _loadReport();
+    _loadProjects();
+  }
+
+  /// 项目列表来自账号里真实保存的项目，不再写死两个示例项目。
+  Future<void> _loadProjects() async {
+    setState(() => _isLoading = true);
+    try {
+      final rows = await ApiService.getProjects();
+      if (!mounted) return;
+      setState(() {
+        _projects = rows;
+        _projectsLoaded = true;
+        _selectedProject = rows.isEmpty ? null : rows.first['id']?.toString();
+        _isLoading = rows.isNotEmpty;
+      });
+      if (_selectedProject != null) _loadReport();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('项目列表加载失败，请稍后重试')));
+      setState(() {
+        _projectsLoaded = true;
+        _isLoading = false;
+      });
+    }
   }
 
   void _loadReport() async {
+    final projectId = _selectedProject;
+    if (projectId == null) return;
     setState(() => _isLoading = true);
     try {
-      final report = await ApiService.getHealthReport(_selectedProject);
+      final report = await ApiService.getHealthReport(projectId);
       if (!mounted) return;
       setState(() {
         _report = DiagnosticReport.fromJson(report);
@@ -51,34 +78,45 @@ class _HealthScreenState extends State<HealthScreen> {
           children: [
             Text('选择项目', style: Theme.of(context).textTheme.titleMedium),
             SizedBox(height: 12),
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                border: Border.all(color: Color(0xFFE2E8F0)),
-                borderRadius: BorderRadius.circular(8),
+            if (_projectsLoaded && _projects.isEmpty)
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Color(0xFFE2E8F0)),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '还没有项目。请先在「项目」页新建一个项目，再回来做健康诊断。',
+                  style: TextStyle(color: Color(0xFF64748B), fontSize: 13, height: 1.5),
+                ),
+              )
+            else if (_projects.isNotEmpty)
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Color(0xFFE2E8F0)),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: DropdownButton<String>(
+                  value: _selectedProject,
+                  isExpanded: true,
+                  underline: SizedBox(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() => _selectedProject = value);
+                      _loadReport();
+                    }
+                  },
+                  items: [
+                    for (final p in _projects)
+                      DropdownMenuItem(
+                        value: p['id']?.toString(),
+                        child: Text('${p['name'] ?? p['title'] ?? '未命名项目'}'),
+                      ),
+                  ],
+                ),
               ),
-              child: DropdownButton<String>(
-                value: _selectedProject,
-                isExpanded: true,
-                underline: SizedBox(),
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() => _selectedProject = value);
-                    _loadReport();
-                  }
-                },
-                items: [
-                  DropdownMenuItem(
-                    value: 'proj_001',
-                    child: Text('山东德州100MW光伏'),
-                  ),
-                  DropdownMenuItem(
-                    value: 'proj_002',
-                    child: Text('内蒙古乌兰察布50MW风电'),
-                  ),
-                ].toList(),
-              ),
-            ),
             SizedBox(height: 24),
             if (_isLoading)
               Center(child: CircularProgressIndicator())

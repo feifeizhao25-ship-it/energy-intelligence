@@ -255,26 +255,6 @@ class _SolarFinanceScreenState extends State<SolarFinanceScreen> {
           gradientStartColor: AppTheme.primaryColor,
           gradientEndColor: Color(0xFF06B6D4),
         ),
-        SizedBox(height: 24),
-        Row(
-          children: [
-            Expanded(
-              child: ElevatedButton.icon(
-                onPressed: () {},
-                icon: Icon(Icons.description_outlined),
-                label: Text('生成报告'),
-              ),
-            ),
-            SizedBox(width: 12),
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () {},
-                icon: Icon(Icons.bookmark_border),
-                label: Text('保存方案'),
-              ),
-            ),
-          ],
-        ),
       ],
     );
   }
