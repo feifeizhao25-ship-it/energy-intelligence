@@ -56,6 +56,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Text('Energy Intelligence'),
           ],
         ),
+        actions: [
+          IconButton(
+            key: const Key('openSettings'),
+            tooltip: 'Settings',
+            icon: const Icon(Icons.account_circle_outlined),
+            onPressed: () => Navigator.of(context).pushNamed('/settings'),
+          ),
+        ],
       ),
       body: RefreshIndicator(
         onRefresh: _load,
