@@ -341,7 +341,7 @@ class ApiService {
   /// AI chat — calls POST /api/v1/ai/chat  (returns Map for assistant_screen)
   static Future<Map<String, dynamic>> chat(String message) async {
     try {
-      final resp = await _post('/api/v1/ai/chat', body: {'message': message});
+      final resp = await _post('/api/v1/ai/chat-json', body: {'message': message});
       return resp;
     } catch (_) {
       return {
@@ -420,6 +420,32 @@ class ApiService {
   /// Replaces the registered sources. The server validates and answers in the account's language.
   static Future<Map<String, dynamic>> putReportSources(String projectId, List<Map<String, String>> sources) async {
     return await _put('/api/v1/finance/data-sources/$projectId', body: {'sources': sources});
+  }
+
+  // ── Plan & usage, assistant, privacy ─────────────────────────────────────
+
+  /// Plan name, features, real usage and reset dates (GET /api/v1/billing/usage).
+  static Future<Map<String, dynamic>> getUsage() async {
+    return await _get('/api/v1/billing/usage');
+  }
+
+  /// Asks the assistant. [style] is "plain" (everyday words) or "pro" (technical). Throws [ApiException] on failure
+  /// so the screen can tell "quota used up" (429) from "service down".
+  static Future<Map<String, dynamic>> askAssistant(String message, String style) async {
+    final resp = await _client
+        .post(_uri('/api/v1/ai/chat-json'), headers: _headers, body: jsonEncode({'message': message, 'style': style}))
+        .timeout(const Duration(seconds: 90));
+    return _parse(resp);
+  }
+
+  /// A copy of the account's data (GET /api/v1/privacy/export).
+  static Future<Map<String, dynamic>> exportMyData() async {
+    return await _get('/api/v1/privacy/export');
+  }
+
+  /// Deletes the account and its data (POST /api/v1/privacy/delete-account).
+  static Future<void> deleteMyAccount() async {
+    await _post('/api/v1/privacy/delete-account', body: {'confirm': 'DELETE'});
   }
 
   // ── HTTP helpers ──────────────────────────────────────────────────────────
