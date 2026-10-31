@@ -1529,7 +1529,7 @@ def _add_appendix(doc, data: Dict, metrics: Dict):
             ["贷款比例", fmt_pct(fin.get("loan_ratio", 0.70))],
             ["贷款利率", fmt_pct(fin.get("loan_interest_rate", 0.045))],
             ["贷款期限", f"{fin.get('loan_term_years', 15)} 年"],
-        ],
+        ] + _storage_assumption_rows(fin),
         col_widths=[6, 10],
         caption="财务模型假设条件",
     )
@@ -2021,7 +2021,7 @@ def _build_pdf_appendix(story, data, metrics, style_h1, style_h2, style_body, cn
         ["运维成本年涨幅", fmt_pct(fin.get("opex_escalation_rate", 0.025))],
         ["组件年衰减率", "0.5%"],
         ["贷款比例", fmt_pct(fin.get("loan_ratio", 0.70))],
-    ]
+    ] + _storage_assumption_rows(fin)
     t = Table([["参数", "数值"]] + rows, colWidths=[6 * cm, 10 * cm])
     t.setStyle(TableStyle([
         ("FONT", (0, 0), (-1, -1), cn_font, LAYOUT["font_size"]["table_body"]),
@@ -2192,6 +2192,19 @@ async def get_report_templates(market: str = "cn"):
         },
         "meta": {"total": len(pro_templates) + len(legacy), "market": market},
     }
+
+
+def _storage_assumption_rows(fin: dict) -> list:
+    """Extra assumption rows for a storage model: states which figures the user did not enter."""
+    if (fin or {}).get("model_type") != "storage_arbitrage":
+        return []
+    names = {"roundtrip_efficiency": "往返效率", "annual_degradation_rate": "年衰减率",
+             "annual_opex_rate": "年运维费率", "discount_rate": "折现率", "project_life": "项目年限"}
+    rows = [["模型类型", "储能价差套利：收入 = 放电量 × 峰谷价差"]]
+    missing = [names[k] for k in (fin.get("defaulted_assumptions") or []) if k in names]
+    if missing:
+        rows.append(["用户未填写（系统默认值，未核实来源）", "、".join(missing)])
+    return rows
 
 
 async def _resolve_market(requested: Optional[str], request: Request, db: AsyncSession, user_id: str) -> str:
