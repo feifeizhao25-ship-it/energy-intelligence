@@ -135,6 +135,8 @@ class StorageFinanceRequest(BaseModel):
     discount_rate: float = Field(default=0.08, ge=0, le=0.30)
     project_life: int = Field(default=10, ge=5, le=30)
     currency: str = Field(default="USD", pattern="^[A-Z]{3}$")
+    # Only used when saving a model for a report: the sources a person registered for the assumptions.
+    data_sources: Optional[List[dict]] = None
 
 
 class StorageFinanceResponse(BaseModel):

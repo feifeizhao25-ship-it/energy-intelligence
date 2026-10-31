@@ -15,15 +15,18 @@ from app.core.database import get_db
 router = APIRouter(prefix="/finance")
 
 
-@router.post("/storage", response_model=StorageFinanceResponse)
-async def storage_finance(
-    body: StorageFinanceRequest,
-    user_id: str = Depends(get_current_user_id),
-):
-    """Auditable storage-arbitrage model based solely on explicit user assumptions."""
+STORAGE_USER_FIELDS = (
+    "capacity_mwh", "power_mw", "cycles_per_year", "peak_price_per_mwh", "offpeak_price_per_mwh", "capex_per_kwh",
+    "roundtrip_efficiency", "annual_degradation_rate", "annual_opex_rate", "discount_rate", "project_life",
+)
+# Engine defaults are placeholders, not evidence. A saved model says which numbers the person entered.
+STORAGE_DEFAULTED = ("roundtrip_efficiency", "annual_degradation_rate", "annual_opex_rate", "discount_rate", "project_life")
+
+
+def storage_model(body: StorageFinanceRequest) -> dict:
+    """Auditable storage-arbitrage maths from explicit assumptions only (shared by /storage and saved models)."""
     if body.peak_price_per_mwh <= body.offpeak_price_per_mwh:
         raise HTTPException(status_code=422, detail="峰时电价必须高于谷时电价")
-
     total_capex = body.capacity_mwh * 1000 * body.capex_per_kwh
     annual_opex = total_capex * body.annual_opex_rate
     price_spread = body.peak_price_per_mwh - body.offpeak_price_per_mwh
@@ -47,14 +50,29 @@ async def storage_finance(
             payback = (year - 1) + (-previous / cashflow)
             break
     discounted_costs = total_capex + sum(
-        annual_opex / ((1 + body.discount_rate) ** year)
-        for year in range(1, body.project_life + 1)
+        annual_opex / ((1 + body.discount_rate) ** year) for year in range(1, body.project_life + 1)
     )
     discounted_energy = sum(
-        energy / ((1 + body.discount_rate) ** year)
-        for year, energy in enumerate(discharged_energy, start=1)
+        energy / ((1 + body.discount_rate) ** year) for year, energy in enumerate(discharged_energy, start=1)
     )
     lcos = discounted_costs / discounted_energy if discounted_energy > 0 else 0
+    return dict(
+        total_capex=total_capex, annual_opex=annual_opex, price_spread=price_spread,
+        initial_discharged=initial_discharged, cashflows=cashflows, irr=irr, npv=npv,
+        payback=payback, lcos=lcos,
+    )
+
+
+@router.post("/storage", response_model=StorageFinanceResponse)
+async def storage_finance(
+    body: StorageFinanceRequest,
+    user_id: str = Depends(get_current_user_id),
+):
+    """Auditable storage-arbitrage model based solely on explicit user assumptions."""
+    m = storage_model(body)
+    irr, npv, lcos, payback = m["irr"], m["npv"], m["lcos"], m["payback"]
+    initial_discharged, total_capex, price_spread, cashflows = (
+        m["initial_discharged"], m["total_capex"], m["price_spread"], m["cashflows"])
 
     return StorageFinanceResponse(
         irr=None if irr is None else round(float(irr), 4), npv=round(float(npv), 2), lcos=round(lcos, 4),
@@ -284,11 +302,11 @@ async def get_financial_models(
 @router.post("/models/{project_id}")
 async def save_financial_model(
     project_id: str,
-    body: Union[SolarFinanceRequest, WindFinanceRequest],
+    body: Union[StorageFinanceRequest, SolarFinanceRequest, WindFinanceRequest],
     user_id: str = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db),
 ):
-    """Save a financial model for a project."""
+    """Save a financial model for a project (solar, wind or storage)."""
     from sqlalchemy import select
     from app.models.database import FinancialModel, Project
     import uuid
@@ -301,6 +319,9 @@ async def save_financial_model(
     project = result.scalar_one_or_none()
     if not project:
         raise HTTPException(status_code=404, detail="项目不存在")
+
+    if isinstance(body, StorageFinanceRequest):
+        return await _save_storage_model(db, project_id, body, user_id)
 
     is_solar = hasattr(body, 'capex_per_w')
     scenario_name = getattr(body, 'name', None) if hasattr(body, 'name') else None
@@ -506,3 +527,56 @@ async def put_report_data_sources(
     cf.yearly_cashflows = payload  # reassign so the JSON column is flagged dirty
     await db.flush()
     return {"project_id": project_id, "has_financial_model": True, "sources": sources, "count": len(sources)}
+
+
+async def _save_storage_model(db, project_id: str, body: StorageFinanceRequest, user_id: str):
+    """Persist a storage-arbitrage model in the shape the report generator reads.
+
+    Every figure is the person's own input: the saved assumptions record which numbers were entered and
+    which are engine defaults ("not sourced"), and sources come only from ``data_sources``. Nothing is
+    looked up or invented. For reports, annual energy is the year-1 discharged MWh and the price is the
+    peak/off-peak spread, so revenue = energy x spread, exactly as the model computes it."""
+    import uuid
+    from datetime import datetime, timezone
+    from app.models.cashflow import CashflowProjection
+    from app.models.database import FinancialModel
+
+    m = storage_model(body)
+    sources = clean_report_sources(body.data_sources, await _user_is_global(db, user_id)) if body.data_sources else []
+    irr = m["irr"]
+    given = set(getattr(body, "model_fields_set", set()))
+    provenance = {f: ("user_input" if f in given else "engine_default_not_sourced") for f in STORAGE_USER_FIELDS}
+    model = FinancialModel(
+        id=str(uuid.uuid4()), project_id=project_id, scenario_name="Storage arbitrage",
+        capacity_mw=body.power_mw, capex_per_w=None,
+        opex_per_kw_yr=round(m["annual_opex"] / (body.power_mw * 1000), 4),
+        electricity_price=m["price_spread"],
+        irr=None if irr is None else round(irr, 2), npv=round(m["npv"], 2), lcoe=round(m["lcos"], 4),
+        payback_years=round(min(m["payback"], 99.0), 1), capacity_factor=None,
+        created_at=datetime.now(timezone.utc),
+    )
+    db.add(model)
+    db.add(CashflowProjection(
+        id=str(uuid.uuid4()), project_id=project_id, scenario_name="Storage arbitrage",
+        yearly_cashflows={
+            "assumptions": {
+                "initial_investment": float(m["total_capex"]),
+                "project_life_years": body.project_life,
+                "discount_rate": body.discount_rate,
+                "annual_generation_mwh": float(m["initial_discharged"]),
+                "electricity_price": float(m["price_spread"]) / 1000,  # spread per kWh in the report maths
+                "opex_annual": float(m["annual_opex"]),
+                "currency": body.currency,
+                "model_type": "storage_arbitrage",
+                "assumption_provenance": provenance,
+                "defaulted_assumptions": [f for f in STORAGE_DEFAULTED if provenance[f] != "user_input"],
+            },
+            "values": [float(c) for c in m["cashflows"]],
+            "sources": sources,
+        },
+        irr=model.irr, npv=model.npv, lcoe=model.lcoe, payback_years=model.payback_years,
+        created_at=datetime.now(timezone.utc),
+    ))
+    await db.flush()
+    await db.refresh(model)
+    return model

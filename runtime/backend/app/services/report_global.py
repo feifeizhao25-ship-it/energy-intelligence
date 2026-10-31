@@ -119,6 +119,15 @@ def build_report(data: Dict[str, Any], report_type: str, template, metrics: Dict
         ["Operating cost escalation", _pct(fin.get("opex_escalation_rate", 0.025))],
         ["Discount rate", _pct(fin.get("discount_rate"))],
     ]
+    if fin.get("model_type") == "storage_arbitrage":
+        assumptions[1][0] = "Annual discharged energy (year 1)"
+        assumptions[3][0] = "Price spread, peak minus off-peak"
+        assumptions.append(["Model type", "Storage arbitrage: revenue is discharged energy times the price spread"])
+        names = {"roundtrip_efficiency": "Round-trip efficiency", "annual_degradation_rate": "Annual degradation",
+                 "annual_opex_rate": "Annual operating cost rate", "discount_rate": "Discount rate", "project_life": "Project life"}
+        missing = [names[k] for k in (fin.get("defaulted_assumptions") or []) if k in names]
+        if missing:
+            assumptions.append(["Not entered by the user (engine default, not sourced)", ", ".join(missing)])
     cfs = metrics.get("cashflows") or []
     first5 = [[f"Year {y}", f"{cur} {cfs[y]:,.0f}"] for y in range(1, min(6, len(cfs)))]
     sens = _sensitivity(fin, calc) if calc else []
