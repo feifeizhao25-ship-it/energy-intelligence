@@ -120,6 +120,14 @@ class _HealthScreenState extends State<HealthScreen> {
             SizedBox(height: 24),
             if (_isLoading)
               Center(child: CircularProgressIndicator())
+            else if (_report == null && _projects.isNotEmpty)
+              Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: Text(
+                  '这个项目暂时没有可用的诊断报告。运行数据接入后会在这里生成，不会用示例数据代替。',
+                  style: TextStyle(color: Color(0xFF64748B), fontSize: 13, height: 1.5),
+                ),
+              )
             else if (_report != null)
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
