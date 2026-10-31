@@ -194,6 +194,7 @@ async def metrics(request: Request):
 from app.api.v1 import ai_assistant as v1_ai  # noqa: E402
 from app.api.v1 import alerts as v1_alerts  # noqa: E402
 from app.api.v1 import analytics as v1_analytics  # noqa: E402
+from app.api.v1 import activation as v1_activation  # noqa: E402
 from app.api.v1 import auth as v1_auth  # noqa: E402
 from app.api.v1 import billing as v1_billing  # noqa: E402
 from app.api.v1 import finance as v1_finance  # noqa: E402
@@ -224,6 +225,7 @@ async def quota_exceeded_handler(request: Request, exc: QuotaExceeded):
     )
 
 
+app.include_router(v1_activation.router, prefix="/api/v1", tags=["activation"])
 app.include_router(v1_auth.router, prefix="/api/v1", tags=["auth"])
 app.include_router(v1_users.router, prefix="/api/v1", tags=["users"])
 app.include_router(v1_resource.router, prefix="/api/v1", tags=["resource"])
