@@ -86,28 +86,39 @@ def source_from_dict(src: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def compute_confidence(sources: Sequence[Dict[str, Any]]) -> Tuple[str, str]:
+def compute_confidence(sources: Sequence[Dict[str, Any]], lang: str = "zh") -> Tuple[str, str]:
     """按来源新鲜度/数量给出可解释置信度（规则见模块 docstring）。"""
     if not sources:
-        return "low", "无任何来源支撑，按规则置信度为 low（sources_status=无来源）"
+        return "low", ("No source supports this, so confidence is low by rule (sources_status = none)" if lang == "en" else "无任何来源支撑，按规则置信度为 low（sources_status=无来源）")
 
     stale = [s for s in sources if s.get("freshness_status") == "stale"]
     if stale:
         return (
             "low",
-            f"{len(stale)} 条来源已过期（stale），按规则置信度降为 low，需重新核验",
+            f"{len(stale)} source(s) are stale, so confidence drops to low by rule; re-verify them" if lang == "en"
+            else f"{len(stale)} 条来源已过期（stale），按规则置信度降为 low，需重新核验",
         )
 
     current = [s for s in sources if s.get("freshness_status") == "current"]
     if len(sources) >= HIGH_MIN_SOURCES and len(current) == len(sources):
         return (
             "high",
-            f"{len(sources)} 条来源全部在核验周期内（current），按规则置信度为 high",
+            f"All {len(sources)} sources are within their verification window (current), so confidence is high by rule" if lang == "en"
+            else f"{len(sources)} 条来源全部在核验周期内（current），按规则置信度为 high",
         )
 
     unknown = [s for s in sources if s.get("freshness_status") not in
                ("current", "review_recommended")]
     review = [s for s in sources if s.get("freshness_status") == "review_recommended"]
+    if lang == "en":
+        reasons = [f"{len(sources)} source(s) are not stale"]
+        if len(sources) < HIGH_MIN_SOURCES:
+            reasons.append(f"fewer than {HIGH_MIN_SOURCES} sources")
+        if review:
+            reasons.append(f"{len(review)} close to their review date (review_recommended)")
+        if unknown:
+            reasons.append(f"{len(unknown)} with unknown freshness")
+        return "medium", "; ".join(reasons) + "; confidence is medium by rule"
     reasons = [f"{len(sources)} 条来源未过期"]
     if len(sources) < HIGH_MIN_SOURCES:
         reasons.append(f"数量不足 {HIGH_MIN_SOURCES} 条")
@@ -125,6 +136,13 @@ VERIFIED = "verified"
 REVIEW_RECOMMENDED = "review_recommended"
 CONFLICT = "conflict"
 UNVERIFIED = "unverified"
+
+VERIFICATION_LABELS_EN = {
+    "verified": "Verified",
+    "review_recommended": "To verify",
+    "unverified": "To verify",
+    "conflict": "Conflict",
+}
 
 VERIFICATION_LABELS = {
     VERIFIED: "已核验",
@@ -160,30 +178,32 @@ def _independent_key(src: Dict[str, Any]) -> str:
     return url.split("//")[-1].split("/")[0].lower() or str(src.get("source_id") or id(src))
 
 
-def verify_policy_claim(sources: Sequence[Dict[str, Any]]) -> Tuple[str, str]:
+def verify_policy_claim(sources: Sequence[Dict[str, Any]], lang: str = "zh") -> Tuple[str, str]:
     """政策类：官方原文 + 至少 1 个独立来源 → verified；只有转载 → review_recommended。"""
+    en = lang == "en"
     if not sources:
-        return UNVERIFIED, "无来源"
+        return UNVERIFIED, "No source" if en else "无来源"
     officials = [s for s in sources if is_official_source(s)]
     if not officials:
-        return REVIEW_RECOMMENDED, "只有转载来源，未找到官方原文"
+        return REVIEW_RECOMMENDED, "Only reposted sources; no official original found" if en else "只有转载来源，未找到官方原文"
     official_keys = {_independent_key(s) for s in officials}
     others = {_independent_key(s) for s in sources} - {_independent_key(officials[0])}
     if others:
-        return VERIFIED, f"官方原文 + {len(others)} 个独立来源"
+        return VERIFIED, f"Official original + {len(others)} independent source(s)" if en else f"官方原文 + {len(others)} 个独立来源"
     if len(official_keys) > 1:
-        return VERIFIED, "官方原文 + 另一官方转载"
-    return REVIEW_RECOMMENDED, "仅有官方原文，缺少独立来源交叉核对"
+        return VERIFIED, "Official original + another official repost" if en else "官方原文 + 另一官方转载"
+    return REVIEW_RECOMMENDED, "Only the official original; no independent source to cross-check" if en else "仅有官方原文，缺少独立来源交叉核对"
 
 
-def verify_numeric_claim(values: Sequence[Dict[str, Any]], tolerance: float = NUMERIC_AGREEMENT_TOLERANCE) -> Tuple[str, str]:
+def verify_numeric_claim(values: Sequence[Dict[str, Any]], tolerance: float = NUMERIC_AGREEMENT_TOLERANCE, lang: str = "zh") -> Tuple[str, str]:
     """数值类（电价、排放因子、组件价格）：≥2 个独立来源一致（相对差 < 1%）→ verified；冲突 → conflict。
 
     ``values`` 形如 ``[{"value": 0.5827, "publisher": "生态环境部"}, ...]``。
     """
     pts = [(v, _independent_key(v)) for v in values if isinstance(v.get("value"), (int, float))]
+    en = lang == "en"
     if not pts:
-        return UNVERIFIED, "无数值来源"
+        return UNVERIFIED, "No numeric source" if en else "无数值来源"
     by_pub: Dict[str, float] = {}
     for v, key in pts:
         by_pub.setdefault(key, float(v["value"]))
@@ -191,14 +211,14 @@ def verify_numeric_claim(values: Sequence[Dict[str, Any]], tolerance: float = NU
         only = next(iter(pts))[0]
         snapshot = str(only.get("snapshot_sha256") or "")
         if is_official_source(only) and len(snapshot) == 64:
-            return VERIFIED, "一手官方原文并附快照"
-        return REVIEW_RECOMMENDED, "只有 1 个独立来源"
+            return VERIFIED, "Primary official original with a snapshot" if en else "一手官方原文并附快照"
+        return REVIEW_RECOMMENDED, "Only 1 independent source" if en else "只有 1 个独立来源"
     nums = list(by_pub.values())
     lo, hi = min(nums), max(nums)
     base = max(abs(lo), abs(hi)) or 1.0
     if (hi - lo) / base < tolerance:
-        return VERIFIED, f"{len(nums)} 个独立来源一致（相对差 < {tolerance:.0%}）"
-    return CONFLICT, f"{len(nums)} 个来源数值冲突（{lo:g}–{hi:g}），已全部展示，待人工核验"
+        return VERIFIED, f"{len(nums)} independent sources agree (relative difference < {tolerance:.0%})" if en else f"{len(nums)} 个独立来源一致（相对差 < {tolerance:.0%}）"
+    return CONFLICT, f"{len(nums)} sources disagree ({lo:g}–{hi:g}); all are shown, pending human verification" if en else f"{len(nums)} 个来源数值冲突（{lo:g}–{hi:g}），已全部展示，待人工核验"
 
 
 def present_claim(values: Sequence[Dict[str, Any]], *, claim_type: str = "numeric") -> Dict[str, Any]:
@@ -227,14 +247,15 @@ def compute_verification(
     *,
     claim_type: str = "policy",
     values: Optional[Sequence[Dict[str, Any]]] = None,
+    lang: str = "zh",
 ) -> Dict[str, Any]:
     if claim_type == "numeric":
-        status, reason = verify_numeric_claim(values or [])
+        status, reason = verify_numeric_claim(values or [], lang=lang)
     else:
-        status, reason = verify_policy_claim(sources)
+        status, reason = verify_policy_claim(sources, lang=lang)
     return {
         "status": status,
-        "label": VERIFICATION_LABELS[status],
+        "label": (VERIFICATION_LABELS_EN if lang == "en" else VERIFICATION_LABELS)[status],
         "reason": reason,
         "claim_type": claim_type,
         "usable_as_conclusion": status == VERIFIED,
@@ -252,9 +273,14 @@ def build_envelope(
     as_of: Optional[str] = None,
     claim_type: str = "policy",
     numeric_values: Optional[Sequence[Dict[str, Any]]] = None,
+    lang: str = "zh",
 ) -> Dict[str, Any]:
-    """组装统一证据封装。``sources`` 必须先经 source_from_* 归一化。"""
-    confidence, reason = compute_confidence(sources)
+    """组装统一证据封装。``sources`` 必须先经 source_from_* 归一化。
+
+    ``lang="en"``: the envelope's own text (confidence reason, verification label/reason,
+    source role, limitation suffix) is English, for the international edition."""
+    en = lang == "en"
+    confidence, reason = compute_confidence(sources, lang)
     envelope: Dict[str, Any] = {
         "answer": answer,
         "confidence": confidence,
@@ -267,15 +293,16 @@ def build_envelope(
         "calculation_trace": list(calculation_trace or []),
         "limitations": list(limitations or []),
     }
-    verification = compute_verification(sources, claim_type=claim_type, values=numeric_values)
+    verification = compute_verification(sources, claim_type=claim_type, values=numeric_values, lang=lang)
     envelope["verification"] = verification
     envelope["sources"] = [
-        {**src, "verification_label": "官方原文" if is_official_source(src) else "转载/第三方"}
+        {**src, "verification_label": ("Official original" if en else "官方原文") if is_official_source(src) else ("Repost / third party" if en else "转载/第三方")}
         for src in envelope["sources"]
     ]
     if not verification["usable_as_conclusion"]:
         envelope["limitations"].append(
-            f"核验状态：{verification['label']}（{verification['reason']}），不得作为结论依据"
+            f"Verification status: {verification['label']} ({verification['reason']}); not to be used as a basis for conclusions" if en
+            else f"核验状态：{verification['label']}（{verification['reason']}），不得作为结论依据"
         )
     if skill_version:
         envelope["skill_version"] = skill_version
