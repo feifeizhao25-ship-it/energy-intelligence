@@ -359,16 +359,26 @@ async def fetch_project_data(
 
 def _build_project_dict(project: Any, cf: Any = None) -> Dict[str, Any]:
     """从 ORM 对象构建数据字典"""
+    # Project stores one free-text address (``location``) plus latitude/longitude; it has no country, region, city or
+    # currency column. The old code read those attributes with a "CN"/"CNY" default, so every export said China/CNY.
+    from app.services.geo_hint import infer_country
+
+    address = str(getattr(project, "location", "") or "").strip()
     data: Dict[str, Any] = {
-        "name": getattr(project, "name", "未命名项目"),
-        "project_type": getattr(project, "project_type", "solar_pv"),
+        "name": getattr(project, "name", None) or "未命名项目",
+        "project_type": {"solar": "solar_pv"}.get(
+            str(getattr(project, "project_type", None) or getattr(project, "technology", None) or "solar_pv"),
+            str(getattr(project, "project_type", None) or getattr(project, "technology", None) or "solar_pv")),
         "capacity_mw": float(getattr(project, "capacity_mw", 0) or 0),
-        "country_code": getattr(project, "country_code", "CN"),
-        "province_or_region": getattr(project, "province_or_region", ""),
-        "city": getattr(project, "city", ""),
-        "currency": getattr(project, "currency", "CNY"),
-        "description": getattr(project, "description", ""),
-        "status": getattr(project, "status", "development"),
+        "address": address,
+        "latitude": getattr(project, "latitude", None),
+        "longitude": getattr(project, "longitude", None),
+        "country_code": getattr(project, "country_code", None) or infer_country(address) or "",
+        "province_or_region": getattr(project, "province_or_region", None) or "",
+        "city": getattr(project, "city", None) or "",
+        "currency": getattr(project, "currency", None) or "",
+        "description": getattr(project, "description", None) or "",
+        "status": getattr(project, "status", None) or "development",
     }
 
     payload = getattr(cf, "yearly_cashflows", None) if cf else None
@@ -383,6 +393,11 @@ def _build_project_dict(project: Any, cf: Any = None) -> Dict[str, Any]:
     else:
         data["financial"] = {}
         data["data_sources"] = []
+
+    # The currency the user modelled in is the report currency (a USD model must not be labelled CNY).
+    model_currency = str((data["financial"] or {}).get("currency") or "").strip().upper()
+    if model_currency:
+        data["currency"] = model_currency
 
     return data
 
@@ -1157,7 +1172,7 @@ def _add_feasibility_content(doc, data: Dict, metrics: Dict):
             ["装机容量", f"{cap:.0f} MW"],
             ["项目地点", _format_location(data)],
             ["预计寿命", f"{fin.get('project_life_years', 25)} 年"],
-            ["货币单位", data.get("currency", "CNY")],
+            ["货币单位", data.get("currency") or "CNY"],
         ],
         col_widths=[6, 10],
         caption="项目基本信息一览",
@@ -1587,7 +1602,8 @@ def _format_location(data: Dict) -> str:
         parts.append(data["province_or_region"])
     if data.get("city") and data["city"] != data.get("province_or_region"):
         parts.append(data["city"])
-    return "".join(parts) or "待确认"
+    # The project's own address (Project.location) is the location the user typed; use it before giving up.
+    return "".join(parts) or str(data.get("address") or "").strip() or "待确认"
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -2208,8 +2224,8 @@ def _storage_assumption_rows(fin: dict) -> list:
 
 
 async def _resolve_market(requested: Optional[str], request: Request, db: AsyncSession, user_id: str) -> str:
-    """Body field, then X-Market header, then the user's own market; default cn."""
-    for cand in (requested, request.headers.get("x-market")):
+    """Body field, then X-App-Market / X-Market header, then the user's own market; default cn."""
+    for cand in (requested, request.headers.get("x-app-market"), request.headers.get("x-market")):
         if cand:
             return "global" if _is_global(cand) else "cn"
     try:
