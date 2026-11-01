@@ -168,11 +168,11 @@ class _SolarFinanceScreenState extends State<SolarFinanceScreen> {
             SizedBox(height: 12),
             Text(
               '衰减率: 0.5%/年',
-              style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+              style: TextStyle(fontSize: 12, color: context.eiMuted),
             ),
             Text(
               '直流/交流容配比: 1.2',
-              style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+              style: TextStyle(fontSize: 12, color: context.eiMuted),
             ),
           ],
         ),
@@ -270,7 +270,7 @@ class _SolarFinanceScreenState extends State<SolarFinanceScreen> {
           children: [
             Text(
               label,
-              style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+              style: TextStyle(fontSize: 12, color: context.eiMuted),
             ),
             SizedBox(height: 8),
             Text(

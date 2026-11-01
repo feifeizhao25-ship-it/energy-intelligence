@@ -110,14 +110,14 @@ class _SolarResourceScreenState extends State<SolarResourceScreen> {
                               '组件类型: 单晶硅',
                               style: TextStyle(
                                 fontSize: 12,
-                                color: Color(0xFF64748B),
+                                color: context.eiMuted,
                               ),
                             ),
                             Text(
                               '倾角: 优化角',
                               style: TextStyle(
                                 fontSize: 12,
-                                color: Color(0xFF64748B),
+                                color: context.eiMuted,
                               ),
                             ),
                           ],
@@ -247,7 +247,7 @@ class _SolarResourceScreenState extends State<SolarResourceScreen> {
           children: [
             Text(
               label,
-              style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+              style: TextStyle(fontSize: 12, color: context.eiMuted),
             ),
             SizedBox(height: 6),
             Row(
@@ -262,7 +262,7 @@ class _SolarResourceScreenState extends State<SolarResourceScreen> {
                 SizedBox(width: 4),
                 Text(
                   unit,
-                  style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                  style: TextStyle(fontSize: 11, color: context.eiMuted),
                 ),
               ],
             ),

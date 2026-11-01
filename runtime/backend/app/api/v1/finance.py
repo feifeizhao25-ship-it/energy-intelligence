@@ -97,6 +97,7 @@ async def storage_finance(
 async def solar_finance(
     body: SolarFinanceRequest,
     user_id: str = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
 ):
     """Calculate financial metrics for solar project."""
     cashflows = build_solar_cashflows(
@@ -136,7 +137,7 @@ async def solar_finance(
             tax_rate=body.tax_rate, project_life=body.project_life,
         ),
         cashflows=cashflows[1:],
-        input_notes=body.price_notes,
+        input_notes=body.notes_for(await _user_is_global(db, user_id)),
         sensitivity={
             "capex_+10pct_irr": calc_irr(build_solar_cashflows(
                 capacity_mw=body.capacity_mw, capex_per_w=body.capex_per_w * 1.1, opex_per_kw_yr=body.opex_per_kw_yr,
@@ -158,6 +159,7 @@ async def solar_finance(
 async def wind_finance(
     body: WindFinanceRequest,
     user_id: str = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
 ):
     """Calculate financial metrics for wind project."""
     wind_kwargs = dict(
@@ -190,7 +192,7 @@ async def wind_finance(
             tax_rate=body.tax_rate, project_life=body.project_life,
         ),
         cashflows=cashflows[1:],
-        input_notes=body.price_notes,
+        input_notes=body.notes_for(await _user_is_global(db, user_id)),
         sensitivity={
             "capex_+10pct_irr": calc_irr(build_wind_cashflows(**{**wind_kwargs, "capex_per_kw": body.capex_per_kw * 1.1})),
             "price_-10pct_irr": calc_irr(build_wind_cashflows(**{**wind_kwargs, "electricity_price": body.electricity_price * 0.9})),

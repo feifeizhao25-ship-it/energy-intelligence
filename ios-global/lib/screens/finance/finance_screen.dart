@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_theme.dart';
 import '../../widgets/photo_widgets.dart';
 import 'wind_finance_screen.dart';
 import 'storage_finance_screen.dart';
@@ -12,8 +13,8 @@ class FinanceScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Financial Modeling'),
         elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF1E293B),
+        backgroundColor: context.eiCard,
+        foregroundColor: context.eiBody,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),

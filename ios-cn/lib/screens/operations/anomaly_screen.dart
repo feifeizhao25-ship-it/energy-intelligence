@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_theme.dart';
 import '../../services/api_service.dart';
 
 class AnomalyScreen extends StatefulWidget {
@@ -132,7 +133,7 @@ class _NoticeCard extends StatelessWidget {
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
-            Icon(icon, size: 40, color: const Color(0xFF64748B)),
+            Icon(icon, size: 40, color: context.eiMuted),
             const SizedBox(height: 12),
             Text(
               title,

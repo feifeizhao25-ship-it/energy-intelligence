@@ -154,3 +154,23 @@ async def test_answer_stating_a_passed_deadline_gets_a_date_check_note(client, d
     body = r.json()
     assert body["time_check"]["expired_dates"][0]["date"] == "2026-07-04"
     assert "Date check: 2026-07-04 has already passed (today is 2026-11-01)" in body["message"]
+    # Retest N02: the sentence itself is marked, so it no longer reads as a live deadline
+    assert "before July 4, 2026 (already passed) to keep the ITC" in body["message"]
+    assert "(already passed)" in str(body["structured"])
+
+
+def test_mark_expired_leaves_future_and_non_deadline_dates_alone():
+    a = "The law was signed on July 4, 2025. Placed in service by December 31, 2027."
+    assert grounding.mark_expired(a, TODAY, "global") == a
+    b = "Construction must begin before July 4, 2026 and by 2025-09-02."
+    out = grounding.mark_expired(b, TODAY, "global")
+    assert out == "Construction must begin before July 4, 2026 (already passed) and by 2025-09-02 (already passed)."
+    assert grounding.mark_expired(out, TODAY, "global") == out
+
+
+def test_time_note_grammar_and_cn():
+    two = [{"date": "2026-07-04"}, {"date": "2025-09-02"}]
+    note = grounding.time_note(two, TODAY, "global")
+    assert "2026-07-04 and 2025-09-02 have already passed" in note and "them as future deadlines" in note
+    assert "已经过去" in grounding.time_note(two, TODAY, "cn")
+    assert grounding.mark_expired("必须在2026年7月4日之前开工。", TODAY, "cn") == "必须在2026年7月4日（已过期）之前开工。"

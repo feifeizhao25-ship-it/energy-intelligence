@@ -3,6 +3,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
 const _kDir = 'assets/images/';
 
@@ -20,7 +21,7 @@ Widget _img(String asset, {double? w, double? h}) => Image.asset(
       width: w,
       height: h,
       fit: BoxFit.cover,
-      errorBuilder: (_, _, _) => Container(width: w, height: h, color: const Color(0xFFE2E8F0)),
+      errorBuilder: (_, _, _) => Container(width: w, height: h, color: Color(0xFFE2E8F0)),
     );
 
 class EnPhotoBanner extends StatelessWidget {
@@ -81,7 +82,7 @@ class EnPhotoCard extends StatelessWidget {
         onTap: onTap,
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: context.eiCard,
             borderRadius: BorderRadius.circular(18),
             boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 12, offset: const Offset(0, 4))],
           ),
@@ -112,7 +113,7 @@ class EnPhotoCard extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
               child: Row(children: [
-                Expanded(child: Text(description, style: const TextStyle(fontSize: 14, height: 1.45, color: Color(0xFF475569)))),
+                Expanded(child: Text(description, style: TextStyle(fontSize: 14, height: 1.45, color: context.eiBody2))),
                 if (cta != null) ...[
                   const SizedBox(width: 10),
                   Container(
@@ -121,7 +122,7 @@ class EnPhotoCard extends StatelessWidget {
                     child: Text(cta!, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700)),
                   ),
                 ] else
-                  const Icon(Icons.chevron_right, color: Color(0xFF64748B)),
+                  Icon(Icons.chevron_right, color: context.eiMuted),
               ]),
             ),
           ]),
@@ -191,7 +192,7 @@ class EnEmptyPhoto extends StatelessWidget {
         const SizedBox(height: 16),
         Text(title, textAlign: TextAlign.center, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
         const SizedBox(height: 6),
-        Text(message, textAlign: TextAlign.center, style: const TextStyle(fontSize: 14.5, height: 1.5, color: Color(0xFF475569))),
+        Text(message, textAlign: TextAlign.center, style: TextStyle(fontSize: 14.5, height: 1.5, color: context.eiBody2)),
         if (action != null) ...[const SizedBox(height: 16), action!],
       ]),
     );

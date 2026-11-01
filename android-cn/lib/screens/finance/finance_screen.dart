@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_theme.dart';
 import '../../widgets/photo_widgets.dart';
 import 'solar_finance_screen.dart';
 import 'wind_finance_screen.dart';
@@ -20,7 +21,7 @@ class FinanceScreen extends StatelessWidget {
             SizedBox(height: 8),
             Text(
               '全面计算项目财务指标，支持多种能源类型',
-              style: TextStyle(color: Color(0xFF64748B), fontSize: 14, height: 1.5),
+              style: TextStyle(color: context.eiMuted, fontSize: 14, height: 1.5),
             ),
             SizedBox(height: 24),
             _buildFinanceCard(
@@ -116,13 +117,13 @@ class FinanceScreen extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF0F172A),
+                        color: context.eiStrong,
                       ),
                     ),
                     SizedBox(height: 4),
                     Text(
                       subtitle,
-                      style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                      style: TextStyle(fontSize: 13, color: context.eiMuted),
                     ),
                   ],
                 ),

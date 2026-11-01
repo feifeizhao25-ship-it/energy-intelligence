@@ -21,7 +21,7 @@ class ResourceScreen extends StatelessWidget {
             SizedBox(height: 8),
             Text(
               '通过精准的资源评估为项目开发提供科学依据',
-              style: TextStyle(color: Color(0xFF64748B), fontSize: 14, height: 1.5),
+              style: TextStyle(color: context.eiMuted, fontSize: 14, height: 1.5),
             ),
             SizedBox(height: 24),
             _buildResourceCard(

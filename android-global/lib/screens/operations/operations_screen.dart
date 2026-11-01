@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_theme.dart';
 
 import '../../widgets/photo_widgets.dart';
 import 'anomaly_screen.dart';
@@ -14,8 +15,8 @@ class OperationsScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Operations'),
         elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF1E293B),
+        backgroundColor: context.eiCard,
+        foregroundColor: context.eiBody,
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),

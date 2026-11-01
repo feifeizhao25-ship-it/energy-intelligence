@@ -101,7 +101,7 @@ class ProjectDetailScreen extends StatelessWidget {
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF0F172A),
+            color: context.eiStrong,
           ),
         ),
         SizedBox(height: 12),
@@ -270,7 +270,7 @@ class ProjectDetailScreen extends StatelessWidget {
           title: '财务模型',
           date: project.createdAt.add(Duration(days: 60)),
           icon: Icons.schedule,
-          color: Color(0xFF94A3B8),
+          color: Color(0xFF64748B),
         ),
       ],
     );
@@ -306,7 +306,7 @@ class ProjectDetailScreen extends StatelessWidget {
                 ),
                 Text(
                   '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}',
-                  style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                  style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
                 ),
               ],
             ),

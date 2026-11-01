@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
 class MetricCard extends StatelessWidget {
   final String label;
@@ -77,7 +78,7 @@ class MetricCard extends StatelessWidget {
                 label,
                 style: TextStyle(
                   fontSize: 12,
-                  color: Color(0xFF64748B),
+                  color: context.eiMuted,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -99,7 +100,7 @@ class MetricCard extends StatelessWidget {
                     unit,
                     style: TextStyle(
                       fontSize: 12,
-                      color: Color(0xFF64748B),
+                      color: context.eiMuted,
                       fontWeight: FontWeight.w500,
                     ),
                   ),

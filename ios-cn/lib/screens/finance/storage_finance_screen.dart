@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_theme.dart';
 import '../../widgets/bar_chart.dart';
 import '../../services/api_service.dart';
 
@@ -194,7 +195,7 @@ class _StorageFinanceScreenState extends State<StorageFinanceScreen> {
           label,
           style: TextStyle(
             fontSize: 13,
-            color: Color(0xFF64748B),
+            color: context.eiMuted,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -267,7 +268,7 @@ class _StorageFinanceScreenState extends State<StorageFinanceScreen> {
                 children: [
                   Text(
                     item['label'] as String,
-                    style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                    style: TextStyle(fontSize: 11, color: context.eiMuted),
                   ),
                   SizedBox(height: 6),
                   Text(

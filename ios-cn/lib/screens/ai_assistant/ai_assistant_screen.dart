@@ -28,9 +28,10 @@ class _Msg {
   final Map<String, dynamic>? structured;
   /// `{status, source_count}` from the server: sourced | no_source | no_source_refused. Shown above the answer.
   final Map<String, dynamic>? grounding;
+  final Map<String, dynamic>? timeCheck;
   final String? error; // generic | quota | login
   final String? retryText;
-  const _Msg({required this.text, required this.isUser, this.structured, this.grounding, this.error, this.retryText});
+  const _Msg({required this.text, required this.isUser, this.structured, this.grounding, this.timeCheck, this.error, this.retryText});
 }
 
 class AiAssistantScreen extends StatefulWidget {
@@ -71,12 +72,14 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
       if (answer.isEmpty) throw StateError('empty answer');
       final structured = result['structured'];
       final grounding = result['grounding'];
+      final timeCheck = result['time_check'];
       setState(() {
         _messages.add(_Msg(
           text: answer,
           isUser: false,
           structured: structured is Map ? Map<String, dynamic>.from(structured) : null,
           grounding: grounding is Map ? Map<String, dynamic>.from(grounding) : null,
+          timeCheck: timeCheck is Map ? Map<String, dynamic>.from(timeCheck) : null,
         ));
         _busy = false;
       });
@@ -230,7 +233,31 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         // The grounding status comes first, not as a footnote: the reader must know whether anything backs the answer.
         if (m.grounding != null) _groundingBanner(context, m.grounding!),
+        if (_expiredDates(m).isNotEmpty) _dateCheckBanner(context, _expiredDates(m), m.timeCheck?['today']),
         m.structured == null ? SelectableText(cleanAnswerText(m.text), style: const TextStyle(fontSize: 14, height: 1.5)) : _answer(context, m),
+      ]),
+    );
+  }
+
+  List<String> _expiredDates(_Msg m) {
+    final list = m.timeCheck?['expired_dates'];
+    if (list is! List) return const [];
+    return [for (final e in list) if (e is Map && e['date'] != null) '${e['date']}'];
+  }
+
+  Widget _dateCheckBanner(BuildContext context, List<String> dates, Object? today) {
+    final scheme = Theme.of(context).colorScheme;
+    final text = '日期核对：${dates.join('、')} 已经过去（今天是 $today），不要当作未来的截止日期。';
+    return Container(
+      key: const Key('dateCheck'),
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(color: scheme.error.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(10)),
+      child: Row(children: [
+        Icon(Icons.event_busy, size: 16, color: scheme.error),
+        const SizedBox(width: 6),
+        Expanded(child: Text(text, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: scheme.error, height: 1.3))),
       ]),
     );
   }

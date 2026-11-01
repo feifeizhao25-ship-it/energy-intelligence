@@ -101,6 +101,21 @@ def _parse_dates(text: str) -> List[Dict[str, Any]]:
     return found
 
 
+_SENT_END = re.compile(r"(?<=[.!?;])\s|\n|[。；！？]")
+
+
+def _window(text: str, start: int, end: int) -> str:
+    """The text around a date, limited to the sentence it is in (a deadline word in the next sentence is not about it)."""
+    left = text[max(0, start - 80):start]
+    for m in _SENT_END.finditer(left):
+        left = left[m.end():]
+    right = text[end:end + 40]
+    m = _SENT_END.search(right)
+    if m:
+        right = right[:m.start()]
+    return left + text[start:end] + right
+
+
 def date_check(answer: str, today: date) -> List[Dict[str, str]]:
     """Dates in the answer that are in the past and sit next to a deadline word."""
     out: List[Dict[str, str]] = []
@@ -108,18 +123,43 @@ def date_check(answer: str, today: date) -> List[Dict[str, str]]:
     for hit in _parse_dates(answer or ""):
         if hit["date"] >= today or hit["date"] in seen:
             continue
-        window = answer[max(0, hit["start"] - 80): hit["end"] + 40]
+        window = _window(answer, hit["start"], hit["end"])
         if _DEADLINE_WORDS.search(window):
             seen.add(hit["date"])
             out.append({"date": hit["date"].isoformat(), "context": re.sub(r"\s+", " ", window).strip()})
     return out
 
 
+def mark_expired(answer: str, today: date, market: str) -> str:
+    """Put "(already passed)" right after every past date that sits next to a deadline word, so the sentence itself no
+    longer reads as a live requirement (the trailing note alone was easy to miss)."""
+    text = answer or ""
+    marks = []
+    for hit in _parse_dates(text):
+        if hit["date"] >= today:
+            continue
+        window = _window(text, hit["start"], hit["end"])
+        if _DEADLINE_WORDS.search(window):
+            marks.append(hit["end"])
+    for end in sorted(set(marks), reverse=True):
+        tag = " (already passed)" if market == "global" else "（已过期）"
+        if text[end:end + len(tag)] != tag:
+            text = text[:end] + tag + text[end:]
+    return text
+
+
+def _join_dates(dates: Sequence[str], market: str) -> str:
+    if market != "global" or len(dates) < 2:
+        return ", ".join(dates) if market == "global" else "、".join(dates)
+    return ", ".join(dates[:-1]) + " and " + dates[-1]
+
+
 def time_note(expired: Sequence[Dict[str, str]], today: date, market: str) -> str:
     if not expired:
         return ""
-    ds = ", ".join(e["date"] for e in expired)
+    dates = [e["date"] for e in expired]
     if market == "global":
-        return (f"\n\nDate check: {ds} has already passed (today is {today.isoformat()}). "
-                "Do not read it as a future deadline; check the cited source for what applies now.")
-    return f"\n\n日期核对：{ds} 已经过去（今天是 {today.isoformat()}），不要当作未来的截止日期，请以所引用资料中现行规定为准。"
+        many = len(dates) > 1
+        return (f"\n\nDate check: {_join_dates(dates, market)} {'have' if many else 'has'} already passed (today is {today.isoformat()}). "
+                f"Do not read {'them as future deadlines' if many else 'it as a future deadline'}; check the cited source for what applies now.")
+    return f"\n\n日期核对：{_join_dates(dates, market)} 已经过去（今天是 {today.isoformat()}），不要当作未来的截止日期，请以所引用资料中现行规定为准。"

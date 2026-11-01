@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_theme.dart';
 import 'dart:math';
 import '../../widgets/bar_chart.dart';
 
@@ -114,8 +115,8 @@ class _SolarFinanceScreenState extends State<SolarFinanceScreen> {
       appBar: AppBar(
         title: const Text('Solar Financial Model'),
         elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF1E293B),
+        backgroundColor: context.eiCard,
+        foregroundColor: context.eiBody,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -315,10 +316,10 @@ class _SolarFinanceScreenState extends State<SolarFinanceScreen> {
                             const SizedBox(height: 12),
                             Container(
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: context.eiCard,
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                  color: const Color(0xFFE2E8F0),
+                                  color: context.eiLine,
                                 ),
                               ),
                               padding: const EdgeInsets.all(16),
@@ -369,19 +370,19 @@ class _ResultCard extends StatelessWidget {
         children: [
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF64748B),
+              color: context.eiMuted,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF1E293B),
+              color: context.eiBody,
             ),
           ),
         ],

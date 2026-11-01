@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_theme.dart';
 import '../../services/api_service.dart';
 
 class ResearchScreen extends StatefulWidget {
@@ -106,7 +107,7 @@ class _ResearchScreenState extends State<ResearchScreen> {
             SizedBox(height: 6),
             Text(
               (paper['authors'] ?? []).join(', '),
-              style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+              style: TextStyle(fontSize: 11, color: context.eiMuted),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -117,7 +118,7 @@ class _ResearchScreenState extends State<ResearchScreen> {
                 Expanded(
                   child: Text(
                     '${paper['journal']} ${paper['year']}',
-                    style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                    style: TextStyle(fontSize: 11, color: context.eiMuted),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -150,7 +151,7 @@ class _ResearchScreenState extends State<ResearchScreen> {
               children: [
                 Text(
                   '引用: ${paper['citations']}',
-                  style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                  style: TextStyle(fontSize: 11, color: context.eiMuted),
                 ),
               ],
             ),

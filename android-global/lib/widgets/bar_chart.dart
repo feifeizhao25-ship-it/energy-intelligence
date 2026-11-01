@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 import 'dart:math' as math;
 
 class BarChart extends StatelessWidget {
@@ -51,10 +52,10 @@ class BarChart extends StatelessWidget {
             if (title != null) ...[
               Text(
                 title!,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF0F172A),
+                  color: context.eiStrong,
                 ),
               ),
               const SizedBox(height: 16),
@@ -157,7 +158,7 @@ class _BarChartPainter extends CustomPainter {
       final valueTextPainter = TextPainter(
         text: TextSpan(
           text: value.toStringAsFixed(0),
-          style: const TextStyle(
+          style: TextStyle(
             color: Color(0xFF475569),
             fontSize: 11,
             fontWeight: FontWeight.w500,
@@ -176,7 +177,7 @@ class _BarChartPainter extends CustomPainter {
       final labelTextPainter = TextPainter(
         text: TextSpan(
           text: labels[i],
-          style: const TextStyle(color: Color(0xFF64748B), fontSize: 11),
+          style: TextStyle(color: Color(0xFF64748B), fontSize: 11),
         ),
         textDirection: TextDirection.ltr,
       );

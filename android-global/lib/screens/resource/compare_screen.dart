@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_theme.dart';
 import '../../services/api_service.dart';
 
 class CompareScreen extends StatefulWidget {
@@ -114,10 +115,10 @@ class _CompareScreenState extends State<CompareScreen> {
       appBar: AppBar(
         title: const Text('Multi-site Comparison'),
         elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF1E293B),
+        backgroundColor: context.eiCard,
+        foregroundColor: context.eiBody,
       ),
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: context.eiPage,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -127,8 +128,8 @@ class _CompareScreenState extends State<CompareScreen> {
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+                color: context.eiCard,
+                border: Border.all(color: context.eiLine),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
@@ -229,8 +230,8 @@ class _CompareScreenState extends State<CompareScreen> {
                   vertical: 10,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  color: context.eiCard,
+                  border: Border.all(color: context.eiLine),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
@@ -269,9 +270,9 @@ class _CompareScreenState extends State<CompareScreen> {
                             ),
                             Text(
                               '${e.value['lat']}, ${e.value['lon']}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 11,
-                                color: Color(0xFF64748B),
+                                color: context.eiMuted,
                               ),
                             ),
                           ],
@@ -279,10 +280,10 @@ class _CompareScreenState extends State<CompareScreen> {
                       ],
                     ),
                     IconButton(
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.close,
                         size: 16,
-                        color: Color(0xFF94A3B8),
+                        color: context.eiMuted,
                       ),
                       onPressed: () => setState(() => _sites.removeAt(e.key)),
                       padding: EdgeInsets.zero,
@@ -337,12 +338,12 @@ class _CompareScreenState extends State<CompareScreen> {
             // Results
             if (_results != null) ...[
               const SizedBox(height: 28),
-              const Text(
+              Text(
                 'Results (ranked by solar score)',
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF0F172A),
+                  color: context.eiStrong,
                 ),
               ),
               const SizedBox(height: 12),
@@ -457,15 +458,15 @@ class _CompareScreenState extends State<CompareScreen> {
         children: [
           Text(
             metric,
-            style: const TextStyle(fontSize: 10, color: Color(0xFF64748B)),
+            style: TextStyle(fontSize: 10, color: context.eiMuted),
           ),
           const SizedBox(height: 3),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 12,
-              color: Color(0xFF0F172A),
+              color: context.eiStrong,
             ),
           ),
           const SizedBox(height: 4),

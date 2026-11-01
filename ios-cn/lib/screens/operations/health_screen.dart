@@ -302,7 +302,7 @@ class _HealthScreenState extends State<HealthScreen> {
                 SizedBox(height: 8),
                 Text(
                   '影响：${finding.impact}',
-                  style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                  style: TextStyle(fontSize: 11, color: context.eiMuted),
                 ),
               ],
             ),

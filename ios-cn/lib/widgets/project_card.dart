@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 import '../models/project.dart';
 
 class ProjectCard extends StatelessWidget {
@@ -139,13 +140,13 @@ class ProjectCard extends StatelessWidget {
                   Icon(
                     Icons.location_on_outlined,
                     size: 14,
-                    color: Color(0xFF64748B),
+                    color: context.eiMuted,
                   ),
                   SizedBox(width: 4),
                   Expanded(
                     child: Text(
                       _placeAndCapacity(),
-                      style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                      style: TextStyle(fontSize: 12, color: context.eiMuted),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),

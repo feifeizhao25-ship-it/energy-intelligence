@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'theme/app_theme.dart';
+import 'widgets/responsive_frame.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/dashboard/dashboard_screen.dart';
@@ -35,6 +36,9 @@ class EnergyIntelligenceApp extends StatelessWidget {
       title: 'Energy Intelligence',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.buildTheme(),
+      darkTheme: AppTheme.buildDarkTheme(),
+      themeMode: ThemeMode.system,
+      builder: (context, child) => ResponsiveFrame(child: child ?? const SizedBox.shrink()),
       locale: const Locale('en', 'US'),
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
@@ -96,8 +100,8 @@ class _MainNavigationState extends State<MainNavigation> {
     return Scaffold(
       body: IndexedStack(index: _currentIndex, children: _screens),
       bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(
+          color: context.eiCard,
           boxShadow: [
             BoxShadow(
               color: Color(0x1A000000),

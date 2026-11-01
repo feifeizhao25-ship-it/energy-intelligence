@@ -52,4 +52,21 @@ void main() {
     await _ask(t, {'message': '结论：内部收益率约 8.5%。', 'grounding': {'status': 'no_source', 'source_count': 0}});
     expect(find.byKey(const Key('groundingStatus')), findsOneWidget);
   });
+
+  testWidgets('retest N02: an expired deadline is flagged inside the answer card, not only in the raw text', (t) async {
+    await _ask(t, {
+      ..._reply({'status': 'sourced', 'source_count': 1}),
+      'time_check': {'today': '2026-11-01', 'expired_dates': [{'date': '2026-07-04'}, {'date': '2025-09-02'}]},
+    });
+    expect(find.byKey(const Key('dateCheck')), findsOneWidget);
+    expect(find.text('日期核对：2026-07-04、2025-09-02 已经过去（今天是 2026-11-01），不要当作未来的截止日期。'), findsOneWidget);
+  });
+
+  testWidgets('no expired date, no date-check banner', (t) async {
+    await _ask(t, {
+      ..._reply({'status': 'sourced', 'source_count': 1}),
+      'time_check': {'today': '2026-11-01', 'expired_dates': []},
+    });
+    expect(find.byKey(const Key('dateCheck')), findsNothing);
+  });
 }

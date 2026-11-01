@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_theme.dart';
 import '../../widgets/photo_widgets.dart';
 import 'compare_screen.dart';
 
@@ -11,8 +12,8 @@ class ResourceScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Resource Assessment'),
         elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF1E293B),
+        backgroundColor: context.eiCard,
+        foregroundColor: context.eiBody,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),

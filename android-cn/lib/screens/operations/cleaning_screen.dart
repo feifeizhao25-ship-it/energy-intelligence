@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_theme.dart';
 import '../../services/api_service.dart';
 
 class CleaningScreen extends StatefulWidget {
@@ -107,7 +108,7 @@ class _CleaningScreenState extends State<CleaningScreen> {
               '日积灰率',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF0F172A),
+                color: context.eiStrong,
               ),
             ),
             SizedBox(height: 8),
@@ -127,7 +128,7 @@ class _CleaningScreenState extends State<CleaningScreen> {
               '单次清洗成本 (元)',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF0F172A),
+                color: context.eiStrong,
               ),
             ),
             SizedBox(height: 8),
@@ -147,7 +148,7 @@ class _CleaningScreenState extends State<CleaningScreen> {
               '日均发电收益 (元)',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF0F172A),
+                color: context.eiStrong,
               ),
             ),
             SizedBox(height: 8),
@@ -268,7 +269,7 @@ class _CleaningScreenState extends State<CleaningScreen> {
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 15,
-                  color: Color(0xFF0F172A),
+                  color: context.eiStrong,
                 ),
               ),
               SizedBox(height: 12),
@@ -355,7 +356,7 @@ class _CleaningScreenState extends State<CleaningScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(label, style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+          Text(label, style: TextStyle(fontSize: 11, color: context.eiMuted)),
           SizedBox(height: 6),
           Text(
             value,

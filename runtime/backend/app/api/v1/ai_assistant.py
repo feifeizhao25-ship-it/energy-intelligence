@@ -67,6 +67,7 @@ def _style_for(style: Optional[str], market: str) -> str:
 
 
 def _structured(answer: str, hits: list, market: str, style: Optional[str]) -> dict:
+    answer = grounding.mark_expired(answer, _today(), market)
     sources = _evidence_for(answer, hits, market).get("sources", [])
     return structure_answer(answer, market, sources, _style_for(style, market), limitations=_AI_LIMITATIONS if market != "global" else list(_AI_LIMITATIONS_EN))
 
@@ -114,7 +115,7 @@ def _finish_answer(message: str, hits: list, market: str) -> tuple:
     fixed no-source reply, status on line 1); general explanations carry ``grounding.status`` for the client to show."""
     today = _today()
     expired = grounding.date_check(message, today)
-    return message + grounding.time_note(expired, today, market), expired
+    return grounding.mark_expired(message, today, market) + grounding.time_note(expired, today, market), expired
 
 
 _AI_LIMITATIONS_EN = ["AI-generated content is meant for checking methods and sources; verify key figures yourself."]
