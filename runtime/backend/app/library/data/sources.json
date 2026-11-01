@@ -10,7 +10,15 @@
   "ember-energy.org",
   "gov.uk",
   "ec.europa.eu",
-  "irs.gov"
+  "irs.gov",
+  "courtlistener.com",
+  "mcguirewoods.com",
+  "dcceew.gov.au",
+  "gesetze-im-internet.de",
+  "rijksoverheid.nl",
+  "business.gov.nl",
+  "pmindia.gov.in",
+  "apec.org"
  ],
  "watch": {
   "cn": [

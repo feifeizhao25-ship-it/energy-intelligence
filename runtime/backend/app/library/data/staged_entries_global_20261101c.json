@@ -92,15 +92,16 @@
   {
    "id": "en-intl-s03",
    "title": "US wind and solar tax credits: the 4 July 2026 start-of-construction deadline has passed, and the IRS notice on how to prove it was vacated by a court",
-   "summary": "Under the OBBBA, wind and solar facilities placed in service after 31 December 2027 lose the §45Y/§48E credits unless construction began before 5 July 2026. IRS Notice 2025-42 narrowed how to prove a start of construction; a federal district court vacated that notice on 6 June 2026, according to law-firm reports.",
+   "summary": "Under the OBBBA, wind and solar facilities placed in service after 31 December 2027 lose the 45Y/48E credits unless construction began on or before 4 July 2026. On 6 June 2026 the U.S. District Court for the District of Columbia vacated IRS Notice 2025-42 in full and sent it back to the IRS; the court's memorandum opinion was read for this entry.",
    "points": [
-    "The OBBBA ends the §45Y production credit and §48E investment credit for applicable wind and solar facilities placed in service after 31 December 2027; the placed-in-service deadline does not apply to facilities whose construction began before 5 July 2026 (IRS Notice 2025-42, section 1).",
-    "IRS Notice 2025-42 (15 August 2025) made the Physical Work Test the main way to show construction began and kept the Five Percent Safe Harbor only for low-output solar (1.5 MW AC or less).",
-    "A law-firm alert (McGuireWoods, 8 June 2026) reports that on 6 June 2026 the U.S. District Court for the District of Columbia vacated Notice 2025-42 in full in Oregon Environmental Council v. IRS, restoring the Five Percent Safe Harbor for wind and larger solar; it also notes an appeal or new IRS guidance was possible.",
-    "Later developments (appeal, stay, new guidance) were not verified for this entry."
+    "The OBBBA ends the Section 45Y production credit and Section 48E investment credit for applicable wind and solar facilities placed in service after 31 December 2027, unless construction began on or before 4 July 2026 (court opinion, Background; IRS Notice 2025-42, section 1).",
+    "IRS Notice 2025-42 (issued 15 August 2025) made the Physical Work Test the only way to show construction began for wind and most solar, and kept the Five Percent Safe Harbor only for solar projects of 1.5 MW or less (opinion, Background, citing Notice sections 3.01 and 6.02).",
+    "In Oregon Environmental Council v. IRS, No. 25-4400 (CKK), the court held the Notice arbitrary and capricious under the Administrative Procedure Act because the IRS gave no reasoned explanation for removing the safe harbor and did not weigh reliance on the earlier policy (opinion, Part III.E).",
+    "The remedy was to vacate Notice 2025-42 in full, not only for the plaintiffs, and remand to the IRS; two of the seven plaintiffs (HUC and OPC) were dismissed (opinion, Parts III.F and IV).",
+    "The court noted that the IRS could adopt new guidance on remand and that appeal rights would extend past 4 July 2026. Events after 6 June 2026 were not verified from the docket for this entry."
    ],
-   "plain_tip": "In plain terms: the start-building deadline for the old US wind and solar credit rules was 4 July 2026; how projects could prove they met it was disputed in court.",
-   "caution": "This is a short summary, not tax or legal advice. The legal status after the court decision may have changed; check the court docket and IRS guidance and ask a qualified adviser.",
+   "plain_tip": "In plain terms: the start-building deadline for the old US wind and solar credit rules was 4 July 2026; a federal court struck down the IRS notice that tightened how to prove it, and the IRS may issue new guidance.",
+   "caution": "This is a short summary of a court opinion, not tax or legal advice. The legal status may have changed after the opinion (appeal, new IRS guidance); check the court docket and IRS guidance and ask a qualified adviser.",
    "category": "Policy",
    "tags": [
     "IRS Notice 2025-42",
@@ -118,23 +119,27 @@
     "was the IRS safe harbor notice vacated"
    ],
    "source": {
-    "title": "Federal Court Vacates IRS Notice 2025-42, Restores 5% Safe Harbor for Wind and Solar Projects",
-    "publisher": "McGuireWoods LLP (law-firm client alert); statutory facts from IRS Notice 2025-42",
-    "doc_no": "Oregon Environmental Council v. IRS, No. 1:25-cv-04400 (D.D.C. 6 June 2026); IRS Notice 2025-42",
-    "url": "https://www.mcguirewoods.com/client-resources/alerts/2026/6/federal-court-vacates-irs-notice-2025-42-restores-5-safe-harbor-for-wind-and-solar-projects/",
-    "url_note": "Statutory facts: https://www.irs.gov/pub/irs-drop/n-25-42.pdf (official, sections 1,3,6,7 read)",
-    "read_scope": "Alert full text; IRS notice sections 1,2,3,6,7",
-    "read_via": "Fetched directly on 2026-11-01",
-    "tier": "B",
-    "license_note": "Short attributed summary of facts; no reproduction of the alert text."
+    "title": "Memorandum Opinion, Oregon Environmental Council v. Internal Revenue Service, Case 1:25-cv-04400-CKK, Document 50 (filed 6 June 2026, 57 pages)",
+    "publisher": "United States District Court for the District of Columbia (Judge Colleen Kollar-Kotelly)",
+    "doc_no": "No. 1:25-cv-04400 (CKK), ECF No. 50, 6 June 2026",
+    "url": "https://storage.courtlistener.com/recap/gov.uscourts.dcd.287847/gov.uscourts.dcd.287847.50.0.pdf",
+    "url_note": "Docket: https://www.courtlistener.com/docket/72054098/oregon-environmental-council-v-internal-revenue-service/ (blocked to the fetcher). A PacerMonitor snapshot dated 16 June 2026 shows the case as terminated on 8 June 2026.",
+    "read_scope": "Full opinion, all 57 pages: Background, Analysis (standing, merits, remedy) and Conclusion",
+    "read_via": "PDF of ECF No. 50 downloaded from the CourtListener RECAP archive and read with pdftotext on 2026-11-01; the text is identical to the copy hosted by McGuireWoods LLP",
+    "tier": "A",
+    "license_note": "US federal court opinion (public record); short attributed summary of facts and holdings."
    },
    "status": "Contested",
-   "status_note": "Vacatur reported by law firms; official court document and subsequent history not read. Needs a primary court source before going live.",
+   "status_note": "Primary text read: the opinion vacates the Notice and remands to the IRS. Whether an appeal was filed or new IRS guidance issued after 6 June 2026 could not be checked on the docket (CourtListener blocked); secondary reports say no timely appeal was seen. A reviewer should open the live docket before approving.",
    "publish_date": "2026-06-08",
    "effective_date": "2025-09-02",
    "retrieved_at": "2026-11-01",
    "review_status": "Pending review",
-   "second_source_needed": "Court opinion from the official docket (D.D.C. 1:25-cv-04400) not read; law-firm alert is tier B."
+   "second_source": {
+    "title": "Federal Court Vacates IRS Notice 2025-42, Restores 5% Safe Harbor for Wind and Solar Projects",
+    "publisher": "McGuireWoods LLP (law-firm client alert)",
+    "url": "https://www.mcguirewoods.com/client-resources/alerts/2026/6/federal-court-vacates-irs-notice-2025-42-restores-5-safe-harbor-for-wind-and-solar-projects/"
+   }
   }
  ]
 }

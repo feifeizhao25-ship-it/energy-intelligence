@@ -1,0 +1,14 @@
+{
+ "note": "Held-out paraphrases written after the entries; they are NOT the entries' own probes. Used by test_global_multicountry_20261101 to pin retrieval quality over working + staged global entries.",
+ "queries": {
+  "en-intl-s03": ["court decision on the IRS notice about starting construction for solar tax credits", "can wind projects still use the five percent safe harbor after the ruling"],
+  "en-intl-s04": ["US power plants planned to come online in 2026 by technology", "how many gigawatts of utility solar will America add this year"],
+  "en-intl-s05": ["UK scheme where energy suppliers pay for solar electricity sent to the grid", "Ofgem export tariff for rooftop solar owners in Britain"],
+  "en-intl-s06": ["Europe's binding share of renewable energy by 2030", "revised renewable energy directive 2023 transposition and permitting"],
+  "en-intl-s07": ["German rule limiting solar export to 60 percent of capacity", "EEG paragraph 51 negative spot prices payment reduced to zero"],
+  "en-intl-s08": ["Australian government discount on home batteries and how it changes with size", "STC factor stepping down every six months for batteries"],
+  "en-intl-s09": ["Japan electricity mix goals for fiscal 2040 including nuclear and solar", "METI energy plan perovskite solar 20 GW"],
+  "en-intl-s10": ["Indian government subsidy for installing rooftop solar at home", "Rs 78,000 central financial assistance solar 3 kW"],
+  "en-intl-s11": ["Dutch solar owners lose the offset scheme in 2027", "minimum payment from supplier for solar power fed back in the Netherlands"]
+ }
+}
