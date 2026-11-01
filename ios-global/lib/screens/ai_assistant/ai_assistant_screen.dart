@@ -26,9 +26,11 @@ class _Msg {
   final String text;
   final bool isUser;
   final Map<String, dynamic>? structured;
+  /// `{status, source_count}` from the server: sourced | no_source | no_source_refused. Shown above the answer.
+  final Map<String, dynamic>? grounding;
   final String? error; // generic | quota | login
   final String? retryText;
-  const _Msg({required this.text, required this.isUser, this.structured, this.error, this.retryText});
+  const _Msg({required this.text, required this.isUser, this.structured, this.grounding, this.error, this.retryText});
 }
 
 class AiAssistantScreen extends StatefulWidget {
@@ -68,8 +70,14 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
       final answer = '${result['message'] ?? ''}'.trim();
       if (answer.isEmpty) throw StateError('empty answer');
       final structured = result['structured'];
+      final grounding = result['grounding'];
       setState(() {
-        _messages.add(_Msg(text: answer, isUser: false, structured: structured is Map ? Map<String, dynamic>.from(structured) : null));
+        _messages.add(_Msg(
+          text: answer,
+          isUser: false,
+          structured: structured is Map ? Map<String, dynamic>.from(structured) : null,
+          grounding: grounding is Map ? Map<String, dynamic>.from(grounding) : null,
+        ));
         _busy = false;
       });
     } catch (e) {
@@ -219,7 +227,45 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: scheme.outlineVariant),
       ),
-      child: m.structured == null ? SelectableText(cleanAnswerText(m.text), style: const TextStyle(fontSize: 14, height: 1.5)) : _answer(context, m),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        // The grounding status comes first, not as a footnote: the reader must know whether anything backs the answer.
+        if (m.grounding != null) _groundingBanner(context, m.grounding!),
+        m.structured == null ? SelectableText(cleanAnswerText(m.text), style: const TextStyle(fontSize: 14, height: 1.5)) : _answer(context, m),
+      ]),
+    );
+  }
+
+  Widget _groundingBanner(BuildContext context, Map<String, dynamic> g) {
+    final scheme = Theme.of(context).colorScheme;
+    final status = '${g['status'] ?? ''}';
+    final n = (g['source_count'] is num) ? (g['source_count'] as num).toInt() : 0;
+    final String text;
+    final IconData icon;
+    final Color color;
+    if (status == 'sourced') {
+      text = 'Based on $n source${n == 1 ? '' : 's'} from our library';
+      icon = Icons.verified_outlined;
+      color = scheme.primary;
+    } else if (status == 'no_source_refused') {
+      text = 'Not answered: our library has no source for this question.';
+      icon = Icons.block;
+      color = scheme.error;
+    } else {
+      text = 'No library source behind this answer. Check any figures yourself.';
+      icon = Icons.info_outline;
+      color = scheme.tertiary;
+    }
+    return Container(
+      key: const Key('groundingStatus'),
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(color: color.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(10)),
+      child: Row(children: [
+        Icon(icon, size: 16, color: color),
+        const SizedBox(width: 6),
+        Expanded(child: Text(text, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: color, height: 1.3))),
+      ]),
     );
   }
 
