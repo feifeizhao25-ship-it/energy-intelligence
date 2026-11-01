@@ -79,12 +79,13 @@ def test_stale_flags_expiring_rag_sources_per_edition(tmp_path):
 
 def test_staged_entries_pending_and_never_visible():
     staged = store.load_staged("cn")
-    assert {e["id"] for e in staged} == {"en-lib-s01", "en-lib-s02", "en-lib-s03"}
+    assert {e["id"] for e in staged} >= {"en-lib-s01", "en-lib-s02", "en-lib-s03"}  # 2026-11-01 又加了 s04/s05（见 test_research_c_20261101）
     visible = {e["id"] for e in store.annotated("cn", date(2026, 11, 1), include_hidden=True)}
     assert not visible & {e["id"] for e in staged}
     for e in staged:
-        assert e["review_status"] == "待审核" and e["source"]["url"].startswith("https://") and e["source"]["tier"] == "A"
-    assert store.load_staged("global") == []
+        assert e["review_status"] == "待审核" and e["source"]["url"].startswith("https://") and e["source"]["tier"] in ("A", "B")
+    assert {e["id"] for e in store.load_staged("global")} == {"en-intl-s01", "en-intl-s02", "en-intl-s03"}  # 国际版暂存候选，同样待审核且不可见
+    assert all(e["review_status"] == "Pending review" for e in store.load_staged("global"))
 
 
 def test_promote_requires_listed_reviewer_and_stays_pending(monkeypatch, tmp_path):

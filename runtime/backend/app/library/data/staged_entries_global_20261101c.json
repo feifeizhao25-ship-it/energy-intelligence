@@ -1,0 +1,140 @@
+{
+ "schema_version": 1,
+ "library": "energy-global",
+ "staged": true,
+ "note": "Staged 2026-11-01 (research-c): all candidates are 'Pending review', never shown to users; going live needs review_cli promote -> approve by a named POLICY_REVIEWERS member (the list is still filled by the owner).",
+ "entries": [
+  {
+   "id": "en-intl-s01",
+   "title": "IEA: solar PV was the biggest source of energy demand growth in 2025, and battery storage additions rose about 40%",
+   "summary": "The IEA's Global Energy Review 2026 says solar PV met more than 25% of the rise in global energy demand in 2025, added a record 600 TWh of generation, and battery storage capacity additions reached almost 110 GW.",
+   "points": [
+    "Global energy demand growth slowed to 1.3% in 2025; solar PV met more than 25% of the increase, the first time a modern renewable has been the largest source of demand growth.",
+    "Solar PV generation rose by 600 TWh, the largest one-year increase by any source outside post-crisis recovery periods, covering around 70% of electricity generation growth.",
+    "Renewable capacity additions rose to a record 800 GW, of which solar was 75%; battery storage additions rose by around 40% to almost 110 GW.",
+    "Electricity demand grew nearly 3%, well over twice the rate of overall energy demand; in the EU, solar and wind reached 30% of generation, above fossil fuels for the first time."
+   ],
+   "plain_tip": "In plain terms: in 2025 solar added more new electricity than any other source, and batteries were the fastest-growing power technology.",
+   "caution": "Figures are quoted from the publisher and may be revised in later editions. For understanding the market only; not investment or trading advice.",
+   "category": "Market reports",
+   "tags": [
+    "IEA",
+    "solar PV",
+    "battery storage",
+    "electricity demand",
+    "Global Energy Review"
+   ],
+   "probes": [
+    "how much did solar grow in 2025",
+    "how fast are battery storage additions growing",
+    "what share of generation do solar and wind have in the EU"
+   ],
+   "source": {
+    "title": "Global Energy Review 2026 – Key findings",
+    "publisher": "International Energy Agency",
+    "doc_no": "Global Energy Review 2026",
+    "url": "https://www.iea.org/reports/global-energy-review-2026/key-findings",
+    "url_note": "",
+    "read_scope": "Key findings page, full text",
+    "read_via": "Fetched directly (HTTP 200), full text read on 2026-11-01",
+    "tier": "A",
+    "license_note": "IEA material is © IEA; used here as short attributed summaries of facts, no reproduction of report text or charts."
+   },
+   "status": "Current",
+   "status_note": "Annual report; replace when the next edition is published.",
+   "publish_date": "2026",
+   "effective_date": "",
+   "retrieved_at": "2026-11-01",
+   "review_status": "Pending review"
+  },
+  {
+   "id": "en-intl-s02",
+   "title": "EU CBAM definitive regime: in force since 1 January 2026 for six sectors including electricity and hydrogen",
+   "summary": "The European Commission says the CBAM definitive regime applies from 1 January 2026: EU importers above a 50-tonne threshold must become authorised CBAM declarants, buy CBAM certificates, and surrender them for embedded emissions each year.",
+   "points": [
+    "Applies from 1 January 2026 to imports of cement, iron and steel, aluminium, fertilisers, electricity and hydrogen.",
+    "Importers (or their indirect customs representatives) bringing in more than the single mass-based threshold of 50 tonnes of CBAM goods per year must apply for authorised CBAM declarant status.",
+    "The certificate price follows the EU ETS auction price (€/tonne CO2): a quarterly average in 2026 and a weekly average from 2027.",
+    "Importers declare the emissions embedded in imports and surrender the corresponding certificates each year; a carbon price already paid in the producing country can be deducted if proven."
+   ],
+   "plain_tip": "In plain terms: goods that enter the EU have to carry the same carbon price as goods made inside the EU.",
+   "caution": "This is a summary of the Commission's overview page, not legal advice; thresholds, default values and deadlines are set in the legal texts and can be amended. Check the Commission's CBAM pages before acting.",
+   "category": "Policy",
+   "tags": [
+    "CBAM",
+    "carbon border adjustment",
+    "EU ETS",
+    "carbon price"
+   ],
+   "probes": [
+    "when does the EU carbon border tax start",
+    "who has to buy CBAM certificates",
+    "which products does CBAM cover"
+   ],
+   "source": {
+    "title": "CBAM definitive regime",
+    "publisher": "European Commission, Taxation and Customs Union",
+    "doc_no": "CBAM definitive regime page",
+    "url": "https://taxation-customs.ec.europa.eu/carbon-border-adjustment-mechanism/cbam-definitive-regime_en",
+    "url_note": "",
+    "read_scope": "Page full text",
+    "read_via": "Fetched directly (HTTP 200), full text read on 2026-11-01",
+    "tier": "A",
+    "license_note": "European Commission reuse policy (CC BY 4.0 for most content); short attributed summary."
+   },
+   "status": "Current",
+   "status_note": "Certificate sales dates and surrender deadlines are on separate pages not read here; not included.",
+   "publish_date": "2026-01-01",
+   "effective_date": "2026-01-01",
+   "retrieved_at": "2026-11-01",
+   "review_status": "Pending review"
+  },
+  {
+   "id": "en-intl-s03",
+   "title": "US wind and solar tax credits: the 4 July 2026 start-of-construction deadline has passed, and the IRS notice on how to prove it was vacated by a court",
+   "summary": "Under the OBBBA, wind and solar facilities placed in service after 31 December 2027 lose the §45Y/§48E credits unless construction began before 5 July 2026. IRS Notice 2025-42 narrowed how to prove a start of construction; a federal district court vacated that notice on 6 June 2026, according to law-firm reports.",
+   "points": [
+    "The OBBBA ends the §45Y production credit and §48E investment credit for applicable wind and solar facilities placed in service after 31 December 2027; the placed-in-service deadline does not apply to facilities whose construction began before 5 July 2026 (IRS Notice 2025-42, section 1).",
+    "IRS Notice 2025-42 (15 August 2025) made the Physical Work Test the main way to show construction began and kept the Five Percent Safe Harbor only for low-output solar (1.5 MW AC or less).",
+    "A law-firm alert (McGuireWoods, 8 June 2026) reports that on 6 June 2026 the U.S. District Court for the District of Columbia vacated Notice 2025-42 in full in Oregon Environmental Council v. IRS, restoring the Five Percent Safe Harbor for wind and larger solar; it also notes an appeal or new IRS guidance was possible.",
+    "Later developments (appeal, stay, new guidance) were not verified for this entry."
+   ],
+   "plain_tip": "In plain terms: the start-building deadline for the old US wind and solar credit rules was 4 July 2026; how projects could prove they met it was disputed in court.",
+   "caution": "This is a short summary, not tax or legal advice. The legal status after the court decision may have changed; check the court docket and IRS guidance and ask a qualified adviser.",
+   "category": "Policy",
+   "tags": [
+    "IRS Notice 2025-42",
+    "OBBBA",
+    "45Y",
+    "48E",
+    "tax credit",
+    "solar",
+    "wind",
+    "court"
+   ],
+   "probes": [
+    "do new solar projects still get the US tax credit",
+    "what is the begin construction deadline for wind and solar credits",
+    "was the IRS safe harbor notice vacated"
+   ],
+   "source": {
+    "title": "Federal Court Vacates IRS Notice 2025-42, Restores 5% Safe Harbor for Wind and Solar Projects",
+    "publisher": "McGuireWoods LLP (law-firm client alert); statutory facts from IRS Notice 2025-42",
+    "doc_no": "Oregon Environmental Council v. IRS, No. 1:25-cv-04400 (D.D.C. 6 June 2026); IRS Notice 2025-42",
+    "url": "https://www.mcguirewoods.com/client-resources/alerts/2026/6/federal-court-vacates-irs-notice-2025-42-restores-5-safe-harbor-for-wind-and-solar-projects/",
+    "url_note": "Statutory facts: https://www.irs.gov/pub/irs-drop/n-25-42.pdf (official, sections 1,3,6,7 read)",
+    "read_scope": "Alert full text; IRS notice sections 1,2,3,6,7",
+    "read_via": "Fetched directly on 2026-11-01",
+    "tier": "B",
+    "license_note": "Short attributed summary of facts; no reproduction of the alert text."
+   },
+   "status": "Contested",
+   "status_note": "Vacatur reported by law firms; official court document and subsequent history not read. Needs a primary court source before going live.",
+   "publish_date": "2026-06-08",
+   "effective_date": "2025-09-02",
+   "retrieved_at": "2026-11-01",
+   "review_status": "Pending review",
+   "second_source_needed": "Court opinion from the official docket (D.D.C. 1:25-cv-04400) not read; law-firm alert is tier B."
+  }
+ ]
+}
