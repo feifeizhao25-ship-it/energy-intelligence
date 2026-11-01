@@ -689,11 +689,12 @@ def generate_docx(
     doc.add_page_break()
     _add_appendix(doc, data, metrics)
 
-    # ── 导出 ──
+    # ── 导出 ──（目录域预渲染：标题 + 页码直接写进文件，不必手动更新域）
     buf = io.BytesIO()
     doc.save(buf)
-    buf.seek(0)
-    return buf.read()
+    from app.services.docx_toc import prerender_toc
+
+    return prerender_toc(buf.getvalue())
 
 
 def _setup_heading_styles(doc):
@@ -915,7 +916,7 @@ def _add_toc_page(doc, template_info: TemplateInfo):
     fldChar2 = OxmlElement('w:fldChar')
     fldChar2.set(qn('w:fldCharType'), 'separate')
     fldChar3 = OxmlElement('w:t')
-    fldChar3.text = "右键此处 → 更新域 可生成带页码的目录"
+    fldChar3.text = ""
     fldChar4 = OxmlElement('w:fldChar')
     fldChar4.set(qn('w:fldCharType'), 'end')
     run._element.append(fldChar1)
@@ -926,22 +927,6 @@ def _add_toc_page(doc, template_info: TemplateInfo):
 
     # 打开文档时让 Word 自动更新目录页码（Word 会提示一次"更新域"）
     _enable_update_fields_on_open(doc)
-
-    # 静态章节预览 (非页码版)
-    doc.add_paragraph()
-    for i, section_name in enumerate(template_info.sections, 1):
-        p = doc.add_paragraph()
-        # 添加书签便于导航
-        run = p.add_run(f"第{i}章  {section_name}")
-        run.font.size = Pt(12)
-        _set_run_fonts(run, FONT_BODY_CN)
-
-    # 附录
-    p = doc.add_paragraph()
-    run = p.add_run("附录")
-    run.font.size = Pt(12)
-    run.font.color.rgb = RGBColor(0x88, 0x88, 0x88)
-    _set_run_fonts(run, FONT_BODY_CN)
 
     doc.add_page_break()
 
@@ -987,11 +972,14 @@ def _add_heading(doc, text: str, level: int = 1):
 
     level = max(1, min(level, 3))
     p = doc.add_paragraph(style=f"Heading {level}")
+    p.paragraph_format.keep_with_next = True
+    p.paragraph_format.keep_together = True
     run = p.add_run(text)
     _set_run_fonts(run, FONT_TITLE_CN)
     if level == 1:
-        # 下方金色装饰线
+        # 下方金色装饰线（也跟下一段连在一起，否则标题只和装饰线连着，仍会孤立在页尾）
         p2 = doc.add_paragraph()
+        p2.paragraph_format.keep_with_next = True
         r2 = p2.add_run("━" * 20)
         r2.font.size = Pt(8)
         r2.font.color.rgb = RGBColor(0xC9, 0xA9, 0x61)
@@ -1685,12 +1673,12 @@ def generate_pdf(
     style_h1 = ParagraphStyle(
         "H1", parent=styles["Heading1"],
         fontName=cn_font_bold, fontSize=fs["h1"], textColor=primary,
-        spaceAfter=sp["h1_after"], spaceBefore=sp["h1_before"],
+        spaceAfter=sp["h1_after"], spaceBefore=sp["h1_before"], keepWithNext=1,
     )
     style_h2 = ParagraphStyle(
         "H2", parent=styles["Heading2"],
         fontName=cn_font_bold, fontSize=fs["h2"], textColor=colors.HexColor("#2C3E50"),
-        spaceAfter=sp["h2_after"], spaceBefore=sp["h2_before"],
+        spaceAfter=sp["h2_after"], spaceBefore=sp["h2_before"], keepWithNext=1,
     )
     style_body = ParagraphStyle(
         "Body", parent=styles["Normal"],
