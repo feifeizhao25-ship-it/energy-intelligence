@@ -43,6 +43,8 @@ CONFIDENCE_LEVELS = ("high", "medium", "low")
 #: 无来源时的显式标注（禁止伪造来源）
 SOURCES_STATUS_NONE = "无来源"
 SOURCES_STATUS_OK = "ok"
+#: English counterpart for the international edition (the key stays machine-readable)
+SOURCES_STATUS_NONE_EN = "no sources"
 
 #: 高置信度要求的最少来源数
 HIGH_MIN_SOURCES = 3
@@ -288,7 +290,7 @@ def build_envelope(
         "as_of": as_of or date.today().isoformat(),
         "engine_version": settings.VERSION,
         "sources": list(sources),
-        "sources_status": SOURCES_STATUS_OK if sources else SOURCES_STATUS_NONE,
+        "sources_status": SOURCES_STATUS_OK if sources else (SOURCES_STATUS_NONE_EN if en else SOURCES_STATUS_NONE),
         "assumptions": list(assumptions or []),
         "calculation_trace": list(calculation_trace or []),
         "limitations": list(limitations or []),

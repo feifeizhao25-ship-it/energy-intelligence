@@ -67,9 +67,8 @@ def _style_for(style: Optional[str], market: str) -> str:
 
 
 def _structured(answer: str, hits: list, market: str, style: Optional[str]) -> dict:
-    sources = _evidence_for(answer, hits).get("sources", [])
-    return structure_answer(answer, market, sources, _style_for(style, market), limitations=_AI_LIMITATIONS if market != "global" else [
-        "AI-generated content is meant for checking methods and sources; verify key figures yourself."])
+    sources = _evidence_for(answer, hits, market).get("sources", [])
+    return structure_answer(answer, market, sources, _style_for(style, market), limitations=_AI_LIMITATIONS if market != "global" else list(_AI_LIMITATIONS_EN))
 
 
 def _grounded_prompt(base_prompt: str, hits: list, market: str, style: Optional[str] = None) -> str:
@@ -103,7 +102,7 @@ def _no_source_payload(market: str, style: Optional[str]) -> dict:
     return {
         "message": message,
         "ai_metadata": {"grounding": "no_source", "model_called": False},
-        "evidence": _evidence_for("", []),
+        "evidence": _evidence_for("", [], market),
         "sources": [],
         "structured": _structured(message, [], market, style),
         "grounding": _grounding([], "no_source_refused"),
@@ -118,9 +117,21 @@ def _finish_answer(message: str, hits: list, market: str) -> tuple:
     return message + grounding.time_note(expired, today, market), expired
 
 
-def _evidence_for(answer: str, hits: list) -> dict:
-    """证据封装使用与生成时相同的检索结果（不再事后另行检索）。"""
+_AI_LIMITATIONS_EN = ["AI-generated content is meant for checking methods and sources; verify key figures yourself."]
+
+
+def _evidence_for(answer: str, hits: list, market: str = "cn") -> dict:
+    """证据封装使用与生成时相同的检索结果（不再事后另行检索）。
+
+    International market: the envelope's own text (confidence reason, verification label, limitations,
+    sources status) is English; the domestic text is unchanged."""
+    if market == "global":
+        return envelope_from_rag(answer, hits, limitations=list(_AI_LIMITATIONS_EN), lang="en")
     return envelope_from_rag(answer, hits, limitations=_AI_LIMITATIONS)
+
+
+def _ai_unavailable(market: str) -> str:
+    return "The AI service is temporarily unavailable. Please try again later." if market == "global" else "AI 服务暂时不可用，请稍后重试"
 
 
 class MobileChatRequest(BaseModel):
@@ -221,7 +232,7 @@ async def chat(
             yield "data: [DONE]\n\n"
         return StreamingResponse(refusal_stream(), media_type="text/event-stream", headers={"X-Accel-Buffering": "no"})
     prompt = _grounded_prompt(SYSTEM_PROMPT if market == "global" else CN_SYSTEM_PROMPT, hits, market, style)
-    sources = _evidence_for("", hits)["sources"]
+    sources = _evidence_for("", hits, market)["sources"]
 
     async def stream():
         # 先下发本次回答所依据的来源，前端可按 [S1] 编号渲染引用
@@ -263,7 +274,7 @@ async def chat_json(
         market = await _market_for_user(user_id, db)
         blocked = blocked_model_text(body.message, market)
         if blocked:
-            return {"message": blocked, "ai_metadata": {"blocked": "bottom_line"}, "evidence": _evidence_for("", [])}
+            return {"message": blocked, "ai_metadata": {"blocked": "bottom_line"}, "evidence": _evidence_for("", [], market)}
         assert_product_budget(user_id, market)
         hits = _retrieve(body.message, market)
         if not hits and grounding.is_policy_question(body.message):
@@ -273,12 +284,12 @@ async def chat_json(
     except BudgetExceeded as error:
         raise HTTPException(status_code=429, detail={"error": "PRODUCT_BUDGET_EXCEEDED", "message": str(error)}) from error
     except RuntimeError as error:
-        raise HTTPException(status_code=503, detail="AI 服务暂时不可用，请稍后重试") from error
+        raise HTTPException(status_code=503, detail=_ai_unavailable(market)) from error
     await consume_ai_quota(user, db)
     _charge_cn(user_id, market)
     message = _scrub_citations(enforce_bottom_line(result["content"], market=market), len(hits))
     structured = _structured(message, hits, market, body.style)
-    evidence = _evidence_for(message, hits)
+    evidence = _evidence_for(message, hits, market)
     message, expired = _finish_answer(message, hits, market)
     return {
         "message": message,
@@ -307,25 +318,25 @@ async def analyze(
         market = await _market_for_user(user_id, db)
         blocked = blocked_model_text(query, market)
         if blocked:
-            return {"analysis": blocked, "ai_metadata": {"blocked": "bottom_line"}, "evidence": _evidence_for("", [])}
+            return {"analysis": blocked, "ai_metadata": {"blocked": "bottom_line"}, "evidence": _evidence_for("", [], market)}
         assert_product_budget(user_id, market)
         hits = _retrieve(query, market)
         if not hits and grounding.is_policy_question(query):
             return {"analysis": grounding.no_source_reply(market), "ai_metadata": {"grounding": "no_source", "model_called": False},
-                    "evidence": _evidence_for("", []), "grounding": _grounding([], "no_source_refused")}
+                    "evidence": _evidence_for("", [], market), "grounding": _grounding([], "no_source_refused")}
         prompt = _grounded_prompt(SYSTEM_PROMPT if market == "global" else CN_SYSTEM_PROMPT, hits, market)
         result = await ai_assistant.chat_openai_with_metadata(query, prompt, market=market)
     except BudgetExceeded as error:
         raise HTTPException(status_code=429, detail={"error": "PRODUCT_BUDGET_EXCEEDED", "message": str(error)}) from error
     except RuntimeError as error:
-        raise HTTPException(status_code=503, detail="AI 服务暂时不可用，请稍后重试") from error
+        raise HTTPException(status_code=503, detail=_ai_unavailable(market)) from error
     await consume_ai_quota(user, db)
     _charge_cn(user_id, market)
     analysis, expired = _finish_answer(enforce_bottom_line(result["content"], market=market), hits, market)
     return {
         "analysis": analysis,
         "ai_metadata": result["metadata"],
-        "evidence": _evidence_for(result["content"], hits),
+        "evidence": _evidence_for(result["content"], hits, market),
         "grounding": _grounding(hits),
         "time_check": {"today": _today().isoformat(), "expired_dates": expired},
     }
@@ -502,7 +513,7 @@ async def ask(
                 f"[S{i}] {hit.title}（{hit.metadata.get('published_at') or hit.metadata.get('year')}）"
                 for i, hit in enumerate(hits, 1)
             )
-        return {"answer": answer, "sources": _evidence_for(answer, hits).get("sources", []), "model": None,
+        return {"answer": answer, "sources": _evidence_for(answer, hits, market).get("sources", []), "model": None,
                 "structured": _structured(answer, hits, market, body.style)}
     try:
         assert_product_budget(user_id, market)
@@ -511,11 +522,11 @@ async def ask(
     except BudgetExceeded as error:
         raise HTTPException(status_code=429, detail={"error": "PRODUCT_BUDGET_EXCEEDED", "message": str(error)}) from error
     except RuntimeError as error:
-        raise HTTPException(status_code=503, detail="AI 服务暂时不可用，请稍后重试") from error
+        raise HTTPException(status_code=503, detail=_ai_unavailable(market)) from error
     _charge_cn(user_id, market)
     answer = _scrub_citations(enforce_bottom_line(result["content"], market=market), len(hits))
     structured = _structured(answer, hits, market, body.style)
     shown, expired = _finish_answer(answer, hits, market)
-    return {"answer": shown, "sources": _evidence_for(answer, hits).get("sources", []), "model": result["metadata"],
+    return {"answer": shown, "sources": _evidence_for(answer, hits, market).get("sources", []), "model": result["metadata"],
             "structured": structured, "grounding": _grounding(hits),
             "time_check": {"today": _today().isoformat(), "expired_dates": expired}}

@@ -64,6 +64,9 @@ app.add_middleware(
 )
 
 
+from starlette.exceptions import HTTPException as StarletteHTTPException  # noqa: E402
+
+
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     """R18 红线：参数校验错误必须带用户可读 message。"""
@@ -74,14 +77,35 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         if ctx:
             err["ctx"] = {k: str(v) for k, v in ctx.items()}
         safe_errors.append(err)
+    from app.core.market import request_market
+    message = "请求参数无效"
+    if request_market(request) == "global":
+        from app.services.market_localization import localize_error_text
+        message = localize_error_text(message, 422)
     return JSONResponse(
         status_code=422,
         content={
             "code": 422,
-            "message": "请求参数无效",
+            "message": message,
             "error": {"details": safe_errors},
         },
     )
+
+
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler_by_market(request: Request, exc: StarletteHTTPException):
+    """International callers (X-App-Market: global) never get Chinese error text: billing, AI and other routes raise
+    Chinese ``detail`` strings, which are answered with the English counterpart (or a generic English line)."""
+    from fastapi.exception_handlers import http_exception_handler
+    from app.core.market import request_market
+    if request_market(request) == "global":
+        from app.services.market_localization import localize_error_detail
+        exc = StarletteHTTPException(
+            status_code=exc.status_code,
+            detail=localize_error_detail(exc.detail, exc.status_code),
+            headers=getattr(exc, "headers", None),
+        )
+    return await http_exception_handler(request, exc)
 
 
 async def _probe_database() -> str:

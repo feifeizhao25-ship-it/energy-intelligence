@@ -21,6 +21,21 @@ except ImportError:  # 注册表从其他工作目录加载本文件时，补后
     from app.utils.financial_utils import build_solar_cashflows, calc_irr, calc_npv
 
 
+# International edition (params["market"] == "global"): English at the source, international references only
+# (the Chinese construction-project evaluation guideline is China-only).
+GLOBAL_REFERENCES = [
+    "NREL ATB financial assumptions (discount rate, project life)",
+    "Brealey, Myers, Allen: Principles of Corporate Finance (discounted cash flow)",
+]
+GLOBAL_FORMULA_REF = "FM-002 cash flows"
+GLOBAL_VALID_RANGE = "At least two cash-flow periods"
+GLOBAL_ASSUMPTIONS = ["Scope is defined by the references; no further guarantee is given."]
+
+
+def _is_global(params: Dict[str, Any]) -> bool:
+    return str(params.get("market") or "").lower() == "global"
+
+
 def _payback_years(cashflows: List[float], rate: float = 0.0) -> Optional[float]:
     """累计现金流（可选折现）首次转正的年份，年内线性插值；未回收返回 None。"""
     cumulative = 0.0
@@ -53,6 +68,7 @@ class IrrNpvSkill:
     ]
 
     async def execute(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        gl = _is_global(params)
         cashflows = params.get("cashflows")
         engine = "financial_utils.calc_irr/calc_npv"
         if cashflows is None:
@@ -60,7 +76,7 @@ class IrrNpvSkill:
             engine = "financial_utils.build_solar_cashflows"
         cashflows = [float(cf) for cf in cashflows]
         if len(cashflows) < 2:
-            raise ValueError("FM-002 至少需要两期现金流")
+            raise ValueError("FM-002 needs at least two cash-flow periods" if gl else "FM-002 至少需要两期现金流")
 
         discount_rate = float(params.get("discount_rate", 0.08))
 
@@ -73,14 +89,15 @@ class IrrNpvSkill:
             "discount_rate": discount_rate,
             "cashflows": cashflows,
             "engine": engine,
-            "references": list(self.references),
+            "references": list(GLOBAL_REFERENCES if gl else self.references),
         }
 
     def _cashflows_from_project(self, params: Dict[str, Any]) -> List[float]:
         """由光伏项目参数生成股权现金流（复用 build_solar_cashflows）。"""
         capacity_mw = params.get("capacity_mw")
         if capacity_mw is None:
-            raise ValueError("FM-002 需要 cashflows，或 capacity_mw 等项目参数")
+            raise ValueError("FM-002 needs cashflows, or project parameters such as capacity_mw"
+                             if _is_global(params) else "FM-002 需要 cashflows，或 capacity_mw 等项目参数")
         return build_solar_cashflows(
             capacity_mw=float(capacity_mw),
             capex_per_w=float(params.get("capex_per_w", 1.0)),
@@ -106,6 +123,17 @@ def _install_contract(cls, formula_ref, valid_range):
         root = str(Path(__file__).resolve().parents[3])
         if root not in sys.path:
             sys.path.insert(0, root)
+        from skill_contract import attach
+        if _is_global(params):
+            return attach(
+                data,
+                skill_id=self.skill_id,
+                formula_ref=GLOBAL_FORMULA_REF,
+                inputs=params,
+                assumptions=list(GLOBAL_ASSUMPTIONS),
+                sources=list(GLOBAL_REFERENCES),
+                valid_range=GLOBAL_VALID_RANGE,
+            )
         from skill_contract import attach
         return attach(
             data,

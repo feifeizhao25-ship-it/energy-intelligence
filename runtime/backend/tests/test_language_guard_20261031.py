@@ -30,13 +30,25 @@ async def test_international_client_with_chinese_in_json_is_counted_and_response
     assert r.status_code == 200
     base = lg.snapshot()["global_json_responses"]
     assert base >= 1
-    # a 404 detail in Chinese on an international client is exactly what the counter exists to find
-    miss = await client.get("/api/v1/finance/data-sources/does-not-exist", headers={**auth_headers, **G})
-    assert miss.status_code == 404
+    # Chinese error text no longer reaches international clients (B10), so the counter's canary is a body that still
+    # carries Chinese: a route that returns it directly.
+    from fastapi import Response
+    from app.main import app
+
+    @app.get("/__lg_test_cjk_body")
+    async def _cjk_body():
+        return Response(content=json.dumps({"message": "用户不存在"}, ensure_ascii=False), media_type="application/json")
+
+    miss = await client.get("/__lg_test_cjk_body", headers={**auth_headers, **G})
+    assert miss.status_code == 200
     snap = lg.snapshot()
     assert snap["global_json_responses"] == base + 1 and snap["with_cjk"] >= 1
-    assert any(p["path"].endswith("/does-not-exist") for p in snap["top_paths"])
-    assert "不存在" in miss.json()["detail"]  # the body is passed through unchanged
+    assert any(p["path"].endswith("/__lg_test_cjk_body") for p in snap["top_paths"])
+    assert "不存在" in miss.json()["message"]  # the body is passed through unchanged
+
+    # ...and a Chinese HTTPException detail is answered in English for an international client
+    nf = await client.get("/api/v1/finance/data-sources/does-not-exist", headers={**auth_headers, **G})
+    assert nf.status_code == 404 and not any("\u4e00" <= ch <= "\u9fff" for ch in nf.text)
 
 
 @pytest.mark.asyncio

@@ -53,9 +53,10 @@ async def _run_skill_async(
     try:
         from app.skills.param_adapter_v2 import adapt_params
 
-        result = await get_registry().execute(
-            skill_id, adapt_params(skill_id, params)
-        )
+        run_params = adapt_params(skill_id, params)
+        if market == "global":
+            run_params["market"] = market
+        result = await get_registry().execute(skill_id, run_params)
         failed = result.get("status") == SkillStatus.FAILED.value
         data = result.get("data")
         error = result.get("error") if failed else None
@@ -327,7 +328,8 @@ async def execute_skill(
     # P0 修复: 工程参数自动适配为 Skill 金融参数
     from app.skills.param_adapter_v2 import adapt_params
     adapted_params = adapt_params(skill_id, params)
-    if skill_id == "RA-001":
+    if skill_id == "RA-001" or is_gl:
+        # the international market is passed to every skill so it can write English at the source (FM-001/FM-002)
         adapted_params["market"] = req_market
     
     start_time = time.time()
