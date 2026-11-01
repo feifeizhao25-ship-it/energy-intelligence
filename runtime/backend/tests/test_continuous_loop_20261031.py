@@ -84,7 +84,7 @@ def test_staged_entries_pending_and_never_visible():
     assert not visible & {e["id"] for e in staged}
     for e in staged:
         assert e["review_status"] == "待审核" and e["source"]["url"].startswith("https://") and e["source"]["tier"] in ("A", "B")
-    assert {e["id"] for e in store.load_staged("global")} == {"en-intl-s01", "en-intl-s02", "en-intl-s03"}  # 国际版暂存候选，同样待审核且不可见
+    assert {e["id"] for e in store.load_staged("global")} >= {"en-intl-s01", "en-intl-s02", "en-intl-s03"}  # 国际版暂存候选，同样待审核且不可见（2026-11-01 又加了 s04–s11，见 test_global_multicountry_20261101）
     assert all(e["review_status"] == "Pending review" for e in store.load_staged("global"))
 
 

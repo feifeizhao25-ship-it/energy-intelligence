@@ -1,0 +1,361 @@
+{
+ "schema_version": 1,
+ "library": "energy-global",
+ "staged": true,
+ "note": "Staged 2026-11-01 (research-c phase 3): multi-country candidates from official sources only; all 'Pending review', never shown to users; going live needs review_cli promote -> approve by a named POLICY_REVIEWERS member.",
+ "entries": [
+  {
+   "id": "en-intl-s04",
+   "title": "United States: developers plan a record 86 GW of new capacity in 2026",
+   "summary": "EIA's generator inventory shows US developers planning 86 GW of new utility-scale capacity for 2026, more than any year on record if it all happens.",
+   "points": [
+    "Planned 2026 additions: 43.4 GW solar (51%), 24 GW battery storage (28%), 11.8 GW wind (14%) and 6.3 GW natural gas.",
+    "For comparison, EIA reports 53 GW of new capacity in 2025 in total, with 27.2 GW solar and a record 15 GW of battery storage.",
+    "More than half of the planned solar is in four states: Texas (40%), Arizona (6%), California (6%) and Michigan (5%).",
+    "These are plans reported by developers, not installed capacity; projects slip or are cancelled."
+   ],
+   "plain_tip": "In plain terms: the pipeline for 2026 is mostly solar and batteries, but a pipeline is not a finished build.",
+   "caution": "Summary of an official publication, not legal, tax or investment advice. Rules and figures change; check the official page and local rules before deciding.",
+   "category": "Market data",
+   "tags": [
+    "United States",
+    "EIA",
+    "capacity additions",
+    "planned capacity",
+    "generator inventory"
+   ],
+   "probes": [
+    "how much new power capacity is the US adding in 2026",
+    "how much solar and battery storage are US developers planning this year",
+    "record US capacity additions solar share"
+   ],
+   "source": {
+    "title": "New U.S. electric generating capacity expected to reach a record high in 2026",
+    "publisher": "U.S. Energy Information Administration (EIA)",
+    "doc_no": "Today in Energy, 20 February 2026",
+    "url": "https://www.eia.gov/todayinenergy/detail.php?id=67205",
+    "url_note": "",
+    "read_scope": "Full article text",
+    "read_via": "Fetched directly (HTTP 200), full text read on 2026-11-01",
+    "tier": "A",
+    "license_note": "US federal government work; short attributed summary of facts."
+   },
+   "status": "Planned",
+   "status_note": "Plans as of the December 2025 inventory; EIA publishes monthly updates, so later figures may differ.",
+   "publish_date": "2026-02-20",
+   "effective_date": "2026-02-20",
+   "retrieved_at": "2026-11-01",
+   "review_status": "Pending review"
+  },
+  {
+   "id": "en-intl-s05",
+   "title": "Great Britain: the Smart Export Guarantee pays small solar owners for exported power",
+   "summary": "Under Ofgem's Smart Export Guarantee (SEG), some electricity suppliers must pay small generators for low-carbon electricity they export to the grid. Each supplier sets its own rate, and the rate must be above zero.",
+   "points": [
+    "The SEG launched on 1 January 2020 and is government-backed.",
+    "It covers installations up to 5 MW (50 kW for micro-CHP) using solar PV, wind, micro-CHP, hydro or anaerobic digestion, located in Great Britain.",
+    "SEG licensees (the suppliers) decide the rate, contract length and other terms. Payments are based on export meter readings.",
+    "Because rates differ by supplier, Ofgem tells generators to shop around."
+   ],
+   "plain_tip": "In plain terms: if you export solar power in Great Britain, check several SEG tariffs; they are not all the same.",
+   "caution": "Summary of an official publication, not legal, tax or investment advice. Rules and figures change; check the official page and local rules before deciding. This entry does not list current tariffs.",
+   "category": "Policy",
+   "tags": [
+    "United Kingdom",
+    "Great Britain",
+    "SEG",
+    "Ofgem",
+    "solar",
+    "export tariff"
+   ],
+   "probes": [
+    "do I get paid for exporting solar electricity in the UK",
+    "what is the smart export guarantee",
+    "who has to offer an SEG tariff"
+   ],
+   "source": {
+    "title": "Smart Export Guarantee (SEG)",
+    "publisher": "Ofgem",
+    "doc_no": "Scheme page",
+    "url": "https://www.ofgem.gov.uk/environmental-and-social-schemes/smart-export-guarantee-seg",
+    "url_note": "",
+    "read_scope": "Page full text",
+    "read_via": "Fetched directly (HTTP 200), full text read on 2026-11-01",
+    "tier": "A",
+    "license_note": "Ofgem content is published under the Open Government Licence v3.0; short attributed summary."
+   },
+   "status": "In force",
+   "status_note": "Scheme page read in full; the page itself carries no revision date. Supplier tariffs were not checked.",
+   "publish_date": "2020-01-01",
+   "effective_date": "2020-01-01",
+   "retrieved_at": "2026-11-01",
+   "review_status": "Pending review"
+  },
+  {
+   "id": "en-intl-s06",
+   "title": "European Union: the 2030 renewable energy target is at least 42.5%, aiming for 45%",
+   "summary": "The revised Renewable Energy Directive (EU) 2023/2413 sets a binding EU-wide target of at least 42.5% renewable energy in gross final consumption by 2030, with an aim of 45%.",
+   "points": [
+    "The amending directive entered into force on 20 November 2023, with 18 months to transpose most provisions and a shorter deadline of July 2024 for some permitting rules.",
+    "It adds sector targets for heating and cooling, transport, industry and buildings, and binding targets for renewable fuels of non-biological origin.",
+    "It also speeds up permitting, for example through shorter approval periods and 'renewables acceleration areas'.",
+    "The Commission's page states that renewables were 26.2% of EU energy consumption and 47.2% of EU electricity production in 2025, and that proposals for a post-2030 framework are planned by the end of 2026."
+   ],
+   "plain_tip": "In plain terms: the EU's 2030 goal is to roughly double the renewable share of its energy, and the rules are set at EU level but carried out by each country.",
+   "caution": "Summary of an official publication, not legal, tax or investment advice. Rules and figures change; check the official page and local rules before deciding. National rules and progress differ by country.",
+   "category": "Policy",
+   "tags": [
+    "European Union",
+    "RED III",
+    "Directive 2023/2413",
+    "renewable target",
+    "2030"
+   ],
+   "probes": [
+    "what is the EU renewable energy target for 2030",
+    "EU RED III 42.5 percent",
+    "how much of EU electricity came from renewables in 2025"
+   ],
+   "source": {
+    "title": "Renewable energy directive",
+    "publisher": "European Commission, Directorate-General for Energy",
+    "doc_no": "Directive (EU) 2018/2001 as amended by Directive (EU) 2023/2413",
+    "url": "https://energy.ec.europa.eu/topics/renewable-energy/renewable-energy-directive-rules-and-financing/renewable-energy-directive_en",
+    "url_note": "",
+    "read_scope": "Page full text",
+    "read_via": "Fetched directly (HTTP 200), full text read on 2026-11-01",
+    "tier": "A",
+    "license_note": "European Commission reuse policy (CC BY 4.0 for most content); short attributed summary."
+   },
+   "status": "In force",
+   "status_note": "Page read in full; the legal text on EUR-Lex was not read for this entry. The 2025 shares are as stated on the Commission page.",
+   "publish_date": "2023-11-20",
+   "effective_date": "2023-11-20",
+   "retrieved_at": "2026-11-01",
+   "review_status": "Pending review"
+  },
+  {
+   "id": "en-intl-s07",
+   "title": "Germany: new solar systems face a 60% feed-in limit until a smart meter is fitted, and no feed-in payment at negative prices",
+   "summary": "Germany's Renewable Energy Sources Act (EEG 2023) sets technical rules for small solar systems and removes the payment basis during negative wholesale prices. The official statute text sets the numbers.",
+   "points": [
+    "Section 9(2) EEG 2023: until a smart metering system and control box are installed and tested, solar systems under 25 kW that receive the feed-in tariff must limit grid feed-in to 60% of installed capacity; systems of 25 kW to under 100 kW must be remotely controllable (and, if on the feed-in tariff, also limited to 60%); systems of 100 kW or more must be remotely controllable.",
+    "Plug-in solar devices up to 2 kW with an inverter of up to 800 VA are excluded from these technical requirements.",
+    "Section 51(1) EEG 2023: for periods when the spot-market price is negative, the 'applicable value' used to calculate the payment is reduced to zero.",
+    "Section 51(2): this does not apply to systems under 100 kW until the end of the calendar year in which a smart metering system is installed, nor to systems under 2 kW until the end of the year after the Federal Network Agency makes a specified determination. Section 100(47) lets operators of older plants opt in."
+   ],
+   "plain_tip": "In plain terms: in Germany a new small solar system's export is capped at 60% until it has a smart meter, and exports at negative prices can earn nothing.",
+   "caution": "Summary of an official publication, not legal, tax or investment advice. Rules and figures change; check the official page and local rules before deciding. Which rule applies depends on the system's size, commissioning date and tariff type; the statute has transition rules this summary does not cover.",
+   "category": "Policy",
+   "tags": [
+    "Germany",
+    "EEG 2023",
+    "solar",
+    "negative prices",
+    "60% feed-in limit",
+    "smart meter"
+   ],
+   "probes": [
+    "what is the 60 percent feed-in limit for solar in Germany",
+    "does German solar get paid when power prices are negative",
+    "German EEG rules for small solar and smart meters"
+   ],
+   "source": {
+    "title": "Gesetz fuer den Ausbau erneuerbarer Energien (EEG 2023), sections 9, 51 and 100",
+    "publisher": "Federal Ministry of Justice and Federal Office of Justice, Gesetze im Internet",
+    "doc_no": "EEG 2023 sections 9, 51, 100(47) (German-language consolidated text)",
+    "url": "https://www.gesetze-im-internet.de/eeg_2014/__51.html",
+    "url_note": "Section 9: https://www.gesetze-im-internet.de/eeg_2014/__9.html; section 100: https://www.gesetze-im-internet.de/eeg_2014/__100.html. The text is German; this entry is an English summary.",
+    "read_scope": "Full text of sections 9, 51 and 100(47)",
+    "read_via": "Fetched directly (HTTP 200), full text read on 2026-11-01",
+    "tier": "A",
+    "license_note": "German federal laws are not protected by copyright (section 5 UrhG); short attributed summary in English."
+   },
+   "status": "In force",
+   "status_note": "Consolidated text as shown on the official site on 2026-11-01. The commissioning dates that trigger each rule were not read from the official text and are not stated here.",
+   "publish_date": "2025-02-25",
+   "effective_date": "2025-02-25",
+   "retrieved_at": "2026-11-01",
+   "review_status": "Pending review"
+  },
+  {
+   "id": "en-intl-s08",
+   "title": "Australia: the Cheaper Home Batteries discount became smaller for larger batteries on 1 May 2026",
+   "summary": "The federal Cheaper Home Batteries Program gives about a 30% discount on small batteries (5 to 100 kWh). Since 1 May 2026 the certificate factor falls every six months and tapers with battery size.",
+   "points": [
+    "The discount comes from small-scale technology certificates (STCs) based on usable capacity; households do not apply to the government, and installers or retailers pass it on, or owners can claim STCs themselves.",
+    "STC factor: 8.4 (January to April 2026), 6.8 (May to December 2026), 5.7 (January to June 2027), falling to 2.1 by the second half of 2030.",
+    "Since 1 May 2026 the factor applies at 100% for the first 14 kWh, 60% for kWh above 14 up to 28, and 15% for kWh above 28 up to 50. No extra certificates above 50 kWh, although batteries up to 100 kWh remain eligible.",
+    "The government says it expanded the program from an estimated $2.3 billion to $7.2 billion over four years, and the Clean Energy Regulator administers it."
+   ],
+   "plain_tip": "In plain terms: the support per kilowatt-hour is higher for the first 14 kWh and lower for bigger batteries, and it steps down over time.",
+   "caution": "Summary of an official publication, not legal, tax or investment advice. Rules and figures change; check the official page and local rules before deciding. Eligibility and the discount value depend on the installation date and the Regulations.",
+   "category": "Incentives",
+   "tags": [
+    "Australia",
+    "Cheaper Home Batteries",
+    "STC",
+    "home battery",
+    "Clean Energy Regulator"
+   ],
+   "probes": [
+    "how much is the Australian home battery discount now",
+    "Cheaper Home Batteries changes 1 May 2026",
+    "STC factor for batteries in Australia"
+   ],
+   "source": {
+    "title": "Cheaper Home Batteries Program",
+    "publisher": "Department of Climate Change, Energy, the Environment and Water (DCCEEW), Australian Government",
+    "doc_no": "Program page, last updated 9 June 2026",
+    "url": "https://www.dcceew.gov.au/energy/programs/cheaper-home-batteries",
+    "url_note": "",
+    "read_scope": "Page full text",
+    "read_via": "Fetched directly (HTTP 200), full text read on 2026-11-01",
+    "tier": "A",
+    "license_note": "Commonwealth of Australia content, normally CC BY 4.0 (check the page licence); short attributed summary."
+   },
+   "status": "In force",
+   "status_note": "Page read in full; the amending Regulations (made 5 February 2026) were not read for this entry. The program is to be reviewed at least annually.",
+   "publish_date": "2026-06-09",
+   "effective_date": "2026-05-01",
+   "retrieved_at": "2026-11-01",
+   "review_status": "Pending review"
+  },
+  {
+   "id": "en-intl-s09",
+   "title": "Japan: the 7th Strategic Energy Plan aims for about 40-50% renewables in the power mix by FY2040",
+   "summary": "Japan's 7th Strategic Energy Plan (February 2025) projects renewables at about 40-50% of electricity in fiscal 2040, up from 22.9% in fiscal 2023, and treats renewables as a major power source alongside nuclear.",
+   "points": [
+    "FY2040 outlook: renewables about 40-50% (solar about 23-29%, wind about 4-8%, hydro about 8-10%, geothermal about 1-2%, biomass about 5-6%), nuclear about 20%, thermal about 30-40%.",
+    "FY2023 preliminary figures in the same document: renewables 22.9% (solar 9.8%, wind 1.1%, hydro 7.6%), nuclear 8.5%, thermal 68.6%.",
+    "Electricity generation is expected to be about 1.1 to 1.2 trillion kWh in FY2040, against 985.4 billion kWh in FY2023.",
+    "Policy directions include a perovskite solar cell target of 20 GW by 2040, floating offshore wind in the exclusive economic zone and next-generation geothermal.",
+    "The plan gives ranges from several scenarios because of uncertainty; they are outlooks, not forecasts of a single result."
+   ],
+   "plain_tip": "In plain terms: Japan's plan roughly doubles the renewable share of its electricity over about 15 years and keeps nuclear in the mix.",
+   "caution": "Summary of an official publication, not legal, tax or investment advice. Rules and figures change; check the official page and local rules before deciding. The figures are policy outlooks with wide ranges.",
+   "category": "Policy",
+   "tags": [
+    "Japan",
+    "Strategic Energy Plan",
+    "METI",
+    "renewable share",
+    "FY2040"
+   ],
+   "probes": [
+    "what is Japan's renewable energy target for 2040",
+    "Japan 7th Strategic Energy Plan solar and wind share",
+    "how much nuclear does Japan plan in 2040"
+   ],
+   "source": {
+    "title": "Japan - The Update Energy Policy (7th Strategic Energy Plan in Japan)",
+    "publisher": "Ministry of Economy, Trade and Industry (METI), Japan, submitted to the APEC Energy Working Group",
+    "doc_no": "APEC 2026/EWG71/017, 18-19 March 2026",
+    "url": "https://mddb.apec.org/Documents/2026/EWG/EWG71/26_ewg71_017.pdf",
+    "url_note": "The METI website pages for the plan returned an access block to the fetcher, so the METI-authored presentation hosted by APEC was used. The METI outline PDF was not read.",
+    "read_scope": "Full document (outline slides)",
+    "read_via": "Fetched directly, full text read on 2026-11-01",
+    "tier": "A",
+    "license_note": "Document submitted by Japan to APEC; short attributed summary of facts."
+   },
+   "second_source_needed": "The plan text itself on the METI / ANRE site could not be fetched; a reviewer should open it before approving.",
+   "status": "In force",
+   "status_note": "Cabinet decision of 18 February 2025, as summarised by METI in March 2026.",
+   "publish_date": "2026-03-18",
+   "effective_date": "2025-02-18",
+   "retrieved_at": "2026-11-01",
+   "review_status": "Pending review"
+  },
+  {
+   "id": "en-intl-s10",
+   "title": "India: PM Surya Ghar pays up to Rs 78,000 towards a home rooftop solar system",
+   "summary": "As approved by India's Union Cabinet in February 2024, PM Surya Ghar: Muft Bijli Yojana gives central financial assistance for residential rooftop solar, aimed at one crore (10 million) households.",
+   "points": [
+    "Assistance is 60% of system cost for the first 2 kW and 40% of the additional cost between 2 and 3 kW, capped at 3 kW.",
+    "At the benchmark prices then used, that is Rs 30,000 for 1 kW, Rs 60,000 for 2 kW and Rs 78,000 for 3 kW or more.",
+    "Households apply through the national portal and choose their own vendor; collateral-free loans at around 7% (at the time) were available for systems up to 3 kW.",
+    "The Cabinet outlay was Rs 75,021 crore, targeting 30 GW of residential rooftop solar and free electricity up to 300 units a month for participating households."
+   ],
+   "plain_tip": "In plain terms: the scheme covers a share of the cost of a home rooftop system up to 3 kW, and you apply on the government portal.",
+   "caution": "Summary of an official publication, not legal, tax or investment advice. Rules and figures change; check the official page and local rules before deciding. The amounts are those announced in 2024; benchmark prices and scheme terms may have changed since.",
+   "category": "Incentives",
+   "tags": [
+    "India",
+    "PM Surya Ghar",
+    "rooftop solar",
+    "subsidy",
+    "residential"
+   ],
+   "probes": [
+    "how much subsidy does India give for rooftop solar",
+    "PM Surya Ghar Muft Bijli Yojana subsidy for 3 kW",
+    "how do I apply for the India solar subsidy"
+   ],
+   "source": {
+    "title": "Cabinet approves PM-Surya Ghar: Muft Bijli Yojana for installing rooftop solar in One Crore households",
+    "publisher": "Prime Minister's Office, Government of India",
+    "doc_no": "Cabinet decision, 29 February 2024",
+    "url": "https://www.pmindia.gov.in/en/news_updates/cabinet-approves-pm-surya-ghar-muft-bijli-yojana-for-installing-rooftop-solar-in-one-crore-households/",
+    "url_note": "",
+    "read_scope": "Page full text",
+    "read_via": "Fetched directly (HTTP 200), full text read on 2026-11-01",
+    "tier": "A",
+    "license_note": "Government of India content; short attributed summary."
+   },
+   "status": "In force",
+   "status_note": "Terms as announced on 29 February 2024; later changes were not checked against pmsuryaghar.gov.in.",
+   "publish_date": "2024-02-29",
+   "effective_date": "2024-02-13",
+   "retrieved_at": "2026-11-01",
+   "review_status": "Pending review"
+  },
+  {
+   "id": "en-intl-s11",
+   "title": "Netherlands: net metering for solar ends on 1 January 2027",
+   "summary": "The Dutch salderingsregeling, which lets solar owners offset exported power against what they use, ends on 1 January 2027. After that, suppliers must pay a compensation for exported power instead.",
+   "points": [
+    "Until 31 December 2026 households and small businesses can offset the electricity they feed back against their yearly use, with no energy tax on the offset amount.",
+    "From 1 January 2027 offsetting is no longer allowed, but owners can keep feeding power into the grid and receive a payment from their supplier.",
+    "Until 2030 that payment must be at least 50% of the supplier's bare electricity supply tariff, which is the price without taxes.",
+    "Suppliers often charge feed-in costs too; these may only cover the supplier's own costs of handling the exported power, and the consumer authority ACM supervises them."
+   ],
+   "plain_tip": "In plain terms: from 2027 Dutch solar owners are paid for exports, but the old one-for-one offset against their own use goes away.",
+   "caution": "Summary of an official publication, not legal, tax or investment advice. Rules and figures change; check the official page and local rules before deciding. Actual payments and feed-in costs differ by supplier.",
+   "category": "Policy",
+   "tags": [
+    "Netherlands",
+    "net metering",
+    "salderingsregeling",
+    "solar",
+    "2027"
+   ],
+   "probes": [
+    "when does Dutch net metering end",
+    "what happens to solar owners in the Netherlands after 2026",
+    "salderingsregeling minimum feed-in compensation"
+   ],
+   "source": {
+    "title": "Salderingsregeling stopt in 2027",
+    "publisher": "Rijksoverheid (Government of the Netherlands)",
+    "doc_no": "Government information page (Dutch)",
+    "url": "https://www.rijksoverheid.nl/themas/klimaat-milieu-en-natuur/energie-thuis/salderingsregeling",
+    "url_note": "English-language page for businesses: https://business.gov.nl/amendments/netting-scheme-solar-panels-ends/ (read; confirms the 1 January 2027 end date). The Dutch page is the basis; this entry is an English summary.",
+    "read_scope": "Page full text",
+    "read_via": "Fetched directly (HTTP 200), full text read on 2026-11-01",
+    "tier": "A",
+    "license_note": "Dutch government content, reusable with attribution (public domain notice on rijksoverheid.nl); short attributed summary in English."
+   },
+   "second_source": {
+    "title": "Netting scheme for solar panels ends per 2027",
+    "publisher": "Business.gov.nl (Netherlands Enterprise Agency)",
+    "url": "https://business.gov.nl/amendments/netting-scheme-solar-panels-ends/"
+   },
+   "status": "Upcoming",
+   "status_note": "Enacted; takes effect on 1 January 2027.",
+   "publish_date": "2026-11-01",
+   "effective_date": "2027-01-01",
+   "retrieved_at": "2026-11-01",
+   "review_status": "Pending review"
+  }
+ ]
+}

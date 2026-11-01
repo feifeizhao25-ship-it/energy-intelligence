@@ -61,7 +61,7 @@ def test_gate_english_edition_safety():
 
 
 def test_shipped_staged_candidates_verdicts_and_invisible():
-    expect = {"cn": {"en-lib-s01": "keep", "en-lib-s04": "keep", "en-lib-s05": "keep"}, "global": {"en-intl-s01": "keep", "en-intl-s02": "keep", "en-intl-s03": "reject"}}
+    expect = {"cn": {"en-lib-s01": "keep", "en-lib-s04": "keep", "en-lib-s05": "keep"}, "global": {"en-intl-s01": "keep", "en-intl-s02": "keep", "en-intl-s03": "keep"}}
     for ed, lang in (("cn", "cn"), ("global", "en")):
         rep = PG.evaluate_all(store.load_staged(ed), store.load_document(ed)["entries"], today=TODAY, lang=lang)
         v = {r["id"]: r["decision"] for r in rep["rows"]}
@@ -113,23 +113,37 @@ def test_cli_roundtrip_per_edition_and_rollback(lib):
     assert review_cli.main(base + ["rollback", "v1", "--reviewer", "lisi", "--note", "x"], env=ENV) == 3  # 不在名单里仍然进不来
 
 
+def put_reject_candidate():
+    """A deliberately weak staged candidate (B-tier, one source) so the 'reject' path stays covered now that every shipped
+    candidate passes: it goes into the data dir's own staged file, never into the package data."""
+    d = store.data_dir()
+    d.mkdir(parents=True, exist_ok=True)
+    weak = {"id": "en-intl-t01", "title": "Test: weak single-source candidate", "summary": "Summary taken from a law-firm alert.", "points": ["One point."], "plain_tip": "Wait for a primary source.",
+            "caution": "Test fixture, not advice.", "tags": ["test"], "probes": ["weak single source test candidate", "single source alert summary"],
+            "source": {"title": "Alert", "publisher": "A law firm", "url": "https://www.mcguirewoods.com/x", "read_scope": "full", "read_via": "test", "tier": "B"},
+            "publish_date": "2026-06-08", "retrieved_at": "2026-11-01", "review_status": "Pending review"}
+    (d / "staged_entries_global.json").write_text(json.dumps({"entries": [weak]}), "utf-8")
+
+
 def test_cli_gate_and_enforced_approve(lib):
+    put_reject_candidate()
     assert review_cli.main(["--edition", "global", "gate", "en-intl-s01", "--reviewer", "zhangsan"], env=ENV) == 0
-    assert review_cli.main(["--edition", "global", "gate", "en-intl-s03", "--reviewer", "zhangsan"], env=ENV) == 4
-    assert review_cli.main(["--edition", "global", "promote", "en-intl-s03", "--reviewer", "zhangsan"], env=ENV) == 0
+    assert review_cli.main(["--edition", "global", "gate", "en-intl-t01", "--reviewer", "zhangsan"], env=ENV) == 4
+    assert review_cli.main(["--edition", "global", "promote", "en-intl-t01", "--reviewer", "zhangsan"], env=ENV) == 0
     env = {**ENV, "LIBRARY_PROMOTE_GATE": "1"}
-    assert review_cli.main(["--edition", "global", "approve", "en-intl-s03", "--reviewer", "zhangsan"], env=env) == 2
-    assert next(e for e in store.load_document("global")["entries"] if e["id"] == "en-intl-s03")["review_status"] == "Pending review"
+    assert review_cli.main(["--edition", "global", "approve", "en-intl-t01", "--reviewer", "zhangsan"], env=env) == 2
+    assert next(e for e in store.load_document("global")["entries"] if e["id"] == "en-intl-t01")["review_status"] == "Pending review"
     assert review_cli.main(["--edition", "global", "promote", "en-intl-s01", "--reviewer", "zhangsan"], env=ENV) == 0
     assert review_cli.main(["--edition", "global", "approve", "en-intl-s01", "--reviewer", "zhangsan"], env=env) == 0
 
 
 def test_gate_job_off_by_default_and_never_writes_the_library(lib):
+    put_reject_candidate()
     off = SILConfig(product="energy", enabled=False, data_dir=str(lib / "sil"))
     assert C.run_promote_gate(NOW, cfg=off) == {"status": "disabled"}
     on = SILConfig(product="energy", enabled=True, data_dir=str(lib / "sil"))
     r = C.run_promote_gate(NOW, cfg=on)
-    assert r["status"] == "ok" and "en-lib-s04" in r["editions"]["cn"]["keep"] and "en-intl-s03" in r["editions"]["global"]["reject"]
+    assert r["status"] == "ok" and "en-lib-s04" in r["editions"]["cn"]["keep"] and "en-intl-t01" in r["editions"]["global"]["reject"] and "en-intl-s03" in r["editions"]["global"]["keep"]
     assert (lib / "sil" / "cn" / "promote_gate_report.md").exists() and (lib / "sil" / "global" / "promote_gate_report.json").exists()
     assert not (lib / "lib").exists() or not list((lib / "lib").glob("reference_entries_*.json"))
     assert C.run_promote_gate(NOW, cfg=on)["editions"]["cn"]["new_keep"] == []
