@@ -72,7 +72,9 @@ class _LoginScreenState extends State<LoginScreen>
       body: ReadingColumn(child: Column(
         children: [
           Container(
-            height: 220,
+            // minHeight, not a fixed height: large text must grow the hero, not overflow it (200% text-scale check).
+            constraints: const BoxConstraints(minHeight: 220),
+            alignment: Alignment.bottomLeft,
             width: double.infinity,
             decoration: BoxDecoration(
               image: const DecorationImage(
@@ -89,6 +91,7 @@ class _LoginScreenState extends State<LoginScreen>
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
@@ -96,12 +99,14 @@ class _LoginScreenState extends State<LoginScreen>
                       children: [
                         const Icon(Icons.bolt, color: Colors.white, size: 32),
                         const SizedBox(width: 8),
-                        const Text(
-                          'Energy Intelligence',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
+                        const Flexible(
+                          child: Text(
+                            'Energy Intelligence',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ],
@@ -193,7 +198,8 @@ class _LoginScreenState extends State<LoginScreen>
                   ),
                   const SizedBox(height: 20),
                   SizedBox(
-                    height: 200,
+                    // grows with the text scale: two fields + helper text no longer fit in a fixed 200 at 200% type
+                    height: 200 + 80 * (MediaQuery.textScalerOf(context).scale(16) / 16 - 1).clamp(0.0, 1.5),
                     child: TabBarView(
                       controller: _tabController,
                       children: [
@@ -268,8 +274,9 @@ class _LoginScreenState extends State<LoginScreen>
                         : const Text('Sign In'),
                   ),
                   const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  Wrap(
+                    alignment: WrapAlignment.center,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       Text(
                         "Don't have an account? ",

@@ -188,7 +188,9 @@ class _MainNavigationState extends State<MainNavigation> {
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 6),
-            child: Row(
+            child: MediaQuery(
+              data: MediaQuery.of(context).copyWith(textScaler: MediaQuery.textScalerOf(context).clamp(maxScaleFactor: 1.3)),
+              child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _NavItem(
@@ -228,6 +230,7 @@ class _MainNavigationState extends State<MainNavigation> {
                 ),
               ],
             ),
+            ),
           ),
         ),
       ),
@@ -253,7 +256,7 @@ class _NavItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isActive = index == current;
-    return Semantics(
+    return Expanded(child: Semantics(
       button: true,
       selected: isActive,
       label: label,
@@ -264,7 +267,7 @@ class _NavItem extends StatelessWidget {
         onTap: () => onTap(index),
         behavior: HitTestBehavior.opaque,
         child: ConstrainedBox(
-          constraints: const BoxConstraints(minWidth: 60, minHeight: 48),
+          constraints: const BoxConstraints(minHeight: 48),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
@@ -277,6 +280,9 @@ class _NavItem extends StatelessWidget {
               const SizedBox(height: 2),
               Text(
                 label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                softWrap: false,
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
@@ -287,6 +293,6 @@ class _NavItem extends StatelessWidget {
           ),
         ),
       ),
-    );
+    ));
   }
 }
