@@ -2,7 +2,7 @@
 
 国内版（cn，中文）和国际版（global，英文）分开：各自一份金标准题、各自的结果目录、各自的月报；互不混用。
 
-  python -m app.self_improve.continuous golden|stale|radar|radar-stage|monthly-report [--force] [--month YYYY-MM]
+  python -m app.self_improve.continuous golden|stale|radar|radar-stage|promote-gate|monthly-report [--force] [--month YYYY-MM]
 --force 只用于人工手动跑一次，不改变任何开关。所有任务只写 SIL_DATA_DIR 下的文件，不改资料库条目、不改 RAG 来源、不发消息。
 """
 
@@ -25,7 +25,7 @@ HERE = Path(__file__).resolve()
 BACKEND = HERE.parents[2]
 GOLDEN_DIR = BACKEND / "data" / "eval"
 EDITIONS = {"cn": {"lang": "zh", "golden": GOLDEN_DIR / "golden_ci_cn_20261031.jsonl"}, "global": {"lang": "en", "golden": GOLDEN_DIR / "golden_ci_global_20261031.jsonl"}}
-SLOTS = {"golden_eval": "weekly:SUN@03:30", "stale_scan": "daily@02:30", "radar": radar.RADAR_SCHEDULE, "radar_stage": "weekly:WED@06:00", "monthly_report": "monthly:1@05:00"}
+SLOTS = {"golden_eval": "weekly:SUN@03:30", "stale_scan": "daily@02:30", "radar": radar.RADAR_SCHEDULE, "radar_stage": "weekly:WED@06:00", "promote_gate": "weekly:WED@07:00", "monthly_report": "monthly:1@05:00"}
 SKILLS = {
     "cn": ("lib-law", "lib-stats", "lib-policy", "calc-npv-irr", "safety-bottom-line"),
     "global": ("lib-market", "safety-bottom-line"),
@@ -76,14 +76,25 @@ def _grams(s: str) -> set:
 
 
 def library_answer(question: str, entries: list[dict]) -> dict:
-    qg = _grams(question)
-    best, score = None, 0
-    for e in entries:
-        sc = len(qg & _grams(e["title"] + " ".join(e.get("tags", [])))) * 3 + len(qg & _grams(e["summary"] + "".join(e["points"])))
-        if sc > score:
-            best, score = e, sc
-    if not best:
+    """金标准的“资料库答案”：字二元组重合数的名次 + BM25（标题+标签加权 3 倍）的名次，用 RRF 融合后取第一名。
+    原来只数字二元组重合，新增条目只要字面上多沾一点就会抢走别的题（2026-11-01 加入 IEA/CBAM 候选时被金标准发现）；
+    只用 BM25 又会在个别题上输给原来的办法（en-g-002），所以两路融合。"""
+    from .bm25 import BM25Index, POOL
+
+    if not entries:
         return {"text": ""}
+    qg = _grams(question)
+    gram = sorted(((i, len(qg & _grams(e["title"] + " ".join(e.get("tags", [])))) * 3 + len(qg & _grams(e["summary"] + "".join(e["points"])))) for i, e in enumerate(entries)), key=lambda x: -x[1])
+    gram = [(i, sc) for i, sc in gram if sc > 0][:POOL]
+    lang = "cn" if any("\u4e00" <= ch <= "\u9fff" for ch in question) else "en"
+    bm = BM25Index(((e["title"] + " " + " ".join(e.get("tags", [])), "\n".join([e["summary"], *e["points"]])) for e in entries), lang).query(question, top_k=POOL)
+    fused: dict[int, float] = {}
+    for ranking in (gram, bm):
+        for rank, (i, _s) in enumerate(ranking, 1):
+            fused[i] = fused.get(i, 0.0) + 1.0 / (60 + rank)
+    if not fused:
+        return {"text": ""}
+    best = entries[max(fused.items(), key=lambda kv: (kv[1], -kv[0]))[0]]
     return {"text": "\n".join([best["title"], best["summary"], *best["points"], best.get("plain_tip", ""), best.get("caution", "")]), "citations": [best["source"]["url"]]}
 
 
@@ -183,6 +194,33 @@ def run_radar_stage(now: Optional[datetime] = None, *, force: bool = False, cfg=
     return {"status": "ok", **out}
 
 
+def run_promote_gate(now: Optional[datetime] = None, *, force: bool = False, edition: Optional[str] = None, cfg=None) -> dict:
+    """对暂存区候选逐条评估（国内版/国际版各自对照自己的工作文档）：keep = 可交给人工审核；reject = 写明原因。
+    从不 promote / approve（那两步只有 review_cli + POLICY_REVIEWERS 名单里的人名）。"""
+    from app.library import store as lib
+    from . import promote_gate as PG
+
+    cfg = cfg or _cfg()
+    if not _enabled(force, cfg):
+        return {"status": "disabled"}
+    now = now or datetime.now(TZ)
+    out = {}
+    for ed in ([edition] if edition else list(lib.EDITIONS)):
+        data = _data(cfg, ed)
+        doc = lib.load_document(ed)
+        rep = PG.evaluate_all(lib.load_staged(ed), doc["entries"], today=now.date(), lang="cn" if ed == "cn" else "en")
+        data.mkdir(parents=True, exist_ok=True)
+        (data / "promote_gate_report.json").write_text(json.dumps(rep, ensure_ascii=False, indent=1), "utf-8")
+        (data / "promote_gate_report.md").write_text(PG.render_md(rep), "utf-8")
+        prevp = data / "promote_gate_prev.json"
+        prev = json.loads(prevp.read_text("utf-8")) if prevp.exists() else []
+        new_keep = [i for i in rep["keep"] if i not in prev]
+        _worklist(data, [{"candidate": f"promote-ready-{i}", "url": "", "excerpt": (f"候选 {i} 已通过闸门，等人工审核（review_cli promote → approve）" if ed == "cn" else f"Candidate {i} passed the gate; waiting for human review (review_cli promote -> approve)")} for i in new_keep])
+        prevp.write_text(json.dumps(rep["keep"], ensure_ascii=False), "utf-8")
+        out[ed] = {"n": rep["n"], "keep": rep["keep"], "reject": rep["reject"], "new_keep": new_keep}
+    return {"status": "ok", "editions": out}
+
+
 def run_monthly_report(now: Optional[datetime] = None, *, force: bool = False, month: Optional[str] = None, edition: Optional[str] = None, cfg=None, env=None) -> dict:
     cfg = cfg or _cfg()
     if not _enabled(force, cfg):
@@ -218,7 +256,7 @@ def run_monthly_report(now: Optional[datetime] = None, *, force: bool = False, m
 
 def jobs() -> dict:
     return {"golden_eval": (SLOTS["golden_eval"], run_golden), "stale_scan": (SLOTS["stale_scan"], run_stale), "radar": (SLOTS["radar"], run_radar),
-            "radar_stage": (SLOTS["radar_stage"], run_radar_stage), "monthly_report": (SLOTS["monthly_report"], run_monthly_report)}
+            "radar_stage": (SLOTS["radar_stage"], run_radar_stage), "promote_gate": (SLOTS["promote_gate"], run_promote_gate), "monthly_report": (SLOTS["monthly_report"], run_monthly_report)}
 
 
 def main(argv=None) -> int:
@@ -226,7 +264,7 @@ def main(argv=None) -> int:
 
     argv = list(sys.argv[1:] if argv is None else argv)
     cmd = argv[0] if argv else ""
-    fn = {"golden": run_golden, "stale": run_stale, "radar": run_radar, "radar-stage": run_radar_stage, "monthly-report": run_monthly_report}.get(cmd)
+    fn = {"golden": run_golden, "stale": run_stale, "radar": run_radar, "radar-stage": run_radar_stage, "promote-gate": run_promote_gate, "monthly-report": run_monthly_report}.get(cmd)
     if fn is None:
         print(__doc__)
         return 0
