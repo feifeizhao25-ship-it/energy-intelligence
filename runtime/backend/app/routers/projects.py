@@ -21,6 +21,7 @@ from app.database import get_db
 from app.core.subscription import QuotaExceeded, assert_project_quota
 from app.models.database import Project
 from app.models.user import User
+from app.services.geo_hint import infer_country
 from app.utils.response import success
 
 router = APIRouter(prefix="/projects")
@@ -31,6 +32,13 @@ class LocationIn(BaseModel):
     longitude: float = Field(..., ge=-180, le=180)
     address: Optional[str] = None
     timezone: Optional[str] = None
+    # ISO 3166-1 alpha-2. Optional: when omitted it is recognised from the address, else left empty (never defaulted).
+    country_code: Optional[str] = Field(None, min_length=2, max_length=2, pattern="^[A-Za-z]{2}$")
+
+    @field_validator("country_code")
+    @classmethod
+    def upper_country(cls, v: Optional[str]) -> Optional[str]:
+        return v.upper() if v else None
 
 
 class ProjectCreate(BaseModel):
@@ -60,7 +68,9 @@ def _to_response(project: Project) -> Dict[str, Any]:
             "latitude": project.latitude,
             "longitude": project.longitude,
             "address": project.location,
+            "country_code": project.country_code,
         },
+        "country_code": project.country_code,
         "status": project.status,
         "created_at": project.created_at.isoformat() if project.created_at else None,
         "updated_at": project.updated_at.isoformat() if project.updated_at else None,
@@ -105,6 +115,7 @@ async def create_project(
         description=body.description,
         technology=body.technology,
         location=body.location.address,
+        country_code=body.location.country_code or infer_country(body.location.address),
         latitude=body.location.latitude,
         longitude=body.location.longitude,
         capacity_mw=body.capacity_kw / 1000,
