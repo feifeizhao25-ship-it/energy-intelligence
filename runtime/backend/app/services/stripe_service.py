@@ -24,6 +24,10 @@ class StripeService:
             raise RuntimeError(f"Stripe price is not configured for plan: {plan}")
         if not settings.STRIPE_SUCCESS_URL or not settings.STRIPE_CANCEL_URL:
             raise RuntimeError("Stripe checkout return URLs are not configured")
+        # The international currency is USD (owner decision 2026-11-01): refuse to sell a Price in another currency.
+        real = StripeService.get_price(plan)
+        if real and str(real.get("currency") or "").upper() != "USD":
+            raise RuntimeError(f"Stripe price for plan {plan} must be in USD (found {str(real.get('currency')).upper()})")
         kwargs = {
             "payment_method_types": ["card"],
             "mode": "subscription",
