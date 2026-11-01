@@ -359,7 +359,7 @@ def scenario_s34() -> dict:
 _OFFICIAL_HOSTS = {
     "www.ndrc.gov.cn", "zfxxgk.nea.gov.cn", "www.nea.gov.cn", "www.stats.gov.cn",
     "drc.gd.gov.cn", "www.shanghai.gov.cn", "fgw.sh.gov.cn", "fgw.beijing.gov.cn",
-    "www.beijing.gov.cn", "gb.shandong.gov.cn", "fgw.weihai.gov.cn",
+    "www.beijing.gov.cn", "gb.shandong.gov.cn", "fgw.weihai.gov.cn", "sdb.nea.gov.cn",
 }
 _AUTO_TRACE = ("source_url", "publish_date", "retrieved_at", "review_due", "last_verified_at", "verify_interval_days", "snapshot_sha256")
 
