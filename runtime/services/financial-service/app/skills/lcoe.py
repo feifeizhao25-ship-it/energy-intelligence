@@ -23,6 +23,17 @@ except ImportError:  # 注册表从其他工作目录加载本文件时，补后
 
 HOURS_PER_YEAR = 8760.0
 
+# International edition (params["market"] == "global"): text is written in English at the source, not translated
+# afterwards, and cites only international references (the NDRC document is China-only).
+GLOBAL_REFERENCES = ["NREL Annual Technology Baseline (ATB): LCOE formula"]
+GLOBAL_FORMULA_REF = "Simplified NREL LCOE"
+GLOBAL_VALID_RANGE = "Annual generation must be positive"
+GLOBAL_ASSUMPTIONS = ["Scope is defined by the references; no further guarantee is given."]
+
+
+def _is_global(params: Dict[str, Any]) -> bool:
+    return str(params.get("market") or "").lower() == "global"
+
 
 class LcoeSkill:
     """FM-001 LCOE 计算。"""
@@ -41,10 +52,11 @@ class LcoeSkill:
     ]
 
     async def execute(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        gl = _is_global(params)
         capex = params.get("capex")
         opex_annual = params.get("opex_annual")
         if capex is None or opex_annual is None:
-            raise ValueError("FM-001 需要 capex 与 opex_annual 参数")
+            raise ValueError("FM-001 needs the capex and opex_annual parameters" if gl else "FM-001 需要 capex 与 opex_annual 参数")
         capex = float(capex)
         opex_annual = float(opex_annual)
 
@@ -56,13 +68,15 @@ class LcoeSkill:
             capacity_factor = float(params.get("capacity_factor", 0.0))
             if capacity_mw <= 0 or capacity_factor <= 0:
                 raise ValueError(
+                    "FM-001 needs annual_generation_kwh, or capacity_mw + capacity_factor to derive it"
+                    if gl else
                     "FM-001 需要 annual_generation_kwh，"
                     "或 capacity_mw + capacity_factor 推算发电量"
                 )
             annual_generation = capacity_mw * 1000.0 * HOURS_PER_YEAR * capacity_factor
 
         if annual_generation <= 0:
-            raise ValueError("FM-001 年发电量必须为正数")
+            raise ValueError("FM-001 annual generation must be positive" if gl else "FM-001 年发电量必须为正数")
 
         discount_rate = float(params.get("discount_rate", 0.08))
         project_life = int(params.get("project_life", 25))
@@ -88,7 +102,7 @@ class LcoeSkill:
             "project_life": project_life,
             "degradation_rate": degradation_rate,
             "engine": "financial_utils.calc_lcoe",
-            "references": list(self.references),
+            "references": list(GLOBAL_REFERENCES if gl else self.references),
         }
 
 
@@ -103,6 +117,16 @@ def _install_contract(cls, formula_ref, valid_range):
         if root not in sys.path:
             sys.path.insert(0, root)
         from skill_contract import attach
+        if _is_global(params):
+            return attach(
+                data,
+                skill_id=self.skill_id,
+                formula_ref=GLOBAL_FORMULA_REF,
+                inputs=params,
+                assumptions=list(GLOBAL_ASSUMPTIONS),
+                sources=list(GLOBAL_REFERENCES),
+                valid_range=GLOBAL_VALID_RANGE,
+            )
         return attach(
             data,
             skill_id=self.skill_id,
