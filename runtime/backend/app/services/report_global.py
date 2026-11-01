@@ -313,8 +313,9 @@ def render_pdf(model: Dict[str, Any]) -> bytes:
     base = getSampleStyleSheet()
     st = {
         "title": ParagraphStyle("CoverTitle", parent=base["Title"], fontName=font, fontSize=28, textColor=primary, alignment=1, spaceAfter=18),
-        "h1": ParagraphStyle("H1", parent=base["Heading1"], fontName=font, fontSize=17, textColor=primary, spaceBefore=16, spaceAfter=8),
-        "h2": ParagraphStyle("H2", parent=base["Heading2"], fontName=font, fontSize=13, textColor=colors.HexColor("#2C3E50"), spaceBefore=10, spaceAfter=5),
+        # keepWithNext: a heading never sits alone at the foot of a page (B18)
+        "h1": ParagraphStyle("H1", parent=base["Heading1"], fontName=font, fontSize=17, textColor=primary, spaceBefore=16, spaceAfter=8, keepWithNext=1),
+        "h2": ParagraphStyle("H2", parent=base["Heading2"], fontName=font, fontSize=13, textColor=colors.HexColor("#2C3E50"), spaceBefore=10, spaceAfter=5, keepWithNext=1),
         "p": ParagraphStyle("Body", parent=base["Normal"], fontName=font, fontSize=10, leading=15, spaceAfter=6),
         "cap": ParagraphStyle("Caption", parent=base["Normal"], fontName=font, fontSize=8.5, textColor=colors.HexColor("#555555"), alignment=1, spaceAfter=4),
         "toc": ParagraphStyle("TOCTitle", parent=base["Heading1"], fontName=font, fontSize=17, textColor=primary),
@@ -388,6 +389,8 @@ def render_docx(model: Dict[str, Any]) -> bytes:
         s.font.name = "Calibri"
         s.font.size = Pt(size)
         s.font.color.rgb = RGBColor(0x1A, 0x27, 0x44)
+        s.paragraph_format.keep_with_next = True
+        s.paragraph_format.keep_together = True
 
     def field(par, instr, placeholder=""):
         run = par.add_run()
@@ -411,7 +414,7 @@ def render_docx(model: Dict[str, Any]) -> bytes:
         cells[0].paragraphs[0].runs[0].bold = True
     doc.add_page_break()
     doc.add_paragraph().add_run("Contents").bold = True
-    field(doc.add_paragraph(), 'TOC \\o "1-3" \\h \\z \\u', "Right-click and choose Update Field to show page numbers.")
+    field(doc.add_paragraph(), 'TOC \\o "1-3" \\h \\z \\u', "")
     st = doc.settings.element
     if st.find(qn("w:updateFields")) is None:
         uf = OxmlElement("w:updateFields"); uf.set(qn("w:val"), "true"); st.append(uf)
@@ -434,6 +437,7 @@ def render_docx(model: Dict[str, Any]) -> bytes:
             _, header, rows, caption = b
             n += 1
             cp = doc.add_paragraph(f"Table {n}. {caption}"); cp.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            cp.paragraph_format.keep_with_next = True
             for run in cp.runs:
                 run.font.size = Pt(9); run.italic = True
             tb = doc.add_table(rows=1, cols=len(header)); tb.style = "Light Grid Accent 1"
@@ -455,4 +459,6 @@ def render_docx(model: Dict[str, Any]) -> bytes:
                 cells[0].text = lab; cells[1].text = f"{v:,.0f}"; cells[2].text = "\u2588" * max(1, round(abs(v) / peak * 20))
             doc.add_paragraph(caption)
     buf = io.BytesIO(); doc.save(buf)
-    return buf.getvalue()
+    from app.services.docx_toc import prerender_toc
+
+    return prerender_toc(buf.getvalue())

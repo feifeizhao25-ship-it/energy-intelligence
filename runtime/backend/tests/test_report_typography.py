@@ -54,8 +54,10 @@ def test_docx_cover_and_toc(report_type):
 
     # 目录页: 标题 + 全部章节条目
     assert "目  录" in text
-    for i, section in enumerate(TEMPLATES[report_type].sections_zh, 1):
-        assert f"第{i}章  {section}" in text, f"目录缺少章节: {section}"
+    # 目录条目现在由标题预渲染进 TOC 域（B18），不再是另写一份静态章节预览
+    toc = "\n".join(p.text for p in document.paragraphs if p.style.name.startswith("TOC "))
+    for section in TEMPLATES[report_type].sections_zh:
+        assert section in toc, f"目录缺少章节: {section}"
 
 
 @pytest.mark.parametrize("report_type", REPORT_TYPES)
