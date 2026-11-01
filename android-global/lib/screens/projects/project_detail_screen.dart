@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../widgets/photo_widgets.dart';
 
 import '../../utils/project_display.dart';
+import '../../widgets/country_picker.dart';
 import 'report_sources_screen.dart';
 
 /// Real project details. The project comes from the Projects list (route arguments or constructor);
@@ -82,6 +83,11 @@ class ProjectDetailScreen extends StatelessWidget {
                 Flexible(child: Text(r.value, textAlign: TextAlign.end, style: theme.textTheme.bodyMedium)),
               ]),
             ),
+          ProjectCountryRow(
+            key: const Key('projectCountryRow'),
+            projectId: _text(p, 'id')!,
+            initial: _text(p, 'country_code') ?? (p['location'] is Map ? (p['location'] as Map)['country_code']?.toString() : null),
+          ),
           const SizedBox(height: 16),
         ],
         Text('Actions', style: theme.textTheme.titleSmall),

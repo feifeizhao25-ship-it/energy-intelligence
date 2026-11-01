@@ -18,6 +18,7 @@ void main() {
   testWidgets('empty form shows what is missing and sends nothing', (t) async {
     var sent = 0;
     await t.pumpWidget(MaterialApp(home: CreateProjectScreen(submit: (b) async { sent++; return b; })));
+    await t.ensureVisible(find.byKey(const Key('createProjectSubmit')));
     await t.tap(find.byKey(const Key('createProjectSubmit')));
     await t.pumpAndSettle();
     expect(find.text('请填写项目名称'), findsOneWidget);
@@ -29,6 +30,7 @@ void main() {
   testWidgets('out-of-range coordinates are rejected before the server sees them', (t) async {
     await t.pumpWidget(MaterialApp(home: CreateProjectScreen(submit: (b) async => b)));
     await fill(t, lat: '95');
+    await t.ensureVisible(find.byKey(const Key('createProjectSubmit')));
     await t.tap(find.byKey(const Key('createProjectSubmit')));
     await t.pumpAndSettle();
     expect(find.textContaining('纬度需在'), findsOneWidget);
@@ -47,6 +49,7 @@ void main() {
     await t.tap(find.byKey(const Key('type_wind')));
     await fill(t);
     await t.ensureVisible(find.byKey(const Key('createProjectSubmit')));
+    await t.ensureVisible(find.byKey(const Key('createProjectSubmit')));
     await t.tap(find.byKey(const Key('createProjectSubmit')));
     await t.pumpAndSettle();
     expect(body, {
@@ -63,6 +66,7 @@ void main() {
     await t.pumpWidget(MaterialApp(home: CreateProjectScreen(
         submit: (b) async => throw ApiException(429, '当前套餐最多可创建 1 个项目，如需更多请升级会员。'))));
     await fill(t);
+    await t.ensureVisible(find.byKey(const Key('createProjectSubmit')));
     await t.ensureVisible(find.byKey(const Key('createProjectSubmit')));
     await t.tap(find.byKey(const Key('createProjectSubmit')));
     await t.pumpAndSettle();

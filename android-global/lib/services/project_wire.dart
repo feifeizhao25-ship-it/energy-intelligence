@@ -53,6 +53,7 @@ class ProjectWire {
     required double longitude,
     String? address,
     String? description,
+    String? countryCode,
   }) {
     return {
       'name': name,
@@ -62,6 +63,7 @@ class ProjectWire {
         'latitude': latitude,
         'longitude': longitude,
         if (address != null && address.trim().isNotEmpty) 'address': address.trim(),
+        if (countryCode != null && countryCode.trim().isNotEmpty) 'country_code': countryCode.trim().toUpperCase(),
       },
       if (description != null && description.trim().isNotEmpty) 'description': description.trim(),
     };

@@ -135,6 +135,11 @@ class ApiService {
     return await _post('/api/v1/projects', body: body);
   }
 
+  /// Sets (or, with null, clears and re-recognises from the address) the project's country.
+  static Future<Map<String, dynamic>> updateProjectCountry(String id, String? code) async {
+    return await _put('/api/v1/projects/$id/country', body: {'country_code': code});
+  }
+
   static Future<void> deleteProject(String id) async {
     await _delete('/api/v1/projects/$id');
   }
