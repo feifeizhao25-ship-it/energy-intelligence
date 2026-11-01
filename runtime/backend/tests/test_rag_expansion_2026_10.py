@@ -10,7 +10,7 @@ from app.services.rag_sources import SourceRegistry, VALID_TYPES
 OFFICIAL_HOSTS = {
     "www.ndrc.gov.cn", "zfxxgk.nea.gov.cn", "www.nea.gov.cn", "www.stats.gov.cn",
     "drc.gd.gov.cn", "www.shanghai.gov.cn", "fgw.sh.gov.cn", "fgw.beijing.gov.cn",
-    "www.beijing.gov.cn", "gb.shandong.gov.cn", "fgw.weihai.gov.cn",
+    "www.beijing.gov.cn", "gb.shandong.gov.cn", "fgw.weihai.gov.cn", "sdb.nea.gov.cn",
 }
 ADVICE_TERMS = ("建议投资", "建议买入", "买入评级", "投资评级", "保证收益", "稳赚", "收益率承诺", "值得投资", "推荐购买")
 TRACE_FIELDS = ("source_url", "publish_date", "retrieved_at", "review_due", "last_verified_at", "verify_interval_days", "snapshot_sha256")
@@ -24,8 +24,8 @@ def _new_sources():
 def test_registry_is_valid_and_larger_than_before():
     reg, new = _new_sources()
     assert reg.validate() == []
-    assert len(reg.sources) == 125  # 124 + stat-cn-nea-renewable-202608（2026-10-31）
-    assert len(new) == 113
+    assert len(reg.sources) == 126  # 124 + stat-cn-nea-renewable-202608（2026-10-31）+ policy-cn-sd-nea-2025-57（2026-11-01）
+    assert len(new) == 114
     assert "statistic" in VALID_TYPES
 
 
@@ -35,7 +35,7 @@ def test_every_new_source_carries_traceability_fields():
         for field in TRACE_FIELDS:
             assert s.get(field) not in (None, ""), (s["source_id"], field)
         retrieved = date.fromisoformat(s["retrieved_at"])
-        assert retrieved == date(2026, 10, 30)
+        assert retrieved in (date(2026, 10, 30), date(2026, 11, 1))
         assert date.fromisoformat(s["review_due"]) == retrieved + timedelta(days=s["verify_interval_days"]), s["source_id"]
         date.fromisoformat(s["publish_date"])
         assert s["needs_human_verification"], s["source_id"]
@@ -67,7 +67,7 @@ def test_source_types_and_intervals():
         if s["type"] == "statistic":
             assert s["verify_interval_days"] == 45
         else:
-            assert s["type"] == "policy" and s["verify_interval_days"] == 90
+            assert s["type"] == "policy" and s["verify_interval_days"] == 30
 
 
 def test_expired_new_sources_are_not_current():
@@ -83,7 +83,7 @@ def test_new_sources_turn_stale_after_review_window():
     reg, new = _new_sources()
     later = date(2027, 6, 1)
     assert all(reg.freshness_of(s, today=later) == "stale" for s in new)
-    assert all(reg.freshness_of(s, today=date(2026, 10, 30)) == "current" for s in new)
+    assert all(reg.freshness_of(s, today=date(2026, 11, 1)) == "current" for s in new)
 
 
 def test_existing_core_records_untouched():

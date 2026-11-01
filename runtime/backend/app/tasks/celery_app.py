@@ -92,6 +92,10 @@ celery_app.conf.update(
             "task": "energy.domestic.rag_refresh",
             "schedule": crontab(hour=2, minute=45),
         },
+        "rag-monthly-review": {
+            "task": "energy.domestic.rag_monthly_review",
+            "schedule": crontab(day_of_month=1, hour=3, minute=30),
+        },
         "geo-monitor-weekly": {
             "task": "energy.domestic.geo_monitor",
             "schedule": crontab(day_of_week=1, hour=4, minute=0),
