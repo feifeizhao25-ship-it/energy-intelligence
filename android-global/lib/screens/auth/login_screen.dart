@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../../services/api_service.dart';
+import '../../widgets/reading_column.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -68,7 +69,7 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
+      body: ReadingColumn(child: Column(
         children: [
           Container(
             height: 220,
@@ -301,7 +302,7 @@ class _LoginScreenState extends State<LoginScreen>
             ),
           ),
         ],
-      ),
+      )),
     );
   }
 }

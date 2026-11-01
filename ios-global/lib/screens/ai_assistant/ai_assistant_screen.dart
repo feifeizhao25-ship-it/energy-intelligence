@@ -4,6 +4,7 @@ import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/photo_widgets.dart';
 import '../settings/plan_usage_screen.dart';
+import '../../widgets/reading_column.dart';
 
 /// Asks the server (POST /api/v1/ai/chat-json) and shows the answer as cards: one-sentence conclusion, key figures,
 /// the full text (collapsed), the sources the answer actually cited, risks and plain explanations of jargon.
@@ -111,7 +112,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('AI Assistant')),
-      body: SafeArea(
+      body: ReadingColumn(child: SafeArea(
         child: Column(children: [
           _styleBar(context),
           Expanded(
@@ -126,7 +127,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
           ),
           _input(context),
         ]),
-      ),
+      )),
     );
   }
 

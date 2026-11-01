@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/reading_column.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -42,7 +43,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('创建账号'), elevation: 0),
-      body: SingleChildScrollView(
+      body: ReadingColumn(child: SingleChildScrollView(
         padding: EdgeInsets.symmetric(
           horizontal: MediaQuery.sizeOf(context).width >= 700 ? 48 : 20,
           vertical: 20,
@@ -84,7 +85,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 

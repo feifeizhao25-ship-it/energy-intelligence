@@ -6,6 +6,9 @@ import 'package:energy_global/main.dart';
 
 void main() {
   testWidgets('bottom tabs are announced with their names and the selected one is marked', (t) async {
+    t.view.devicePixelRatio = 1;
+    t.view.physicalSize = const Size(599, 900);
+    addTearDown(t.view.reset);
     final handle = t.ensureSemantics();
     await t.pumpWidget(const MaterialApp(home: MainNavigation()));
     await t.pump(const Duration(milliseconds: 300));

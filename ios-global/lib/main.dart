@@ -20,6 +20,7 @@ import 'screens/research/research_screen.dart';
 import 'screens/settings/settings_screen.dart';
 import 'screens/library/energy_library.dart';
 import 'services/api_service.dart';
+import 'widgets/ei_nav_rail.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -149,6 +150,28 @@ class _MainNavigationState extends State<MainNavigation> {
 
   @override
   Widget build(BuildContext context) {
+    if (MediaQuery.of(context).size.width >= 600) {
+      return Scaffold(
+        body: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            EiNavRail(
+              dests: const [
+        EiNavDest(Icons.grid_view_rounded, Icons.grid_view_rounded, 'Dashboard'),
+        EiNavDest(Icons.folder_outlined, Icons.folder_outlined, 'Projects'),
+        EiNavDest(Icons.wb_sunny_outlined, Icons.wb_sunny_outlined, 'Resources'),
+        EiNavDest(Icons.calculate_outlined, Icons.calculate_outlined, 'Finance'),
+        EiNavDest(Icons.auto_awesome_outlined, Icons.auto_awesome_outlined, 'AI'),
+              ],
+              index: _currentIndex,
+              onSelect: (i) => setState(() => _currentIndex = i),
+            ),
+            Expanded(child: IndexedStack(index: _currentIndex, children: _screens)),
+          ],
+        ),
+      );
+    }
+
     return Scaffold(
       body: IndexedStack(index: _currentIndex, children: _screens),
       bottomNavigationBar: Container(

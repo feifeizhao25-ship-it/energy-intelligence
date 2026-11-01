@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/bar_chart.dart';
 import '../../services/api_service.dart';
+import '../../widgets/reading_column.dart';
 
 class StorageFinanceScreen extends StatefulWidget {
   const StorageFinanceScreen({super.key});
@@ -78,7 +79,7 @@ class _StorageFinanceScreenState extends State<StorageFinanceScreen> {
         backgroundColor: const Color(0xFF1D4ED8),
         foregroundColor: Colors.white,
       ),
-      body: SingleChildScrollView(
+      body: ReadingColumn(child: SingleChildScrollView(
         padding: EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -168,7 +169,7 @@ class _StorageFinanceScreenState extends State<StorageFinanceScreen> {
             ],
           ],
         ),
-      ),
+      )),
     );
   }
 
