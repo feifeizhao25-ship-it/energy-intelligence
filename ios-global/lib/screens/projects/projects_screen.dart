@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_theme.dart';
 import '../../widgets/photo_widgets.dart';
 
 import '../../utils/project_display.dart';
@@ -71,10 +72,10 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
             ? ListView(
                 children: [
                   const SizedBox(height: 180),
-                  const Icon(
+                  Icon(
                     Icons.cloud_off_outlined,
                     size: 48,
-                    color: Color(0xFF94A3B8),
+                    color: context.eiMuted,
                   ),
                   const SizedBox(height: 12),
                   Text(_error!, textAlign: TextAlign.center),
@@ -152,7 +153,7 @@ class _ProjectCard extends StatelessWidget {
           ),
           trailing: Text(
             status,
-            style: const TextStyle(fontSize: 12, color: Color(0xFF475569)),
+            style: TextStyle(fontSize: 12, color: context.eiBody2),
           ),
           onTap: () => Navigator.pushNamed(
             context,

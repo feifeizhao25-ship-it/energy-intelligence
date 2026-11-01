@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 import '../models/project.dart';
 
 class ProjectCard extends StatelessWidget {
@@ -102,7 +103,7 @@ class ProjectCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF0F172A),
+                  color: context.eiStrong,
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -113,13 +114,13 @@ class ProjectCard extends StatelessWidget {
                   Icon(
                     Icons.location_on_outlined,
                     size: 14,
-                    color: Color(0xFF64748B),
+                    color: context.eiMuted,
                   ),
                   SizedBox(width: 4),
                   Expanded(
                     child: Text(
                       '${project.province} · ${project.capacityMw.toStringAsFixed(0)}MW',
-                      style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                      style: TextStyle(fontSize: 12, color: context.eiMuted),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -134,14 +135,14 @@ class ProjectCard extends StatelessWidget {
                     return Container(
                       padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: Color(0xFFF1F5F9),
+                        color: context.eiLine,
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
                         tag,
                         style: TextStyle(
                           fontSize: 10,
-                          color: Color(0xFF475569),
+                          color: context.eiBody2,
                         ),
                       ),
                     );

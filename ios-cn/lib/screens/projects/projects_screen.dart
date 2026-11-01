@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_theme.dart';
 import '../../models/project.dart';
 import '../../services/api_service.dart';
 import '../../widgets/project_card.dart';
@@ -152,7 +153,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                                       textAlign: TextAlign.center,
                                       style: TextStyle(
                                         fontSize: 13,
-                                        color: Color(0xFF64748B),
+                                        color: context.eiMuted,
                                         height: 1.5,
                                       ),
                                     ),

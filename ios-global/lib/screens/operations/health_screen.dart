@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_theme.dart';
 import 'dart:math' as math;
 
 class HealthScreen extends StatelessWidget {
@@ -10,8 +11,8 @@ class HealthScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Plant Health'),
         elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF1E293B),
+        backgroundColor: context.eiCard,
+        foregroundColor: context.eiBody,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -20,9 +21,9 @@ class HealthScreen extends StatelessWidget {
           children: [
             Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: context.eiCard,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+                border: Border.all(color: context.eiLine),
               ),
               padding: const EdgeInsets.all(24),
               child: Center(
@@ -34,16 +35,16 @@ class HealthScreen extends StatelessWidget {
                       child: CustomPaint(painter: HealthArcPainter(score: 84)),
                     ),
                     const SizedBox(height: 16),
-                    const Text(
+                    Text(
                       'Overall Health Score',
-                      style: TextStyle(fontSize: 14, color: Color(0xFF64748B)),
+                      style: TextStyle(fontSize: 14, color: context.eiMuted),
                     ),
-                    const Text(
+                    Text(
                       '84/100',
                       style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF1E293B),
+                        color: context.eiBody,
                       ),
                     ),
                     const Text(
@@ -55,12 +56,12 @@ class HealthScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 28),
-            const Text(
+            Text(
               'Component Health',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF1E293B),
+                color: context.eiBody,
               ),
             ),
             const SizedBox(height: 12),
@@ -94,12 +95,12 @@ class HealthScreen extends StatelessWidget {
               color: const Color(0xFFF87171),
             ),
             const SizedBox(height: 28),
-            const Text(
+            Text(
               'Findings',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF1E293B),
+                color: context.eiBody,
               ),
             ),
             const SizedBox(height: 12),
@@ -128,13 +129,13 @@ class HealthScreen extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: 10),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: context.eiCard,
                     borderRadius: BorderRadius.circular(10),
                     border: Border(
                       left: BorderSide(color: color, width: 4),
-                      right: const BorderSide(color: Color(0xFFE2E8F0)),
-                      top: const BorderSide(color: Color(0xFFE2E8F0)),
-                      bottom: const BorderSide(color: Color(0xFFE2E8F0)),
+                      right: BorderSide(color: context.eiLine),
+                      top: BorderSide(color: context.eiLine),
+                      bottom: BorderSide(color: context.eiLine),
                     ),
                   ),
                   padding: const EdgeInsets.all(12),
@@ -148,17 +149,17 @@ class HealthScreen extends StatelessWidget {
                           children: [
                             Text(
                               finding['title'] as String,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
-                                color: Color(0xFF1E293B),
+                                color: context.eiBody,
                               ),
                             ),
                             Text(
                               finding['subtitle'] as String,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
-                                color: Color(0xFF64748B),
+                                color: context.eiMuted,
                               ),
                             ),
                           ],
@@ -197,18 +198,18 @@ class _HealthBar extends StatelessWidget {
           children: [
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF1E293B),
+                color: context.eiBody,
               ),
             ),
             Text(
               '$value%',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF64748B),
+                color: context.eiMuted,
               ),
             ),
           ],
@@ -219,7 +220,7 @@ class _HealthBar extends StatelessWidget {
           child: LinearProgressIndicator(
             value: value / 100,
             minHeight: 6,
-            backgroundColor: const Color(0xFFE2E8F0),
+            backgroundColor: context.eiLine,
             valueColor: AlwaysStoppedAnimation<Color>(color),
           ),
         ),

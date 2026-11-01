@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_theme.dart';
 import '../../widgets/bar_chart.dart';
 
 class WindFinanceScreen extends StatefulWidget {
@@ -365,7 +366,7 @@ class _WindFinanceScreenState extends State<WindFinanceScreen> {
                 children: [
                   Text(
                     item['label'] as String,
-                    style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                    style: TextStyle(fontSize: 11, color: context.eiMuted),
                   ),
                   SizedBox(height: 6),
                   Text(

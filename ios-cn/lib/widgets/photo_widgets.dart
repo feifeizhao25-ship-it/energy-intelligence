@@ -2,6 +2,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
 /// 带照片背景的入口卡片内容（照片 + 深色渐变 + 文字）。
 class EnPhotoCard extends StatelessWidget {
@@ -103,9 +104,9 @@ class EnEmptyState extends StatelessWidget {
             errorBuilder: (_, __, ___) => SizedBox(height: imageHeight)),
       ),
       const SizedBox(height: 14),
-      Text(title, textAlign: TextAlign.center, style: const TextStyle(fontSize: 17, height: 1.4, fontWeight: FontWeight.w700, color: Color(0xFF0F172A))),
+      Text(title, textAlign: TextAlign.center, style: TextStyle(fontSize: 17, height: 1.4, fontWeight: FontWeight.w700, color: context.eiStrong)),
       const SizedBox(height: 6),
-      Text(message, textAlign: TextAlign.center, style: const TextStyle(fontSize: 14, height: 1.6, color: Color(0xFF64748B))),
+      Text(message, textAlign: TextAlign.center, style: TextStyle(fontSize: 14, height: 1.6, color: context.eiMuted)),
     ]);
   }
 }
@@ -143,10 +144,10 @@ class EnThumbRow extends StatelessWidget {
                 Row(children: [
                   Icon(icon, size: 18, color: color),
                   const SizedBox(width: 6),
-                  Expanded(child: Text(title, style: const TextStyle(fontSize: 17, height: 1.3, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)))),
+                  Expanded(child: Text(title, style: TextStyle(fontSize: 17, height: 1.3, fontWeight: FontWeight.bold, color: context.eiStrong))),
                 ]),
                 const SizedBox(height: 4),
-                Text(subtitle, style: const TextStyle(fontSize: 14, height: 1.5, color: Color(0xFF64748B))),
+                Text(subtitle, style: TextStyle(fontSize: 14, height: 1.5, color: context.eiMuted)),
               ]),
             ),
             const Icon(Icons.arrow_forward, color: Color(0xFFCBD5E1)),

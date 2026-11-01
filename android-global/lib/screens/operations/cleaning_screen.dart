@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_theme.dart';
 import '../../services/api_service.dart';
 
 class CleaningScreen extends StatefulWidget {
@@ -71,10 +72,10 @@ class _CleaningScreenState extends State<CleaningScreen> {
       appBar: AppBar(
         title: const Text('Cleaning Optimizer'),
         elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF1E293B),
+        backgroundColor: context.eiCard,
+        foregroundColor: context.eiBody,
       ),
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: context.eiPage,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -237,12 +238,12 @@ class _CleaningScreenState extends State<CleaningScreen> {
               ),
               const SizedBox(height: 20),
 
-              const Text(
+              Text(
                 'Schedule Comparison',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
-                  color: Color(0xFF0F172A),
+                  color: context.eiStrong,
                 ),
               ),
               const SizedBox(height: 10),
@@ -327,10 +328,10 @@ class _CleaningScreenState extends State<CleaningScreen> {
       padding: const EdgeInsets.only(bottom: 6),
       child: Text(
         text,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.w600,
-          color: Color(0xFF374151),
+          color: context.eiBody2,
         ),
       ),
     );
@@ -342,17 +343,17 @@ class _CleaningScreenState extends State<CleaningScreen> {
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 13),
+        hintStyle: TextStyle(color: context.eiMuted, fontSize: 13),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+          borderSide: BorderSide(color: context.eiLine),
         ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 12,
           vertical: 10,
         ),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: context.eiCard,
       ),
     );
   }
@@ -371,7 +372,7 @@ class _CleaningScreenState extends State<CleaningScreen> {
         children: [
           Text(
             label,
-            style: const TextStyle(fontSize: 10, color: Color(0xFF64748B)),
+            style: TextStyle(fontSize: 10, color: context.eiMuted),
           ),
           const SizedBox(height: 5),
           Text(

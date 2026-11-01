@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 import 'dart:math' as math;
 
 class SiteScoreCard extends StatelessWidget {
@@ -29,7 +30,7 @@ class SiteScoreCard extends StatelessWidget {
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF475569),
+                color: context.eiBody2,
               ),
             ),
             SizedBox(height: 24),
@@ -58,7 +59,7 @@ class SiteScoreCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF475569),
+                        color: context.eiBody2,
                       ),
                     ),
                   ],
@@ -69,14 +70,14 @@ class SiteScoreCard extends StatelessWidget {
             Container(
               padding: EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Color(0xFFF1F5F9),
+                color: context.eiLine,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
                 recommendation,
                 style: TextStyle(
                   fontSize: 13,
-                  color: Color(0xFF475569),
+                  color: context.eiBody2,
                   height: 1.5,
                 ),
                 textAlign: TextAlign.center,

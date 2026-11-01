@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_theme.dart';
 import '../../widgets/bar_chart.dart';
 
 class WindFinanceScreen extends StatefulWidget {
@@ -133,7 +134,7 @@ class _WindFinanceScreenState extends State<WindFinanceScreen> {
               '装机容量 (MW)',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF0F172A),
+                color: context.eiStrong,
               ),
             ),
             SizedBox(height: 8),
@@ -153,7 +154,7 @@ class _WindFinanceScreenState extends State<WindFinanceScreen> {
               '年利用小时数 (容量系数)',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF0F172A),
+                color: context.eiStrong,
               ),
             ),
             SizedBox(height: 8),
@@ -173,7 +174,7 @@ class _WindFinanceScreenState extends State<WindFinanceScreen> {
               '单位投资成本 (万元/MW)',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF0F172A),
+                color: context.eiStrong,
               ),
             ),
             SizedBox(height: 8),
@@ -193,7 +194,7 @@ class _WindFinanceScreenState extends State<WindFinanceScreen> {
               '年度运维成本 (万元/MW)',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF0F172A),
+                color: context.eiStrong,
               ),
             ),
             SizedBox(height: 8),
@@ -213,7 +214,7 @@ class _WindFinanceScreenState extends State<WindFinanceScreen> {
               '上网电价 (元/kWh)',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF0F172A),
+                color: context.eiStrong,
               ),
             ),
             SizedBox(height: 8),
@@ -289,7 +290,7 @@ class _WindFinanceScreenState extends State<WindFinanceScreen> {
                 '未来10年现金流 (万元)',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF0F172A),
+                  color: context.eiStrong,
                 ),
               ),
               SizedBox(height: 12),
@@ -365,7 +366,7 @@ class _WindFinanceScreenState extends State<WindFinanceScreen> {
                 children: [
                   Text(
                     item['label'] as String,
-                    style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                    style: TextStyle(fontSize: 11, color: context.eiMuted),
                   ),
                   SizedBox(height: 6),
                   Text(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'services/api_service.dart';
 import 'theme/app_theme.dart';
+import 'widgets/responsive_frame.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/dashboard/dashboard_screen.dart';
@@ -37,6 +38,7 @@ class NewEnergyApp extends StatelessWidget {
       theme: AppTheme.buildTheme(),
       darkTheme: AppTheme.buildDarkTheme(),
       themeMode: ThemeMode.system,
+      builder: (context, child) => ResponsiveFrame(child: child ?? const SizedBox.shrink()),
       locale: const Locale('zh', 'CN'),
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
@@ -120,7 +122,7 @@ class _MainNavigationState extends State<MainNavigation> {
       body: IndexedStack(index: _selectedIndex, children: _screens),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.eiCard,
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.08),

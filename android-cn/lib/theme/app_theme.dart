@@ -247,3 +247,17 @@ class AppTheme {
     );
   }
 }
+
+
+/// Theme-aware slate palette. Screens use these instead of hard-coded light-theme colours so the app follows the
+/// system dark mode (retest N07).
+extension EiColors on BuildContext {
+  bool get eiDark => Theme.of(this).brightness == Brightness.dark;
+  Color get eiCard => eiDark ? const Color(0xFF1E293B) : Colors.white;
+  Color get eiPage => eiDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
+  Color get eiStrong => eiDark ? const Color(0xFFF1F5F9) : const Color(0xFF0F172A);
+  Color get eiBody => eiDark ? const Color(0xFFE2E8F0) : const Color(0xFF1E293B);
+  Color get eiBody2 => eiDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569);
+  Color get eiMuted => eiDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+  Color get eiLine => eiDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
+}

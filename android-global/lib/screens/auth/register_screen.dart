@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_theme.dart';
 import '../../services/api_service.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -111,9 +112,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 children: [
                   Text(
                     'Step ${_step + 1} of 2',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
-                      color: Color(0xFF64748B),
+                      color: context.eiMuted,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -202,11 +203,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             Expanded(
                               child: Padding(
                                 padding: const EdgeInsets.only(top: 8),
-                                child: const Text(
+                                child: Text(
                                   'I agree to the Terms of Service and Privacy Policy (GDPR compliant)',
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: Color(0xFF64748B),
+                                    color: context.eiMuted,
                                   ),
                                 ),
                               ),
@@ -248,10 +249,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text(
+                      Text(
                         'Already have an account? ',
                         style: TextStyle(
-                          color: Color(0xFF64748B),
+                          color: context.eiMuted,
                           fontSize: 14,
                         ),
                       ),

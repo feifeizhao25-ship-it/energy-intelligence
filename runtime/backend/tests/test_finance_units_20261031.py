@@ -68,6 +68,9 @@ async def test_solar_api_gives_sane_result_for_cny_per_kwh(client, auth_headers)
     assert out["npv"] > -5_000_000, "NPV must not be the -22.8 million of the unit bug"
     assert out["input_notes"] and "kWh" in out["input_notes"][0]
     assert any("ITC" in n for n in out["input_notes"]), "US ITC must not be silently applied to a CNY project"
+    # Retest N10: a domestic (cn) account gets the notes in Chinese, not an English sentence
+    assert any("\u4e00" <= ch <= "\u9fff" for ch in out["input_notes"][0]), out["input_notes"]
+    assert "plausible" not in " ".join(out["input_notes"]) and "not applied" not in " ".join(out["input_notes"])
     explicit = (await client.post("/api/v1/finance/solar", json={**body, "electricity_price": 320, "electricity_price_unit": "per_mwh", "itc_rate": 0}, headers=auth_headers)).json()
     assert explicit["irr"] == pytest.approx(out["irr"]) and explicit["input_notes"] == []
 
@@ -77,3 +80,21 @@ async def test_storage_api_accepts_660_cycles(client, auth_headers):
     body = dict(power_mw=5, capacity_mwh=10, cycles_per_year=660, peak_price_per_mwh=1100, offpeak_price_per_mwh=350, capex_per_kwh=1100, currency="CNY")
     r = await client.post("/api/v1/finance/storage", json=body, headers=auth_headers)
     assert r.status_code == 200, r.text
+
+
+@pytest.mark.asyncio
+async def test_input_notes_are_english_for_an_international_account(client, db_session):
+    import uuid
+    from app.core.security import create_access_token
+    from app.models.user import User
+    from app.utils.security import get_password_hash
+    u = User(id=str(uuid.uuid4()), email=f"g{uuid.uuid4().hex[:6]}@example.com", password_hash=get_password_hash("Passw0rd!x"),
+             name="g", role="user", market="global", subscription_plan="free", usage_quota={})
+    db_session.add(u)
+    await db_session.commit()
+    h = {"Authorization": f"Bearer {create_access_token(str(u.id))}"}
+    r = await client.post("/api/v1/finance/solar", json=dict(electricity_price=0.32, **SOLAR_CN), headers=h)
+    assert r.status_code == 200, r.text
+    notes = r.json()["input_notes"]
+    assert notes and "not a plausible price per MWh" in notes[0]
+    assert not any("\u4e00" <= ch <= "\u9fff" for n in notes for ch in n)

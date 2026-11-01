@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_theme.dart';
 import '../../services/api_service.dart';
 
 class ResearchScreen extends StatefulWidget {
@@ -98,7 +99,7 @@ class _ResearchScreenState extends State<ResearchScreen> {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF0F172A),
+                color: context.eiStrong,
               ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
@@ -106,7 +107,7 @@ class _ResearchScreenState extends State<ResearchScreen> {
             SizedBox(height: 6),
             Text(
               (paper['authors'] ?? []).join(', '),
-              style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+              style: TextStyle(fontSize: 11, color: context.eiMuted),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -117,7 +118,7 @@ class _ResearchScreenState extends State<ResearchScreen> {
                 Expanded(
                   child: Text(
                     '${paper['journal']} ${paper['year']}',
-                    style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                    style: TextStyle(fontSize: 11, color: context.eiMuted),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -133,12 +134,12 @@ class _ResearchScreenState extends State<ResearchScreen> {
                   return Container(
                     padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
-                      color: Color(0xFFF1F5F9),
+                      color: context.eiLine,
                       borderRadius: BorderRadius.circular(3),
                     ),
                     child: Text(
                       tag,
-                      style: TextStyle(fontSize: 10, color: Color(0xFF475569)),
+                      style: TextStyle(fontSize: 10, color: context.eiBody2),
                     ),
                   );
                 }).toList(),
@@ -150,7 +151,7 @@ class _ResearchScreenState extends State<ResearchScreen> {
               children: [
                 Text(
                   '引用: ${paper['citations']}',
-                  style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                  style: TextStyle(fontSize: 11, color: context.eiMuted),
                 ),
               ],
             ),

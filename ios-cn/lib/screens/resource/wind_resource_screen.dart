@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_theme.dart';
 import '../../services/api_service.dart';
 import '../../models/resource_assessment.dart';
 import '../../widgets/site_score_card.dart';
@@ -216,7 +217,7 @@ class _WindResourceScreenState extends State<WindResourceScreen> {
           children: [
             Text(
               label,
-              style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+              style: TextStyle(fontSize: 12, color: context.eiMuted),
             ),
             SizedBox(height: 6),
             Row(
@@ -231,7 +232,7 @@ class _WindResourceScreenState extends State<WindResourceScreen> {
                 SizedBox(width: 4),
                 Text(
                   unit,
-                  style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                  style: TextStyle(fontSize: 11, color: context.eiMuted),
                 ),
               ],
             ),

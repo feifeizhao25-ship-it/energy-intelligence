@@ -84,7 +84,7 @@ class _HealthScreenState extends State<HealthScreen> {
                 width: double.infinity,
                 padding: EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  border: Border.all(color: Color(0xFFE2E8F0)),
+                  border: Border.all(color: context.eiLine),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: EnEmptyState(
@@ -96,7 +96,7 @@ class _HealthScreenState extends State<HealthScreen> {
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 12),
                 decoration: BoxDecoration(
-                  border: Border.all(color: Color(0xFFE2E8F0)),
+                  border: Border.all(color: context.eiLine),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: DropdownButton<String>(
@@ -187,7 +187,7 @@ class _HealthScreenState extends State<HealthScreen> {
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF475569),
+                        color: context.eiBody2,
                       ),
                     ),
                   ],
@@ -246,7 +246,7 @@ class _HealthScreenState extends State<HealthScreen> {
                   child: LinearProgressIndicator(
                     value: (d['value'] as double),
                     minHeight: 6,
-                    backgroundColor: Color(0xFFE2E8F0),
+                    backgroundColor: context.eiLine,
                     valueColor: AlwaysStoppedAnimation(AppTheme.primaryColor),
                   ),
                 ),
@@ -305,7 +305,7 @@ class _HealthScreenState extends State<HealthScreen> {
                         finding.description,
                         style: TextStyle(
                           fontSize: 12,
-                          color: Color(0xFF0F172A),
+                          color: context.eiStrong,
                           fontWeight: FontWeight.w500,
                         ),
                         maxLines: 1,
@@ -317,7 +317,7 @@ class _HealthScreenState extends State<HealthScreen> {
                 SizedBox(height: 8),
                 Text(
                   '影响：${finding.impact}',
-                  style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                  style: TextStyle(fontSize: 11, color: context.eiMuted),
                 ),
               ],
             ),
@@ -344,7 +344,7 @@ class _HealthScreenState extends State<HealthScreen> {
             margin: EdgeInsets.only(bottom: 12),
             padding: EdgeInsets.all(12),
             decoration: BoxDecoration(
-              border: Border.all(color: Color(0xFFE2E8F0)),
+              border: Border.all(color: context.eiLine),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Column(
@@ -382,7 +382,7 @@ class _HealthScreenState extends State<HealthScreen> {
                 SizedBox(height: 8),
                 Text(
                   rec.action,
-                  style: TextStyle(fontSize: 12, color: Color(0xFF475569)),
+                  style: TextStyle(fontSize: 12, color: context.eiBody2),
                 ),
                 SizedBox(height: 4),
                 Text(

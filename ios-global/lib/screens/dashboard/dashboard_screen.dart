@@ -180,7 +180,7 @@ class _Metric extends StatelessWidget {
             value,
             style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
           ),
-          Text(title, style: const TextStyle(color: Color(0xFF64748B))),
+          Text(title, style: TextStyle(color: context.eiMuted)),
         ],
       ),
     ),
@@ -205,7 +205,7 @@ class _StatusCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: const Color(0xFF64748B)),
+          Icon(icon, color: context.eiMuted),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -216,7 +216,7 @@ class _StatusCard extends StatelessWidget {
                   style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 4),
-                Text(detail, style: const TextStyle(color: Color(0xFF64748B))),
+                Text(detail, style: TextStyle(color: context.eiMuted)),
                 if (action != null)
                   TextButton(onPressed: action, child: const Text('Try again')),
               ],

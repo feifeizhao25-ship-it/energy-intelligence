@@ -117,9 +117,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
         const SizedBox(height: 6),
-        const Text(
+        Text(
           '仅展示当前账号中经过验证的项目数据',
-          style: TextStyle(color: Color(0xFF64748B)),
+          style: TextStyle(color: context.eiMuted),
         ),
         const SizedBox(height: 20),
         const EnBanner(
@@ -200,7 +200,7 @@ class _Metric extends StatelessWidget {
             value,
             style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
           ),
-          Text(title, style: const TextStyle(color: Color(0xFF64748B))),
+          Text(title, style: TextStyle(color: context.eiMuted)),
         ],
       ),
     ),
@@ -225,7 +225,7 @@ class _Status extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: const Color(0xFF64748B)),
+          Icon(icon, color: context.eiMuted),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -236,7 +236,7 @@ class _Status extends StatelessWidget {
                   style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 4),
-                Text(detail, style: const TextStyle(color: Color(0xFF64748B))),
+                Text(detail, style: TextStyle(color: context.eiMuted)),
                 if (action != null)
                   TextButton(onPressed: action, child: const Text('重试')),
               ],

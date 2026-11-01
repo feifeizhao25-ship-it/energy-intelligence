@@ -9,19 +9,36 @@ PER_KWH_CEILING = 5.0
 PriceUnit = Literal["per_mwh", "per_kwh"]
 
 
-def price_to_per_mwh(value: float, unit: Optional[str], currency: str, field: str = "electricity_price"):
-    """Return (price per MWh, note or None). An explicit unit always wins; no unit is inferred from size."""
+def price_to_per_mwh_bilingual(value: float, unit: Optional[str], currency: str, field: str = "electricity_price"):
+    """Return (price per MWh, (English note, Chinese note) or None). An explicit unit always wins; no unit is inferred from size."""
     if unit == "per_kwh":
-        return value * 1000.0, f"{field} {value:g} {currency}/kWh converted to {value * 1000.0:g} {currency}/MWh."
+        mwh = value * 1000.0
+        return mwh, (f"{field} {value:g} {currency}/kWh converted to {mwh:g} {currency}/MWh.",
+                     f"{field} {value:g} {currency}/kWh 已换算为 {mwh:g} {currency}/MWh。")
     if unit == "per_mwh":
         return value, None
     if value < PER_KWH_CEILING:
-        return value * 1000.0, (
+        mwh = value * 1000.0
+        return mwh, (
             f"{field} {value:g} is below {PER_KWH_CEILING:g}, which is not a plausible price per MWh, so it was read as "
-            f"{value:g} {currency}/kWh = {value * 1000.0:g} {currency}/MWh. "
-            "Send electricity_price_unit ('per_kwh' or 'per_mwh') to make this explicit."
+            f"{value:g} {currency}/kWh = {mwh:g} {currency}/MWh. "
+            "Send electricity_price_unit ('per_kwh' or 'per_mwh') to make this explicit.",
+            f"{field} 的值 {value:g} 低于 {PER_KWH_CEILING:g}，不可能是每 MWh 的电价，已按 {value:g} {currency}/kWh"
+            f"（即 {mwh:g} {currency}/MWh）处理。请同时传入 electricity_price_unit（'per_kwh' 或 'per_mwh'）以明确单位。",
         )
     return value, None
+
+
+def price_to_per_mwh(value: float, unit: Optional[str], currency: str, field: str = "electricity_price"):
+    """English-only wrapper kept for callers that want the English note."""
+    price, pair = price_to_per_mwh_bilingual(value, unit, currency, field)
+    return price, (pair[0] if pair else None)
+
+
+ITC_NOTE = (
+    "itc_rate not sent for a CNY project: the US 30% ITC was not applied (itc_rate=0).",
+    "人民币项目未传 itc_rate：未套用美国 30% 投资税收抵免（ITC），itc_rate 按 0 计算。",
+)
 
 
 class SolarFinanceRequest(BaseModel):
@@ -44,11 +61,11 @@ class SolarFinanceRequest(BaseModel):
         default_factory=list,
         description="Optional sources for the inputs (title, url, retrieved_at); stored with the model so reports can cite them",
     )
-    _price_notes: List[str] = PrivateAttr(default_factory=list)
+    _price_notes: List[tuple] = PrivateAttr(default_factory=list)
 
     @model_validator(mode="after")
     def _normalise_price_unit(self):
-        price, note = price_to_per_mwh(self.electricity_price, self.electricity_price_unit, self.currency)
+        price, note = price_to_per_mwh_bilingual(self.electricity_price, self.electricity_price_unit, self.currency)
         if self.electricity_price_unit != "per_mwh" or note:
             object.__setattr__(self, "electricity_price", price)
         self._price_notes = [note] if note else []
@@ -59,13 +76,17 @@ class SolarFinanceRequest(BaseModel):
             and self.currency.upper() == "CNY"
         ):
             self.itc_rate = 0.0
-            self._price_notes.append("itc_rate not sent for a CNY project: the US 30% ITC was not applied (itc_rate=0).")
+            self._price_notes.append(ITC_NOTE)
         self.electricity_price_unit = "per_mwh"
         return self
 
     @property
     def price_notes(self) -> List[str]:
-        return list(self._price_notes)
+        return [n[0] for n in self._price_notes]
+
+    def notes_for(self, en: bool) -> List[str]:
+        """Input notes in the language of the account: English for the international edition, Chinese for the domestic one."""
+        return [n[0] if en else n[1] for n in self._price_notes]
 
 
 class FinancialModelResponse(BaseModel):
@@ -98,11 +119,11 @@ class WindFinanceRequest(BaseModel):
         default_factory=list,
         description="Optional sources for the inputs (title, url, retrieved_at); stored with the model so reports can cite them",
     )
-    _price_notes: List[str] = PrivateAttr(default_factory=list)
+    _price_notes: List[tuple] = PrivateAttr(default_factory=list)
 
     @model_validator(mode="after")
     def _normalise_price_unit(self):
-        price, note = price_to_per_mwh(self.electricity_price, self.electricity_price_unit, self.currency)
+        price, note = price_to_per_mwh_bilingual(self.electricity_price, self.electricity_price_unit, self.currency)
         if self.electricity_price_unit != "per_mwh" or note:
             object.__setattr__(self, "electricity_price", price)
         self._price_notes = [note] if note else []
@@ -113,13 +134,17 @@ class WindFinanceRequest(BaseModel):
             and self.currency.upper() == "CNY"
         ):
             self.itc_rate = 0.0
-            self._price_notes.append("itc_rate not sent for a CNY project: the US 30% ITC was not applied (itc_rate=0).")
+            self._price_notes.append(ITC_NOTE)
         self.electricity_price_unit = "per_mwh"
         return self
 
     @property
     def price_notes(self) -> List[str]:
-        return list(self._price_notes)
+        return [n[0] for n in self._price_notes]
+
+    def notes_for(self, en: bool) -> List[str]:
+        """Input notes in the language of the account: English for the international edition, Chinese for the domestic one."""
+        return [n[0] if en else n[1] for n in self._price_notes]
 
 
 class StorageFinanceRequest(BaseModel):

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_theme.dart';
 import '../../widgets/bar_chart.dart';
 import '../../services/api_service.dart';
 
@@ -79,10 +80,10 @@ class _StorageFinanceScreenState extends State<StorageFinanceScreen> {
       appBar: AppBar(
         title: const Text('Storage Finance'),
         elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF1E293B),
+        backgroundColor: context.eiCard,
+        foregroundColor: context.eiBody,
       ),
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: context.eiPage,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -145,12 +146,12 @@ class _StorageFinanceScreenState extends State<StorageFinanceScreen> {
 
             if (_result != null) ...[
               const SizedBox(height: 28),
-              const Text(
+              Text(
                 'Results',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF0F172A),
+                  color: context.eiStrong,
                 ),
               ),
               const SizedBox(height: 12),
@@ -158,14 +159,14 @@ class _StorageFinanceScreenState extends State<StorageFinanceScreen> {
               const SizedBox(height: 8),
               Text(
                 'Model: ${_result!['assumptionVersion']} · Based on your assumptions, not a market forecast.',
-                style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                style: TextStyle(fontSize: 11, color: context.eiMuted),
               ),
               const SizedBox(height: 20),
-              const Text(
+              Text(
                 '10-Year Cash Flow (USD M)',
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF0F172A),
+                  color: context.eiStrong,
                 ),
               ),
               const SizedBox(height: 10),
@@ -190,10 +191,10 @@ class _StorageFinanceScreenState extends State<StorageFinanceScreen> {
       padding: const EdgeInsets.only(bottom: 12),
       child: Text(
         title,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.bold,
-          color: Color(0xFF0F172A),
+          color: context.eiStrong,
         ),
       ),
     );
@@ -204,10 +205,10 @@ class _StorageFinanceScreenState extends State<StorageFinanceScreen> {
       padding: const EdgeInsets.only(bottom: 6),
       child: Text(
         text,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.w600,
-          color: Color(0xFF374151),
+          color: context.eiBody2,
         ),
       ),
     );
@@ -219,17 +220,17 @@ class _StorageFinanceScreenState extends State<StorageFinanceScreen> {
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 13),
+        hintStyle: TextStyle(color: context.eiMuted, fontSize: 13),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+          borderSide: BorderSide(color: context.eiLine),
         ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 12,
           vertical: 10,
         ),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: context.eiCard,
       ),
     );
   }
@@ -287,7 +288,7 @@ class _StorageFinanceScreenState extends State<StorageFinanceScreen> {
             children: [
               Text(
                 item['label'] as String,
-                style: const TextStyle(fontSize: 10, color: Color(0xFF64748B)),
+                style: TextStyle(fontSize: 10, color: context.eiMuted),
               ),
               const SizedBox(height: 5),
               Text(

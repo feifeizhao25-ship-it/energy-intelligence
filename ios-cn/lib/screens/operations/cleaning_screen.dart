@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_theme.dart';
 import '../../services/api_service.dart';
 
 class CleaningScreen extends StatefulWidget {
@@ -355,7 +356,7 @@ class _CleaningScreenState extends State<CleaningScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(label, style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+          Text(label, style: TextStyle(fontSize: 11, color: context.eiMuted)),
           SizedBox(height: 6),
           Text(
             value,
