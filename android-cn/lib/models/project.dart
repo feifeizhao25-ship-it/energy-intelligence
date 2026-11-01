@@ -11,6 +11,7 @@ class Project {
   final double capacityMw;
   final List<String> tags;
   final DateTime createdAt;
+  final String? countryCode;
 
   Project({
     required this.id,
@@ -25,6 +26,7 @@ class Project {
     required this.capacityMw,
     required this.tags,
     required this.createdAt,
+    this.countryCode,
   });
 
   factory Project.fromJson(Map<String, dynamic> json) {
@@ -40,6 +42,7 @@ class Project {
       province: json['province'] ?? '',
       capacityMw: (json['capacityMw'] ?? 0.0).toDouble(),
       tags: List<String>.from(json['tags'] ?? []),
+      countryCode: (json['country_code'] ?? json['countryCode'])?.toString(),
       createdAt: DateTime.parse(
         json['createdAt'] ?? DateTime.now().toIso8601String(),
       ),

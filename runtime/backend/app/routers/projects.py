@@ -151,6 +151,32 @@ async def get_project(
     return success(data=_to_response(project))
 
 
+class CountryUpdate(BaseModel):
+    # ISO 3166-1 alpha-2; null clears it (and re-recognises it from the address).
+    country_code: Optional[str] = Field(None, min_length=2, max_length=2, pattern="^[A-Za-z]{2}$")
+
+    @field_validator("country_code")
+    @classmethod
+    def upper_country(cls, v: Optional[str]) -> Optional[str]:
+        return v.upper() if v else None
+
+
+@router.put("/{project_id}/country")
+async def set_project_country(
+    project_id: str,
+    body: CountryUpdate,
+    user_id: str = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+):
+    """The user corrects the project's country (reports use it for standards, currency and wording)."""
+    project = await _get_owned(project_id, user_id, db)
+    project.country_code = body.country_code or infer_country(project.location)
+    project.updated_at = datetime.now(timezone.utc)
+    await db.flush()
+    await db.refresh(project)
+    return success(data=_to_response(project), message="updated")
+
+
 @router.delete("/{project_id}")
 async def delete_project(
     project_id: str,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
 import '../../services/project_wire.dart';
+import '../../widgets/country_picker.dart';
 
 /// 新建项目。服务端要求：名称、类型、容量、经纬度；套餐项目数有上限（超出时显示升级提示）。
 class CreateProjectScreen extends StatefulWidget {
@@ -21,6 +22,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
   final _lng = TextEditingController();
   final _note = TextEditingController();
   String _type = 'solar_pv';
+  String? _country;
   bool _busy = false;
   String? _error;
 
@@ -55,6 +57,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
       longitude: double.parse(_lng.text.trim()),
       address: _address.text,
       description: _note.text,
+      countryCode: _country,
     );
     try {
       final created = widget.submit != null
@@ -77,8 +80,11 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
       body: SafeArea(
         child: Form(
           key: _form,
-          child: ListView(
+          child: SingleChildScrollView(
+            // every field is built up front, so the form validates all of them (a lazy ListView skips off-screen fields)
             padding: const EdgeInsets.all(16),
+            child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               TextFormField(
                 key: const Key('projectName'),
@@ -124,6 +130,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                 controller: _address,
                 decoration: const InputDecoration(labelText: '地点（选填）', hintText: '例如：江苏省盐城市'),
               ),
+              const SizedBox(height: 12),              CountryField(value: _country, onChanged: (v) => setState(() => _country = v)),
               const SizedBox(height: 12),
               Row(
                 children: [
@@ -168,6 +175,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                     : const Text('创建项目'),
               ),
             ],
+          ),
           ),
         ),
       ),

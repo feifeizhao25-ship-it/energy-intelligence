@@ -4,6 +4,7 @@ import '../../theme/app_theme.dart';
 import '../resource/solar_resource_screen.dart';
 import '../finance/solar_finance_screen.dart';
 import '../operations/health_screen.dart';
+import '../../widgets/country_picker.dart';
 import 'report_sources_screen.dart';
 
 class ProjectDetailScreen extends StatelessWidget {
@@ -213,6 +214,7 @@ class ProjectDetailScreen extends StatelessWidget {
         _buildInfoRow('状态', project.statusLabel),
         _buildInfoRow('装机容量', '${project.capacityMw}MW'),
         _buildInfoRow('所在地', '${project.province}${project.address}'),
+        ProjectCountryRow(projectId: project.id, initial: project.countryCode),
         _buildInfoRow('纬度', '${project.lat.toStringAsFixed(4)}°N'),
         _buildInfoRow('经度', '${project.lng.toStringAsFixed(4)}°E'),
       ],
