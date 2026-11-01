@@ -2,8 +2,9 @@
 
 The registry in data/entitlements.json is the single source of truth and already carries ``name_en`` /
 ``description_en`` / ``features_en``. The international view uses only those fields and never shows CNY, Alipay
-or Chinese text. USD (or any other currency) prices are never invented: an amount appears only when it was read
-from the configured Stripe Price object; otherwise the amount is null and the note says it is shown at checkout.
+or Chinese text. The international currency is USD (owner decision 2026-11-01). USD prices are never invented: an amount appears
+only when it was read from the configured Stripe Price object AND that Price is in USD; otherwise the amount is null
+and the note says it is shown at checkout.
 """
 from __future__ import annotations
 
@@ -13,11 +14,13 @@ import time
 from typing import Any, Dict, Optional
 
 PRODUCT_NAME_EN = "Energy Intelligence"
+# The one currency of the international edition. A Stripe Price in any other currency is never shown or sold.
+INTERNATIONAL_CURRENCY = "USD"
 _CJK = re.compile(r"[\u3400-\u9fff\uf900-\ufaff\u3000-\u303f\uff00-\uffef]")
 
 GLOBAL_PRICING_NOTE = (
-    "Annual billing is the only billing period. The amount and currency are shown on the secure checkout page "
-    "before you pay. Plans without a listed amount are arranged with sales."
+    "Annual billing is the only billing period. All international prices are in US dollars (USD) and are shown "
+    "on the secure checkout page before you pay. Plans without a listed amount are arranged with sales."
 )
 
 GLOBAL_BILLING_RULES = {
@@ -31,7 +34,7 @@ GLOBAL_BILLING_RULES = {
         "price difference is not refunded."
     ),
     "refund": "International refund terms are not published through this endpoint; the terms shown at checkout apply.",
-    "currency": "Amounts and currency are shown at checkout. No CNY pricing applies to international accounts.",
+    "currency": "International prices are in US dollars (USD) and are shown at checkout. No CNY pricing applies to international accounts.",
 }
 
 _PRICE_CACHE: Dict[str, Any] = {}
@@ -73,6 +76,8 @@ def _price_block(plan_id: str) -> Dict[str, Any]:
     if plan_id == "free":
         return {"amount_cents": 0, "currency": None, "interval": "year", "source": "free", "note": None}
     real = international_price(plan_id)
+    if real and str(real.get("currency") or "").upper() != INTERNATIONAL_CURRENCY:
+        real = None  # a non-USD Stripe Price is a misconfiguration for the international edition: never display it
     if real:
         return {
             "amount_cents": real["amount_cents"],
@@ -86,7 +91,7 @@ def _price_block(plan_id: str) -> Dict[str, Any]:
         "currency": None,
         "interval": "year",
         "source": None,
-        "note": "Shown at checkout." if plan_id in ("pro", "enterprise") else "Contact sales.",
+        "note": "Shown at checkout (USD)." if plan_id in ("pro", "enterprise") else "Contact sales.",
     }
 
 

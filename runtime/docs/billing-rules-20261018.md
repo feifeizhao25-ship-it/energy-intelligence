@@ -19,3 +19,12 @@
 以上均为规则与接口逻辑，未接入任何真实支付/退款通道；支付宝/Stripe 的下单与回调仍是原有代码，未在本定稿中启用新通道。
 
 规则实现：`runtime/backend/app/services/billing_rules.py`，测试：`tests/test_billing_rules.py`。
+
+## 2026-11-01 补充：国际站币种与席位口径
+- 国际站（market=global）币种固定为 **美元（USD）**（负责人 2026-11-01 决定）。只显示 Stripe 实际 Price 里读到的金额，且该 Price 必须是 USD；
+  非 USD 的 Price 视为配置错误：定价页不显示金额（显示"结账时展示（USD）"），`create_checkout_session` 直接拒绝下单。
+  实现：`app/services/market_localization.py`（`INTERNATIONAL_CURRENCY`）、`app/services/stripe_service.py`；测试：`tests/test_intl_currency_usd_20261101.py`。
+  Stripe 后台需把国际站 Price 建为 USD（需要本人在 Stripe 操作，本次没有创建）。
+- 席位以注册表 v2.0.0（2026-10-27，依据 0S2）为准：免费 1 / 标准 1 / 专业 3 / 团队 10 / 上限档 10（合同可增加）。
+  D5 6-1 在 2026-10-15 的草案写的是团队 5 / 上限档 20，早于 0S2，已作废；该差异按"以较新的决定为准"关闭，并由测试锁定。
+- 档名以注册表为准：免费 / 标准·数据库订阅 / 专业 / 团队 / 上限档（英文 Evaluation / Professional / Expert / Team / Enterprise）。
