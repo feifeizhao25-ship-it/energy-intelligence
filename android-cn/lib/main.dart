@@ -19,6 +19,7 @@ import 'screens/projects/create_project_screen.dart';
 import 'screens/research/research_screen.dart';
 import 'screens/settings/settings_screen.dart';
 import 'screens/library/energy_library.dart';
+import 'widgets/ei_nav_rail.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -118,6 +119,28 @@ class _MainNavigationState extends State<MainNavigation> {
 
   @override
   Widget build(BuildContext context) {
+    if (MediaQuery.of(context).size.width >= 600) {
+      return Scaffold(
+        body: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            EiNavRail(
+              dests: const [
+        EiNavDest(Icons.dashboard_outlined, Icons.dashboard, '首页'),
+        EiNavDest(Icons.folder_outlined, Icons.folder, '项目'),
+        EiNavDest(Icons.map_outlined, Icons.map, '资源'),
+        EiNavDest(Icons.calculate_outlined, Icons.calculate, '计算'),
+        EiNavDest(Icons.smart_toy_outlined, Icons.smart_toy, 'AI助手'),
+              ],
+              index: _selectedIndex,
+              onSelect: (i) => setState(() => _selectedIndex = i),
+            ),
+            Expanded(child: IndexedStack(index: _selectedIndex, children: _screens)),
+          ],
+        ),
+      );
+    }
+
     return Scaffold(
       body: IndexedStack(index: _selectedIndex, children: _screens),
       bottomNavigationBar: Container(

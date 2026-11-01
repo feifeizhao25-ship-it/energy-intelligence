@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import 'dart:math';
 import '../../widgets/bar_chart.dart';
+import '../../widgets/reading_column.dart';
 
 class SolarFinanceScreen extends StatefulWidget {
   const SolarFinanceScreen({super.key});
@@ -118,7 +119,7 @@ class _SolarFinanceScreenState extends State<SolarFinanceScreen> {
         backgroundColor: context.eiCard,
         foregroundColor: context.eiBody,
       ),
-      body: SingleChildScrollView(
+      body: ReadingColumn(child: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -340,7 +341,7 @@ class _SolarFinanceScreenState extends State<SolarFinanceScreen> {
             ),
           ],
         ),
-      ),
+      )),
     );
   }
 }

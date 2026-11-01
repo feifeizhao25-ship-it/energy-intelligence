@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
 import '../../services/project_wire.dart';
 import '../../widgets/country_picker.dart';
+import '../../widgets/reading_column.dart';
 
 /// 新建项目。服务端要求：名称、类型、容量、经纬度；套餐项目数有上限（超出时显示升级提示）。
 class CreateProjectScreen extends StatefulWidget {
@@ -77,7 +78,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('新建项目')),
-      body: SafeArea(
+      body: ReadingColumn(child: SafeArea(
         child: Form(
           key: _form,
           child: SingleChildScrollView(
@@ -178,7 +179,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
           ),
           ),
         ),
-      ),
+      )),
     );
   }
 }

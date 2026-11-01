@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/bar_chart.dart';
 import '../../services/api_service.dart';
+import '../../widgets/reading_column.dart';
 
 class WindFinanceScreen extends StatefulWidget {
   const WindFinanceScreen({super.key});
@@ -85,7 +86,7 @@ class _WindFinanceScreenState extends State<WindFinanceScreen> {
         foregroundColor: context.eiBody,
       ),
       backgroundColor: context.eiPage,
-      body: SingleChildScrollView(
+      body: ReadingColumn(child: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -202,7 +203,7 @@ class _WindFinanceScreenState extends State<WindFinanceScreen> {
             ],
           ],
         ),
-      ),
+      )),
     );
   }
 

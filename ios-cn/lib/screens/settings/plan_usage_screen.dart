@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/reading_column.dart';
 
 /// Shows the account's plan and real usage (GET /api/v1/billing/usage). Nothing here is a placeholder:
 /// the numbers, plan name and feature list all come from the server, and a failed load says so.
@@ -57,7 +58,7 @@ class _PlanUsageScreenState extends State<PlanUsageScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('会员权益与用量')),
-      body: SafeArea(child: _body(context)),
+      body: ReadingColumn(child: SafeArea(child: _body(context))),
     );
   }
 

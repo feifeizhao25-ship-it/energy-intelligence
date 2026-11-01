@@ -8,6 +8,7 @@ import '../../theme/app_theme.dart';
 import '../../widgets/photo_widgets.dart';
 import '../library/energy_library.dart';
 import 'plan_usage_screen.dart';
+import '../../widgets/reading_column.dart';
 
 /// Account screen. Every row does what it says: the profile is read from the server, export fetches the real
 /// data copy, delete calls the account-deletion API and signing out clears the stored token.
@@ -125,7 +126,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final scheme = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
-      body: SafeArea(
+      body: ReadingColumn(child: SafeArea(
         child: ListView(
           padding: const EdgeInsets.only(bottom: 32),
           children: [
@@ -178,7 +179,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ],
         ),
-      ),
+      )),
     );
   }
 

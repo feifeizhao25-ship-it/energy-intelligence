@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
 import '../../services/project_wire.dart';
 import '../../widgets/country_picker.dart';
+import '../../widgets/reading_column.dart';
 
 /// Create a project. The server needs a name, type, capacity and coordinates; the plan limits how many projects
 /// an account can have (the upgrade message is shown when it is reached).
@@ -78,7 +79,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('New project')),
-      body: SafeArea(
+      body: ReadingColumn(child: SafeArea(
         child: Form(
           key: _form,
           child: SingleChildScrollView(
@@ -179,7 +180,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
           ),
           ),
         ),
-      ),
+      )),
     );
   }
 }

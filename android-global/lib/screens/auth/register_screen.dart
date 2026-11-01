@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../../services/api_service.dart';
+import '../../widgets/reading_column.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -65,7 +66,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
+      body: ReadingColumn(child: Column(
         children: [
           Container(
             height: 140,
@@ -274,7 +275,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
           ),
         ],
-      ),
+      )),
     );
   }
 }

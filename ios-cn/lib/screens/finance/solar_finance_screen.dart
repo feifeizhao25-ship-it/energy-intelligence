@@ -3,6 +3,7 @@ import '../../theme/app_theme.dart';
 import '../../services/api_service.dart';
 import '../../models/financial_model.dart';
 import '../../widgets/bar_chart.dart';
+import '../../widgets/reading_column.dart';
 
 class SolarFinanceScreen extends StatefulWidget {
   const SolarFinanceScreen({super.key});
@@ -65,7 +66,7 @@ class _SolarFinanceScreenState extends State<SolarFinanceScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('光伏财务计算')),
-      body: SingleChildScrollView(
+      body: ReadingColumn(child: SingleChildScrollView(
         padding: EdgeInsets.all(16),
         child: Column(
           children: [
@@ -79,7 +80,7 @@ class _SolarFinanceScreenState extends State<SolarFinanceScreen> {
             _buildActionButtons(),
           ],
         ),
-      ),
+      )),
     );
   }
 

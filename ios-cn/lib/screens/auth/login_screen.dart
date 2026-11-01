@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../../services/api_service.dart';
+import '../../widgets/reading_column.dart';
 
 class ConfigErrorScreen extends StatelessWidget {
   const ConfigErrorScreen({super.key, required this.message});
@@ -11,7 +12,7 @@ class ConfigErrorScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      body: SafeArea(
+      body: ReadingColumn(child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
@@ -30,7 +31,7 @@ class ConfigErrorScreen extends StatelessWidget {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 }
@@ -131,7 +132,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     final keyboard = MediaQuery.viewInsetsOf(context).bottom;
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      body: DecoratedBox(
+      body: ReadingColumn(child: DecoratedBox(
         decoration: BoxDecoration(
           gradient: dark ? AppTheme.nightGradient() : AppTheme.darkGradient(),
           image: const DecorationImage(image: AssetImage('assets/images/en_login_bg.webp'), fit: BoxFit.cover, opacity: 0.5),
@@ -214,7 +215,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
             },
           ),
         ),
-      ),
+      )),
     );
   }
 
