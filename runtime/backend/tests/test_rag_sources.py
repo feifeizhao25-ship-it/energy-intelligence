@@ -90,7 +90,7 @@ def test_registry_verify_interval_tiers():
     by_type = {}
     for source in registry.sources:
         by_type.setdefault(source["type"], set()).add(source["verify_interval_days"])
-    assert by_type["policy"] == {90}
+    assert by_type["policy"] == {30}  # monthly review (retest B12)
     assert by_type["standard"] == {365}
     assert by_type["price"] == {7}
 

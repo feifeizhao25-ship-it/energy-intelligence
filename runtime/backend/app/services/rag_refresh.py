@@ -142,6 +142,10 @@ def refresh_report(registry: Optional[SourceRegistry] = None, today: Optional[da
         source["source_id"] for source in registry.sources
         if source.get("evidence_status") not in {"pending", "quarantined", "invalid"}
     ]
+    superseded = [src["source_id"] for src in registry.sources if src.get("superseded_by") or src.get("status") in {"被替代", "废止"}]
+    # 每月复核清单：逾期未核验的政策来源。复核本身要人对照官方原文做，这里只列出清单。
+    monthly_review = [e["source_id"] for e in entries if e["type"] == "policy" and e["freshness_status"] != "current"]
     return {"generated_at": today.isoformat(), "registry_path": str(registry.path) if registry.path else None,
             "total": len(entries), "counts": counts, "entries": entries, "refresh_needed": refresh_needed,
+            "superseded": superseded, "monthly_review_due": monthly_review,
             "evidence_review_needed": review_needed, "retrieval_allowed_by_review": allowed}

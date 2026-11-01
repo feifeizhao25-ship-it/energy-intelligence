@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "description": "RAG 来源注册表：语料条目由 SourceRegistry 加载。verify_interval_days 按类型分档：政策 90 天、标准 365 天、价格数据 7 天。corroborated_by 为独立第二来源的 source_id 列表。每条文献须带 authors（作者/机构）、version（版本）、published_at（发布日期）、locator（页码/段落定位）。 2026-10-30 扩充：新增国家发展改革委、国家能源局、国家统计局及广东、上海、北京、山东地方主管部门的官方公开文件摘录（evidence_status=auto_extracted，须人工逐条复核；expert_signed 保持 false）。type=statistic 为统计数据，verify_interval_days=45；政策类 90 天。",
+  "description": "RAG 来源注册表：语料条目由 SourceRegistry 加载。verify_interval_days 按类型分档：政策 30 天（至少每月复核一次，复测 B12）、标准 365 天、价格数据 7 天。corroborated_by 为独立第二来源的 source_id 列表。每条文献须带 authors（作者/机构）、version（版本）、published_at（发布日期）、locator（页码/段落定位）。 2026-10-30 扩充：新增国家发展改革委、国家能源局、国家统计局及广东、上海、北京、山东地方主管部门的官方公开文件摘录（evidence_status=auto_extracted，须人工逐条复核；expert_signed 保持 false）。type=statistic 为统计数据，verify_interval_days=45；政策类 90 天。",
   "sources": [
     {
       "source_id": "std-gb50797",
@@ -53,7 +53,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202502/t20250209_1396066.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [
         "std-gb50797"
       ],
@@ -96,7 +96,7 @@
       "source_url": "https://www.nea.gov.cn/",
       "source_org": "国家能源局",
       "license_note": "政府公开发布文件，转载引用须注明来源为国家能源局。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [
         "policy-cn-136"
       ],
@@ -170,7 +170,7 @@
       "source_url": "https://www.irs.gov/pub/irs-drop/n-25-42.pdf",
       "source_org": "Internal Revenue Service",
       "license_note": "U.S. federal government publication, generally public domain; cite IRS.gov as the source.",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [
         "guide-grid-interconnection"
       ],
@@ -268,7 +268,7 @@
       "source_url": "https://www.nrel.gov/solar/",
       "source_org": "National Renewable Energy Laboratory (NREL)",
       "license_note": "NREL publications are U.S. government-funded works; reuse with attribution per NREL copyright notice.",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [
         "std-ieee1547",
         "policy-us-itc"
@@ -382,7 +382,7 @@
       "source_url": "https://www.gov.cn/zhengce/zhengceku/202605/content_7069765.htm",
       "source_org": "国家发展改革委、国家能源局（载于中国政府网）",
       "license_note": "政府公开发布文件，引用须给出原文链接。Mac 工作副本曾误把本文编号写成 policy-cn-136，生产登记表以本 id 为准。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [
         "policy-cn-136"
       ],
@@ -408,7 +408,7 @@
         }
       ],
       "retrieved_at": "2026-10-31",
-      "review_due": "2026-12-30"
+      "review_due": "2026-11-30"
     },
     {
       "source_id": "policy-cn-114",
@@ -425,7 +425,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202601/t20260130_1403524.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [
         "policy-cn-136"
       ],
@@ -469,7 +469,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/fzggwl/202610/t20261023_1408364.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -490,7 +490,7 @@
       "snapshot_sha256": "e37c44ecaad54e9fdded1095111c94a98b19bf55ff3d3514734018604d058910",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "b16e08ef628fe552683c30e1416b7f75e91e2fd64283af36b3aed6be370141af",
       "sign_date": "2026-10-19",
       "effective_date_basis": "原文：自2026年12月1日起施行/执行",
@@ -512,7 +512,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202608/t20260803_1406883.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -533,7 +533,7 @@
       "snapshot_sha256": "46c8edde111c40c4183e943b74d99d198ff92af739df09ff1735e50be0fb87bb",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "3ff07f1e8242dba53886f914f278016c9a2983e04a42863f17c5844bea9b2f9d",
       "sign_date": "2026-07-21",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
@@ -561,7 +561,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202607/t20260723_1406641.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -582,7 +582,7 @@
       "snapshot_sha256": "6c95b0bf73bbb0effef4d4619eec8cf18c9978e327134f35f077d9dbb6f43601",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "8adca9fd48d000f3068e299ec85b4a21763a20e14c33307c18843b42fb93f644",
       "sign_date": "2026-07-06",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
@@ -610,7 +610,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202607/t20260710_1406431.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -631,7 +631,7 @@
       "snapshot_sha256": "48aa2f049292a975c0786fbdaabcef882a60f3d42e349daf88b431575b7f45c5",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "1148be422c40570551d88e79a91b4739bc48b836c6ffb3e49bbed2e95abc72b8",
       "sign_date": "2026-07-08",
       "effective_date_basis": "原文：自2026年8月1日起施行/执行",
@@ -653,7 +653,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202606/t20260625_1406079.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -674,7 +674,7 @@
       "snapshot_sha256": "826aee30ab02cb5c553446a0dd97240dcdd7646c6fbe7357ab99b168dfdd1eb2",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "f8bd91a75a3f6d7935f71890d08172e6bcacac303eb58cf83957aba56ab87ab2",
       "sign_date": "2026-06-13",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
@@ -696,7 +696,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/fzggwl/202606/t20260612_1405837.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -717,7 +717,7 @@
       "snapshot_sha256": "7d7fd6ea9a4272b4e950aa48353b27b2684fc8544b4881745e0d49cd2945bf78",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "3d65e812ba78ed2c28ba75b5d5838ed1edd98d89f3878c7f52c277d991836695",
       "sign_date": "2026-06-05",
       "effective_date_basis": "原文：自2026年8月1日起施行/执行",
@@ -739,7 +739,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202606/t20260601_1405606.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -760,7 +760,7 @@
       "snapshot_sha256": "f8a86fafd8952ad8ca6539a0c6ebfbe7531c77506579146f00bbd492df0a7ad9",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "25a949b1e006f821c0135de76c24a6e5f4aa6c23340354bfa4404d31ff5e3d9c",
       "sign_date": "2026-05-06",
       "effective_date_basis": "原文：自印发/发布/公布之日起施行，按落款/发布日期记录",
@@ -782,7 +782,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/fzggwl/202604/t20260409_1404577.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -803,7 +803,7 @@
       "snapshot_sha256": "7403675be4bca188e30f375b8c8f5098f859de00e2ed3210e5602fab448a291c",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "75cd66a154ce97f602203ba864ec0e9ff7ae205b69c4b5bb0d73682d7b5d9b30",
       "sign_date": "2026-03-18",
       "effective_date_basis": "原文：自2026年7月1日起施行/执行",
@@ -825,7 +825,7 @@
       "source_url": "https://www.nea.gov.cn/20260107/9a905f263a8b4aa4a06e1a96855cc8eb/c.html",
       "source_org": "国家能源局",
       "license_note": "政府公开发布文件，引用须注明转引自国家能源局官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -846,7 +846,7 @@
       "snapshot_sha256": "d3a2281a0e485a4d6f7f31aa463517392f724f036a29b8f1f8978f24ad07ca7a",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "8a77c3175dd822ff87a32b25031c540b1fe529eb9b2a22b07fd6d1d742dc7ff8",
       "sign_date": "2025-11-28",
       "effective_date_basis": "原文：自印发/发布/公布之日起施行，按落款/发布日期记录",
@@ -868,7 +868,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202512/t20251231_1402949.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -889,7 +889,7 @@
       "snapshot_sha256": "49cf27b907c0f748cc7b8908b099f7b7a7dafd30825691ad5f3c9419f8fde16a",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "f709581004608142036c56ee77d61895db420d5525a13c8a8b32abcaa51fad0c",
       "sign_date": "2025-12-26",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
@@ -910,7 +910,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/ghxwj/202512/t20251226_1402666.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -931,7 +931,7 @@
       "snapshot_sha256": "c7900fcdf676133a6fb631225a21c99e6968f415c11aafa2d531cc1df1f0fd19",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "f2f6bd16e0edcaa0ecf9793db1e23102013b67f2bc0e0b44f51212140a52430a",
       "sign_date": "2025-12-17",
       "effective_date_basis": "原文：自2026年3月1日起施行/执行",
@@ -954,7 +954,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202512/t20251223_1402540.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -975,7 +975,7 @@
       "snapshot_sha256": "0b6797de86aae1768c19ba52a4cffa46fb042a833986315aa92083d91c194ec1",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "7ba35eadb7b0cbd57c7b8c2d3eb3b4c507b84c9838f689e5daca43b9da0d1389",
       "sign_date": "2025-12-15",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
@@ -1002,7 +1002,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202512/t20251217_1402475.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -1023,7 +1023,7 @@
       "snapshot_sha256": "f47d31e12f1c4b3e1082bf55e51794d5278bccb100daecbbd3e02b7d6c887a99",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "29a35316a371480cf616ea13de9cb1d759610c54325c07c27a11008f493ea49b",
       "sign_date": "2025-12-02",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
@@ -1044,7 +1044,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202512/t20251211_1402340.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -1065,7 +1065,7 @@
       "snapshot_sha256": "7fa68b35984ef5d94b103f21935590265fbb4f2d0f1821b58f3a3f571ddebadd",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "2efb6cb6afce176b5426df096d37ac9ec282c2272a3fbbfb9d06403aa1681dbb",
       "sign_date": "2025-11-18",
       "effective_date_basis": "原文：自印发/发布/公布之日起施行，按落款/发布日期记录",
@@ -1087,7 +1087,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/ghxwj/202511/t20251127_1401964.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -1108,7 +1108,7 @@
       "snapshot_sha256": "1dc0291caa83ba7391b2eed61804db9c6be1b7caa7ef1f8d532720462af5653c",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "d24139714df06cb616294ad2d056674a82c44ee2b4c0750574a8187260999dd6",
       "sign_date": "2025-11-21",
       "effective_date_basis": "原文：自2025年12月1日起施行/执行",
@@ -1131,7 +1131,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202511/t20251110_1401469.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -1152,7 +1152,7 @@
       "snapshot_sha256": "6628f0b916e871a3bc3574f38c6379b97163b4711d6386a0ac39e565f579d293",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "9be5b8e5cf57e52c203d6deee9807c1299ebc1abb68bccd1c510b98ff5bd645e",
       "sign_date": "2025-10-29",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
@@ -1173,7 +1173,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202510/t20251015_1401011.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -1194,7 +1194,7 @@
       "snapshot_sha256": "a44df69e3034c18401d0a83728150d32da252331abfe0a1d3bf2e86bd9e89ba0",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "bd3c84b5a02cca2cbc8add240615cbc82f7aed7a83e02e768c6fae782d6492c2",
       "sign_date": "2025-09-24",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
@@ -1216,7 +1216,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/ghxwj/202510/t20251013_1400912.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -1237,7 +1237,7 @@
       "snapshot_sha256": "f95f18ba91b86c447b1af7a1400a548cee5d3b2b1e4549c2c283e88525a17af3",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "339db2c5332b7b7d55e1c03d619f4e4b81c2607d66ae875eb764c2e009f4cae4",
       "sign_date": "2025-09-09",
       "effective_date_basis": "原文：自2025年10月1日起施行/执行",
@@ -1260,7 +1260,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/ghxwj/202509/t20250930_1400835.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -1281,7 +1281,7 @@
       "snapshot_sha256": "f3893a71ad95e04a011388b33a8b061db22cd3cf79e5ee5190c67a7aa66ba299",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "0362e01425bd86f183ea1b2de6dcb63e255941f5dbd5de684c91d5dcb0eee59d",
       "sign_date": "2025-09-16",
       "effective_date_basis": "原文：自印发/发布/公布之日起施行，按落款/发布日期记录",
@@ -1304,7 +1304,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202509/t20250912_1400454.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -1325,7 +1325,7 @@
       "snapshot_sha256": "8994a285e712654747da2491654b394d52268ccdb4d2912a9df61c3b88946c88",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "695e59d6b80dd235adaae3aaa7a71c149355292877998c8e44da583d5366c18e",
       "sign_date": "2025-09-02",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
@@ -1353,7 +1353,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202509/t20250912_1400444.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -1374,7 +1374,7 @@
       "snapshot_sha256": "a059103fc0ec245a2a2a4b6db02595352b3577714bee06294546efe840732c0b",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "9f961abb977f595faff49e035effdd2778386144432ba456bdab114c4ef59b97",
       "sign_date": "2025-09-09",
       "effective_date_basis": "原文：自2025年10月1日起施行/执行",
@@ -1395,7 +1395,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202509/t20250912_1400425.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -1416,7 +1416,7 @@
       "snapshot_sha256": "59d11880bf8d33ecf842303ea1ddedbd9b724fac4fe4b070f094f8710f8eb8c0",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "c1b75b5ef95a66935e6247bb07b6022752a9ee098898eb65c9553d77406ade2d",
       "sign_date": "2025-08-27",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
@@ -1444,7 +1444,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/ghxwj/202508/t20250806_1399686.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -1465,7 +1465,7 @@
       "snapshot_sha256": "8a5193c53f4b14fa725ad4a2f69ce3ed8bf37fd8323b9dc4f938ce2c5aa9d901",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "fd89c896cffc208ca32df8112fcbec9a86ff25b833024802c3c163afc6366244",
       "sign_date": "2025-07-18",
       "effective_date_basis": "原文：自2025年10月1日起施行/执行",
@@ -1494,7 +1494,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202507/t20250711_1399141.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -1515,7 +1515,7 @@
       "snapshot_sha256": "32b4af24f09f4548d03a41ecaf7e9d04ffc1a6e247f79b50749d6a639eee800c",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "74a6e36da42b13f60d286734cca6b996a4940924fa63ab213c176c3fc0ffff42",
       "sign_date": "2025-07-01",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
@@ -1536,7 +1536,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202507/t20250707_1399030.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -1557,7 +1557,7 @@
       "snapshot_sha256": "59565f08a0ef3fb481067bc64c1d3ec4d8b979228a7e820862e26b700e454bda",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "6ca7c6698e7ea1162131b86d69f0fdf446b1242352537d8faa70d51535eca372",
       "sign_date": "2025-06-13",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
@@ -1578,7 +1578,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/ghxwj/202506/t20250603_1398199.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -1599,7 +1599,7 @@
       "snapshot_sha256": "52cafe1f905eca474cbad4e0cb50ac53d548b3e171b73a8f0d6b4cd729165b67",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "f5105d2d287618b5ca233e33f0ff815d3000835546a96692b660a980b63d53f2",
       "sign_date": "2025-05-16",
       "effective_date_basis": "原文：自2025年7月1日起施行/执行",
@@ -1621,7 +1621,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202505/t20250530_1398138.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -1642,7 +1642,7 @@
       "snapshot_sha256": "8756882f639d2d1ce81893ed7880f0a099746407ec9c3bd97f2239a507f904e5",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "40cae0a854b424c254777e9bcb5be07b168218d51a27c1440f89c305f0cc94a7",
       "sign_date": "2025-05-21",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
@@ -1669,7 +1669,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/fzggwl/202505/t20250509_1397646.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -1690,7 +1690,7 @@
       "snapshot_sha256": "e3f6dcd89aca500df3c388abf501f070e46e3ed5b19ebfbc3af5ec4f4f65e353",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "b9f8e643b5e62487bd815927508d595a96b39fa82e130e5c118fd47945032744",
       "sign_date": "2025-04-11",
       "effective_date_basis": "原文：自2025年7月1日起施行/执行",
@@ -1712,7 +1712,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202504/t20250429_1397488.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -1733,7 +1733,7 @@
       "snapshot_sha256": "5541ca77dfa3d9935597176364d3bab6ce64b4365f9573fb23a2724713abcef6",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "c08c386d280c6ee20d66d8b1486835548d4c00f226b139bf8ca2460a6ca8448c",
       "sign_date": "2025-04-16",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
@@ -1754,7 +1754,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/ghxwj/202504/t20250429_1397483.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -1775,7 +1775,7 @@
       "snapshot_sha256": "24c3a399763decbf5d357abc912682344a0ca03de7b3e1ccd43cb2c0dadca059",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "d750ed4679bce07b42b9bc90d68578bd0669d1de2c6fca6344686aad86fcf40b",
       "sign_date": "2025-04-03",
       "effective_date_basis": "原文：自印发/发布/公布之日起施行，按落款/发布日期记录",
@@ -1804,7 +1804,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202504/t20250411_1397162.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -1825,7 +1825,7 @@
       "snapshot_sha256": "e480ee8aab9f02ddd46b8da63147f9de332918b68f1af75fd225863bace43169",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "df85d1828cbf26a7548e6b518380f03917d1ce491a6fa962fe36c4a32cd58eb7",
       "sign_date": "2025-03-25",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
@@ -1852,7 +1852,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202504/t20250402_1396958.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -1873,7 +1873,7 @@
       "snapshot_sha256": "df0df70aeec6214533b7244f8b1cb2e8ccaeb1382b6996670be5cde512fb2a95",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "c2535796643d3e6fcae9ccd37654212cc975985744ed11c699897ceaa32890e5",
       "sign_date": "2025-03-13",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
@@ -1895,7 +1895,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202503/t20250318_1396627.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -1916,7 +1916,7 @@
       "snapshot_sha256": "8f2dc0737d0dc31dad44efaa262775cea644ca6a5a1eb221e0376d64be9350ea",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "4bcfbfc292a4ebe38318031cc9207d11ca3414a6de24b92ee1abea7f7c72ae87",
       "sign_date": "2025-03-06",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
@@ -1937,7 +1937,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/ghxwj/202502/t20250207_1396029.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -1958,7 +1958,7 @@
       "snapshot_sha256": "5ddd86e1e9796e16a7ed17b7029d37609fc5fb891773299d291112d5b2400e78",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "57da0670255dc41e98df0aa89148a042dde46e813a296b887771b7b190ab2ffa",
       "sign_date": "2025-01-24",
       "effective_date_basis": "原文：自印发/发布/公布之日起施行，按落款/发布日期记录",
@@ -1981,7 +1981,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202501/t20250106_1395477.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -2002,7 +2002,7 @@
       "snapshot_sha256": "8159dbf0eb5ecafe42129de1dc5558dd9bccddfc2c4d31aa32aa877be18400a2",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "3b3b012c3084d3adc71d1bba4c6e3bd55af61238d90881378e87a2bc6174bf94",
       "sign_date": "2024-12-20",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
@@ -2030,7 +2030,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/fzggwl/202412/t20241211_1394960.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -2051,7 +2051,7 @@
       "snapshot_sha256": "e7543743d0773486ce8d813c893ed6d8821b3eed26093ca3ee7a0956754dad6f",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "d2a9e5ca8ecb1790f88c6901770743bd4c9a403de16664ed51b9d59934adeece",
       "sign_date": "2024-11-25",
       "effective_date_basis": "原文：自2025年1月1日起施行/执行",
@@ -2073,7 +2073,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202410/t20241030_1394119.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -2094,7 +2094,7 @@
       "snapshot_sha256": "87163115bd1f50e2ad7f2286bd4aaf18c9ece261992acbc868c6d5bef9099ec1",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "ac8be39f8c51b1a22437814e19fcd545b4d51f4813c632d99601ca983b3e7197",
       "sign_date": "2024-10-18",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
@@ -2115,7 +2115,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202409/t20240910_1392926.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -2136,7 +2136,7 @@
       "snapshot_sha256": "c38c92fbc0867b1dc4c1680a6b877f5e3df288ed644e4981c0ccd6a19fb7316a",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "838905b261e13afd3823926cf2f489508e2b6b972a4bc68983a4b3a8a5196c87",
       "sign_date": "2024-08-23",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
@@ -2157,7 +2157,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202408/t20240806_1392258.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -2178,7 +2178,7 @@
       "snapshot_sha256": "ab3fe81d396266a65bbb4c137962c583225c94ae6f9fb70d6589e55d8c4b661a",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "6a65980086a2519f5aba750697d6975891f498838a6575ee8cadf806000aba68",
       "sign_date": "2024-07-25",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
@@ -2206,7 +2206,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/fzggwl/202405/t20240510_1377245.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -2227,7 +2227,7 @@
       "snapshot_sha256": "429ff79466bedc9789e690b938700f75f34ee86249091810e571212adf521d34",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "286b2324f613d73478bbb476d16fccd567707fe9125f8e8387aab8c7f1efc500",
       "sign_date": "2024-04-25",
       "effective_date_basis": "原文：自2024年7月1日起施行/执行",
@@ -2249,7 +2249,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/fzggwl/202405/t20240506_1366319.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -2270,7 +2270,7 @@
       "snapshot_sha256": "d1fe61a87eb96ba6b92e8b8baeb73cb3f2d9eb8620ec4cabea4daf3d81fa3e66",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "7934752d363006d1856bca615063985313b618824b096cd4d2c12d5a6eb765a0",
       "sign_date": "2024-04-12",
       "effective_date_basis": "原文：自2024年6月1日起施行/执行",
@@ -2292,7 +2292,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/ghxwj/202404/t20240402_1365404.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -2313,7 +2313,7 @@
       "snapshot_sha256": "a141cfce8f639429878ca862066674226836c04f3ed075da60506ada653fa905",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "58fd626199d238f8dcfdd31ea9b73bd1fb43b27db62de556d3ca03326da91714",
       "sign_date": "2024-03-15",
       "effective_date_basis": "原文：自印发/发布/公布之日起施行，按落款/发布日期记录",
@@ -2336,7 +2336,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/fzggwl/202403/t20240315_1364966.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -2357,7 +2357,7 @@
       "snapshot_sha256": "b2263fad1fb1a54f0229a76189cb20d0935035d694cf4942aeb00fb28d24998c",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "627be34a2ad7e9d0c866d800846e9325218faa93509e41f56ff339f0eaad5341",
       "sign_date": "2024-02-08",
       "effective_date_basis": "原文：自2024年4月1日起施行/执行",
@@ -2379,7 +2379,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/fzggwl/202403/t20240315_1364964.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -2400,7 +2400,7 @@
       "snapshot_sha256": "054a2223df91d8e01db9a614c7656e81c37c211ddf77d61b5404f9d24eb50918",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "443a390b215dc211112d4d868c1217d5dd7e6e376e691ba830ea01f1a8fef41a",
       "sign_date": "2024-02-08",
       "effective_date_basis": "原文：自2024年4月1日起施行/执行",
@@ -2422,7 +2422,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202403/t20240301_1364313.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -2443,7 +2443,7 @@
       "snapshot_sha256": "2af19b152fa54e7ec086df466e14b9345ae35a939c2785db7f4ee7ee811e3150",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "cefc7c0a2d72fefe635bc73efda55929d0688e871e7e8a85b4ed05e9c7c9bff5",
       "sign_date": "2024-02-06",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
@@ -2464,7 +2464,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202402/t20240227_1364257.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -2485,7 +2485,7 @@
       "snapshot_sha256": "0e286bfd5341410c1bb050c276e57dd03739bbb12e6d946c24e0b0a01f290072",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "5e7b51900ce376054f4918e21de431b4653edab0c34bcc8d7a4cf8d7e08568e2",
       "sign_date": "2024-01-27",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
@@ -2506,7 +2506,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202402/t20240208_1364053.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -2527,7 +2527,7 @@
       "snapshot_sha256": "5c038c71d94119dcf4a9ffff2f8fd763913623d5d4948aa670303f2ce70fb9a7",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "3787cc736481b2614057bfb2f6bc1b70294ff2a72458976750f221a7811161fa",
       "sign_date": "2024-02-07",
       "effective_date_basis": "原文：自2024年3月1日起施行/执行",
@@ -2548,7 +2548,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202401/t20240104_1363096.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -2569,7 +2569,7 @@
       "snapshot_sha256": "252587f82708ae29bca75cc13abc0470c2fef306c6fa7edcd42f44227efffa51",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "e1e17cd51c0f33bdb594861078bb995a8eeb52ab808f394a2b0ab7d517695e2b",
       "sign_date": "2023-12-13",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
@@ -2596,7 +2596,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202311/t20231110_1361897.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -2617,7 +2617,7 @@
       "snapshot_sha256": "c153420cde2b7714c69daefb5d9c0e89c81f47420ae2de71ae1304f9d7e4cabd",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "7da095535da59e26bc51b91b379f80c30196189b8f40cf75720ab4a63fe19a9a",
       "sign_date": "2023-11-08",
       "effective_date_basis": "原文：自2024年1月1日起施行/执行",
@@ -2638,7 +2638,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202311/t20231101_1361704.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -2659,7 +2659,7 @@
       "snapshot_sha256": "04f19945c7044624a3b2d2921509643580e637e73f31e9db9cd15780e89950f3",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "88365016371c8b541194cfaf1818c287b18511e20243aa1610ae0becc74ab53e",
       "sign_date": "2023-10-12",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
@@ -2680,7 +2680,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202310/t20231025_1361514.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -2701,7 +2701,7 @@
       "snapshot_sha256": "1e6e1bebb35203e105b01fd9e0e184cdcf0147c83e1c78c564d51b4cc9149423",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "1b8b9654530551234516f8580d13ef98f6b020ad6d9742248ad5ba151e282572",
       "sign_date": "2023-09-21",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
@@ -2722,7 +2722,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/ghxwj/202309/t20230927_1360904.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -2743,7 +2743,7 @@
       "snapshot_sha256": "74aa38bfedc564da266f21d68eb6ea452de686e587e7a52604649f1067585d58",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "04306e8f69f01a405f17ca691c17f3d6aca935c062f5b9d938545aa4aa7dbc19",
       "sign_date": "2023-09-07",
       "effective_date_basis": "原文：自2023年10月1日起施行/执行",
@@ -2766,7 +2766,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/ghxwj/202309/t20230927_1360902.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -2787,7 +2787,7 @@
       "snapshot_sha256": "520e9db2cece44248a6816b8571f914d4fcba0063a7fa7c1ffe70c443dc0f132",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "dd9d1bb2a877d50a1f9a3d6e065d6bb1f101d9a5aafe6d73befdf35d7de9256d",
       "sign_date": "2023-09-15",
       "effective_date_basis": "原文：自2023年10月1日起施行/执行",
@@ -2810,7 +2810,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/ghxwj/202309/t20230915_1360625.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -2831,7 +2831,7 @@
       "snapshot_sha256": "43f1ab313699e13967f9f3f86ed3aa5a46d231ef1e7e245ccc8fca5333f6d3a6",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "90a4e3ef812b8d5ad993554e39b5582a58331f205faf630724144396127ecebd",
       "sign_date": "2023-09-07",
       "effective_date_basis": "原文：自2023年10月15日起施行/执行",
@@ -2859,7 +2859,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202308/t20230817_1359879.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -2880,7 +2880,7 @@
       "snapshot_sha256": "69062e8a63b1ffa7acbef601af32c80a7d0b3a98d7715199b3c6cc4762850adc",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "b295bb442e881ff719fec5fe58aac85ae42fe09766e315f87363ec9e6d8bf40c",
       "sign_date": "2023-07-21",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
@@ -2901,7 +2901,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202308/t20230803_1359092.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -2922,7 +2922,7 @@
       "snapshot_sha256": "4d946c4f5c05222b03514ff1b7908c9210aea1d23224d3617f90f8612bb90149",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "8fed0e5971fc47c529e75efeb453718957f28ac73c4a305656dbb698348e806e",
       "sign_date": "2023-07-25",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
@@ -2949,7 +2949,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/ghxwj/202307/t20230714_1358371.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -2970,7 +2970,7 @@
       "snapshot_sha256": "6556a29303e6c990b22f41daae3105901b5a6abac4eae9d8424af4556538f5fa",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "a227aaddeab030ed5551175dc46a8ab6ba266a520d3020798c77db2a9cf9db72",
       "sign_date": "2023-07-04",
       "effective_date_basis": "原文：自印发/发布/公布之日起施行，按落款/发布日期记录",
@@ -2992,7 +2992,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202305/t20230517_1355814.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -3013,7 +3013,7 @@
       "snapshot_sha256": "576f03e127d4bd7bf70c816b91f446b4bf18c1aa77060ad453247f8b5ed2e7a6",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "e601b0776cf9738cfbc16c176212a7bd89fab4b244f199cdb6be89a8cb26d41a",
       "sign_date": "2023-05-14",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
@@ -3034,7 +3034,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202305/t20230515_1355747.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -3055,7 +3055,7 @@
       "snapshot_sha256": "e74404918f3ceb1fdb5821cdfa7f71e78b688fffd79d5d8f0b07c0c26e7cf425",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "d49c824123d82f665f1d9021d2231c13e3c33aefb04df3edcbe982bc8574b129",
       "sign_date": "2023-05-09",
       "effective_date_basis": "原文：自2023年6月1日起施行/执行",
@@ -3077,7 +3077,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202305/t20230515_1355744.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -3098,7 +3098,7 @@
       "snapshot_sha256": "a8f604100dad3bd925b5939174c10a8d3e45150f69f2fad3ddcd3b357dc92304",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "d31042c64ffde51837203b603727f2044352b99200fe0a316a20de70279c381d",
       "sign_date": "2023-05-11",
       "effective_date_basis": "原文：自2023年6月1日起施行/执行",
@@ -3120,7 +3120,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202305/t20230515_1355741.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -3141,7 +3141,7 @@
       "snapshot_sha256": "b22921c2b70f6dab1ac5f02ce8f50e5259239a6873fbd2cb495f99d24ab95aef",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "34bef83112acfb85dd3c1ae402c847188307e5276f3a6086f18eb862fe228ab4",
       "sign_date": "2023-05-11",
       "effective_date_basis": "原文：自2023年6月1日起施行/执行",
@@ -3163,7 +3163,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202301/t20230110_1346271.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -3184,7 +3184,7 @@
       "snapshot_sha256": "5b98810ac62e12a8c0644f9733c00cb84ca4869b06e0c3067604246d9cf633a7",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "4fe93a25d2cbeb1b3f4071594362dd4b65284bc3083e2ae47f3b82405502a756",
       "sign_date": "2022-12-23",
       "effective_date_basis": "原文：自2023年1月1日起施行/执行",
@@ -3205,7 +3205,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202211/t20221116_1341323.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -3226,7 +3226,7 @@
       "snapshot_sha256": "4ae188f42404c61a6992c50bfd62234b904234fb568b40d477515aff14515da5",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "13ce36b0fcb53a1eb497adf785620437bb72508e38926e548873c8096a4a1daa",
       "sign_date": "2022-08-15",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
@@ -3247,7 +3247,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202210/t20221028_1339677.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -3268,7 +3268,7 @@
       "snapshot_sha256": "9361ca04beec2227e5102555c94dd33757850f280aeefa7e8fa0f053d8ce02b1",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "ff03c807ad404dcd4dc9ab8c0124e398092e81f35e6b95d58d731d55c6b22aaf",
       "sign_date": "2022-09-13",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
@@ -3289,7 +3289,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202206/t20220607_1326854.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -3310,7 +3310,7 @@
       "snapshot_sha256": "220fa32ba8b63d80e72d537828553d12d8b15547713c79e8f0abcfcc23f99e98",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "297c5fe51fa60bfdfb31a6ae908e6ddc798367a7d06cb6d1b1f3d1d3045dc73f",
       "sign_date": "2022-05-24",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
@@ -3331,7 +3331,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/fzggwl/202204/t20220424_1322795.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -3352,7 +3352,7 @@
       "snapshot_sha256": "a3b78e2c3b5897773144cd318c04fe95e156578ceda14c538c546025d94f0343",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "b9af8039133211274d2acc4aa5716c430a05ddde4a6739b6cdc79ceb5a3dc26d",
       "sign_date": "2022-04-16",
       "effective_date_basis": "原文：自2022年6月1日起施行/执行",
@@ -3374,7 +3374,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202203/t20220321_1319772.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -3395,7 +3395,7 @@
       "snapshot_sha256": "6ddebc1abe7ebc46b3ad298b7ca4b4b9bba60908673b08daf2909c436ff9220f",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "f6a316ae99425db44aeb1531b697abdc732940a3d564eed6e96056904ac20140",
       "sign_date": "2022-01-29",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
@@ -3423,7 +3423,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202203/t20220317_1319436.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -3444,7 +3444,7 @@
       "snapshot_sha256": "4b4840dd38ff443b06c7f74387604a975cd0ecface57dfd77898ea9f79a97e7f",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "8c686526e99efd65c51712bab8f7c7a8d2bdf0cc59aab9955797d49f42d0c925",
       "sign_date": "2022-02-22",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
@@ -3466,7 +3466,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202201/t20220128_1313653.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -3487,7 +3487,7 @@
       "snapshot_sha256": "3a983d129d6a255828838c68ba5635feeb6d0b82c4c920f8100efa8cdaf01747",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "37f955e1693e612f38e92f55ee86fed0fe7f8ebb330ffc14c90b069c4aa937a8",
       "sign_date": "2022-01-18",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
@@ -3508,7 +3508,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/ghxwj/202201/t20220121_1312634.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -3529,7 +3529,7 @@
       "snapshot_sha256": "d00f5b5514a0d417ba24f382a800568617a0e6453724aa007fc4f018a82919b5",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "252536ff797ae1ba1d546d165fc222f5d2f5ff075d99f2903a55959507173ff5",
       "sign_date": "2022-01-10",
       "effective_date_basis": "原文：自印发/发布/公布之日起施行，按落款/发布日期记录",
@@ -3551,7 +3551,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202110/t20211026_1300892.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -3572,7 +3572,7 @@
       "snapshot_sha256": "7eb8668785da735770f02e65cc9a226ab20036f2ee0b59e5b84a6458cc6c3e0d",
       "status": "待核实",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "147d4bd27468055af5e4d77bffdabe48ea0322beb2ba4c0198090a6d72ca6579",
       "sign_date": "2021-10-23",
       "effective_date_basis": "原文：自印发/发布/公布之日起施行，按落款/发布日期记录",
@@ -3594,7 +3594,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/ghxwj/202110/t20211015_1299846.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -3615,7 +3615,7 @@
       "snapshot_sha256": "4ed30c4cd7eecad43ce1c896071272ad1b924db8534d3e8b8c93df63e1974ba6",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "253412363da953ca4e6f1432941925cb324d2957eda0f008ebbc5afe661b13f5",
       "sign_date": "2021-10-14",
       "effective_date_basis": "原文：自印发/发布/公布之日起施行，按落款/发布日期记录",
@@ -3638,7 +3638,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202110/t20211012_1299461.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -3659,7 +3659,7 @@
       "snapshot_sha256": "ba1ec344b89f3a6b2f3febb0447d081e890a380783ca368de01d9b73c8e1d037",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "b9f228b0e14dc8e5453cf5e60045872e6c3035e62fc0efdfd4b12fb1e7e98a34",
       "sign_date": "2021-10-11",
       "effective_date_basis": "原文：自2021年10月15日起施行/执行",
@@ -3680,7 +3680,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202108/t20210810_1293396.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -3701,7 +3701,7 @@
       "snapshot_sha256": "f6cf94a0ce731f162ff09960ca4e9494fe3794ccdf209848b6a5efb0ad48c105",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "3d6ddc013939fed599372864dacc31ef8e24697cf963aacde6c88284606f6e69",
       "sign_date": "2021-07-29",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
@@ -3722,7 +3722,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202107/t20210729_1292067.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -3743,7 +3743,7 @@
       "snapshot_sha256": "2b2b7f715e195c21408f1aef3ebf5a8c8b7252a4acaa9c534000170c78e0b0fa",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "1d8b9a8d9be03d17644518efb086415e07b1c6bb5bbeff8f776fac79ba0988f6",
       "sign_date": "2021-07-26",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
@@ -3764,7 +3764,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/ghxwj/202107/t20210723_1291321.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -3785,7 +3785,7 @@
       "snapshot_sha256": "f3b30a2b666817a8da8a9d4d6b15010b7273acbd4e6bd52e6b6fbe685f20bff4",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "7e2cd9a9acae703e78387130c6d587df8772469dd9e143355a1d69fccfb33e35",
       "sign_date": "2021-07-15",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
@@ -3806,7 +3806,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202107/t20210705_1285399.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -3827,7 +3827,7 @@
       "snapshot_sha256": "65aaaf11f7bb2f197de59c7f406333bb6ab25c388d3dbb05b86d461279ae4dbd",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "0b89f6ace1be732b9f7b9cdab708bcdf399707779dbe3681a15ef49d4d764656",
       "sign_date": "2021-05-31",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
@@ -3848,7 +3848,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202105/t20210507_1279341.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -3869,7 +3869,7 @@
       "snapshot_sha256": "ae2d24362ac19c7cf90c9aefd78e3fa4fa2a7b18ab41f8b8ec84d303e781562f",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "c2062f1c069ac38270e703e870d9c0d607fa939d7854ea77674c5ddcd8a8d50e",
       "sign_date": "2021-04-30",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
@@ -3890,7 +3890,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202103/t20210312_1269410.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -3911,7 +3911,7 @@
       "snapshot_sha256": "4f7aba48b1f891bb1f0ab1df8e7f171168b98b9b191c832e0bb5d186917ee854",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "60158b3cba46586072bb8da995d3eebadc33b73eaf964a812d4e02761bd58a0f",
       "sign_date": "2021-02-24",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
@@ -3938,7 +3938,7 @@
       "source_url": "https://www.ndrc.gov.cn/xxgk/zcfb/ghxwj/202103/t20210305_1269046.html",
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -3959,7 +3959,7 @@
       "snapshot_sha256": "8a6423ae7a74db36cd90c4d6f73df0e3695d5fb2fa4686121e80f546018b017f",
       "status": "待核实",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "fab4d65ef6788a1b809ae70b187f0ffa0b09d6b13d49901570849aa7eb8e9ccc",
       "sign_date": "2021-02-25",
       "effective_date_basis": "原文：自印发/发布/公布之日起施行，按落款/发布日期记录",
@@ -3981,7 +3981,7 @@
       "source_url": "https://www.nea.gov.cn/20260623/62bac506e76544bda509a7a50e81ba08/c.html",
       "source_org": "国家能源局",
       "license_note": "政府公开发布文件，引用须注明转引自国家能源局官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -4002,7 +4002,7 @@
       "snapshot_sha256": "fd1e75a871253387688b38db1edd7f0b2a0db09bf5a76e42e211e4751a53b7aa",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "2299d5efc962c5b41f8ef81f53c22a24e51c3744f4f1a3a86e76124299713ca7",
       "sign_date": "2026-06-05",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
@@ -4023,7 +4023,7 @@
       "source_url": "https://www.nea.gov.cn/20251112/79210278a3184efea9ccf2d546fdf1b7/c.html",
       "source_org": "国家能源局",
       "license_note": "政府公开发布文件，引用须注明转引自国家能源局官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -4044,7 +4044,7 @@
       "snapshot_sha256": "6ee75297672c4bec42861b469c62b904568b9ca4f4504aeab0a4c5fd8ae52383",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "56bcef3d60be2c28f6caf69f95c11fd4055ee6ba7faf40ccb6882a2b79a9758f",
       "sign_date": "2025-10-31",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
@@ -4065,7 +4065,7 @@
       "source_url": "https://www.nea.gov.cn/20250723/48e11a3413dc440f8306c38a1869940c/c.html",
       "source_org": "国家能源局",
       "license_note": "政府公开发布文件，引用须注明转引自国家能源局官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -4086,7 +4086,7 @@
       "snapshot_sha256": "ff8de662a1714706c171d882e99cb538024c437e8a61473670b3b881ebf2e08b",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "da277c0437a66b422aeb38d22378025169e286b5df684c168fbcfe1e5670a2ab",
       "sign_date": "2025-07-09",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
@@ -4108,7 +4108,7 @@
       "source_url": "https://www.nea.gov.cn/20250123/112c5b199c5f45dd8e7ac93c9f5e4eaf/c.html",
       "source_org": "国家能源局",
       "license_note": "政府公开发布文件，引用须注明转引自国家能源局官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -4129,7 +4129,7 @@
       "snapshot_sha256": "d895680a5fd8d5f89c0ca70beb6dda07da37bd9067670f56b139a136e94ab2fd",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "1043a7813bcf8871af873dcd5120d08fba4a4c06d03bc6ded53e27b0890d93e1",
       "sign_date": "2025-01-17",
       "effective_date_basis": "原文：自印发/发布/公布之日起施行，按落款/发布日期记录",
@@ -4152,7 +4152,7 @@
       "source_url": "https://zfxxgk.nea.gov.cn/2024-11/08/c_1310787216.htm",
       "source_org": "国家能源局",
       "license_note": "政府公开发布文件，引用须注明转引自国家能源局官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -4173,7 +4173,7 @@
       "snapshot_sha256": "f3179a7706f94a8cf423852c15b46d52145265ded6cd78777955c22f380168f9",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "988c4963ae202c7bd58767638347f43ccecb09c87a5229451288b2451b0fd164",
       "sign_date": "2024-11-08",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
@@ -4194,7 +4194,7 @@
       "source_url": "https://zfxxgk.nea.gov.cn/2024-09/13/c_1212399683.htm",
       "source_org": "国家能源局",
       "license_note": "政府公开发布文件，引用须注明转引自国家能源局官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -4215,7 +4215,7 @@
       "snapshot_sha256": "a3dae849db58997ce05c67cf789a3e71ff77c5913b50a3872f500a3cd7576448",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "b0b12cfdd9a3cf64fdc56f19209395a683f2ee9b35b1f307044081ed2e133f01",
       "sign_date": "2024-09-13",
       "effective_date_basis": "原文：自印发/发布/公布之日起施行，按落款/发布日期记录",
@@ -4237,7 +4237,7 @@
       "source_url": "https://zfxxgk.nea.gov.cn/2024-08/26/c_1310786081.htm",
       "source_org": "国家能源局",
       "license_note": "政府公开发布文件，引用须注明转引自国家能源局官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -4258,7 +4258,7 @@
       "snapshot_sha256": "19b41c1857702b6321389d7b1e6327461ca87b0d21e94624bb56fc1c27f65fa5",
       "status": "待核实",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "e14a620117b7fd76c0e6b385d163692a4026df9fa267b38f30ae28e720854740",
       "sign_date": "2024-08-26",
       "effective_date_basis": "原文：自2024年10月1日起施行/执行",
@@ -4280,7 +4280,7 @@
       "source_url": "https://zfxxgk.nea.gov.cn/2024-08/26/c_1310785819.htm",
       "source_org": "国家能源局",
       "license_note": "政府公开发布文件，引用须注明转引自国家能源局官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -4301,7 +4301,7 @@
       "snapshot_sha256": "9a3aa6c54c96c6531bb9dfa0e7f408b37613f5f8d45b469c5eabd276c32df6c7",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "6302f2af82b016fa486411f33bca5f53d3f69a346c86d7582512f61e53f9f711",
       "sign_date": "2024-08-26",
       "effective_date_basis": "原文：自印发/发布/公布之日起施行，按落款/发布日期记录",
@@ -4324,7 +4324,7 @@
       "source_url": "https://zfxxgk.nea.gov.cn/2024-07/02/c_1310781805.htm",
       "source_org": "国家能源局",
       "license_note": "政府公开发布文件，引用须注明转引自国家能源局官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -4345,7 +4345,7 @@
       "snapshot_sha256": "42d1a711e8779b027b5ba08fa79e64cb199cff62aadec7f59e4ceade87878bfd",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "a4a2888d1f68893488c80af1120fff9b10ce4b22b6093d9b2eaec319ef7f49d9",
       "sign_date": "2024-07-02",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
@@ -4366,7 +4366,7 @@
       "source_url": "https://zfxxgk.nea.gov.cn/2024-05/17/c_1310776162.htm",
       "source_org": "国家能源局",
       "license_note": "政府公开发布文件，引用须注明转引自国家能源局官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -4387,7 +4387,7 @@
       "snapshot_sha256": "ea759224d1c953ba0dca7df2b41b8bb0c68d8c7aeafe9de157f8026796cb0f06",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "fe20dba0a7762b6ca24a5539b6cea5b822969d757f4702bff84dc09eceecf62d",
       "sign_date": "2024-05-17",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
@@ -4408,7 +4408,7 @@
       "source_url": "https://zfxxgk.nea.gov.cn/2024-04/02/c_1310771072.htm",
       "source_org": "国家能源局",
       "license_note": "政府公开发布文件，引用须注明转引自国家能源局官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -4429,7 +4429,7 @@
       "snapshot_sha256": "03d407a61101055476dfdf464a1e4b03920b3fefad7647dd88a121aaa4cc70f0",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "575c842441fedd5a1324c9d8e348ff413768202a8271b2a6a51f8de00fd4cf03",
       "sign_date": "2024-04-02",
       "effective_date_basis": "原文：自印发/发布/公布之日起施行，按落款/发布日期记录",
@@ -4451,7 +4451,7 @@
       "source_url": "https://zfxxgk.nea.gov.cn/2024-01/31/c_1310763726.htm",
       "source_org": "国家能源局",
       "license_note": "政府公开发布文件，引用须注明转引自国家能源局官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -4472,7 +4472,7 @@
       "snapshot_sha256": "8740fb2df13e445552ca6070c764d0b7f3fe342250666a3cdc5f9ab62851e681",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "fdaee990e1dca8219fb1ad53026e62e408c7e86e2ae91e1807de42843ef55234",
       "sign_date": "2024-01-31",
       "effective_date_basis": "原文：自2024年1月31日起施行/执行",
@@ -4495,7 +4495,7 @@
       "source_url": "https://zfxxgk.nea.gov.cn/2023-06/05/c_1310726993.htm",
       "source_org": "国家能源局",
       "license_note": "政府公开发布文件，引用须注明转引自国家能源局官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -4516,7 +4516,7 @@
       "snapshot_sha256": "a13fa63dfaa24bc8b52842b59ebf48d7a6f49c0e362931db06f8dedf4239676b",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "332d3ca3b04a91da7cf6a064d12870639df2a750a5463f4065b1f73764495c19",
       "sign_date": "2023-06-05",
       "effective_date_basis": "原文：自印发/发布/公布之日起施行，按落款/发布日期记录",
@@ -4539,7 +4539,7 @@
       "source_url": "https://zfxxgk.nea.gov.cn/2023-04/23/c_1310717984.htm",
       "source_org": "国家能源局",
       "license_note": "政府公开发布文件，引用须注明转引自国家能源局官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -4560,7 +4560,7 @@
       "snapshot_sha256": "088ffc789d70845920eda2e139bc6a041e6c1c956ba029b5197518826dbba772",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "a0b024f1121e4d7d94dc2a9312ed05218dbe02174ab2fc4e6de4afd30a942494",
       "sign_date": "2023-04-23",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
@@ -4581,7 +4581,7 @@
       "source_url": "https://zfxxgk.nea.gov.cn/2023-02/27/c_1310702093.htm",
       "source_org": "国家能源局",
       "license_note": "政府公开发布文件，引用须注明转引自国家能源局官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -4602,7 +4602,7 @@
       "snapshot_sha256": "d9d9439d7d76eb3cef9c7d605698b48a693c36d823debbf862a84cd691ff6a4c",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "3a5ae058b27857bb0bde9b0d9c0df8651de690f66f8ccecc0b7e7e451e84307d",
       "sign_date": "2023-02-27",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
@@ -4624,7 +4624,7 @@
       "source_url": "https://zfxxgk.nea.gov.cn/2021-10/21/c_1310611148.htm",
       "source_org": "国家能源局",
       "license_note": "政府公开发布文件，引用须注明转引自国家能源局官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -4645,7 +4645,7 @@
       "snapshot_sha256": "19f857e20ee0b1651667119daefd7a8b476735c7bd187b4d68633d96306a6bf9",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "890101f47571ee95b42e5e2f7aaecbdb5b916f6c6a778e79de514a02dbfa64db",
       "sign_date": "2021-10-21",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
@@ -4667,7 +4667,7 @@
       "source_url": "https://zfxxgk.nea.gov.cn/2022-01/29/c_1310524241.htm",
       "source_org": "国家能源局",
       "license_note": "政府公开发布文件，引用须注明转引自国家能源局官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -4688,7 +4688,7 @@
       "snapshot_sha256": "fe146082e65a6179c92dadba138f2719cbdfebba9506f03f05ecba1fbeff4638",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "e5f3906807e4186f2335b9d407a0b8390590f750267680ac38be9d1384cc0afe",
       "sign_date": "2022-01-29",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
@@ -4710,7 +4710,7 @@
       "source_url": "https://zfxxgk.nea.gov.cn/2021-12/21/c_1310391369.htm",
       "source_org": "国家能源局",
       "license_note": "政府公开发布文件，引用须注明转引自国家能源局官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -4731,7 +4731,7 @@
       "snapshot_sha256": "801f1fcac847b05b6f895095f7e11e292490fc10b4abaf8e5ca5793929ec773d",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "4250ee650d00408a1e4abb6a0b131ecb53b42a4861eb8f504059661b3e93ea36",
       "sign_date": "2021-12-21",
       "effective_date_basis": "原文：自印发/发布/公布之日起施行，按落款/发布日期记录",
@@ -4754,7 +4754,7 @@
       "source_url": "https://zfxxgk.nea.gov.cn/2021-12/21/c_1310391161.htm",
       "source_org": "国家能源局",
       "license_note": "政府公开发布文件，引用须注明转引自国家能源局官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -4775,7 +4775,7 @@
       "snapshot_sha256": "f8c94849d0e7f3d8ef3b97bb7407b7c4218155baca472dff0987b62a8c60a051",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "8893437f9e0907646abf975cdc176cd5092735581697320bf0b64066614c57d1",
       "sign_date": "2021-12-21",
       "effective_date_basis": "原文：自印发/发布/公布之日起施行，按落款/发布日期记录",
@@ -4798,7 +4798,7 @@
       "source_url": "https://zfxxgk.nea.gov.cn/2021-09/24/c_1310215100.htm",
       "source_org": "国家能源局",
       "license_note": "政府公开发布文件，引用须注明转引自国家能源局官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -4819,7 +4819,7 @@
       "snapshot_sha256": "7ba2a613d45d321e615949209019955734cc3fd6114110565159e46562291441",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "f8392219c4aad34dcb03d2592a314a9bae2bf500aa0dc7ff300aa33204e170dd",
       "sign_date": "2021-09-24",
       "effective_date_basis": "原文：自印发/发布/公布之日起施行，按落款/发布日期记录",
@@ -4841,7 +4841,7 @@
       "source_url": "https://zfxxgk.nea.gov.cn/2020-12/30/c_139686580.htm",
       "source_org": "国家能源局",
       "license_note": "政府公开发布文件，引用须注明转引自国家能源局官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -4862,7 +4862,7 @@
       "snapshot_sha256": "ccc03d9f1b0449c4a35aa1046bf8fba84bf8f5ff58b9a3c480fb56843c465e1a",
       "status": "待核实",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "source_text_sha256": "3b01bdf65df690657482bb2198cf5b625b26a0e26fdad02de903870aa8ccaa66",
       "sign_date": "2020-12-30",
       "effective_date_basis": "原文：自2021年1月1日起施行/执行",
@@ -4884,7 +4884,7 @@
       "source_url": "https://drc.gd.gov.cn/ywtz/content/post_4775501.html",
       "source_org": "广东省发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自广东省发展和改革委员会官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -4905,7 +4905,7 @@
       "snapshot_sha256": "d3c527ac10795f3502540c1d98e4590f1b3339efcfcf0d27e56e835993d54470",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "sign_date": "2025-09-19",
       "effective_date_basis": "原文：本方案自2025年11月1日起执行",
       "content_scope": "页面通知与实施方案正文（全文）",
@@ -4926,7 +4926,7 @@
       "source_url": "https://drc.gd.gov.cn/ywtz/content/post_4828493.html",
       "source_org": "广东省发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自广东省发展和改革委员会官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -4947,7 +4947,7 @@
       "snapshot_sha256": "6372e99475eeb44885f4a99175b08a2b7b213f4dcdf500df3144dbb72af74f6e",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "sign_date": "2025-12-10",
       "effective_date_basis": "原文未写明统一施行日期；机制电价执行起点按通知第二条（投产时间在2025年10月31日前的自2025年11月1日起执行），此处记录最早执行日",
       "content_scope": "页面通知全文（全文）",
@@ -4968,7 +4968,7 @@
       "source_url": "https://drc.gd.gov.cn/ywtz/content/post_4965021.html",
       "source_org": "广东省发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自广东省发展和改革委员会官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -4989,7 +4989,7 @@
       "snapshot_sha256": "031d848b445e1643e51a82edef506ee64254eab4ca397573e0a1a8c280bfd4df",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "sign_date": "2026-09-30",
       "effective_date_basis": "原文未写明施行日期，生效日期暂按落款日期记录",
       "content_scope": "页面通知全文（全文）",
@@ -5010,7 +5010,7 @@
       "source_url": "https://www.shanghai.gov.cn/gwk/search/content/489f8337cf3a4a23aeb03c72f82fb189",
       "source_org": "上海市人民政府",
       "license_note": "政府公开发布文件，引用须注明转引自上海市人民政府官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -5031,7 +5031,7 @@
       "snapshot_sha256": "e0223b71e4feaf505880ee6cb2380560ec7e376838e2a7cb3e3cf58d15e8c0f2",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "sign_date": "2026-10-19",
       "effective_date_basis": "原文：本通知自发文之日起施行（页面印发日期2026-10-19）",
       "content_scope": "页面通知正文（不含三项附件）（全文）",
@@ -5052,7 +5052,7 @@
       "source_url": "https://fgw.sh.gov.cn/fgw_jggl/20251203/fe1be03f19b8401a8e2c765b1477c39c.html",
       "source_org": "上海市发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自上海市发展和改革委员会官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -5073,7 +5073,7 @@
       "snapshot_sha256": "71f15f0df4ba35e406c129046390a8f012030f42f57dc6591fb68994fd3682ba",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "sign_date": "2025-12-03",
       "effective_date_basis": "原文未写明施行日期，生效日期暂按落款日期记录",
       "content_scope": "页面通知全文（不含Excel附件）（全文）",
@@ -5094,7 +5094,7 @@
       "source_url": "https://fgw.beijing.gov.cn/fgwzwgk/2024zcwj/bwgfxwj/202308/t20230821_3718725.htm",
       "source_org": "北京市发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自北京市发展和改革委员会官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -5115,7 +5115,7 @@
       "snapshot_sha256": "d8108d22b63eb643618e78091756adbac86e86d0b11681c6eb0a02d2766669a7",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "sign_date": "2023-08-18",
       "effective_date_basis": "页面[实施日期]及原文：本通知自2023年9月1日起执行",
       "content_scope": "页面通知全文（全文）",
@@ -5136,7 +5136,7 @@
       "source_url": "https://www.beijing.gov.cn/cs/gncs/zcwj/202603/t20260327_4568006.html",
       "source_org": "北京市城市管理委员会",
       "license_note": "政府公开发布文件，引用须注明转引自北京市城市管理委员会官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -5157,7 +5157,7 @@
       "snapshot_sha256": "94fc1a370b74dcf5211c5fff544615555a64de821e99659316bdaa12ba9a71d1",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "sign_date": "2025-12-05",
       "effective_date_basis": "通知载明前一年度办法自2026年1月1日起废止；本方案适用2026年度交易，生效日期按此记录",
       "content_scope": "页面通知与方案正文（节选，非全文）",
@@ -5179,7 +5179,7 @@
       "source_url": "https://fgw.weihai.gov.cn/art/2025/8/8/art_53888_5705449.html",
       "source_org": "威海市发展和改革委员会（转载）",
       "license_note": "政府公开发布文件，引用须注明转引自威海市发展和改革委员会（转载）官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -5200,11 +5200,14 @@
       "snapshot_sha256": "3fbce7ff2ae949701833720c8aacfe704691a0a43e3f0ac158694b0214ce9e53",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "sign_date": "2025-07-31",
       "effective_date_basis": "原文未写明施行日期，生效日期暂按落款日期记录",
       "content_scope": "转载页面通知与方案正文（全文）",
-      "source_text_sha256": "b8ab5b7dbb46142e8d38f19a94676cc727c3218ecb8ccbd32b6c2925acb5006a"
+      "source_text_sha256": "b8ab5b7dbb46142e8d38f19a94676cc727c3218ecb8ccbd32b6c2925acb5006a",
+      "implemented_by": [
+        "policy-cn-sd-lfgjg-2025-871"
+      ]
     },
     {
       "source_id": "policy-cn-sd-lfgjg-2025-871",
@@ -5221,7 +5224,7 @@
       "source_url": "http://gb.shandong.gov.cn/art/2026/1/18/art_100623_47048.html",
       "source_org": "山东省人民政府公报",
       "license_note": "政府公开发布文件，引用须注明转引自山东省人民政府公报官网并给出原文链接。",
-      "verify_interval_days": 90,
+      "verify_interval_days": 30,
       "corroborated_by": [],
       "countries": [
         "cn"
@@ -5242,10 +5245,11 @@
       "snapshot_sha256": "6e2033525431be091974cdf941272f51be299259fc9135ccd63e43bdd415fd18",
       "status": "现行",
       "retrieved_at": "2026-10-30",
-      "review_due": "2027-01-28",
+      "review_due": "2026-11-29",
       "sign_date": "2025-12-12",
       "effective_date_basis": "原文第四十五条：本实施细则自2026年1月1日起施行",
-      "content_scope": "公报页面逐字节选（印发通知及第二、三、十二、十四、十五、十六、二十一、二十六、四十五条），非全文"
+      "content_scope": "公报页面逐字节选（印发通知及第二、三、十二、十四、十五、十六、二十一、二十六、四十五条），非全文",
+      "implements": "policy-cn-sd-lfgjg-2025-576"
     },
     {
       "source_id": "stat-cn-nbs-energy-202610",
@@ -5406,6 +5410,47 @@
       "review_due": "2026-12-15",
       "effective_date_basis": "通报发布日",
       "content_scope": "页面正文全文"
+    },
+    {
+      "source_id": "policy-cn-sd-nea-2025-57",
+      "type": "policy",
+      "lang": "cn",
+      "title": "关于印发《山东电力市场规则(试行)》的通知（鲁监能市场规〔2025〕57号）",
+      "authors": "国家能源局山东监管办公室 山东省发展和改革委员会 山东省能源局",
+      "version": "鲁监能市场规〔2025〕57号",
+      "published_at": "2025-12-17",
+      "locator": "通知正文一至四条",
+      "content": "国家能源局山东监管办公室《关于印发〈山东电力市场规则(试行)〉的通知》（鲁监能市场规〔2025〕57号），页面日期2025-12-17。通知要点：山东能源监管办会同省发展改革委、省能源局，对山东电力市场规则开展系统性修订，印发修订后《山东电力市场规则(试行)》。一、《规则》自2026年1月1日起执行。其中，日内市场按需启动的相关条款待技术支持系统功能完善后执行，原则上不晚于2026年7月1日。二、扶贫发电项目(扶贫容量部分)暂不参与优发超出优购曲线匹配偏差费用分摊，后续根据国家和省有关政策实施。",
+      "year": 2025,
+      "last_verified_at": "2026-11-01",
+      "source_url": "https://sdb.nea.gov.cn/dtyw/tzgg/202512/t20251217_292527.html",
+      "source_org": "国家能源局山东监管办公室",
+      "license_note": "政府公开发布文件，引用须注明来源为国家能源局山东监管办公室官网并给出原文链接。",
+      "verify_interval_days": 30,
+      "corroborated_by": [],
+      "countries": [
+        "cn"
+      ],
+      "effective_date": "2026-01-01",
+      "expiry": null,
+      "superseded_by": null,
+      "evidence_status": "auto_extracted",
+      "needs_human_verification": "摘录于2026-11-01自国家能源局山东监管办公室官网页面（sdb.nea.gov.cn）提取，为通知正文逐字摘录，不含《规则》723条正文；生效日期取自通知第一条“自2026年1月1日起执行”。另有同站政策解读页（2025-12-18）说明新版规则自2026-01-01起执行、电能量市场结算由差量结算调整为差价结算，未收录。须对照官方原文核对后才能当作已核验原文。",
+      "doc_number": "鲁监能市场规〔2025〕57号",
+      "issuer": "国家能源局山东监管办公室",
+      "publish_date": "2025-12-17",
+      "expiry_date": null,
+      "jurisdiction": "省",
+      "source_tier": "一手官方",
+      "license": "政府公开发布文件，引用须注明来源为国家能源局山东监管办公室官网并给出原文链接。",
+      "snapshot_note": "snapshot_scope=已收录摘要（官方通知正文），不是官方全文影像。",
+      "snapshot_sha256": "16dd62d879887805f4614f989d146af10bc09dbcb82384dde10b151646a993b8",
+      "status": "现行",
+      "retrieved_at": "2026-11-01",
+      "review_due": "2026-12-01",
+      "sign_date": null,
+      "effective_date_basis": "通知第一条：《规则》自2026年1月1日起执行",
+      "content_scope": "通知正文（逐字），不含规则正文"
     }
   ],
   "id_aliases": {

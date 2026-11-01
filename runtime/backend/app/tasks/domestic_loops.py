@@ -30,6 +30,15 @@ def rag_refresh() -> dict:
     return {"status": "report_only", "stale": len(report.get("refresh_needed") or [])}
 
 
+@celery_app.task(name="energy.domestic.rag_monthly_review")
+def rag_monthly_review() -> dict:
+    """每月 1 号：列出需要人工对照官方原文复核的政策来源，以及已被取代的来源（复测 B12）。"""
+    from app.services.rag_refresh import refresh_report
+    report = refresh_report()
+    return {"status": "review_list", "monthly_review_due": report.get("monthly_review_due") or [],
+            "superseded": report.get("superseded") or [], "stale": len(report.get("refresh_needed") or [])}
+
+
 @celery_app.task(name="energy.domestic.geo_monitor")
 def geo_monitor() -> dict:
     from ops.geo import run_monitor

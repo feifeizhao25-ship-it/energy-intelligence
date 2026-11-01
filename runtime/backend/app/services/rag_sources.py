@@ -5,7 +5,7 @@ RAG source registry — JSON 驱动的语料来源注册表。
 发布机构、版权说明与核验周期（verify_interval_days），并带文献溯源字段：
 作者（authors）、版本（version）、发布日期（published_at）、页码/段落（locator）：
 
-- 政策（policy）90 天
+- 政策（policy）30 天（至少每月复核一次；复测 B12：山东 871 号细则曾长期没收录）
 - 标准（standard）365 天
 - 价格数据（price）7 天
 
@@ -53,6 +53,9 @@ REQUIRED_FIELDS = (
 
 # 这些字段必须出现，但允许 JSON null（表示原文未写截止日期，或尚未被替代）。
 NULLABLE_FIELDS = ("expiry_date", "superseded_by")
+
+# 政策类来源最长核验周期（天）。政策更新快，必须至少每月复核一次。
+POLICY_MAX_VERIFY_INTERVAL_DAYS = 30
 
 VALID_TYPES = ("policy", "standard", "price", "statistic")
 VALID_STATUS = ("现行", "征求意见", "废止", "被替代", "待核实")
@@ -156,6 +159,12 @@ class SourceRegistry:
             digest = str(source.get("snapshot_sha256") or "")
             if len(digest) != 64 or any(ch not in "0123456789abcdef" for ch in digest):
                 problems.append("%s: snapshot_sha256 must be 64 hex chars" % sid)
+            if source.get("type") == "policy" and int(source.get("verify_interval_days") or 0) > POLICY_MAX_VERIFY_INTERVAL_DAYS:
+                problems.append("%s: policy sources must be reviewed at least every %d days" % (sid, POLICY_MAX_VERIFY_INTERVAL_DAYS))
+            if source.get("superseded_by") and source["superseded_by"] not in self._by_id:
+                problems.append("%s: superseded_by points to unknown source %s" % (sid, source["superseded_by"]))
+            if source.get("superseded_by") and source.get("status") not in ("被替代", "废止"):
+                problems.append("%s: has superseded_by but status is %s" % (sid, source.get("status")))
             if source.get("status") == "被替代" and not source.get("superseded_by"):
                 problems.append("%s: superseded_by required when status is 被替代" % sid)
             if sid in seen:
