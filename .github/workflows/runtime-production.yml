@@ -93,6 +93,9 @@ jobs:
       - uses: docker/build-push-action@v6
         with:
           context: ${{ matrix.context }}
+          # runtime/backend/Dockerfile 的 COPY --from=services 需要额外构建上下文
+          # (与 compose additional_contexts / build.yml 同款修复)
+          build-contexts: ${{ matrix.image == 'energy-api' && 'services=./runtime/services' || '' }}
           push: true
           build-args: |
             NEXT_PUBLIC_APP_EDITION=${{ matrix.image == 'energy-web-cn' && 'cn' || '' }}
