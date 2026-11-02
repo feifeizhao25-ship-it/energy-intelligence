@@ -21,6 +21,7 @@ import hashlib, json, os, urllib.request, urllib.robotparser
 from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Callable, Dict, List, Optional
+from urllib.parse import urlsplit
 
 from app.services.rag_sources import REGISTRY_PATH, SourceRegistry
 
