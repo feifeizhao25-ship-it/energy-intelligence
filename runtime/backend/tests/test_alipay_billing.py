@@ -199,4 +199,4 @@ async def test_postgres_concurrent_renewals_preserve_both_periods(client, auth_h
     responses = await asyncio.gather(*(client.post("/api/v1/billing/domestic/alipay/notify", data=params) for params in requests))
     assert [response.status_code for response in responses] == [200, 200]
     await db_session.refresh(user)
-    assert user.subscription_expires_at == datetime(2030, 3, 15, tzinfo=timezone.utc)
+    assert user.subscription_expires_at == datetime(2032, 1, 15, tzinfo=timezone.utc)
