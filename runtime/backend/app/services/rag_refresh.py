@@ -55,6 +55,10 @@ def fetch_snapshot(source: Dict, *, fetcher: Optional[Callable[[str, float], tup
     """
     source_id = source.get("source_id", "<unknown>")
     url = source.get("source_url")
+    # 只允许 http/https：source_url 来自运营配置，仍要防 file:/ftp: 等注入
+    if url and urlsplit(url).scheme not in ("http", "https"):
+        result["status"] = "unsupported_scheme"
+        return result
     result = {"source_id": source_id, "source_url": url, "fetched_at": (today or date.today()).isoformat(), "status": "skipped"}
     if not url:
         result["status"] = "no_source_url"
@@ -69,7 +73,8 @@ def fetch_snapshot(source: Dict, *, fetcher: Optional[Callable[[str, float], tup
             final_url, status_code, content = fetcher(url, timeout)
         else:
             req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
-            with urllib.request.urlopen(req, timeout=timeout) as resp:
+            # source_url 已限制 http/https 且经 robots 检查，此处 urlopen 仅按配置抓取
+            with urllib.request.urlopen(req, timeout=timeout) as resp:  # nosec B310 - 配置驱动、scheme 白名单已校验
                 final_url, status_code = resp.geturl(), resp.status
                 content = resp.read(max_bytes + 1)
     except Exception as exc:  # 网络失败如实记录, 不编造内容
