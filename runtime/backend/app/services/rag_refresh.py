@@ -56,13 +56,13 @@ def fetch_snapshot(source: Dict, *, fetcher: Optional[Callable[[str, float], tup
     """
     source_id = source.get("source_id", "<unknown>")
     url = source.get("source_url")
-    # 只允许 http/https：source_url 来自运营配置，仍要防 file:/ftp: 等注入
-    if url and urlsplit(url).scheme not in ("http", "https"):
-        result["status"] = "unsupported_scheme"
-        return result
     result = {"source_id": source_id, "source_url": url, "fetched_at": (today or date.today()).isoformat(), "status": "skipped"}
     if not url:
         result["status"] = "no_source_url"
+        return result
+    # 只允许 http/https：source_url 来自运营配置，仍要防 file:/ftp: 等注入
+    if urlsplit(url).scheme not in ("http", "https"):
+        result["status"] = "unsupported_scheme"
         return result
     timeout = float(os.environ.get("RAG_REFRESH_TIMEOUT_SECONDS", "15"))
     max_bytes = int(os.environ.get("RAG_REFRESH_MAX_BYTES", "2000000"))
