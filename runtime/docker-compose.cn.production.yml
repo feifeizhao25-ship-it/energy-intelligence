@@ -72,7 +72,7 @@ services:
       SENTRY_DSN: ${SENTRY_DSN:-}
       FORWARDED_ALLOW_IPS: ${FORWARDED_ALLOW_IPS:-127.0.0.1}
       REPORTS_DIR: /app/data/reports
-      SKILLS_MIN_COUNT: "7"
+      SKILLS_MIN_COUNT: '7'
     volumes:
     - reports_data:/app/data/reports
     depends_on:
@@ -114,7 +114,6 @@ services:
       ALIYUN_SMS_TEMPLATE_CODE: ${ALIYUN_SMS_TEMPLATE_CODE:?ALIYUN_SMS_TEMPLATE_CODE
         is required}
       CRON_SECRET: ${CRON_SECRET:?CRON_SECRET is required}
-      POLICY_REVIEWERS: ${POLICY_REVIEWERS:-}
       OPENALEX_CONTACT_EMAIL: ${OPENALEX_CONTACT_EMAIL:?OPENALEX_CONTACT_EMAIL is
         required}
       SILICONFLOW_API_KEY: ${SILICONFLOW_API_KEY:-}
