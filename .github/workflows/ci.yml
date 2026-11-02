@@ -37,7 +37,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          cache: "pip"
 
       - name: Install dependencies
         run: uv pip install --system -r requirements.txt pytest-cov
@@ -170,7 +169,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          cache: "pip"
 
       - name: Run translation key checker
         run: python scripts/verify_language_isolation.py
@@ -191,7 +189,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          cache: "pip"
 
       - name: Install flake8
         run: pip install flake8

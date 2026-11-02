@@ -196,9 +196,11 @@ def test_refresh_report_overdue_days():
         assert entry["needs_refetch"]
 
 
-def test_fetch_snapshot_is_a_stub():
-    with pytest.raises(NotImplementedError):
-        fetch_snapshot({"source_id": "std-gb50797"})
+def test_fetch_snapshot_returns_status_never_raises():
+    result = fetch_snapshot({"source_id": "std-gb50797"})
+    assert result["source_id"] == "std-gb50797"
+    assert result["status"] == "no_source_url"
+    assert result["fetched_at"]
 
 
 def test_snapshot_sha256_stable():
