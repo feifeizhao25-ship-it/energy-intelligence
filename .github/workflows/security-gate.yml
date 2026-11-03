@@ -168,10 +168,12 @@ jobs:
 
       - name: Build test image
         run: |
+          # runtime/backend/Dockerfile COPYs --from=services; provide the named
+          # build context (same as build.yml publish, cf. PR #97).
           if [ -f "apps/api/Dockerfile" ]; then
-            docker build -f apps/api/Dockerfile -t eip-api:scan apps/api
+            docker build -f apps/api/Dockerfile -t eip-api:scan --build-context services="$GITHUB_WORKSPACE/services" apps/api
           elif [ -f "runtime/backend/Dockerfile" ]; then
-            docker build -f runtime/backend/Dockerfile -t eip-api:scan runtime/backend
+            docker build -f runtime/backend/Dockerfile -t eip-api:scan --build-context services="$GITHUB_WORKSPACE/services" runtime/backend
           else
             echo "No Dockerfile found, skipping image scan"
             exit 0
