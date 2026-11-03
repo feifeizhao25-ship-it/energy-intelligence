@@ -6,7 +6,10 @@ FROM python:3.12-slim AS base
 WORKDIR /app
 
 # System dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# dist-upgrade first: pull security patches for preinstalled libs (e.g. sqlite
+# CVE-2026-119373 FTS5 heap overflow flagged HIGH by the Trivy image gate)
+RUN apt-get update && apt-get dist-upgrade -y \
+    && apt-get install -y --no-install-recommends \
     curl \
     libpq-dev \
     gcc \
