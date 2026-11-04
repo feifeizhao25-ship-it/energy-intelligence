@@ -1,0 +1,7 @@
+# setuptools CVE-2025-47273 (HIGH) — accepted risk: FALSE POSITIVE.
+# Trivy's per-layer language-package aggregation keeps reporting the
+# setuptools 70.3.0 METADATA from the python:3.12-slim base layer even
+# after the runtime layer upgrades to >=78.1.1 (image ships 84.2.1;
+# verified: only setuptools-84.2.1.dist-info exists in the final fs).
+# Revisit if the base image ever changes.
+CVE-2025-47273
