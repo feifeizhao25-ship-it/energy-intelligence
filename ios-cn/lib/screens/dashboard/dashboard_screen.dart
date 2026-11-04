@@ -4,6 +4,7 @@ import '../../theme/app_theme.dart';
 import '../../services/api_service.dart';
 import '../../widgets/personal_home_section.dart';
 import '../../widgets/ei_wide.dart';
+import '../../widgets/ei_nav_rail.dart';
 import 'personal_home_binding.dart';
 import '../resource/resource_screen.dart';
 import '../finance/finance_screen.dart';
@@ -11,7 +12,10 @@ import '../ai_assistant/ai_assistant_screen.dart';
 import '../projects/projects_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({super.key});
+  const DashboardScreen({super.key, this.embedded = false});
+
+  /// True when MainNavigation already provides the side rail, so this screen must not add a second one.
+  final bool embedded;
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
@@ -60,6 +64,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
       const FinanceScreen(),
       const AiAssistantScreen(),
     ];
+    // Desktop / tablet (>= 600 dp): side rail + a capped content column instead of the phone bottom bar. This is the
+    // screen the login actually lands on ('/dashboard'), so the rail has to live here (live check 2026-11-04).
+    if (!widget.embedded && MediaQuery.sizeOf(context).width >= 600) {
+      return PopScope(
+        canPop: false,
+        child: Scaffold(
+          body: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              EiNavRail(
+                dests: const [
+                  EiNavDest(Icons.home_outlined, Icons.home, '首页'),
+                  EiNavDest(Icons.folder_outlined, Icons.folder, '项目'),
+                  EiNavDest(Icons.terrain_outlined, Icons.terrain, '资源'),
+                  EiNavDest(Icons.calculate_outlined, Icons.calculate, '计算'),
+                  EiNavDest(Icons.smart_toy_outlined, Icons.smart_toy, 'AI助手'),
+                ],
+                index: _selectedIndex,
+                onSelect: (i) => setState(() => _selectedIndex = i),
+              ),
+              Expanded(child: EiContentFrame(child: IndexedStack(index: _selectedIndex, children: screens))),
+            ],
+          ),
+        ),
+      );
+    }
     return PopScope(
       canPop: false,
       child: Scaffold(

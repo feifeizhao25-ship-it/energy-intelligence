@@ -87,7 +87,7 @@ class _MainNavigationState extends State<MainNavigation> {
   int _selectedIndex = 0;
 
   final List<Widget> _screens = const [
-    DashboardScreen(),
+    DashboardScreen(embedded: true),
     ProjectsScreen(),
     ResourceScreen(),
     FinanceScreen(),
