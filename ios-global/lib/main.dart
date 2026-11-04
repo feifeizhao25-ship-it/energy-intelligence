@@ -21,6 +21,7 @@ import 'screens/settings/settings_screen.dart';
 import 'screens/library/energy_library.dart';
 import 'services/api_service.dart';
 import 'widgets/ei_nav_rail.dart';
+import 'widgets/ei_wide.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -166,7 +167,7 @@ class _MainNavigationState extends State<MainNavigation> {
               index: _currentIndex,
               onSelect: (i) => setState(() => _currentIndex = i),
             ),
-            Expanded(child: IndexedStack(index: _currentIndex, children: _screens)),
+            Expanded(child: EiContentFrame(child: IndexedStack(index: _currentIndex, children: _screens))),
           ],
         ),
       );

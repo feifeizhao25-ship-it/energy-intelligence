@@ -3,6 +3,7 @@ import '../../widgets/photo_widgets.dart';
 import '../../theme/app_theme.dart';
 import '../../services/api_service.dart';
 import '../../widgets/personal_home_section.dart';
+import '../../widgets/ei_wide.dart';
 import 'personal_home_binding.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -78,52 +79,55 @@ class _DashboardScreenState extends State<DashboardScreen> {
               subtitle: 'Only verified account and project data are shown.',
             ),
             const SizedBox(height: 20),
-            PersonalHomeSection(margin: EdgeInsets.zero, api: PersonalHomeBinding.api(), strings: PersonalHomeBinding.strings, onOpen: (c) => PersonalHomeBinding.open(context, c)),
-            const SizedBox(height: 20),
-            if (_loading)
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(48),
-                  child: CircularProgressIndicator(),
+            EiTwoColumn(
+              left: PersonalHomeSection(margin: EdgeInsets.zero, api: PersonalHomeBinding.api(), strings: PersonalHomeBinding.strings, onOpen: (c) => PersonalHomeBinding.open(context, c)),
+              right: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              if (_loading)
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(48),
+                    child: CircularProgressIndicator(),
+                  ),
+                )
+              else if (_error != null)
+                _StatusCard(
+                  icon: Icons.cloud_off_outlined,
+                  title: 'Data unavailable',
+                  detail: _error!,
+                  action: _load,
+                )
+              else ...[
+                Row(
+                  children: [
+                    Expanded(
+                      child: _Metric(
+                        title: 'Projects',
+                        value: _projects.length.toString(),
+                        icon: Icons.folder_outlined,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _Metric(
+                        title: 'Capacity',
+                        value: _capacity == 0
+                            ? 'Not provided'
+                            : '${_capacity.toStringAsFixed(1)} MW',
+                        icon: Icons.bolt,
+                      ),
+                    ),
+                  ],
                 ),
-              )
-            else if (_error != null)
-              _StatusCard(
-                icon: Icons.cloud_off_outlined,
-                title: 'Data unavailable',
-                detail: _error!,
-                action: _load,
-              )
-            else ...[
-              Row(
-                children: [
-                  Expanded(
-                    child: _Metric(
-                      title: 'Projects',
-                      value: _projects.length.toString(),
-                      icon: Icons.folder_outlined,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _Metric(
-                      title: 'Capacity',
-                      value: _capacity == 0
-                          ? 'Not provided'
-                          : '${_capacity.toStringAsFixed(1)} MW',
-                      icon: Icons.bolt,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              const _StatusCard(
-                icon: Icons.monitor_heart_outlined,
-                title: 'Operations metrics',
-                detail:
-                    'Connect verified telemetry to display generation, revenue, carbon impact, health and alerts.',
-              ),
-            ],
+                const SizedBox(height: 16),
+                const _StatusCard(
+                  icon: Icons.monitor_heart_outlined,
+                  title: 'Operations metrics',
+                  detail:
+                      'Connect verified telemetry to display generation, revenue, carbon impact, health and alerts.',
+                ),
+              ],
+              ]),
+            ),
             const SizedBox(height: 28),
             const Text(
               'Quick actions',

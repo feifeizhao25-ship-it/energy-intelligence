@@ -115,7 +115,48 @@ def _finish_answer(message: str, hits: list, market: str) -> tuple:
     fixed no-source reply, status on line 1); general explanations carry ``grounding.status`` for the client to show."""
     today = _today()
     expired = grounding.date_check(message, today)
-    return grounding.mark_expired(message, today, market) + grounding.time_note(expired, today, market), expired
+    body = grounding.mark_expired(message, today, market) + grounding.time_note(expired, today, market)
+    return body + _provenance_footer(message, hits, market, today), expired
+
+
+_ASSUMED = __import__("re").compile(r"假设值|假设为|示例数值|assumed value|hypothetical|for illustration only|illustrative (?:value|number)", __import__("re").I)
+
+
+def _provenance_footer(answer: str, hits: list, market: str, today: date) -> str:
+    """Every answer states, in its own text, where it stands: the sources it cites with publisher and date, or that
+    nothing in the library backs it (UI test I-11: 6 of 10 answers had neither, and some filled the gap with 'assumed'
+    numbers). Built from the retrieved records only, never from the model's words. Retrieved-but-uncited documents are
+    not presented as support: an answer that cites none of them is labelled unverified."""
+    zh = market != "global"
+    lines = []
+    cited = sorted({int(m.group(1)) for m in _CITE.finditer(answer or "") if 1 <= int(m.group(1)) <= len(hits)})
+    if cited:
+        shown = []
+        for i in cited:
+            h = hits[i - 1]
+            md = h.metadata or {}
+            when = md.get("published_at") or md.get("year")
+            if when and str(when) in answer and (h.title or "")[:12] in answer:
+                continue  # the model already printed this source with its date
+            shown.append((i, h.title, md.get("source_org") or md.get("publisher"), when, md.get("source_url") or md.get("url")))
+        if shown:
+            lines.append(f"来源（检索于 {today.isoformat()}）：" if zh else f"Sources (retrieved {today.isoformat()}):")
+            for i, title, org, when, url in shown:
+                bits = [b for b in (str(org) if org else None, str(when) if when else ("发布日期未标注" if zh else "date not recorded"), str(url) if url else None) if b]
+                lines.append(f"[S{i}] {title} | " + " | ".join(bits))
+    else:
+        lines.append(
+            f"核验状态：未核验——回答没有引用来源库中的资料，以上是通用说明，不是引用资料的结论（{today.isoformat()}）。"
+            if zh else
+            f"Verification: not verified. The answer cites no document from the source library; it is general explanation, not a sourced finding ({today.isoformat()})."
+        )
+    if _ASSUMED.search(answer):
+        lines.append(
+            "注意：回答中标注“假设值”的数字不是来源数据，不能当作依据，请用你自己的数据或官方文件替换。"
+            if zh else
+            "Note: figures marked as assumed or illustrative above are not source data. Do not rely on them; replace them with your own data or the official document."
+        )
+    return ("\n\n" + "\n".join(lines)) if lines else ""
 
 
 _AI_LIMITATIONS_EN = ["AI-generated content is meant for checking methods and sources; verify key figures yourself."]

@@ -20,6 +20,7 @@ import 'screens/research/research_screen.dart';
 import 'screens/settings/settings_screen.dart';
 import 'screens/library/energy_library.dart';
 import 'widgets/ei_nav_rail.dart';
+import 'widgets/ei_wide.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -135,7 +136,7 @@ class _MainNavigationState extends State<MainNavigation> {
               index: _selectedIndex,
               onSelect: (i) => setState(() => _selectedIndex = i),
             ),
-            Expanded(child: IndexedStack(index: _selectedIndex, children: _screens)),
+            Expanded(child: EiContentFrame(child: IndexedStack(index: _selectedIndex, children: _screens))),
           ],
         ),
       );
