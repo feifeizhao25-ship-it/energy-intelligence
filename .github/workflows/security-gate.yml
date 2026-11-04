@@ -192,6 +192,14 @@ jobs:
           ignore-unfixed: true
           severity: 'HIGH,CRITICAL'
 
+      - name: Locate ghost setuptools (debug)
+        run: |
+          docker run --rm --entrypoint sh eip-api:scan -c '
+            find / -iname "*setuptools*" 2>/dev/null | head -20
+            echo ---
+            python -c "import setuptools; print(setuptools.__version__, setuptools.__file__)"
+          '
+
       - name: Run Trivy image scan
         uses: aquasecurity/trivy-action@master
         with:
