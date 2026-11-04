@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../../services/api_service.dart';
 import '../../widgets/personal_home_section.dart';
+import '../../widgets/ei_wide.dart';
 import 'personal_home_binding.dart';
 import '../resource/resource_screen.dart';
 import '../finance/finance_screen.dart';
@@ -125,51 +126,54 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
         const SizedBox(height: 16),
-        PersonalHomeSection(margin: EdgeInsets.zero, api: PersonalHomeBinding.api(), strings: PersonalHomeBinding.strings, onOpen: (c) => PersonalHomeBinding.open(context, c)),
-        const SizedBox(height: 20),
-        if (_loading)
-          const Center(
-            child: Padding(
-              padding: EdgeInsets.all(48),
-              child: CircularProgressIndicator(),
+        EiTwoColumn(
+          left: PersonalHomeSection(margin: EdgeInsets.zero, api: PersonalHomeBinding.api(), strings: PersonalHomeBinding.strings, onOpen: (c) => PersonalHomeBinding.open(context, c)),
+          right: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          if (_loading)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(48),
+                child: CircularProgressIndicator(),
+              ),
+            )
+          else if (_error != null)
+            _Status(
+              icon: Icons.cloud_off_outlined,
+              title: '数据加载失败',
+              detail: _error!,
+              action: _load,
+            )
+          else ...[
+            Row(
+              children: [
+                Expanded(
+                  child: _Metric(
+                    title: '项目数量',
+                    value: _projects.length.toString(),
+                    icon: Icons.folder_outlined,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _Metric(
+                    title: '装机容量',
+                    value: _capacity == 0
+                        ? '未填写'
+                        : '${_capacity.toStringAsFixed(1)} MW',
+                    icon: Icons.bolt,
+                  ),
+                ),
+              ],
             ),
-          )
-        else if (_error != null)
-          _Status(
-            icon: Icons.cloud_off_outlined,
-            title: '数据加载失败',
-            detail: _error!,
-            action: _load,
-          )
-        else ...[
-          Row(
-            children: [
-              Expanded(
-                child: _Metric(
-                  title: '项目数量',
-                  value: _projects.length.toString(),
-                  icon: Icons.folder_outlined,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _Metric(
-                  title: '装机容量',
-                  value: _capacity == 0
-                      ? '未填写'
-                      : '${_capacity.toStringAsFixed(1)} MW',
-                  icon: Icons.bolt,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          const _Status(
-            icon: Icons.monitor_heart_outlined,
-            title: '运行指标待接入',
-            detail: '接入经过授权的监控系统与物联网数据后，才会展示发电量、收益、碳减排、健康度和告警。',
-          ),
-        ],
+            const SizedBox(height: 16),
+            const _Status(
+              icon: Icons.monitor_heart_outlined,
+              title: '运行指标待接入',
+              detail: '接入经过授权的监控系统与物联网数据后，才会展示发电量、收益、碳减排、健康度和告警。',
+            ),
+          ],
+          ]),
+        ),
       ],
     ),
   );
