@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:energy_app/main.dart';
 import 'package:energy_app/widgets/reading_column.dart';
+import 'package:energy_app/screens/dashboard/dashboard_screen.dart';
 
 void main() {
   testWidgets('>= 600 dp uses a side rail (no bottom bar); < 600 keeps the bottom bar', (t) async {
@@ -34,5 +35,19 @@ void main() {
     await t.pumpWidget(app());
     expect(w, 500);
   });
-}
 
+  testWidgets('the screen login lands on (/dashboard) shows the side rail on a wide window and the bottom bar on a phone', (t) async {
+    t.view.devicePixelRatio = 1;
+    addTearDown(t.view.reset);
+    t.view.physicalSize = const Size(1440, 900);
+    await t.pumpWidget(const MaterialApp(home: DashboardScreen()));
+    await t.pump(const Duration(milliseconds: 300));
+    expect(find.byType(NavigationRail), findsOneWidget);
+    expect(find.byType(BottomNavigationBar), findsNothing);
+    t.view.physicalSize = const Size(390, 844);
+    await t.pumpWidget(const MaterialApp(home: DashboardScreen()));
+    await t.pump(const Duration(milliseconds: 300));
+    expect(find.byType(NavigationRail), findsNothing);
+    expect(find.byType(BottomNavigationBar), findsOneWidget);
+  });
+}
