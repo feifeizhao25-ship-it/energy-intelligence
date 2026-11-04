@@ -194,11 +194,27 @@ jobs:
 
       - name: Locate ghost setuptools (debug)
         run: |
-          docker run --rm --entrypoint sh eip-api:scan -c '
-            find / -iname "*setuptools*" 2>/dev/null | head -20
-            echo ---
-            python -c "import setuptools; print(setuptools.__version__, setuptools.__file__)"
-          '
+          TRIVY_BIN="$(command -v trivy || echo "$HOME/.local/bin/trivy-bin/trivy")"
+          echo "== trivy: $TRIVY_BIN =="
+          "$TRIVY_BIN" image --format json --list-all-pkgs --ignore-unfixed eip-api:scan > /tmp/t.json 2>/tmp/t.err || true
+          python3 - <<'EOF'
+          import json
+          d = json.load(open('/tmp/t.json'))
+          for r in d.get('Results', []):
+              pkgs = r.get('Packages') or []
+              st = [p for p in pkgs if p.get('Name') == 'setuptools']
+              if st or 'Python' in (r.get('Target') or ''):
+                  print('TARGET:', repr(r.get('Target')), 'TYPE:', r.get('Type'), 'n_pkgs:', len(pkgs))
+                  for p in st:
+                      print('  setuptools:', p.get('Version'), '| id:', p.get('PkgIdentifier'), '| layer:', p.get('Layer'))
+                  if not st:
+                      print('  (no setuptools in this target)')
+                  print('  sample pkgs:', [p.get('Name') for p in pkgs[:8]])
+          import subprocess
+          print('== manifest inspect ==')
+          print(subprocess.run(['docker','image','inspect','eip-api:scan','--format','{{.Id}} {{.RepoTags}} {{.ManifestType}}'],capture_output=True,text=True).stdout)
+          EOF
+          head -5 /tmp/t.err
 
       - name: Run Trivy image scan
         uses: aquasecurity/trivy-action@master
