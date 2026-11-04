@@ -179,6 +179,15 @@ jobs:
             exit 0
           fi
 
+      - name: Trivy findings (table, informational)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'eip-api:scan'
+          format: 'table'
+          exit-code: '0'
+          ignore-unfixed: true
+          severity: 'HIGH,CRITICAL'
+
       - name: Run Trivy image scan
         uses: aquasecurity/trivy-action@master
         with:
