@@ -30,6 +30,7 @@ def test_backend_source_has_no_banned_phrases():
         "app/services/bottom_line_semantic.py",
         "app/self_improve/compliance.py",
         "app/api/v1/ai_assistant.py",
+        "app/growth/claims.py",  # growth kit claim scanner must spell the banned wording it blocks
     }
     hits = []
     for f in (ROOT / "app").rglob("*.py"):

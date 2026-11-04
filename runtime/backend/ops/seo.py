@@ -5,6 +5,13 @@ from ops.killswitch import is_killed
 from ops.publish import AIGC_LABEL
 from ops.switches import SWITCHES
 
+try:  # growth kit (opt-in): extra forbidden-claim scan on page copy
+    from app.growth import claims as _kit_claims
+    from app.growth.flags import GrowthFlags
+except Exception:  # pragma: no cover - package import path
+    _kit_claims = None
+    GrowthFlags = None
+
 PILOT_CAP = 50
 
 try:
@@ -24,6 +31,11 @@ def quality_gate(page: dict) -> list[str]:
     blob = " ".join(str(page.get(key) or "") for key in ("title", "body"))
     if find_violations(blob, market="cn"):
         problems.append("bottom line")
+    # Growth kit, SEO_PAGES_ENABLED (default OFF): a forbidden-claim hit (medical / prediction / investment
+    # promise / absolute wording, EN+ZH) holds the page. Adds reasons only; never removes an existing one.
+    if _kit_claims is not None and GrowthFlags.from_env().seo_pages:
+        for category in sorted({cat for cat, _ in _kit_claims.scan(blob)}):
+            problems.append(f"claim:{category}")
     return problems
 
 
