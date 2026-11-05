@@ -1,0 +1,23 @@
+name: mobile_voice
+description: On-device microphone input and spoken readout for energy chat.
+publish_to: 'none'
+version: 1.0.0
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+  flutter: '>=3.10.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # 7.4.0 keeps the SDK floor at 3.3 so the energy apps (Dart ^3.10) can resolve it.
+  speech_to_text: 7.4.0
+  flutter_tts: 4.2.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_voice/mobile_voice.dart';
 
 import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
@@ -37,7 +38,8 @@ class _Msg {
 
 class AiAssistantScreen extends StatefulWidget {
   final AiChatFn? chat;
-  const AiAssistantScreen({super.key, this.chat});
+  final VoiceIo? voice;
+  const AiAssistantScreen({super.key, this.chat, this.voice});
 
   @override
   State<AiAssistantScreen> createState() => _AiAssistantScreenState();
@@ -122,7 +124,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                     controller: _scroll,
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
                     itemCount: _messages.length + (_busy ? 1 : 0),
-                    itemBuilder: (context, i) => i == _messages.length ? _thinking(context) : _bubble(context, _messages[i]),
+                    itemBuilder: (context, i) => i == _messages.length ? _thinking(context) : _bubble(context, _messages[i], i),
                   ),
           ),
           _input(context),
@@ -208,7 +210,30 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
     );
   }
 
-  Widget _bubble(BuildContext context, _Msg m) {
+  String _speakable(_Msg m) {
+    final body = cleanAnswerText(m.text);
+    final headline = m.structured == null ? '' : '${m.structured!['headline'] ?? ''}'.trim();
+    if (headline.isEmpty || body.contains(headline)) return body;
+    if (body.isEmpty) return headline;
+    return '$headline\n$body';
+  }
+
+  Widget _speaker(_Msg m, int index) {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: SpeakAloudButton(
+        key: const Key('voiceSpeak'),
+        utteranceId: 'a$index',
+        text: _speakable(m),
+        locale: VoiceLocale.english,
+        voice: widget.voice,
+        playLabel: 'Read aloud',
+        stopLabel: 'Stop reading',
+      ),
+    );
+  }
+
+  Widget _bubble(BuildContext context, _Msg m, int index) {
     final scheme = Theme.of(context).colorScheme;
     if (m.isUser) {
       return Align(
@@ -221,22 +246,29 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
         ),
       );
     }
-    if (m.error != null) return _errorCard(context, m);
+    if (m.error != null) return _errorCard(context, m, index);
     return Container(
       key: const Key('answerCard'),
       margin: const EdgeInsets.only(bottom: 14, right: 8),
-      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: scheme.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: scheme.outlineVariant),
       ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      child: Material(
+        color: scheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        clipBehavior: Clip.antiAlias,
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        _speaker(m, index),
         // The grounding status comes first, not as a footnote: the reader must know whether anything backs the answer.
         if (m.grounding != null) _groundingBanner(context, m.grounding!),
         if (_expiredDates(m).isNotEmpty) _dateCheckBanner(context, _expiredDates(m), m.timeCheck?['today']),
         m.structured == null ? SelectableText(cleanAnswerText(m.text), style: const TextStyle(fontSize: 14, height: 1.5)) : _answer(context, m),
-      ]),
+          ]),
+        ),
+      ),
     );
   }
 
@@ -297,7 +329,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
     );
   }
 
-  Widget _errorCard(BuildContext context, _Msg m) {
+  Widget _errorCard(BuildContext context, _Msg m, int index) {
     final scheme = Theme.of(context).colorScheme;
     return Container(
       key: const Key('aiError'),
@@ -312,6 +344,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
         ]),
         const SizedBox(height: 6),
         Text(m.text, style: const TextStyle(fontSize: 13, height: 1.4)),
+        _speaker(m, index),
         const SizedBox(height: 10),
         Wrap(spacing: 8, children: [
           if (m.error == 'quota')
@@ -473,7 +506,18 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
             ),
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 4),
+        VoiceMicButton(
+          key: const Key('voiceMic'),
+          controller: _controller,
+          enabled: !_busy,
+          locale: VoiceLocale.english,
+          voice: widget.voice,
+          startLabel: 'Voice input',
+          stopLabel: 'Stop voice input',
+          deniedMessage: 'Microphone and speech recognition are needed to fill the composer from your voice. Allow them in Settings.',
+          unavailableMessage: 'Voice input is not available on this device. Type your question instead.',
+        ),
         IconButton.filled(
           key: const Key('aiSend'),
           tooltip: 'Send',
