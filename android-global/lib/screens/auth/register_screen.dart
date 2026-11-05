@@ -109,7 +109,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
-              child: Column(
+              child: Center(
+                // iPad / wide screens: keep the auth card a single centred column instead of stretching.
+                child: ConstrainedBox(
+                  key: const Key('auth-form-card'),
+                  constraints: const BoxConstraints(maxWidth: 480),
+                  child: Column(
                 children: [
                   Text(
                     'Step ${_step + 1} of 2',
@@ -271,6 +276,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ],
                   ),
                 ],
+              ),
+                ),
               ),
             ),
           ),

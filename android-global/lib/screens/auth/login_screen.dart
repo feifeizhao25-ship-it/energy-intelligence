@@ -132,7 +132,12 @@ class _LoginScreenState extends State<LoginScreen>
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
-              child: Column(
+              child: Center(
+                // iPad / wide screens: keep the auth card a single centred column instead of stretching.
+                child: ConstrainedBox(
+                  key: const Key('auth-form-card'),
+                  constraints: const BoxConstraints(maxWidth: 480),
+                  child: Column(
                 children: [
                   OutlinedButton.icon(
                     onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
@@ -305,6 +310,8 @@ class _LoginScreenState extends State<LoginScreen>
                     style: TextStyle(fontSize: 11, color: context.eiMuted),
                   ),
                 ],
+              ),
+                ),
               ),
             ),
           ),
