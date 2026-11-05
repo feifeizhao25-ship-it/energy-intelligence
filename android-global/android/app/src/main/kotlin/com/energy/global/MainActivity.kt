@@ -1,4 +1,4 @@
-package com.energyintelligence.global.energy_global
+package com.energy.global
 
 import io.flutter.embedding.android.FlutterActivity
 
