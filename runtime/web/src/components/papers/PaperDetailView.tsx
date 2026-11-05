@@ -29,6 +29,8 @@ import {
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { AigcLabel } from '@/components/ui/AigcLabel';
+import { BubbleSpeaker } from '@/components/ai/BubbleSpeaker';
+import { VoiceInput } from '@/components/input/VoiceInput';
 
 interface PaperDetailViewProps {
     paper: Paper;
@@ -584,26 +586,49 @@ export default function PaperDetailView({ paper, pdfStatus }: PaperDetailViewPro
                                                                     <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-bounce [animation-delay:0.4s]"></div>
                                                                 </div>
                                                             ) : "")}
-                                                            {msg.role !== 'user' && msg.content && <AigcLabel compact />}
+                                                            {msg.role !== 'user' && msg.content && (
+                                                                <div className="mt-3 flex items-center justify-between gap-2">
+                                                                    <AigcLabel compact />
+                                                                    <BubbleSpeaker
+                                                                        id={`paper-${i}`}
+                                                                        text={msg.content}
+                                                                        className="border-slate-100 bg-slate-50 text-slate-500 hover:border-green-500"
+                                                                    />
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 ))}
                                             </div>
 
                                             <div className="pt-6 border-t border-slate-100">
-                                                <div className="relative group">
+                                                <div className="flex items-center gap-2">
                                                     <input
                                                         type="text"
                                                         value={chatInput}
                                                         onChange={e => setChatInput(e.target.value)}
                                                         onKeyDown={e => e.key === 'Enter' && handleSendMessage()}
                                                         placeholder="针对论文核心发现或实验背景提问..."
-                                                        className="w-full pl-6 pr-16 py-5 rounded-[24px] bg-white border border-slate-100 focus:ring-4 focus:ring-green-500/10 focus:border-green-500/50 shadow-sm transition-all text-sm font-bold"
+                                                        className="min-w-0 flex-1 px-5 py-4 rounded-[24px] bg-white border border-slate-100 focus:ring-4 focus:ring-green-500/10 focus:border-green-500/50 shadow-sm transition-all text-sm font-bold"
+                                                    />
+                                                    <VoiceInput
+                                                        appearance="toolbar"
+                                                        disabled={isSending}
+                                                        className="text-slate-500 hover:bg-slate-100 hover:text-green-600"
+                                                        onTranscript={(text) => {
+                                                            const heard = text.trim();
+                                                            if (!heard) return;
+                                                            setChatInput((prev) => {
+                                                                const base = prev.trim();
+                                                                return base ? `${base} ${heard}` : heard;
+                                                            });
+                                                        }}
                                                     />
                                                     <button
                                                         onClick={handleSendMessage}
                                                         disabled={isSending || !chatInput.trim()}
-                                                        className="absolute right-3 top-3 bottom-3 w-12 rounded-2xl bg-slate-900 text-white flex items-center justify-center hover:bg-green-600 disabled:opacity-20 transition-all shadow-lg"
+                                                        aria-label="发送"
+                                                        className="h-12 w-12 shrink-0 rounded-2xl bg-slate-900 text-white flex items-center justify-center hover:bg-green-600 disabled:opacity-20 transition-all shadow-lg"
                                                     >
                                                         <Send className="w-5 h-5" />
                                                     </button>

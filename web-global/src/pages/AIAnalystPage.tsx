@@ -11,6 +11,7 @@
 
 import React, { useRef, useState } from 'react';
 import { Send, Sparkles } from 'lucide-react';
+import { AnalystMic, AnalystSpeaker } from '../components/voice/AnalystVoice';
 import { Button, Card, cn } from '@energy-intelligence/ui-web';
 import GlobalShell from '../components/GlobalShell';
 import EmptyState from '../components/EmptyState';
@@ -111,6 +112,7 @@ const AIAnalystPage: React.FC = () => {
                   )}
                 >
                   {message.text}
+                  {message.role !== 'user' && <AnalystSpeaker id={`bubble-${i}`} text={message.text} />}
                 </div>
               ))
             )}
@@ -145,6 +147,17 @@ const AIAnalystPage: React.FC = () => {
               placeholder="Ask the AI analyst…"
               aria-label="Ask the AI analyst"
               className="h-10 flex-1 rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--bg-primary)] px-3 text-[14px] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-[var(--color-brand-500)]"
+            />
+            <AnalystMic
+              disabled={sending}
+              onTranscript={(text) => {
+                const heard = text.trim();
+                if (!heard) return;
+                setInput((prev) => {
+                  const base = prev.trim();
+                  return base ? `${base} ${heard}` : heard;
+                });
+              }}
             />
             <Button
               variant="primary"
