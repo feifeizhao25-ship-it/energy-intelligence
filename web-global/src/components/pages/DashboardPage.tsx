@@ -11,11 +11,13 @@
  */
 
 import React, { useState, useMemo } from 'react';
+import Link from 'next/link';
 import { Button, Card, Badge, KPIRibbon, SegmentedControl, Progress } from '@energy-intelligence/ui-web';
 import { cn } from '@energy-intelligence/ui-web';
 import GlobalShell from '../GlobalShell';
 import DemoBadge from '../DemoBadge';
 import PersonalizedSection from '../dashboard/PersonalizedSection';
+import conflict from '../../lib/policy/us-48e-45y-conflict.json';
 
 // ── Types ──────────────────────────────────────────────
 
@@ -59,10 +61,6 @@ const MARKET_DATA: Record<string, MarketPrice> = {
   PJM:   { iso: 'PJM',   lmp: 41.00, change: 0.9,  ppa: 48.00 },
   SPP:   { iso: 'SPP',   lmp: 29.75, change: 5.4,  ppa: 35.50 },
 };
-
-// ITC countdown — Inflation Reduction Act
-const ITC_EXPIRY = new Date('2032-12-31');
-const DAYS_REMAINING = Math.ceil((ITC_EXPIRY.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
 
 // ── Sub-components ─────────────────────────────────────
 
@@ -310,53 +308,36 @@ const DashboardPage: React.FC = () => {
               </div>
             </Card>
 
-            {/* ── Incentive Tracker: ITC ── */}
+            {/* ── Incentive Tracker: sources, no winner ── */}
             <Card title="Incentive Tracker" padding="md">
-              <div className="space-y-4">
-                {/* ITC Status */}
-                <div className="p-3 rounded-[var(--radius-md)] bg-[#E6F7EF] border border-[#B7E6D0]">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-[13px] font-semibold text-[var(--color-success)]">
-                      Federal ITC — 30% Active
-                    </span>
-                    <Badge color="success" dot>Active</Badge>
-                  </div>
-                  <p className="text-[12px] text-[var(--text-secondary)]">
-                    Investment Tax Credit under the Inflation Reduction Act (IRA). Applies to
-                    qualifying solar, wind, and storage projects placed in service before 2033.
-                  </p>
-                </div>
-
-                {/* IRA Countdown */}
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[12px] text-[var(--text-secondary)]">IRA ITC Expiry</span>
-                    <span className="text-[13px] font-mono font-semibold text-[var(--text-primary)]">
-                      {DAYS_REMAINING.toLocaleString()} days
-                    </span>
-                  </div>
-                  <Progress value={35} className="w-full" />
-                  <div className="flex justify-between mt-1">
-                    <span className="text-[10px] text-[var(--text-tertiary)]">2022</span>
-                    <span className="text-[10px] text-[var(--text-tertiary)]">Dec 31, 2032</span>
-                  </div>
-                </div>
-
-                {/* Bonus Credits */}
-                <div className="space-y-2 pt-2 border-t border-[var(--border-default)]">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[12px] text-[var(--text-secondary)]">Domestic Content Bonus</span>
-                    <Badge color="success">+10%</Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-[12px] text-[var(--text-secondary)]">Energy Community</span>
-                    <Badge color="success">+10%</Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-[12px] text-[var(--text-secondary)]">Low-Income Bonus</span>
-                    <Badge color="neutral">+10%</Badge>
-                  </div>
-                </div>
+              <div className="space-y-3" data-testid="incentive-tracker-conflict">
+                <p className="text-[12px] leading-relaxed text-[var(--text-secondary)]">
+                  {conflict.instruction}{' '}
+                  {conflict.resolution === null ? 'No source is selected.' : ''}{' '}
+                  This is not investment advice.
+                </p>
+                {conflict.sources.map((source) => (
+                  <article
+                    key={source.id}
+                    className="rounded-[var(--radius-md)] border border-[var(--border-default)] p-2.5"
+                  >
+                    <div className="flex flex-wrap items-baseline justify-between gap-2">
+                      <h3 className="text-[12px] font-semibold text-[var(--text-primary)]">
+                        {source.role}
+                      </h3>
+                      <span className="text-[11px] text-[var(--text-tertiary)]">{source.date_label}</span>
+                    </div>
+                    <p className="mt-1 text-[12px] leading-relaxed text-[var(--text-secondary)]">
+                      {source.statement}
+                    </p>
+                  </article>
+                ))}
+                <Link
+                  href="/incentives"
+                  className="inline-block text-[12px] text-[var(--color-brand-600)]"
+                >
+                  Open the full §48E / §45Y sources
+                </Link>
               </div>
             </Card>
 

@@ -81,7 +81,7 @@ export const Input: React.FC<InputProps> = ({ icon, className, ...rest }) => (
     <input
       className={cn(
         'h-9 w-full rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--bg-primary)] px-3 text-[14px] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-[var(--color-brand-500)]',
-        icon && 'pl-9',
+        icon ? 'pl-9' : false,
         className,
       )}
       {...rest}
