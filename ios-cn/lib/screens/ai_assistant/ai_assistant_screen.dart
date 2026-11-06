@@ -398,18 +398,26 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
         ),
       if (numbers.isNotEmpty) ...[
         _label(context, '关键数字'),
-        Wrap(spacing: 8, runSpacing: 8, children: [
-          for (final n in numbers)
-            Container(
-              key: const Key('keyNumber'),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(color: scheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(10)),
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-                Text('${n['value']}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
-                if ('${n['label'] ?? ''}'.isNotEmpty) Text('${n['label']}', style: TextStyle(fontSize: 11, color: scheme.onSurfaceVariant)),
-              ]),
-            ),
-        ]),
+        // Wrap keeps Key('keyNumber') for layout checks. Each chip needs its own key:
+        // a shared Key('keyNumber') throws once a reply has two figures, and this card
+        // (speaker included) never finishes building.
+        Wrap(
+          key: const Key('keyNumber'),
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (var i = 0; i < numbers.length; i++)
+              Container(
+                key: Key('keyNumber_$i'),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(color: scheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(10)),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+                  Text('${numbers[i]['value']}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+                  if ('${numbers[i]['label'] ?? ''}'.isNotEmpty) Text('${numbers[i]['label']}', style: TextStyle(fontSize: 11, color: scheme.onSurfaceVariant)),
+                ]),
+              ),
+          ],
+        ),
         const SizedBox(height: 10),
       ],
       Theme(
@@ -427,15 +435,15 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
       if (basis.isEmpty)
         Text('本回答没有引用资料库中的来源，请自行核对其中的数字。', key: const Key('noBasis'), style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant, height: 1.4))
       else
-        for (final b in basis)
+        for (var i = 0; i < basis.length; i++)
           Padding(
-            key: const Key('basisItem'),
+            key: Key('basisItem_$i'),
             padding: const EdgeInsets.only(bottom: 6),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('[${b['ref']}] ${b['title'] ?? ''}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-              Text([for (final k in ['publisher', 'published_at']) if ('${b[k] ?? ''}'.isNotEmpty) '${b[k]}'].join(' · '),
+              Text('[${basis[i]['ref']}] ${basis[i]['title'] ?? ''}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+              Text([for (final k in ['publisher', 'published_at']) if ('${basis[i][k] ?? ''}'.isNotEmpty) '${basis[i][k]}'].join(' · '),
                   style: TextStyle(fontSize: 11, color: scheme.onSurfaceVariant)),
-              if ('${b['url'] ?? ''}'.isNotEmpty) SelectableText('${b['url']}', style: TextStyle(fontSize: 11, color: AppTheme.primaryColor)),
+              if ('${basis[i]['url'] ?? ''}'.isNotEmpty) SelectableText('${basis[i]['url']}', style: TextStyle(fontSize: 11, color: AppTheme.primaryColor)),
             ]),
           ),
       if (risks.isNotEmpty) ...[
