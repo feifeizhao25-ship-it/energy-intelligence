@@ -226,11 +226,13 @@ export const SegmentedControl: React.FC<SegmentedControlProps> = ({
 
 // ── Switch ─────────────────────────────────────────────
 
-export interface SwitchProps {
+export interface SwitchProps
+  extends Omit<
+    React.ButtonHTMLAttributes<HTMLButtonElement>,
+    'onChange' | 'onClick' | 'role' | 'aria-checked'
+  > {
   checked: boolean;
   onChange: (checked: boolean) => void;
-  disabled?: boolean;
-  className?: string;
 }
 
 export const Switch: React.FC<SwitchProps> = ({
@@ -238,8 +240,10 @@ export const Switch: React.FC<SwitchProps> = ({
   onChange,
   disabled,
   className,
+  ...rest
 }) => (
   <button
+    {...rest}
     type="button"
     role="switch"
     aria-checked={checked}
@@ -252,6 +256,7 @@ export const Switch: React.FC<SwitchProps> = ({
     )}
   >
     <span
+      aria-hidden="true"
       className={cn(
         'absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all',
         checked ? 'left-[18px]' : 'left-0.5',

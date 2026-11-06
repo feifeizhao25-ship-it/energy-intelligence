@@ -129,30 +129,39 @@ const IncentivesPage: React.FC = () => {
                     30%
                   </span>
                 </div>
-                {BONUS_CREDITS.map((bonus) => (
-                  <div
-                    key={bonus.id}
-                    className="flex items-center justify-between gap-3 p-2.5 rounded-[var(--radius-md)] border border-[var(--border-default)]"
-                  >
-                    <div className="min-w-0">
-                      <div className="text-[13px] font-medium text-[var(--text-primary)]">
-                        {bonus.label}
-                        <span className="ml-2 text-[12px] font-mono text-[var(--color-success)]">
-                          +10%
-                        </span>
+                {BONUS_CREDITS.map((bonus) => {
+                  const switchId = `bonus-${bonus.id}`;
+                  const labelId = `${switchId}-label`;
+                  return (
+                    <div
+                      key={bonus.id}
+                      className="flex items-center justify-between gap-3 p-2.5 rounded-[var(--radius-md)] border border-[var(--border-default)]"
+                    >
+                      <div className="min-w-0">
+                        <div className="text-[13px] font-medium text-[var(--text-primary)]">
+                          <label id={labelId} htmlFor={switchId} className="cursor-pointer">
+                            {bonus.label}
+                          </label>
+                          <span className="ml-2 text-[12px] font-mono text-[var(--color-success)]">
+                            +10%
+                          </span>
+                        </div>
+                        <div className="text-[11px] text-[var(--text-tertiary)] truncate">
+                          {bonus.note}
+                        </div>
                       </div>
-                      <div className="text-[11px] text-[var(--text-tertiary)] truncate">
-                        {bonus.note}
-                      </div>
+                      <Switch
+                        id={switchId}
+                        aria-labelledby={labelId}
+                        data-testid={switchId}
+                        checked={!!enabled[bonus.id]}
+                        onChange={(checked) =>
+                          setEnabled((prev) => ({ ...prev, [bonus.id]: checked }))
+                        }
+                      />
                     </div>
-                    <Switch
-                      checked={!!enabled[bonus.id]}
-                      onChange={(checked) =>
-                        setEnabled((prev) => ({ ...prev, [bonus.id]: checked }))
-                      }
-                    />
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               <div className="rounded-[var(--radius-md)] bg-[var(--bg-secondary)] p-4 space-y-2">
