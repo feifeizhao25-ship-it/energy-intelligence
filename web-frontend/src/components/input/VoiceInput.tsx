@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Mic, Square } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { attachLocalFirstRecognition, type LocalFirstSession, type SpeechRecognitionLike } from '@/lib/voice/localFirstSpeech';
 
 interface VoiceInputProps {
   onTranscript: (text: string) => void;
@@ -12,35 +13,23 @@ interface VoiceInputProps {
   className?: string;
 }
 
-type Rec = {
-  continuous: boolean;
-  interimResults: boolean;
-  lang: string;
-  processLocally?: boolean;
-  onresult: (event: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void;
-  onerror: (event: { error?: string }) => void;
-  onend: () => void;
-  start: () => void;
-  stop: () => void;
-};
-
 /**
  * Browser speech recognition for Chinese chat composers.
- * Prefers on-device recognition when the browser exposes `processLocally`.
- * No app speech key is stored or sent.
+ * Prefers on-device recognition when the browser exposes `processLocally`,
+ * and retries once in the cloud when that mode cannot run (including
+ * `language-not-supported` for zh-CN). No app speech key is stored or sent.
  */
 export function VoiceInput({ onTranscript, appearance = 'fab', disabled = false, className }: VoiceInputProps) {
   const [isListening, setIsListening] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const recognitionRef = useRef<Rec | null>(null);
-  const localAttempt = useRef(true);
+  const recognitionRef = useRef<LocalFirstSession | null>(null);
   const onTranscriptRef = useRef(onTranscript);
   onTranscriptRef.current = onTranscript;
 
   useEffect(() => {
     const w = window as Window & {
-      webkitSpeechRecognition?: new () => Rec;
-      SpeechRecognition?: new () => Rec;
+      webkitSpeechRecognition?: new () => SpeechRecognitionLike;
+      SpeechRecognition?: new () => SpeechRecognitionLike;
     };
     const Ctor = w.SpeechRecognition || w.webkitSpeechRecognition;
     if (!Ctor) {
@@ -51,32 +40,25 @@ export function VoiceInput({ onTranscript, appearance = 'fab', disabled = false,
     recognition.continuous = false;
     recognition.interimResults = false;
     recognition.lang = 'zh-CN';
-    recognition.onresult = (event) => {
-      const transcript = event.results[0][0].transcript;
-      onTranscriptRef.current(transcript);
-      setIsListening(false);
-    };
-    recognition.onerror = (event) => {
-      const code = event.error || '';
-      if ((code === 'network' || code === 'service-not-allowed') && localAttempt.current) {
-        localAttempt.current = false;
-        try {
-          recognition.processLocally = false;
-          recognition.start();
-          return;
-        } catch {
-          /* use the message below */
+    const session = attachLocalFirstRecognition(recognition, {
+      onTranscript: (transcript) => {
+        onTranscriptRef.current(transcript);
+        setIsListening(false);
+      },
+      onFailure: (code) => {
+        if (code === 'not-allowed') {
+          setError('需要麦克风权限才能把您说的话填进输入框');
+        } else if (code !== 'aborted' && code !== 'no-speech') {
+          setError('无法识别语音');
         }
-      }
-      if (code === 'not-allowed') {
-        setError('需要麦克风权限才能把您说的话填进输入框');
-      } else if (code !== 'aborted' && code !== 'no-speech') {
-        setError('无法识别语音');
-      }
-      setIsListening(false);
+        setIsListening(false);
+      },
+      onIdle: () => setIsListening(false),
+    });
+    recognitionRef.current = session;
+    return () => {
+      try { session.stop(); } catch { /* recognizer was already idle */ }
     };
-    recognition.onend = () => setIsListening(false);
-    recognitionRef.current = recognition;
   }, []);
 
   const toggleListening = () => {
@@ -89,15 +71,8 @@ export function VoiceInput({ onTranscript, appearance = 'fab', disabled = false,
       return;
     }
     setError(null);
-    localAttempt.current = true;
     try {
-      if ('processLocally' in recognition) recognition.processLocally = true;
-    } catch {
-      /* older browsers ignore on-device mode */
-    }
-    try {
-      recognition.start();
-      setIsListening(true);
+      setIsListening(recognition.start());
     } catch {
       setError('无法开始语音输入');
       setIsListening(false);

@@ -2,19 +2,20 @@
 /**
  * EnergyIQ — AI Analyst Page
  *
- * Chat with the AI analyst via POST /api/v1/ai/chat. If the service is
- * unreachable the failure is stated in the thread — no canned answers are
- * ever presented as AI output.
+ * Chat with the AI analyst via POST /api/v1/ai/chat-json (JSON body plus the
+ * stored login token). The streaming /api/v1/ai/chat route is a different
+ * contract and is not used here. If the service is unreachable the failure is
+ * stated in the thread — no canned answers are ever presented as AI output.
  *
  * All copy in English. Uses CSS Variables for theming.
  */
 
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { Send, Sparkles } from 'lucide-react';
 import { Button, Card, cn } from '@energy-intelligence/ui-web';
 import GlobalShell from '../GlobalShell';
 import EmptyState from '../EmptyState';
-import { API_BASE, fetchJson } from '../../lib/config';
+import { postAnalystChat } from '../../lib/ai/analystChat';
 
 interface Message {
   role: 'user' | 'assistant' | 'system';
@@ -27,27 +28,10 @@ const SUGGESTIONS = [
   'What should I watch in the interconnection study phase?',
 ];
 
-function extractReply(payload: unknown): string | null {
-  if (!payload || typeof payload !== 'object') return null;
-  const body = payload as Record<string, unknown>;
-  if (typeof body.code === 'number' && body.code !== 0) return null;
-  const sources: unknown[] = [body, body.data];
-  for (const source of sources) {
-    if (source && typeof source === 'object') {
-      const record = source as Record<string, unknown>;
-      for (const key of ['reply', 'message', 'answer', 'content', 'text']) {
-        if (typeof record[key] === 'string' && record[key]) return record[key] as string;
-      }
-    }
-  }
-  return null;
-}
-
 const AIAnalystPage: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
-  const conversationId = useRef(`conv-${Date.now().toString(36)}`);
 
   const send = async (text: string) => {
     const question = text.trim();
@@ -56,13 +40,7 @@ const AIAnalystPage: React.FC = () => {
     setSending(true);
     setMessages((prev) => [...prev, { role: 'user', text: question }]);
     try {
-      const payload = await fetchJson(`${API_BASE}/api/v1/ai/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ conversation_id: conversationId.current, message: question }),
-      });
-      const reply = extractReply(payload);
-      if (!reply) throw new Error('unrecognized payload');
+      const reply = await postAnalystChat(question);
       setMessages((prev) => [...prev, { role: 'assistant', text: reply }]);
     } catch {
       setMessages((prev) => [

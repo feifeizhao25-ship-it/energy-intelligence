@@ -1,0 +1,70 @@
+import { attachLocalFirstRecognition, type SpeechRecognitionLike } from './localFirstSpeech';
+
+function chromeWithoutLocalPack(lang: string): SpeechRecognitionLike & { starts: number; localFlags: boolean[] } {
+  let open = false;
+  const rec = {
+    lang,
+    continuous: false,
+    interimResults: false,
+    processLocally: false,
+    starts: 0,
+    localFlags: [] as boolean[],
+    onresult: () => {},
+    onerror: () => {},
+    onend: () => {},
+    start() {
+      if (open) throw new Error('recognition already started');
+      open = true;
+      rec.starts += 1;
+      rec.localFlags.push(Boolean(rec.processLocally));
+      if (rec.processLocally) {
+        rec.onerror({ error: 'language-not-supported' });
+        open = false;
+        rec.onend();
+        return;
+      }
+      rec.onresult({ results: [[{ transcript: '屋顶光伏回收期' }]] });
+      open = false;
+      rec.onend();
+    },
+    stop() {
+      if (!open) return;
+      open = false;
+      rec.onend();
+    },
+  };
+  return rec;
+}
+
+describe('on-device speech fallback', () => {
+  it('retries zh-CN without processLocally after language-not-supported', () => {
+    const recognition = chromeWithoutLocalPack('zh-CN');
+    const transcripts: string[] = [];
+    const failures: string[] = [];
+    const session = attachLocalFirstRecognition(recognition, {
+      onTranscript: (text) => transcripts.push(text),
+      onFailure: (code) => failures.push(code),
+    });
+    session.start();
+    expect(failures).toEqual([]);
+    expect(transcripts).toEqual(['屋顶光伏回收期']);
+    expect(recognition.starts).toBe(2);
+    expect(recognition.localFlags).toEqual([true, false]);
+  });
+
+  it('does not retry when the microphone is blocked', () => {
+    const recognition = chromeWithoutLocalPack('zh-CN');
+    recognition.start = () => {
+      recognition.starts += 1;
+      recognition.onerror({ error: 'not-allowed' });
+      recognition.onend();
+    };
+    const failures: string[] = [];
+    attachLocalFirstRecognition(recognition, {
+      onTranscript: () => { throw new Error('should not hear audio'); },
+      onFailure: (code) => failures.push(code),
+    }).start();
+    expect(failures).toEqual(['not-allowed']);
+    expect(recognition.starts).toBe(1);
+  });
+});
