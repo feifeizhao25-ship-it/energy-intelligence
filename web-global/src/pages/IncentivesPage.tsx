@@ -88,8 +88,8 @@ const IncentivesPage: React.FC = () => {
           </h2>
           <p className="text-[13px] text-[var(--text-secondary)] mt-1">
             Public descriptions of the §48E and §45Y credits disagree. Each source is shown
-            with its date. This page does not choose which description controls, and it is
-            not tax advice.
+            with its date. This page does not choose which description controls. It is not
+            investment advice and it is not tax advice.
           </p>
         </div>
 
@@ -181,9 +181,10 @@ const IncentivesPage: React.FC = () => {
               </div>
 
               <p className="text-[11px] leading-relaxed text-[var(--text-tertiary)]">
-                Illustrative estimate only, computed locally from your inputs. Actual credit
-                eligibility depends on prevailing wage and apprenticeship rules, placed-in-service
-                timing and IRS guidance. Consult a tax advisor before making investment decisions.
+                Illustrative estimate only, computed locally from your inputs. The arithmetic
+                does not decide eligibility. Actual credit eligibility depends on prevailing wage
+                and apprenticeship rules, placed-in-service timing and IRS guidance. This is not
+                investment advice. Consult a tax advisor before making investment decisions.
               </p>
             </div>
           </Card>
