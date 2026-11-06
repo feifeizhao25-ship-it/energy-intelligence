@@ -1,17 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { browserPlayback, speakableText } from '../lib/voice/playback';
-
-type Rec = {
-  lang: string;
-  continuous: boolean;
-  interimResults: boolean;
-  processLocally?: boolean;
-  onresult: (event: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void;
-  onerror: (event: { error?: string }) => void;
-  onend: () => void;
-  start: () => void;
-  stop: () => void;
-};
+import { attachLocalFirstRecognition, type LocalFirstSession, type SpeechRecognitionLike } from '../lib/voice/localFirstSpeech';
 
 function MicIcon() {
   return (
@@ -48,13 +37,15 @@ export function ChatMic({
 }) {
   const [listening, setListening] = useState(false);
   const [hint, setHint] = useState('语音输入');
-  const recRef = useRef<Rec | null>(null);
-  const localAttempt = useRef(true);
+  const recRef = useRef<LocalFirstSession | null>(null);
   const onTranscriptRef = useRef(onTranscript);
   onTranscriptRef.current = onTranscript;
 
   useEffect(() => {
-    const w = window as Window & { SpeechRecognition?: new () => Rec; webkitSpeechRecognition?: new () => Rec };
+    const w = window as Window & {
+      SpeechRecognition?: new () => SpeechRecognitionLike;
+      webkitSpeechRecognition?: new () => SpeechRecognitionLike;
+    };
     const Ctor = w.SpeechRecognition || w.webkitSpeechRecognition;
     if (!Ctor) {
       setHint('当前浏览器不支持语音输入');
@@ -64,28 +55,25 @@ export function ChatMic({
     recognition.lang = 'zh-CN';
     recognition.continuous = false;
     recognition.interimResults = false;
-    recognition.onresult = (event) => {
-      onTranscriptRef.current(event.results[0][0].transcript);
-      setListening(false);
-      setHint('语音输入');
+    const session = attachLocalFirstRecognition(recognition, {
+      onTranscript: (transcript) => {
+        onTranscriptRef.current(transcript);
+        setListening(false);
+        setHint('语音输入');
+      },
+      onFailure: (code) => {
+        setHint(code === 'not-allowed' ? '需要麦克风权限才能语音输入' : '无法识别语音');
+        setListening(false);
+      },
+      onIdle: () => {
+        setListening(false);
+        setHint((current) => (current === '停止语音' ? '语音输入' : current));
+      },
+    });
+    recRef.current = session;
+    return () => {
+      try { session.stop(); } catch { /* recognizer was already idle */ }
     };
-    recognition.onerror = (event) => {
-      const code = event.error || '';
-      if ((code === 'network' || code === 'service-not-allowed') && localAttempt.current) {
-        localAttempt.current = false;
-        try {
-          recognition.processLocally = false;
-          recognition.start();
-          return;
-        } catch {
-          /* show the hint below */
-        }
-      }
-      setHint(code === 'not-allowed' ? '需要麦克风权限才能语音输入' : '无法识别语音');
-      setListening(false);
-    };
-    recognition.onend = () => setListening(false);
-    recRef.current = recognition;
   }, []);
 
   const toggle = () => {
@@ -97,13 +85,13 @@ export function ChatMic({
       setHint('语音输入');
       return;
     }
-    localAttempt.current = true;
     try {
-      if ('processLocally' in recognition) recognition.processLocally = true;
-      recognition.start();
-      setListening(true);
-      setHint('停止语音');
+      const stillListening = recognition.start();
+      setListening(stillListening);
+      // 同步失败时 onFailure 已经写了提示，这里不能再盖成空闲文案。
+      if (stillListening) setHint('停止语音');
     } catch {
+      setListening(false);
       setHint('无法开始语音输入');
     }
   };

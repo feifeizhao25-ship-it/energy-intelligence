@@ -70,6 +70,77 @@ void main() {
     expect(find.text('Internal rate of return: the discount rate at which net present value is zero.'), findsOneWidget);
   });
 
+  testWidgets('several key figures keep distinct Wrap keys and the speaker stays on the answer', (t) async {
+    // One shared Key('keyNumber') used to throw "Duplicate keys found" inside the
+    // answer Material as soon as structured.key_numbers had two entries. The card
+    // never finished building, so the read-aloud control was missing after send.
+    await t.pumpWidget(_host((m, s) async => {
+          'message': 'Bottom line: IRR is about 8.5% and payback is about 7 years.',
+          'structured': {
+            'style': 'plain',
+            'headline': 'IRR is about 8.5% and payback is about 7 years.',
+            'key_numbers': [
+              {'value': '8.5%', 'label': 'IRR'},
+              {'value': '7 years', 'label': 'Payback'},
+            ],
+            'basis': [
+              {'ref': 'S1', 'title': 'Source A', 'publisher': 'Lab A', 'published_at': '2025', 'url': ''},
+            ],
+            'risks': ['The tariff assumption may change.'],
+            'glossary': [],
+            'limitations': [],
+          },
+        }));
+    await t.enterText(find.byKey(const Key('aiInput')), 'two figures');
+    await t.tap(find.byKey(const Key('aiSend')));
+    await t.pumpAndSettle();
+
+    expect(find.text('8.5%'), findsOneWidget);
+    expect(find.text('7 years'), findsOneWidget);
+    expect(find.text('[S1] Source A'), findsOneWidget);
+    expect(find.byKey(const Key('voiceSpeak')), findsOneWidget);
+    expect(find.byTooltip('Read aloud'), findsOneWidget);
+    expect(find.byIcon(Icons.volume_up_rounded), findsOneWidget);
+
+    final figureWrap = t.widget<Wrap>(find.byKey(const Key('keyNumber')));
+    final keys = [for (final child in figureWrap.children) child.key];
+    expect(keys, hasLength(2));
+    expect(keys.toSet(), hasLength(keys.length));
+    expect(keys, isNot(contains(const Key('keyNumber'))));
+  });
+
+  testWidgets('several cited sources keep distinct keys on the answer column', (t) async {
+    await t.pumpWidget(_host((m, s) async => {
+          'message': 'Two sources.',
+          'structured': {
+            'headline': 'Two sources.',
+            'key_numbers': [
+              {'value': '8.5%', 'label': 'IRR'},
+            ],
+            'basis': [
+              {'ref': 'S1', 'title': 'Source A', 'publisher': 'Lab A', 'published_at': '2025', 'url': ''},
+              {'ref': 'S2', 'title': 'Source B', 'publisher': 'Lab B', 'published_at': '2024', 'url': ''},
+            ],
+            'risks': [],
+            'glossary': [],
+            'limitations': [],
+          },
+        }));
+    await t.enterText(find.byKey(const Key('aiInput')), 'two sources');
+    await t.tap(find.byKey(const Key('aiSend')));
+    await t.pumpAndSettle();
+
+    expect(find.text('[S1] Source A'), findsOneWidget);
+    expect(find.text('[S2] Source B'), findsOneWidget);
+    expect(find.byKey(const Key('voiceSpeak')), findsOneWidget);
+    final basisKeys = t
+        .widgetList<Padding>(find.byWidgetPredicate((w) => w.key is Key && w.key.toString().contains('basisItem')))
+        .map((w) => w.key)
+        .toList();
+    expect(basisKeys, hasLength(2));
+    expect(basisKeys.toSet(), hasLength(basisKeys.length));
+  });
+
   testWidgets('an answer without sources says so instead of implying support', (t) async {
     await t.pumpWidget(_host((m, s) async => {
           'message': 'x answer',

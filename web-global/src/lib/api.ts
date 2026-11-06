@@ -8,18 +8,18 @@ export interface ApiResponse<T> {
   error?: { code: string; message: string };
 }
 
+/** Login token written by AuthProvider, or the same keys older sessions used. */
+export function readStoredAuthToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  const stored = localStorage.getItem('auth_token') || localStorage.getItem('token')
+    || sessionStorage.getItem('auth_token') || sessionStorage.getItem('token');
+  if (stored) return stored;
+  const match = document.cookie.match(/(?:auth_token|access_token|token)=([^;]+)/);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
 async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
-  // V23: moresource token 探test (兼容 localStorage/sessionStorage/cookie)
-  let token: string | null = null;
-  if (typeof window !== 'undefined') {
-    token = localStorage.getItem('auth_token') || localStorage.getItem('token')
-         || sessionStorage.getItem('auth_token') || sessionStorage.getItem('token');
-    if (!token) {
-      // from cookie 找
-      const m = document.cookie.match(/(?:auth_token|access_token|token)=([^;]+)/);
-      if (m) token = decodeURIComponent(m[1]);
-    }
-  }
+  const token = readStoredAuthToken();
   const res = await fetch(`${API_BASE}${endpoint}`, {
     headers: {
       'Content-Type': 'application/json',
@@ -231,10 +231,11 @@ export const operationsApi = {
 // ── AI ────────────────────────────────────────────────────────────────────────
 
 export const aiApi = {
-  chat: (conversationId: string, message: string) =>
-    fetchApi<ApiResponse<unknown>>('/api/v1/ai/chat', {
+  // JSON + bearer. /api/v1/ai/chat is the streaming query-parameter route.
+  chat: (message: string) =>
+    fetchApi<Record<string, unknown>>('/api/v1/ai/chat-json', {
       method: 'POST',
-      body: JSON.stringify({ conversation_id: conversationId, message }),
+      body: JSON.stringify({ message }),
     }),
   conversations: () => fetchApi<ApiResponse<unknown[]>>('/api/v1/ai/conversations'),
   skills: () => fetchApi<ApiResponse<unknown[]>>('/api/v1/ai/skills'),

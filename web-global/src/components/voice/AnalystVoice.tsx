@@ -3,18 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Mic, Square, Volume2 } from 'lucide-react';
 import { browserPlayback, speakableText } from '../../lib/voice/playback';
-
-type Rec = {
-  lang: string;
-  continuous: boolean;
-  interimResults: boolean;
-  processLocally?: boolean;
-  onresult: (event: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void;
-  onerror: (event: { error?: string }) => void;
-  onend: () => void;
-  start: () => void;
-  stop: () => void;
-};
+import { attachLocalFirstRecognition, type LocalFirstSession, type SpeechRecognitionLike } from '../../lib/voice/localFirstSpeech';
 
 /** Icon button matched to the analyst form's 40px field. */
 export function AnalystMic({
@@ -26,13 +15,15 @@ export function AnalystMic({
 }) {
   const [listening, setListening] = useState(false);
   const [hint, setHint] = useState('Voice input');
-  const recRef = useRef<Rec | null>(null);
-  const localAttempt = useRef(true);
+  const recRef = useRef<LocalFirstSession | null>(null);
   const onTranscriptRef = useRef(onTranscript);
   onTranscriptRef.current = onTranscript;
 
   useEffect(() => {
-    const w = window as Window & { SpeechRecognition?: new () => Rec; webkitSpeechRecognition?: new () => Rec };
+    const w = window as Window & {
+      SpeechRecognition?: new () => SpeechRecognitionLike;
+      webkitSpeechRecognition?: new () => SpeechRecognitionLike;
+    };
     const Ctor = w.SpeechRecognition || w.webkitSpeechRecognition;
     if (!Ctor) {
       setHint('Voice input is not available in this browser');
@@ -42,28 +33,25 @@ export function AnalystMic({
     recognition.lang = 'en-US';
     recognition.continuous = false;
     recognition.interimResults = false;
-    recognition.onresult = (event) => {
-      onTranscriptRef.current(event.results[0][0].transcript);
-      setListening(false);
-      setHint('Voice input');
+    const session = attachLocalFirstRecognition(recognition, {
+      onTranscript: (transcript) => {
+        onTranscriptRef.current(transcript);
+        setListening(false);
+        setHint('Voice input');
+      },
+      onFailure: (code) => {
+        setHint(code === 'not-allowed' ? 'Allow the microphone to dictate a question' : 'Could not recognize speech');
+        setListening(false);
+      },
+      onIdle: () => {
+        setListening(false);
+        setHint((current) => (current === 'Stop voice input' ? 'Voice input' : current));
+      },
+    });
+    recRef.current = session;
+    return () => {
+      try { session.stop(); } catch { /* recognizer was already idle */ }
     };
-    recognition.onerror = (event) => {
-      const code = event.error || '';
-      if ((code === 'network' || code === 'service-not-allowed') && localAttempt.current) {
-        localAttempt.current = false;
-        try {
-          recognition.processLocally = false;
-          recognition.start();
-          return;
-        } catch {
-          /* show the hint below */
-        }
-      }
-      setHint(code === 'not-allowed' ? 'Allow the microphone to dictate a question' : 'Could not recognize speech');
-      setListening(false);
-    };
-    recognition.onend = () => setListening(false);
-    recRef.current = recognition;
   }, []);
 
   const toggle = () => {
@@ -75,13 +63,13 @@ export function AnalystMic({
       setHint('Voice input');
       return;
     }
-    localAttempt.current = true;
     try {
-      if ('processLocally' in recognition) recognition.processLocally = true;
-      recognition.start();
-      setListening(true);
-      setHint('Stop voice input');
+      const stillListening = recognition.start();
+      setListening(stillListening);
+      // A synchronous failure already set the hint. Don't replace it with the idle label.
+      if (stillListening) setHint('Stop voice input');
     } catch {
+      setListening(false);
       setHint('Could not start voice input');
     }
   };
