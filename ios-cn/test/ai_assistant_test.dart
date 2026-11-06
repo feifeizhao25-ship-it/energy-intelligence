@@ -70,6 +70,78 @@ void main() {
     expect(find.text('内部收益率：让项目净现值刚好为零的年化折现率。'), findsOneWidget);
   });
 
+  testWidgets('several key figures keep distinct Wrap keys and the speaker stays on the answer', (t) async {
+    // One shared Key('keyNumber') used to throw "Duplicate keys found" inside the
+    // answer Material as soon as structured.key_numbers had two entries. The card
+    // never finished building, so the read-aloud control was missing after send.
+    // A single basis item does not avoid that: the colliding key is the figure chip.
+    await t.pumpWidget(_host((m, s) async => {
+          'message': '一句话结论：内部收益率约 8.5%，回收期约 7 年。',
+          'structured': {
+            'style': 'plain',
+            'headline': '内部收益率约 8.5%，回收期约 7 年。',
+            'key_numbers': [
+              {'value': '8.5%', 'label': '内部收益率'},
+              {'value': '7年', 'label': '回收期'},
+            ],
+            'basis': [
+              {'ref': 'S1', 'title': '资料甲', 'publisher': '机构甲', 'published_at': '2025', 'url': ''},
+            ],
+            'risks': ['电价假设可能变化。'],
+            'glossary': [],
+            'limitations': [],
+          },
+        }));
+    await t.enterText(find.byKey(const Key('aiInput')), '两个关键数字');
+    await t.tap(find.byKey(const Key('aiSend')));
+    await t.pumpAndSettle();
+
+    expect(find.text('8.5%'), findsOneWidget);
+    expect(find.text('7年'), findsOneWidget);
+    expect(find.text('[S1] 资料甲'), findsOneWidget);
+    expect(find.byKey(const Key('voiceSpeak')), findsOneWidget);
+    expect(find.byTooltip('朗读'), findsOneWidget);
+    expect(find.byIcon(Icons.volume_up_rounded), findsOneWidget);
+
+    final figureWrap = t.widget<Wrap>(find.byKey(const Key('keyNumber')));
+    final keys = [for (final child in figureWrap.children) child.key];
+    expect(keys, hasLength(2));
+    expect(keys.toSet(), hasLength(keys.length));
+    expect(keys, isNot(contains(const Key('keyNumber'))));
+  });
+
+  testWidgets('several cited sources keep distinct keys on the answer column', (t) async {
+    await t.pumpWidget(_host((m, s) async => {
+          'message': '两条依据。',
+          'structured': {
+            'headline': '两条依据。',
+            'key_numbers': [
+              {'value': '8.5%', 'label': '内部收益率'},
+            ],
+            'basis': [
+              {'ref': 'S1', 'title': '资料甲', 'publisher': '机构甲', 'published_at': '2025', 'url': ''},
+              {'ref': 'S2', 'title': '资料乙', 'publisher': '机构乙', 'published_at': '2024', 'url': ''},
+            ],
+            'risks': [],
+            'glossary': [],
+            'limitations': [],
+          },
+        }));
+    await t.enterText(find.byKey(const Key('aiInput')), '两条依据');
+    await t.tap(find.byKey(const Key('aiSend')));
+    await t.pumpAndSettle();
+
+    expect(find.text('[S1] 资料甲'), findsOneWidget);
+    expect(find.text('[S2] 资料乙'), findsOneWidget);
+    expect(find.byKey(const Key('voiceSpeak')), findsOneWidget);
+    final basisKeys = t
+        .widgetList<Padding>(find.byWidgetPredicate((w) => w.key is Key && w.key.toString().contains('basisItem')))
+        .map((w) => w.key)
+        .toList();
+    expect(basisKeys, hasLength(2));
+    expect(basisKeys.toSet(), hasLength(basisKeys.length));
+  });
+
   testWidgets('an answer without sources says so instead of implying support', (t) async {
     await t.pumpWidget(_host((m, s) async => {
           'message': 'x answer',
