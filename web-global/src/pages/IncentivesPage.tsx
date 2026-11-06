@@ -5,16 +5,17 @@
  * - Interactive ITC calculator: capex in → credit out. The math is real
  *   client-side arithmetic on user input; results are labeled as an
  *   illustrative estimate, not tax advice.
- * - IRA bonus credit stack and key deadlines as static reference content.
+ * - The IRS page's stated base rate, shown beside the §48E/45Y conflict. No source is selected.
  *
  * All copy in English. Uses CSS Variables for theming.
  */
 
 import React, { useMemo, useState } from 'react';
 import { Landmark } from 'lucide-react';
-import { Badge, Card, Input, Switch, cn } from '@energy-intelligence/ui-web';
+import { Badge, Card, Input, Switch } from '@energy-intelligence/ui-web';
 import GlobalShell from '../components/GlobalShell';
 import DemoBadge from '../components/DemoBadge';
+import conflict from '../lib/policy/us-48e-45y-conflict.json';
 
 const BASE_ITC_RATE = 0.3;
 
@@ -86,8 +87,9 @@ const IncentivesPage: React.FC = () => {
             Federal tax incentives
           </h2>
           <p className="text-[13px] text-[var(--text-secondary)] mt-1">
-            Estimate the Investment Tax Credit under the Inflation Reduction Act and see how
-            bonus credits stack for qualifying projects.
+            Public descriptions of the §48E and §45Y credits disagree. Each source is shown
+            with its date. This page does not choose which description controls, and it is
+            not tax advice.
           </p>
         </div>
 
@@ -188,12 +190,12 @@ const IncentivesPage: React.FC = () => {
 
           {/* ── Reference column ── */}
           <div className="space-y-6">
-            <Card title="How the credit stack works" padding="lg">
+            <Card title="As printed on the undated IRS §48E page" padding="lg">
               <ul className="space-y-3">
                 {[
-                  'The base ITC covers 30% of eligible costs for solar, wind and stand-alone storage that meet prevailing wage and apprenticeship requirements.',
-                  'Bonus credits add 10 percentage points each and can stack, bringing the effective rate to 40–60% for qualifying projects.',
-                  'Credits can be monetized through direct pay (tax-exempt owners) or transferred once to an unrelated taxpayer for cash.',
+                  'That page describes a 30% base rate for projects that meet prevailing wage and apprenticeship requirements, and a 6% base rate when they do not.',
+                  'The same page describes bonus amounts that can stack. Those sentences are the page text, not a resolution of Notice 2025-42 or the 2026-06-06 vacatur report.',
+                  'The calculator on the left uses the 30% figure from that page only so the arithmetic is visible. It does not decide eligibility.',
                 ].map((line) => (
                   <li
                     key={line.slice(0, 24)}
@@ -210,34 +212,37 @@ const IncentivesPage: React.FC = () => {
               title={
                 <span className="inline-flex items-center gap-2">
                   <Landmark size={15} className="text-[var(--color-brand-500)]" />
-                  Key deadlines
+                  §48E / §45Y — sources side by side
                 </span>
               }
               padding="lg"
             >
-              <div className="space-y-3">
-                {[
-                  { period: 'Through 2032', detail: 'Full 30% base ITC for qualifying projects' },
-                  { period: '2033', detail: 'Base rate steps down to 26%' },
-                  { period: '2034', detail: 'Base rate steps down to 22%' },
-                ].map((row) => (
-                  <div
-                    key={row.period}
-                    className={cn(
-                      'flex items-center justify-between p-2.5 rounded-[var(--radius-md)]',
-                      'border border-[var(--border-default)]',
-                    )}
-                  >
-                    <span className="text-[13px] font-medium text-[var(--text-primary)]">
-                      {row.period}
-                    </span>
-                    <span className="text-[12px] text-[var(--text-secondary)]">{row.detail}</span>
-                  </div>
-                ))}
-                <p className="text-[11px] text-[var(--text-tertiary)]">
-                  Schedule reflects current statute; pending legislation may change step-down
-                  timing. Track updates on the Policies page.
+              <div className="space-y-3" data-testid="us-rules-conflict">
+                <p className="text-[13px] leading-relaxed text-[var(--text-secondary)]">
+                  {conflict.instruction} {conflict.resolution === null ? 'No source is selected as the one that controls.' : ''}
                 </p>
+                {conflict.sources.map((source) => (
+                  <article
+                    key={source.id}
+                    className="rounded-[var(--radius-md)] border border-[var(--border-default)] p-3"
+                  >
+                    <div className="flex flex-wrap items-baseline justify-between gap-2">
+                      <h3 className="text-[13px] font-semibold text-[var(--text-primary)]">
+                        {source.role}
+                      </h3>
+                      <span className="text-[11px] text-[var(--text-tertiary)]">{source.date_label}</span>
+                    </div>
+                    <p className="mt-1 text-[12px] leading-relaxed text-[var(--text-secondary)]">
+                      {source.statement}
+                    </p>
+                    <a
+                      className="mt-1 inline-block text-[11px] text-[var(--color-brand-600)] break-all"
+                      href={source.url}
+                    >
+                      {source.publisher}: {source.title}
+                    </a>
+                  </article>
+                ))}
               </div>
             </Card>
           </div>

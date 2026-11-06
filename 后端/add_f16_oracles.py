@@ -12,7 +12,7 @@ ORACLES = [
      "description": "Arizona Phoenix 100MW 公用事业 PV, PySAM PVWattsv8 模型 + NREL NSRDB 2024 真实气象, TOPCon 单轴跟踪",
      "inputs": {"region": "us_arizona_phoenix", "system_capacity_kw": 100000, "dc_ac_ratio": 1.3, "tilt": 20, "module_model": "TOPCon", "bifacial": True, "tracking": "single_axis"},
      "expected_outputs": {"annual_generation_gwh": 216, "capacity_factor": 24.7, "specific_yield_kwh_per_kwp": 2160, "lcoe_usd_mwh": 26, "pr": 0.85, "module_eff": 0.225},
-     "sources": {"primary": "NREL PySAM 5.1 + NSRDB 2024", "reference_urls": ["https://github.com/NatLabRockies/pysam", "https://nsrdb.nrel.gov"]}},
+     "sources": {"primary": "NREL PySAM 5.1 + NSRDB 2024", "reference_urls": ["https://github.com/NatLabRockies/pysam", "https://nsrdb.nlr.gov/"]}},
 
     # 2. pvlib 实测 (青海)
     {"id": "PV-PVLIB-2024-CN-QH-50MW-001", "name": "青海格尔木 50MW PV pvlib 0.13 实测", "project_type": "pv",
@@ -172,7 +172,7 @@ ORACLES = [
      "description": "Texas Austin 100MW PV, NREL ATB 2024 实测, 单轴跟踪 TOPCon, LCOE $32/MWh",
      "inputs": {"region": "us_texas_austin", "system_capacity_kw": 100000, "tracking": "single_axis", "module_model": "TOPCon"},
      "expected_outputs": {"annual_generation_gwh": 182, "capacity_factor": 20.8, "specific_yield_kwh_per_kwp": 1820, "lcoe_usd_mwh": 32, "pr": 0.85},
-     "sources": {"primary": "NREL ATB 2024 + ERCOT 2024", "reference_urls": ["https://atb.nrel.gov/electricity/2024/"]}},
+     "sources": {"primary": "NREL ATB 2024 + ERCOT 2024", "reference_urls": ["https://atb.nlr.gov/"]}},
 
     {"id": "PV-AGROVOLTAIC-2024-FR-5MW-001", "name": "法国 5MW 农光互补 INRAE 2024", "project_type": "pv",
      "location": {"country": "FR", "province": "Provence", "city": "Avignon", "region_full": "法国普罗旺斯"},

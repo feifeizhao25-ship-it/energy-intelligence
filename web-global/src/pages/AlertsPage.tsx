@@ -41,8 +41,9 @@ const AlertsPage: React.FC = () => {
 
         {state === 'loading' ? (
           <Card padding="lg">
-            <div className="py-10 text-center text-[13px] text-[var(--text-tertiary)]">
-              Loading alerts…
+            <div className="py-10 text-center" role="status">
+              <p className="text-[13px] text-[var(--text-primary)]">Loading alerts from the alerts service.</p>
+              <p className="mt-1 text-[12px] text-[var(--text-secondary)]">Wait a few seconds. If the service does not answer, the next card says so and offers Retry.</p>
             </div>
           </Card>
         ) : state === 'unavailable' ? (

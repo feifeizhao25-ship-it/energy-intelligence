@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'services/api_service.dart';
 import 'theme/app_theme.dart';
+import 'widgets/calm_error_card.dart';
 import 'widgets/responsive_frame.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
@@ -24,6 +25,7 @@ import 'widgets/ei_wide.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  installCalmErrorWidget(english: false);
   await ApiService.init(region: 'CN');
   runApp(NewEnergyApp(configError: ApiService.configError));
 }
