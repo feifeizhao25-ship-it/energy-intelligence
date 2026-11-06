@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic';
 import Sidebar from '@/components/layout/Sidebar';
 import { MobileNav } from '@/components/layout/MobileNav';
 import { TopBar } from '@/components/layout/TopBar';
+import { ShellErrorBoundary } from '@/components/ui/ShellErrorBoundary';
 import { StationProvider } from '@/contexts/StationContext';
 
 const OnboardingFlow = dynamic(() => import('@/components/onboarding/OnboardingFlow'), { ssr: false });
@@ -18,7 +19,7 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
                 <div className="ei-shell-offset min-h-screen min-w-0 lg:ml-64">
                     <TopBar />
                     <main className="ei-main min-w-0 p-4 lg:p-8 lg:pb-8">
-                        {children}
+                        <ShellErrorBoundary>{children}</ShellErrorBoundary>
                     </main>
                 </div>
                 <MobileNav />

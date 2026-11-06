@@ -115,8 +115,9 @@ const ReportsPage: React.FC = () => {
         {/* ── Report list ── */}
         {state === 'loading' ? (
           <Card padding="lg">
-            <div className="py-10 text-center text-[13px] text-[var(--text-tertiary)]">
-              Loading reports…
+            <div className="py-10 text-center" role="status">
+              <p className="text-[13px] text-[var(--text-primary)]">Loading the report list from the report service.</p>
+              <p className="mt-1 text-[12px] text-[var(--text-secondary)]">Wait a few seconds. If the list does not appear, the next card explains that the service is not connected and offers Retry.</p>
             </div>
           </Card>
         ) : state === 'unavailable' ? (

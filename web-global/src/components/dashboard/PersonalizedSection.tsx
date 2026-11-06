@@ -97,8 +97,9 @@ const PersonalizedSectionContent: React.FC = () => {
   if (status === 'loading') {
     return (
       <Card padding="lg">
-        <div className="py-8 text-center text-[13px] text-[var(--text-tertiary)]">
-          Loading your personalized layout…
+        <div className="py-8 text-center" role="status">
+          <p className="text-[13px] text-[var(--text-primary)]">Loading your saved layout from the personalization service.</p>
+          <p className="mt-1 text-[12px] text-[var(--text-secondary)]">Wait a moment. If the service cannot be reached, the next card explains that and offers Retry.</p>
         </div>
       </Card>
     );
@@ -215,7 +216,7 @@ const PersonalizedSectionContent: React.FC = () => {
       {widgets.length === 0 && recommendations.length === 0 && !hero.headline && (
         <div className="flex items-center gap-2 text-[13px] text-[var(--text-secondary)]">
           <RefreshCw size={14} />
-          No personalized content for this persona today.
+          No personalized content for this persona today. Open another day or persona, or wait until the service returns a layout. This is an empty result, not a missing page.
           <Badge color="neutral">empty layout</Badge>
         </div>
       )}
@@ -227,8 +228,9 @@ const PersonalizedSection: React.FC = () => (
   <Suspense
     fallback={
       <Card padding="lg">
-        <div className="py-8 text-center text-[13px] text-[var(--text-tertiary)]">
-          Loading your personalized layout…
+        <div className="py-8 text-center" role="status">
+          <p className="text-[13px] text-[var(--text-primary)]">Loading your saved layout from the personalization service.</p>
+          <p className="mt-1 text-[12px] text-[var(--text-secondary)]">Wait a moment. If the service cannot be reached, the next card explains that and offers Retry.</p>
         </div>
       </Card>
     }

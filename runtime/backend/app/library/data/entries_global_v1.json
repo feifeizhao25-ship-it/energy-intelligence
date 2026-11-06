@@ -298,6 +298,43 @@
       "effective_date": "2026-02-10",
       "retrieved_at": "2026-10-31",
       "review_status": "Pending review"
+    },
+    {
+      "id": "en-intl-009",
+      "title": "US §48E and §45Y: three public descriptions, no selection",
+      "summary": "The IRS §48E page, IRS Notice 2025-42, and a 2026-06-06 vacatur report do not say the same thing. This entry shows all three and does not choose one.",
+      "points": [
+        "IRS §48E page (no date on the page): still describes a phase-out in 2032, or when emissions fall to 25% of the 2022 level, and base rates of 6% and 30%. The undated §45Y page is shown with it and does not resolve the later documents.",
+        "IRS Notice 2025-42 (August 2025): wind and solar facilities placed in service after 2027-12-31 lose the §45Y and §48E credits unless construction began on or before 2026-07-04.",
+        "A law-firm article dated 2026-06-16 reports that on 2026-06-06 the U.S. District Court for the District of Columbia vacated Notice 2025-42 and restored the 5% safe harbor. The court opinion was not read for this entry.",
+        "No source is marked as the one that controls. A tax adviser has to read the primary texts."
+      ],
+      "plain_tip": "Read the three descriptions next to each other. Do not treat the phase-out year on the IRS page as the only rule.",
+      "caution": "Figures and rules are quoted from the named publishers and may change. For understanding the public record only; not tax, investment, or trading advice.",
+      "category": "Market reports",
+      "tags": [
+        "48E",
+        "45Y",
+        "IRS Notice 2025-42",
+        "United States"
+      ],
+      "source": {
+        "title": "Clean Electricity Investment Credit (§48E)",
+        "publisher": "Internal Revenue Service",
+        "doc_no": "IRS §48E page (undated); Notice 2025-42 (2025-08); vacatur report 2026-06-16",
+        "url": "https://www.irs.gov/credits-deductions/clean-electricity-investment-credit",
+        "url_note": "Notice 2025-42: https://www.irs.gov/pub/irs-drop/n-25-42.pdf ; §45Y page: https://www.irs.gov/credits-deductions/clean-electricity-production-credit ; vacatur report: https://www.bdlaw.com/publications/court-restores-5-safe-harbor-for-wind-and-solar-as-july-4-deadline-nears/",
+        "read_scope": "IRS page text as registered on 2026-11-06; Notice 2025-42 PDF; law-firm article. Court opinion not read.",
+        "read_via": "2026-11-06 candidate registry marked the IRS page, the notice PDF, and the law-firm article as read. Pending review.",
+        "tier": "A",
+        "license_note": "IRS pages are U.S. government works. The vacatur note is a law-firm article and is cited as a secondary report, not as the judgment."
+      },
+      "status": "Unverified",
+      "status_note": "Three public descriptions disagree. This entry does not select one. Pending review.",
+      "publish_date": "2025-08",
+      "effective_date": "2025-08",
+      "retrieved_at": "2026-11-06",
+      "review_status": "Pending review"
     }
   ]
 }

@@ -18,6 +18,16 @@ export const DEMO_POLICIES: Array<VersionedRecord & {
         superseded_by: null,
     },
     {
+        source_id: 'policy-cn-nea-2025-7',
+        title: '分布式光伏发电开发建设管理办法',
+        doc_number: '国能发新能规〔2025〕7号',
+        region: '全国',
+        source_url: 'https://www.gov.cn/zhengce/zhengceku/202502/content_7004206.htm',
+        effective_date: '2025-01',
+        expiry_date: null,
+        superseded_by: null,
+    },
+    {
         source_id: 'policy-cn-688',
         title: '关于有序推动多用户绿电直连的通知',
         doc_number: '发改能源〔2026〕688号',

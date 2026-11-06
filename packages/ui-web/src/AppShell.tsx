@@ -35,9 +35,11 @@ export const TopBar: React.FC<TopBarProps> = ({ market, onSearch, notificationCo
         </div>
         <span className="text-[16px] font-semibold text-[var(--text-primary)] truncate">{market === 'cn' ? '新能源智库' : 'EnergyIQ'}</span>
       </button>
-      {/* ⌘K 搜索 */}
-      <button onClick={onSearch} className="hidden sm:flex items-center gap-2 w-[280px] h-9 px-3 rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--bg-secondary)] text-[var(--text-tertiary)] text-[13px] hover:border-[var(--border-strong)] transition-colors">
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5" strokeLinecap="round"/></svg>
+      {/* Header search glyph is 16px. Width and height are attributes, not only
+          utility classes, so a missing stylesheet cannot blow the icon up to
+          the SVG default (300×150) and take over the bar. */}
+      <button type="button" data-header-search="" aria-label={market === 'cn' ? '搜索' : 'Search'} onClick={onSearch} className="hidden sm:flex items-center gap-2 w-[280px] h-9 px-3 rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--bg-secondary)] text-[var(--text-tertiary)] text-[13px] hover:border-[var(--border-strong)] transition-colors">
+        <svg width={16} height={16} className="h-4 w-4 shrink-0" style={{ width: 16, height: 16, flex: '0 0 16px' }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5" strokeLinecap="round"/></svg>
         <span className="flex-1 text-left truncate">{market === 'cn' ? '搜索…' : 'Search…'}</span>
         <kbd className="text-[11px]">⌘K</kbd>
       </button>

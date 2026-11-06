@@ -149,3 +149,185 @@ def refresh_report(registry: Optional[SourceRegistry] = None, today: Optional[da
             "total": len(entries), "counts": counts, "entries": entries, "refresh_needed": refresh_needed,
             "superseded": superseded, "monthly_review_due": monthly_review,
             "evidence_review_needed": review_needed, "retrieval_allowed_by_review": allowed}
+
+
+WEEKLY_CATALOG_PATH = Path(__file__).resolve().parent / "energy_weekly_sources.json"
+_CANDIDATE_FIELDS = (
+    "url", "doi", "publisher", "excerpt", "published_at", "retrieved_at",
+    "effective_at", "expires_at", "region", "content_hash", "license",
+)
+
+
+def _load_weekly_catalog(path: Optional[Path] = None) -> Dict:
+    catalog_path = Path(path) if path else WEEKLY_CATALOG_PATH
+    return json.loads(catalog_path.read_text(encoding="utf-8"))
+
+
+def _production_roots() -> List[Path]:
+    roots = [REGISTRY_PATH.resolve().parent]
+    skills = Path(__file__).resolve().parents[2] / "skills"
+    if skills.exists():
+        roots.append(skills.resolve())
+    return roots
+
+
+def _refuse_production_dir(target: Path) -> Path:
+    """Candidates may not be written into the production registry or skills tree."""
+    root = Path(target).resolve()
+    for banned in _production_roots():
+        if root == banned or banned in root.parents:
+            raise PermissionError("refusing to write candidates into production RAG or skills: %s" % root)
+    return root
+
+
+def _snapshot_bytes(paths: List[Path]) -> Dict[str, Optional[bytes]]:
+    out: Dict[str, Optional[bytes]] = {}
+    for path in paths:
+        key = str(Path(path).resolve()) if Path(path).exists() else str(path)
+        out[key] = Path(path).read_bytes() if Path(path).exists() else None
+    return out
+
+
+def _assert_unchanged(before: Dict[str, Optional[bytes]]) -> None:
+    for key, content in before.items():
+        path = Path(key)
+        current = path.read_bytes() if path.exists() else None
+        if current != content:
+            raise RuntimeError("production path changed during candidate harvest: %s" % key)
+
+
+def harvest_weekly(
+    *,
+    candidates_dir: Path,
+    today: Optional[date] = None,
+    fetcher: Optional[Callable[[str], bytes]] = None,
+    catalog_path: Optional[Path] = None,
+    production_paths: Optional[List[Path]] = None,
+) -> Dict:
+    """Write the energy weekly sources into ``candidates_dir`` only.
+
+    Records stay unpublished. The reviewer field is empty and the status is
+    待审核. A fetcher, when injected, supplies bytes for the content hash and
+    is not required. This function does not update the RAG registry or skills.
+    """
+    today = today or date.today()
+    root = _refuse_production_dir(candidates_dir)
+    catalog = _load_weekly_catalog(catalog_path)
+    blocked = {u.rstrip("/") for u in catalog.get("blocked_urls", [])}
+    watched = list(production_paths or [])
+    if REGISTRY_PATH.exists():
+        watched.append(REGISTRY_PATH)
+    before = _snapshot_bytes(watched)
+    previous: Dict[str, str] = {}
+    manifest_path = root / "manifest.json"
+    if manifest_path.exists():
+        previous = {row["id"]: row["content_hash"] for row in json.loads(manifest_path.read_text(encoding="utf-8")).get("candidates", [])}
+
+    written: List[Dict] = []
+    skipped: List[Dict] = []
+    root.mkdir(parents=True, exist_ok=True)
+    for source in catalog["sources"]:
+        url = str(source.get("url", "")).strip()
+        if url.rstrip("/") in blocked or url in blocked:
+            skipped.append({"id": source.get("id"), "url": url, "status": "blocked_unverified_url"})
+            continue
+        body = None
+        fetch_status = "not_fetched"
+        if fetcher is not None:
+            try:
+                body = fetcher(url)
+                fetch_status = "fetched"
+            except Exception as exc:
+                fetch_status = "fetch_failed"
+                body = None
+                source = {**source, "fetch_error": str(exc)[:300]}
+        raw = body if body is not None else str(source.get("excerpt", "")).encode("utf-8")
+        record = {
+            "id": source["id"],
+            "product": source.get("product", catalog.get("product", "energy")),
+            "url": url,
+            "doi": source.get("doi") or "",
+            "publisher": source.get("publisher", ""),
+            "excerpt": source.get("excerpt", ""),
+            "published_at": source.get("published_at") or "",
+            "retrieved_at": today.isoformat(),
+            "effective_at": source.get("effective_at") or "",
+            "expires_at": source.get("expires_at") or "",
+            "region": source.get("region", ""),
+            "content_hash": snapshot_sha256(raw),
+            "license": source.get("license", ""),
+            "language": source.get("language", ""),
+            "reviewer": "",
+            "review_status": "待审核",
+            "state": "unpublished",
+            "fetch_status": fetch_status,
+        }
+        if source.get("fetch_error"):
+            record["fetch_error"] = source["fetch_error"]
+        for field in _CANDIDATE_FIELDS:
+            if field not in record:
+                raise RuntimeError("candidate missing %s" % field)
+        path = root / ("%s.json" % record["id"])
+        path.write_text(json.dumps(record, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        written.append(record)
+
+    added = [row["id"] for row in written if row["id"] not in previous]
+    changed = [row["id"] for row in written if row["id"] in previous and previous[row["id"]] != row["content_hash"]]
+    unchanged = [row["id"] for row in written if row["id"] in previous and previous[row["id"]] == row["content_hash"]]
+    removed = [cid for cid in previous if cid not in {row["id"] for row in written}]
+    report = {
+        "generated_at": today.isoformat(),
+        "state": "unpublished",
+        "reviewer": "",
+        "review_status": "待审核",
+        "added": added,
+        "changed": changed,
+        "unchanged": unchanged,
+        "removed": removed,
+        "skipped": skipped,
+        "conflicts": catalog.get("conflicts", []),
+        "note": "候选未发布，未写入生产 RAG 或 skills。复核人留空。",
+        "production_written": False,
+    }
+    (root / "diff-report.json").write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    manifest = {"generated_at": today.isoformat(), "state": "unpublished", "candidates": [{"id": row["id"], "content_hash": row["content_hash"]} for row in written]}
+    manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    _assert_unchanged(before)
+    return report
+
+
+def publish_candidates(
+    reviewer_signature: str,
+    *,
+    candidates_dir: Path,
+    production_paths: Optional[List[Path]] = None,
+) -> Dict:
+    """Queue a publish request. An empty signature is refused.
+
+    Even with a signature, this does not copy candidates into the production
+    RAG registry or skills. Candidate reviewer fields stay empty / 待审核.
+    """
+    if reviewer_signature is None or not str(reviewer_signature).strip():
+        raise ValueError("refusing publish: reviewer_signature is empty")
+    root = _refuse_production_dir(candidates_dir)
+    watched = list(production_paths or [])
+    if REGISTRY_PATH.exists():
+        watched.append(REGISTRY_PATH)
+    before = _snapshot_bytes(watched)
+    receipt = {
+        "state": "queued_unpublished",
+        "production_written": False,
+        "signature_accepted": True,
+        "reviewer_on_candidates": "",
+        "review_status": "待审核",
+        "note": "签名只放行队列记录，不覆盖生产 RAG 或 skills，也不填写复核人姓名。",
+    }
+    (root / "publish-receipt.json").write_text(json.dumps(receipt, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    for path in root.glob("*.json"):
+        if path.name in {"diff-report.json", "manifest.json", "publish-receipt.json"}:
+            continue
+        row = json.loads(path.read_text(encoding="utf-8"))
+        if row.get("reviewer") or row.get("review_status") != "待审核" or row.get("state") != "unpublished":
+            raise RuntimeError("publish must leave candidates unpublished and reviewer empty")
+    _assert_unchanged(before)
+    return receipt

@@ -38,8 +38,9 @@ const PoliciesPage: React.FC = () => {
 
         {state === 'loading' ? (
           <Card padding="lg">
-            <div className="py-10 text-center text-[13px] text-[var(--text-tertiary)]">
-              Loading policy feed…
+            <div className="py-10 text-center" role="status">
+              <p className="text-[13px] text-[var(--text-primary)]">Loading the policy feed from the policies service.</p>
+              <p className="mt-1 text-[12px] text-[var(--text-secondary)]">Wait a few seconds. If nothing arrives, the next card explains the gap and offers Retry. An empty list is not a blank page.</p>
             </div>
           </Card>
         ) : state === 'unavailable' ? (
