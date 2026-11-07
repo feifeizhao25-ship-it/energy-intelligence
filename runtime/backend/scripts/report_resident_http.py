@@ -190,14 +190,15 @@ def main() -> None:
             if downloaded.status_code != 200 or downloaded.content[:2] != b"PK" or b"word/document.xml" not in downloaded.content or pro_used != 1:
                 raise SystemExit("pro word mismatch\n" + "\n".join(lines))
 
-            full = _worker("insert-user", {"plan": "full"}, reports_dir)
-            _worker("set-usage", {"user_id": full["user_id"], "used": 5}, reports_dir)
-            full_project = _project(client, full["token"])
-            unlimited = [_post(client, full["token"], full_project, "pdf") for _ in range(4)]
-            full_used = _worker("usage", {"user_id": full["user_id"]}, reports_dir)["used"]
-            lines.append(f"unlimited_full statuses={_counts(unlimited)} usage_before=5 usage_after={full_used}")
-            if _counts(unlimited) != "200:4" or full_used != 5:
-                raise SystemExit("unlimited mismatch\n" + "\n".join(lines))
+            for plan in ("full", "team", "enterprise"):
+                account = _worker("insert-user", {"plan": plan}, reports_dir)
+                _worker("set-usage", {"user_id": account["user_id"], "used": 5}, reports_dir)
+                plan_project = _project(client, account["token"])
+                unlimited = [_post(client, account["token"], plan_project, "pdf") for _ in range(4)]
+                plan_used = _worker("usage", {"user_id": account["user_id"]}, reports_dir)["used"]
+                lines.append(f"unlimited_{plan} statuses={_counts(unlimited)} usage_before=5 usage_after={plan_used}")
+                if _counts(unlimited) != "200:4" or plan_used != 5:
+                    raise SystemExit(f"unlimited {plan} mismatch\n" + "\n".join(lines))
 
             _worker("set-usage", {"user_id": owner, "used": 0}, reports_dir)
             os.chmod(reports_dir, 0o555)

@@ -30,3 +30,5 @@ def test_resident_workers_over_tcp():
         raise AssertionError((completed.stdout or "")[-4000:])
     assert "uvicorn_started_server_process=4" in (completed.stdout or "")
     assert "last_slot statuses=200:1,429:7" in (completed.stdout or "")
+    for plan in ("full", "team", "enterprise"):
+        assert f"unlimited_{plan} statuses=200:4 usage_before=5 usage_after=5" in (completed.stdout or "")
