@@ -66,10 +66,27 @@ describe('ITC illustrative calculator', () => {
     expect(rowText('Estimated tax credit')).toContain('$800,000');
     expect(rowText('Net capex after credit')).toContain('$1,200,000');
 
-    const pageText = document.body.textContent ?? '';
+    const pageText = (document.body.textContent ?? '').replace(/\s+/g, ' ');
     expect(pageText).toContain('No source is selected as the one that controls.');
     expect(pageText).toContain('It is not investment advice and it is not tax advice.');
     expect(pageText).toContain('The arithmetic does not decide eligibility.');
     expect(pageText).toContain('This is not investment advice.');
+
+    const notes = [
+      'Qualifying US-manufactured steel, iron and components',
+      'Brownfields, coal communities and former fossil sites',
+      'Facilities serving low-income communities (capacity-limited allocation)',
+    ];
+    for (const note of notes) {
+      const node = screen.getByText(note);
+      expect(node.className).not.toMatch(/truncate|line-clamp/);
+      expect(node.getAttribute('title')).toBeNull();
+      expect(node.textContent).toBe(note);
+    }
+
+    expect(pageText).toContain(
+      'Illustrative estimate only, computed locally from your inputs. The arithmetic does not decide eligibility. Actual credit eligibility depends on prevailing wage and apprenticeship rules, placed-in-service timing and IRS guidance. This is not investment advice. Consult a tax advisor before making investment decisions.',
+    );
+    expect(pageText).toContain('Show every source with its date. Do not mark a winner.');
   });
 });
