@@ -47,6 +47,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 # ── 项目内部依赖 ──────────────────────────────────────────────
 from app.database import AsyncSessionLocal, get_db
 from app.core.dependencies import get_current_user_id
+from app.core.subscription import (
+    QuotaExceeded,
+    assert_report_quota,
+    consume_report_quota,
+    release_report_quota,
+    report_format_included,
+    report_quota_lock,
+)
 from app.models.report import Report
 from app.models.user import User
 from app.models.project import Project
@@ -2076,6 +2084,46 @@ def _build_pdf_appendix(story, data, metrics, style_h1, style_h2, style_body, cn
 _report_store: Dict[str, Dict[str, Any]] = {}
 
 
+def _quota_state(report: Report) -> str:
+    raw = report.data_sources if isinstance(report.data_sources, dict) else {}
+    quota = raw.get("quota") if isinstance(raw, dict) else None
+    if isinstance(quota, dict):
+        return str(quota.get("state") or "")
+    return ""
+
+
+def _set_quota_state(report: Report, state: str) -> None:
+    raw = dict(report.data_sources) if isinstance(report.data_sources, dict) else {}
+    quota = dict(raw.get("quota") or {})
+    quota["state"] = state
+    raw["quota"] = quota
+    report.data_sources = raw
+
+
+async def _load_user(db: AsyncSession, user_id: str) -> Optional[User]:
+    result = await db.execute(select(User).where(User.id == user_id))
+    return result.scalar_one_or_none()
+
+
+async def _refund_held_report(db: AsyncSession, report: Report) -> None:
+    """Return the monthly export if this job is still reserved and not completed.
+
+    The state change and the counter change commit together, so a second
+    cancel or a failed retry cannot refund the same job twice.
+    """
+    async with report_quota_lock(str(report.user_id)):
+        await db.refresh(report)
+        if _quota_state(report) != "held" or report.status == "completed":
+            return
+        account = await _load_user(db, str(report.user_id))
+        if account is None:
+            return
+        await db.refresh(account)
+        _set_quota_state(report, "released")
+        await release_report_quota(account, db)
+        await db.commit()
+
+
 async def _generate_report_task(
     report_id: str,
     data: Dict[str, Any],
@@ -2127,10 +2175,14 @@ async def _generate_report_task(
                 result = await db.execute(select(Report).where(Report.id == report_id))
                 report = result.scalar_one_or_none()
                 if report:
-                    report.status = "completed"
-                    report.file_path = filepath
-                    report.updated_at = datetime.now()
-                    await db.commit()
+                    async with report_quota_lock(str(report.user_id)):
+                        await db.refresh(report)
+                        report.status = "completed"
+                        report.file_path = filepath
+                        report.updated_at = datetime.now()
+                        if _quota_state(report) == "held":
+                            _set_quota_state(report, "settled")
+                        await db.commit()
             except Exception as e:
                 await db.rollback()
                 logger.exception("更新报告完成状态失败")
@@ -2149,6 +2201,8 @@ async def _generate_report_task(
             result = await db.execute(select(Report).where(Report.id == report_id))
             report = result.scalar_one_or_none()
             if report:
+                await _refund_held_report(db, report)
+                await db.refresh(report)
                 report.status = "failed"
                 report.content = str(e)[:1000]
                 report.updated_at = datetime.now()
@@ -2269,8 +2323,22 @@ async def generate_report(
         else f"{template_info.name} — {datetime.now().strftime('%Y%m%d')}"
     )
 
-    # 获取数据
+    # 归属先于套餐：别人的项目保持 404，不把它改写成格式或额度错误。
     data = await fetch_project_data(db, req.project_id, user_id)
+    account = await _load_user(db, user_id)
+    if account is None:
+        raise HTTPException(status_code=404, detail="项目不存在或无权访问")
+    if not report_format_included(account, req.format.value):
+        label = "Word" if req.format.value == "docx" else req.format.value.upper()
+        message = (
+            f"{label} export is not included in this plan."
+            if en else
+            f"当前套餐不含 {label} 导出，可导出 PDF，或升级到专业版及以上"
+        )
+        raise HTTPException(
+            status_code=403,
+            detail={"error": "FORMAT_NOT_INCLUDED", "message": message},
+        )
     if req.report_type in (ReportTemplateType.FEASIBILITY, ReportTemplateType.INVESTMENT):
         validate_financial_evidence(data, market)
 
@@ -2291,26 +2359,55 @@ async def generate_report(
         "user_id": user_id,
     }
 
-    # 如果 DB 可用，创建记录
+    # 校验通过后才占一份月度导出。格式用 export.formats，不套用回答下载的 citation_export。
     if db:
+        await db.commit()
         try:
-            report = Report(
-                id=report_id,
-                user_id=user_id,
-                project_id=req.project_id,
-                title=title,
-                report_type=req.report_type.value,
-                language="en" if en else "zh",
-                status="generating",
-                data_sources={"sources": data.get("data_sources", []), "generated_at": datetime.now().isoformat()},
+            async with report_quota_lock(user_id):
+                account = await assert_report_quota(user_id, db)
+                await consume_report_quota(account, db)
+                report = Report(
+                    id=report_id,
+                    user_id=user_id,
+                    project_id=req.project_id,
+                    title=title,
+                    report_type=req.report_type.value,
+                    language="en" if en else "zh",
+                    status="generating",
+                    data_sources={
+                        "sources": data.get("data_sources", []),
+                        "generated_at": datetime.now().isoformat(),
+                        "quota": {"state": "held"},
+                    },
+                )
+                db.add(report)
+                try:
+                    await db.commit()
+                except Exception:
+                    await db.rollback()
+                    fresh = await _load_user(db, user_id)
+                    if fresh is not None:
+                        await release_report_quota(fresh, db)
+                        await db.commit()
+                    raise
+        except QuotaExceeded as error:
+            _report_store.pop(report_id, None)
+            message = (
+                f"You have used this month's report exports ({error.limit})."
+                if en else
+                "本月报告导出额度已用尽，请查看套餐或下月再试"
             )
-            db.add(report)
-            await db.commit()
-        except Exception as e:
+            raise HTTPException(
+                status_code=429,
+                detail={"error": "REPORT_QUOTA_EXCEEDED", "message": message, "limit": error.limit},
+            ) from error
+        except HTTPException:
+            raise
+        except Exception as error:
             _report_store.pop(report_id, None)
             await db.rollback()
             logger.exception("创建报告记录失败")
-            raise HTTPException(status_code=503, detail="报告任务创建失败") from e
+            raise HTTPException(status_code=503, detail="报告任务创建失败") from error
 
     # 后台生成
     background_tasks.add_task(
@@ -2532,6 +2629,7 @@ async def delete_report(
 ):
     """删除报告"""
     report = await _assert_report_owner(report_id, user_id, db)
+    await _refund_held_report(db, report)
 
     _report_store.pop(report_id, None)
     # 文件路径一律由 UUID 推导，不信任存储的 file_path（旧部署路径可能已失效）。
