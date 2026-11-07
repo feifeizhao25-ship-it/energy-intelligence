@@ -3,7 +3,7 @@
  */
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { ANALYST_CHAT_PATH, postAnalystChat, replyFromAnalystPayload } from './analystChat';
+import { ANALYST_CHAT_PATH, clipboardAnswer, postAnalystChat, replyFromAnalystPayload, sourcesFromAnalystPayload } from './analystChat';
 
 afterEach(() => {
   localStorage.clear();
@@ -25,7 +25,8 @@ describe('international analyst chat contract', () => {
 
     const reply = await postAnalystChat('  What drives rooftop solar payback?  ');
 
-    expect(reply).toBe('Payback is driven by installed cost and the retail tariff.');
+    expect(reply.text).toBe('Payback is driven by installed cost and the retail tariff.');
+    expect(reply.sources).toEqual([]);
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toBe(ANALYST_CHAT_PATH);
@@ -63,6 +64,35 @@ describe('international analyst chat contract', () => {
       headers: { 'content-type': 'text/event-stream' },
     })));
     await expect(postAnalystChat('hi')).rejects.toThrow(/event stream/);
+  });
+
+  it('keeps structured sources for display and copies them with the answer', () => {
+    const payload = {
+      message: 'Notice 2025-42 is the library record [S1].',
+      sources: [{
+        title: 'IRS Notice 2025-42',
+        url: 'https://www.irs.gov/pub/irs-drop/n-25-42.pdf',
+        publisher: 'Internal Revenue Service',
+        published_at: '2025-08-15',
+        locator: 'FS-2025-05 FAQ 1',
+        excerpt: 'The notice describes the credit deadline.',
+        freshness_status: 'current',
+        evidence_status: 'legacy_unreviewed',
+      }],
+      answer_id: 'ans-1',
+      downloads: { pdf: true, docx: false },
+      synthetic: false,
+      ai_metadata: { stand_in: 'library_only', model_called: false },
+    };
+    const sources = sourcesFromAnalystPayload(payload);
+    expect(sources[0].locator).toBe('FS-2025-05 FAQ 1');
+    expect(sources[0].url).toContain('irs.gov');
+    const copied = clipboardAnswer(payload.message, sources);
+    expect(copied).toContain(payload.message);
+    expect(copied).toContain('https://www.irs.gov/pub/irs-drop/n-25-42.pdf');
+    expect(copied).toContain('Locator: FS-2025-05 FAQ 1');
+    expect(copied).toContain('not recorded as a human review');
+    expect(copied).not.toContain('example.gov');
   });
 
   it('reads only the JSON message field, not a streaming content chunk', () => {

@@ -29,26 +29,57 @@ def excerpt_of(text: Any, limit: int = EXCERPT_LIMIT) -> Optional[str]:
         return None
     if len(raw) <= limit:
         return raw
-    return raw[:limit].rstrip()
+    cut = raw[:limit].rsplit(" ", 1)[0]
+    return cut or raw[:limit].rstrip()
+
+
+_SYNTHETIC_HOSTS = {"example.com", "example.org", "example.cn", "example.gov"}
+
+
+def _host(url: str) -> str:
+    return str(url or "").split("//")[-1].split("/")[0].split(":")[0].lower()
+
+
+def is_synthetic_source(src: Dict[str, Any]) -> bool:
+    host = _host(str(src.get("url") or src.get("source_url") or ""))
+    return host in _SYNTHETIC_HOSTS or host.endswith(".example.com") or host.endswith(".example.gov")
+
+
+def synthetic_banner(lang: str = "zh") -> str:
+    if lang == "en":
+        return (
+            "SYNTHETIC TEST DATA. This file is not a publication of the National Energy "
+            "Administration, the IRS, or any other authority. Do not deliver it as a real source."
+        )
+    return "合成测试数据。本文件不是国家能源局、税务机关或其他机构的出版物，不得当作真实来源交付。"
 
 
 def publication_note(src: Dict[str, Any], lang: str = "zh") -> Optional[str]:
     en = lang == "en"
     status = str(src.get("status") or "")
     evidence = str(src.get("evidence_status") or "")
+    notes = []
+    if is_synthetic_source(src):
+        notes.append("SYNTHETIC TEST DATA. Not a real publication." if en else "合成测试数据。不是真实出版物。")
     if status in UNPUBLISHED_STATUS or evidence in BLOCKED_EVIDENCE:
-        return (
+        notes.append(
             "Not published: pending review. Do not treat this as a released source."
             if en else
             "未发布：待审核。不得当作已发布来源。"
         )
-    if evidence == "auto_extracted":
-        return (
+    elif evidence == "auto_extracted":
+        notes.append(
             "Review: machine extract, not a human-reviewed publication."
             if en else
             "审核：机器摘录，未经人工复核，不是已发布文本。"
         )
-    return None
+    elif evidence == "legacy_unreviewed":
+        notes.append(
+            "Review status: not recorded as a human review."
+            if en else
+            "审核状态：没有人工复核记录。"
+        )
+    return " ".join(notes) or None
 
 
 def format_citation(index: int, src: Dict[str, Any], lang: str = "zh") -> str:

@@ -10,7 +10,17 @@ from app.config import settings
 from app.core.dependencies import get_current_user_id
 from app.core.database import get_db
 from app.services.ai_service import ai_assistant
-from app.core.subscription import QuotaExceeded, assert_ai_quota, consume_ai_quota
+from uuid import uuid4
+
+from app.core.subscription import (
+    QuotaExceeded,
+    answer_export_offer,
+    assert_ai_quota,
+    assert_report_quota,
+    consume_ai_quota,
+    consume_report_quota,
+)
+from app.services.answer_export import render_answer_file, sources_are_synthetic
 from app.services.citation_record import excerpt_of, publication_note
 from app.services.evidence_envelope import envelope_from_rag
 from app.services.rag_service import RAGService
@@ -19,11 +29,15 @@ from app.services import grounding
 from app.services.bottom_line import NOTICE_EN, NOTICE_ZH, blocked_input_text, enforce_bottom_line, find_violations
 from app.services.budget_caps import BudgetExceeded, assert_product_budget, charge_product_budget
 from app.models.user import User
+import io
 import json
 import os
 from datetime import date
 
 router = APIRouter(prefix="/ai")
+
+# Answers the server has already returned. Export reads this record, not a client-supplied source list.
+_ANSWER_EXPORTS: dict = {}
 
 # Retrieval scores are normalised to 0-1. Below this line the "match" is a stray word overlap
 # (an unrelated question scored 0.31, a North Sea wind question scored 0.14 against US tax credits),
@@ -325,6 +339,96 @@ async def chat(
     )
 
 
+def _export_offer(user) -> dict:
+    offer = answer_export_offer(user)
+    return {"pdf": offer["pdf"], "docx": offer["docx"]}
+
+
+def _remember_answer(user, market: str, message: str, sources: list, metadata: dict) -> dict:
+    answer_id = str(uuid4())
+    synthetic = sources_are_synthetic(sources)
+    _ANSWER_EXPORTS[answer_id] = {
+        "user_id": str(user.id),
+        "market": market,
+        "message": message,
+        "sources": list(sources or []),
+        "synthetic": synthetic,
+        "stand_in": metadata.get("stand_in"),
+        "watermark": answer_export_offer(user)["watermark"],
+    }
+    if len(_ANSWER_EXPORTS) > 200:
+        _ANSWER_EXPORTS.pop(next(iter(_ANSWER_EXPORTS)))
+    return {
+        "answer_id": answer_id,
+        "downloads": _export_offer(user),
+        "synthetic": synthetic,
+    }
+
+
+def _library_stand_in(message: str, hits: list, market: str, style: Optional[str]):
+    """Used only when no model provider is configured. The text is the library record, not a model answer."""
+    if not hits:
+        answer = "No data available in the source library." if market == "global" else "本库尚未收录相关资料。"
+    else:
+        rows = []
+        for index, hit in enumerate(hits, 1):
+            md = hit.metadata or {}
+            when = md.get("published_at") or md.get("year") or ""
+            rows.append(f"[S{index}] {hit.title}" + (f" ({when})" if when else ""))
+        answer = "\n".join(rows)
+    shown, expired = _finish_answer(answer, hits, market)
+    evidence = _evidence_for(shown, hits, market)
+    return shown, evidence, expired
+
+
+class AnswerExportRequest(BaseModel):
+    format: str = Field(pattern="^(pdf|docx)$")
+
+
+@router.post("/answers/{answer_id}/export")
+async def export_stored_answer(
+    answer_id: str,
+    body: AnswerExportRequest,
+    user_id: str = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+):
+    """Download one answer this user already received. The file is not built from client-supplied sources."""
+    record = _ANSWER_EXPORTS.get(answer_id)
+    if not record or record["user_id"] != str(user_id):
+        raise HTTPException(status_code=404, detail="回答不存在或无权访问")
+    user = await db.scalar(select(User).where(User.id == user_id))
+    if user is None:
+        raise HTTPException(status_code=404, detail="回答不存在或无权访问")
+    offer = _export_offer(user)
+    if not offer.get(body.format):
+        market = record["market"]
+        message = (
+            "Word export is not included in this plan."
+            if market == "global" else
+            "当前方案不包含 Word 导出。"
+        ) if body.format == "docx" else (
+            "PDF export is not included in this plan."
+            if market == "global" else
+            "当前方案不包含 PDF 导出。"
+        )
+        raise HTTPException(status_code=403, detail={"error": "EXPORT_FORMAT_NOT_INCLUDED", "message": message})
+    try:
+        await assert_report_quota(user_id, db)
+    except QuotaExceeded as error:
+        market = record["market"]
+        if market == "global":
+            message = f"You have used this month's report exports ({error.limit}). This is not an extra AI answer."
+        else:
+            message = f"本月报告导出次数已用完（{error.limit} 次）。这不是额外的 AI 回答次数。"
+        raise HTTPException(status_code=429, detail={"error": "REPORT_QUOTA_EXCEEDED", "message": message, "limit": error.limit}) from error
+    payload = render_answer_file(record, body.format)
+    await consume_report_quota(user, db)
+    ext = body.format
+    mime = "application/pdf" if ext == "pdf" else "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    filename = f"answer-{answer_id}.{ext}"
+    return StreamingResponse(io.BytesIO(payload), media_type=mime, headers={"Content-Disposition": f'attachment; filename="{filename}"'})
+
+
 @router.post("/chat-json")
 async def chat_json(
     body: MobileChatRequest,
@@ -340,13 +444,34 @@ async def chat_json(
         market = await _market_for_user(user_id, db)
         blocked = blocked_model_text(body.message, market)
         if blocked:
-            return {"message": blocked, "ai_metadata": {"blocked": "bottom_line"}, "evidence": _evidence_for("", [], market)}
+            evidence = _evidence_for("", [], market)
+            stored = _remember_answer(user, market, blocked, [], {"blocked": "bottom_line"})
+            return {"message": blocked, "ai_metadata": {"blocked": "bottom_line"}, "evidence": evidence, "sources": [], **stored}
         assert_product_budget(user_id, market)
         hits = _retrieve(body.message, market)
         if not hits and grounding.is_policy_question(body.message):
-            return _no_source_payload(market, body.style)
+            payload = _no_source_payload(market, body.style)
+            stored = _remember_answer(user, market, payload["message"], [], {"stand_in": "no_source", "model_called": False})
+            return {**payload, "sources": [], **stored}
         prompt = _grounded_prompt(SYSTEM_PROMPT if market == "global" else CN_SYSTEM_PROMPT, hits, market, body.style)
-        result = await ai_assistant.chat_openai_with_metadata(body.message, prompt, market=market)
+        try:
+            result = await ai_assistant.chat_openai_with_metadata(body.message, prompt, market=market)
+        except RuntimeError as error:
+            if "not configured" not in str(error).lower():
+                raise
+            message, evidence, expired = _library_stand_in(body.message, hits, market, body.style)
+            meta = {"stand_in": "library_only", "model_called": False, "provider": None, "model": None}
+            stored = _remember_answer(user, market, message, evidence.get("sources") or [], meta)
+            return {
+                "message": message,
+                "ai_metadata": meta,
+                "evidence": evidence,
+                "sources": evidence.get("sources", []),
+                "structured": _structured(message, hits, market, body.style),
+                "grounding": _grounding(hits),
+                "time_check": {"today": _today().isoformat(), "expired_dates": expired},
+                **stored,
+            }
     except BudgetExceeded as error:
         raise HTTPException(status_code=429, detail={"error": "PRODUCT_BUDGET_EXCEEDED", "message": str(error)}) from error
     except RuntimeError as error:
@@ -357,6 +482,7 @@ async def chat_json(
     structured = _structured(message, hits, market, body.style)
     evidence = _evidence_for(message, hits, market)
     message, expired = _finish_answer(message, hits, market)
+    stored = _remember_answer(user, market, message, evidence.get("sources") or [], result["metadata"] or {})
     return {
         "message": message,
         "ai_metadata": result["metadata"],
@@ -365,6 +491,7 @@ async def chat_json(
         "structured": structured,
         "grounding": _grounding(hits),
         "time_check": {"today": _today().isoformat(), "expired_dates": expired},
+        **stored,
     }
 
 

@@ -1,16 +1,22 @@
-"""Vertical check: /ai/ask citation text, retrieval of unpublished records, and real PDF/Word files.
+"""Vertical check: citation text, unpublished records, and the answer download route.
 
 The model is not called. These cases use the library records and the same generators the report route calls.
 """
 import io
+import uuid
 import zipfile
 from datetime import date
 from types import SimpleNamespace
 
+import pytest
 from docx import Document
 from pypdf import PdfReader
 
+from app.api.v1 import ai_assistant as ask_api
 from app.api.v1.ai_assistant import _provenance_footer, _retrieve
+from app.core.security import create_access_token
+from app.models.user import User
+from app.utils.security import get_password_hash
 from app.routers import reports as R
 from app.services.citation_record import format_citation
 from app.services.evidence_envelope import present_claim
@@ -163,6 +169,7 @@ def test_report_entry_writes_pdf_and_word_with_clickable_sources():
         assert "摘录：并网申请应当提交" in text
         assert "https://example.gov/policy" in text
         assert "机器摘录，未经人工复核" in text
+        assert "合成测试数据" in text
         assert "不是经人工签字的审核结论" in text
         extract_line = text.split("机器摘录", 1)[-1]
         assert "页码/段落" not in extract_line.split("https://example.gov/policy", 1)[0]
@@ -174,3 +181,80 @@ def test_report_entry_writes_pdf_and_word_with_clickable_sources():
                 rels = package.read("word/_rels/document.xml.rels").decode("utf-8")
             assert "hyperlink" in document
             assert "https://example.gov/policy" in rels
+
+
+async def _user(db_session, market: str, plan: str) -> dict:
+    user = User(
+        id=str(uuid.uuid4()),
+        email=f"{market}-{uuid.uuid4().hex[:8]}@example.com",
+        password_hash=get_password_hash("Passw0rd!x"),
+        name="Citation tester",
+        role="user",
+        market=market,
+        subscription_plan=plan,
+        usage_quota={"ai_calls": {}, "report_exports": {}},
+    )
+    db_session.add(user)
+    await db_session.commit()
+    return {"Authorization": f"Bearer {create_access_token(str(user.id))}"}
+
+
+@pytest.mark.asyncio
+async def test_chat_download_uses_real_library_record_and_rejects_other_users(client, db_session, monkeypatch):
+    async def unavailable(message, system_prompt, *, market):
+        raise RuntimeError("Global AI provider is not configured")
+
+    monkeypatch.setattr(ask_api.ai_assistant, "chat_openai_with_metadata", unavailable)
+    free = await _user(db_session, "global", "free")
+    other = await _user(db_session, "global", "pro")
+    hit = await client.post("/api/v1/ai/chat-json", headers=free, json={"message": "IRS Notice 2025-42 solar investment tax credit"})
+    assert hit.status_code == 200, hit.text
+    body = hit.json()
+    assert body["ai_metadata"]["model_called"] is False
+    assert body["sources"]
+    source = body["sources"][0]
+    assert "irs.gov" in source["url"]
+    assert source.get("locator")
+    assert "example.gov" not in source["url"]
+    assert body["downloads"]["pdf"] is True and body["downloads"]["docx"] is False
+    answer_id = body["answer_id"]
+
+    denied = await client.post(f"/api/v1/ai/answers/{answer_id}/export", headers=other, json={"format": "pdf"})
+    assert denied.status_code == 404
+
+    word = await client.post(f"/api/v1/ai/answers/{answer_id}/export", headers=free, json={"format": "docx"})
+    assert word.status_code == 403
+
+    pdf = await client.post(f"/api/v1/ai/answers/{answer_id}/export", headers=free, json={"format": "pdf"})
+    assert pdf.status_code == 200
+    text = "\n".join(page.extract_text() or "" for page in PdfReader(io.BytesIO(pdf.content)).pages)
+    assert "irs.gov" in text
+    assert source["locator"] in text
+    assert "Evaluation copy" in text
+    assert "SYNTHETIC TEST DATA" not in text
+    assert "not a signed human review" in text
+    assert "No model was called" in text
+
+    missing = await client.post("/api/v1/ai/chat-json", headers=free, json={"message": "zzzz nothing matches qqqq"})
+    assert missing.status_code == 200 and missing.json()["sources"] == []
+
+    refused = await client.post(
+        "/api/v1/ai/chat-json",
+        headers=free,
+        json={"message": "What statute sets the zoning penalty in fictional county ZZQQ-999?"},
+    )
+    assert refused.status_code == 200
+    assert refused.json()["message"].startswith("Status: No source")
+    assert refused.json()["sources"] == []
+
+    domestic = await _user(db_session, "cn", "pro")
+    cn = await client.post("/api/v1/ai/chat-json", headers=domestic, json={"message": "能源保供中长期合同管理办法"})
+    assert cn.status_code == 200, cn.text
+    cn_body = cn.json()
+    if cn_body["sources"]:
+        assert any("机器摘录" in cn_body["message"] or src.get("evidence_status") == "auto_extracted" for src in cn_body["sources"])
+        docx = await client.post(f"/api/v1/ai/answers/{cn_body['answer_id']}/export", headers=domestic, json={"format": "docx"})
+        assert docx.status_code == 200
+        package = zipfile.ZipFile(io.BytesIO(docx.content))
+        xml = package.read("word/document.xml").decode("utf-8")
+        assert "机器摘录" in xml or "不是经人工签字" in xml
