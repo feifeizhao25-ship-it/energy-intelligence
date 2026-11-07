@@ -20,6 +20,15 @@ export interface AnalystSource {
   url?: string | null;
   publisher?: string | null;
   published_at?: string | null;
+  date_kind?: string | null;
+  sign_date?: string | null;
+  effective_date?: string | null;
+  effective_date_stated?: boolean | null;
+  effective_date_basis?: string | null;
+  expiry_date?: string | null;
+  superseded_by?: string | null;
+  primary_checked_at?: string | null;
+  issuer?: string | null;
   locator?: string | null;
   excerpt?: string | null;
   freshness_status?: string | null;
@@ -60,6 +69,15 @@ export function sourcesFromAnalystPayload(payload: unknown): AnalystSource[] {
       url: textField(row.url) ?? textField(row.source_url),
       publisher: textField(row.publisher) ?? textField(row.source_org),
       published_at: textField(row.published_at),
+      date_kind: textField(row.date_kind),
+      sign_date: textField(row.sign_date),
+      effective_date: textField(row.effective_date),
+      effective_date_stated: row.effective_date_stated === true ? true : row.effective_date_stated === false ? false : null,
+      effective_date_basis: textField(row.effective_date_basis),
+      expiry_date: textField(row.expiry_date),
+      superseded_by: textField(row.superseded_by),
+      primary_checked_at: textField(row.primary_checked_at),
+      issuer: textField(row.issuer),
       locator: textField(row.locator),
       excerpt: textField(row.excerpt),
       freshness_status: textField(row.freshness_status),
@@ -70,10 +88,35 @@ export function sourcesFromAnalystPayload(payload: unknown): AnalystSource[] {
   });
 }
 
+export function dateLines(source: AnalystSource): string[] {
+  const lines: string[] = [];
+  const published = source.published_at;
+  if (source.date_kind === 'pdf_creation' && published) {
+    lines.push(`PDF file metadata date (CreationDate): ${published}. Printed publication date: unknown.`);
+  } else if (source.date_kind === 'page_release' && published) {
+    lines.push(`Page release time: ${published}.`);
+  } else if (source.date_kind === 'printed_on_page' && published) {
+    lines.push(`Date printed on the page: ${published}.`);
+  } else if (published) {
+    lines.push(`Date on record: ${published}. Date type: not stated.`);
+  }
+  if (source.sign_date) lines.push(`Signature date: ${source.sign_date}.`);
+  if (source.effective_date_stated === true && source.effective_date) {
+    lines.push(`Effective date: ${source.effective_date}. ${source.effective_date_basis || ''}`.trim());
+  } else if (source.effective_date_stated === false) {
+    lines.push(`Effective date: not stated as a single date. ${source.effective_date_basis || ''}`.trim());
+  }
+  if (source.expiry_date) lines.push(`Expiry date on the record: ${source.expiry_date}.`);
+  if (source.superseded_by) lines.push(`Record says superseded by: ${source.superseded_by}.`);
+  if (source.primary_checked_at) lines.push(`Primary page read on ${source.primary_checked_at}. This is not a human review.`);
+  return lines;
+}
+
 export function citationLine(source: AnalystSource, index: number): string {
   const bits = [`[${index}] ${source.title}`];
   if (source.publisher) bits.push(source.publisher);
-  if (source.published_at) bits.push(source.published_at);
+  if (source.issuer && source.issuer !== source.publisher) bits.push(`Issuing body: ${source.issuer}`);
+  bits.push(...dateLines(source));
   if (source.url) bits.push(source.url);
   if (source.locator) bits.push(`Locator: ${source.locator}`);
   if (source.excerpt) bits.push(`Excerpt: ${source.excerpt}`);

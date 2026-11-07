@@ -82,6 +82,64 @@ def publication_note(src: Dict[str, Any], lang: str = "zh") -> Optional[str]:
     return " ".join(notes) or None
 
 
+def date_lines(src: Dict[str, Any], lang: str = "zh") -> list:
+    """Label each date by what the file actually is. Never call a metadata date Published."""
+    en = lang == "en"
+    lines = []
+    kind = str(src.get("date_kind") or "")
+    published = src.get("published_at")
+    if kind == "pdf_creation" and published:
+        lines.append(
+            f"PDF file metadata date (CreationDate): {published}. Printed publication date: unknown."
+            if en else
+            f"PDF文件元数据日期（CreationDate）：{published}。印刷发布日期：未知。"
+        )
+    elif kind == "page_release" and published:
+        lines.append(f"Page release time: {published}." if en else f"页面发布时间：{published}。")
+    elif kind == "printed_on_page" and published:
+        lines.append(f"Date printed on the page: {published}." if en else f"页面所印日期：{published}。")
+    elif published:
+        lines.append(
+            f"Date on record: {published}. Date type: not stated."
+            if en else
+            f"记录中的日期：{published}。日期类型：未标明。"
+        )
+    if src.get("sign_date"):
+        lines.append(f"Signature date: {src['sign_date']}." if en else f"落款日期：{src['sign_date']}。")
+    if src.get("effective_date_stated") is True and src.get("effective_date"):
+        basis = src.get("effective_date_basis")
+        line = f"Effective date: {src['effective_date']}." if en else f"生效日：{src['effective_date']}。"
+        if basis:
+            line = f"{line} {basis}"
+        lines.append(line)
+    elif src.get("effective_date_stated") is False:
+        basis = src.get("effective_date_basis")
+        lines.append(
+            f"Effective date: not stated as a single date. {basis}".rstrip()
+            if en else
+            f"生效日：原文未写单一施行日。{basis or ''}".rstrip()
+        )
+    if src.get("expiry_date"):
+        lines.append(
+            f"Expiry date on the record: {src['expiry_date']}."
+            if en else
+            f"记录中的届满日：{src['expiry_date']}。"
+        )
+    if src.get("superseded_by"):
+        lines.append(
+            f"Record says superseded by: {src['superseded_by']}."
+            if en else
+            f"记录写明被替代：{src['superseded_by']}。"
+        )
+    if src.get("primary_checked_at"):
+        lines.append(
+            f"Primary page read on {src['primary_checked_at']}. This is not a human review."
+            if en else
+            f"对照原文阅读：{src['primary_checked_at']}。这不是人工审核。"
+        )
+    return lines
+
+
 def format_citation(index: int, src: Dict[str, Any], lang: str = "zh") -> str:
     """Stable citation line. Missing locator, date, or review fields are omitted, not invented."""
     en = lang == "en"
@@ -97,9 +155,10 @@ def format_citation(index: int, src: Dict[str, Any], lang: str = "zh") -> str:
     org = src.get("publisher") or src.get("source_org")
     if org:
         parts.append(f"Publisher: {org}" if en else f"机构：{org}")
-    published = src.get("published_at") or src.get("year")
-    if published:
-        parts.append(f"Published: {published}" if en else f"发布日期：{published}")
+    issuer = src.get("issuer")
+    if issuer and issuer != org:
+        parts.append(f"Issuing body: {issuer}" if en else f"发文机关：{issuer}")
+    parts.extend(date_lines(src, lang))
     locator = src.get("locator")
     if locator:
         parts.append(f"Locator: {locator}" if en else f"页码/段落：{locator}")

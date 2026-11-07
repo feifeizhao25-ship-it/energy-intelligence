@@ -74,6 +74,10 @@ describe('international analyst chat contract', () => {
         url: 'https://www.irs.gov/pub/irs-drop/n-25-42.pdf',
         publisher: 'Internal Revenue Service',
         published_at: '2025-08-15',
+        date_kind: 'pdf_creation',
+        effective_date: '2025-09-02',
+        effective_date_stated: true,
+        effective_date_basis: 'Notice 2025-42 section 7.',
         locator: 'Notice 2025-42 sections 1, 2.02, 3, 6, and 7',
         excerpt: 'The notice describes the credit deadline.',
         freshness_status: 'current',
@@ -89,6 +93,10 @@ describe('international analyst chat contract', () => {
     expect(sources[0].url).toContain('irs.gov');
     const copied = clipboardAnswer(payload.message, sources);
     expect(copied).toContain(payload.message);
+    expect(copied).toContain('PDF file metadata date (CreationDate): 2025-08-15');
+    expect(copied).toContain('Printed publication date: unknown');
+    expect(copied).toContain('Effective date: 2025-09-02');
+    expect(copied).not.toContain('Published');
     expect(copied).toContain('https://www.irs.gov/pub/irs-drop/n-25-42.pdf');
     expect(copied).toContain('Locator: Notice 2025-42 sections 1, 2.02, 3, 6, and 7');
     expect(copied).toContain('not recorded as a human review');

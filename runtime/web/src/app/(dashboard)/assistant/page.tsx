@@ -12,7 +12,7 @@ import { AigcLabel } from '@/components/ui/AigcLabel';
 import { buildAnswerDateLine } from '@/lib/ai/answer-date-line';
 import { VerificationBadge } from '@/components/evidence/VerificationBadge';
 import type { EvidenceVerification } from '@/lib/evidence/verification';
-import { citationText } from '@/lib/assistant/citation-text';
+import { citationText, dateLines } from '@/lib/assistant/citation-text';
 import type { StoredSource } from '@/lib/assistant/answer-store';
 
 interface Message {
@@ -385,7 +385,8 @@ export default function AssistantPage() {
                                                     <li key={`${source.title}-${index}`} className="text-xs leading-relaxed break-words text-white/80">
                                                         <span className="font-medium text-white">[{index + 1}] {source.title}</span>
                                                         {source.publisher && <span className="block">发布机构：{source.publisher}</span>}
-                                                        {source.published_at && <span className="block">日期：{source.published_at}</span>}
+                                                        {source.issuer && source.issuer !== source.publisher && <span className="block">发文机关：{source.issuer}</span>}
+                                                        {dateLines(source).map((line) => <span key={line} className="block">{line}</span>)}
                                                         {source.url && <a className="block break-all text-primary" href={source.url}>{source.url}</a>}
                                                         {source.locator && <span className="block">定位：{source.locator}</span>}
                                                         {source.excerpt && <span className="block whitespace-pre-wrap">摘录：{source.excerpt}</span>}

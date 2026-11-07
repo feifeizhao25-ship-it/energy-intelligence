@@ -6,8 +6,11 @@ const { Document, Page, Text, Link, Font, renderToBuffer } = require('@react-pdf
 
 const chunks = [];
 for await (const chunk of process.stdin) chunks.push(chunk);
-const { record, watermark, font } = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+const payload = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+const font = payload.font;
 if (font) Font.register({ family: 'Droid', src: font });
+const noHyphen = (word) => (typeof word === 'string' ? Array.from(word) : [word]);
+Font.registerHyphenationCallback(noHyphen);
 
 function linesOf(answer, marked) {
   const lines = [];
@@ -28,11 +31,35 @@ function linesOf(answer, marked) {
   return lines;
 }
 
+function pieces(line) {
+  const chars = Array.from(line);
+  if (line.startsWith('http://') || line.startsWith('https://') || chars.length <= 36) return [line];
+  const out = [];
+  let buf = '';
+  const openBrackets = () => (buf.split('〔').length + buf.split('（').length) > (buf.split('〕').length + buf.split('）').length);
+  for (let index = 0; index < chars.length; index += 1) {
+    const ch = chars[index];
+    const next = chars[index + 1] || '';
+    buf += ch;
+    const count = Array.from(buf).length;
+    const midToken = /\d/.test(ch) && /\d/.test(next);
+    const safe = !openBrackets() && !midToken;
+    if (safe && ((count >= 24 && /[。；，、]/.test(ch)) || count >= 38)) {
+      out.push(buf);
+      buf = '';
+    }
+  }
+  if (buf) out.push(buf);
+  return out;
+}
+
 const family = font ? 'Droid' : 'Helvetica';
-const children = linesOf(record, watermark).map((line, index) => (
+const rendered = (Array.isArray(payload.lines) && payload.lines.length ? payload.lines : linesOf(payload.record || {}, payload.watermark))
+  .flatMap(pieces);
+const children = rendered.map((line, index) => (
   line.startsWith('http://') || line.startsWith('https://')
-    ? h(Link, { key: String(index), src: line, style: { marginBottom: 4, color: '#1d4ed8' } }, line)
-    : h(Text, { key: String(index), style: { marginBottom: 4 } }, line)
+    ? h(Link, { key: String(index), src: line, hyphenationCallback: noHyphen, style: { marginBottom: 4, color: '#1d4ed8' } }, line)
+    : h(Text, { key: String(index), hyphenationCallback: noHyphen, style: { marginBottom: 4 } }, line)
 ));
 const doc = h(Document, null, h(Page, { size: 'A4', style: { fontFamily: family, fontSize: 11, padding: 36, lineHeight: 1.4 } }, children));
 const output = await renderToBuffer(doc);

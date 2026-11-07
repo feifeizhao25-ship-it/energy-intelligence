@@ -21,7 +21,7 @@ from app.core.subscription import (
     consume_report_quota,
 )
 from app.services.answer_export import render_answer_file, sources_are_synthetic
-from app.services.citation_record import excerpt_of, publication_note
+from app.services.citation_record import date_lines, excerpt_of, publication_note
 from app.services.evidence_envelope import envelope_from_rag
 from app.services.rag_service import RAGService
 from app.services.answer_structure import STYLES, structure_answer, style_instruction
@@ -102,7 +102,7 @@ def _grounded_prompt(base_prompt: str, hits: list, market: str, style: Optional[
     for i, h in enumerate(hits, 1):
         md = h.metadata or {}
         lines.append(
-            f"[S{i}] {h.title} | {md.get('source_org') or ''} | {md.get('published_at') or md.get('year')} | "
+            f"[S{i}] {h.title} | {md.get('source_org') or ''} | {' '.join(date_lines(md, 'en' if market == 'global' else 'zh')) or md.get('year')} | "
             f"{md.get('source_url') or ''}\n{h.content}"
         )
     return base_prompt + head + "\n" + "\n".join(lines)
@@ -159,14 +159,15 @@ def _provenance_footer(answer: str, hits: list, market: str, today: date) -> str
             for h in shown:
                 i = hits.index(h) + 1
                 md = h.metadata or {}
-                when = md.get("published_at") or md.get("year")
                 org = md.get("source_org") or md.get("publisher")
                 url = md.get("source_url") or md.get("url")
-                bits = [b for b in (str(org) if org else None, str(when) if when else ("发布日期未标注" if zh else "date not recorded"), str(url) if url else None) if b]
+                typed_dates = date_lines(md, "zh" if zh else "en")
+                when = " ".join(typed_dates) if typed_dates else ("发布日期未标注" if zh else "date not recorded")
+                bits = [b for b in (str(org) if org else None, when, str(url) if url else None) if b]
                 extra = []
                 if md.get("locator"):
                     extra.append(f"页码/段落：{md['locator']}" if zh else f"Locator: {md['locator']}")
-                fragment = excerpt_of(getattr(h, "content", None) or md.get("excerpt") or md.get("content"))
+                fragment = md.get("excerpt") or excerpt_of(getattr(h, "content", None) or md.get("content"))
                 if fragment:
                     extra.append(f"摘录：{fragment}" if zh else f"Excerpt: {fragment}")
                 freshness = md.get("freshness_status")
@@ -373,8 +374,8 @@ def _library_stand_in(message: str, hits: list, market: str, style: Optional[str
         rows = []
         for index, hit in enumerate(hits, 1):
             md = hit.metadata or {}
-            when = md.get("published_at") or md.get("year") or ""
-            rows.append(f"[S{index}] {hit.title}" + (f" ({when})" if when else ""))
+            typed = " ".join(date_lines(md, "en" if market == "global" else "zh"))
+            rows.append(f"[S{index}] {hit.title}" + (f"\n{typed}" if typed else ""))
         answer = "\n".join(rows)
     shown, expired = _finish_answer(answer, hits, market)
     evidence = _evidence_for(shown, hits, market)
@@ -707,7 +708,7 @@ async def ask(
             answer = "本库尚未收录相关资料。" if market != "global" else "No data available in the source library."
         else:
             answer = "\n".join(
-                f"[S{i}] {hit.title}（{hit.metadata.get('published_at') or hit.metadata.get('year')}）"
+                f"[S{i}] {hit.title}（{' '.join(date_lines(hit.metadata or {}, 'en' if market == 'global' else 'zh')) or (hit.metadata or {}).get('year') or ''}）"
                 for i, hit in enumerate(hits, 1)
             )
         return {"answer": answer, "sources": _evidence_for(answer, hits, market).get("sources", []), "model": None,

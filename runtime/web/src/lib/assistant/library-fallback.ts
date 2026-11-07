@@ -16,6 +16,16 @@ interface LibraryDoc {
   status?: string;
   evidence_status?: string;
   published_at?: string;
+  date_kind?: string;
+  sign_date?: string;
+  effective_date?: string;
+  effective_date_stated?: boolean;
+  effective_date_basis?: string;
+  expiry_date?: string;
+  superseded_by?: string;
+  primary_checked_at?: string;
+  issuer?: string;
+  excerpt?: string;
   locator?: string;
   source_url?: string;
   source_org?: string;
@@ -114,9 +124,18 @@ function toSource(doc: LibraryDoc): StoredSource {
     title: String(doc.title || '未命名来源'),
     url: doc.source_url || undefined,
     publisher: doc.source_org || undefined,
+    issuer: doc.issuer || undefined,
     published_at: doc.published_at || undefined,
+    date_kind: doc.date_kind || undefined,
+    sign_date: doc.sign_date || undefined,
+    effective_date: doc.effective_date || undefined,
+    effective_date_stated: typeof doc.effective_date_stated === 'boolean' ? doc.effective_date_stated : undefined,
+    effective_date_basis: doc.effective_date_basis || undefined,
+    expiry_date: doc.expiry_date || undefined,
+    superseded_by: doc.superseded_by || undefined,
+    primary_checked_at: doc.primary_checked_at || undefined,
     locator: doc.locator || undefined,
-    excerpt: excerpt(String(doc.content || '')),
+    excerpt: doc.excerpt || excerpt(String(doc.content || '')),
     freshness_status: freshness(doc),
     evidence_status: doc.evidence_status || undefined,
     status: doc.status || undefined,

@@ -4,7 +4,16 @@ export interface StoredSource {
   title: string;
   url?: string;
   publisher?: string;
+  issuer?: string;
   published_at?: string;
+  date_kind?: string;
+  sign_date?: string;
+  effective_date?: string;
+  effective_date_stated?: boolean;
+  effective_date_basis?: string;
+  expiry_date?: string;
+  superseded_by?: string;
+  primary_checked_at?: string;
   locator?: string;
   excerpt?: string;
   freshness_status?: string;

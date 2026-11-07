@@ -235,6 +235,9 @@ async def test_chat_download_uses_real_library_record_and_rejects_other_users(cl
     text = "\n".join(page.extract_text() or "" for page in PdfReader(io.BytesIO(pdf.content)).pages)
     assert "irs.gov" in text
     assert source["locator"] in text
+    assert "PDF file metadata date (CreationDate): 2025-08-15" in text
+    assert "Printed publication date: unknown" in text
+    assert "Published:" not in text
     assert "Evaluation copy" in text
     assert "SYNTHETIC TEST DATA" not in text
     assert "not a signed human review" in text

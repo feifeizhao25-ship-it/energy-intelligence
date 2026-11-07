@@ -20,6 +20,7 @@ import {
   AnalystReply,
   AnalystSource,
   clipboardAnswer,
+  dateLines,
   downloadAnalystAnswer,
   postAnalystChat,
 } from '../lib/ai/analystChat';
@@ -90,7 +91,8 @@ const AnswerSources: React.FC<{ reply: AnalystReply }> = ({ reply }) => {
             <li key={`${source.title}-${index}`} className="text-[12px] leading-relaxed break-words">
               <span className="font-medium text-[var(--text-primary)]">[{index + 1}] {source.title}</span>
               {source.publisher && <span className="block text-[var(--text-secondary)]">{source.publisher}</span>}
-              {source.published_at && <span className="block text-[var(--text-secondary)]">Published {source.published_at}</span>}
+              {source.issuer && source.issuer !== source.publisher && <span className="block">Issuing body: {source.issuer}</span>}
+              {dateLines(source).map((line) => <span key={line} className="block">{line}</span>)}
               {source.url && (
                 <a className="block break-all text-[var(--color-brand-600)]" href={source.url}>
                   {source.url}

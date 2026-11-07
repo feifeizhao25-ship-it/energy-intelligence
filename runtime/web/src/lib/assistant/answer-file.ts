@@ -5,6 +5,7 @@ import path from 'path';
 import { gazetteBuffer } from '@/lib/reports/ooxml-zip';
 
 import type { StoredAnswer } from './answer-store';
+import { dateLines } from './citation-text';
 
 const FONT = '/usr/share/fonts/truetype/droid/DroidSansFallbackFull.ttf';
 const RENDER_SCRIPT = path.resolve(process.cwd(), 'src/lib/assistant/render-pdf.mjs');
@@ -18,7 +19,8 @@ export function answerLines(record: StoredAnswer, watermark: boolean): string[] 
   record.sources.forEach((source, index) => {
     lines.push(`[${index + 1}] ${source.title}`);
     if (source.publisher) lines.push(`发布机构：${source.publisher}`);
-    if (source.published_at) lines.push(`日期：${source.published_at}`);
+    if (source.issuer && source.issuer !== source.publisher) lines.push(`发文机关：${source.issuer}`);
+    lines.push(...dateLines(source));
     if (source.url) lines.push(source.url);
     if (source.locator) lines.push(`定位：${source.locator}`);
     if (source.excerpt) lines.push(`摘录：${source.excerpt}`);
@@ -45,6 +47,6 @@ export function renderAnswerPdf(record: StoredAnswer, watermark: boolean): Promi
       if (code === 0) resolve(Buffer.concat(out));
       else reject(new Error(Buffer.concat(err).toString('utf8') || `pdf renderer exited ${code}`));
     });
-    child.stdin.end(JSON.stringify({ record, watermark, font }));
+    child.stdin.end(JSON.stringify({ lines: answerLines(record, watermark), font }));
   });
 }
