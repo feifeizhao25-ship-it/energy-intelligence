@@ -3,11 +3,15 @@
  *
  * Illustrative ITC arithmetic only. These figures are not a determination
  * of eligibility under §48E or §45Y.
+ *
+ * This test lives beside the App Router route, not under src/pages.
+ * Next treats src/pages as the Pages Router and `next build` rejects a
+ * file there that has no default page export.
  */
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import IncentivesPage from './IncentivesPage';
+import IncentivesPage from '../../pages/IncentivesPage';
 
 vi.mock('next/navigation', () => ({
   usePathname: () => '/incentives',
