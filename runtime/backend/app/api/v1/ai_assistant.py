@@ -11,6 +11,7 @@ from app.core.dependencies import get_current_user_id
 from app.core.database import get_db
 from app.services.ai_service import ai_assistant
 from app.core.subscription import QuotaExceeded, assert_ai_quota, consume_ai_quota
+from app.services.citation_record import excerpt_of, publication_note
 from app.services.evidence_envelope import envelope_from_rag
 from app.services.rag_service import RAGService
 from app.services.answer_structure import STYLES, structure_answer, style_instruction
@@ -138,12 +139,35 @@ def _provenance_footer(answer: str, hits: list, market: str, today: date) -> str
             when = md.get("published_at") or md.get("year")
             if when and str(when) in answer and (h.title or "")[:12] in answer:
                 continue  # the model already printed this source with its date
-            shown.append((i, h.title, md.get("source_org") or md.get("publisher"), when, md.get("source_url") or md.get("url")))
+            shown.append(h)
         if shown:
             lines.append(f"来源（检索于 {today.isoformat()}）：" if zh else f"Sources (retrieved {today.isoformat()}):")
-            for i, title, org, when, url in shown:
+            for h in shown:
+                i = hits.index(h) + 1
+                md = h.metadata or {}
+                when = md.get("published_at") or md.get("year")
+                org = md.get("source_org") or md.get("publisher")
+                url = md.get("source_url") or md.get("url")
                 bits = [b for b in (str(org) if org else None, str(when) if when else ("发布日期未标注" if zh else "date not recorded"), str(url) if url else None) if b]
-                lines.append(f"[S{i}] {title} | " + " | ".join(bits))
+                extra = []
+                if md.get("locator"):
+                    extra.append(f"页码/段落：{md['locator']}" if zh else f"Locator: {md['locator']}")
+                fragment = excerpt_of(getattr(h, "content", None) or md.get("excerpt") or md.get("content"))
+                if fragment:
+                    extra.append(f"摘录：{fragment}" if zh else f"Excerpt: {fragment}")
+                freshness = md.get("freshness_status")
+                if freshness and freshness != "unknown":
+                    extra.append(f"时效：{freshness}" if zh else f"Freshness: {freshness}")
+                note = publication_note(md, "zh" if zh else "en")
+                if note:
+                    extra.append(note)
+                license_note = md.get("license_note") or md.get("license")
+                if license_note:
+                    extra.append(f"许可：{license_note}" if zh else f"License: {license_note}")
+                line = f"[S{i}] {h.title} | " + " | ".join(bits)
+                if extra:
+                    line += " | " + " | ".join(extra)
+                lines.append(line)
     else:
         lines.append(
             f"核验状态：未核验——回答没有引用来源库中的资料，以上是通用说明，不是引用资料的结论（{today.isoformat()}）。"

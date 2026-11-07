@@ -14,6 +14,7 @@ from dataclasses import dataclass, field
 from datetime import date
 from typing import Dict, List, Optional
 
+from app.services.citation_record import is_blocked_from_retrieval
 from app.services.policy_aliases import STOPWORDS, alias_score
 from app.services.rag_sources import SourceRegistry, verification_status
 
@@ -167,13 +168,12 @@ class RAGService:
                 continue
             if doc.get("quote_policy") == "withdrawn":
                 continue
-            if doc.get("status") == "待核实" and doc.get("evidence_status") == "pending":
-                continue
             if doc.get("type") == "price":
                 continue  # 电价走结构化查询，不进向量/词面检索
-            review = doc.get("evidence_status")
-            if review in {"pending", "quarantined", "invalid"}:
+            # 待核实 / 待审核 / pending 候选不得进入检索，避免被回答或导出当成已发布来源。
+            if is_blocked_from_retrieval(doc):
                 continue
+            review = doc.get("evidence_status")
             if effective_only and not _currently_effective(doc, today):
                 continue
             source_countries = set(doc.get("countries") or [])

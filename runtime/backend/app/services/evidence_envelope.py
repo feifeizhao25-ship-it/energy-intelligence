@@ -35,6 +35,7 @@ from datetime import date
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from app.config import settings
+from app.services.citation_record import excerpt_of
 from app.services.rag_service import RAGHit
 
 #: 置信度取值
@@ -62,10 +63,13 @@ def source_from_rag_hit(hit: RAGHit) -> Dict[str, Any]:
         "retrieved_at": meta.get("retrieved_at"),
         "authors": meta.get("authors"),
         "version": meta.get("version"),
-        "locator": meta.get("locator"),
+        "locator": meta.get("locator") or None,
+        "excerpt": excerpt_of(hit.content),
         "license": meta.get("license_note"),
         "type": meta.get("type"),
         "freshness_status": meta.get("freshness_status", "unknown"),
+        "evidence_status": meta.get("evidence_status"),
+        "status": meta.get("status"),
         "relevance_score": round(hit.score, 4),
     }
 
