@@ -93,23 +93,39 @@ async def _check_quota(
         raise QuotaExceeded(quota_type, limit, current_count)
 
 
+async def session_is_postgresql(db: AsyncSession) -> bool:
+    """True only when this session is speaking to PostgreSQL.
+
+    AsyncSession.bind is empty until a connection exists, so the dialect has to
+    be read from the live connection. Otherwise the row lock is silently skipped
+    and two processes can both take the last monthly export.
+    """
+    connection = await db.connection()
+    return connection.dialect.name == "postgresql"
+
+
+def lock_for_update(stmt, postgres: bool):
+    stmt = stmt.execution_options(populate_existing=True)
+    if postgres:
+        return stmt.with_for_update()
+    return stmt
+
+
 async def assert_report_quota(user_id: str, db: AsyncSession) -> User:
     """Validate report quota without consuming it.
 
     Generation performs validation first and records usage only after the job
     has been accepted. This prevents invalid projects or failed validation
     requests from consuming a paid entitlement.
+
+    On PostgreSQL the user row stays locked until the caller commits the
+    increment, so another process cannot read the same remaining slot.
     """
-    stmt = select(User).where(User.id == user_id)
-    if db.bind is not None and db.bind.dialect.name == "postgresql":
-        stmt = stmt.with_for_update()
+    stmt = lock_for_update(select(User).where(User.id == user_id), await session_is_postgresql(db))
     result = await db.execute(stmt)
     user = result.scalar_one_or_none()
     if user is None:
         raise LookupError(f"user not found: {user_id}")
-    # Sessions keep expire_on_commit disabled, so a user loaded earlier in the
-    # request would otherwise hide a quota write committed by a concurrent job.
-    await db.refresh(user)
     plan = user.plan
     limit = PLAN_QUOTAS.get(plan, PLAN_QUOTAS["free"]).get(
         "report_exports_per_month", 5

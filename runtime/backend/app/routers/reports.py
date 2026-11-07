@@ -49,6 +49,8 @@ from app.database import AsyncSessionLocal, get_db
 from app.core.dependencies import get_current_user_id
 from app.core.subscription import (
     QuotaExceeded,
+    lock_for_update,
+    session_is_postgresql,
     assert_report_quota,
     consume_report_quota,
     release_report_quota,
@@ -2108,20 +2110,25 @@ async def _load_user(db: AsyncSession, user_id: str) -> Optional[User]:
 async def _refund_held_report(db: AsyncSession, report: Report) -> None:
     """Return the monthly export if this job is still reserved and not completed.
 
-    The state change and the counter change commit together, so a second
-    cancel or a failed retry cannot refund the same job twice.
+    The report row is locked on PostgreSQL before the state is read again.
+    A second process, cancelling or finishing the same failure, sees
+    ``released`` or no row and does not subtract a second time. The caller
+    commits this change together with the status update or the delete.
     """
     async with report_quota_lock(str(report.user_id)):
-        await db.refresh(report)
-        if _quota_state(report) != "held" or report.status == "completed":
+        postgres = await session_is_postgresql(db)
+        locked = (
+            await db.execute(lock_for_update(select(Report).where(Report.id == report.id), postgres))
+        ).scalar_one_or_none()
+        if locked is None or _quota_state(locked) != "held" or locked.status == "completed":
             return
-        account = await _load_user(db, str(report.user_id))
+        account = (
+            await db.execute(lock_for_update(select(User).where(User.id == locked.user_id), postgres))
+        ).scalar_one_or_none()
         if account is None:
             return
-        await db.refresh(account)
-        _set_quota_state(report, "released")
+        _set_quota_state(locked, "released")
         await release_report_quota(account, db)
-        await db.commit()
 
 
 async def _generate_report_task(
@@ -2202,7 +2209,6 @@ async def _generate_report_task(
             report = result.scalar_one_or_none()
             if report:
                 await _refund_held_report(db, report)
-                await db.refresh(report)
                 report.status = "failed"
                 report.content = str(e)[:1000]
                 report.updated_at = datetime.now()
@@ -2630,13 +2636,18 @@ async def delete_report(
     """删除报告"""
     report = await _assert_report_owner(report_id, user_id, db)
     await _refund_held_report(db, report)
+    current = (
+        await db.execute(select(Report).where(Report.id == report_id, Report.user_id == user_id))
+    ).scalar_one_or_none()
+    if current is None:
+        raise HTTPException(status_code=404, detail="报告不存在或无权访问")
 
     _report_store.pop(report_id, None)
     # 文件路径一律由 UUID 推导，不信任存储的 file_path（旧部署路径可能已失效）。
     found = _existing_report_file(report_id)
     if found:
         os.remove(found[0])
-    await db.delete(report)
+    await db.delete(current)
     await db.commit()
 
     return {"data": {"message": "报告已删除", "report_id": report_id}}
