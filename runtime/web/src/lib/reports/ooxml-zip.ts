@@ -77,21 +77,56 @@ function xmlText(value: string): string {
     return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-/** 公文版资料汇编。封面写非正式文件，标题黑体、正文仿宋，不用红头。 */
+const URL_LINE = /^https?:\/\/\S+$/;
+const WORD_JOINER = '\u2060';
+
+function glueDates(text: string): string {
+    const glue = (match: string) => Array.from(match).join(WORD_JOINER);
+    return text
+        .replace(/20\d{2}年\d{1,2}月\d{1,2}日/g, glue)
+        .replace(/20\d{2}-\d{2}-\d{2}/g, glue);
+}
+
+function runXml(text: string, ascii: string, eastAsia: string, size?: string, link = false): string {
+    const color = link ? '<w:color w:val="0563C1"/><w:u w:val="single"/>' : '';
+    const sz = size ? `<w:sz w:val="${size}"/>` : '';
+    return `<w:r><w:rPr><w:rFonts w:ascii="${ascii}" w:hAnsi="${ascii}" w:eastAsia="${eastAsia}"/>${sz}${color}</w:rPr><w:t xml:space="preserve">${xmlText(text)}</w:t></w:r>`;
+}
+
+function paragraphXml(text: string, ascii: string, eastAsia: string, size?: string, linkId?: string): string {
+    const run = runXml(glueDates(text), ascii, eastAsia, size, Boolean(linkId));
+    const inner = linkId ? `<w:hyperlink r:id="${linkId}" w:history="1">${run}</w:hyperlink>` : run;
+    return `<w:p><w:pPr><w:autoSpaceDE w:val="0"/><w:autoSpaceDN w:val="0"/></w:pPr>${inner}</w:p>`;
+}
+
+/** 公文版资料汇编。封面写非正式文件，标题黑体、正文仿宋，不用红头。整行 URL 写成可点击超链接。 */
 export function gazetteBuffer(title: string, rows: string[][]): Buffer {
-    const body = rows.map((row) => `<w:p><w:r><w:rPr><w:rFonts w:ascii="FangSong" w:hAnsi="FangSong" w:eastAsia="仿宋"/></w:rPr><w:t>${xmlText(row.join(' '))}</w:t></w:r></w:p>`).join('');
+    const links: { id: string; url: string }[] = [];
+    const body = rows.map((row) => {
+        const text = row.join(' ');
+        if (!URL_LINE.test(text)) return paragraphXml(text, 'FangSong', '仿宋');
+        const id = `rIdLink${links.length + 1}`;
+        links.push({ id, url: text });
+        return paragraphXml(text, 'FangSong', '仿宋', undefined, id);
+    }).join('');
     const document = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
   <w:body>
-    <w:p><w:r><w:rPr><w:rFonts w:ascii="SimHei" w:hAnsi="SimHei" w:eastAsia="黑体"/><w:sz w:val="32"/></w:rPr><w:t>资料汇编 · 非正式文件</w:t></w:r></w:p>
-    <w:p><w:r><w:rPr><w:rFonts w:ascii="SimHei" w:hAnsi="SimHei" w:eastAsia="黑体"/></w:rPr><w:t>${xmlText(title)}</w:t></w:r></w:p>
+    ${paragraphXml('资料汇编 · 非正式文件', 'SimHei', '黑体', '32')}
+    ${paragraphXml(title, 'SimHei', '黑体')}
     ${body}
-    <w:p><w:r><w:rPr><w:rFonts w:ascii="FangSong" w:hAnsi="FangSong" w:eastAsia="仿宋"/></w:rPr><w:t>本文件不是行政机关公文，测算值不是承诺。公文模板待企业微信审批，未签字。</w:t></w:r></w:p>
+    ${paragraphXml('本文件不是行政机关公文，测算值不是承诺。公文模板待企业微信审批，未签字。', 'FangSong', '仿宋')}
+    <w:sectPr>
+      <w:pgSz w:w="11906" w:h="16838"/>
+      <w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="720" w:footer="720" w:gutter="0"/>
+    </w:sectPr>
   </w:body>
 </w:document>`;
+    const relationships = links.map((link) => `<Relationship Id="${link.id}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink" Target="${xmlText(link.url)}" TargetMode="External"/>`).join('');
     return zipStore([
         { name: '[Content_Types].xml', data: `<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>` },
         { name: '_rels/.rels', data: `<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>` },
+        { name: 'word/_rels/document.xml.rels', data: `<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${relationships}</Relationships>` },
         { name: 'word/document.xml', data: document },
     ]);
 }

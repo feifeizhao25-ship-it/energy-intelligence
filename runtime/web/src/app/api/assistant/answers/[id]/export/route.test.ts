@@ -69,6 +69,8 @@ test('文件只含已保存的来源，忽略请求体里的标题', async () =>
   const xml = Buffer.from(await response.arrayBuffer()).toString('utf8');
   expect(xml).toContain('发改价格〔2025〕136号');
   expect(xml).toContain('ndrc.gov.cn');
+  expect(xml).toContain('w:hyperlink');
+  expect(xml).toContain('TargetMode="External"');
   expect(xml).toContain('不是经人工签字');
   expect(xml).not.toContain('FAKE SOURCE');
 });
