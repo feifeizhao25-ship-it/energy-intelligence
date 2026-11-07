@@ -215,15 +215,20 @@ async def test_chat_download_uses_real_library_record_and_rejects_other_users(cl
     source = body["sources"][0]
     assert "irs.gov" in source["url"]
     assert source.get("locator")
+    assert "FS-2025-05" not in source["locator"]
+    assert source["published_at"] == "2025-08-15"
+    assert source["url"].endswith("n-25-42.pdf")
     assert "example.gov" not in source["url"]
     assert body["downloads"]["pdf"] is True and body["downloads"]["docx"] is False
     answer_id = body["answer_id"]
 
     denied = await client.post(f"/api/v1/ai/answers/{answer_id}/export", headers=other, json={"format": "pdf"})
     assert denied.status_code == 404
+    assert denied.json()["detail"] == "This answer does not exist or you cannot access it."
 
     word = await client.post(f"/api/v1/ai/answers/{answer_id}/export", headers=free, json={"format": "docx"})
     assert word.status_code == 403
+    assert word.json()["detail"]["message"] == "Word export is not included in this plan."
 
     pdf = await client.post(f"/api/v1/ai/answers/{answer_id}/export", headers=free, json={"format": "pdf"})
     assert pdf.status_code == 200
@@ -258,3 +263,40 @@ async def test_chat_download_uses_real_library_record_and_rejects_other_users(cl
         package = zipfile.ZipFile(io.BytesIO(docx.content))
         xml = package.read("word/document.xml").decode("utf-8")
         assert "机器摘录" in xml or "不是经人工签字" in xml
+    other_cn = await _user(db_session, "cn", "free")
+    foreign = await client.post(f"/api/v1/ai/answers/{cn_body['answer_id']}/export", headers=other_cn, json={"format": "pdf"})
+    assert foreign.status_code == 404
+    assert foreign.json()["detail"] == "回答不存在或无权访问"
+
+
+@pytest.mark.asyncio
+async def test_exhausted_report_exports_are_not_described_as_ai_answers(client, db_session, monkeypatch):
+    async def unavailable(message, system_prompt, *, market):
+        raise RuntimeError("Global AI provider is not configured")
+
+    monkeypatch.setattr(ask_api.ai_assistant, "chat_openai_with_metadata", unavailable)
+    user = User(
+        id=str(uuid.uuid4()),
+        email=f"quota-{uuid.uuid4().hex[:8]}@example.com",
+        password_hash=get_password_hash("Passw0rd!x"),
+        name="Quota tester",
+        role="user",
+        market="global",
+        subscription_plan="free",
+        usage_quota={"ai_calls": {}, "report_exports": {"monthly_2026-11": 3}},
+    )
+    db_session.add(user)
+    await db_session.commit()
+    headers = {"Authorization": f"Bearer {create_access_token(str(user.id))}"}
+    hit = await client.post("/api/v1/ai/chat-json", headers=headers, json={"message": "IRS Notice 2025-42"})
+    assert hit.status_code == 200, hit.text
+    exported = await client.post(
+        f"/api/v1/ai/answers/{hit.json()['answer_id']}/export",
+        headers=headers,
+        json={"format": "pdf"},
+    )
+    assert exported.status_code == 429
+    detail = exported.json()["detail"]
+    assert detail["error"] == "REPORT_QUOTA_EXCEEDED"
+    assert "report export" in detail["message"]
+    assert "not an extra AI answer" in detail["message"]

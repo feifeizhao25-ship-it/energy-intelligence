@@ -165,6 +165,23 @@ export async function downloadAnalystAnswer(
     },
     body: JSON.stringify({ format }),
   });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  if (!res.ok) {
+    let detail = `HTTP ${res.status}`;
+    try {
+      const body = await res.json();
+      const nested = body && typeof body === 'object' ? (body as { detail?: unknown; message?: unknown }).detail : undefined;
+      const message = typeof nested === 'string'
+        ? nested
+        : nested && typeof nested === 'object' && typeof (nested as { message?: unknown }).message === 'string'
+          ? (nested as { message: string }).message
+          : typeof (body as { message?: unknown })?.message === 'string'
+            ? (body as { message: string }).message
+            : '';
+      if (message.trim()) detail = message.trim();
+    } catch {
+      // The status is enough when the body is not JSON.
+    }
+    throw new Error(detail);
+  }
   return res.blob();
 }

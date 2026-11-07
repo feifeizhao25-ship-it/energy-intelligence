@@ -159,24 +159,76 @@
       "source_id": "policy-us-itc",
       "type": "policy",
       "lang": "en",
-      "title": "US clean energy tax credits after the One Big Beautiful Bill Act (P.L. 119-21): §25D, §48E and §45Y",
+      "title": "Notice 2025-42: Beginning of Construction for Sections 45Y and 48E after the One Big Beautiful Bill Act",
       "authors": "Internal Revenue Service; U.S. Department of the Treasury",
-      "version": "IRS FS-2025-05 (Aug. 21, 2025); IRS Notice 2025-42",
-      "published_at": "2025-08-21",
-      "locator": "FS-2025-05 FAQ 1 and 7; Notice 2025-42 sections 1-3 and 6",
-      "content": "Public Law 119-21 (July 4, 2025), commonly known as the One Big Beautiful Bill Act (OBBBA), accelerated termination of clean energy credits. Residential clean energy credit (section 25D): not allowed for expenditures made after December 31, 2025; an expenditure is treated as made when original installation is completed. Clean electricity investment credit (section 48E) and production credit (section 45Y) for applicable wind and solar facilities: terminated for facilities placed in service after December 31, 2027, unless construction began on or before July 4, 2026. Under IRS Notice 2025-42 (effective for facilities whose construction did not begin before September 2, 2025), beginning of construction must be shown with the Physical Work Test; the Five Percent Safe Harbor is available only for low output solar facilities of 1.5 MW AC or less. Energy storage technology is excepted from the wind and solar termination rule. This is a summary of primary sources, not tax advice.",
+      "version": "IRS Notice 2025-42",
+      "published_at": "2025-08-15",
+      "locator": "Notice 2025-42 sections 1, 2.02, 3, 6, and 7",
+      "content": "Notice 2025-42. Section 1 and section 2.02: Public Law 119-21 (July 4, 2025), commonly known as the One, Big, Beautiful Bill Act (OBBBA), terminates the section 45Y credit and the section 48E credit for an applicable wind or solar facility placed in service after December 31, 2027. Those amendments apply to facilities whose construction begins after July 4, 2026. The notice's definition of an applicable wind or solar facility refers to the exception in section 48E(e)(4)(C) relating to energy storage technology. Section 3: except as provided in section 6, the Physical Work Test is the sole method to establish that construction began before July 5, 2026. Section 6: the Five Percent Safe Harbor is available for a low output solar facility with maximum net output not greater than 1.5 MW (alternating current). Section 7: this notice is effective for applicable wind and solar facilities whose construction did not begin before September 2, 2025. This row is a summary of the notice PDF, not the notice text and not tax advice.",
       "year": 2025,
       "last_verified_at": "2026-10-15",
       "source_url": "https://www.irs.gov/pub/irs-drop/n-25-42.pdf",
       "source_org": "Internal Revenue Service",
       "license_note": "U.S. federal government publication, generally public domain; cite IRS.gov as the source.",
       "verify_interval_days": 30,
-      "corroborated_by": [
-        "guide-grid-interconnection"
-      ],
+      "corroborated_by": [],
       "source_urls": [
-        "https://www.irs.gov/newsroom/faqs-for-modification-of-sections-25c-25d-25e-30c-30d-45l-45w-and-179d-under-public-law-119-21-139-stat-72-july-4-2025-commonly-known-as-the-one-big-beautiful-bill-obbb",
         "https://www.irs.gov/pub/irs-drop/n-25-42.pdf"
+      ],
+      "countries": [
+        "us"
+      ],
+      "effective_date": "2025-09-02",
+      "expiry": null,
+      "superseded_by": null,
+      "key_dates": [
+        {
+          "date": "2025-09-02",
+          "kind": "effective",
+          "event": "Notice 2025-42 section 7: effective for applicable wind and solar facilities whose construction did not begin before September 2, 2025."
+        },
+        {
+          "date": "2026-07-04",
+          "kind": "deadline",
+          "event": "Notice 2025-42 section 2.02: the section 45Y and 48E termination amendments apply to facilities whose construction begins after July 4, 2026."
+        },
+        {
+          "date": "2027-12-31",
+          "kind": "deadline",
+          "event": "Notice 2025-42 section 1: the section 45Y and 48E credits terminate for an applicable wind or solar facility placed in service after December 31, 2027."
+        }
+      ],
+      "evidence_status": "legacy_unreviewed",
+      "doc_number": "IRS Notice 2025-42",
+      "issuer": "Internal Revenue Service; U.S. Department of the Treasury",
+      "publish_date": "2025-08-15",
+      "expiry_date": null,
+      "jurisdiction": "海外",
+      "source_tier": "一手官方",
+      "license": "U.S. federal government publication, generally public domain; cite IRS.gov as the source.",
+      "snapshot_note": "snapshot_scope=已收录摘要，不是官方全文影像。日期取自该 PDF 文件元数据 CreationDate D:20250815143044-04'00'（2025-08-15）；公告正文没有印发布日期。本条只对应 Notice 2025-42，不含 FS-2025-05。evidence_status 仍为 legacy_unreviewed，没有人工复核记录。",
+      "snapshot_sha256": "b462aa2d27acd1ded8876e9e2124342b78dc1f5fbec483053e2edc174bfbdff0",
+      "status": "现行"
+    },
+    {
+      "source_id": "policy-us-fs-2025-05",
+      "type": "policy",
+      "lang": "en",
+      "title": "FAQs for modification of sections 25C, 25D, 25E, 30C, 30D, 45L, 45W, and 179D under Public Law 119-21",
+      "authors": "Internal Revenue Service",
+      "version": "IRS FS-2025-05 (Aug. 21, 2025)",
+      "published_at": "2025-08-21",
+      "locator": "FS-2025-05 FAQ 1 and FAQ 7",
+      "content": "FS-2025-05, August 21, 2025. FAQ 1 states that the section 25D residential clean energy credit will not be allowed for any expenditures made after December 31, 2025. FAQ 7 states that section 25D(e)(8)(A) treats an expenditure as made when the original installation is completed, so an installation completed after December 31, 2025 prevents the section 25D credit. The same page states that these FAQs have not been published in the Internal Revenue Bulletin and will not be relied on or used by the IRS to resolve a case. This row is a summary of that page, not the page itself and not tax advice.",
+      "year": 2025,
+      "last_verified_at": "2026-11-07",
+      "source_url": "https://www.irs.gov/newsroom/faqs-for-modification-of-sections-25c-25d-25e-30c-30d-45l-45w-and-179d-under-public-law-119-21-139-stat-72-july-4-2025-commonly-known-as-the-one-big-beautiful-bill-obbb",
+      "source_org": "Internal Revenue Service",
+      "license_note": "U.S. federal government publication, generally public domain; cite IRS.gov as the source.",
+      "verify_interval_days": 30,
+      "corroborated_by": [],
+      "source_urls": [
+        "https://www.irs.gov/newsroom/faqs-for-modification-of-sections-25c-25d-25e-30c-30d-45l-45w-and-179d-under-public-law-119-21-139-stat-72-july-4-2025-commonly-known-as-the-one-big-beautiful-bill-obbb"
       ],
       "countries": [
         "us"
@@ -186,36 +238,21 @@
       "superseded_by": null,
       "key_dates": [
         {
-          "date": "2025-09-02",
-          "kind": "effective",
-          "event": "IRS Notice 2025-42 beginning-of-construction rules apply to facilities whose construction did not begin before this date."
-        },
-        {
           "date": "2025-12-31",
           "kind": "deadline",
-          "event": "Section 25D residential credit: not allowed for expenditures made after this date."
-        },
-        {
-          "date": "2026-07-04",
-          "kind": "deadline",
-          "event": "Last day to begin construction of a wind or solar facility so that it is not subject to the placed-in-service deadline below (P.L. 119-21)."
-        },
-        {
-          "date": "2027-12-31",
-          "kind": "deadline",
-          "event": "Wind and solar facilities (sections 48E and 45Y) that did not begin construction on or before 2026-07-04 must be placed in service by this date."
+          "event": "FS-2025-05 FAQ 1 and FAQ 7: the section 25D residential clean energy credit is not allowed for expenditures made after December 31, 2025, and installation completed after that date is treated as made after that date."
         }
       ],
       "evidence_status": "legacy_unreviewed",
-      "doc_number": "IRS FS-2025-05 (Aug. 21, 2025); IRS Notice 2025-42",
-      "issuer": "Internal Revenue Service; U.S. Department of the Treasury",
+      "doc_number": "IRS FS-2025-05",
+      "issuer": "Internal Revenue Service",
       "publish_date": "2025-08-21",
       "expiry_date": null,
       "jurisdiction": "海外",
-      "source_tier": "学术",
+      "source_tier": "一手官方",
       "license": "U.S. federal government publication, generally public domain; cite IRS.gov as the source.",
-      "snapshot_note": "snapshot_scope=已收录摘要，不是官方全文影像。",
-      "snapshot_sha256": "b61584ba10d836cbd15cf90848c345c294462167736a8b94574a1390829cbc06",
+      "snapshot_note": "snapshot_scope=已收录摘要，不是官方全文影像。日期来自页面正文 “FS-2025-05, Aug. 21, 2025”。effective_date 重复该印发日期，FAQ 没有另写生效日。页面写明这些 FAQ 未刊登在 Internal Revenue Bulletin。evidence_status 仍为 legacy_unreviewed，没有人工复核记录。",
+      "snapshot_sha256": "f67ac434a6f18e58cc5d5ad31fa6b540b1ae015eba867fe443eb31cad7b9dc5b",
       "status": "现行"
     },
     {

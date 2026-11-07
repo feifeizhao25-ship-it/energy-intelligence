@@ -3,7 +3,7 @@
  */
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { ANALYST_CHAT_PATH, clipboardAnswer, postAnalystChat, replyFromAnalystPayload, sourcesFromAnalystPayload } from './analystChat';
+import { ANALYST_CHAT_PATH, clipboardAnswer, downloadAnalystAnswer, postAnalystChat, replyFromAnalystPayload, sourcesFromAnalystPayload } from './analystChat';
 
 afterEach(() => {
   localStorage.clear();
@@ -74,7 +74,7 @@ describe('international analyst chat contract', () => {
         url: 'https://www.irs.gov/pub/irs-drop/n-25-42.pdf',
         publisher: 'Internal Revenue Service',
         published_at: '2025-08-15',
-        locator: 'FS-2025-05 FAQ 1',
+        locator: 'Notice 2025-42 sections 1, 2.02, 3, 6, and 7',
         excerpt: 'The notice describes the credit deadline.',
         freshness_status: 'current',
         evidence_status: 'legacy_unreviewed',
@@ -85,12 +85,12 @@ describe('international analyst chat contract', () => {
       ai_metadata: { stand_in: 'library_only', model_called: false },
     };
     const sources = sourcesFromAnalystPayload(payload);
-    expect(sources[0].locator).toBe('FS-2025-05 FAQ 1');
+    expect(sources[0].locator).toBe('Notice 2025-42 sections 1, 2.02, 3, 6, and 7');
     expect(sources[0].url).toContain('irs.gov');
     const copied = clipboardAnswer(payload.message, sources);
     expect(copied).toContain(payload.message);
     expect(copied).toContain('https://www.irs.gov/pub/irs-drop/n-25-42.pdf');
-    expect(copied).toContain('Locator: FS-2025-05 FAQ 1');
+    expect(copied).toContain('Locator: Notice 2025-42 sections 1, 2.02, 3, 6, and 7');
     expect(copied).toContain('not recorded as a human review');
     expect(copied).not.toContain('example.gov');
   });
@@ -101,5 +101,13 @@ describe('international analyst chat contract', () => {
     expect(replyFromAnalystPayload({ content: 'partial chunk' })).toBeNull();
     expect(replyFromAnalystPayload('data: {"content":"x"}')).toBeNull();
     expect(replyFromAnalystPayload({ code: 500, message: 'nope' })).toBeNull();
+  });
+
+  it('shows the export endpoint message for a refused download', async () => {
+    localStorage.setItem('auth_token', 'tok-1');
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({
+      detail: { error: 'REPORT_QUOTA_EXCEEDED', message: "You have used this month's report exports (3). This is not an extra AI answer." },
+    }), { status: 429 })));
+    await expect(downloadAnalystAnswer('ans-1', 'pdf')).rejects.toThrow(/report exports \(3\)/);
   });
 });

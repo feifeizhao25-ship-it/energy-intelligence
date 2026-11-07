@@ -394,11 +394,15 @@ async def export_stored_answer(
 ):
     """Download one answer this user already received. The file is not built from client-supplied sources."""
     record = _ANSWER_EXPORTS.get(answer_id)
-    if not record or record["user_id"] != str(user_id):
-        raise HTTPException(status_code=404, detail="回答不存在或无权访问")
     user = await db.scalar(select(User).where(User.id == user_id))
-    if user is None:
-        raise HTTPException(status_code=404, detail="回答不存在或无权访问")
+    market = "global" if user is not None and user.market == "global" else "cn"
+    missing = (
+        "This answer does not exist or you cannot access it."
+        if market == "global" else
+        "回答不存在或无权访问"
+    )
+    if not record or user is None or record["user_id"] != str(user_id):
+        raise HTTPException(status_code=404, detail=missing)
     offer = _export_offer(user)
     if not offer.get(body.format):
         market = record["market"]

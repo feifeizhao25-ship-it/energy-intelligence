@@ -31,10 +31,11 @@ export interface AnswerDateLine {
   text: string;
 }
 
-export function buildAnswerDateLine(opts: { content: string; question?: string; model?: string | null; answeredAt: Date }): AnswerDateLine {
+export function buildAnswerDateLine(opts: { content: string; question?: string; model?: string | null; answeredAt: Date; sourceDates?: Array<string | null | undefined> }): AnswerDateLine {
   const d = opts.answeredAt;
   const verifiedDate = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-  const sourceDate = latestCitedDate(opts.content, d) ?? '未引用带日期的来源';
+  const dated = [opts.content, ...(opts.sourceDates || [])].filter(Boolean).join('\n');
+  const sourceDate = latestCitedDate(dated, d) ?? '未引用带日期的来源';
   const model = opts.model?.trim() || '未知模型';
   const policyNotice = POLICY_RE.test(`${opts.question ?? ''}${opts.content}`) ? '涉及政策内容，请以最新官方文件为准' : null;
   const text = [`引用来源最新日期：${sourceDate}`, `核验日期：${verifiedDate}`, `模型：${model}`, policyNotice].filter(Boolean).join(' · ');

@@ -113,7 +113,7 @@ const AnswerSources: React.FC<{ reply: AnalystReply }> = ({ reply }) => {
             Download PDF
           </button>
         )}
-        {reply.downloads.docx && reply.answerId && (
+        {reply.answerId && (
           <button type="button" className="rounded border border-[var(--border-default)] px-2 py-1 text-[12px]" onClick={() => void download('docx')}>
             Download Word
           </button>
@@ -122,7 +122,7 @@ const AnswerSources: React.FC<{ reply: AnalystReply }> = ({ reply }) => {
           <span className="text-[12px] text-[var(--text-tertiary)]">Word export is not included in this plan.</span>
         )}
       </div>
-      {downloadError && <p className="text-[12px] text-[var(--color-danger)]">{downloadError}</p>}
+      {downloadError && <p className="text-[12px] text-[var(--color-danger)]" data-testid="download-error">{downloadError}</p>}
     </div>
   );
 };
