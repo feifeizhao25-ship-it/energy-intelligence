@@ -156,6 +156,35 @@ async def delete_report(token: str, report_id: str) -> dict:
     return {"status": response.status_code, "pid": os.getpid(), "body": response.json()}
 
 
+async def insert_user(plan: str) -> dict:
+    import uuid
+    from app.core.security import create_access_token
+    from app.database import AsyncSessionLocal
+    from app.models.user import User
+    from app.utils.security import get_password_hash
+    user_id = str(uuid.uuid4())
+    async with AsyncSessionLocal() as db:
+        db.add(User(
+            id=user_id, email=f"{plan}-{user_id[:8]}@example.com",
+            password_hash=get_password_hash("Passw0rd!x"), name=f"{plan}用户",
+            role="user", market="cn", subscription_plan=plan,
+            usage_quota={"ai_calls": {}, "report_exports": {}},
+        ))
+        await db.commit()
+    return {"user_id": user_id, "token": create_access_token(user_id), "plan": plan}
+
+
+async def generating(user_id: str) -> dict:
+    from sqlalchemy import select
+    from app.database import AsyncSessionLocal
+    from app.models.report import Report
+    async with AsyncSessionLocal() as db:
+        rows = (await db.execute(
+            select(Report.id, Report.status).where(Report.user_id == user_id, Report.status == "generating")
+        )).all()
+    return {"ids": [row[0] for row in rows]}
+
+
 async def report_status(token: str, report_id: str) -> dict:
     async with await _client() as client:
         response = await client.get(
@@ -184,6 +213,10 @@ def main() -> None:
         result = asyncio.run(delete_report(payload["token"], payload["report_id"]))
     elif action == "status":
         result = asyncio.run(report_status(payload["token"], payload["report_id"]))
+    elif action == "insert-user":
+        result = asyncio.run(insert_user(payload["plan"]))
+    elif action == "generating":
+        result = asyncio.run(generating(payload["user_id"]))
     else:
         raise SystemExit(f"unknown action {action}")
     sys.stdout.write(json.dumps(result, ensure_ascii=False))

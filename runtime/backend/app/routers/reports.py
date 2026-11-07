@@ -2143,6 +2143,10 @@ async def _generate_report_task(
     """后台任务: 实际生成报告文件"""
     template_info = TEMPLATES[report_type]
     metrics = calc_financial_metrics(data.get("financial", {}))
+    # 仅测试常驻服务时用来拉长“生成中”，默认不设置，不影响正式生成。
+    pause = os.environ.get("REPORT_TASK_DELAY_SECONDS", "").strip()
+    if pause:
+        await asyncio.sleep(float(pause))
 
     try:
         if output_format == "docx":
