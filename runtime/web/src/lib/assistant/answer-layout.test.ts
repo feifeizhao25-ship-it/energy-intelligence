@@ -20,7 +20,7 @@ test('含日期的长句按标点拆开，日期本身留在同一段', () => {
   expect(clauses.some((clause) => clause.includes('2025年11月') && !clause.includes('2025年11月1日'))).toBe(false);
 });
 
-test('每条来源标题和正文在同一个不可跨页的表格行里', () => {
+test('来源标题只跟下一段留在同页，长来源可以按段落换页', () => {
   const docx = renderAnswerDocx({
     id: 'layout',
     userId: 'owner',
@@ -54,13 +54,19 @@ test('每条来源标题和正文在同一个不可跨页的表格行里', () =>
   expect(xml).toContain('w:h="16838"');
   expect(xml).toContain('未调用模型');
   expect(xml).toContain('不是经人工签字');
-  const rows = xml.split('<w:tr>').slice(1);
-  expect(rows).toHaveLength(2);
-  for (const row of rows) {
-    expect(row).toContain('<w:cantSplit/>');
-    expect(row.indexOf('[')).toBeLessThan(row.indexOf('https://'));
-    expect(row.indexOf('[')).toBeLessThan(row.indexOf('机器摘录'));
+  expect(xml).not.toContain('cantSplit');
+  expect(xml).not.toContain('<w:tbl>');
+  const paragraphs = xml.split('<w:p>').slice(1);
+  for (const marker of ['[1]', '[2]']) {
+    const titleAt = paragraphs.findIndex((paragraph) => paragraph.includes(marker));
+    expect(titleAt).toBeGreaterThan(-1);
+    expect(paragraphs[titleAt]).toContain('<w:keepNext/>');
+    expect(paragraphs[titleAt + 1]).toContain('发布机构');
+    expect(paragraphs[titleAt + 1]).not.toContain('<w:keepNext/>');
   }
+  const review = paragraphs.find((paragraph) => paragraph.includes('机器摘录'));
+  expect(review).toBeTruthy();
+  expect(review).not.toContain('<w:keepNext/>');
   expect(xml).toContain('https://drc.gd.gov.cn/ywtz/content/post_4828493.html');
   expect(xml).toContain('https://drc.gd.gov.cn/ywtz/content/post_4965021.html');
   expect(docx.toString('utf8')).toContain('TargetMode="External"');

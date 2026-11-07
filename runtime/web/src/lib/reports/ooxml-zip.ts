@@ -143,42 +143,23 @@ function paragraphXml(text: string, ascii: string, eastAsia: string, size?: stri
     return `<w:p><w:pPr><w:keepLines/>${keep}<w:autoSpaceDE w:val="0"/><w:autoSpaceDN w:val="0"/></w:pPr>${inner}</w:p>`;
 }
 
-function sourceTable(paragraphs: string): string {
-    return `<w:tbl><w:tblPr><w:tblW w:w="5000" w:type="pct"/><w:tblLayout w:type="fixed"/><w:tblBorders><w:top w:val="nil"/><w:left w:val="nil"/><w:bottom w:val="nil"/><w:right w:val="nil"/><w:insideH w:val="nil"/><w:insideV w:val="nil"/></w:tblBorders></w:tblPr><w:tblGrid><w:gridCol w:w="9638"/></w:tblGrid><w:tr><w:trPr><w:cantSplit/></w:trPr><w:tc><w:tcPr><w:tcW w:w="9638" w:type="dxa"/></w:tcPr>${paragraphs}</w:tc></w:tr></w:tbl>`;
-}
-
-function lineParagraphs(text: string, links: { id: string; url: string }[], keepNext: boolean): string {
+function lineParagraphs(text: string, links: { id: string; url: string }[], glueToNext: boolean): string {
     if (URL_LINE.test(text)) {
         const id = `rIdLink${links.length + 1}`;
         links.push({ id, url: text });
-        return paragraphXml(text, 'FangSong', '仿宋', undefined, id, keepNext);
+        return paragraphXml(text, 'FangSong', '仿宋', undefined, id, glueToNext);
     }
-    return layoutClauses(text).map((clause, index, all) => paragraphXml(clause, 'FangSong', '仿宋', undefined, undefined, keepNext || index < all.length - 1)).join('');
+    return layoutClauses(text).map((clause) => paragraphXml(clause, 'FangSong', '仿宋', undefined, undefined, glueToNext)).join('');
 }
 
-/** 公文版资料汇编。封面写非正式文件，标题黑体、正文仿宋，不用红头。整行 URL 写成可点击超链接。以 [n] 开头的来源整段放进不可跨页的表格行。 */
+/** 公文版资料汇编。封面写非正式文件，标题黑体、正文仿宋，不用红头。整行 URL 写成可点击超链接。来源标题用 keepNext 只跟下一段留在同页，后面的段落可以换页。 */
 export function gazetteBuffer(title: string, rows: string[][]): Buffer {
     const links: { id: string; url: string }[] = [];
     const lines = rows.map((row) => row.join(' '));
-    const firstSource = lines.findIndex((line) => /^\[\d+\] /.test(line));
-    let epilogueAt = -1;
-    for (let index = lines.length - 1; index >= 0; index -= 1) {
-        if (lines[index].startsWith('本文件由软件')) { epilogueAt = index; break; }
-    }
-    const preambleEnd = firstSource === -1 ? lines.length : firstSource;
-    const sourceEnd = epilogueAt > preambleEnd ? epilogueAt : lines.length;
-    const blocks: string[] = [];
-    for (const line of lines.slice(0, preambleEnd)) blocks.push(lineParagraphs(line, links, false));
-    let cursor = preambleEnd;
-    while (cursor < sourceEnd) {
-        const next = lines.findIndex((line, index) => index > cursor && /^\[\d+\] /.test(line));
-        const end = next === -1 || next > sourceEnd ? sourceEnd : next;
-        const group = lines.slice(cursor, end);
-        const paragraphs = group.map((line, index) => lineParagraphs(line, links, index < group.length - 1)).join('');
-        blocks.push(sourceTable(paragraphs));
-        cursor = end;
-    }
-    for (const line of lines.slice(sourceEnd)) blocks.push(lineParagraphs(line, links, false));
+    const blocks = lines.map((line, index) => {
+        const glueToNext = /^\[\d+\] /.test(line) && index < lines.length - 1;
+        return lineParagraphs(line, links, glueToNext);
+    });
     const document = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
   <w:body>
