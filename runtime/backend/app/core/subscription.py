@@ -6,6 +6,7 @@
 并补全残片函数。
 """
 
+import asyncio
 import json
 from datetime import datetime, timezone
 from pathlib import Path
@@ -99,7 +100,16 @@ async def assert_report_quota(user_id: str, db: AsyncSession) -> User:
     has been accepted. This prevents invalid projects or failed validation
     requests from consuming a paid entitlement.
     """
-    user = await _get_user(user_id, db)
+    stmt = select(User).where(User.id == user_id)
+    if db.bind is not None and db.bind.dialect.name == "postgresql":
+        stmt = stmt.with_for_update()
+    result = await db.execute(stmt)
+    user = result.scalar_one_or_none()
+    if user is None:
+        raise LookupError(f"user not found: {user_id}")
+    # Sessions keep expire_on_commit disabled, so a user loaded earlier in the
+    # request would otherwise hide a quota write committed by a concurrent job.
+    await db.refresh(user)
     plan = user.plan
     limit = PLAN_QUOTAS.get(plan, PLAN_QUOTAS["free"]).get(
         "report_exports_per_month", 5
@@ -112,21 +122,69 @@ async def assert_report_quota(user_id: str, db: AsyncSession) -> User:
     return user
 
 
-async def consume_report_quota(user: User, db: AsyncSession) -> None:
-    """Record one accepted report generation request."""
-    plan = user.plan
-    limit = PLAN_QUOTAS.get(plan, PLAN_QUOTAS["free"]).get(
+_REPORT_QUOTA_LOCKS: dict[str, asyncio.Lock] = {}
+
+
+def report_quota_lock(user_id: str) -> asyncio.Lock:
+    """Serialize one user's report-export counter inside this process.
+
+    PostgreSQL row locks are not available on the sqlite test database. The
+    route also re-reads the counter inside this lock, so two accepted jobs
+    cannot both take the last monthly slot.
+    """
+    lock = _REPORT_QUOTA_LOCKS.get(user_id)
+    if lock is None:
+        lock = asyncio.Lock()
+        _REPORT_QUOTA_LOCKS[user_id] = lock
+    return lock
+
+
+def report_month_key() -> str:
+    return f"monthly_{datetime.now(timezone.utc).strftime('%Y-%m')}"
+
+
+def report_export_limit(user: User) -> int:
+    return PLAN_QUOTAS.get(user.plan, PLAN_QUOTAS["free"]).get(
         "report_exports_per_month", 5
     )
-    if limit == -1:
-        return
+
+
+def report_format_included(user: User, fmt: str) -> bool:
+    """Project reports follow export.formats only.
+
+    citation_export is the answer-download flag. A free plan already lacks
+    docx in export.formats; that is the report rule, not a second gate.
+    """
+    granted = _plan_entitlements(user).get("export_formats") or []
+    return fmt in granted
+
+
+def _write_report_usage(user: User, used: int) -> None:
     usage = dict(user.usage_quota or {})
     report_usage = dict(usage.get("report_exports", {}))
-    month_key = f"monthly_{datetime.now(timezone.utc).strftime('%Y-%m')}"
-    report_usage[month_key] = int(report_usage.get(month_key, 0) or 0) + 1
+    report_usage[report_month_key()] = used
     usage["report_exports"] = report_usage
     user.usage_quota = usage
+
+
+async def consume_report_quota(user: User, db: AsyncSession) -> None:
+    """Record one accepted report generation request."""
+    limit = report_export_limit(user)
+    if limit == -1:
+        return
+    used = _period_usage(user, "report_exports", report_month_key()) + 1
+    _write_report_usage(user, used)
     await db.commit()
+
+
+async def release_report_quota(user: User, db: AsyncSession) -> None:
+    """Return one reserved export. The caller holds report_quota_lock and commits."""
+    if report_export_limit(user) == -1:
+        return
+    used = _period_usage(user, "report_exports", report_month_key())
+    if used <= 0:
+        return
+    _write_report_usage(user, used - 1)
 
 
 async def check_report_quota(user_id: str, db: AsyncSession) -> None:
