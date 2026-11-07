@@ -16,7 +16,8 @@ def test_sources_with_publisher_date_and_link_are_appended_when_the_model_omitte
     h = [hit("广东省新能源上网电价市场化改革实施方案", "广东省发展和改革委员会", "2025-09-19", "https://drc.gd.gov.cn/x")]
     out = _provenance_footer("江苏分时电价影响屋顶光伏收益 [S1]。", h, "cn", TODAY)
     assert "来源（检索于 2026-11-04）" in out
-    assert "[S1] 广东省新能源上网电价市场化改革实施方案 | 广东省发展和改革委员会 | 2025-09-19 | https://drc.gd.gov.cn/x" in out
+    assert "[S1] 广东省新能源上网电价市场化改革实施方案 | 广东省发展和改革委员会 | 记录中的日期：2025-09-19。日期类型：未标明。 | https://drc.gd.gov.cn/x" in out
+    assert "发布日期" not in out and "Published" not in out
 
 
 def test_source_the_model_already_printed_with_its_date_is_not_repeated():

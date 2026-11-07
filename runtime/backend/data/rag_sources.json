@@ -79,7 +79,14 @@
           "source_id": "policy-cn-114",
           "relation": "同属电价机制改革：114号管调节性电源容量电价，不替代136号"
         }
-      ]
+      ],
+      "date_kind": "page_release",
+      "sign_date": "2025-01-27",
+      "effective_date_stated": false,
+      "effective_date_basis": "页面标注发布时间为2025/02/09，落款为2025年1月27日。存量与增量以2025年6月1日分界。",
+      "excerpt": "2025年6月1日以前投产的新能源存量项目：（2）机制电价，按现行价格政策执行，不高于当地煤电基准价。",
+      "primary_checked_at": "2026-11-07",
+      "primary_checked_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202502/t20250209_1396066.html"
     },
     {
       "source_id": "policy-cn-storage",
@@ -159,24 +166,81 @@
       "source_id": "policy-us-itc",
       "type": "policy",
       "lang": "en",
-      "title": "US clean energy tax credits after the One Big Beautiful Bill Act (P.L. 119-21): §25D, §48E and §45Y",
+      "title": "Notice 2025-42: Beginning of Construction for Sections 45Y and 48E after the One Big Beautiful Bill Act",
       "authors": "Internal Revenue Service; U.S. Department of the Treasury",
-      "version": "IRS FS-2025-05 (Aug. 21, 2025); IRS Notice 2025-42",
-      "published_at": "2025-08-21",
-      "locator": "FS-2025-05 FAQ 1 and 7; Notice 2025-42 sections 1-3 and 6",
-      "content": "Public Law 119-21 (July 4, 2025), commonly known as the One Big Beautiful Bill Act (OBBBA), accelerated termination of clean energy credits. Residential clean energy credit (section 25D): not allowed for expenditures made after December 31, 2025; an expenditure is treated as made when original installation is completed. Clean electricity investment credit (section 48E) and production credit (section 45Y) for applicable wind and solar facilities: terminated for facilities placed in service after December 31, 2027, unless construction began on or before July 4, 2026. Under IRS Notice 2025-42 (effective for facilities whose construction did not begin before September 2, 2025), beginning of construction must be shown with the Physical Work Test; the Five Percent Safe Harbor is available only for low output solar facilities of 1.5 MW AC or less. Energy storage technology is excepted from the wind and solar termination rule. This is a summary of primary sources, not tax advice.",
+      "version": "IRS Notice 2025-42",
+      "published_at": "2025-08-15",
+      "locator": "Notice 2025-42 sections 1, 2.02, 3, 6, and 7",
+      "content": "Notice 2025-42. Section 1 and section 2.02: Public Law 119-21 (July 4, 2025), commonly known as the One, Big, Beautiful Bill Act (OBBBA), terminates the section 45Y credit and the section 48E credit for an applicable wind or solar facility placed in service after December 31, 2027. Those amendments apply to facilities whose construction begins after July 4, 2026. The notice's definition of an applicable wind or solar facility refers to the exception in section 48E(e)(4)(C) relating to energy storage technology. Section 3: except as provided in section 6, the Physical Work Test is the sole method to establish that construction began before July 5, 2026. Section 6: the Five Percent Safe Harbor is available for a low output solar facility with maximum net output not greater than 1.5 MW (alternating current). Section 7: this notice is effective for applicable wind and solar facilities whose construction did not begin before September 2, 2025. This row is a summary of the notice PDF, not the notice text and not tax advice.",
       "year": 2025,
       "last_verified_at": "2026-10-15",
       "source_url": "https://www.irs.gov/pub/irs-drop/n-25-42.pdf",
       "source_org": "Internal Revenue Service",
       "license_note": "U.S. federal government publication, generally public domain; cite IRS.gov as the source.",
       "verify_interval_days": 30,
-      "corroborated_by": [
-        "guide-grid-interconnection"
-      ],
+      "corroborated_by": [],
       "source_urls": [
-        "https://www.irs.gov/newsroom/faqs-for-modification-of-sections-25c-25d-25e-30c-30d-45l-45w-and-179d-under-public-law-119-21-139-stat-72-july-4-2025-commonly-known-as-the-one-big-beautiful-bill-obbb",
         "https://www.irs.gov/pub/irs-drop/n-25-42.pdf"
+      ],
+      "countries": [
+        "us"
+      ],
+      "effective_date": "2025-09-02",
+      "expiry": null,
+      "superseded_by": null,
+      "key_dates": [
+        {
+          "date": "2025-09-02",
+          "kind": "effective",
+          "event": "Notice 2025-42 section 7: effective for applicable wind and solar facilities whose construction did not begin before September 2, 2025."
+        },
+        {
+          "date": "2026-07-04",
+          "kind": "deadline",
+          "event": "Notice 2025-42 section 2.02: the section 45Y and 48E termination amendments apply to facilities whose construction begins after July 4, 2026."
+        },
+        {
+          "date": "2027-12-31",
+          "kind": "deadline",
+          "event": "Notice 2025-42 section 1: the section 45Y and 48E credits terminate for an applicable wind or solar facility placed in service after December 31, 2027."
+        }
+      ],
+      "evidence_status": "legacy_unreviewed",
+      "doc_number": "IRS Notice 2025-42",
+      "issuer": "Internal Revenue Service; U.S. Department of the Treasury",
+      "publish_date": "2025-08-15",
+      "expiry_date": null,
+      "jurisdiction": "海外",
+      "source_tier": "一手官方",
+      "license": "U.S. federal government publication, generally public domain; cite IRS.gov as the source.",
+      "snapshot_note": "snapshot_scope=已收录摘要，不是官方全文影像。日期取自该 PDF 文件元数据 CreationDate D:20250815143044-04'00'（2025-08-15）；公告正文没有印发布日期。本条只对应 Notice 2025-42，不含 FS-2025-05。evidence_status 仍为 legacy_unreviewed，没有人工复核记录。",
+      "snapshot_sha256": "b462aa2d27acd1ded8876e9e2124342b78dc1f5fbec483053e2edc174bfbdff0",
+      "status": "现行",
+      "date_kind": "pdf_creation",
+      "effective_date_stated": true,
+      "effective_date_basis": "Notice 2025-42 section 7: effective for applicable wind and solar facilities whose construction did not begin before September 2, 2025.",
+      "primary_checked_at": "2026-11-07",
+      "primary_checked_url": "https://www.irs.gov/pub/irs-drop/n-25-42.pdf"
+    },
+    {
+      "source_id": "policy-us-fs-2025-05",
+      "type": "policy",
+      "lang": "en",
+      "title": "FAQs for modification of sections 25C, 25D, 25E, 30C, 30D, 45L, 45W, and 179D under Public Law 119-21",
+      "authors": "Internal Revenue Service",
+      "version": "IRS FS-2025-05 (Aug. 21, 2025)",
+      "published_at": "2025-08-21",
+      "locator": "FS-2025-05 FAQ 1 and FAQ 7",
+      "content": "FS-2025-05, August 21, 2025. FAQ 1 states that the section 25D residential clean energy credit will not be allowed for any expenditures made after December 31, 2025. FAQ 7 states that section 25D(e)(8)(A) treats an expenditure as made when the original installation is completed, so an installation completed after December 31, 2025 prevents the section 25D credit. The same page states that these FAQs have not been published in the Internal Revenue Bulletin and will not be relied on or used by the IRS to resolve a case. This row is a summary of that page, not the page itself and not tax advice.",
+      "year": 2025,
+      "last_verified_at": "2026-11-07",
+      "source_url": "https://www.irs.gov/newsroom/faqs-for-modification-of-sections-25c-25d-25e-30c-30d-45l-45w-and-179d-under-public-law-119-21-139-stat-72-july-4-2025-commonly-known-as-the-one-big-beautiful-bill-obbb",
+      "source_org": "Internal Revenue Service",
+      "license_note": "U.S. federal government publication, generally public domain; cite IRS.gov as the source.",
+      "verify_interval_days": 30,
+      "corroborated_by": [],
+      "source_urls": [
+        "https://www.irs.gov/newsroom/faqs-for-modification-of-sections-25c-25d-25e-30c-30d-45l-45w-and-179d-under-public-law-119-21-139-stat-72-july-4-2025-commonly-known-as-the-one-big-beautiful-bill-obbb"
       ],
       "countries": [
         "us"
@@ -186,37 +250,27 @@
       "superseded_by": null,
       "key_dates": [
         {
-          "date": "2025-09-02",
-          "kind": "effective",
-          "event": "IRS Notice 2025-42 beginning-of-construction rules apply to facilities whose construction did not begin before this date."
-        },
-        {
           "date": "2025-12-31",
           "kind": "deadline",
-          "event": "Section 25D residential credit: not allowed for expenditures made after this date."
-        },
-        {
-          "date": "2026-07-04",
-          "kind": "deadline",
-          "event": "Last day to begin construction of a wind or solar facility so that it is not subject to the placed-in-service deadline below (P.L. 119-21)."
-        },
-        {
-          "date": "2027-12-31",
-          "kind": "deadline",
-          "event": "Wind and solar facilities (sections 48E and 45Y) that did not begin construction on or before 2026-07-04 must be placed in service by this date."
+          "event": "FS-2025-05 FAQ 1 and FAQ 7: the section 25D residential clean energy credit is not allowed for expenditures made after December 31, 2025, and installation completed after that date is treated as made after that date."
         }
       ],
       "evidence_status": "legacy_unreviewed",
-      "doc_number": "IRS FS-2025-05 (Aug. 21, 2025); IRS Notice 2025-42",
-      "issuer": "Internal Revenue Service; U.S. Department of the Treasury",
+      "doc_number": "IRS FS-2025-05",
+      "issuer": "Internal Revenue Service",
       "publish_date": "2025-08-21",
       "expiry_date": null,
       "jurisdiction": "海外",
-      "source_tier": "学术",
+      "source_tier": "一手官方",
       "license": "U.S. federal government publication, generally public domain; cite IRS.gov as the source.",
-      "snapshot_note": "snapshot_scope=已收录摘要，不是官方全文影像。",
-      "snapshot_sha256": "b61584ba10d836cbd15cf90848c345c294462167736a8b94574a1390829cbc06",
-      "status": "现行"
+      "snapshot_note": "snapshot_scope=已收录摘要，不是官方全文影像。日期来自页面正文 “FS-2025-05, Aug. 21, 2025”。effective_date 重复该印发日期，FAQ 没有另写生效日。页面写明这些 FAQ 未刊登在 Internal Revenue Bulletin。evidence_status 仍为 legacy_unreviewed，没有人工复核记录。",
+      "snapshot_sha256": "f67ac434a6f18e58cc5d5ad31fa6b540b1ae015eba867fe443eb31cad7b9dc5b",
+      "status": "现行",
+      "date_kind": "printed_on_page",
+      "effective_date_stated": false,
+      "effective_date_basis": "The page prints FS-2025-05, Aug. 21, 2025. It does not state a separate effective date.",
+      "primary_checked_at": "2026-11-07",
+      "primary_checked_url": "https://www.irs.gov/newsroom/faqs-for-modification-of-sections-25c-25d-25e-30c-30d-45l-45w-and-179d-under-public-law-119-21-139-stat-72-july-4-2025-commonly-known-as-the-one-big-beautiful-bill-obbb"
     },
     {
       "source_id": "std-ieee1547",
@@ -4873,11 +4927,11 @@
       "source_id": "policy-cn-gd-yfgjg-2025-263",
       "type": "policy",
       "lang": "cn",
-      "title": "广东省关于深化新能源上网电价市场化改革促进新能源高质量发展的实施方案（粤发改价格〔2025〕263号）",
+      "title": "广东省发展改革委 广东省能源局关于印发《关于深化新能源上网电价市场化改革促进新能源高质量发展的实施方案》的通知（粤发改价格〔2025〕263号）",
       "authors": "广东省发展改革委 广东省能源局",
       "version": "粤发改价格〔2025〕263号",
       "published_at": "2025-09-19",
-      "locator": "一、总体目标；二、主要原则；三、主要措施（存量项目、增量项目、结算与退出机制）；四、保障措施；五、方案执行时间；附表",
+      "locator": "一、总体目标；二、主要原则；三、主要任务；四、保障措施；五、方案执行时间；附表",
       "content": "广东省发展改革委、广东省能源局《关于深化新能源上网电价市场化改革促进新能源高质量发展的实施方案》（粤发改价格〔2025〕263号），2025-09-19印发，广东省发展改革委官网业务通知栏目公开。 正文节选：粤发改价格〔2025〕263号各地级以上市发展改革局（委）、广州市工业和信息化局、惠州市能源和重点项目局，广东电网有限责任公司、深圳供电局有限公司，广东电力交易中心，有关发电企业：现将《关于深化新能源上网电价市场化改革 促进新能源高质量发展的实施方案》印发给你们，请遵照执行。执行中发现问题请及时报告。广东省发展改革委      广东省能源局2025年9月19日关于深化新能源上网电价市场化改革促进新能源高质量发展的实施方案为贯彻落实《国家发展改革委 国家能源局关于深化新能源上网电价市场化改革 促进新能源高质量发展的通知》（发改价格〔2025〕136号）要求，平稳有序推进我省新能源上网电价市场化改革工作，促进新能源高质量发展，结合广东实际，制定本实施方案。一、总体目标以市场化改革为核心，推动风电、光伏等新能源电量全面参与电力市场交易，建立适应我省新能源发展特点的可持续发展价格结算机制，区分存量和增量项目分类施策，确保2025年底前实现新能源上网电价全面市场化，提升新能源与电力系统的协同能力，促进新能源产业高质量发展，助力实现“双碳”目标。二、主要原则坚持平等开放。实现新能源与火电同等参与电力市场，上网电价通过市场交易形成，公平承担电力系统调节成本。规范市场秩序，加强信息公开，打造稳定公平透明的市场环境。坚持效率优先。还原电力商品属性，构建有效竞争的市场结构和市场体系，完善市场价格形成机制，更好发挥市场对资源优化配置的决定性作用，引导新能源与调节电源、电网协调发展，构建更加高效协同的新型电力系统。坚持统筹协调。分类施策，妥善衔接现行政策，合理确定市场外差价结算机制的覆盖范围和价格水平。加强政策与市场机制的协同配合，做好与电能量市场、绿电绿证市场、代理购电、并网管理、调度运行等衔接融合，有序推进市场建设。坚持风险可控。加强全过程风险管控，对各类潜在风险做到辨识充分、预案详实、系统防控、科学化解。及时评估阶段性成效，坚持问题导向，适时优化具体措施，确保方案实施平稳有序。三、主要任务（一）推动新能源上网电价全面由市场形成1.推动新能源上网电量全面参与市场交易。2025年11月1日起，全省新能源项目（风电、太阳能发电，下同）上网电量全部进入电力市场，上网电价通过市场交易形成。新能源项目报量报价参与市场交易的范围主要以并网电压等级（10千伏及以上并网电压等级的确定以电网公司正式接入系统方案为准，下同）进行划分，具体按照广东新能源参与电力市场交易实施细则执行。鼓励具备条件的10千伏及以下新能源聚合后报量报价参与市场交易，其余接受市场形成的价格。2.健全市场交易机制。以报量报价方式参与市场交易的新能源项目可参与年度、多月、月度、周及多日等周期的中长期交易，公平参与实时市场，加快实现自愿参与日前市场，具体时间节点和参与方式等在交易规则中另行明确。完善适应新能源出力特点的中长期交易机制，允许供需双方自主确定中长期合同的量价、曲线等内容，不对中长期签约比例进行限制。新能源参与市场后因报价等因素未上网电量，不纳入新能源利用率统计与考核。纳入电力平衡的新能源按照系统运行需要公平承担调节责任。3.完善市场价格机制。适当放宽现货市场限价，现货市场申报、出清价格上限考虑目前省内工商业用户尖峰电价水平等因素确定，申报、出清价格下限考虑新能源在电力市场外可获得的其他收益等因素确定，后续根据市场运行情况适时调整。接受市场形成价格的新能源项目，结算价格按照所在节点的实时市场分时价格确定。价格上下限等具体参数见附表。（二）建立健全支持新能源高质量发展的制度机制1.建立新能源可持续发展价格结算机制。新能源项目参与电力市场交易后，在市场外建立差价结算的机制。纳入机制的电量，初期不再开展包括中长期交易、绿电交易等形式的差价结算。对于纳入机制的新能源电价水平（以下简称机制电价），市场交易均价低于或高于机制电价的部分，由电网企业按规定开展差价结算，结算费用纳入当地系统运行费用。参与机制电价的项目可在每年开展竞价前自主向电网企业申请下调次年机制电量比例，调低比例部分不得再次申请纳入机制电价范围。2.存量项目执行差价结算机制的电量规模、机制电价和执行期限。（1）存量项目范围。2025年6月1日以前已投产的新能源项目。10千伏及以上新能源存量项目清单由各地市能源主管部门负责出具，10千伏以下新能源存量项目以项目的并网时间为准。2025年6月1日以前通过竞争性配置等方式确定业主的海上风电项目视同存量项目。存量项目实际并网容量与备案容量不一致的，可执行变更备案程序；如后续增加并网容量，按照增量项目执行。（2）电量规模。妥善衔接现行具有保障性质的相关电量规模政策，110千伏以下电压等级项目机制电量比例上限取100%，2025年1月1日起新增并网的110千伏及以上电压等级集中式光伏项目机制电量比例上限取50%，其他项目机制电量比例上限取70%。（3）机制电价。存量项目机制电价参考广东省燃煤发电基准价0.453元/千瓦时执行。（4）执行期限。按照20年或全生命周期合理利用小时数扣减截至2025年5月31日的累计投产时间较早者确定，到期后存量项目不再执行机制电价。3.增量项目执行差价结算机制的电量规模、机制电价和执行期限。（1）增量项目范围。2025年6月1日起投产且未纳入过机制电价的新能源项目，不含2025年6月1日以前通过竞争性配置等方式确定业主的海上风电项目。预计从当期竞价月起未来12个月内投产的新能源项目，资料齐备的情况下可申请参与竞价。（2）竞价分类。初期综合建设成本和运行特性的差异，分为海上风电项目、其他风电项目和光伏项目三类（下文的“同类型”与之保持一致）。海上风电项目和光伏项目分别组织竞价，同一竞价场次的新能源项目执行相同的机制电价水平和期限。（3）电量规模。每年新增纳入机制的电量规模由广东省发展改革委、广东省能源局按照相关规定确定，并在竞价前予以公布。（4）竞价电量上限。集中式光伏和陆上风电项目不参与机制电量竞价。在参与竞价的项目中，110千伏以下电压等级项目的竞价电量申报比例上限取80%，其他项目的竞价电量申报比例上限原则上与存量项目机制电量比例上限保持一致。（5）机制电价上下限。竞价上限综合考虑合理成本收益、绿色价值、电力市场供需形势、用户承受能力等因素确定，初期考虑成本因素、避免无序竞争等设定竞价下限，具体见附表。（6）机制电价。竞价时按报价从低到高确定入选项目，机制电价原则上按入选项目最高报价确定、但不得高于竞价上限。价格相同时，按照申报时间优先确定排序，直至满足竞价总规模。（7）执行期限。增量项目机制电价的执行期限为：海上风电项目14年，光伏项目12年，到期后不再执行机制电价。增量项目参与竞价成功后，未投产项目的执行起始时间按照竞价时申报的投产时间确定；已投产项目按照入选时间确定。增量项目执行机制电价前必须具备“四可”（可观、可测、可调、可控）条件且已投产。（8）竞价机制。广东省发展改革委、广东省能源局委托广东电力交易中心按照本方案在全省范围内统一组织开展广东增量新能源项目可持续发展价格机制竞价交易，竞价规则经广东省发展改革委、广东省能源局批准后实施。4.新能源可持续发展价格结算机制的结算方式。对纳入机制的电量，电网企业每月按机制电价开展差价结算，将市场交易均价与机制电价的差额纳入系统运行费用，由全体工商业用户分摊或分享。其中，市场交易均价按照月度发电侧实时市场同类型电源加权平均价格确定；机制电量根据项目每月实际上网电量和其机制电量比例确定。广东省发展改革委、广东省能源局委托广东电网公司、深圳供电局按照本方案开展省内新能源项目可持续发展价格机制结算，结算规则经广东省发展改革委、广东省能源局批准后实施。5.新能源可持续发展价格结算机制的退出规则。已纳入机制的新能源项目，执行期限内可自愿申请退出。新能源项目执行到期，或者在期限内自愿退出的，均不再纳入机制执行范围。（三）强化政策协同1.强化改革与绿电绿证机制的协同。完善绿电交易规则，省内绿电交易开展双边协商、挂牌交易，申报和成交价格分别明确电能量价格和相应绿色电力证书价格，推动绿电交易规则融入省内电力中长期交易规则。纳入可持续发展价格结算机制的电量，不重复获得绿证收益。建立健全省级账户托管绿证的市场化分配机制。研究探索多年期绿电交易机制，引导新能源企业根据机制外电量发电能力，与用户签订多年期绿电交易合同，形成长期稳定供求关系。2.强化改革与优化环境的协同。鼓励新能源企业综合考虑新能源出力特性、调节性能、系统消纳空间和经济性等实际因素，自愿按一定比例配建或租赁储能设施，提高新能源利用率。配置储能不再作为新建新能源项目核准、并网、上网等的前置条件，对2025年6月1日前已并网的新能源存量项目，继续执行我省配置储能政策。四、保障措施（一）加快修订电力市场交易规则。国家能源局南方监管局、广东省能源局组织市场运营机构加快修订电力市场配套实施细则，履行相关程序后印发实施。做好市场规则执行情况监管，并根据市场运行情况动态调整。电网企业与电力交易机构应规范工作流程，保障新能源参与市场交易平稳运行。（二）完善相关技术支撑。电网企业应持续提升新能源项目管理、计量支撑、并网服务等能力；健全结算业务，对新能源可持续发展价格结算机制执行结果单独归集。电力交易机构要建立机制电价竞价系统，完善电力交易平台，优化市场服务能力，为市场主体提供优质服务。（三）有序组织合同签订。电网企业应采用线上、线下等方式做好存量项目的差价结算协议告知工作，在完成购售电合同重签以前，原购售电合同价格条款按照最新电价政策执行，合同保持有效。修编购售电合同范本，将差价结算条款纳入其中，组织增量项目及时完成购售电合同签订。（四）加强政策宣传和信息公开。各地市相关部门协同电网企业向新能源企业做好市场化改革政策解读、新能源增量项目竞价交易安排等事项的宣传告知。电力交易机构按要求进行电力市场交易信息披露，确保信息公开透明。（五）做好跟踪评估。电网企业、电力交易机构要密切跟踪市场价格波动、新能源发电成本和收益变化、终端用户电价水平等，配合行业主管部门评估改革对行业发展和企业经营等方面的影响，及时总结改革成效，优化政策实施，持续增强市场价格信号对新能源发展的引导作用。五、方案执行时间本方案自2025年11月1日起执行。附表现货市场出清上下限等指标参数（试行）序号应用环节参数名称参数取值1现货市场交易出清价格上限1.8元/千瓦时2申报、出清价格下限-0.05元/千瓦时3增量项目机制电价竞价海上风电项目竞价上限0.453元/千瓦时4海上风电项目竞价下限0.35元/千瓦时5光伏项目竞价上限0.40元/千瓦时6光伏项目竞价下限0.20元/千瓦时备注：现货市场申报上限，按照《广东电力市场现货电能量交易实施细则》有关规定执行；2025年暂按上述参数执行，后续视情况调整。相关附件：相关导读:【部门解读】《关于深化新能源上网电价市场化改革促进新能源高质量发展的实施方案》的解读",
       "year": 2025,
       "last_verified_at": "2026-10-30",
@@ -4907,19 +4961,24 @@
       "retrieved_at": "2026-10-30",
       "review_due": "2026-11-29",
       "sign_date": "2025-09-19",
-      "effective_date_basis": "原文：本方案自2025年11月1日起执行",
+      "effective_date_basis": "原文：本方案自2025年11月1日起执行。页面时间：2025-09-19 17:18:17。落款：2025年9月19日。",
       "content_scope": "页面通知与实施方案正文（全文）",
-      "source_text_sha256": "f106e5493981bc832d09bb0f857140e01feb6cc8960dbb621c9d06be37b2e2a2"
+      "source_text_sha256": "f106e5493981bc832d09bb0f857140e01feb6cc8960dbb621c9d06be37b2e2a2",
+      "date_kind": "page_release",
+      "effective_date_stated": true,
+      "excerpt": "本方案自2025年11月1日起执行。",
+      "primary_checked_at": "2026-11-07",
+      "primary_checked_url": "https://drc.gd.gov.cn/ywtz/content/post_4775501.html"
     },
     {
       "source_id": "policy-cn-gd-yfgjgh-2025-2137",
       "type": "policy",
       "lang": "cn",
-      "title": "广东省关于公布2025年新能源项目机制电价竞价结果的通知（粤发改价格函〔2025〕2137号）",
+      "title": "广东省发展改革委 广东省能源局关于公布2025年新能源项目机制电价竞价结果的通知（粤发改价格函〔2025〕2137号）",
       "authors": "广东省发展改革委 广东省能源局",
       "version": "粤发改价格函〔2025〕2137号",
       "published_at": "2025-12-12",
-      "locator": "全文：竞价结果、执行起始时间、结算与披露要求",
+      "locator": "一、竞价结果；二、机制电价执行起点；三、结算与入选项目告知",
       "content": "广东省发展改革委、广东省能源局《关于公布2025年新能源项目机制电价竞价结果的通知》（粤发改价格函〔2025〕2137号），2025-12-10落款，2025-12-12公开。 正文节选：粤发改价格函〔2025〕2137号各地级以上市发展改革局（委），广东电网有限责任公司、深圳供电局有限公司，广东电力交易中心，有关发电企业：根据《广东省发展改革委 广东省能源局关于印发<关于深化新能源上网电价市场化改革 促进新能源高质量发展的实施方案>的通知》（粤发改价格〔2025〕263号）及配套规则等文件规定，我省组织开展2025年新能源机制电价竞价工作。现将竞价结果及有关事项通知如下：一、经广东电力交易中心公开竞价和结果公示，我省2025年6月1日-2026年10月31日投产或承诺投产，且未纳入机制的新能源项目竞价结果为：分布式光伏项目机制电量规模为44.3亿千瓦时，机制电价为0.36元/千瓦时。具体项目信息详见广东电力交易中心官网（https://pm.gd.csg.cn）。二、竞价入选项目，投产时间在2025年10月31日前的，机制电价自2025年11月1日起执行；其余项目机制电价自竞价时申报的投产时间起执行。三、请广东电网和深圳供电局按要求做好新能源增量项目结算工作，请广东电力交易中心做好竞价入选项目公布和告知工作。政策执行中如遇到问题，请及时报告省发展改革委和省能源局。广东省发展改革委   广东省能源局2025年12月10日相关附件：相关导读:",
       "year": 2025,
       "last_verified_at": "2026-10-30",
@@ -4949,19 +5008,24 @@
       "retrieved_at": "2026-10-30",
       "review_due": "2026-11-29",
       "sign_date": "2025-12-10",
-      "effective_date_basis": "原文未写明统一施行日期；机制电价执行起点按通知第二条（投产时间在2025年10月31日前的自2025年11月1日起执行），此处记录最早执行日",
+      "effective_date_basis": "通知第二条：投产时间在2025年10月31日前的，机制电价自2025年11月1日起执行；其余自竞价时申报的投产时间起执行。页面时间：2025-12-12 11:25:59。落款：2025年12月10日。",
       "content_scope": "页面通知全文（全文）",
-      "source_text_sha256": "d70b4292e65241c5837747d5a29dbbd43eb1f199a828403d634e7d8b3886cb1e"
+      "source_text_sha256": "d70b4292e65241c5837747d5a29dbbd43eb1f199a828403d634e7d8b3886cb1e",
+      "date_kind": "page_release",
+      "effective_date_stated": false,
+      "excerpt": "分布式光伏项目机制电量规模为44.3亿千瓦时，机制电价为0.36元/千瓦时。",
+      "primary_checked_at": "2026-11-07",
+      "primary_checked_url": "https://drc.gd.gov.cn/ywtz/content/post_4828493.html"
     },
     {
       "source_id": "policy-cn-gd-yfgjgh-2026-1805",
       "type": "policy",
       "lang": "cn",
-      "title": "广东省关于开展2026年新能源项目机制电价竞价工作有关事项的通知（粤发改价格函〔2026〕1805号）",
+      "title": "广东省发展改革委 广东省能源局关于开展2026年新能源项目机制电价竞价工作有关事项的通知（粤发改价格函〔2026〕1805号）",
       "authors": "广东省发展改革委 广东省能源局",
       "version": "粤发改价格函〔2026〕1805号",
       "published_at": "2026-10-10",
-      "locator": "全文：竞价项目范围、竞价参数（电量规模、比例、上下限、执行期限）、其他事项",
+      "locator": "一、竞价项目范围；二、竞价参数；三、其他事项",
       "content": "广东省发展改革委、广东省能源局《关于开展2026年新能源项目机制电价竞价工作有关事项的通知》（粤发改价格函〔2026〕1805号），2026-09-30落款，2026-10-10公开。 正文节选：粤发改价格函〔2026〕1805号广东电网有限责任公司、深圳供电局有限公司，广东电力交易中心：根据《广东省发展改革委 广东省能源局关于印发〈关于深化新能源上网电价市场化改革 促进新能源高质量发展的实施方案〉的通知》（粤发改价格〔2025〕263号）及配套规则等文件规定，决定开展2026年新能源项目机制电价竞价工作。现将有关事项通知如下：一、竞价项目范围2025年6月1日—2027年10月31日投产或承诺投产，且未纳入机制的分布式光伏项目。二、竞价参数（一）电量规模。机制电量初始竞价规模为79.34亿千瓦时（按全年计算）。为保障竞价结果有效性，价格出清前开展竞争有效性检测，机制竞价交易出清规模取机制电量初始竞价规模和申报电量规模除以竞争有效性系数的较小值确定，竞争有效性系数此次为1.2。（二）机制电量比例。110千伏以下电压等级分布式光伏项目的竞价电量申报比例上限取80%（纳入省级清单的村级光伏帮扶电站按相关规定执行），其他分布式光伏项目申报比例上限取70%。（三）竞价上下限。光伏项目竞价上限为每千瓦时0.400元，竞价下限为每千瓦时0.200元。价格申报基本单位比例由1%调整为0.1%。（四）执行期限。光伏项目机制电价执行期限为12年。（五）单个项目机制电量计算公式。分布式光伏项目机制电量≤装机容量×该类型电源年平均发电小时数×申报比例上限（含自发自用电量）。具体结算电量根据项目实际上网电量、差价结算规则要求执行。三、其他事项（一）列入省级开发试点的海上光伏项目另行规定。（二）请广东电力交易中心根据要求发布竞价公告，明确竞价流程、时间安排等具体事项。请广东电网、深圳供电局、广东电力交易中心按照职责分工做好竞价相关工作。竞价最终结果由省发展改革委、省能源局另行发布。未尽事宜，根据《广东新能源增量项目可持续发展价格结算机制竞价规则》执行。广东省发展改革委      广东省能源局2026年9月30日相关附件：相关导读:",
       "year": 2026,
       "last_verified_at": "2026-10-30",
@@ -4991,9 +5055,14 @@
       "retrieved_at": "2026-10-30",
       "review_due": "2026-11-29",
       "sign_date": "2026-09-30",
-      "effective_date_basis": "原文未写明施行日期，生效日期暂按落款日期记录",
+      "effective_date_basis": "页面时间：2026-10-10 21:06:38。落款：2026年9月30日。",
       "content_scope": "页面通知全文（全文）",
-      "source_text_sha256": "22a84b23dc6a9b9540baeec7699b8ff2a75ef7916f7c78c7189f3d38b2d6849b"
+      "source_text_sha256": "22a84b23dc6a9b9540baeec7699b8ff2a75ef7916f7c78c7189f3d38b2d6849b",
+      "date_kind": "page_release",
+      "effective_date_stated": false,
+      "excerpt": "机制电量初始竞价规模为79.34亿千瓦时（按全年计算）。",
+      "primary_checked_at": "2026-11-07",
+      "primary_checked_url": "https://drc.gd.gov.cn/ywtz/content/post_4965021.html"
     },
     {
       "source_id": "policy-cn-sh-hfgjg-2026-42",

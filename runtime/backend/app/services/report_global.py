@@ -100,17 +100,8 @@ def _interconnection_text(data: Dict[str, Any]) -> str:
 
 
 def citation(i: int, src: Dict[str, Any]) -> str:
-    bits = [f"[{i}] {_en(src.get('title')) or 'Untitled source'}", str(src.get("url") or "no URL")]
-    if src.get("authors"):
-        bits.append(f"Authors: {_en(src['authors'])}")
-    if src.get("version"):
-        bits.append(f"Version: {_en(src['version'])}")
-    if src.get("published_at"):
-        bits.append(f"Published: {src['published_at']}")
-    if src.get("locator"):
-        bits.append(f"Locator: {_en(src['locator'])}")
-    bits.append(f"Retrieved: {src.get('retrieved_at') or 'not recorded'}")
-    return " | ".join(bits)
+    from app.services.citation_record import format_citation
+    return format_citation(i, src, "en")
 
 
 def _sensitivity(fin: Dict[str, Any], calc) -> List[List[str]]:
@@ -272,13 +263,72 @@ def build_report(data: Dict[str, Any], report_type: str, template, metrics: Dict
           ("h", 2, "C. Required validation before decision"),
           ("p", "Independent engineering review, grid interconnection confirmation and legal due diligence should be completed before any investment decision."),
           ("h", 2, "D. Disclaimer"),
-          ("p", "This report is a calculation based on public information and the inputs provided. Results depend on those inputs and may differ from actual outcomes. It is not investment, legal or tax advice, and it says nothing about future prices.")]
+          ("p", "This report is a calculation based on public information and the inputs provided. Results depend on those inputs and may differ from actual outcomes. It is not investment, legal or tax advice, and it says nothing about future prices. "
+                "This file was produced by software from those inputs and sources. It is not a signed human review and it does not name a reviewer.")]
     return {
         "title": _en(title) or template.name_en,
         "cover": [("Report", template.name_en), ("Project", name), ("Capacity", f"{_num(cap, 1)} MW"), ("Location", _location(data)),
                   ("Date", datetime.now().strftime("%d %B %Y")), ("Confidentiality", confidential.replace("_", " ").title())],
         "blocks": S,
     }
+
+
+_URL = re.compile(r"https?://[^\s<>]+")
+
+
+def _linked(escape, text: str) -> str:
+    """Escape paragraph text, then wrap each http(s) URL in a PDF link."""
+    raw = str(text)
+    pieces = []
+    last = 0
+    for match in _URL.finditer(raw):
+        pieces.append(escape(raw[last:match.start()]))
+        url = match.group(0).rstrip(".,;)")
+        pieces.append(f'<link href="{escape(url)}" color="blue">{escape(url)}</link>')
+        last = match.end()
+    pieces.append(escape(raw[last:]))
+    return "".join(pieces)
+
+
+def _add_hyperlink(paragraph, url: str, text: str) -> None:
+    from docx.oxml import OxmlElement
+    from docx.oxml.ns import qn
+
+    relate = getattr(paragraph.part, "relate_to")
+    r_id = relate(url, "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink", is_external=True)
+    hyperlink = OxmlElement("w:hyperlink")
+    hyperlink.set(qn("r:id"), r_id)
+    run = OxmlElement("w:r")
+    rpr = OxmlElement("w:rPr")
+    color = OxmlElement("w:color")
+    color.set(qn("w:val"), "0563C1")
+    underline = OxmlElement("w:u")
+    underline.set(qn("w:val"), "single")
+    rpr.append(color)
+    rpr.append(underline)
+    run.append(rpr)
+    node = OxmlElement("w:t")
+    node.text = text
+    run.append(node)
+    hyperlink.append(run)
+    paragraph._p.append(hyperlink)
+
+
+def _add_paragraph_with_links(doc, text: str):
+    paragraph = doc.add_paragraph()
+    last = 0
+    found = False
+    for match in _URL.finditer(text):
+        found = True
+        if match.start() > last:
+            paragraph.add_run(text[last:match.start()])
+        url = match.group(0).rstrip(".,;)")
+        _add_hyperlink(paragraph, url, url)
+        last = match.end()
+    if not found:
+        paragraph.add_run(text)
+    elif last < len(text):
+        paragraph.add_run(text[last:])
 
 
 # ── renderers ──────────────────────────────────────────────────────────────
@@ -333,7 +383,7 @@ def render_pdf(model: Dict[str, Any]) -> bytes:
         if kind == "h":
             story.append(Paragraph(esc(b[2]), st["h1" if b[1] == 1 else "h2"]))
         elif kind == "p":
-            story.append(Paragraph(esc(b[1]), st["p"]))
+            story.append(Paragraph(_linked(esc, b[1]), st["p"]))
         elif kind == "bullets":
             for t in b[1]:
                 story.append(Paragraph("\u2022 " + esc(t), ParagraphStyle("B", parent=st["p"], leftIndent=14, firstLineIndent=-8, spaceAfter=3)))
@@ -429,7 +479,7 @@ def render_docx(model: Dict[str, Any]) -> bytes:
         if kind == "h":
             doc.add_heading(b[2], level=b[1])
         elif kind == "p":
-            doc.add_paragraph(b[1])
+            _add_paragraph_with_links(doc, b[1])
         elif kind == "bullets":
             for x in b[1]:
                 doc.add_paragraph(x, style="List Bullet")
