@@ -105,9 +105,12 @@ class TestV26ResearchFix:
         r = _throttled_get("/research/papers?q=solar", admin_token)
         assert r.status_code == 200
         data = r.json()
-        assert data.get("success") is True, f"papers failed: {data}"
-        assert "data" in data
-        assert "items" in data["data"]
+        # 现行契约是顶层 items/source，不是 success 信封。见 app/api/v1/research.py
+        # 和 tests/test_domestic_gaps_20261027.py。
+        assert "items" in data, f"papers failed: {data}"
+        assert isinstance(data["items"], list)
+        for item in data["items"]:
+            assert item.get("title") and item.get("url")
 
 
 class TestV26Finance:
@@ -129,13 +132,12 @@ class TestV26Finance:
             "capex_per_w": 4.0, "opex_per_kw_yr": 80, "electricity_price": 0.42,
             "ghi_annual": 1600, "capacity_factor": 0.18, "lifetime": 25
         }, admin_token)
-        assert r.status_code == 200
+        assert r.status_code == 200, r.text
         data = r.json()
-        assert data["success"] is True
-        d = data["data"]
-        assert d["irr"] > 5
-        assert d["npv"] > 0
-        assert 0.1 < d["lcoe"] < 0.5
+        # FinancialModelResponse 直接返回 irr/npv/lcoe，irr 单位是百分数。
+        assert data["irr"] > 5
+        assert data["npv"] > 0
+        assert 0.1 < data["lcoe"] < 0.5
 
     def test_wind_200mw(self, admin_token):
         r = _throttled_post("/finance/wind", {
@@ -143,12 +145,10 @@ class TestV26Finance:
             "capex_per_kw": 6500, "opex_per_kw_yr": 150, "electricity_price": 0.42,
             "wind_speed": 7.0, "wind_capacity_factor": 0.30, "lifetime": 20
         }, admin_token)
-        assert r.status_code == 200
+        assert r.status_code == 200, r.text
         data = r.json()
-        assert data["success"] is True
-        d = data["data"]
-        assert d["irr"] > 5
-        assert d["npv"] > 0
+        assert data["irr"] > 5
+        assert data["npv"] > 0
 
 
 class TestV26Admin:
