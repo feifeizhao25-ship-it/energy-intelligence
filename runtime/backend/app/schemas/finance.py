@@ -164,6 +164,17 @@ class StorageFinanceRequest(BaseModel):
     data_sources: Optional[List[dict]] = None
 
 
+class LCOERequest(BaseModel):
+    """Inputs for calc_lcoe. Omitted degradation uses that function's 0.005 default."""
+    capex: float = Field(..., gt=0)
+    annual_opex: float = Field(..., ge=0)
+    annual_gen_kwh: float = Field(..., gt=0)
+    discount_rate: float = Field(default=0.06, ge=0, lt=1)
+    lifetime: int = Field(default=25, ge=1, le=100)
+    degradation: float = Field(default=0.005, ge=0, lt=1)
+    currency: str = Field(default="CNY", pattern="^[A-Z]{3}$")
+
+
 class StorageFinanceResponse(BaseModel):
     irr: Optional[float]  # 无唯一解时为 None
     npv: float
