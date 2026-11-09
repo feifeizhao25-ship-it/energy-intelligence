@@ -383,9 +383,12 @@ async def execute_skill(
             detail=error_detail,
         )
 
+    from app.skills.literature import literature_metadata
+
     response_data = {
         **result,
         **_tasks_store[task_id],
+        "literature": literature_metadata(result),
     }
     return success(data=response_data)
 
