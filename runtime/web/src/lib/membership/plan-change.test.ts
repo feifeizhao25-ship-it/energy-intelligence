@@ -14,6 +14,13 @@ import { POST } from '@/app/api/membership/upgrade/route';
 const buy = (plan: string) => POST(new NextRequest('http://x/api/membership/upgrade', { method: 'POST', body: JSON.stringify({ plan, billingPeriod: 'yearly' }) }) as never);
 
 describe('会员有效期内更换方案', () => {
+  const previous = process.env.BUSINESS_LICENSE_GRANTED;
+  beforeEach(() => { process.env.BUSINESS_LICENSE_GRANTED = '1'; });
+  afterEach(() => {
+    if (previous === undefined) delete process.env.BUSINESS_LICENSE_GRANTED;
+    else process.env.BUSINESS_LICENSE_GRANTED = previous;
+  });
+
   it('专业版有效期内买全能版被拒，不再把剩余时长按全能版计', async () => {
     jest.mocked(prisma.user.findUnique).mockResolvedValue({ plan: 'PRO', planExpireAt: new Date(Date.now() + 20 * 86400e3) } as never);
     const res = await buy('FULL');

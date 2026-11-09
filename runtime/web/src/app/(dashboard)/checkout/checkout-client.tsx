@@ -10,7 +10,7 @@ import { safeErrorMessage } from '@/lib/api/safe-error';
 const purchasable = [Plan.PRO, Plan.FULL] as const;
 type PurchasablePlan = (typeof purchasable)[number];
 
-export default function CheckoutClient({ planParam, billingParam }: { planParam?: string; billingParam?: string }) {
+export default function CheckoutClient({ planParam, billingParam, checkoutOpen }: { planParam?: string; billingParam?: string; checkoutOpen: boolean }) {
   const [paying, setPaying] = useState(false);
   const [paymentError, setPaymentError] = useState('');
   const [wechatCode, setWechatCode] = useState('');
@@ -64,7 +64,7 @@ export default function CheckoutClient({ planParam, billingParam }: { planParam?
           '最终会员等级和额度由服务端记录。',
         ].map(item => <div key={item} className="flex gap-2"><Check className="h-4 w-4 shrink-0 text-emerald-600" />{item}</div>)}</div>
       </section>
-      <aside className="h-fit rounded-3xl bg-slate-900 p-7 text-white"><ShieldCheck className="h-9 w-9 text-emerald-400" /><h2 className="mt-5 text-2xl font-black">支付宝安全支付</h2><p className="mt-3 text-sm leading-6 text-slate-300">{`本次应付 ¥${amount}，支付结果以支付宝服务端通知为准，不接受前端自报成功。`}</p>{<button type="button" onClick={() => startPay('alipay')} disabled={paying} className="mt-7 w-full rounded-xl bg-emerald-400 px-4 py-3 text-center font-bold text-slate-950 hover:bg-emerald-300 disabled:cursor-wait disabled:opacity-60">{paying ? '正在创建安全订单…' : `支付宝支付 ¥${amount}`}</button>}{<button type="button" onClick={() => startPay('wechat')} disabled={paying} className="mt-3 w-full rounded-xl border border-emerald-400 px-4 py-3 text-center font-bold text-emerald-300 hover:bg-emerald-400/10 disabled:cursor-wait disabled:opacity-60">微信扫码支付</button>}{wechatCode && <div className="mt-3 space-y-2 text-xs leading-5 text-slate-300"><p>请用微信扫描通道返回的收款链接。到账以服务端通知为准。</p><p className="break-all">{wechatCode}</p></div>}{paymentError && <p role="alert" className="mt-3 text-sm text-rose-300">{paymentError}</p>}<Link href="/terms" className="mt-4 block text-center text-sm text-slate-400 hover:text-white">查看服务条款</Link></aside>
+      <aside className="h-fit rounded-3xl bg-slate-900 p-7 text-white"><ShieldCheck className="h-9 w-9 text-emerald-400" /><h2 className="mt-5 text-2xl font-black">{checkoutOpen ? '支付宝安全支付' : '收费入口关闭'}</h2>{checkoutOpen ? <><p className="mt-3 text-sm leading-6 text-slate-300">{`本次应付 ¥${amount}，支付结果以支付宝服务端通知为准，不接受前端自报成功。`}</p><button type="button" onClick={() => startPay('alipay')} disabled={paying} className="mt-7 w-full rounded-xl bg-emerald-400 px-4 py-3 text-center font-bold text-slate-950 hover:bg-emerald-300 disabled:cursor-wait disabled:opacity-60">{paying ? '正在创建安全订单…' : `支付宝支付 ¥${amount}`}</button><button type="button" onClick={() => startPay('wechat')} disabled={paying} className="mt-3 w-full rounded-xl border border-emerald-400 px-4 py-3 text-center font-bold text-emerald-300 hover:bg-emerald-400/10 disabled:cursor-wait disabled:opacity-60">微信扫码支付</button>{wechatCode && <div className="mt-3 space-y-2 text-xs leading-5 text-slate-300"><p>请用微信扫描通道返回的收款链接。到账以服务端通知为准。</p><p className="break-all">{wechatCode}</p></div>}{paymentError && <p role="alert" className="mt-3 text-sm text-rose-300">{paymentError}</p>}</> : <p className="mt-3 text-sm leading-6 text-slate-300">经营许可未取得，收费入口关闭。试用不受影响，不会创建支付订单。</p>}<Link href="/terms" className="mt-4 block text-center text-sm text-slate-400 hover:text-white">查看服务条款</Link></aside>
     </main>
   </div>;
 }

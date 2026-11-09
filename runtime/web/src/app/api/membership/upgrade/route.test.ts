@@ -17,8 +17,17 @@ const buy = () => POST(new NextRequest('http://x/api/membership/upgrade', { meth
 
 describe('下单失败时给用户的提示', () => {
   let errorSpy: jest.SpyInstance;
-  beforeEach(() => { errorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined); });
-  afterEach(() => errorSpy.mockRestore());
+  const previous = process.env.BUSINESS_LICENSE_GRANTED;
+  beforeEach(() => {
+    jest.clearAllMocks();
+    process.env.BUSINESS_LICENSE_GRANTED = '1';
+    errorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+  });
+  afterEach(() => {
+    if (previous === undefined) delete process.env.BUSINESS_LICENSE_GRANTED;
+    else process.env.BUSINESS_LICENSE_GRANTED = previous;
+    errorSpy.mockRestore();
+  });
 
   it.each([
     '支付宝商户配置缺失：ALIPAY_PRIVATE_KEY',
@@ -34,6 +43,17 @@ describe('下单失败时给用户的提示', () => {
     expect(JSON.stringify(body)).not.toMatch(/ALIPAY|HTTPS|routines|ECONNREFUSED|10\.0\.0/);
     expect(errorSpy.mock.calls.flat().map(String).join(' ')).toContain(reason);
     expect(prisma.payment.create).not.toHaveBeenCalled();
+  });
+
+  it('经营许可未设置时不创建支付订单', async () => {
+    delete process.env.BUSINESS_LICENSE_GRANTED;
+    const res = await buy();
+    expect(res.status).toBe(403);
+    const body = await res.json();
+    expect(body.error).toBe('CHECKOUT_CLOSED');
+    expect(body.message).toBe('经营许可未取得，收费入口关闭');
+    expect(prisma.payment.create).not.toHaveBeenCalled();
+    expect(createAlipayPagePayUrl).not.toHaveBeenCalled();
   });
 
   it('金额与服务端价格不一致属于内部错误，同样不外露', async () => {
