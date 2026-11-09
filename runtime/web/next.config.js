@@ -34,8 +34,11 @@ const nextConfig = {
     NEXT_PUBLIC_BUILD_DATE: process.env.NEXT_PUBLIC_BUILD_DATE || new Date().toISOString().slice(0, 10),
   },
   transpilePackages: ['@react-pdf/renderer'],
-  // pdf-parse 含 pdfjs worker，保持在服务端外部依赖，避免打包期动态依赖告警
-  serverExternalPackages: ['pdf-parse'],
+  // pdf-parse 含 pdfjs worker，保持在服务端外部依赖，避免打包期动态依赖告警。
+  // ali-oss 用的 urllib 只在打开代理时才 require('proxy-agent')（可选 peer ^5.0.0）。
+  // 打进服务端包时构建器仍会解析这个 require。proxy-agent 5.0.0 的传递依赖 ip
+  // 有高危公告 GHSA-2p57-rm9w-gvfp，所以不安装这个可选包，改为运行时从 node_modules 加载。
+  serverExternalPackages: ['pdf-parse', 'ali-oss'],
   output: 'standalone',
   async rewrites() {
     const backend = process.env.BACKEND_INTERNAL_URL || 'http://backend:8000';
