@@ -135,10 +135,10 @@ const IncentivesPage: React.FC = () => {
                   return (
                     <div
                       key={bonus.id}
-                      className="flex items-center justify-between gap-3 p-2.5 rounded-[var(--radius-md)] border border-[var(--border-default)]"
+                      className="flex items-start justify-between gap-3 p-2.5 rounded-[var(--radius-md)] border border-[var(--border-default)]"
                     >
-                      <div className="min-w-0">
-                        <div className="text-[13px] font-medium text-[var(--text-primary)]">
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[13px] font-medium leading-snug text-[var(--text-primary)] break-words">
                           <label id={labelId} htmlFor={switchId} className="cursor-pointer">
                             {bonus.label}
                           </label>
@@ -146,9 +146,9 @@ const IncentivesPage: React.FC = () => {
                             +10%
                           </span>
                         </div>
-                        <div className="text-[11px] text-[var(--text-tertiary)] truncate">
+                        <p className="mt-0.5 text-[11px] leading-relaxed text-[var(--text-tertiary)] whitespace-normal break-words">
                           {bonus.note}
-                        </div>
+                        </p>
                       </div>
                       <Switch
                         id={switchId}
@@ -189,7 +189,7 @@ const IncentivesPage: React.FC = () => {
                 </div>
               </div>
 
-              <p className="text-[11px] leading-relaxed text-[var(--text-tertiary)]">
+              <p className="text-[11px] leading-relaxed text-[var(--text-tertiary)] break-words">
                 Illustrative estimate only, computed locally from your inputs. The arithmetic
                 does not decide eligibility. Actual credit eligibility depends on prevailing wage
                 and apprenticeship rules, placed-in-service timing and IRS guidance. This is not
@@ -212,7 +212,7 @@ const IncentivesPage: React.FC = () => {
                     className="flex gap-2.5 text-[13px] leading-relaxed text-[var(--text-secondary)]"
                   >
                     <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--color-brand-500)]" />
-                    {line}
+                    <span className="min-w-0 break-words">{line}</span>
                   </li>
                 ))}
               </ul>
@@ -228,7 +228,7 @@ const IncentivesPage: React.FC = () => {
               padding="lg"
             >
               <div className="space-y-3" data-testid="us-rules-conflict">
-                <p className="text-[13px] leading-relaxed text-[var(--text-secondary)]">
+                <p className="text-[13px] leading-relaxed text-[var(--text-secondary)] break-words">
                   {conflict.instruction} {conflict.resolution === null ? 'No source is selected as the one that controls.' : ''}
                 </p>
                 {conflict.sources.map((source) => (
@@ -242,7 +242,7 @@ const IncentivesPage: React.FC = () => {
                       </h3>
                       <span className="text-[11px] text-[var(--text-tertiary)]">{source.date_label}</span>
                     </div>
-                    <p className="mt-1 text-[12px] leading-relaxed text-[var(--text-secondary)]">
+                    <p className="mt-1 text-[12px] leading-relaxed text-[var(--text-secondary)] break-words">
                       {source.statement}
                     </p>
                     <a
