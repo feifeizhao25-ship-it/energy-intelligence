@@ -2,6 +2,8 @@
 import { Message } from '@/types';
 import { domesticSiliconFlowBaseUrl } from './domestic-endpoint';
 import { AI_TOOLS } from './tools';
+import { modelToolNames } from './tool-catalog';
+import { isCnEdition } from './router';
 import { executeTool } from './tool-executor';
 
 const SILICONFLOW_API_KEY = process.env.SILICONFLOW_API_KEY;
@@ -49,6 +51,14 @@ function convertToOpenAITools(tools: typeof AI_TOOLS) {
     }));
 }
 
+function openAIToolsForThisEdition() {
+    const names = new Set<string>(modelToolNames(isCnEdition() ? 'cn' : 'global', 'chat'));
+    const selected = Object.fromEntries(
+        Object.entries(AI_TOOLS).filter(([, tool]) => names.has(tool.name)),
+    ) as typeof AI_TOOLS;
+    return names.size ? convertToOpenAITools(selected) : [];
+}
+
 // 聊天响应接口
 export interface SiliconFlowChatResponse {
     content: string;
@@ -79,7 +89,7 @@ export async function chat(messages: Message[], model: string = DEFAULT_MODEL): 
 
     console.log('[SiliconFlow] 调用模型:', model);
 
-    const openAITools = convertToOpenAITools(AI_TOOLS);
+    const openAITools = openAIToolsForThisEdition();
     let currentMessages = [
         { role: 'system', content: SYSTEM_PROMPT },
         ...messages.map(m => ({ role: m.role, content: m.content }))
@@ -196,7 +206,7 @@ export async function* chatStream(
 
     console.log('[SiliconFlow] 流式调用模型:', model);
 
-    const openAITools = convertToOpenAITools(AI_TOOLS);
+    const openAITools = openAIToolsForThisEdition();
     let currentMessages = [
         { role: 'system', content: SYSTEM_PROMPT },
         ...messages.map(m => ({ role: m.role, content: m.content }))
