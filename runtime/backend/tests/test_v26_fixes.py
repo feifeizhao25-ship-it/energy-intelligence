@@ -121,9 +121,10 @@ class TestV26Finance:
             "capex": 400000000, "annual_opex": 5000000,
             "annual_gen_kwh": 250000000, "discount_rate": 0.06, "lifetime": 25
         }, admin_token)
-        assert r.status_code == 200
+        assert r.status_code == 200, r.text
         data = r.json()
-        assert data["success"] is True
+        assert data["code"] == 0
+        assert data["data"]["unit"] == "CNY/kWh"
         assert 0.1 < data["data"]["lcoe"] < 0.5
 
     def test_solar_100mw(self, admin_token):
