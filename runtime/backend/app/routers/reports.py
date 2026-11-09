@@ -468,24 +468,10 @@ def validate_financial_evidence(data: Dict[str, Any], market: str = "cn") -> Non
         )
 
 
-def _format_citation(index: int, src: Dict[str, Any]) -> str:
-    """格式化单条数据来源引用；文献溯源字段（作者/版本/发布日期/页码）存在即透出。"""
-    parts = [
-        f"[{index}] {src.get('title', '未命名来源')}",
-        str(src.get('url', '无URL')),
-    ]
-    if src.get("authors"):
-        parts.append(f"作者：{src['authors']}")
-    if src.get("version"):
-        parts.append(f"版本：{src['version']}")
-    if src.get("published_at"):
-        parts.append(f"发布日期：{src['published_at']}")
-    if src.get("locator"):
-        parts.append(f"页码/段落：{src['locator']}")
-    parts.append(f"获取日期：{src.get('retrieved_at', '未记录')}")
-    if src.get("license_note"):
-        parts.append(f"许可：{src['license_note']}")
-    return " | ".join(parts)
+def _format_citation(index: int, src: Dict[str, Any], lang: str = "zh") -> str:
+    """格式化单条数据来源引用。有页码才写页码；待审核记录标明未发布。"""
+    from app.services.citation_record import format_citation
+    return format_citation(index, src, "en" if lang == "en" else "zh")
 
 
 def _demo_data() -> Dict[str, Any]:
@@ -1567,7 +1553,8 @@ def _add_appendix(doc, data: Dict, metrics: Dict):
     if not sources:
         _add_body(doc, "未附可核验来源；本报告不得用于投资决策。")
     for i, src in enumerate(sources, 1):
-        _add_body(doc, _format_citation(i, src))
+        from app.services.report_global import _add_paragraph_with_links
+        _add_paragraph_with_links(doc, _format_citation(i, src))
 
     _add_heading(doc, "C. 免责声明", level=2)
     p = doc.add_paragraph()
@@ -1576,6 +1563,7 @@ def _add_appendix(doc, data: Dict, metrics: Dict):
         "报告中的预测和结论受假设条件影响，实际结果可能与预测存在差异。"
         "报告制作方不对依据本报告做出的投资决策承担任何责任。"
         "未经书面许可，不得复制、转发或引用本报告内容。"
+        "本文件由软件根据所列输入和来源生成，不是经人工签字的审核结论，也不填写审核人。"
     )
     run.font.size = Pt(9)
     run.font.color.rgb = RGBColor(0x88, 0x88, 0x88)
@@ -2069,13 +2057,15 @@ def _build_pdf_appendix(story, data, metrics, style_h1, style_h2, style_body, cn
     if not sources:
         story.append(Paragraph("未附可核验来源；本报告不得用于投资决策。", style_body))
     for i, source in enumerate(sources, 1):
-        story.append(Paragraph(_format_citation(i, source), style_body))
+        from app.services.citation_record import pdf_link_markup
+        story.append(Paragraph(pdf_link_markup(_format_citation(i, source)), style_body))
 
     story.append(Paragraph("C. 免责声明", style_h2))
     story.append(Paragraph(
         "本报告基于公开资料和项目方提供的数据编制，仅供参考。"
         "报告中的预测和结论受假设条件影响。"
-        "未经书面许可不得复制或转发。", style_small))
+        "未经书面许可不得复制或转发。"
+        "本文件由软件根据所列输入和来源生成，不是经人工签字的审核结论，也不填写审核人。", style_small))
 
 
 # ═══════════════════════════════════════════════════════════════

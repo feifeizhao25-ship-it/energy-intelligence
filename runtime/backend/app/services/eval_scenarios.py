@@ -259,7 +259,7 @@ def scenario_s21() -> dict:
 def scenario_s22() -> dict:
     hits = RAGService().search("分布式光伏并网要求", market="cn")
     ids = {hit.source_id for hit in hits.hits}
-    banned = {"policy-us-itc", "std-ieee1547", "guide-grid-interconnection", "price-us-eia", "std-iec61724"}
+    banned = {"policy-us-itc", "policy-us-fs-2025-05", "std-ieee1547", "guide-grid-interconnection", "price-us-eia", "std-iec61724"}
     return {"ok": not (ids & banned) and not query_allows_overseas("分布式光伏并网要求"), "ids": sorted(ids)}
 
 
@@ -421,7 +421,7 @@ SCENARIOS = [
     {"id": "S19", "covers": ["std-iec61724"], "run": scenario_s19},
     {"id": "S20", "covers": ["policy-cn-688"], "run": scenario_s20},
     {"id": "S21", "covers": ["price-cn-module"], "run": scenario_s21},
-    {"id": "S22", "covers": ["policy-us-itc", "std-ieee1547", "guide-grid-interconnection", "price-us-eia"], "run": scenario_s22},
+    {"id": "S22", "covers": ["policy-us-itc", "policy-us-fs-2025-05", "std-ieee1547", "guide-grid-interconnection", "price-us-eia"], "run": scenario_s22},
     {"id": "S23", "covers": ["cn_datasets"], "run": scenario_s23},
     {"id": "S24", "covers": ["domestic_resources"], "run": scenario_s24},
     {"id": "S25", "covers": ["user_pdf"], "run": scenario_s25},

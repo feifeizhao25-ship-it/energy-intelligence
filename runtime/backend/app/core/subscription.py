@@ -239,6 +239,18 @@ def _plan_entitlements(user: User) -> dict:
     return ENTITLEMENTS.get(plan, ENTITLEMENTS["free"])
 
 
+def answer_export_offer(user: User) -> dict:
+    """PDF follows export.formats. Word also requires citation_export, so a free plan cannot receive it."""
+    tier = _REGISTRY.get("tiers", {}).get(user.plan or "free") or _REGISTRY["tiers"]["free"]
+    formats = list(tier.get("export", {}).get("formats") or [])
+    citation_export = bool(tier.get("export", {}).get("citation_export"))
+    return {
+        "pdf": "pdf" in formats,
+        "docx": "docx" in formats and citation_export,
+        "watermark": not citation_export,
+    }
+
+
 def check_numeric_entitlement(user: User, key: str) -> int:
     """返回数值型权益上限；-1 一律表示无限。"""
     value = _plan_entitlements(user).get(key)

@@ -3,7 +3,7 @@
  */
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { ANALYST_CHAT_PATH, postAnalystChat, replyFromAnalystPayload } from './analystChat';
+import { ANALYST_CHAT_PATH, clipboardAnswer, downloadAnalystAnswer, postAnalystChat, replyFromAnalystPayload, sourcesFromAnalystPayload } from './analystChat';
 
 afterEach(() => {
   localStorage.clear();
@@ -25,7 +25,8 @@ describe('international analyst chat contract', () => {
 
     const reply = await postAnalystChat('  What drives rooftop solar payback?  ');
 
-    expect(reply).toBe('Payback is driven by installed cost and the retail tariff.');
+    expect(reply.text).toBe('Payback is driven by installed cost and the retail tariff.');
+    expect(reply.sources).toEqual([]);
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toBe(ANALYST_CHAT_PATH);
@@ -65,11 +66,56 @@ describe('international analyst chat contract', () => {
     await expect(postAnalystChat('hi')).rejects.toThrow(/event stream/);
   });
 
+  it('keeps structured sources for display and copies them with the answer', () => {
+    const payload = {
+      message: 'Notice 2025-42 is the library record [S1].',
+      sources: [{
+        title: 'IRS Notice 2025-42',
+        url: 'https://www.irs.gov/pub/irs-drop/n-25-42.pdf',
+        publisher: 'Internal Revenue Service',
+        published_at: '2025-08-15',
+        date_kind: 'pdf_creation',
+        effective_date: '2025-09-02',
+        effective_date_stated: true,
+        effective_date_basis: 'Notice 2025-42 section 7.',
+        locator: 'Notice 2025-42 sections 1, 2.02, 3, 6, and 7',
+        excerpt: 'The notice describes the credit deadline.',
+        freshness_status: 'current',
+        evidence_status: 'legacy_unreviewed',
+      }],
+      answer_id: 'ans-1',
+      downloads: { pdf: true, docx: false },
+      synthetic: false,
+      ai_metadata: { stand_in: 'library_only', model_called: false },
+    };
+    const sources = sourcesFromAnalystPayload(payload);
+    expect(sources[0].locator).toBe('Notice 2025-42 sections 1, 2.02, 3, 6, and 7');
+    expect(sources[0].url).toContain('irs.gov');
+    const copied = clipboardAnswer(payload.message, sources);
+    expect(copied).toContain(payload.message);
+    expect(copied).toContain('PDF file metadata date (CreationDate): 2025-08-15');
+    expect(copied).toContain('Printed publication date: unknown');
+    expect(copied).toContain('Effective date: 2025-09-02');
+    expect(copied).not.toContain('Published');
+    expect(copied).toContain('https://www.irs.gov/pub/irs-drop/n-25-42.pdf');
+    expect(copied).toContain('Locator: Notice 2025-42 sections 1, 2.02, 3, 6, and 7');
+    expect(copied).toContain('not recorded as a human review');
+    expect(copied).not.toContain('example.gov');
+  });
+
   it('reads only the JSON message field, not a streaming content chunk', () => {
     expect(replyFromAnalystPayload({ message: 'full answer', content: 'ignored' })).toBe('full answer');
     expect(replyFromAnalystPayload({ data: { message: 'wrapped' } })).toBe('wrapped');
     expect(replyFromAnalystPayload({ content: 'partial chunk' })).toBeNull();
     expect(replyFromAnalystPayload('data: {"content":"x"}')).toBeNull();
     expect(replyFromAnalystPayload({ code: 500, message: 'nope' })).toBeNull();
+  });
+
+  it('shows the export endpoint message for a refused download', async () => {
+    localStorage.setItem('auth_token', 'tok-1');
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({
+      detail: { error: 'REPORT_QUOTA_EXCEEDED', message: "You have used this month's report exports (3). This is not an extra AI answer." },
+    }), { status: 429 })));
+    await expect(downloadAnalystAnswer('ans-1', 'pdf')).rejects.toThrow(/report exports \(3\)/);
   });
 });

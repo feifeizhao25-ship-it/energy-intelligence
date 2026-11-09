@@ -35,6 +35,7 @@ from datetime import date
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from app.config import settings
+from app.services.citation_record import excerpt_of
 from app.services.rag_service import RAGHit
 
 #: 置信度取值
@@ -59,13 +60,25 @@ def source_from_rag_hit(hit: RAGHit) -> Dict[str, Any]:
         "url": meta.get("source_url"),
         "publisher": meta.get("source_org"),
         "published_at": meta.get("published_at"),
+        "date_kind": meta.get("date_kind"),
+        "sign_date": meta.get("sign_date"),
+        "effective_date": meta.get("effective_date"),
+        "effective_date_stated": meta.get("effective_date_stated"),
+        "effective_date_basis": meta.get("effective_date_basis"),
+        "issuer": meta.get("issuer"),
+        "primary_checked_at": meta.get("primary_checked_at"),
+        "expiry_date": meta.get("expiry_date"),
+        "superseded_by": meta.get("superseded_by"),
         "retrieved_at": meta.get("retrieved_at"),
         "authors": meta.get("authors"),
         "version": meta.get("version"),
-        "locator": meta.get("locator"),
+        "locator": meta.get("locator") or None,
+        "excerpt": meta.get("excerpt") or excerpt_of(hit.content),
         "license": meta.get("license_note"),
         "type": meta.get("type"),
         "freshness_status": meta.get("freshness_status", "unknown"),
+        "evidence_status": meta.get("evidence_status"),
+        "status": meta.get("status"),
         "relevance_score": round(hit.score, 4),
     }
 
