@@ -125,3 +125,24 @@ async def test_research_trends_requires_auth():
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         resp = await client.get("/api/v1/research/trends?metric=lcoe_solar")
         assert resp.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_research_papers_items_keep_title_and_url(client, auth_headers, monkeypatch):
+    from app.api.v1 import research as research_api
+
+    async def fake(q, max_results=10):
+        return [{
+            "id": "fixture-1", "title": "Solar fixture", "authors": "A",
+            "year": 2024, "citations": 0, "abstract": "x", "doi": None,
+            "url": "https://arxiv.org/abs/fixture-1", "journal": "arXiv preprint",
+            "keywords": [q],
+        }]
+
+    monkeypatch.setattr(research_api, "search_arxiv", fake)
+    response = await client.get("/api/v1/research/papers?q=solar", headers=auth_headers)
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["source"] == "arxiv"
+    assert body["items"][0]["title"] == "Solar fixture"
+    assert body["items"][0]["url"] == "https://arxiv.org/abs/fixture-1"

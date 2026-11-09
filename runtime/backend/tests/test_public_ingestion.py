@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -214,14 +215,23 @@ def test_fixtures_normalise_into_existing_shapes(tmp_path):
 
     store = IngestStore(tmp_path / "ingest.sqlite")
     client = _client(_read("tariff_notice.html"))
+    fetched_today = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
     report = run_source(
         _source(), contact="ops@example.com", client=client, store=store,
-        snapshot_dir=tmp_path / "snaps", dry_run=False, fetched_at="2026-10-27T01:00:00+00:00",
+        snapshot_dir=tmp_path / "snaps", dry_run=False, fetched_at=fetched_today,
     )
     assert report["status"] == "fetched"
     saved = store.accepted()[0]
     assert saved["verification_code"] == "verified"
     assert saved["freshness"]["usable"] is True
+    stale_store = IngestStore(tmp_path / "stale.sqlite")
+    stale = run_source(
+        _source(source_id="pub-stale"), contact="ops@example.com", client=client, store=stale_store,
+        snapshot_dir=tmp_path / "stale-snaps", dry_run=False, fetched_at="2026-10-01T00:00:00+00:00",
+    )
+    assert stale["status"] == "fetched"
+    assert stale_store.accepted()[0]["verification_code"] == "verified"
+    assert stale_store.accepted()[0]["freshness"]["usable"] is False
     assert len(saved["snapshot_sha256"]) == 64
     rows = store.verified_tariff_rows()
     conn = price_connect(tmp_path / "prices.sqlite")

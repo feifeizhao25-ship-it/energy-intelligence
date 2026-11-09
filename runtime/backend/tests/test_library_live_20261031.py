@@ -430,7 +430,11 @@ def test_check_writes_state_per_edition_and_discover_stages_candidates_only(lib)
     docs = {ed: store.load_document(ed) for ed in store.EDITIONS}
     pages = build_pages(docs.values())
     r = run_check(at(0), pages)
-    assert r["status"] == "ok" and r["editions"]["cn"]["counts"].get("manual", 0) == 13 and r["editions"]["global"]["counts"] == {"ok": 8}
+    # 国际条目后来增加了 en-intl-009（IRS clean electricity credit）。核对结果仍只能是 ok，
+    # 条数跟目录走，避免把新增的正常来源写成故障，也避免再写死一个会过期的数字。
+    assert r["status"] == "ok"
+    assert r["editions"]["cn"]["counts"].get("manual", 0) == 13
+    assert r["editions"]["global"]["counts"] == {"ok": len(docs["global"]["entries"])}
     assert store.state_path("cn").exists() and store.state_path("global").exists()
     assert (store.data_dir() / "library_report_cn.md").exists()
     # 条目不被任务改动
