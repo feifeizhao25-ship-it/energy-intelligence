@@ -1,11 +1,6 @@
 # FutureX Project Status
 
-_Tracking the integration of the three core sub-agents._
-
-## 顺时 (Shunshi - Health AI)
-- **Goal**: Connect to iOS local health data.
-- **Status**: ✅ Integrated. Proactive care logic enabled.
-- **Priority**: Maintained.
+_This file sits in the energy repository. 顺时 (Shunshi) is not an energy product, so it is no longer listed here. Its code is still under `web-frontend/futurex` and was not moved._
 
 ## 新能源 (Xinnengyuan - New Energy)
 - **Goal**: Enable full API calling (34 modules).
