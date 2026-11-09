@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { Prisma } from '@prisma/client';
 
@@ -202,8 +202,6 @@ describe('只有一个迁移目录', () => {
   // runtime/web/prisma/migrations 是旧位置，entrypoint 不执行它。两个目录并存时，
   // 有人把新迁移写进旧目录，部署后表/列就缺了（这个门禁本来要抓的事故）。
   it('旧目录 runtime/web/prisma/migrations 不存在', () => {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { existsSync } = require('node:fs') as typeof import('node:fs');
     expect(existsSync(join(__dirname, '..', '..', 'prisma', 'migrations'))).toBe(false);
   });
 });

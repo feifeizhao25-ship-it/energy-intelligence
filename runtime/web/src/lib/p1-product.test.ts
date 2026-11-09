@@ -65,7 +65,7 @@ describe('国内版 P1 行为', () => {
         const sequences = SEED_PERSONAS.map((persona) => composeHome(persona).map((item) => item.id).join(','));
         expect(new Set(sequences).size).toBe(SEED_PERSONAS.length);
         for (const persona of SEED_PERSONAS) {
-            for (const module of composeHome(persona)) expect(module.reason.length).toBeGreaterThan(0);
+            for (const homeModule of composeHome(persona)) expect(homeModule.reason.length).toBeGreaterThan(0);
             expect(composeHome(persona).length).toBeLessThanOrEqual(8);
         }
     });
@@ -158,8 +158,7 @@ describe('国内版 P1 行为', () => {
             summary: '摘要',
             facts: [{ label: '甲', value: '1' }, { label: '乙', value: '2' }, { label: '丙', value: '3' }],
             aside: createElement(FreshnessBoard, { rows: [{ name: '电价', status: '未达标', asOf: '2026-10-27' }], escalated: ['电价'] }),
-            children: createElement(ChartSpecView, { source: { type: 'bar', title: '示例', unit: '千瓦时', series: [{ name: '甲', data: [1, 2] }] } }),
-        }));
+        }, createElement(ChartSpecView, { source: { type: 'bar', title: '示例', unit: '千瓦时', series: [{ name: '甲', data: [1, 2] }] } })));
         expect(html).toContain('测算值不是承诺');
         expect(html).toContain('时效看板');
         expect(html).toContain('示例');

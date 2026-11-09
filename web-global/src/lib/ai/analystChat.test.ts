@@ -28,7 +28,7 @@ describe('international analyst chat contract', () => {
     expect(reply.text).toBe('Payback is driven by installed cost and the retail tariff.');
     expect(reply.sources).toEqual([]);
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toBe(ANALYST_CHAT_PATH);
     expect(url).not.toBe('/api/v1/ai/chat');
     expect(init.method).toBe('POST');
@@ -46,7 +46,7 @@ describe('international analyst chat contract', () => {
     }));
     vi.stubGlobal('fetch', fetchMock);
     await postAnalystChat('hi');
-    const init = fetchMock.mock.calls[0][1] as RequestInit;
+    const init = (fetchMock.mock.calls[0] as unknown as [string, RequestInit])[1];
     expect((init.headers as Record<string, string>).Authorization).toBe('Bearer sess-tok');
   });
 
