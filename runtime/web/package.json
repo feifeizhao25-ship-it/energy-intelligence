@@ -7,7 +7,7 @@
     "dev": "next dev",
     "build": "next build --webpack",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
@@ -46,7 +46,7 @@
     "@types/react-dom": "^19.2.5",
     "ali-oss": "^6.23.0",
     "autoprefixer": "^10.4.20",
-    "axios": "^1.7.4",
+    "axios": "^1.21.1",
     "bcryptjs": "^3.0.3",
     "canvas-confetti": "^1.9.4",
     "cheerio": "^1.1.2",
@@ -63,7 +63,7 @@
     "lucide-react": "^0.439.0",
     "mermaid": "^11.17.2",
     "nanoid": "^5.1.6",
-    "next": "^16.3.3",
+    "next": "^16.4.6",
     "next-auth": "^4.24.15",
     "next-intl": "^4.7.0",
     "next-themes": "^0.4.6",
@@ -83,6 +83,14 @@
     "tailwindcss-animate": "^1.0.7",
     "typescript": "^5.6.2",
     "zod": "^3.25.76"
+  },
+  "overrides": {
+    "follow-redirects": "1.16.3",
+    "postcss-selector-parser": "6.1.6",
+    "qs": "6.17.1",
+    "sharp": "0.35.5",
+    "source-map-js": "1.2.2",
+    "undici": "7.30.2"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",

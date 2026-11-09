@@ -5,6 +5,7 @@ module.exports = {
         '^@/(.*)$': '<rootDir>/src/$1',
         '^server-only$': '<rootDir>/src/test-shims/server-only.js',
     },
+    testPathIgnorePatterns: ['/node_modules/', '/.next/'],
     transform: {
         '^.+\\.tsx?$': 'ts-jest',
     },
