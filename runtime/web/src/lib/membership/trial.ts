@@ -40,7 +40,14 @@ export function trialWatermark(onTrial: boolean): '试用' | null {
     return onTrial ? '试用' : null;
 }
 
-/** 经营许可未取得时，收费入口关闭，试用仍可开始。 */
+/** 经营许可未取得时，收费入口关闭，试用仍可开始。未设置视为未取得。 */
+const LICENSE_GRANTED = new Set(['1', 'true', 'yes', 'granted']);
+
+export function licenseGrantedFromEnv(env: Record<string, string | undefined> = process.env): boolean {
+    const raw = String(env.BUSINESS_LICENSE_GRANTED ?? '').trim().toLowerCase();
+    return LICENSE_GRANTED.has(raw);
+}
+
 export function paidCheckoutOpen(licenseGranted: boolean): boolean {
     return licenseGranted;
 }
