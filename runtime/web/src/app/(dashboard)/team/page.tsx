@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { canExport, inviteMember, removeMember, type TeamSeat } from '@/lib/membership/team-admin';
+import { canExport, inviteMember, removeMember, teamSeatLimit, type TeamSeat } from '@/lib/membership/team-admin';
 import { PageShell } from '@/components/layout/PageShell';
 
 const START: TeamSeat[] = [
@@ -12,7 +12,7 @@ const START: TeamSeat[] = [
 export default function TeamPage() {
     const [seats, setSeats] = useState<TeamSeat[]>(START);
     const [note, setNote] = useState('示例席位，未连接真实团队。');
-    const limit = 10;
+    const limit = teamSeatLimit('team');
     return (
         <PageShell
             sample
