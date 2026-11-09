@@ -202,7 +202,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 }
 
-/// Asks the person to type DELETE; owns its controller so it is disposed together with the dialog.
+/// Asks the person to type 删除; owns its controller so it is disposed together with the dialog.
 class _DeleteConfirmDialog extends StatefulWidget {
   const _DeleteConfirmDialog();
 
@@ -221,18 +221,18 @@ class _DeleteConfirmDialogState extends State<_DeleteConfirmDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final ready = _controller.text.trim() == 'DELETE';
+    final ready = _controller.text.trim() == '删除';
     return AlertDialog(
       title: const Text('删除账号'),
       content: SingleChildScrollView(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          const Text('将立即删除你的项目、模型和报告，且无法恢复。依法需保留的支付记录会与你的身份解除关联。输入 DELETE 以确认。'),
+          const Text('将立即删除你的项目、模型和报告，且无法恢复。依法需保留的支付记录会与你的身份解除关联。输入「删除」两个字以确认。'),
           const SizedBox(height: 12),
           TextField(
             key: const Key('deleteConfirmField'),
             controller: _controller,
             onChanged: (_) => setState(() {}),
-            decoration: const InputDecoration(hintText: '输入 DELETE', border: OutlineInputBorder()),
+            decoration: const InputDecoration(hintText: '输入「删除」', border: OutlineInputBorder()),
           ),
         ]),
       ),

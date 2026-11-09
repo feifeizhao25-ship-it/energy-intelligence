@@ -282,7 +282,7 @@ class _AddSourceSheetState extends State<_AddSourceSheet> {
     final okLink = RegExp(r'^https?://\S+$', caseSensitive: false).hasMatch(link);
     setState(() {
       _titleError = title.isEmpty ? '请填写标题' : null;
-      _linkError = okLink ? null : '请填写以 http:// 或 https:// 开头的链接';
+      _linkError = okLink ? null : '请填写以 http:// 或 https:// 开头的链接'; // zh-gate:allow 网址协议名，用户需按原样输入
     });
     if (title.isEmpty || !okLink) return;
     Navigator.of(context).pop(<String, String>{
@@ -311,7 +311,7 @@ class _AddSourceSheetState extends State<_AddSourceSheet> {
             key: const Key('fieldLink'),
             controller: _link,
             keyboardType: TextInputType.url,
-            decoration: InputDecoration(labelText: '链接（需以 http:// 或 https:// 开头）', errorText: _linkError),
+            decoration: InputDecoration(labelText: '链接（需以 http:// 或 https:// 开头）', errorText: _linkError), // zh-gate:allow 网址协议名，用户需按原样输入
           ),
           TextField(
             key: const Key('fieldPublisher'),

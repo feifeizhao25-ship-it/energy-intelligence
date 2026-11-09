@@ -5,7 +5,6 @@ import '../services/api_service.dart';
 /// Project country (B16): ISO 3166-1 alpha-2 code the server stores on the project. Reports use it for the grid
 /// standard, currency and wording, so the user can set it on create and correct it later. Leaving it empty means
 /// "recognise it from the location" (the server never defaults it).
-const bool kCountryUiZh = false;
 
 const List<List<String>> kCountryOptions = [
   ['CN', 'China'],
@@ -52,9 +51,9 @@ String? countryName(String? code) {
   return code.toUpperCase();
 }
 
-String get _auto => kCountryUiZh ? '按地点自动识别' : 'Detect from location';
-String get _label => kCountryUiZh ? '国家 / 地区（选填）' : 'Country / region (optional)';
-String get _title => kCountryUiZh ? '选择国家或地区' : 'Select country or region';
+String get _auto => 'Detect from location';
+String get _label => 'Country / region (optional)';
+String get _title => 'Select country or region';
 
 /// Opens the picker; returns `(chosen: true, code)` so "detect from location" (null) is distinguishable from a dismissal.
 Future<({bool chosen, String? code})> pickCountry(BuildContext context, String? current) async {
@@ -151,7 +150,7 @@ class _ProjectCountryRowState extends State<ProjectCountryRow> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(kCountryUiZh ? '保存失败，请稍后重试' : "Couldn't save. Please try again."),
+          content: Text("Couldn't save. Please try again."),
         ));
       }
     } finally {
@@ -165,12 +164,12 @@ class _ProjectCountryRowState extends State<ProjectCountryRow> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-        Text(kCountryUiZh ? '国家 / 地区' : 'Country', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline)),
+        Text('Country', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline)),
         Row(mainAxisSize: MainAxisSize.min, children: [
-          Text(countryName(_code) ?? (kCountryUiZh ? '未设置' : 'Not set'), key: const Key('projectCountryValue')),
+          Text(countryName(_code) ?? 'Not set', key: const Key('projectCountryValue')),
           IconButton(
             key: const Key('editCountry'),
-            tooltip: kCountryUiZh ? '修改国家 / 地区' : 'Change country',
+            tooltip: 'Change country',
             icon: _busy
                 ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
                 : const Icon(Icons.edit_outlined, size: 18),

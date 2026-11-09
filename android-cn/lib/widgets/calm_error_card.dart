@@ -3,16 +3,15 @@ import 'package:flutter/material.dart';
 /// Replacement for the red error screen. The shell stays usable; the failed
 /// subtree shows a short card that says what happened and what to do next.
 class CalmErrorCard extends StatelessWidget {
-  const CalmErrorCard({super.key, required this.english});
+  /// 国内版只显示中文。保留 [english] 参数，只为与国际版的调用方式一致。
+  const CalmErrorCard({super.key, this.english = false});
 
   final bool english;
 
   @override
   Widget build(BuildContext context) {
-    final title = english ? 'This section could not be shown' : '这一处暂时显示不了';
-    final body = english
-        ? 'A part of the screen failed to draw. Go back and open it again. The red error screen is not used.'
-        : '页面有一块没有绘制出来。请返回后重新打开。这里不会再铺满红色错误屏。';
+    const title = '这一处暂时显示不了';
+    const body = '页面有一块没有绘制出来。请返回后重新打开。这里不会再铺满红色错误屏。';
     return Material(
       color: const Color(0xFFF5F7FA),
       child: Center(
@@ -46,7 +45,7 @@ class CalmErrorCard extends StatelessWidget {
 }
 
 /// Log the failure and show [CalmErrorCard] instead of the red screen.
-void installCalmErrorWidget({required bool english}) {
+void installCalmErrorWidget({bool english = false}) {
   FlutterError.onError = (details) {
     FlutterError.dumpErrorToConsole(details);
   };
