@@ -15,7 +15,7 @@ import roleTemplates from '@/lib/dashboard/role_templates.json';
 import { formulaLibrary } from '@/lib/formulas/library';
 import { findTerm, glossaryCount, glossaryReviewStatus } from '@/lib/glossary/lookup';
 import { publishAllowed } from '@/lib/growth/publish-gate';
-import { canExport, inviteMember } from '@/lib/membership/team-admin';
+import { canExport, inviteMember, teamSeatLimit } from '@/lib/membership/team-admin';
 import { paidCheckoutOpen, planAfterTrial, startTrial, trialWatermark } from '@/lib/membership/trial';
 import { quoteUpgrade, upgradeDifferenceYuan } from '@/lib/membership/upgrade-proration';
 import { gazetteBuffer } from '@/lib/reports/ooxml-zip';
@@ -93,14 +93,16 @@ describe('国内版 P1 行为', () => {
         expect(paidCheckoutOpen(false)).toBe(false);
     });
 
-    it('团队第 10 个之后拒绝，只读顾问不能导出', () => {
+    it('团队席位按注册表，不用另一份 5 人上限', () => {
+        const limit = teamSeatLimit('team');
+        expect(limit).toBe(10);
         let seats = [] as { id: string; role: 'member' }[];
-        for (let index = 0; index < 10; index += 1) {
-            const next = inviteMember(seats, 10, 'member', `m${index}`);
+        for (let index = 0; index < limit; index += 1) {
+            const next = inviteMember(seats, limit, 'member', `m${index}`);
             expect(next.ok).toBe(true);
             if (next.ok) seats = next.seats;
         }
-        expect(inviteMember(seats, 10, 'member', 'm10').ok).toBe(false);
+        expect(inviteMember(seats, limit, 'member', 'm-extra').ok).toBe(false);
         expect(canExport('readonly_advisor')).toBe(false);
     });
 
