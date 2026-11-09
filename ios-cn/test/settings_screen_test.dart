@@ -67,7 +67,7 @@ void main() {
     await t.tap(find.byKey(const Key('deleteAccount')));
     await t.pumpAndSettle();
     expect(t.widget<TextButton>(find.byKey(const Key('deleteConfirmButton'))).onPressed, isNull);
-    await t.enterText(find.byKey(const Key('deleteConfirmField')), 'DELETE');
+    await t.enterText(find.byKey(const Key('deleteConfirmField')), '删除');
     await t.pump();
     await t.tap(find.byKey(const Key('deleteConfirmButton')));
     await t.pumpAndSettle();
@@ -82,7 +82,7 @@ void main() {
     await t.pumpAndSettle();
     await t.tap(find.byKey(const Key('deleteAccount')));
     await t.pumpAndSettle();
-    await t.enterText(find.byKey(const Key('deleteConfirmField')), 'DELETE');
+    await t.enterText(find.byKey(const Key('deleteConfirmField')), '删除');
     await t.pump();
     await t.tap(find.byKey(const Key('deleteConfirmButton')));
     await t.pumpAndSettle();

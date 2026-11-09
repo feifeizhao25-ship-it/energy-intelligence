@@ -2,18 +2,14 @@
 
 import React from 'react';
 
-type Locale = 'en' | 'zh';
+// International edition: English only. The Chinese shell has its own boundary in runtime/web.
+type Locale = 'en';
 
 const COPY = {
   en: {
     title: 'This part of the page stopped',
     body: 'The navigation around it is still here. Retry this section, or go back and open it again. The rest of the page is not replaced by a blank screen.',
     retry: 'Retry this section',
-  },
-  zh: {
-    title: '这一块没有显示出来',
-    body: '周围的导航还在。请重试这一块，或返回后重新打开。整页不会变成空白。',
-    retry: '重试这一块',
   },
 } as const;
 

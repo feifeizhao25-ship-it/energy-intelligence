@@ -28,7 +28,7 @@ void main() {
     expect(find.text('免费'), findsOneWidget);
     expect(find.text('2 / 5'), findsOneWidget);
     expect(find.text('已用完'), findsOneWidget);
-    expect(find.text('明天重置（UTC 日期 {date}）'.replaceAll('{date}', '2026-11-01')), findsOneWidget);
+    expect(find.text('明天重置（世界协调时日期 {date}）'.replaceAll('{date}', '2026-11-01')), findsOneWidget);
     expect(find.text('0 已用 · 不限'), findsOneWidget);
   });
 
