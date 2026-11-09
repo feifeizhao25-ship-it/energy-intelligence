@@ -10,6 +10,7 @@ import os
 import signal
 import subprocess
 import sys
+import tempfile
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -24,7 +25,7 @@ HOST = "127.0.0.1"
 PORT = int(os.environ.get("REPORT_RESIDENT_PORT", "8097"))
 WORKERS = int(os.environ.get("REPORT_RESIDENT_WORKERS", "4"))
 BASE = f"http://{HOST}:{PORT}"
-LOG = Path(os.environ.get("REPORT_RESIDENT_LOG", "/opt/cursor/artifacts/report_resident_http.log"))
+LOG = Path(os.environ.get("REPORT_RESIDENT_LOG") or Path(tempfile.gettempdir()) / "report_resident_http.log")
 UVICORN_LOG = Path("/tmp/report-resident-uvicorn.log")
 
 

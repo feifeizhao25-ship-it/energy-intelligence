@@ -7,6 +7,7 @@ import json
 import os
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -14,7 +15,9 @@ import pytest
 BACKEND = Path(__file__).resolve().parents[1]
 WORKER = BACKEND / "scripts" / "report_mp_worker.py"
 URL = os.environ.get("REPORT_MP_DATABASE_URL", "")
-LOG = Path("/opt/cursor/artifacts/report_mp_112.log")
+# Evidence log. Set REPORT_MP_LOG to keep it somewhere specific; default is the temp dir
+# so the test also runs outside the cloud-agent VM (no /opt/cursor there).
+LOG = Path(os.environ.get("REPORT_MP_LOG") or Path(tempfile.gettempdir()) / "report_mp_112.log")
 
 pytestmark = pytest.mark.skipif(
     not URL.startswith("postgresql") or "energy_cn" in URL or not URL.endswith("energy_report_mp_112"),
