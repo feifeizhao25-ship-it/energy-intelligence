@@ -85,7 +85,7 @@ def _report_file(report_id: str, extension: str) -> str:
 
 def _existing_report_file(report_id: str) -> Optional[tuple]:
     """Locate a generated file for a server UUID under REPORTS_DIR; None if absent."""
-    for ext in ("pdf", "docx"):
+    for ext in ("pdf", "docx", "xlsx", "pptx"):
         filepath = _report_file(report_id, ext)
         if os.path.isfile(filepath):
             return filepath, ext
@@ -189,6 +189,8 @@ class ReportTemplateType(str, Enum):
 class OutputFormat(str, Enum):
     PDF = "pdf"
     DOCX = "docx"
+    XLSX = "xlsx"
+    PPTX = "pptx"
 
 
 class ConfidentialLevel(str, Enum):
@@ -215,7 +217,7 @@ class GenerateReportRequest(BaseModel):
     """生成报告请求"""
     project_id: str = Field(..., min_length=1, description="当前用户拥有的项目ID")
     report_type: ReportTemplateType = Field(ReportTemplateType.FEASIBILITY, description="报告模板类型")
-    format: OutputFormat = Field(OutputFormat.PDF, description="输出格式 pdf/docx")
+    format: OutputFormat = Field(OutputFormat.PDF, description="输出格式 pdf/docx/xlsx/pptx")
     title: Optional[str] = Field(None, description="自定义标题 (空则自动生成)")
     confidential: ConfidentialLevel = Field(ConfidentialLevel.CONFIDENTIAL, description="机密等级")
     market: Optional[str] = Field(None, description="cn | global；空则取请求头 X-Market，再取用户所属市场")
@@ -695,6 +697,40 @@ def generate_docx(
     from app.services.docx_toc import prerender_toc
 
     return prerender_toc(buf.getvalue())
+
+
+def generate_xlsx(
+    data: Dict[str, Any],
+    report_type: str,
+    template_info: TemplateInfo,
+    metrics: Dict[str, Any],
+    title: str,
+    confidential: str,
+    market: str = "cn",
+) -> bytes:
+    """Excel workbook of the same paragraphs and table cells as the Word export."""
+    from app.services.report_office import workbook_from_docx
+
+    return workbook_from_docx(generate_docx(
+        data, report_type, template_info, metrics, title, confidential, market,
+    ))
+
+
+def generate_pptx(
+    data: Dict[str, Any],
+    report_type: str,
+    template_info: TemplateInfo,
+    metrics: Dict[str, Any],
+    title: str,
+    confidential: str,
+    market: str = "cn",
+) -> bytes:
+    """Slides of the same paragraphs and table cells as the Word export."""
+    from app.services.report_office import slides_from_docx
+
+    return slides_from_docx(generate_docx(
+        data, report_type, template_info, metrics, title, confidential, market,
+    ))
 
 
 def _setup_heading_styles(doc):
@@ -2096,6 +2132,14 @@ async def _generate_report_task(
             file_bytes = generate_docx(data, report_type, template_info, metrics, title, confidential, market)
             mime = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
             ext = "docx"
+        elif output_format == "xlsx":
+            file_bytes = generate_xlsx(data, report_type, template_info, metrics, title, confidential, market)
+            mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            ext = "xlsx"
+        elif output_format == "pptx":
+            file_bytes = generate_pptx(data, report_type, template_info, metrics, title, confidential, market)
+            mime = "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+            ext = "pptx"
         else:
             if not HAS_REPORTLAB:
                 raise ImportError("reportlab 未安装")
@@ -2243,6 +2287,28 @@ async def _resolve_market(requested: Optional[str], request: Request, db: AsyncS
         return "cn"
 
 
+async def _refuse_unpromised_office_format(user_id: str, db: AsyncSession, fmt: str, en: bool) -> None:
+    """Excel and PowerPoint exist only on tiers whose export.formats list them."""
+    if fmt not in ("xlsx", "pptx"):
+        return
+    from app.core.subscription import ENTITLEMENTS, _get_user
+
+    try:
+        user = await _get_user(user_id, db)
+    except LookupError as exc:
+        raise HTTPException(status_code=401, detail="请先登录" if not en else "Sign in required") from exc
+    allowed = list((ENTITLEMENTS.get(user.plan) or ENTITLEMENTS["free"]).get("export_formats") or [])
+    if fmt in allowed:
+        return
+    if en:
+        name = "Excel" if fmt == "xlsx" else "PowerPoint"
+        detail = f"{name} export is not included in this plan."
+    else:
+        name = "Excel" if fmt == "xlsx" else "PPT"
+        detail = f"当前套餐不含 {name} 导出"
+    raise HTTPException(status_code=403, detail=detail)
+
+
 @router.post("/generate")
 async def generate_report(
     req: GenerateReportRequest,
@@ -2255,7 +2321,8 @@ async def generate_report(
     生成测算、合规或排放核算报告
 
     - 支持 4 种模板: feasibility / investment / compliance / esg
-    - 支持两种格式: pdf / docx
+    - 支持四种格式: pdf / docx / xlsx / pptx
+    - Excel 与 PowerPoint 只转写同一份 Word 正文，并且只对权益表里列出该格式的档位开放
     - 仅使用当前用户拥有的真实项目数据
     """
     report_id = str(uuid4())
@@ -2271,6 +2338,7 @@ async def generate_report(
 
     # 获取数据
     data = await fetch_project_data(db, req.project_id, user_id)
+    await _refuse_unpromised_office_format(user_id, db, req.format.value, en)
     if req.report_type in (ReportTemplateType.FEASIBILITY, ReportTemplateType.INVESTMENT):
         validate_financial_evidence(data, market)
 
@@ -2449,10 +2517,12 @@ async def download_report_file(
     if not found:
         raise HTTPException(status_code=404, detail="报告文件不存在，请重新生成")
     filepath, ext = found
-    mime = (
-        "application/pdf" if ext == "pdf"
-        else "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-    )
+    mime = {
+        "pdf": "application/pdf",
+        "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    }.get(ext, "application/octet-stream")
     with open(filepath, "rb") as f:
         content = f.read()
     title = report.title or _report_store.get(report_id, {}).get("title") or report_id
