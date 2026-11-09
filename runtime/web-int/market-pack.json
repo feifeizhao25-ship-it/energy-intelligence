@@ -1,0 +1,8 @@
+{
+  "id": "intl",
+  "languages": ["en"],
+  "default_language": "en",
+  "cookie_banner_enabled": false,
+  "non_essential_cookies": "rejected",
+  "ai_notice": "Generated text. Not a reviewed publication."
+}

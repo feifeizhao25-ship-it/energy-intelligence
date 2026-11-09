@@ -14,6 +14,8 @@ from datetime import date
 from pathlib import Path
 from typing import Iterable, Mapping, Optional
 
+from app.services.readability import assess
+
 I18N = {
     "zh": {
         "title": "{product} - 月度改进报告 - {month}", "overview": "一、概览", "changes": "二、本月改了什么", "scores": "三、评测分数（金标准问答）",
@@ -27,8 +29,10 @@ I18N = {
         "no_golden": "本月没有金标准评测记录（评测任务未开启或未运行）。", "generated": "生成日期 {d}。本报告只汇总已有文件，没有联网、没有改任何内容。",
         "reg_h": "退步的题（上次通过、这次没通过）", "fail_h": "没通过的题", "adv_none": "没有需要特别处理的事项。",
         "adv_reg": "先看 {n} 道退步的题：{ids}", "adv_stale": "先处理 {n} 个高优先级陈旧项（过期/被取代/没有出处）", "adv_wait": "有 {n} 个候选在等人审核；超过 45 天没人看的会被标成陈旧",
-        "adv_skill": "这些技能/主题通过率低于 90%：{names}", "adv_off": "SIL 与评测任务仍是关闭状态；要启用由你决定，并先填好审批人名单",
+        "adv_skill": "这些技能/主题通过率低于 90%：{names}",         "adv_off": "SIL 与评测任务仍是关闭状态；要启用由你决定，并先填好审批人名单",
         "pdf_missing": "PDF 未生成：{why}",
+        "readability": "可读性",
+        "readability_line": "平均句长 {n}。问题条数 {issues}。这是长度检查，不是评分。",
     },
     "en": {
         "title": "{product} - Monthly improvement report - {month}", "overview": "1. Overview", "changes": "2. What changed this month", "scores": "3. Evaluation scores (golden Q&A)",
@@ -42,8 +46,10 @@ I18N = {
         "no_golden": "No golden evaluation runs this month (the job is off or did not run).", "generated": "Generated on {d}. This report only summarises existing files: no network access, no content changed.",
         "reg_h": "Regressions (passed last time, failing now)", "fail_h": "Failing cases", "adv_none": "Nothing needs special attention.",
         "adv_reg": "Look at the {n} regressed cases first: {ids}", "adv_stale": "Handle {n} high-priority stale items first (expired / superseded / no source)", "adv_wait": "{n} candidates are waiting for review; items unseen for 45+ days are flagged stale",
-        "adv_skill": "These skills/topics are below 90%: {names}", "adv_off": "SIL and the evaluation jobs are still off; turning them on is your call, after the approver list is filled in",
+        "adv_skill": "These skills/topics are below 90%: {names}",         "adv_off": "SIL and the evaluation jobs are still off; turning them on is your call, after the approver list is filled in",
         "pdf_missing": "PDF not generated: {why}",
+        "readability": "Readability",
+        "readability_line": "Average sentence length {n}. Issue count {issues}. This is a length check, not a score.",
     },
 }
 
@@ -94,6 +100,18 @@ def build_report(product: str, month: str, *, golden_runs: Iterable[Mapping] = (
         advice.append(t["adv_off"])
     if not advice:
         advice.append(t["adv_none"])
+    measured = assess("\n".join(advice))
+    issue_codes = {
+        "句长": "sentence_length",
+        "段长": "paragraph_length",
+        "术语": "terms",
+        "数字": "numbers",
+    }
+    readability = {
+        "average_sentence_length": measured["average_sentence_length"],
+        "ok": measured["ok"],
+        "issues": [issue_codes.get(item, item) for item in measured["issues"]],
+    }
     return {
         "product": product, "month": month, "lang": lang, "generated": (today or date.today()).isoformat(), "sil_enabled": sil_enabled,
         "golden": None if not last else {"n": last["n"], "passed": last["passed"], "pass_rate": last["pass_rate"], "ran_at": last["ran_at"],
@@ -102,6 +120,7 @@ def build_report(product: str, month: str, *, golden_runs: Iterable[Mapping] = (
         "skills": skills, "changes": changes, "stale": {"counts": (stale or {}).get("counts", {}), "high": len(high), "findings": findings},
         "awaiting": {"candidates": cands, "staged": staged, "pending_entries": pending_entries, "total": waiting},
         "radar": {"digests": radar_digests, "new_items": radar_new_items}, "advice": advice,
+        "readability": readability,
     }
 
 
@@ -152,6 +171,11 @@ def sections(rep: Mapping) -> list[tuple[str, list]]:
     out.append((t["awaiting"], ab or [("p", t["none"])]))
     out.append((t["radar"], [("p", t["digests"].format(n=rep["radar"]["digests"], m=rep["radar"]["new_items"]))]))
     out.append((t["next"], [("bullets", rep["advice"])]))
+    reading = rep.get("readability") or {}
+    out.append((t["readability"], [("p", t["readability_line"].format(
+        n=f"{reading.get('average_sentence_length', 0):.1f}",
+        issues=len(reading.get("issues") or []),
+    ))]))
     return out
 
 
