@@ -3,6 +3,7 @@
 > **不得部署、不得作为定价/配额来源**。现行生产后端是 `runtime/backend`，会员唯一定价/配额源是
 > `runtime/backend/data/entitlements.json`（五档年付，月付已废止，续费/降级/退款规则见 runtime 后端 billing）。
 > 本目录仅作历史参考与迁移对照保留，不物理删除；新功能一律写到 `runtime/` 下。
+> 2026-11-09：上一行里的“唯一”不是已经做出的价目决定。六档、五档年费和战略文档里的月费，哪一份对外有效还没有选定。代码当前读取 `runtime/backend/data/entitlements.json`，这次没有改里面的数字，也没有改币种。
 
 # Energy Intelligence Platform — 后端 API
 
