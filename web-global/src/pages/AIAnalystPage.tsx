@@ -22,6 +22,7 @@ import {
   clipboardAnswer,
   dateLines,
   downloadAnalystAnswer,
+  isUnpublishedRecord,
   postAnalystChat,
 } from '../lib/ai/analystChat';
 
@@ -38,7 +39,7 @@ function reviewNote(source: AnalystSource): string | null {
   if (source.evidence_status === 'legacy_unreviewed') {
     return 'Review status is not recorded as a human review.';
   }
-  if (source.evidence_status === 'pending' || source.status === '待核实' || source.status === '待审核') {
+  if (isUnpublishedRecord(source)) {
     return 'Not published: pending review.';
   }
   return null;

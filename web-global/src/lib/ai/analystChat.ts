@@ -112,6 +112,12 @@ export function dateLines(source: AnalystSource): string[] {
   return lines;
 }
 
+const PENDING_RECORD_STATUS = new Set(['\u5f85\u6838\u5b9e', '\u5f85\u5ba1\u6838']);
+
+export function isUnpublishedRecord(source: AnalystSource): boolean {
+  return source.evidence_status === 'pending' || PENDING_RECORD_STATUS.has(source.status || '');
+}
+
 export function citationLine(source: AnalystSource, index: number): string {
   const bits = [`[${index}] ${source.title}`];
   if (source.publisher) bits.push(source.publisher);
@@ -125,7 +131,7 @@ export function citationLine(source: AnalystSource, index: number): string {
     bits.push('Review: machine extract, not a human-reviewed publication.');
   } else if (source.evidence_status === 'legacy_unreviewed') {
     bits.push('Review status: not recorded as a human review.');
-  } else if (source.evidence_status === 'pending' || source.status === '待核实' || source.status === '待审核') {
+  } else if (isUnpublishedRecord(source)) {
     bits.push('Not published: pending review.');
   }
   if (source.license) bits.push(`License: ${source.license}`);
