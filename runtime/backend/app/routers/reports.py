@@ -2300,13 +2300,17 @@ async def _refuse_unpromised_office_format(user_id: str, db: AsyncSession, fmt: 
     allowed = list((ENTITLEMENTS.get(user.plan) or ENTITLEMENTS["free"]).get("export_formats") or [])
     if fmt in allowed:
         return
-    if en:
-        name = "Excel" if fmt == "xlsx" else "PowerPoint"
-        detail = f"{name} export is not included in this plan."
-    else:
-        name = "Excel" if fmt == "xlsx" else "PPT"
-        detail = f"当前套餐不含 {name} 导出"
-    raise HTTPException(status_code=403, detail=detail)
+    # Same envelope as the Word/PDF format gate: detail.error = FORMAT_NOT_INCLUDED.
+    label = "Excel" if fmt == "xlsx" else "PPT"
+    message = (
+        f"{label} export is not included in this plan."
+        if en else
+        f"当前套餐不含 {label} 导出，可导出 PDF，或升级到专业版及以上"
+    )
+    raise HTTPException(
+        status_code=403,
+        detail={"error": "FORMAT_NOT_INCLUDED", "message": message},
+    )
 
 
 @router.post("/generate")

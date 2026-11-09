@@ -91,7 +91,9 @@ async def test_lower_tiers_are_refused_excel_and_powerpoint(client, db_session, 
             "project_id": project_id, "report_type": "compliance", "format": fmt,
         })
         assert response.status_code == 403, response.text
-        assert response.json()["detail"] == f"当前套餐不含 {label} 导出"
+        detail = response.json()["detail"]
+        assert detail["error"] == "FORMAT_NOT_INCLUDED"
+        assert detail["message"] == f"当前套餐不含 {label} 导出，可导出 PDF，或升级到专业版及以上"
 
 
 @pytest.mark.asyncio
