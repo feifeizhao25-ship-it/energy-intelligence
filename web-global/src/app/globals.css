@@ -10,13 +10,13 @@
   --color-brand-500: #2f6bed;
   --color-brand-600: #1f56d1;
 
-  --color-success: #2f9e63;
+  --color-success: #146c3e;
   --color-success-bg: #e6f6ec;
-  --color-warning: #c07f13;
+  --color-warning: #92600a;
   --color-warning-bg: #fdf3e0;
-  --color-danger: #d64545;
+  --color-danger: #b42318;
   --color-danger-bg: #fdecec;
-  --color-info: #2b7cd3;
+  --color-info: #18658f;
   --color-info-bg: #e8f2fd;
 
   --bg-primary: #ffffff;
@@ -25,7 +25,7 @@
 
   --text-primary: #17233b;
   --text-secondary: #4c5a75;
-  --text-tertiary: #8494ad;
+  --text-tertiary: #5a6a82;
 
   --border-default: #e2e8f0;
   --border-strong: #c3cedd;

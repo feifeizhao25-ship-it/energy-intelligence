@@ -63,7 +63,7 @@ export default function ReportPage() {
     }, [lat, lng, name]);
 
     if (!lat || !lng) {
-        return <div className="p-8 text-white">无效的坐标参数</div>;
+        return <div className="min-h-screen bg-gray-900 p-8 text-white">无效的坐标参数</div>;
     }
 
     return (

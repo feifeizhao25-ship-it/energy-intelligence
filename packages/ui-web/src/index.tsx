@@ -416,12 +416,14 @@ export const StatCard: React.FC<StatCardProps> = ({
 
 export interface ProgressProps {
   value: number;
+  label?: string;
   className?: string;
 }
 
-export const Progress: React.FC<ProgressProps> = ({ value, className }) => (
+export const Progress: React.FC<ProgressProps> = ({ value, label = 'Progress', className }) => (
   <div
     role="progressbar"
+    aria-label={label}
     aria-valuenow={value}
     aria-valuemin={0}
     aria-valuemax={100}
