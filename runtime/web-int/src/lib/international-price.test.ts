@@ -36,6 +36,19 @@ test('a registry USD amount is used when Stripe is not configured', () => {
   }), 'USD 8,800.00');
 });
 
+test('team and enterprise seat copy matches the enforced registry', () => {
+  const registry = JSON.parse(readFileSync(join(ROOT, 'runtime/backend/data/entitlements.json'), 'utf8'));
+  const page = readFileSync(join(ROOT, 'runtime/web-int/src/app/pricing/page.tsx'), 'utf8');
+  const teamSeats = registry.tiers.team.collaboration.team_seats;
+  const enterpriseSeats = registry.tiers.enterprise.collaboration.team_seats;
+  assert.equal(teamSeats, 10);
+  assert.equal(enterpriseSeats, 10);
+  assert.match(page, new RegExp(`${teamSeats} team seats`));
+  assert.match(page, /ten-person/);
+  assert.match(page, /10 seats included, more by contract/);
+  assert.doesNotMatch(page, /5 team accounts|five-person|From 20 seats/);
+});
+
 test('missing or non-USD prices say price unavailable', async () => {
   const cny = await resolveInternationalPrice('enterprise', {
     env: { STRIPE_SECRET_KEY: 'sk_test', STRIPE_ENTERPRISE_PRICE_ID: 'price_ent' },

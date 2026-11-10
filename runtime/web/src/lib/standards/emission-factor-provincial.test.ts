@@ -1,6 +1,6 @@
 import { resolveEmissionFactor, co2AvoidedKgForProvince, PROVINCIAL_EMISSION_FACTORS_2023, normalizeProvince } from './emission-factor';
 
-describe('审计 8-2 省级排放因子（公告 2025 年第 47 号）', () => {
+describe('审计 8-2 省级排放因子（生态环境部、国家统计局公告 2025 年第 47 号，2025-12-31 发布；附件表 3 为 2023 年省级电力平均二氧化碳排放因子）', () => {
   it('江苏、云南用例与公告附件手算一致', () => {
     // 1,000,000 kWh × 0.5827 = 582,700 kg；× 0.1333 = 133,300 kg
     expect(co2AvoidedKgForProvince(1_000_000, '江苏省')).toBeCloseTo(582_700, 6);
