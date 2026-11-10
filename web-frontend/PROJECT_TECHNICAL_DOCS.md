@@ -47,7 +47,7 @@
 
 ### 2.3 外部集成 Layer
 系统通过 `src/lib/api/` 对外提供聚合访问：
-- **地理信息**：高德地图 API (`amap.ts`)。
+- **地理信息**：这个目录是遗留前端，不是现网地图。说明见 `runtime/web/docs/maps.md`。这里的 `amap.ts` 只是占位，不请求高德，也不回退到 Nominatim。
 - **气象/地理**：NASA, Open-Meteo, Elevation API。
 - **学术资源**：Unpaywall, OpenAlex 等资源接口。
 

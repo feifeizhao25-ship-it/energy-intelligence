@@ -2,6 +2,8 @@
 
 A new Flutter project.
 
+No map yet. This app does not ship a map page, Mapbox, or Amap.
+
 ## Getting Started
 
 This project is a starting point for a Flutter application.

@@ -4,6 +4,7 @@
 > `runtime/backend/data/entitlements.json`（五档年付 免费/1980/5800/16800/33000，月付已废止）。
 > 本目录仅作历史参考与迁移对照保留，不物理删除；新功能一律写到 `runtime/` 下。
 > 2026-11-09：上一行里的“唯一”不是已经做出的价目决定。六档、五档年费和战略文档里的月费，哪一份对外有效还没有选定。代码当前读取 `runtime/backend/data/entitlements.json`，这次没有改里面的数字，也没有改币种。
+> 地图也不在这个目录。现网说明见 `runtime/web/docs/maps.md`。这里不回退到 OSM / Nominatim。
 
 # 🌟 新能源智库 - Energy Intelligence Platform
 

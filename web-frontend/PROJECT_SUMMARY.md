@@ -20,7 +20,7 @@
 - ✅ **NASA POWER API** - 辐照度和风速数据
 - ✅ **NREL PVWatts API** - 光伏产能计算
 - ✅ **Open-Meteo API** - 天气数据
-- ✅ **高德地图API** - 地理信息和选点
+- 本目录是遗留前端，高德地图并未完成。现网说明见 `runtime/web/docs/maps.md`。
 
 ### 4. 核心计算引擎 ✅
 - ✅ **光伏计算引擎**
@@ -81,7 +81,7 @@ Next.js API Routes
 ├── NASA POWER (太阳辐射/风速)
 ├── NREL PVWatts (光伏计算)
 ├── Open-Meteo (天气数据)
-└── 高德地图 (地理信息)
+└── 地图（遗留，不是现网，见 runtime/web/docs/maps.md）
 ```
 
 ## 📊 核心算法实现
@@ -142,7 +142,7 @@ Next.js API Routes
 | API集成 | NASA/NREL/Open-Meteo/高德 | ✅ |
 | 计算引擎 | 自研光伏/风电算法 | ✅ |
 | AI服务 | Claude + GPT + Gemini | ✅ |
-| 地图服务 | 高德地图API | ✅ |
+| 地图服务 | 遗留目录，不是现网。见 runtime/web/docs/maps.md | 未完成 |
 | PDF生成 | pdf-lib | ⏳ |
 | 部署平台 | 阿里云 (ECS+RDS+OSS) | ⏳ |
 
@@ -171,7 +171,7 @@ Next.js API Routes
 1. **多AI服务路由**：根据任务复杂度自动选择最优AI模型
 2. **保守估算策略**：所有计算采用保守假设，确保投资安全
 3. **结构化决策输出**：避免AI闲聊，提供可执行的工程建议
-4. **中国本土化**：集成高德地图，符合国内使用习惯
+4. **中国本土化**：遗留目录不提供可用地图。现网见 `runtime/web/docs/maps.md`。
 5. **商业化就绪**：内置权限控制和付费功能设计
 
 ## 📝 总结

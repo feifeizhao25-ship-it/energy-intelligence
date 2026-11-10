@@ -47,7 +47,7 @@
 
 ### 2.3 外部集成 Layer
 系统通过 `src/lib/api/` 对外提供聚合访问：
-- **地理信息**：高德地图 API (`amap.ts`)。
+- **地理信息**：见 `docs/maps.md`。瓦片代理、Web 服务和 JS SDK 是三条路。现网只接了前两条里已经配了密钥的部分，JS SDK 没有加载。没有密钥时页面写「地图服务暂不可用」。国际站没有地图页。
 - **气象/地理**：NASA, Open-Meteo, Elevation API。
 - **学术资源**：Unpaywall, OpenAlex 等资源接口。
 

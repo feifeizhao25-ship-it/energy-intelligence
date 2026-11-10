@@ -17,11 +17,7 @@ dependencies:
   fl_chart: ^0.70.0
   syncfusion_flutter_charts: ^28.1.33
   
-  # 地图
-  # amap_flutter_map 已移除：全库无任何 import（energy_map.dart 只有注释占位），
-  # 且其 Android 实现仍用 Flutter v1 embedding（io.flutter.view.FlutterMain），无法编译
-  amap_flutter_location: ^3.0.0
-  google_maps_flutter: ^2.6.0
+  # 没有地图页。amap_flutter_location 未使用，已去掉，避免看起来像已经接了高德。
   
   # UI增强
   shimmer: ^3.0.0

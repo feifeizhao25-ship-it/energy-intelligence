@@ -38,13 +38,7 @@ export default function LocationPicker({ value, onChange, placeholder = "点击�
         if (!isMapOpen) return;
 
         const loadMap = async () => {
-            // 配置安全密钥
-            if (process.env.NEXT_PUBLIC_AMAP_SECURITY_CODE) {
-                (window as any)._AMapSecurityConfig = {
-                    securityJsCode: process.env.NEXT_PUBLIC_AMAP_SECURITY_CODE,
-                };
-            }
-
+            // 遗留树不把安全密钥放进浏览器。
             try {
                 setMapError(null);
 

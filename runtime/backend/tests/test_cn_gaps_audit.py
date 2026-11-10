@@ -253,6 +253,15 @@ def test_cn_map_tiles_need_a_domestic_key_and_block_osm():
     Cfg.MAP_TILE_URL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
     Cfg.MAP_TILE_PROVIDER = "tianditu"
     assert map_tiles(Cfg())["reason"] == "osm-blocked"
+    Cfg.MAP_TILE_URL = ""
+    Cfg.MAP_TILE_PROVIDER = "amap"
+    Cfg.GAODE_MAP_KEY = ""
+    assert map_tiles(Cfg())["reason"] == "key-unset"
+    Cfg.GAODE_MAP_KEY = "gaode-secret"
+    enabled_amap = map_tiles(Cfg())
+    assert enabled_amap["enabled"] is True and enabled_amap["provider"] == "amap"
+    assert "gaode-secret" not in json.dumps(enabled_amap)
+    assert "key=" not in enabled_amap["template"]
 
 
 def test_alert_delivery_is_opt_in_and_rate_limited(tmp_path, monkeypatch):
