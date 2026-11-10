@@ -45,7 +45,7 @@ const KPI_ITEMS = [
   { label: 'Total Capacity', value: '2,847', unit: 'MW', trend: { value: 4.2, positive: true }, color: 'var(--color-brand-500)' },
   { label: 'Avg IRR', value: '14.6', unit: '%', trend: { value: 1.8, positive: true }, color: 'var(--color-success)' },
   { label: 'Projects', value: '38', unit: '', trend: { value: 2.7, positive: true }, color: 'var(--color-info)' },
-  { label: 'CO₂ Avoided', value: '1.24', unit: 'M tons', trend: { value: 5.1, positive: true }, color: '#5FAE7A' },
+  { label: 'CO₂ Avoided', value: '1.24', unit: 'M tons', trend: { value: 5.1, positive: true }, color: '#146c3e' },
 ];
 
 const RECENT_PROJECTS: ProjectItem[] = [
@@ -348,12 +348,12 @@ const DashboardPage: React.FC = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="p-3 rounded-[var(--radius-md)] bg-[var(--bg-secondary)]">
                     <div className="text-[11px] text-[var(--text-tertiary)] mb-1">CO₂ Avoided</div>
-                    <div className="text-[20px] font-bold font-mono" style={{ color: '#5FAE7A' }}>1.24M</div>
+                    <div className="text-[20px] font-bold font-mono" style={{ color: '#146c3e' }}>1.24M</div>
                     <div className="text-[11px] text-[var(--text-secondary)]">tons / year</div>
                   </div>
                   <div className="p-3 rounded-[var(--radius-md)] bg-[var(--bg-secondary)]">
                     <div className="text-[11px] text-[var(--text-tertiary)] mb-1">MWh Generated</div>
-                    <div className="text-[20px] font-bold font-mono" style={{ color: '#4FA8C9' }}>5,840</div>
+                    <div className="text-[20px] font-bold font-mono" style={{ color: '#18658f' }}>5,840</div>
                     <div className="text-[11px] text-[var(--text-secondary)]">GWh YTD</div>
                   </div>
                 </div>
@@ -383,9 +383,9 @@ const DashboardPage: React.FC = () => {
                 <div className="pt-3 border-t border-[var(--border-default)]">
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-[12px] font-medium text-[var(--text-primary)]">ESG Score</span>
-                    <span className="text-[16px] font-bold font-mono" style={{ color: '#5FAE7A' }}>A+</span>
+                    <span className="text-[16px] font-bold font-mono" style={{ color: '#146c3e' }}>A+</span>
                   </div>
-                  <Progress value={92} className="w-full" />
+                  <Progress value={92} label="ESG Score" className="w-full" />
                 </div>
               </div>
             </Card>

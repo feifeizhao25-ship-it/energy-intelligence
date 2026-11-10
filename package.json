@@ -41,6 +41,7 @@
     "verify:production": "python3 scripts/verify_production_code.py && python3 scripts/verify_k8s_production.py && python3 scripts/verify_compose_production.py"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.10.2",
     "@commitlint/cli": "^18.4.0",
     "@commitlint/config-conventional": "^18.4.0",
     "@faker-js/faker": "^10.5.0",

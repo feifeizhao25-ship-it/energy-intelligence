@@ -40,15 +40,15 @@ export default function ResourceMapPage() {
             {/* Minimal High-Tech Search & Layer Controls */}
             <div className="absolute top-8 left-8 right-8 z-20 pointer-events-none flex justify-between items-start">
                 <div className="space-y-4 pointer-events-auto">
-                    <div className="group flex items-center gap-3 bg-slate-900/40 backdrop-blur-2xl border border-white/5 p-2 pr-4 rounded-[32px] shadow-2xl transition-all hover:bg-slate-900/60 w-80">
-                        <div className="bg-green-500 p-3 rounded-2xl shadow-lg shadow-green-500/20">
+                    <div className="group flex items-center gap-3 bg-slate-950 border border-white/10 p-2 pr-4 rounded-[32px] shadow-2xl w-80">
+                        <div className="bg-emerald-800 p-3 rounded-2xl">
                             <Search className="w-5 h-5 text-white" />
                         </div>
                         <input
                             type="text"
                             id="map-search-input"
                             placeholder="搜索地点或经纬度..."
-                            className="bg-transparent border-none focus:ring-0 text-sm font-bold text-white placeholder-slate-500 w-full outline-none pointer-events-auto"
+                            className="bg-transparent border-none focus:ring-0 text-sm font-bold text-white placeholder-slate-300 w-full outline-none pointer-events-auto"
                         />
                     </div>
 
@@ -61,7 +61,7 @@ export default function ResourceMapPage() {
                                     "px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all",
                                     selectedLayer === l
                                         ? "bg-white text-slate-900 shadow-xl"
-                                        : "bg-slate-900/40 backdrop-blur-xl border border-white/5 text-slate-400 hover:text-white"
+                                        : "bg-slate-950 border border-white/10 text-slate-200 hover:text-white"
                                 )}
                             >
                                 {l === 'solar' ? '光伏 GHI' : '风电 100M'}
@@ -71,29 +71,29 @@ export default function ResourceMapPage() {
                 </div>
 
                 <div className="flex flex-col items-end gap-4 pointer-events-auto text-white">
-                    <div className="bg-slate-900/40 backdrop-blur-2xl border border-white/5 p-1.5 rounded-2xl shadow-2xl flex gap-1">
+                    <div className="bg-slate-950 border border-white/10 p-1.5 rounded-2xl shadow-2xl flex gap-1">
                         <button
                             onClick={() => setCompareMode(!compareMode)}
                             className={cn(
                                 "p-3 rounded-xl transition-all",
-                                compareMode ? "bg-green-500 text-white shadow-lg" : "text-slate-400 hover:bg-white/5"
+                                compareMode ? "bg-emerald-800 text-white shadow-lg" : "text-slate-200 hover:bg-white/5"
                             )}
                             title="多点资源对比"
                         >
                             <ArrowRightLeft className="w-5 h-5" />
                         </button>
-                        <button className="p-3 rounded-xl text-slate-400 hover:bg-white/5" title="历史 34 年序列查询">
+                        <button className="p-3 rounded-xl text-slate-200 hover:bg-white/5" title="历史 34 年序列查询">
                             <History className="w-5 h-5" />
                         </button>
-                        <button className="p-3 rounded-xl text-slate-400 hover:bg-white/5" title="导出评估报告">
+                        <button className="p-3 rounded-xl text-slate-200 hover:bg-white/5" title="导出评估报告">
                             <Download className="w-5 h-5" />
                         </button>
                     </div>
 
                     {/* Legend */}
-                    <div className="bg-slate-900/40 backdrop-blur-2xl border border-white/5 p-5 rounded-3xl shadow-2xl w-56 space-y-3">
+                    <div className="bg-slate-950 border border-white/10 p-5 rounded-3xl shadow-2xl w-56 space-y-3">
                         <div className="flex items-center justify-between">
-                            <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                            <h4 className="text-[10px] font-black text-slate-200 uppercase tracking-widest">
                                 {selectedLayer === 'solar' ? '辐照分级' : '风速分级'}
                             </h4>
                             <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
