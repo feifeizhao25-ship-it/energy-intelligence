@@ -8,7 +8,7 @@ import 'package:energy_app/screens/ai_assistant/ai_assistant_screen.dart';
 Map<String, dynamic> _reply(Map<String, dynamic>? grounding) => {
       'message': '结论：内部收益率约 8.5%。',
       'structured': {'headline': '内部收益率约 8.5%。', 'key_numbers': [], 'basis': [], 'risks': [], 'glossary': [], 'limitations': []},
-      if (grounding != null) 'grounding': grounding,
+      'grounding': ?grounding,
     };
 
 Future<void> _ask(WidgetTester t, Map<String, dynamic> reply) async {

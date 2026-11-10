@@ -39,7 +39,7 @@ class EnPhotoCard extends StatelessWidget {
             width: double.infinity,
             child: Stack(fit: StackFit.expand, children: [
               const DecoratedBox(decoration: BoxDecoration(color: Color(0xFF1E3A8A))),
-              Image.asset(asset, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const SizedBox.shrink()),
+              Image.asset(asset, fit: BoxFit.cover, errorBuilder: (_, _, _) => const SizedBox.shrink()),
               const DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -101,7 +101,7 @@ class EnEmptyState extends StatelessWidget {
       ClipRRect(
         borderRadius: BorderRadius.circular(16),
         child: Image.asset(asset, width: double.infinity, height: imageHeight, fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => SizedBox(height: imageHeight)),
+            errorBuilder: (_, _, _) => SizedBox(height: imageHeight)),
       ),
       const SizedBox(height: 14),
       Text(title, textAlign: TextAlign.center, style: TextStyle(fontSize: 17, height: 1.4, fontWeight: FontWeight.w700, color: context.eiStrong)),
@@ -136,7 +136,7 @@ class EnThumbRow extends StatelessWidget {
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
               child: Image.asset(asset, width: 96, height: 72, fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(width: 96, height: 72, color: color.withValues(alpha: 0.12), child: Icon(icon, color: color, size: 28))),
+                  errorBuilder: (_, _, _) => Container(width: 96, height: 72, color: color.withValues(alpha: 0.12), child: Icon(icon, color: color, size: 28))),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -176,7 +176,7 @@ class EnBanner extends StatelessWidget {
         width: double.infinity,
         child: Stack(fit: StackFit.expand, children: [
           const DecoratedBox(decoration: BoxDecoration(color: Color(0xFF1E3A8A))),
-          Image.asset(asset, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const SizedBox.shrink()),
+          Image.asset(asset, fit: BoxFit.cover, errorBuilder: (_, _, _) => const SizedBox.shrink()),
           const DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0x00000000), Color(0xCC0B1220)], stops: [0.3, 1.0]),

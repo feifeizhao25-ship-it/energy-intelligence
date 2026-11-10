@@ -137,7 +137,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                                     ClipRRect(
                                       borderRadius: BorderRadius.circular(16),
                                       child: Image.asset('assets/images/en_empty_substation.webp', height: 150, fit: BoxFit.cover,
-                                          errorBuilder: (_, __, ___) => SizedBox(height: 150)),
+                                          errorBuilder: (_, _, _) => SizedBox(height: 150)),
                                     ),
                                     SizedBox(height: 14),
                                     Text(
