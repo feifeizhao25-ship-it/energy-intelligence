@@ -1,10 +1,13 @@
 """报告减排量在已知省份时用公告 2025 年第 47 号附件表 3，与 CA-001 手算一致。"""
 import io
+import logging
+from pathlib import Path
 
 import pytest
 from docx import Document
 
 from app.routers import reports as R
+from app.services import emission_units
 from app.services.emission_units import avoided_wan_ton, factor_sentence, resolve_grid_factor
 
 
@@ -56,3 +59,35 @@ def test_tibet_report_states_the_national_fallback():
     assert "全国电力平均二氧化碳排放因子 0.5306" in text
     assert "未收录西藏" in text
     assert "省级电力平均二氧化碳排放因子 0." not in text
+
+
+def test_blank_province_does_not_open_the_table(monkeypatch):
+    def boom():
+        raise AssertionError("全国口径不应加载省级表")
+
+    monkeypatch.setattr(emission_units, "_load_carbon", boom)
+    factor, sentence = resolve_grid_factor(None)
+    assert factor == 0.5306
+    assert sentence == (
+        "按2023年生态环境部、国家统计局公告2025年第47号全国电力平均二氧化碳排放因子"
+        " 0.5306 kg/kWh 核算"
+    )
+
+
+def test_missing_table_still_generates_the_national_report(monkeypatch, caplog):
+    monkeypatch.setattr(emission_units, "_CARBON", None)
+    monkeypatch.setattr(
+        emission_units,
+        "_carbon_paths",
+        lambda: [Path("/tmp/missing-carbon-asset-table.py")],
+    )
+    data = R._demo_data()
+    data["province_or_region"] = "江苏省"
+    data["city"] = "南京市"
+    data["financial"]["annual_generation_mwh"] = 1_000
+    with caplog.at_level(logging.WARNING, logger=emission_units.logger.name):
+        text = _text(data)
+    assert "全国电力平均二氧化碳排放因子 0.5306" in text
+    assert "江苏省级" not in text
+    assert "省级排放因子表未能加载" in caplog.text
+    assert avoided_wan_ton(1_000_000, province="江苏省") * 10_000 == pytest.approx(530.6)
