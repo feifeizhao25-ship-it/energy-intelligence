@@ -45,9 +45,18 @@ class CalmErrorCard extends StatelessWidget {
 }
 
 /// Log the failure and show [CalmErrorCard] instead of the red screen.
+///
+/// The previous [FlutterError.onError] is kept. Widget tests record the build
+/// exception there; replacing that handler leaves the failure uncaught and the
+/// test hangs until it times out.
 void installCalmErrorWidget({bool english = false}) {
-  FlutterError.onError = (details) {
-    FlutterError.dumpErrorToConsole(details);
+  final previous = FlutterError.onError;
+  FlutterError.onError = (FlutterErrorDetails details) {
+    if (previous != null) {
+      previous(details);
+    } else {
+      FlutterError.dumpErrorToConsole(details);
+    }
   };
   ErrorWidget.builder = (FlutterErrorDetails details) => CalmErrorCard(english: english);
 }
