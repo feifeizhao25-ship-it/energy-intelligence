@@ -408,7 +408,7 @@ export default function HomePage() {
                             {
                                 icon: Wind,
                                 title: '风电效益分析',
-                                description: '分散式风电项目评估，智能推荐最优装机方案',
+                                description: '分散式风电项目评估，基于公开气象数据做初步估算',
                                 color: 'cyan',
                                 link: '/calculator/wind'
                             },

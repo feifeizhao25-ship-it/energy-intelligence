@@ -10,8 +10,8 @@ import { provincesWithPrices } from '@/lib/pricing/tariffs';
 
 const SRC = join(__dirname, '..');
 const read = (rel: string) => readFileSync(join(SRC, rel), 'utf8');
-const BANNED_COPY = /解答所有|立项审批|基于NASA|碳中和证书|权威数据源|效率神器/;
-const WEB_BANNED_COPY = /解答所有|立项审批|基于NASA|碳中和证书|权威数据源|效率神器|精准/;
+const BANNED_COPY = /解答所有|立项审批|基于NASA|碳中和证书|权威数据源|效率神器|最优装机/;
+const WEB_BANNED_COPY = /解答所有|立项审批|基于NASA|碳中和证书|权威数据源|效率神器|精准|最优装机/;
 const WEB_FRONTEND = join(SRC, '..', '..', '..', 'web-frontend');
 
 describe.each(['app/page.tsx', 'app/[locale]/page.tsx'])('%s 首页文案', (file) => {
