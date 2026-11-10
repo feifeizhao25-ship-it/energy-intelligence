@@ -1355,10 +1355,11 @@ def _add_investment_content(doc, data: Dict, metrics: Dict):
 
     _add_heading(doc, "第五章  排放核算", level=1)
     annual_gen_kwh = fin.get("annual_generation_mwh", 0) * 1000
-    co2_wan_ton = avoided_wan_ton(annual_gen_kwh)
+    province = data.get("province_or_region")
+    co2_wan_ton = avoided_wan_ton(annual_gen_kwh, province=province)
     _add_body(doc,
         f"按年发电量约 {annual_gen_kwh / 1e6:,.1f} GWh，"
-        f"{factor_sentence()}，"
+        f"{factor_sentence(province)}，"
         f"年等效减排 CO₂ 约 {co2_wan_ton:,.2f} 万吨。"
         "这是电力消费间接排放的测算值，不是评级结果。"
         "标煤、二氧化硫和氮氧化物若未单独引用公告，标为待核实。"
@@ -1465,7 +1466,8 @@ def _add_esg_content(doc, data: Dict, metrics: Dict):
     annual_gen_kwh = fin.get("annual_generation_mwh", 0) * 1000
 
     _add_heading(doc, "第一章  碳排放与减排", level=1)
-    co2_reduction_tons = avoided_wan_ton(annual_gen_kwh) * 10000  # 吨
+    province = data.get("province_or_region")
+    co2_reduction_tons = avoided_wan_ton(annual_gen_kwh, province=province) * 10000  # 吨
 
     _add_styled_table(
         doc, ["减排指标", "年度值", "25年累计"],
@@ -1481,7 +1483,7 @@ def _add_esg_content(doc, data: Dict, metrics: Dict):
         col_widths=[5, 5, 5],
         caption="年度减排指标与 25 年累计",
     )
-    _add_body(doc, f"{factor_sentence()}。标煤、二氧化硫、氮氧化物系数未核对，表内写待核实。累计列按 25 年、年发电量逐年乘 0.98 的假设，不是承诺。")
+    _add_body(doc, f"{factor_sentence(province)}。标煤、二氧化硫、氮氧化物系数未核对，表内写待核实。累计列按 25 年、年发电量逐年乘 0.98 的假设，不是承诺。")
 
     _add_heading(doc, "第二章  社会影响", level=1)
     _add_body(doc, "建设期和运营期就业人数、税收待项目单位填报。本报告不估算岗位，也不把产业链带动写成结论。")
@@ -1947,9 +1949,10 @@ def _build_pdf_content(story, data, metrics, report_type, style_h1, style_h2, st
                                 caption="电价敏感性分析"))
 
         story.append(Paragraph("第五章  排放核算", style_h1))
-        co2 = avoided_wan_ton(fin.get("annual_generation_mwh", 0) * 1000)
+        province = data.get("province_or_region")
+        co2 = avoided_wan_ton(fin.get("annual_generation_mwh", 0) * 1000, province=province)
         story.append(Paragraph(
-            f"{factor_sentence()}，年减排 CO₂ 约 {co2:,.2f} 万吨。此为核算值，不是评级。",
+            f"{factor_sentence(province)}，年减排 CO₂ 约 {co2:,.2f} 万吨。此为核算值，不是评级。",
             style_body))
 
         story.append(Paragraph("第六章  测算结果", style_h1))
@@ -1987,7 +1990,8 @@ def _build_pdf_content(story, data, metrics, report_type, style_h1, style_h2, st
 
     elif report_type == "esg":
         annual_gen_kwh = fin.get("annual_generation_mwh", 0) * 1000
-        co2 = avoided_wan_ton(annual_gen_kwh)
+        province = data.get("province_or_region")
+        co2 = avoided_wan_ton(annual_gen_kwh, province=province)
 
         story.append(Paragraph("第一章  碳排放与减排", style_h1))
         story.append(make_table(
@@ -1996,6 +2000,7 @@ def _build_pdf_content(story, data, metrics, report_type, style_h1, style_h2, st
               f"{annual_gen_kwh / 1e6 * 25:,.0f} GWh"],
              ["CO₂减排", f"{co2:,.2f} 万吨", f"{co2 * 25:,.0f} 万吨"]],
             [5, 5, 5], caption="年度减排指标与 25 年累计"))
+        story.append(Paragraph(f"{factor_sentence(province)}。此为核算值，不是评级。", style_body))
 
         story.append(Paragraph("第二章  社会影响", style_h1))
         story.append(Paragraph("建设期和运营期就业人数待项目单位填报，本报告不估算。", style_body))
