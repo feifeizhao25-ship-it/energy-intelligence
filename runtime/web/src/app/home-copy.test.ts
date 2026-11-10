@@ -30,7 +30,10 @@ describe('其他文案', () => {
     it('zh.json 首页副标题不再是「效率神器」', () => {
         const zh = JSON.parse(read('messages/zh.json'));
         expect(zh.Index.hero.subtitle).not.toContain('效率神器');
-        expect(JSON.stringify(zh)).not.toMatch(/基于NASA|立项审批|碳中和证书/);
+        expect(zh.Index.dataSources.title).not.toContain('权威');
+        expect(JSON.stringify(zh)).not.toMatch(/效率神器|权威数据源|基于NASA|立项审批|碳中和证书/);
+        const pkg = JSON.parse(readFileSync(join(SRC, '..', 'package.json'), 'utf8'));
+        expect(pkg.description).not.toMatch(/效率神器|权威/);
     });
     it('高德不可用时只提示「地图服务暂不可用」，不加载境外地图与地名服务', () => {
         const map = read('components/map/ResourceMap.tsx');
