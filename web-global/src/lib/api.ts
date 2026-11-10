@@ -109,7 +109,7 @@ export const projectApi = {
     fetchApi<ApiResponse<ProjectListResponse>>(`/api/v1/projects?page=${page}&limit=${limit}`),
   get: (id: string) => fetchApi<ApiResponse<unknown>>(`/api/v1/projects/${id}`),
   create: (data: unknown) =>
-    fetchApi<ApiResponse<unknown>>('/api/projects', { method: 'POST', body: JSON.stringify(data) }),
+    fetchApi<ApiResponse<unknown>>('/api/v1/projects', { method: 'POST', body: JSON.stringify(data) }),
   update: (id: string, data: unknown) =>
     fetchApi<ApiResponse<unknown>>(`/api/v1/projects/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   delete: (id: string) =>
@@ -238,7 +238,7 @@ export const aiApi = {
       body: JSON.stringify({ message }),
     }),
   conversations: () => fetchApi<ApiResponse<unknown[]>>('/api/v1/ai/conversations'),
-  skills: () => fetchApi<ApiResponse<unknown[]>>('/api/v1/ai/skills'),
+  skills: () => fetchApi<ApiResponse<unknown[]>>('/api/v1/skills'),
 };
 
 // ── Billing ───────────────────────────────────────────────────────────────────
@@ -386,7 +386,7 @@ export const adminApi = {
 };
 
 export const reportsApi = {
-  list: () => fetchApi<ApiResponse<{ reports: ReportItem[] }>>('/api/reports'),
+  list: () => fetchApi<ApiResponse<{ reports: ReportItem[] }>>('/api/v1/reports'),
   get: (id: string) => fetchApi<ApiResponse<{ report: ReportItem }>>(`/api/v1/reports/${id}`),
   generate: (data: { projectId: string; type: string; format?: string }) =>
     fetchApi<ApiResponse<unknown>>('/api/v1/reports/generate', {
@@ -468,7 +468,7 @@ export const skillsApi = {
     if (params?.page) q.set('page', String(params.page));
     if (params?.page_size) q.set('page_size', String(params.page_size));
     const qs = q.toString();
-    return fetchApi<ApiResponse<{ items: unknown[]; total: number }>>(`/api/v1/ai/skills${qs ? '?' + qs : ''}`);
+    return fetchApi<ApiResponse<{ items: unknown[]; total: number }>>(`/api/v1/skills${qs ? '?' + qs : ''}`);
   },
   //  Sync执line skill
   execute: (skillId: string, params: Record<string, unknown>) =>

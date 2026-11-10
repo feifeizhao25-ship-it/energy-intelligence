@@ -16,7 +16,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.config import settings
-from app.database import close_db, init_db
+from app.database import CommitBeforeResponse, close_db, init_db
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +55,9 @@ app = FastAPI(
 from app.services.language_guard import LanguageGuardMiddleware  # noqa: E402
 
 app.add_middleware(LanguageGuardMiddleware)
+# Commit before this wrapper forwards http.response.start. FastAPI otherwise
+# commits a yield dependency only after the client has already been sent the body.
+app.add_middleware(CommitBeforeResponse)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,

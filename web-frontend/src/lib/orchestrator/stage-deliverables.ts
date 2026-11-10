@@ -6,7 +6,7 @@
  */
 
 import { QualityTag } from '../kernel/calculation-result';
-import { DeliverableType, Deliverable Spec } from './deliverable-actions';
+import { DeliverableType, DeliverableSpec } from './deliverable-actions';
 
 /**
  * 项目阶段

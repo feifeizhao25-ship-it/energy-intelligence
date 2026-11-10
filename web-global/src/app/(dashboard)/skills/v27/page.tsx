@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { API_BASE, extractList, fetchJson } from '../../../../lib/config';
+import { skillsApi } from '../../../../lib/api';
+import { extractList } from '../../../../lib/config';
 
 type Skill = { id: string; name: string; description?: string; version?: string };
 
@@ -10,7 +11,7 @@ export default function SkillsWorkbenchPage() {
   const [status, setStatus] = useState<'loading' | 'ready' | 'unavailable'>('loading');
 
   useEffect(() => {
-    void fetchJson(`${API_BASE}/api/v1/ai/skills`, { credentials: 'include' })
+    void skillsApi.list()
       .then((payload) => {
         const rows = extractList(payload);
         if (!rows) throw new Error('Invalid skills response');

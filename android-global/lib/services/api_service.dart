@@ -306,7 +306,7 @@ class ApiService {
   static Future<Map<String, dynamic>> getOperationsHealth(
     String projectId,
   ) async {
-    return await _get('/api/v1/operations/health', {'projectId': projectId});
+    return await _get('/api/v1/operations/health/$projectId');
   }
 
   static Future<Map<String, dynamic>> calculateCleaningSchedule({

@@ -74,10 +74,14 @@ def _start_server(reports_dir: str, delay: str) -> subprocess.Popen:
             raise SystemExit(UVICORN_LOG.read_text(encoding="utf-8")[-4000:])
         try:
             response = httpx.get(f"{BASE}/api/v1/reports/templates", timeout=2)
-            if response.status_code == 200:
-                return process
+            ready = response.status_code == 200
         except httpx.HTTPError:
-            time.sleep(0.3)
+            ready = False
+        # The first worker can answer before the others have logged startup.
+        # Count workers after they have all started, not on the first 200.
+        if ready and _worker_count() >= WORKERS:
+            return process
+        time.sleep(0.3)
     raise SystemExit(UVICORN_LOG.read_text(encoding="utf-8")[-4000:])
 
 
