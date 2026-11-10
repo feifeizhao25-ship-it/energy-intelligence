@@ -436,7 +436,7 @@ export default function HomePage() {
                             {
                                 icon: Leaf,
                                 title: '碳减排计算',
-                                description: '按 2023 年全国电力平均排放因子估算减排量',
+                                description: '按公告电力排放因子（已知省份用省级）估算减排量',
                                 color: 'green',
                                 link: '/achievements'
                             }

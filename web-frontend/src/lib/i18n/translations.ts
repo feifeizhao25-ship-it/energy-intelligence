@@ -48,7 +48,7 @@ export const translations: Record<Locale, Record<string, any>> = {
             ctaButton: '免费开始使用',
             socialProof: '{count}人已完成测算',
             features: {
-                accurate: '精准测算',
+                accurate: '初步测算',
                 accurateDesc: '基于公开气象数据，估算 25 年发电量与现金流',
                 ai: 'AI 助手',
                 aiDesc: '智能问答与项目诊断',
