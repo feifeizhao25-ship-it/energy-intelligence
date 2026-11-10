@@ -173,7 +173,7 @@ export default function HomePage() {
                             </h1>
 
                             <p className="text-xl text-slate-300 mb-8">
-                                基于NASA气象数据和AI深度分析，为您提供专业级的光伏/风电项目投资决策报告
+                                基于公开气象数据与透明的测算假设，初步估算光伏、风电、储能项目的发电量与收益
                             </p>
 
                             <div className="flex flex-wrap gap-4">
@@ -399,7 +399,7 @@ export default function HomePage() {
                             {
                                 icon: Sun,
                                 title: '光伏发电计算',
-                                description: '基于NASA辐射数据，精确计算25年发电量和投资回报',
+                                description: '基于公开气象数据，估算 25 年发电量与现金流',
                                 color: 'amber',
                                 link: '/calculator/solar'
                             },
@@ -420,21 +420,21 @@ export default function HomePage() {
                             {
                                 icon: FileText,
                                 title: '专业报告生成',
-                                description: '一键生成PDF投资分析报告，可用于立项审批',
+                                description: '导出 PDF 测算报告，注明假设与数据来源，仅供参考',
                                 color: 'purple',
                                 link: '/my/stations'
                             },
                             {
                                 icon: Sparkles,
                                 title: 'AI智能问答',
-                                description: '新能源领域专家，解答所有技术政策问题',
+                                description: '按已收录的公开资料说明技术与政策问题，并注明假设与来源，仅供参考',
                                 color: 'pink',
                                 link: '/assistant'
                             },
                             {
                                 icon: Leaf,
                                 title: '碳减排计算',
-                                description: '量化环境贡献，生成碳中和证书',
+                                description: '按 2023 年全国电力平均排放因子估算减排量',
                                 color: 'green',
                                 link: '/achievements'
                             }
@@ -475,7 +475,7 @@ export default function HomePage() {
             <section className="py-16 px-4 bg-slate-900 text-white">
                 <div className="max-w-4xl mx-auto text-center">
                     <h2 className="text-3xl font-black mb-4">公开数据来源</h2>
-                    <p className="text-lg text-slate-400 mb-12">集成国际权威数据，确保分析结果专业可靠</p>
+                    <p className="text-lg text-slate-400 mb-12">使用公开数据源，分析假设与来源全程可见</p>
 
                     <div className="grid md:grid-cols-4 gap-6">
                         {[

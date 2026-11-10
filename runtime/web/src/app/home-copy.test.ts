@@ -10,6 +10,8 @@ import { provincesWithPrices } from '@/lib/pricing/tariffs';
 
 const SRC = join(__dirname, '..');
 const read = (rel: string) => readFileSync(join(SRC, rel), 'utf8');
+const BANNED_COPY = /解答所有|立项审批|基于NASA|碳中和证书|权威数据源|效率神器/;
+const WEB_FRONTEND = join(SRC, '..', '..', '..', 'web-frontend');
 
 describe.each(['app/page.tsx', 'app/[locale]/page.tsx'])('%s 首页文案', (file) => {
     const src = read(file);
@@ -31,9 +33,21 @@ describe('其他文案', () => {
         const zh = JSON.parse(read('messages/zh.json'));
         expect(zh.Index.hero.subtitle).not.toContain('效率神器');
         expect(zh.Index.dataSources.title).not.toContain('权威');
-        expect(JSON.stringify(zh)).not.toMatch(/效率神器|权威数据源|基于NASA|立项审批|碳中和证书/);
+        expect(JSON.stringify(zh)).not.toMatch(BANNED_COPY);
         const pkg = JSON.parse(readFileSync(join(SRC, '..', 'package.json'), 'utf8'));
         expect(pkg.description).not.toMatch(/效率神器|权威/);
+    });
+    it('web-frontend 的 zh.json 与首页不再出现同一组禁用词', () => {
+        const zh = JSON.parse(readFileSync(join(WEB_FRONTEND, 'src/messages/zh.json'), 'utf8'));
+        expect(JSON.stringify(zh)).not.toMatch(BANNED_COPY);
+        for (const file of [
+            'src/app/page.tsx',
+            'src/app/%5Blocale%5D/page.tsx',
+            'src/app/%28dashboard%29/dashboard/page.tsx',
+            'src/lib/i18n/translations.ts',
+        ]) {
+            expect(readFileSync(join(WEB_FRONTEND, file), 'utf8')).not.toMatch(BANNED_COPY);
+        }
     });
     it('高德不可用时只提示「地图服务暂不可用」，不加载境外地图与地名服务', () => {
         const map = read('components/map/ResourceMap.tsx');
