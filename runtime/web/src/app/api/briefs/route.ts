@@ -24,7 +24,7 @@ async function policyCount(now: Date): Promise<string> {
 }
 
 export async function GET() {
-    const preview = process.env.NENGJIAN_SCREENSHOT === '1';
+    const preview = process.env.NODE_ENV !== 'production' && process.env.NENGJIAN_SCREENSHOT === '1';
     if (!preview) {
         const session = await getServerSession(authOptions);
         if (!session?.user?.id) return NextResponse.json({ error: '请先登录' }, { status: 401 });

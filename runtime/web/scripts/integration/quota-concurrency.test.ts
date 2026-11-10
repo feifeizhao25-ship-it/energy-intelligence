@@ -1,10 +1,11 @@
-const url=process.env.INTEGRATION_DATABASE_URL;
-if(!url||new URL(url).hostname!=='127.0.0.1'||new URL(url).pathname!=='/energy_integration_test')throw new Error('Requires isolated local database');
+import { disposableIntegration, integrationSuite } from './disposable-database';
+disposableIntegration();
 jest.mock('server-only',()=>({}),{virtual:true});
-jest.mock('@/lib/prisma',()=>{const {PrismaClient}=require('@prisma/client');return {prisma:new PrismaClient({datasources:{db:{url:process.env.INTEGRATION_DATABASE_URL}}})};});
+jest.mock('@/lib/prisma',()=>{const {PrismaClient}=require('@prisma/client');const {prismaUrl}=require('./disposable-database');return {prisma:new PrismaClient({datasources:{db:{url:prismaUrl()}}})};});
 import {prisma} from '@/lib/prisma';
 import {consumeQuota,getQuotaUsage,quotaPeriod,QUOTA_LIMITS} from '@/lib/audit/quota';
 const id=`quota-${Date.now()}`;
+integrationSuite('export quota on the disposable database', () => {
 beforeAll(async()=>{await prisma.user.create({data:{id,email:id+'@test.invalid'}});});
 afterEach(async()=>{await prisma.quotaUsage.deleteMany({where:{userId:id}});await prisma.user.update({where:{id},data:{plan:'FREE',planExpireAt:null}});});
 afterAll(async()=>{await prisma.user.delete({where:{id}});await prisma.$disconnect();});
@@ -38,4 +39,5 @@ test('usage read failure is surfaced rather than fabricated as unused quota',asy
 test('transaction failure reports unavailable rather than exhaustion or success',async()=>{
  const transaction=jest.spyOn(prisma,'$transaction').mockRejectedValueOnce(new Error('database unavailable'));
  try{expect(await consumeQuota(id,'EXPORTS')).toMatchObject({success:false,usage:{available:false,exceeded:false}});}finally{transaction.mockRestore();}
+});
 });

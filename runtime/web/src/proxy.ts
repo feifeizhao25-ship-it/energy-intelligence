@@ -88,26 +88,32 @@ function isKnownRoute(pathname: string): boolean {
   return knownSegments.has(firstSegment(pathname));
 }
 
-// 窄豁免：仅当显式开启 NEXT_PUBLIC_DEMO_PERSONA_PREVIEW=1 时，
-// 放行 /dashboard 单页用于个性化人设 demo 预览（不含 /dashboard 子路径）
-function isDemoDashboardPreview(pathname: string): boolean {
-  return process.env.NEXT_PUBLIC_DEMO_PERSONA_PREVIEW === '1' && pathname === '/dashboard';
+// 环境变量打开的登录豁免只允许开发服务器和测试。生产进程一律当没开过。
+function devOrTestBypass(): boolean {
+  return process.env.NODE_ENV !== 'production';
 }
 
-// 只在本地截图时放行这些页。生产 compose 不设置 NENGJIAN_SCREENSHOT。
+// 窄豁免：仅当显式开启 NEXT_PUBLIC_DEMO_PERSONA_PREVIEW=1 时，
+// 放行 /dashboard 单页用于个性化人设 demo 预览（不含 /dashboard 子路径）。
+// 页面数据仍只来自已登录会话的 /api/dashboard；没有会话时接口 401，页面不展示任何用户记录。
+function isDemoDashboardPreview(pathname: string): boolean {
+  return devOrTestBypass() && process.env.NEXT_PUBLIC_DEMO_PERSONA_PREVIEW === '1' && pathname === '/dashboard';
+}
+
+// 只在本地截图时放行这些页。生产服务器忽略 NENGJIAN_SCREENSHOT。
 const screenshotPaths = new Set([
   '/datasets', '/daily', '/briefs', '/alerts', '/preview/p0', '/preview/p1', '/preview/p2',
   '/ops/policy-diff', '/ops/preflight', '/ops/solar-sample',
 ]);
 
 function isScreenshotPreview(pathname: string): boolean {
-  if (process.env.NENGJIAN_SCREENSHOT !== '1') return false;
+  if (!devOrTestBypass() || process.env.NENGJIAN_SCREENSHOT !== '1') return false;
   const normalized = pathname.replace(/^\/(?:zh|en)(?=\/|$)/, '') || '/';
   return screenshotPaths.has(normalized);
 }
 
 function isLanguageScan(pathname: string): boolean {
-  return process.env.NENGJIAN_LANGUAGE_SCAN === '1' && isKnownRoute(pathname);
+  return devOrTestBypass() && process.env.NENGJIAN_LANGUAGE_SCAN === '1' && isKnownRoute(pathname);
 }
 
 const authMiddleware = withAuth(
