@@ -92,7 +92,7 @@ class ProjectCard extends StatelessWidget {
               ClipRRect(
                 borderRadius: BorderRadius.circular(10),
                 child: Image.asset(_photo(), height: 96, width: double.infinity, fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => SizedBox(height: 96)),
+                    errorBuilder: (_, _, _) => SizedBox(height: 96)),
               ),
               SizedBox(height: 12),
               Row(

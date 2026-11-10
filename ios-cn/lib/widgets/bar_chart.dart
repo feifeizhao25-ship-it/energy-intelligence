@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../theme/app_theme.dart';
 import 'dart:math' as math;
 
 class BarChart extends StatelessWidget {

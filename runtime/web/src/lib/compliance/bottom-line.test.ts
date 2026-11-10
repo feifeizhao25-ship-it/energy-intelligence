@@ -13,11 +13,17 @@ const ALLOW = new Set([
     'lib/ai/system-prompt.ts', // 提示词里需要写出禁止的说法
 ]);
 
+/** 页面、组件和文案包。文献题名、接口实现和禁词表本身不在这里。 */
+function isUiCopy(rel: string): boolean {
+    if (rel.endsWith('.tsx') && !rel.endsWith('.test.tsx')) return true;
+    return rel.startsWith('messages/') && rel.endsWith('.json');
+}
+
 function walk(dir: string, out: string[] = []): string[] {
     for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
         const p = path.join(dir, e.name);
         if (e.isDirectory()) { if (e.name !== 'node_modules' && e.name !== '__tests__') walk(p, out); }
-        else if (/\.(ts|tsx|json)$/.test(e.name) && !/\.test\.tsx?$/.test(e.name)) out.push(p);
+        else out.push(p);
     }
     return out;
 }
@@ -29,15 +35,23 @@ describe('底线禁词扫描', () => {
         expect(bottomLineTerms('impersonating_official').length).toBeGreaterThan(2);
     });
 
-    it('源码（除禁词表/提示词外）不含禁词', () => {
+    it('用户可见文案不含禁词', () => {
         const hits: string[] = [];
-        for (const f of walk(SRC)) {
-            const rel = path.relative(SRC, f).split(path.sep).join('/');
+        const files = walk(SRC).map(f => path.relative(SRC, f).split(path.sep).join('/')).filter(isUiCopy);
+        expect(files.length).toBeGreaterThan(10);
+        for (const rel of files) {
             if (ALLOW.has(rel)) continue;
-            const v = findBottomLineViolations(fs.readFileSync(f, 'utf8'));
+            const v = findBottomLineViolations(fs.readFileSync(path.join(SRC, rel), 'utf8'));
             if (v.length) hits.push(`${rel}: ${v.join(', ')}`);
         }
         expect(hits).toEqual([]);
+    });
+
+    it('文献原题可以包含 price forecast，那不是产品在做价格预测', () => {
+        const titles = fs.readFileSync(path.join(SRC, 'data/paper-title-zh.json'), 'utf8');
+        expect(titles).toContain('Probabilistic Electricity Price Forecasting');
+        expect(findBottomLineViolations(titles)).toContain('price forecast');
+        expect(isUiCopy('data/paper-title-zh.json')).toBe(false);
     });
 
     it('v1 光伏接口的事实描述不含禁词，且随输入变化', () => {
