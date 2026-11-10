@@ -12,18 +12,17 @@
 
 import React, { useState } from 'react';
 import {
-  Button, Input, Card, Badge, SegmentedControl, Switch,
+  Button, Input, Card, Badge, Switch,
 } from '@energy-intelligence/ui-web';
 import { cn } from '@energy-intelligence/ui-web';
 import GlobalShell from '../GlobalShell';
+import { PRICE_UNAVAILABLE, internationalPriceLabel } from '../../lib/billing/internationalPrice';
 
 // ── Types ──────────────────────────────────────────────
 
 interface PlanTier {
   id: string;
   name: string;
-  monthlyPrice: number | null;  // null = "Custom"
-  annualPrice: number | null;
   tagline: string;
   features: string[];
   highlight?: boolean;
@@ -36,8 +35,6 @@ const TIERS: PlanTier[] = [
   {
     id: 'free',
     name: 'Free',
-    monthlyPrice: 0,
-    annualPrice: 0,
     tagline: 'Get started with essential tools',
     features: [
       '3 projects',
@@ -51,8 +48,6 @@ const TIERS: PlanTier[] = [
   {
     id: 'pro',
     name: 'Pro',
-    monthlyPrice: 39,
-    annualPrice: 31,   // ~20% off, rounded
     tagline: 'For independent analysts and consultants',
     features: [
       'Unlimited projects',
@@ -68,8 +63,6 @@ const TIERS: PlanTier[] = [
   {
     id: 'team',
     name: 'Team',
-    monthlyPrice: 99,
-    annualPrice: 79,
     tagline: 'For teams that collaborate',
     features: [
       'Everything in Pro',
@@ -84,8 +77,6 @@ const TIERS: PlanTier[] = [
   {
     id: 'enterprise',
     name: 'Enterprise',
-    monthlyPrice: null,
-    annualPrice: null,
     tagline: 'For organizations at scale',
     features: [
       'Everything in Team',
@@ -170,9 +161,9 @@ const StripeCardForm: React.FC = () => (
 
 // ── Main Page ──────────────────────────────────────────
 
-const BillingPage: React.FC = () => {
-  const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
+const BillingPage: React.FC<{ prices?: Record<string, string> }> = ({ prices }) => {
   const [autoRenew, setAutoRenew] = useState(true);
+  const priceFor = (id: string) => prices?.[id] || internationalPriceLabel({ planId: id });
 
   // Current plan mock
   const currentPlan = 'free';
@@ -239,24 +230,11 @@ const BillingPage: React.FC = () => {
           </div>
         </Card>
 
-        {/* ── Billing Cycle Toggle ── */}
-        <div className="flex items-center justify-center gap-4">
-          <SegmentedControl
-            options={[
-              { label: 'Monthly',  value: 'monthly' },
-              { label: 'Annual (Save 20%)', value: 'annual' },
-            ]}
-            value={billingCycle}
-            onChange={(v) => setBillingCycle(v as 'monthly' | 'annual')}
-          />
-        </div>
-
         {/* ── Pricing Tiers ── */}
         <div className="grid grid-cols-4 gap-4">
           {TIERS.map((tier) => {
-            const price = billingCycle === 'monthly' ? tier.monthlyPrice : tier.annualPrice;
+            const price = priceFor(tier.id);
             const isCurrent = tier.id === currentPlan;
-            const isCustom = price === null;
 
             return (
               <Card
@@ -282,29 +260,10 @@ const BillingPage: React.FC = () => {
 
                 {/* Price */}
                 <div className="py-4 border-b border-[var(--border-default)]">
-                  {isCustom ? (
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-[28px] font-bold text-[var(--text-primary)]">Custom</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-[14px] font-medium text-[var(--text-secondary)]">$</span>
-                      <span className="text-[36px] font-bold font-mono text-[var(--text-primary)]">
-                        {price}
-                      </span>
-                      <span className="text-[13px] text-[var(--text-tertiary)]">
-                        {tier.id === 'team' ? '/seat/mo' : '/mo'}
-                      </span>
-                    </div>
-                  )}
-                  {billingCycle === 'annual' && !isCustom && price !== 0 && (
-                    <p className="text-[11px] text-[var(--color-success)] mt-1">
-                      Billed annually (${(price * 12).toLocaleString()}/yr)
-                    </p>
-                  )}
-                  {price === 0 && (
-                    <p className="text-[11px] text-[var(--text-tertiary)] mt-1">Free forever</p>
-                  )}
+                  <div className="text-[28px] font-bold text-[var(--text-primary)]">{price}</div>
+                  <p className="text-[11px] text-[var(--text-tertiary)] mt-1">
+                    {price === 'Free' ? 'No charge' : 'Per year, before tax'}
+                  </p>
                 </div>
 
                 {/* Features */}
@@ -374,19 +333,15 @@ const BillingPage: React.FC = () => {
                 </div>
                 <div className="flex justify-between text-[13px]">
                   <span className="text-[var(--text-secondary)]">Unit Price</span>
-                  <span className="font-mono text-[var(--text-primary)]">$31 / mo</span>
+                  <span className="font-mono text-[var(--text-primary)]">{priceFor('pro')}</span>
                 </div>
                 <div className="flex justify-between text-[13px]">
-                  <span className="text-[var(--text-secondary)]">Subtotal</span>
-                  <span className="font-mono text-[var(--text-primary)]">$372.00</span>
-                </div>
-                <div className="flex justify-between text-[13px]">
-                  <span className="text-[var(--text-secondary)]">Tax (est. 8.5%)</span>
-                  <span className="font-mono text-[var(--text-primary)]">$31.62</span>
+                  <span className="text-[var(--text-secondary)]">Tax</span>
+                  <span className="font-mono text-[var(--text-primary)]">{PRICE_UNAVAILABLE}</span>
                 </div>
                 <div className="pt-3 border-t border-[var(--border-default)] flex justify-between items-baseline">
                   <span className="text-[14px] font-semibold text-[var(--text-primary)]">Total</span>
-                  <span className="text-[20px] font-bold font-mono text-[var(--color-brand-500)]">$403.62</span>
+                  <span className="text-[20px] font-bold font-mono text-[var(--color-brand-500)]">{priceFor('pro')}</span>
                 </div>
                 <p className="text-[10px] text-[var(--text-tertiary)] pt-1">
                   Renews automatically on your next billing date. Cancel anytime.
@@ -416,7 +371,7 @@ const BillingPage: React.FC = () => {
                 <td className="py-3 px-2 text-[13px] text-[var(--text-secondary)]">Jun 1, 2026</td>
                 <td className="py-3 px-2 text-[13px] text-[var(--text-primary)]">Free Plan — No charge</td>
                 <td className="py-3 px-2"><Badge color="neutral">N/A</Badge></td>
-                <td className="py-3 px-2 text-right text-[13px] font-mono text-[var(--text-primary)]">$0.00</td>
+                <td className="py-3 px-2 text-right text-[13px] font-mono text-[var(--text-primary)]">No charge</td>
                 <td className="py-3 px-2 text-right">
                   <Button variant="ghost" size="sm">—</Button>
                 </td>
