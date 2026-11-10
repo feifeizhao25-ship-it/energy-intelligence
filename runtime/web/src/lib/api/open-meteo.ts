@@ -3,7 +3,7 @@ import { WeatherData, PVForecast } from '@/types';
 
 import { withCache } from '@/lib/cache';
 import { refuseOverseas } from '@/lib/data/overseas-gate';
-import { GRID_EMISSION_FACTOR } from '@/lib/standards/emission-factor';
+import { resolveEmissionFactor } from '@/lib/standards/emission-factor';
 
 /**
  * 获取天气预报（包含100m高度风速）
@@ -135,10 +135,23 @@ export const getPVForecast = withCache('meteo:pv', async (
   }
 });
 
+/** 接口没有数值时的回退。已知省份用表 3，单位换成 gCO2/kWh。 */
+export function fallbackCarbonIntensity(province?: string | null) {
+  const factor = resolveEmissionFactor(province);
+  return {
+    intensity: factor.value * 1000,
+    unit: 'gCO2/kWh' as const,
+    scope: factor.scope,
+    province: factor.province,
+    year: factor.year,
+    source: `${factor.source}（${factor.year} 年${factor.scope}）`,
+  };
+}
+
 /**
  * 获取碳排放强度
  */
-export const getCarbonIntensity = withCache('meteo:carbon', async (country: string = 'CN') => {
+export const getCarbonIntensity = withCache('meteo:carbon', async (country: string = 'CN', province?: string | null) => {
   try {
     const params = new URLSearchParams({
       country: country,
@@ -154,14 +167,16 @@ export const getCarbonIntensity = withCache('meteo:carbon', async (country: stri
 
     const data = await response.json();
 
-    // 接口没有给出数值时，回退到 2023 年全国电力平均排放因子，并在 source 里写明是回退值
     const fromApi = typeof data.carbon_intensity === 'number';
+    const fallback = fallbackCarbonIntensity(province);
     return {
       country: data.country,
       zone: data.zone,
-      intensity: fromApi ? data.carbon_intensity : GRID_EMISSION_FACTOR.value * 1000, // gCO2/kWh
+      intensity: fromApi ? data.carbon_intensity : fallback.intensity,
       unit: 'gCO2/kWh',
-      source: fromApi ? 'Open-Meteo' : `${GRID_EMISSION_FACTOR.source}（${GRID_EMISSION_FACTOR.year} 年全国电力平均）`,
+      scope: fromApi ? 'Open-Meteo' : fallback.scope,
+      province: fromApi ? null : fallback.province,
+      source: fromApi ? 'Open-Meteo' : fallback.source,
       updatedAt: data.updated_at
     };
 

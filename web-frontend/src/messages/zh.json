@@ -3,7 +3,7 @@
         "title": "首页",
         "hero": {
             "title": "新能源智库",
-            "subtitle": "光伏风电从业者的效率神器",
+            "subtitle": "光伏、风电、储能项目的初步测算工具",
             "cta": "立即计算",
             "description": "基于NASA气象数据和AI深度分析，为您提供专业级的光伏/风电项目投资决策报告"
         },
@@ -42,7 +42,7 @@
             "satisfaction": "用户满意度"
         },
         "dataSources": {
-            "title": "权威数据源",
+            "title": "公开数据来源",
             "subtitle": "集成国际权威数据，确保分析结果专业可靠"
         },
         "pricing": {

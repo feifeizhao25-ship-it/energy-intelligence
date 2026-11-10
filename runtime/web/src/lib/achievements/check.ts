@@ -9,13 +9,31 @@ import {
     usageAchievements,
     communityAchievements,
 } from './achievements';
-import { GRID_EMISSION_FACTOR } from '@/lib/standards/emission-factor';
+import { emissionFactorNoteFor, resolveEmissionFactor } from '@/lib/standards/emission-factor';
 
-// CO2 减排系数：统一取 2023 年全国电力平均排放因子（lib/standards/emission-factor.ts）
-const CO2_FACTOR = GRID_EMISSION_FACTOR.value / 1000; // 吨/kWh
+export interface CarbonReduction {
+    tonnes: number;
+    factorKgPerKwh: number;
+    scope: string;
+    province: string | null;
+    label: string;
+}
+
+/** 吨 CO2 = kWh × 因子(kg/kWh) / 1000。已知省份用表 3，否则用全国平均。 */
+export function carbonReduction(totalGenerationKwh: number, province?: string | null): CarbonReduction {
+    const factor = resolveEmissionFactor(province);
+    return {
+        tonnes: totalGenerationKwh * factor.value / 1000,
+        factorKgPerKwh: factor.value,
+        scope: factor.scope,
+        province: factor.province,
+        label: emissionFactorNoteFor(province),
+    };
+}
 
 export interface UserStats {
     totalGeneration: number;      // 累计发电量 kWh
+    province?: string | null;     // 已知时用省级排放因子
     stationCount: number;         // 电站数量
     recordStreak: number;         // 连续记录天数
     totalRecords: number;         // 总记录次数
@@ -52,8 +70,7 @@ export function checkAllAchievements(
         }
     }
 
-    // 检查环保成就（基于CO2减排量）
-    const co2Reduced = stats.totalGeneration * CO2_FACTOR;
+    const co2Reduced = carbonReduction(stats.totalGeneration, stats.province).tonnes;
     for (const achievement of carbonAchievements) {
         if (achievement.threshold && co2Reduced >= achievement.threshold) {
             if (!existingAchievements.includes(achievement.id)) {
@@ -149,7 +166,7 @@ export function getAchievementProgress(
             current = stats.totalGeneration;
             break;
         case AchievementCategory.CARBON:
-            current = stats.totalGeneration * CO2_FACTOR;
+            current = carbonReduction(stats.totalGeneration, stats.province).tonnes;
             break;
         case AchievementCategory.USAGE:
             switch (achievement.id) {
@@ -224,8 +241,10 @@ export function formatProgressText(
     switch (achievement.category) {
         case AchievementCategory.GENERATION:
             return `${current.toLocaleString()} / ${target.toLocaleString()} 度`;
-        case AchievementCategory.CARBON:
-            return `${current.toFixed(1)} / ${target} 吨`;
+        case AchievementCategory.CARBON: {
+            const reduction = carbonReduction(stats.totalGeneration, stats.province);
+            return `${current.toFixed(1)} / ${target} 吨（${reduction.label}）`;
+        }
         default:
             return `${current} / ${target}`;
     }
