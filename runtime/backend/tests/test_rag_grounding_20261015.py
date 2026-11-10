@@ -36,8 +36,18 @@ def test_136_entry_matches_primary_source():
 def test_us_itc_entry_reflects_obbba():
     d = BY_ID["policy-us-itc"]
     c = d["content"]
-    assert "December 31, 2025" in c and "July 4, 2026" in c and "December 31, 2027" in c
-    assert d["source_url"].startswith("https://www.irs.gov/")
+    assert "July 4, 2026" in c and "December 31, 2027" in c
+    assert "December 31, 2025" not in c
+    assert d["published_at"] == "2025-08-15"
+    assert d["source_url"] == "https://www.irs.gov/pub/irs-drop/n-25-42.pdf"
+    assert "FS-2025-05" not in d["locator"]
+    assert d["evidence_status"] == "legacy_unreviewed"
+    faq = BY_ID["policy-us-fs-2025-05"]
+    assert faq["published_at"] == "2025-08-21"
+    assert "December 31, 2025" in faq["content"]
+    assert faq["source_url"] != d["source_url"]
+    assert faq["locator"] == "FS-2025-05 FAQ 1 and FAQ 7"
+    assert faq["evidence_status"] == "legacy_unreviewed"
 
 
 def test_prompt_is_grounded_before_generation():

@@ -154,9 +154,9 @@ class _PlanUsageScreenState extends State<PlanUsageScreen> {
             : AppTheme.primaryColor;
     final period = '${item['period']}';
     final resetText = period == 'day'
-        ? '明天重置（UTC 日期 {date}）'.replaceAll('{date}', '${resets['day'] ?? ''}')
+        ? '明天重置（世界协调时日期 ${resets['day'] ?? ''}）'
         : period == 'month'
-            ? '下月 1 日重置（UTC 日期 {date}）'.replaceAll('{date}', '${resets['month'] ?? ''}')
+            ? '下月 1 日重置（世界协调时日期 ${resets['month'] ?? ''}）'
             : '按当前数量统计，不会自动重置';
     final levelText = level == 'blocked'
         ? '已用完'

@@ -7,6 +7,7 @@ import pytest
 from httpx import AsyncClient
 import uuid
 import re
+from pathlib import Path
 
 from app.models.user import User
 from app.utils.security import get_password_hash
@@ -920,24 +921,40 @@ async def test_TC_REDLINE_R21_api_has_structured_data(
 @pytest.mark.asyncio
 async def test_TC_REDLINE_R24_no_critical_vulnerabilities_in_deps():
     """R24: 无高危漏洞依赖（通过 pip-audit 检查）"""
+    import json
     import subprocess
+    import sys
     try:
         result = subprocess.run(
-            ["pip-audit", "--desc", "--format=json"],
-            capture_output=True, text=True, timeout=60,
-            cwd="/Users/feifei00/Documents/新能源智库/backend"
+            [sys.executable, "-m", "pip_audit", "--desc", "--format=json"],
+            capture_output=True, text=True, timeout=120,
+            cwd=str(Path(__file__).resolve().parents[1]),
         )
-        if result.returncode == 0:
-            import json
-            findings = json.loads(result.stdout) if result.stdout else []
-            critical = [f for f in findings if f.get("vulnerability", {}).get("severity") == "CRITICAL"]
-            assert len(critical) == 0, f"发现 {len(critical)} 个高危依赖漏洞"
-        else:
-            pytest.skip("pip-audit 不可用或未安装")
     except FileNotFoundError:
         pytest.skip("pip-audit 未安装")
-    except Exception as e:
-        pytest.skip(f"依赖安全扫描失败: {e}")
+        return
+    if not result.stdout.strip():
+        pytest.skip(f"pip-audit 没有输出: {result.stderr[:200]}")
+        return
+    try:
+        payload = json.loads(result.stdout)
+    except json.JSONDecodeError as exc:
+        pytest.skip(f"pip-audit 输出不是 JSON: {exc}")
+        return
+    findings = []
+    if isinstance(payload, dict):
+        for dependency in payload.get("dependencies") or []:
+            for vuln in dependency.get("vulns") or []:
+                findings.append(vuln)
+    elif isinstance(payload, list):
+        findings = payload
+    critical = [
+        item for item in findings
+        if str((item.get("vulnerability") or {}).get("severity") or item.get("severity") or "").upper() == "CRITICAL"
+    ]
+    assert not critical, f"发现 {len(critical)} 个高危依赖漏洞"
+    if findings and not any(item.get("severity") or item.get("vulnerability") for item in findings):
+        pytest.skip(f"pip-audit 报了 {len(findings)} 条公告，但没有严重级别字段，不能判定是不是高危")
 
 
 # ═══════════════════════════════════════════════════════════

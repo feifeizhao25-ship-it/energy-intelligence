@@ -52,7 +52,9 @@ def test_real_library_related_question_keeps_the_right_source():
     hits = aa._retrieve("IEEE 1547 interconnection", "global")
     assert hits and "1547" in hits[0].title
     obbba = aa._retrieve("What is the OBBBA ITC phase-out for solar", "global")
-    assert obbba and "tax credit" in obbba[0].title.lower()
+    assert obbba and obbba[0].source_id == "policy-us-itc"
+    assert "Notice 2025-42" in obbba[0].title
+    assert "FS-2025-05" not in obbba[0].title
 
 
 def test_scrub_removes_markers_without_a_retrieved_source():

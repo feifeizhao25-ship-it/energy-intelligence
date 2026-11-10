@@ -3,9 +3,10 @@ from typing import Union
 from fastapi import APIRouter, Depends, HTTPException, Body
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.schemas.finance import (
-    SolarFinanceRequest, WindFinanceRequest, FinancialModelResponse,
+    LCOERequest, SolarFinanceRequest, WindFinanceRequest, FinancialModelResponse,
     StorageFinanceRequest, StorageFinanceResponse,
 )
+from app.utils.response import success
 from app.utils.financial_utils import (
     calc_irr, calc_npv, calc_lcoe, build_solar_cashflows, build_wind_cashflows, min_solar_dscr,
 )
@@ -91,6 +92,23 @@ async def storage_finance(
             "currency": body.currency,
         },
     )
+
+
+@router.post("/lcoe")
+async def lcoe_finance(
+    body: LCOERequest,
+    user_id: str = Depends(get_current_user_id),
+):
+    """Levelized cost from the shared calc_lcoe formula. Currency labels the unit only."""
+    value = calc_lcoe(
+        body.capex,
+        body.annual_opex,
+        body.annual_gen_kwh,
+        discount_rate=body.discount_rate,
+        project_life=body.lifetime,
+        degradation_rate=body.degradation,
+    )
+    return success(data={"lcoe": value, "unit": f"{body.currency}/kWh"})
 
 
 @router.post("/solar", response_model=FinancialModelResponse)

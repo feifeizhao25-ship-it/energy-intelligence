@@ -23,10 +23,6 @@ class AiMessageBody extends StatelessWidget {
   final double fontSize;
   final bool showSourceList;
 
-  static const bool _zh = false;
-
-  static String _t(String zh, String en) => _zh ? zh : en;
-
   // $$..$$, \[..\], \(..\), and $..$ (inline dollars only when the content looks like TeX, so "$5 and $6" stays text)
   static final RegExp _math = RegExp(
     r'\$\$([\s\S]+?)\$\$|\\\[([\s\S]+?)\\\]|\\\(([\s\S]+?)\\\)|\$([^\$\n]*?[\\^_{][^\$\n]*?)\$',
@@ -123,7 +119,7 @@ class AiMessageBody extends StatelessWidget {
     final small = base.copyWith(fontSize: fontSize - 2, color: base.color?.withValues(alpha: 0.75));
     if (sources.isEmpty) {
       return Text(
-        _t('本回答未检索到可引用的来源，请自行核对。', 'No source was found for this answer; please verify it yourself.'),
+        'No source was found for this answer; please verify it yourself.',
         key: const ValueKey('ai-no-sources'),
         style: small,
       );
@@ -133,7 +129,7 @@ class AiMessageBody extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(_t('来源', 'Sources'), style: small.copyWith(fontWeight: FontWeight.w600)),
+        Text('Sources', style: small.copyWith(fontWeight: FontWeight.w600)),
         const SizedBox(height: 4),
         for (var i = 0; i < sources.length; i++)
           InkWell(
@@ -182,17 +178,17 @@ class AiMessageBody extends StatelessWidget {
             children: [
               Text('[S$number] ${v('title')}', style: Theme.of(ctx).textTheme.titleMedium),
               const SizedBox(height: 12),
-              _row(ctx, _t('发布机构', 'Publisher'), v('publisher')),
-              _row(ctx, _t('发布日期', 'Published'), v('published_at')),
-              _row(ctx, _t('核验日期', 'Retrieved'), v('retrieved_at')),
-              _row(ctx, _t('时效状态', 'Freshness'), v('freshness_status')),
-              if (rel is num) _row(ctx, _t('检索相关度', 'Relevance'), rel.toStringAsFixed(2)),
+              _row(ctx, 'Publisher', v('publisher')),
+              _row(ctx, 'Published', v('published_at')),
+              _row(ctx, 'Retrieved', v('retrieved_at')),
+              _row(ctx, 'Freshness', v('freshness_status')),
+              if (rel is num) _row(ctx, 'Relevance', rel.toStringAsFixed(2)),
               if (url.isNotEmpty) ...[
                 const SizedBox(height: 8),
                 SelectableText(url, style: const TextStyle(decoration: TextDecoration.underline)),
                 TextButton.icon(
                   icon: const Icon(Icons.copy, size: 16),
-                  label: Text(_t('复制原文链接', 'Copy link')),
+                  label: Text('Copy link'),
                   onPressed: () async {
                     await Clipboard.setData(ClipboardData(text: url));
                     if (ctx.mounted) Navigator.of(ctx).pop();

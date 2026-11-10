@@ -76,9 +76,13 @@ def test_report_citation_surfaces_provenance_fields():
         "license_note": "政府公开信息",
     })
     assert line.startswith("[1] 分布式光伏并网管理细则（2026） | https://example.gov/policy")
-    for label in ("作者：国家能源局", "版本：2026 年版", "发布日期：2026-01-01",
-                  "页码/段落：第二章 并网申请", "获取日期：2026-08-20", "许可：政府公开信息"):
+    # 没有 date_kind 时只能写“记录中的日期”，不能自称发布日期（见 citation_record.date_lines）；
+    # example.gov 是合成来源，必须带合成数据提示。
+    for label in ("作者：国家能源局", "版本：2026 年版", "记录中的日期：2026-01-01。日期类型：未标明。",
+                  "页码/段落：第二章 并网申请", "获取日期：2026-08-20", "合成测试数据。不是真实出版物。",
+                  "许可：政府公开信息"):
         assert label in line
+    assert "发布日期" not in line
 
 
 def test_report_citation_omits_absent_provenance_fields():
