@@ -13,6 +13,12 @@ import {
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '../../../..');
 
+function featureList(page: string, id: string): string[] {
+  const match = page.match(new RegExp(`id: '${id}'[\\s\\S]*?features: \\[([^\\]]+)\\]`));
+  assert.ok(match, `features for ${id}`);
+  return [...match[1].matchAll(/'([^']+)'/g)].map((item) => item[1]);
+}
+
 function stripeResponse(currency: string, amount = 41900) {
   return async () => ({
     ok: true,
@@ -47,6 +53,22 @@ test('team and enterprise seat copy matches the enforced registry', () => {
   assert.match(page, /ten-person/);
   assert.match(page, /10 seats included, more by contract/);
   assert.doesNotMatch(page, /5 team accounts|five-person|From 20 seats/);
+
+  const enterprise = registry.tiers.enterprise;
+  const features = featureList(page, 'enterprise');
+  const apiOn = enterprise.capabilities?.tiered_api === true
+    || (enterprise.export?.formats || []).includes('api');
+  const mentions = (word) => features.filter((line) => line.toLowerCase().includes(word));
+  const offered = (lines) => lines.some((line) => !/not available/i.test(line));
+  if (apiOn) assert.equal(offered(mentions('api')), true);
+  else assert.equal(mentions('api').length, 0);
+  if (enterprise.collaboration.sso) assert.equal(offered(mentions('sso')), true);
+  else assert.equal(offered(mentions('sso')), false);
+  if (enterprise.collaboration.white_label) assert.equal(offered(mentions('white-label')), true);
+  else assert.equal(offered(mentions('white-label')), false);
+  if (enterprise.service?.private_deployment === true) {
+    assert.ok(features.includes('Private deployment assessment'));
+  }
 });
 
 test('missing or non-USD prices say price unavailable', async () => {
