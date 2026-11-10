@@ -1,4 +1,13 @@
+import registry from '@/lib/entitlements/entitlements.json';
+
 export type TeamRole = 'admin' | 'member' | 'readonly_advisor';
+
+/** Seat cap from the registry. A separate “5 accounts” note is not applied. */
+export function teamSeatLimit(tier = 'team'): number {
+    const seats = (registry as { tiers: Record<string, { collaboration?: { team_seats?: number } }> }).tiers[tier]?.collaboration?.team_seats;
+    if (typeof seats !== 'number' || seats < 1) throw new Error(`team_seats missing for ${tier}`);
+    return seats;
+}
 
 export interface TeamSeat {
     id: string;

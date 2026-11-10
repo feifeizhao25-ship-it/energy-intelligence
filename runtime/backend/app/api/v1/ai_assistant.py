@@ -10,7 +10,18 @@ from app.config import settings
 from app.core.dependencies import get_current_user_id
 from app.core.database import get_db
 from app.services.ai_service import ai_assistant
-from app.core.subscription import QuotaExceeded, assert_ai_quota, consume_ai_quota
+from uuid import uuid4
+
+from app.core.subscription import (
+    QuotaExceeded,
+    answer_export_offer,
+    assert_ai_quota,
+    assert_report_quota,
+    consume_ai_quota,
+    consume_report_quota,
+)
+from app.services.answer_export import render_answer_file, sources_are_synthetic
+from app.services.citation_record import date_lines, excerpt_of, publication_note
 from app.services.evidence_envelope import envelope_from_rag
 from app.services.rag_service import RAGService
 from app.services.answer_structure import STYLES, structure_answer, style_instruction
@@ -18,11 +29,15 @@ from app.services import grounding
 from app.services.bottom_line import NOTICE_EN, NOTICE_ZH, blocked_input_text, enforce_bottom_line, find_violations
 from app.services.budget_caps import BudgetExceeded, assert_product_budget, charge_product_budget
 from app.models.user import User
+import io
 import json
 import os
 from datetime import date
 
 router = APIRouter(prefix="/ai")
+
+# Answers the server has already returned. Export reads this record, not a client-supplied source list.
+_ANSWER_EXPORTS: dict = {}
 
 # Retrieval scores are normalised to 0-1. Below this line the "match" is a stray word overlap
 # (an unrelated question scored 0.31, a North Sea wind question scored 0.14 against US tax credits),
@@ -87,7 +102,7 @@ def _grounded_prompt(base_prompt: str, hits: list, market: str, style: Optional[
     for i, h in enumerate(hits, 1):
         md = h.metadata or {}
         lines.append(
-            f"[S{i}] {h.title} | {md.get('source_org') or ''} | {md.get('published_at') or md.get('year')} | "
+            f"[S{i}] {h.title} | {md.get('source_org') or ''} | {' '.join(date_lines(md, 'en' if market == 'global' else 'zh')) or md.get('year')} | "
             f"{md.get('source_url') or ''}\n{h.content}"
         )
     return base_prompt + head + "\n" + "\n".join(lines)
@@ -138,12 +153,36 @@ def _provenance_footer(answer: str, hits: list, market: str, today: date) -> str
             when = md.get("published_at") or md.get("year")
             if when and str(when) in answer and (h.title or "")[:12] in answer:
                 continue  # the model already printed this source with its date
-            shown.append((i, h.title, md.get("source_org") or md.get("publisher"), when, md.get("source_url") or md.get("url")))
+            shown.append(h)
         if shown:
             lines.append(f"来源（检索于 {today.isoformat()}）：" if zh else f"Sources (retrieved {today.isoformat()}):")
-            for i, title, org, when, url in shown:
-                bits = [b for b in (str(org) if org else None, str(when) if when else ("发布日期未标注" if zh else "date not recorded"), str(url) if url else None) if b]
-                lines.append(f"[S{i}] {title} | " + " | ".join(bits))
+            for h in shown:
+                i = hits.index(h) + 1
+                md = h.metadata or {}
+                org = md.get("source_org") or md.get("publisher")
+                url = md.get("source_url") or md.get("url")
+                typed_dates = date_lines(md, "zh" if zh else "en")
+                when = " ".join(typed_dates) if typed_dates else ("发布日期未标注" if zh else "date not recorded")
+                bits = [b for b in (str(org) if org else None, when, str(url) if url else None) if b]
+                extra = []
+                if md.get("locator"):
+                    extra.append(f"页码/段落：{md['locator']}" if zh else f"Locator: {md['locator']}")
+                fragment = md.get("excerpt") or excerpt_of(getattr(h, "content", None) or md.get("content"))
+                if fragment:
+                    extra.append(f"摘录：{fragment}" if zh else f"Excerpt: {fragment}")
+                freshness = md.get("freshness_status")
+                if freshness and freshness != "unknown":
+                    extra.append(f"时效：{freshness}" if zh else f"Freshness: {freshness}")
+                note = publication_note(md, "zh" if zh else "en")
+                if note:
+                    extra.append(note)
+                license_note = md.get("license_note") or md.get("license")
+                if license_note:
+                    extra.append(f"许可：{license_note}" if zh else f"License: {license_note}")
+                line = f"[S{i}] {h.title} | " + " | ".join(bits)
+                if extra:
+                    line += " | " + " | ".join(extra)
+                lines.append(line)
     else:
         lines.append(
             f"核验状态：未核验——回答没有引用来源库中的资料，以上是通用说明，不是引用资料的结论（{today.isoformat()}）。"
@@ -301,6 +340,100 @@ async def chat(
     )
 
 
+def _export_offer(user) -> dict:
+    offer = answer_export_offer(user)
+    return {"pdf": offer["pdf"], "docx": offer["docx"]}
+
+
+def _remember_answer(user, market: str, message: str, sources: list, metadata: dict) -> dict:
+    answer_id = str(uuid4())
+    synthetic = sources_are_synthetic(sources)
+    _ANSWER_EXPORTS[answer_id] = {
+        "user_id": str(user.id),
+        "market": market,
+        "message": message,
+        "sources": list(sources or []),
+        "synthetic": synthetic,
+        "stand_in": metadata.get("stand_in"),
+        "watermark": answer_export_offer(user)["watermark"],
+    }
+    if len(_ANSWER_EXPORTS) > 200:
+        _ANSWER_EXPORTS.pop(next(iter(_ANSWER_EXPORTS)))
+    return {
+        "answer_id": answer_id,
+        "downloads": _export_offer(user),
+        "synthetic": synthetic,
+    }
+
+
+def _library_stand_in(message: str, hits: list, market: str, style: Optional[str]):
+    """Used only when no model provider is configured. The text is the library record, not a model answer."""
+    if not hits:
+        answer = "No data available in the source library." if market == "global" else "本库尚未收录相关资料。"
+    else:
+        rows = []
+        for index, hit in enumerate(hits, 1):
+            md = hit.metadata or {}
+            typed = " ".join(date_lines(md, "en" if market == "global" else "zh"))
+            rows.append(f"[S{index}] {hit.title}" + (f"\n{typed}" if typed else ""))
+        answer = "\n".join(rows)
+    shown, expired = _finish_answer(answer, hits, market)
+    evidence = _evidence_for(shown, hits, market)
+    return shown, evidence, expired
+
+
+class AnswerExportRequest(BaseModel):
+    format: str = Field(pattern="^(pdf|docx)$")
+
+
+@router.post("/answers/{answer_id}/export")
+async def export_stored_answer(
+    answer_id: str,
+    body: AnswerExportRequest,
+    user_id: str = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+):
+    """Download one answer this user already received. The file is not built from client-supplied sources."""
+    record = _ANSWER_EXPORTS.get(answer_id)
+    user = await db.scalar(select(User).where(User.id == user_id))
+    market = "global" if user is not None and user.market == "global" else "cn"
+    missing = (
+        "This answer does not exist or you cannot access it."
+        if market == "global" else
+        "回答不存在或无权访问"
+    )
+    if not record or user is None or record["user_id"] != str(user_id):
+        raise HTTPException(status_code=404, detail=missing)
+    offer = _export_offer(user)
+    if not offer.get(body.format):
+        market = record["market"]
+        message = (
+            "Word export is not included in this plan."
+            if market == "global" else
+            "当前方案不包含 Word 导出。"
+        ) if body.format == "docx" else (
+            "PDF export is not included in this plan."
+            if market == "global" else
+            "当前方案不包含 PDF 导出。"
+        )
+        raise HTTPException(status_code=403, detail={"error": "EXPORT_FORMAT_NOT_INCLUDED", "message": message})
+    try:
+        await assert_report_quota(user_id, db)
+    except QuotaExceeded as error:
+        market = record["market"]
+        if market == "global":
+            message = f"You have used this month's report exports ({error.limit}). This is not an extra AI answer."
+        else:
+            message = f"本月报告导出次数已用完（{error.limit} 次）。这不是额外的 AI 回答次数。"
+        raise HTTPException(status_code=429, detail={"error": "REPORT_QUOTA_EXCEEDED", "message": message, "limit": error.limit}) from error
+    payload = render_answer_file(record, body.format)
+    await consume_report_quota(user, db)
+    ext = body.format
+    mime = "application/pdf" if ext == "pdf" else "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    filename = f"answer-{answer_id}.{ext}"
+    return StreamingResponse(io.BytesIO(payload), media_type=mime, headers={"Content-Disposition": f'attachment; filename="{filename}"'})
+
+
 @router.post("/chat-json")
 async def chat_json(
     body: MobileChatRequest,
@@ -316,13 +449,34 @@ async def chat_json(
         market = await _market_for_user(user_id, db)
         blocked = blocked_model_text(body.message, market)
         if blocked:
-            return {"message": blocked, "ai_metadata": {"blocked": "bottom_line"}, "evidence": _evidence_for("", [], market)}
+            evidence = _evidence_for("", [], market)
+            stored = _remember_answer(user, market, blocked, [], {"blocked": "bottom_line"})
+            return {"message": blocked, "ai_metadata": {"blocked": "bottom_line"}, "evidence": evidence, "sources": [], **stored}
         assert_product_budget(user_id, market)
         hits = _retrieve(body.message, market)
         if not hits and grounding.is_policy_question(body.message):
-            return _no_source_payload(market, body.style)
+            payload = _no_source_payload(market, body.style)
+            stored = _remember_answer(user, market, payload["message"], [], {"stand_in": "no_source", "model_called": False})
+            return {**payload, "sources": [], **stored}
         prompt = _grounded_prompt(SYSTEM_PROMPT if market == "global" else CN_SYSTEM_PROMPT, hits, market, body.style)
-        result = await ai_assistant.chat_openai_with_metadata(body.message, prompt, market=market)
+        try:
+            result = await ai_assistant.chat_openai_with_metadata(body.message, prompt, market=market)
+        except RuntimeError as error:
+            if "not configured" not in str(error).lower():
+                raise
+            message, evidence, expired = _library_stand_in(body.message, hits, market, body.style)
+            meta = {"stand_in": "library_only", "model_called": False, "provider": None, "model": None}
+            stored = _remember_answer(user, market, message, evidence.get("sources") or [], meta)
+            return {
+                "message": message,
+                "ai_metadata": meta,
+                "evidence": evidence,
+                "sources": evidence.get("sources", []),
+                "structured": _structured(message, hits, market, body.style),
+                "grounding": _grounding(hits),
+                "time_check": {"today": _today().isoformat(), "expired_dates": expired},
+                **stored,
+            }
     except BudgetExceeded as error:
         raise HTTPException(status_code=429, detail={"error": "PRODUCT_BUDGET_EXCEEDED", "message": str(error)}) from error
     except RuntimeError as error:
@@ -333,6 +487,7 @@ async def chat_json(
     structured = _structured(message, hits, market, body.style)
     evidence = _evidence_for(message, hits, market)
     message, expired = _finish_answer(message, hits, market)
+    stored = _remember_answer(user, market, message, evidence.get("sources") or [], result["metadata"] or {})
     return {
         "message": message,
         "ai_metadata": result["metadata"],
@@ -341,6 +496,7 @@ async def chat_json(
         "structured": structured,
         "grounding": _grounding(hits),
         "time_check": {"today": _today().isoformat(), "expired_dates": expired},
+        **stored,
     }
 
 
@@ -552,7 +708,7 @@ async def ask(
             answer = "本库尚未收录相关资料。" if market != "global" else "No data available in the source library."
         else:
             answer = "\n".join(
-                f"[S{i}] {hit.title}（{hit.metadata.get('published_at') or hit.metadata.get('year')}）"
+                f"[S{i}] {hit.title}（{' '.join(date_lines(hit.metadata or {}, 'en' if market == 'global' else 'zh')) or (hit.metadata or {}).get('year') or ''}）"
                 for i, hit in enumerate(hits, 1)
             )
         return {"answer": answer, "sources": _evidence_for(answer, hits, market).get("sources", []), "model": None,

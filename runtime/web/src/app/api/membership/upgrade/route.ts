@@ -1,4 +1,5 @@
 import { shanghaiDate } from '@/lib/membership/day';
+import { licenseGrantedFromEnv, paidCheckoutOpen } from '@/lib/membership/trial';
 import { randomUUID } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
@@ -15,6 +16,13 @@ export async function POST(request: Request) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
         return NextResponse.json({ success: false, error: 'UNAUTHORIZED', message: '请先登录' }, { status: 401 });
+    }
+    if (!paidCheckoutOpen(licenseGrantedFromEnv())) {
+        return NextResponse.json({
+            success: false,
+            error: 'CHECKOUT_CLOSED',
+            message: '经营许可未取得，收费入口关闭',
+        }, { status: 403 });
     }
     try {
         const body = await request.json() as { plan?: string; billingPeriod?: string; method?: string; openid?: string };

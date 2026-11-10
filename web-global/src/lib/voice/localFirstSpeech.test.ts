@@ -14,7 +14,7 @@ type Attach = typeof attachLocalFirstRecognition;
  */
 function chromeWithoutLocalPack(lang: string): SpeechRecognitionLike & { starts: number; localFlags: boolean[] } {
   let open = false;
-  const rec = {
+  const rec: SpeechRecognitionLike & { starts: number; localFlags: boolean[] } = {
     lang,
     continuous: false,
     interimResults: false,

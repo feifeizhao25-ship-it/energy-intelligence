@@ -51,6 +51,7 @@ describe('部署拓扑', () => {
     const cfg = readFileSync(join(ROOT, 'next.config.js'), 'utf8');
     expect(cfg).toMatch(/source: '\/api\/backend\/entitlements'/);
     expect(cfg).not.toMatch(/\/api\/backend\/:path\*/);
+    expect(cfg).toMatch(/serverExternalPackages:\s*\[[^\]]*['"]ali-oss['"]/);
   });
 
 });

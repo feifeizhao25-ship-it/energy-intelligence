@@ -1,4 +1,9 @@
-"""web-int user-facing text stays English unless a line is on the allowlist."""
+"""web-int user-facing text stays English unless a line is on the allowlist.
+
+PR 116's broader language gate is not what this file repeats. This test covers
+the international site's route tree, the modules those routes render, and the
+cookie module added beside them.
+"""
 import re
 from pathlib import Path
 
@@ -35,6 +40,7 @@ def _allowlist() -> set[str]:
 
 def test_web_int_user_facing_text_is_english_unless_allowlisted():
     assert (SRC / "app" / "page.tsx").is_file()
+    assert (SRC / "app" / "layout.tsx").is_file()
     hits = _hits()
     allowed = _allowlist()
     assert sorted(hits - allowed) == []

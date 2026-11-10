@@ -12,6 +12,9 @@ import { aigcMeta, AIGC_HEADER } from '@/lib/ai/aigc';
 import { BOTTOM_LINE_NOTICE_ZH, neutralizeCnText } from '@/lib/compliance/bottom-line';
 import { recordFeedback } from '@/lib/feedback/samples';
 import { collectSourcesFromToolResult, verifySources, type EvidenceSource } from '@/lib/evidence/verification';
+import { saveAnswer, type StoredSource } from '@/lib/assistant/answer-store';
+import { isSyntheticUrl, storeLibraryStandIn } from '@/lib/assistant/library-fallback';
+import { EXPORT_FORMATS } from '@/lib/membership/plans';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -135,13 +138,50 @@ export async function POST(request: NextRequest) {
                     if (evidenceSources.length && verification.status !== 'verified') {
                         void recordFeedback('failed_citation', rawAnswer || answer);
                     }
+                    const sources = evidenceSources.slice(0, 20).map(storedSource);
+                    const synthetic = sources.some((source) => isSyntheticUrl(source.url));
+                    const saved = answer
+                        ? saveAnswer({ userId: guard.userId, text: answer, sources, standIn: false, synthetic })
+                        : null;
                     controller.enqueue(encoder.encode(`data: ${JSON.stringify({
                         type: 'evidence',
-                        data: { verification, sources: evidenceSources.slice(0, 20) },
+                        data: {
+                            verification,
+                            sources,
+                            answerId: saved?.id ?? null,
+                            standIn: false,
+                            synthetic,
+                            downloads: exportDownloads(userPlan),
+                        },
                     })}\n\n`));
                     controller.enqueue(encoder.encode('data: [DONE]\n\n'));
                     controller.close();
                 } catch (error) {
+                    const unavailable = /未配置|拒绝生成替代内容|not configured/i.test(error instanceof Error ? error.message : String(error));
+                    if (unavailable) {
+                        const question = String(latestUser?.content || '');
+                        const saved = storeLibraryStandIn(guard.userId, question);
+                        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'content', data: saved.text })}\n\n`));
+                        controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                            type: 'evidence',
+                            data: {
+                                verification: {
+                                    status: 'unverified',
+                                    label: '待核验',
+                                    reason: saved.sources.length ? '资料库记录没有人工复核记录' : '没有可引用的来源',
+                                    usable_as_conclusion: false,
+                                },
+                                sources: saved.sources,
+                                answerId: saved.id,
+                                standIn: true,
+                                synthetic: saved.synthetic,
+                                downloads: exportDownloads(userPlan),
+                            },
+                        })}\n\n`));
+                        controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+                        controller.close();
+                        return;
+                    }
                     console.error('流处理错误:', error);
                     const errorData = JSON.stringify({
                         type: 'error',
@@ -170,6 +210,28 @@ export async function POST(request: NextRequest) {
             { status: 500, headers: { 'Content-Type': 'application/json' } }
         );
     }
+}
+
+function exportDownloads(plan: Plan): { pdf: boolean; docx: boolean } {
+    const formats = (EXPORT_FORMATS[plan] ?? []) as readonly string[];
+    return { pdf: true, docx: formats.includes('Word') };
+}
+
+function storedSource(source: EvidenceSource): StoredSource {
+    const extra = source as EvidenceSource & Partial<StoredSource>;
+    return {
+        title: source.title || source.publisher || '未命名来源',
+        url: source.url,
+        publisher: source.publisher,
+        published_at: extra.published_at,
+        locator: extra.locator,
+        excerpt: extra.excerpt,
+        freshness_status: extra.freshness_status,
+        evidence_status: extra.evidence_status,
+        status: extra.status,
+        license: extra.license,
+        note: extra.note,
+    };
 }
 
 // API信息端点

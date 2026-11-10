@@ -1,5 +1,6 @@
 import { Message } from "@/types";
-import { callAI } from "@/lib/ai/router";
+import { callAI, isCnEdition } from "@/lib/ai/router";
+import { modelToolNames } from "@/lib/ai/tool-catalog";
 import { assistantToolDefinitions, handleToolCall } from "./tools";
 
 /**
@@ -37,7 +38,7 @@ export async function* assistantChatStream(
         const response = await callAI({
             model: model as any, // 推荐使用 GLM-4 或 DeepSeek V3 进行工具调用
             messages: currentMessages,
-            tools: assistantToolDefinitions,
+            tools: assistantToolDefinitions.filter((tool) => new Set<string>(modelToolNames(isCnEdition() ? 'cn' : 'global', 'assistant')).has(tool.function.name)),
             tool_choice: 'auto'
         }) as any;
 

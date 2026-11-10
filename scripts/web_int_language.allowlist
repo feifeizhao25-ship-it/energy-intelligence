@@ -1,3 +1,4 @@
 # User-facing web-int strings that may contain Chinese.
 # One entry per line: path relative to runtime/web-int/src, then a colon and the line number.
-# A listed line must still contain Chinese. Comments are not user-facing and are not listed.
+# A listed line must still contain Chinese. Delete the entry when the string is gone.
+# Comments are not user-facing and are not listed.
