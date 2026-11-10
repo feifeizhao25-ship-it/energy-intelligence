@@ -1,9 +1,9 @@
-const databaseUrl = process.env.INTEGRATION_DATABASE_URL;
-if (!databaseUrl || new URL(databaseUrl).hostname !== '127.0.0.1' || new URL(databaseUrl).pathname !== '/energy_integration_test') throw new Error('Requires isolated local test database');
+import { disposableIntegration, integrationSuite } from './disposable-database';
+disposableIntegration();
 jest.mock('server-only',()=>({}),{virtual:true});
 jest.mock('@/lib/auth/auth-options',()=>({authOptions:{}}));
 jest.mock('next-auth',()=>({getServerSession:jest.fn()}));
-jest.mock('@/lib/prisma',()=>{const {PrismaClient}=require('@prisma/client');return {prisma:new PrismaClient({datasources:{db:{url:process.env.INTEGRATION_DATABASE_URL}}})};});
+jest.mock('@/lib/prisma',()=>{const {PrismaClient}=require('@prisma/client');const {prismaUrl}=require('./disposable-database');return {prisma:new PrismaClient({datasources:{db:{url:prismaUrl()}}})};});
 import fs from 'fs';import path from 'path';
 import {NextRequest} from 'next/server';
 import {prisma} from '@/lib/prisma';import {getServerSession} from 'next-auth';
@@ -11,6 +11,7 @@ import {POST} from '@/app/api/exports/route';
 import {POST as reserve} from '@/app/api/exports/reserve/route';
 import {GET} from '@/app/api/exports/download/[filename]/route';
 const owner=`export-${Date.now()}`,other=owner+'-other';let filename:string;
+integrationSuite('export completeness on the disposable database', () => {
 beforeAll(async()=>{
  await prisma.user.createMany({data:[{id:owner,email:owner+'@test.invalid'},{id:other,email:other+'@test.invalid'}]});
  await prisma.calculation.createMany({data:Array.from({length:74},(_,i)=>({id:owner+'-'+String(i).padStart(3,'0'),userId:i===73?other:owner,type:'SOLAR',input:{index:i},output:{energy:{annualGeneration:i}},createdAt:new Date('2026-10-01')}))});
@@ -45,4 +46,5 @@ test.each(['stream','meta'])('disk write failure at %s rolls back quota and leav
   expect((await prisma.quotaUsage.aggregate({where:{userId:owner,type:'EXPORTS'},_sum:{count:true}}))._sum.count ?? 0).toBe(before);
   expect(fs.readdirSync(dir).sort()).toEqual(filesBefore);
  }finally{spy.mockRestore();}
+});
 });

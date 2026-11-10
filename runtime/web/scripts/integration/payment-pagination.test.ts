@@ -1,13 +1,14 @@
-const databaseUrl = process.env.INTEGRATION_DATABASE_URL;
-if (!databaseUrl || new URL(databaseUrl).hostname !== '127.0.0.1' || new URL(databaseUrl).pathname !== '/energy_integration_test') throw new Error('Requires isolated local test database');
+import { disposableIntegration, integrationSuite } from './disposable-database';
+disposableIntegration();
 jest.mock('server-only', () => ({}), {virtual:true});
 jest.mock('@/lib/auth/auth-options',()=>({authOptions:{}}));
 jest.mock('next-auth',()=>({getServerSession:jest.fn()}));
-jest.mock('@/lib/prisma',()=>{const {PrismaClient}=require('@prisma/client');return {prisma:new PrismaClient({datasources:{db:{url:process.env.INTEGRATION_DATABASE_URL}}})};});
+jest.mock('@/lib/prisma',()=>{const {PrismaClient}=require('@prisma/client');const {prismaUrl}=require('./disposable-database');return {prisma:new PrismaClient({datasources:{db:{url:prismaUrl()}}})};});
 import {prisma} from '@/lib/prisma';
 import {getServerSession} from 'next-auth';
 import {GET} from '@/app/api/membership/me/route';
 const owner=`pagination-${Date.now()}`; const other=owner+'-other';
+integrationSuite('payment pagination on the disposable database', () => {
 let sub:string; let expected:string[];
 beforeAll(async()=>{
  await prisma.user.createMany({data:[{id:owner,email:owner+'@test.invalid'},{id:other,email:other+'@test.invalid'}]});
@@ -33,4 +34,5 @@ test('real database: deletion before cursor and new payment do not skip older re
  expect(rest).toEqual(expected.slice(20)); expect(rest).not.toContain(other);
  (getServerSession as jest.Mock).mockResolvedValue({user:{id:other}});
  expect((await GET(new Request(`http://localhost/api/membership/me?paymentCursor=${first.paymentPagination.nextCursor}`))).status).toBe(400);
+});
 });
