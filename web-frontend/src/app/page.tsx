@@ -474,7 +474,7 @@ export default function HomePage() {
             {/* Data Sources Section */}
             <section className="py-16 px-4 bg-slate-900 text-white">
                 <div className="max-w-4xl mx-auto text-center">
-                    <h2 className="text-3xl font-black mb-4">权威数据源</h2>
+                    <h2 className="text-3xl font-black mb-4">公开数据来源</h2>
                     <p className="text-lg text-slate-400 mb-12">集成国际权威数据，确保分析结果专业可靠</p>
 
                     <div className="grid md:grid-cols-4 gap-6">

@@ -195,7 +195,7 @@ export class ActionGenerator {
                 title: "获取太阳辐照数据",
                 description: "从NASA POWER获取项目地点的太阳辐照数据，这是计算发电量的核心依据",
                 evidence: ["缺少太阳辐照数据", "无法进行准确的发电量计算"],
-                valueProposition: "获取权威数据源，提升计算可信度",
+                valueProposition: "标明公开数据来源，便于核对计算",
                 deliverable: {
                     type: "ANALYSIS",
                     title: "太阳资源评估报告",
