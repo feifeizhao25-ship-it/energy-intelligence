@@ -141,7 +141,7 @@ POST   /api/projects/diagnosis      # 生成 AI 诊断报告
 
 ### 外部服务
 - **认证**: NextAuth.js
-- **地图**: 高德地图
+- **地图**: 本目录是遗留说明，高德并未完成。见 `runtime/web/docs/maps.md`。国际站没有地图页。
 - **数据**: NASA POWER, NREL, Semantic Scholar
 
 ---

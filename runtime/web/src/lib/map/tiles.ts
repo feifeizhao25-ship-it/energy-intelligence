@@ -31,6 +31,7 @@ export function mapTileStatus(env: NodeJS.ProcessEnv = process.env): MapTileStat
 }
 
 const TIANDITU = 'https://t{s}.tianditu.gov.cn/vec_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=vec&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk={key}';
+// 高德瓦片地址不带 key。GAODE_MAP_KEY 只决定是否开启这条代理，不出现在浏览器或上游 URL 里。
 const GAODE = 'https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}';
 
 export function tileUpstream(env: NodeJS.ProcessEnv, z: number, x: number, y: number): string | null {

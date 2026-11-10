@@ -141,7 +141,7 @@ POST   /api/projects/diagnosis      # 生成 AI 诊断报告
 
 ### 外部服务
 - **认证**: NextAuth.js
-- **地图**: 高德地图
+- **地图**: 未完成。见 `maps.md`。配了密钥才有瓦片；否则「地图服务暂不可用」。JS SDK 未加载。国际站没有地图页。
 - **数据**: NASA POWER, NREL, Semantic Scholar
 
 ---
