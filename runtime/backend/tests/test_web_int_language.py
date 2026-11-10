@@ -1,7 +1,8 @@
-"""web-int user-facing routes stay English unless a line is on the allowlist.
+"""web-int user-facing text stays English unless a line is on the allowlist.
 
-PR 116's broader language gate is not on this branch. This test covers the
-international site's route tree and the modules those routes render.
+PR 116's broader language gate is not what this file repeats. This test covers
+the international site's route tree, the modules those routes render, and the
+cookie module added beside them.
 """
 import re
 from pathlib import Path
@@ -13,10 +14,10 @@ CJK = re.compile(r"[一-鿿]")
 BLOCK = re.compile(r"/\*.*?\*/", re.S)
 
 
-def _visible_hits() -> set[str]:
+def _hits() -> set[str]:
     hits: set[str] = set()
     for path in SRC.rglob("*"):
-        if path.suffix not in {".ts", ".tsx", ".json"} or ".test." in path.name:
+        if path.suffix not in {".ts", ".tsx", ".json", ".mjs"} or ".test." in path.name:
             continue
         raw = path.read_text(encoding="utf-8")
         text = BLOCK.sub(lambda match: re.sub(r"[^\n]", " ", match.group(0)), raw)
@@ -37,10 +38,10 @@ def _allowlist() -> set[str]:
     return entries
 
 
-def test_web_int_user_facing_routes_are_english_unless_allowlisted():
+def test_web_int_user_facing_text_is_english_unless_allowlisted():
     assert (SRC / "app" / "page.tsx").is_file()
     assert (SRC / "app" / "layout.tsx").is_file()
-    hits = _visible_hits()
+    hits = _hits()
     allowed = _allowlist()
     assert sorted(hits - allowed) == []
     assert sorted(allowed - hits) == []
