@@ -6,6 +6,7 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { priceAsOfText } from '@/lib/pricing/tariffs';
 import { resolveWindPrices } from '@/lib/pricing/tariff-defaults';
+import { formatPercentRange, formatRange, type NullableRange, type ValueRange } from '@/lib/calculator/ranges';
 
 let searchParams = new URLSearchParams();
 jest.mock('next/navigation', () => ({ useSearchParams: () => searchParams, useRouter: () => ({ back: jest.fn(), push: jest.fn() }) }));
@@ -45,5 +46,80 @@ describe('风电结果页', () => {
         expect(html).toMatch(/省份<\/span><span[^>]*>河北/);
         expect(html).toContain('上网电价 0.3644 元/度（你填写的数值，省份：河北）');
         expect(html).not.toContain('用户输入或测算默认值');
+    });
+});
+
+function resultData(extra: Record<string, unknown> = {}) {
+    return {
+        energy: { year1: 6_100_000, monthly: Array(12).fill(500_000), lifetime: 120_000_000, equivalentHours: 2033 },
+        financial: { irr: 7.1, paybackYears: 10.2, lcoe: 0.29, investment: 19_500_000 },
+        metadata: { projectName: '河北分散式风电项目', province: '河北', capacity: 3000 },
+        ...extra,
+    };
+}
+
+async function renderResult(type: string, data: unknown) {
+    const { default: ResultPage } = await import('./page');
+    searchParams = new URLSearchParams({ type, data: JSON.stringify(data) });
+    return renderToStaticMarkup(<ResultPage />);
+}
+
+describe('测算结果页的 IRR / LCOE 区间', () => {
+    const irr: NullableRange = { low: 5.2, median: 7.1, high: 9.4, relUncertainty: 0.15, note: '已有模型区间' };
+    const lcoe: ValueRange = { low: 0.246, median: 0.29, high: 0.341, relUncertainty: 0.15, note: '已有模型区间' };
+
+    it('有 ranges 时展示区间文本，不再渲染单点 toFixed', async () => {
+        const html = await renderResult('wind', resultData({ ranges: { irr, lcoe } }));
+        expect(html).toContain(formatPercentRange(irr));
+        expect(html).toContain(formatRange(lcoe, '元/度', { decimals: 3 }));
+        expect(html).not.toContain('7.10%');
+        expect(html).not.toContain('¥0.290');
+        expect(html).toContain('10.2年');
+    });
+
+    it('payload 已带 text 时沿用该文本', async () => {
+        const html = await renderResult('wind', resultData({
+            ranges: {
+                irr: { ...irr, text: '约 5.2%–9.4%（中值 7.1%）' },
+                lcoe: { ...lcoe, text: '约 0.246–0.341 元/度（中值 0.290）' },
+            },
+        }));
+        expect(html).toContain('约 5.2%–9.4%（中值 7.1%）');
+        expect(html).toContain('约 0.246–0.341 元/度（中值 0.290）');
+        expect(html).not.toContain('7.10%');
+        expect(html).not.toContain('¥0.290');
+    });
+
+    it('没有 ranges 时显示无法确认，不回退成单点', async () => {
+        const html = await renderResult('wind', resultData());
+        expect(html).toContain('无法确认');
+        expect(html).not.toContain('7.10%');
+        expect(html).not.toContain('¥0.290');
+        expect(html).toContain('10.2年');
+    });
+
+    it('IRR 中值为空时显示无唯一解', async () => {
+        const html = await renderResult('wind', resultData({
+            ranges: {
+                irr: { low: null, median: null, high: null, relUncertainty: 0.15, note: '已有模型区间' },
+                lcoe,
+            },
+        }));
+        expect(html).toContain('无唯一解');
+        expect(html).not.toContain('7.10%');
+        expect(html).toContain(formatRange(lcoe, '元/度', { decimals: 3 }));
+    });
+
+    it('已有回收期区间时一并显示，储能卡片用 LCOS', async () => {
+        const payback: ValueRange = { low: 8.7, median: 10.2, high: 12.0, relUncertainty: 0.15, note: '已有模型区间' };
+        const lcos: ValueRange = { low: 0.41, median: 0.48, high: 0.55, relUncertainty: 0.1, note: '已有模型区间' };
+        const html = await renderResult('storage', resultData({
+            ranges: { irr, lcos, paybackYears: payback },
+        }));
+        expect(html).toContain(formatRange(payback, '年', { decimals: 1 }));
+        expect(html).not.toContain('10.2年');
+        expect(html).toContain('平准化储能成本（LCOS）');
+        expect(html).toContain(formatRange(lcos, '元/度', { decimals: 3 }));
+        expect(html).not.toContain('平准化度电成本（LCOE）');
     });
 });

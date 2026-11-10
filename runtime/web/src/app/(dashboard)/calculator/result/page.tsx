@@ -25,6 +25,7 @@ import { co2AvoidedTonnesForProvince, emissionFactorNoteFor } from '@/lib/standa
 import { priceAsOfText } from '@/lib/pricing/tariffs';
 import { ExplainLayer } from '@/components/explain/ExplainLayer';
 import { FreshnessBadge } from '@/components/freshness/FreshnessBadge';
+import { formatPercentRange, formatRange, type NullableRange, type ValueRange } from '@/lib/calculator/ranges';
 
 const PDFDownloadLink = dynamic(
     () => import('@react-pdf/renderer').then((mod) => mod.PDFDownloadLink),
@@ -68,6 +69,8 @@ function CalculatorResultPage() {
     if (!data?.financial || !data?.energy || !Array.isArray(data.energy.monthly)) {
         return <div className="p-20 text-center text-slate-400">计算结果不完整，请返回重新测算</div>;
     }
+
+    const levelized = levelizedDisplay(data, type);
 
     return (
         <div className="min-h-screen overflow-x-hidden bg-[#020617] pb-20 text-slate-200">
@@ -132,19 +135,19 @@ function CalculatorResultPage() {
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             <MetricCard
                                 label="内部收益率（IRR）"
-                                value={data.financial.irr === null || data.financial.irr === undefined ? '无法确认' : `${data.financial.irr.toFixed(2)}%`}
+                                value={irrDisplay(data)}
                                 icon={<TrendingUp className="w-5 h-5 text-emerald-400" />}
                                 color="border-emerald-500/20"
                             />
                             <MetricCard
                                 label="静态回收期"
-                                value={`${data.financial.paybackYears.toFixed(1)}年`}
+                                value={paybackDisplay(data)}
                                 icon={<Calendar className="w-5 h-5 text-blue-400" />}
                                 color="border-blue-500/20"
                             />
                             <MetricCard
-                                label="平准化度电成本（LCOE）"
-                                value={`¥${data.financial.lcoe.toFixed(3)}`}
+                                label={levelized.label}
+                                value={levelized.value}
                                 icon={<DollarSign className="w-5 h-5 text-orange-400" />}
                                 color="border-orange-500/20"
                             />
@@ -250,6 +253,40 @@ function MetricCard({ label, value, unit, icon, trend, color }: any) {
             </div>
         </div>
     );
+}
+
+function preparedText(range: { text?: unknown } | null | undefined): string | null {
+    return typeof range?.text === 'string' && range.text.trim() ? range.text : null;
+}
+
+/** 已有区间优先。缺区间或中值为空时不回退到单点 toFixed。 */
+function irrDisplay(data: { ranges?: { irr?: NullableRange & { text?: string } } }): string {
+    const range = data.ranges?.irr;
+    if (!range) return '无法确认';
+    return preparedText(range) ?? formatPercentRange(range);
+}
+
+function levelizedDisplay(data: { ranges?: { lcoe?: (ValueRange & { text?: string }) | null; lcos?: (ValueRange & { text?: string }) | null } }, type: string | null): { label: string; value: string } {
+    const storage = type === 'storage' || Boolean(data.ranges?.lcos && !data.ranges?.lcoe);
+    const range = storage ? data.ranges?.lcos ?? data.ranges?.lcoe : data.ranges?.lcoe;
+    const label = storage ? '平准化储能成本（LCOS）' : '平准化度电成本（LCOE）';
+    if (!range || range.median === null || range.median === undefined || !Number.isFinite(range.median)) {
+        return { label, value: preparedText(range) ?? '无法确认' };
+    }
+    return { label, value: preparedText(range) ?? formatRange(range, '元/度', { decimals: 3 }) };
+}
+
+function paybackDisplay(data: { ranges?: { paybackYears?: (ValueRange & { text?: string }) | null; payback?: (ValueRange & { text?: string }) | null }; financial?: { paybackYears?: number | null } }): string {
+    const range = data.ranges?.paybackYears ?? data.ranges?.payback;
+    if (range) {
+        if (range.median === null || range.median === undefined || !Number.isFinite(range.median)) {
+            return preparedText(range) ?? '无法确认';
+        }
+        return preparedText(range) ?? formatRange(range, '年', { decimals: 1 });
+    }
+    const years = data.financial?.paybackYears;
+    if (years === null || years === undefined || !Number.isFinite(years)) return '无法确认';
+    return `${years.toFixed(1)}年`;
 }
 
 /** 光伏装机按组件峰值功率 kWp，风电、储能按额定功率 kW */
