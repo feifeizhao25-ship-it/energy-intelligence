@@ -260,7 +260,7 @@ export default function Sidebar() {
 
             {/* 移动端菜单 Drawer */}
             {mobileMenuOpen && (
-                <div className="fixed inset-0 top-14 bg-white dark:bg-background-dark z-40 lg:hidden p-4 overflow-y-auto">
+                <div data-testid="mobile-nav-drawer" className="fixed inset-x-0 bottom-0 top-[calc(3.5rem+env(safe-area-inset-top))] z-[60] overflow-y-auto bg-white p-4 pb-[calc(6rem+env(safe-area-inset-bottom))] dark:bg-background-dark lg:hidden">
                     <nav className="space-y-6">
                         {navGroups.map((group) => {
                             const visibleItems = group.items.filter(item => !item.requiresAuth || isLoggedIn);

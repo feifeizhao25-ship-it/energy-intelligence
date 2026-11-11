@@ -5,9 +5,26 @@ import { useEffect, useState } from 'react';
 import { MapPin, Search, X, Crosshair, Loader2 } from 'lucide-react';
 import DomesticTileMap from './DomesticTileMap';
 import { resolveMapSearch, windPickerSearchNote } from '@/lib/map/map-search';
+import { provinceFromGeocodeRecord } from '@/lib/map/picked-province';
 
 const MAP_UNAVAILABLE = '地图服务暂不可用';
 const MAP_KEY_UNSET = '地图未配置密钥，请直接填写经纬度';
+
+/** 搜索结果里已有省名就用它；地图点选只有坐标时再逆地理编码，失败则保持原样。 */
+async function withProvince(location: LocationData): Promise<LocationData> {
+    if (location.province) return location;
+    try {
+        const response = await fetch(
+            `/api/location?action=reverse&lat=${encodeURIComponent(String(location.lat))}&lng=${encodeURIComponent(String(location.lng))}`,
+            { signal: AbortSignal.timeout(8000) },
+        );
+        const body = await response.json().catch(() => null);
+        const province = provinceFromGeocodeRecord(body?.data);
+        return province ? { ...location, province } : location;
+    } catch {
+        return location;
+    }
+}
 
 interface LocationData {
     lat: number;
@@ -34,6 +51,7 @@ export default function LocationPicker({ value, onChange, placeholder = "点击�
     const [tileMode, setTileMode] = useState<'loading' | 'domestic' | 'disabled'>('loading');
     const [manualLat, setManualLat] = useState('');
     const [manualLng, setManualLng] = useState('');
+    const [confirming, setConfirming] = useState(false);
 
     useEffect(() => {
         if (!isMapOpen) return;
@@ -62,7 +80,12 @@ export default function LocationPicker({ value, onChange, placeholder = "点击�
                 setSearchNote(windPickerSearchNote(result));
                 return;
             }
-            setTempLocation({ lat: result.lat, lng: result.lng, address: result.name });
+            setTempLocation({
+                lat: result.lat,
+                lng: result.lng,
+                address: result.name,
+                province: result.province,
+            });
         } catch {
             setSearchNote(`${MAP_UNAVAILABLE}，${MAP_KEY_UNSET}`);
         } finally {
@@ -83,11 +106,17 @@ export default function LocationPicker({ value, onChange, placeholder = "点击�
         );
     };
 
-    const handleConfirm = () => {
-        if (!tempLocation) return;
-        setSelectedLocation(tempLocation);
-        onChange(tempLocation);
-        setIsMapOpen(false);
+    const handleConfirm = async () => {
+        if (!tempLocation || confirming) return;
+        setConfirming(true);
+        try {
+            const picked = await withProvince(tempLocation);
+            setSelectedLocation(picked);
+            onChange(picked);
+            setIsMapOpen(false);
+        } finally {
+            setConfirming(false);
+        }
     };
 
     const handleCancel = () => {
@@ -214,7 +243,7 @@ export default function LocationPicker({ value, onChange, placeholder = "点击�
                             <button
                                 type="button"
                                 onClick={handleConfirm}
-                                disabled={!tempLocation}
+                                disabled={!tempLocation || confirming}
                                 className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
                             >
                                 <MapPin className="w-4 h-4" />

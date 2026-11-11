@@ -25,5 +25,12 @@ describe('侧栏用户菜单', () => {
         expect(html).toContain('免费');
         const source = readFileSync(join(__dirname, 'Sidebar.tsx'), 'utf8');
         expect(source.match(/<UserAccountMenu/g)).toHaveLength(2);
+        const drawer = source.slice(source.indexOf('data-testid="mobile-nav-drawer"'));
+        expect(drawer.startsWith('data-testid="mobile-nav-drawer"')).toBe(true);
+        expect(drawer).toContain('z-[60]');
+        expect(drawer).toContain('top-[calc(3.5rem+env(safe-area-inset-top))]');
+        expect(drawer).toContain('pb-[calc(6rem+env(safe-area-inset-bottom))]');
+        expect(drawer).toContain('overflow-y-auto');
+        expect(drawer).toContain('<UserAccountMenu');
     });
 });

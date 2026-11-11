@@ -20,9 +20,26 @@ export interface PriceField {
     label: string;
 }
 
+export type TariffRead =
+    | { phase: 'loading' }
+    | { phase: 'empty' }
+    | { phase: 'error' }
+    | { phase: 'ready'; defaults: TariffDefaults };
+
+export const TARIFF_EMPTY_NOTE = '请选择省份，或直接填写电价';
+export const TARIFF_ERROR_NOTE = '电价表暂时读不出来，请在输入框里填写电价（机制电价或合同价）';
+
+/** 读取结果对应的一句说明。读不出来或没选省份时改为可手工填写，不再停在「正在读取」。 */
+export function tariffFieldNote(read: TariffRead, key: PriceKey): string {
+    if (read.phase === 'loading') return '正在读取电价表…';
+    if (read.phase === 'empty') return TARIFF_EMPTY_NOTE;
+    if (read.phase === 'error') return TARIFF_ERROR_NOTE;
+    return describeDefault(read.defaults, key);
+}
+
 /** 输入框下方的说明：表里有值时写「留空按电价表 x 元/度（来源待核实…）」，没有时写必须填写。 */
 export function describeDefault(defaults: TariffDefaults | null, key: PriceKey): string {
-    if (!defaults) return '正在读取电价表…';
+    if (!defaults) return TARIFF_ERROR_NOTE;
     if (key === 'coalBenchmarkPrice') {
         // 上网电价参考与分时电价无关：不因「已取消固定分时」挡住，只看表里有没有燃煤发电基准价
         if (typeof defaults.coalBenchmarkPrice !== 'number') return defaults.feedInMessage ?? '请填写上网电价（机制电价或合同价）';
@@ -45,19 +62,37 @@ export function describePricing(pricing: PricingInfo | null | undefined): string
     return `电价：${used ? `${used}，` : ''}${pricing.province}省级电价表（${pricing.sourceStatus}${pricing.asOfLabel ? `，${pricing.asOfLabel}` : ''}${stale}）${own}`;
 }
 
-export function useTariffDefaults(province: string): TariffDefaults | null {
-    const [defaults, setDefaults] = useState<TariffDefaults | null>(null);
+export function useTariffDefaults(province: string): TariffRead {
+    const [read, setRead] = useState<TariffRead>(() => (province ? { phase: 'loading' } : { phase: 'empty' }));
     useEffect(() => {
         let cancelled = false;
-        setDefaults(null);
-        if (!province) return;
-        fetch(`/api/pricing/tariff?province=${encodeURIComponent(province)}`)
-            .then(r => r.json())
-            .then(body => { if (!cancelled) setDefaults(body?.data ?? null); })
-            .catch(() => { if (!cancelled) setDefaults(null); });
-        return () => { cancelled = true; };
+        if (!province) {
+            setRead({ phase: 'empty' });
+            return;
+        }
+        setRead({ phase: 'loading' });
+        const timer = setTimeout(() => {
+            if (!cancelled) setRead({ phase: 'error' });
+        }, 8000);
+        fetch(`/api/pricing/tariff?province=${encodeURIComponent(province)}`, { signal: AbortSignal.timeout(8000) })
+            .then(async (response) => {
+                const body = await response.json().catch(() => null);
+                if (cancelled) return;
+                clearTimeout(timer);
+                if (!response.ok || !body?.data || typeof body.data !== 'object') {
+                    setRead({ phase: 'error' });
+                    return;
+                }
+                setRead({ phase: 'ready', defaults: body.data as TariffDefaults });
+            })
+            .catch(() => { if (!cancelled) setRead({ phase: 'error' }); })
+            .finally(() => clearTimeout(timer));
+        return () => {
+            cancelled = true;
+            clearTimeout(timer);
+        };
     }, [province]);
-    return defaults;
+    return read;
 }
 
 export default function TariffPriceFields({
@@ -69,9 +104,12 @@ export default function TariffPriceFields({
     onChange: (key: PriceKey, value: string) => void;
     showFeedInBasis?: boolean;
 }) {
-    const defaults = useTariffDefaults(province);
+    const read = useTariffDefaults(province);
+    const defaults = read.phase === 'ready' ? read.defaults : null;
+    const noteIsProblem = read.phase === 'empty' || read.phase === 'error';
     return (
         <div className="space-y-4" data-testid="tariff-fields">
+            {noteIsProblem && <p role="alert" className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm leading-6 text-amber-100">{tariffFieldNote(read, fields[0]?.key ?? 'coalBenchmarkPrice')}</p>}
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 {fields.map(field => {
                     const tableValue = defaults && (defaults.status === 'ok' || field.key === 'coalBenchmarkPrice') ? defaults[field.key] : null;
@@ -89,7 +127,7 @@ export default function TariffPriceFields({
                                 onChange={e => onChange(field.key, e.target.value)}
                                 className="w-full rounded-xl border border-slate-700 bg-slate-800 px-4 py-3 text-white placeholder:text-slate-500"
                             />
-                            <span className="block text-[11px] leading-5 text-slate-500">{describeDefault(defaults, field.key)}</span>
+                            <span className="block text-[11px] leading-5 text-slate-500">{tariffFieldNote(read, field.key)}</span>
                         </label>
                     );
                 })}

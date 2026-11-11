@@ -46,6 +46,19 @@ describe('风电结果页', () => {
         expect(html).toMatch(/省份<\/span><span[^>]*>河北/);
         expect(html).toContain('上网电价 0.3644 元/度（你填写的数值，省份：河北）');
         expect(html).not.toContain('用户输入或测算默认值');
+        expect(html).toContain('轮毂高度');
+        expect(html).toContain('功率曲线');
+        expect(html).toContain('GB/T 18710《风电场风能资源评估方法》');
+        expect(html).toContain('IEC 61400-12-1');
+        expect(html).not.toContain('光伏发电站设计标准');
+        expect(html).not.toContain('倾斜面年辐照');
+    });
+
+    it('光伏结果仍用光伏算法说明', async () => {
+        const html = await renderResult('solar', resultData());
+        expect(html).toContain('倾斜面年辐照');
+        expect(html).toContain('光伏发电站设计标准（2024 年版）');
+        expect(html).not.toContain('轮毂高度');
     });
 });
 
