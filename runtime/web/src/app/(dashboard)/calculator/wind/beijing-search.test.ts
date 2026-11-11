@@ -33,8 +33,10 @@ describe('风电搜索北京市', () => {
 
         const page = readFileSync(join(__dirname, 'page.tsx'), 'utf8');
         const picker = readFileSync(join(__dirname, '../../../../components/map/LocationPicker.tsx'), 'utf8');
-        expect(page).toContain('provinceFromPickedLocation');
+        const place = readFileSync(join(__dirname, '../../../../lib/map/wind-place.ts'), 'utf8');
+        expect(page).toContain('applyWindPick');
         expect(page).not.toContain("province: v.province || ''");
+        expect(place).toContain('provinceFromPickedLocation');
         expect(picker).toContain('province: result.province');
     });
 });

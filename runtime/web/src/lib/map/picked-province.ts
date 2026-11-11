@@ -27,9 +27,20 @@ function listed(name: string): string {
     return normalized && (PROVINCES as readonly string[]).includes(normalized) ? normalized : '';
 }
 
+function geocodeHit(record: unknown): Record<string, unknown> | null {
+    return record && typeof record === 'object' ? record as Record<string, unknown> : null;
+}
+
+/** 地理编码里的地名。没有 formatted_address 时返回空字符串，不编一个地名。 */
+export function placeNameFromGeocodeRecord(record: unknown): string {
+    const hit = geocodeHit(record);
+    if (!hit) return '';
+    return asText(hit.formatted_address) || asText(hit.formattedAddress);
+}
+
 /** 高德地理编码或逆地理编码里的省，收成名单内简称。 */
 export function provinceFromGeocodeRecord(record: unknown): string {
-    const hit = record && typeof record === 'object' ? record as Record<string, unknown> : null;
+    const hit = geocodeHit(record);
     if (!hit) return '';
     const component = hit.addressComponent && typeof hit.addressComponent === 'object'
         ? hit.addressComponent as Record<string, unknown>

@@ -69,4 +69,12 @@ describe('瓦片图', () => {
         expect(second).toContain(`/api/map-tiles/tile?z=4&amp;x=${tile.x}&amp;y=${tile.y}`);
         expect(first).not.toBe(second);
     });
+
+    it('瓦片加载失败时给出中文提示，而不是只留空白', () => {
+        const source = readFileSync(join(__dirname, 'DomesticTileMap.tsx'), 'utf8');
+        expect(source).toContain('地图瓦片暂时不可用');
+        expect(source).toContain('onError');
+        expect(source).toContain('data-testid="map-tiles-unavailable"');
+        expect(source).toContain('pointerOnMap');
+    });
 });

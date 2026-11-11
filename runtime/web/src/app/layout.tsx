@@ -3,11 +3,13 @@ import './globals.css'
 import AuthProvider from '@/components/providers/AuthProvider'
 import { ThemeProvider } from '@/components/providers/ThemeProvider'
 import { isAuthConfigured } from '@/lib/auth/availability'
+import { cnFormatDetection } from '@/lib/metadata/format-detection'
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
     title: '新能源智库 - 新能源项目测算与政策查询',
     description: '算清收益 · 看清假设。面向新能源从业者的光伏、风电、储能初步测算与政策查询工具，基于公开气象数据，结果仅供参考。',
+    formatDetection: cnFormatDetection,
     manifest: '/manifest.json',
     icons: {
       icon: [{ url: '/favicon.ico', sizes: 'any' }],

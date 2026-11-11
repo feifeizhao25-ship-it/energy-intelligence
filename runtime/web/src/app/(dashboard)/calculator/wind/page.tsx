@@ -9,7 +9,8 @@ import LocationPicker from '@/components/map/LocationPicker';
 import { safeErrorMessage } from '@/lib/api/safe-error';
 import TariffPriceFields, { TARIFF_PROVINCES } from '@/components/calculator/TariffPriceFields';
 import { normalizeProvince } from '@/lib/pricing/tariffs';
-import { provinceFromPickedLocation } from '@/lib/map/picked-province';
+import { applyWindPick } from '@/lib/map/wind-place';
+import { windRequestBody } from '@/lib/calculator/wind-request';
 
 export default function WindCalculatorPage() {
     const router = useRouter();
@@ -20,6 +21,7 @@ export default function WindCalculatorPage() {
     const [formData, setFormData] = useState({
         lat: 39.9042,
         lng: 116.4074,
+        name: '',
         province: '北京',
         turbineType: 'medium_wind',
         capacity: 3.0, // MW
@@ -45,34 +47,17 @@ export default function WindCalculatorPage() {
             const response = await fetch('/api/calculator/wind', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    ...formData,
-                    turbine: {
-                        type: formData.turbineType,
-                        capacity: formData.capacity,
-                        count: formData.count,
-                        hubHeight: formData.hubHeight,
-                        rotorDiameter: formData.rotorDiameter,
-                        cutInSpeed: 3.0,
-                        ratedSpeed: 10.5,
-                        cutOutSpeed: 25.0
-                    },
-                    businessModel: {
-                        mode: formData.businessMode,
-                        cooperationMode: formData.cooperationMode,
-                        ...(feedInTariff.trim() ? { feedInTariff: Number(feedInTariff) } : {})
-                    },
-                    investment: { unitCost: formData.unitCost },
-                    operation: {}
-                })
+                body: JSON.stringify(windRequestBody(formData, feedInTariff)),
             });
             const data = await readCalculationResponse(response) as Record<string, any>;
             // 结果页「核心参数回顾」与电价说明读 metadata：省份、装机（kW）、电价来源都带过去
             const province = normalizeProvince(formData.province) || formData.province;
+            const placeName = formData.name.trim();
             const withMeta = {
                 ...data,
                 metadata: {
-                    projectName: `${province}分散式风电项目`,
+                    projectName: `${placeName || province}分散式风电项目`,
+                    placeName,
                     province,
                     capacity: Math.round(formData.capacity * formData.count * 1000),
                     pricing: data.pricing,
@@ -113,17 +98,12 @@ export default function WindCalculatorPage() {
                                 <h2 className="text-xl font-bold text-white mb-6">位置与省份选择</h2>
                                 <div className="mb-4">
                                     <LocationPicker
-                                        value={{ lat: formData.lat.toString(), lng: formData.lng.toString(), province: formData.province }}
-                                        onChange={v => setFormData({
-                                            ...formData,
-                                            lat: v.lat,
-                                            lng: v.lng,
-                                            province: provinceFromPickedLocation(formData.province, v.province),
-                                        })}
+                                        value={{ lat: formData.lat.toString(), lng: formData.lng.toString(), province: formData.province, name: formData.name }}
+                                        onChange={v => setFormData((current) => applyWindPick(current, v))}
                                     />
                                 </div>
                                 <p data-testid="wind-location-summary" className="text-sm leading-6 text-slate-300">
-                                    当前位置：纬度 {Number(formData.lat).toFixed(4)}，经度 {Number(formData.lng).toFixed(4)}；省份：{formData.province || '未选择'}
+                                    当前位置：{formData.name ? `${formData.name}，` : ''}纬度 {Number(formData.lat).toFixed(4)}，经度 {Number(formData.lng).toFixed(4)}；省份：{formData.province || '未选择'}
                                 </p>
                                 <p className="mt-1 text-xs leading-5 text-slate-500">位置用于读取历史风速；省份用于下一步的上网电价参考，可在下一步修改。</p>
                             </div>
