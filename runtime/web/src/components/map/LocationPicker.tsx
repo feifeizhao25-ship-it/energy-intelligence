@@ -4,6 +4,7 @@
 import { useEffect, useState } from 'react';
 import { MapPin, Search, X, Crosshair, Loader2 } from 'lucide-react';
 import DomesticTileMap from './DomesticTileMap';
+import { resolveMapSearch } from '@/lib/map/map-search';
 
 const MAP_UNAVAILABLE = '地图服务暂不可用';
 const MAP_KEY_UNSET = '地图未配置密钥，请直接填写经纬度';
@@ -56,15 +57,12 @@ export default function LocationPicker({ value, onChange, placeholder = "点击�
         setIsSearching(true);
         setSearchNote(null);
         try {
-            const response = await fetch(`/api/location?action=geocode&address=${encodeURIComponent(searchQuery.trim())}`);
-            const body = await response.json().catch(() => null);
-            const hit = body?.data?.[0];
-            const [lng, lat] = String(hit?.location ?? '').split(',').map(Number);
-            if (!response.ok || !Number.isFinite(lat) || !Number.isFinite(lng)) {
-                setSearchNote(`${MAP_UNAVAILABLE}，${MAP_KEY_UNSET}`);
+            const result = await resolveMapSearch(searchQuery);
+            if ('error' in result) {
+                setSearchNote(result.error);
                 return;
             }
-            setTempLocation({ lat, lng, address: hit.formatted_address || searchQuery.trim() });
+            setTempLocation({ lat: result.lat, lng: result.lng, address: result.name });
         } catch {
             setSearchNote(`${MAP_UNAVAILABLE}，${MAP_KEY_UNSET}`);
         } finally {
@@ -198,6 +196,7 @@ export default function LocationPicker({ value, onChange, placeholder = "点击�
                         {tileMode === 'domestic' && (
                             <DomesticTileMap
                                 initial={value?.lat && value?.lng ? { lat: parseFloat(value.lat), lng: parseFloat(value.lng) } : undefined}
+                                focus={tempLocation ? { lat: tempLocation.lat, lng: tempLocation.lng } : undefined}
                                 onPick={(location) => setTempLocation(location)}
                             />
                         )}

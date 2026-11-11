@@ -16,6 +16,7 @@ import {
     Trash2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { MAP_SEARCH_MISS, resolveMapSearch } from '@/lib/map/map-search';
 
 
 export default function ResourceMapPage() {
@@ -24,6 +25,21 @@ export default function ResourceMapPage() {
     const [compareMode, setCompareMode] = useState(false);
     const [compareList, setCompareList] = useState<any[]>([]);
     const [mapStyle, setMapStyle] = useState('dark');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchError, setSearchError] = useState<string | null>(null);
+    const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | undefined>();
+
+    const handleSearch = async (event?: React.FormEvent) => {
+        event?.preventDefault();
+        const result = await resolveMapSearch(searchQuery);
+        if ('error' in result) {
+            setSearchError(result.error || MAP_SEARCH_MISS);
+            return;
+        }
+        setSearchError(null);
+        setMapCenter({ lat: result.lat, lng: result.lng });
+        setSelectedLocation({ lat: result.lat, lng: result.lng, name: result.name });
+    };
 
     const handleSelectLocation = (loc: any) => {
         if (compareMode) {
@@ -40,17 +56,20 @@ export default function ResourceMapPage() {
             {/* Minimal High-Tech Search & Layer Controls */}
             <div className="absolute top-8 left-8 right-8 z-20 pointer-events-none flex justify-between items-start">
                 <div className="space-y-4 pointer-events-auto">
-                    <div className="group flex items-center gap-3 bg-slate-950 border border-white/10 p-2 pr-4 rounded-[32px] shadow-2xl w-80">
-                        <div className="bg-emerald-800 p-3 rounded-2xl">
+                    <form onSubmit={handleSearch} className="group flex items-center gap-3 bg-slate-950 border border-white/10 p-2 pr-4 rounded-[32px] shadow-2xl w-80">
+                        <button type="submit" className="bg-emerald-800 p-3 rounded-2xl" aria-label="搜索地点">
                             <Search className="w-5 h-5 text-white" />
-                        </div>
+                        </button>
                         <input
                             type="text"
                             id="map-search-input"
+                            value={searchQuery}
+                            onChange={(event) => setSearchQuery(event.target.value)}
                             placeholder="搜索地点或经纬度..."
                             className="bg-transparent border-none focus:ring-0 text-sm font-bold text-white placeholder-slate-300 w-full outline-none pointer-events-auto"
                         />
-                    </div>
+                    </form>
+                    {searchError && <p role="alert" className="max-w-xs rounded-2xl bg-slate-950 px-4 py-2 text-sm text-white">{searchError}</p>}
 
                     <div className="flex gap-2">
                         {['solar', 'wind'].map((l) => (
@@ -179,6 +198,7 @@ export default function ResourceMapPage() {
             <ResourceMap
                 layer={selectedLayer}
                 mapStyle={mapStyle}
+                focus={mapCenter}
                 onSelectLocation={handleSelectLocation}
             />
 

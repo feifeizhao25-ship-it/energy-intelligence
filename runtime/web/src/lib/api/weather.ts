@@ -7,9 +7,9 @@ const cache = new Map<string, { data: any; expires: number }>();
 const CACHE_DURATION = 10 * 60 * 1000; // 10分钟
 
 // 缓存装饰器
-function withCache<T extends (...args: any[]) => Promise<any>>(fn: T): T {
+function withCache<T extends (...args: any[]) => Promise<any>>(dataType: string, fn: T): T {
   return (async (...args: any[]) => {
-    const key = `${fn.name}:${JSON.stringify(args)}`;
+    const key = `${dataType}:${JSON.stringify(args)}`;
     const cached = cache.get(key);
 
     if (cached && cached.expires > Date.now()) {
@@ -25,7 +25,7 @@ function withCache<T extends (...args: any[]) => Promise<any>>(fn: T): T {
 /**
  * 获取实时天气数据
  */
-export const getCurrentWeather = withCache(async (lat: number, lng: number): Promise<WeatherData> => {
+export const getCurrentWeather = withCache('weather', async (lat: number, lng: number): Promise<WeatherData> => {
   try {
     const apiKey = process.env.OPENWEATHERMAP_API_KEY;
     if (!apiKey) {
@@ -69,7 +69,7 @@ export const getCurrentWeather = withCache(async (lat: number, lng: number): Pro
 /**
  * 获取天气预报
  */
-export const getWeatherForecast = withCache(async (lat: number, lng: number, days: number = 7) => {
+export const getWeatherForecast = withCache('forecast', async (lat: number, lng: number, days: number = 7) => {
   try {
     const apiKey = process.env.OPENWEATHERMAP_API_KEY;
     if (!apiKey) {
@@ -126,7 +126,7 @@ export const calculateFeelsLike = (temp: number, humidity: number, windSpeed: nu
 /**
  * 获取空气质量数据
  */
-export const getAirQuality = withCache(async (lat: number, lng: number) => {
+export const getAirQuality = withCache('air-quality', async (lat: number, lng: number) => {
   try {
     const apiKey = process.env.OPENWEATHERMAP_API_KEY;
     if (!apiKey) {
@@ -163,7 +163,7 @@ export const getAirQuality = withCache(async (lat: number, lng: number) => {
 /**
  * 获取紫外线指数
  */
-export const getUVIndex = withCache(async (lat: number, lng: number) => {
+export const getUVIndex = withCache('uv', async (lat: number, lng: number) => {
   try {
     const apiKey = process.env.OPENWEATHERMAP_API_KEY;
     if (!apiKey) {
@@ -194,7 +194,7 @@ export const getUVIndex = withCache(async (lat: number, lng: number) => {
 /**
  * 获取历史天气数据
  */
-export const getHistoricalWeather = withCache(async (lat: number, lng: number, timestamp: number) => {
+export const getHistoricalWeather = withCache('historical', async (lat: number, lng: number, timestamp: number) => {
   try {
     const apiKey = process.env.OPENWEATHERMAP_API_KEY;
     if (!apiKey) {

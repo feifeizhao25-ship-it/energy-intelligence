@@ -7,6 +7,7 @@ interface ResourceMapProps {
     layer: string;
     mapStyle: string;
     onSelectLocation: (location: { lat: number; lng: number; name: string }) => void;
+    focus?: { lat: number; lng: number };
 }
 
 /**
@@ -39,7 +40,7 @@ const MapUnavailable = ({ onSelect }: { onSelect: (location: { lat: number; lng:
     );
 };
 
-export default function ResourceMap({ layer, mapStyle, onSelectLocation }: ResourceMapProps) {
+export default function ResourceMap({ layer, mapStyle, onSelectLocation, focus }: ResourceMapProps) {
     void layer;
     void mapStyle;
     const [ready, setReady] = useState(false);
@@ -67,10 +68,15 @@ export default function ResourceMap({ layer, mapStyle, onSelectLocation }: Resou
     }
     if (!domestic) return <MapUnavailable onSelect={onSelectLocation} />;
     return (
-        <DomesticTileMap onPick={(location) => onSelectLocation({
-            lat: location.lat,
-            lng: location.lng,
-            name: `位置 (${location.lat.toFixed(4)}, ${location.lng.toFixed(4)})`,
-        })} />
+        <div className="relative h-full min-h-[400px] w-full flex-1">
+            <DomesticTileMap
+                focus={focus}
+                onPick={(location) => onSelectLocation({
+                    lat: location.lat,
+                    lng: location.lng,
+                    name: `位置 (${location.lat.toFixed(4)}, ${location.lng.toFixed(4)})`,
+                })}
+            />
+        </div>
     );
 }
