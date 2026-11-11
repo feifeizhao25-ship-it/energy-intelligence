@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { X, Sun, Wind, CloudRain, TrendingUp, Info } from 'lucide-react';
 import { getSolarResource, getWindResource } from '@/lib/api/nasa-power';
 import { domesticClimate } from '@/lib/api/domestic-station';
+import { formatPeakSunHours } from '@/lib/resource/peak-sun-hours';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
 import SunPathChart from './SunPathChart';
 
@@ -53,6 +54,7 @@ export default function LocationDetail({ location, onClose }: LocationDetailProp
     if (!data) return null;
 
     const { solar, wind, climate } = data;
+    const peakSun = formatPeakSunHours(solar.annual.peakSunHours);
 
     // 准备图表数据
     const chartData = solar.monthly.map((m: any, i: number) => ({
@@ -124,7 +126,7 @@ export default function LocationDetail({ location, onClose }: LocationDetailProp
                                 </div>
                                 <div>
                                     <p className="text-xs text-gray-400">峰值日照时数</p>
-                                    <p className="text-xl font-bold">{solar.annual.peakSunHours.toFixed(2)} <span className="text-xs font-normal text-gray-400">h/天</span></p>
+                                    <p className="text-xl font-bold">{peakSun.value} <span className="text-xs font-normal text-gray-400">{peakSun.unit}</span></p>
                                 </div>
                                 <div>
                                     <p className="text-xs text-gray-400">最佳倾角</p>

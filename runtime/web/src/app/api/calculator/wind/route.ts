@@ -5,6 +5,7 @@ import { withMembershipCheck } from '@/lib/membership/middleware';
 import { prisma } from '@/lib/prisma';
 import { safeErrorMessage } from '@/lib/api/safe-error';
 import { resolveWindPrices, PriceInputError } from '@/lib/pricing/tariff-defaults';
+import { isWindResourceUnavailable, windResourceUnavailableBody } from '@/lib/api/wind-resource-error';
 
 export async function POST(req: NextRequest) {
     return withMembershipCheck(
@@ -47,6 +48,9 @@ export async function POST(req: NextRequest) {
 
                 return NextResponse.json({ success: true, data: { ...result, calculationId } });
             } catch (error) {
+                if (isWindResourceUnavailable(error)) {
+                    return NextResponse.json(windResourceUnavailableBody(), { status: 422 });
+                }
                 return NextResponse.json(
                     { error: 'CALCULATION_ERROR', message: safeErrorMessage(error, '计算失败') },
                     { status: 500 }

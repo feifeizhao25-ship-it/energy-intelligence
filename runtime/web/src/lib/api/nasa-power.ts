@@ -3,6 +3,7 @@ import { SolarResource, WindResource } from '@/types';
 
 import { withCache } from '@/lib/cache';
 import { extrapolateWindSpeed } from '@/lib/calculator/wind-shear';
+import { WindResourceUnavailableError } from '@/lib/api/wind-resource-error';
 
 /** NASA POWER 用 -999 表示缺测；缺测或非数值一律按 0 处理，不能当真实风速。 */
 function validSpeed(value: unknown): number {
@@ -98,9 +99,10 @@ export function parseWindPowerPayload(data: { properties: { parameter: { WS10M: 
 export const getWindResource = withCache('nasa:wind', async (lat: number, lng: number): Promise<WindResource> => {
   const seeded = windPayloads.get(`${lat.toFixed(4)},${lng.toFixed(4)}`);
   if (seeded) return parseWindPowerPayload(seeded);
+  // 只认 0.85° 内的省级城市样本。张北等远离省会的点没有风速；不用两个省会之间的插值冒充该点风资源。
   const { nearestDomesticStation } = await import('@/lib/api/domestic-station');
   const station = nearestDomesticStation(lat, lng);
-  if (!station) throw new Error('DOMESTIC_RESOURCE_NOT_LOADED');
+  if (!station || station.monthly_wind_100m.length !== 12) throw new WindResourceUnavailableError();
   const months = Object.fromEntries(station.monthly_wind_100m.map((speed, index) => {
     const key = `2022${String(index + 1).padStart(2, '0')}`;
     return [key, speed];
