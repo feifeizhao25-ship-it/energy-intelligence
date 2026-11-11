@@ -21,7 +21,7 @@ describe('地图搜索', () => {
         const hit = await resolveMapSearch('上海', fetchImpl as unknown as typeof fetch);
         expect(fetchImpl).toHaveBeenCalledTimes(1);
         expect(String(fetchImpl.mock.calls[0][0])).toBe('/api/location?action=geocode&address=%E4%B8%8A%E6%B5%B7');
-        expect(hit).toEqual({ lat: 31.2304, lng: 121.4737, name: '上海市' });
+        expect(hit).toEqual({ lat: 31.2304, lng: 121.4737, name: '上海市', province: '上海' });
     });
 
     it('没有结果时给出中文说明', async () => {
@@ -37,7 +37,7 @@ describe('地图搜索', () => {
         const noKey = await resolveMapSearch('上海', jest.fn(async () => ({
             ok: false,
             status: 503,
-            json: async () => ({ code: 'key_missing', error: '位置服务未配置（缺少 AMAP_WEB_SERVICE_KEY）' }),
+            json: async () => ({ code: 'key_missing', error: '位置服务未配置' }),
         } as Response)) as unknown as typeof fetch);
         expect(noKey).toEqual({ error: '地图未配置密钥，请直接填写经纬度', code: 'key_missing' });
         expect(windPickerSearchNote(noKey as { error: string; code: 'key_missing' })).toBe('地图服务暂不可用，地图未配置密钥，请直接填写经纬度');

@@ -1,8 +1,10 @@
+import { provinceFromGeocodeRecord } from './picked-province';
+
 /** Resolve the map search box. Coordinates are "lat,lng"; anything else goes to the existing geocode route. */
 
 export const MAP_SEARCH_MISS = '未找到该地点，请输入「纬度,经度」或更详细的地址';
 
-export type MapSearchHit = { lat: number; lng: number; name: string };
+export type MapSearchHit = { lat: number; lng: number; name: string; province?: string };
 export type MapSearchFailure = { error: string; code?: 'not_found' | 'key_missing' | 'upstream' };
 export type MapSearchResult = MapSearchHit | MapSearchFailure;
 
@@ -37,7 +39,9 @@ export async function resolveMapSearch(text: string, fetchImpl: typeof fetch = f
             const failure = code === 'not_found' || response.status === 404 || response.ok ? 'not_found' : 'upstream';
             return { error: MAP_SEARCH_MISS, code: failure };
         }
-        return { lat, lng, name: typeof hit?.formatted_address === 'string' && hit.formatted_address ? hit.formatted_address : trimmed };
+        const name = typeof hit?.formatted_address === 'string' && hit.formatted_address ? hit.formatted_address : trimmed;
+        const province = provinceFromGeocodeRecord(hit);
+        return province ? { lat, lng, name, province } : { lat, lng, name };
     } catch {
         return { error: MAP_SEARCH_MISS };
     }

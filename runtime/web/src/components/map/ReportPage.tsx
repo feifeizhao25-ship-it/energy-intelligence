@@ -14,23 +14,26 @@ export default function ReportPage() {
     const [report, setReport] = useState<string>('');
     const [loading, setLoading] = useState(true);
 
-    const lat = parseFloat(searchParams.get('lat') || '0');
-    const lng = parseFloat(searchParams.get('lng') || '0');
+    const lat = readCoordinate(searchParams.get('lat'), 90);
+    const lng = readCoordinate(searchParams.get('lng'), 180);
     const name = searchParams.get('name') || '未知地点';
+    const hasPoint = lat !== null && lng !== null;
 
     useEffect(() => {
-        if (!lat || !lng) {
+        if (!hasPoint || lat === null || lng === null) {
             setLoading(false);
             return;
         }
+        const pointLat = lat;
+        const pointLng = lng;
 
         async function generate() {
             try {
                 const [solar, wind] = await Promise.all([
-                    getSolarResource(lat, lng),
-                    getWindResource(lat, lng),
+                    getSolarResource(pointLat, pointLng),
+                    getWindResource(pointLat, pointLng),
                 ]);
-                const climate = domesticClimate(lat, lng);
+                const climate = domesticClimate(pointLat, pointLng);
                 const history = { note: '历史逐年序列未随省级样本提供，本次报告不含趋势。' };
 
                 // Mock elevation or fetch if needed
@@ -60,10 +63,18 @@ export default function ReportPage() {
             }
         }
         generate();
-    }, [lat, lng, name]);
+    }, [lat, lng, name, hasPoint]);
 
-    if (!lat || !lng) {
-        return <div className="min-h-screen bg-gray-900 p-8 text-white">无效的坐标参数</div>;
+    if (!hasPoint) {
+        return (
+            <div className="min-h-screen bg-gray-900 p-8 text-white">
+                <h1 className="text-xl font-bold">还没有地图选点</h1>
+                <p className="mt-3 max-w-xl text-sm leading-7 text-slate-300">
+                    这份评估报告需要一个地图上的位置。请先打开资源地图，点选项目所在地，再生成报告。
+                </p>
+                <a href="/map" className="mt-6 inline-block rounded-lg bg-blue-600 px-4 py-2 text-sm text-white">去地图选点</a>
+            </div>
+        );
     }
 
     return (
@@ -101,4 +112,12 @@ export default function ReportPage() {
             </div>
         </div>
     );
+}
+
+/** 查询串里的纬度或经度。没传、空字符串或超出范围时视为未选点。0 是合法坐标。 */
+export function readCoordinate(value: string | null, limit: number): number | null {
+    if (value == null || value.trim() === '') return null;
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed) || Math.abs(parsed) > limit) return null;
+    return parsed;
 }

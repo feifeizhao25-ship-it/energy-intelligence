@@ -80,13 +80,6 @@ export async function GET(request: NextRequest) {
                 );
             }
         }
-        const message = error instanceof Error ? error.message : '';
-        if (message.includes('缺少 AMAP_WEB_SERVICE_KEY')) {
-            return NextResponse.json(
-                { success: false, error: '位置服务未配置（缺少 AMAP_WEB_SERVICE_KEY）', code: 'key_missing' },
-                { status: 503 },
-            );
-        }
         return NextResponse.json(
             { success: false, error: safeErrorMessage(error, '位置服务出错'), code: 'upstream' },
             { status: 500 },

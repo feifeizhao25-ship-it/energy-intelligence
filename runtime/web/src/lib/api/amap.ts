@@ -18,9 +18,9 @@ const AMAP_API = 'https://restapi.amap.com/v3';
  * `_AMapSecurityConfig.serviceHost` 指到服务端代理。
  */
 export class AmapError extends Error {
-  readonly code: 'not_found' | 'upstream';
+  readonly code: 'not_found' | 'upstream' | 'key_missing';
   readonly httpStatus: number;
-  constructor(message: string, code: 'not_found' | 'upstream', httpStatus: number) {
+  constructor(message: string, code: 'not_found' | 'upstream' | 'key_missing', httpStatus: number) {
     super(message);
     this.name = 'AmapError';
     this.code = code;
@@ -30,7 +30,7 @@ export class AmapError extends Error {
 
 function apiKey(): string {
   const key = process.env.AMAP_WEB_SERVICE_KEY;
-  if (!key) throw new Error('位置服务未配置（缺少 AMAP_WEB_SERVICE_KEY）');
+  if (!key) throw new AmapError('位置服务未配置', 'key_missing', 503);
   return key;
 }
 

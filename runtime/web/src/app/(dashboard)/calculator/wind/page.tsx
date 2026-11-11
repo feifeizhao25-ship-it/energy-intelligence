@@ -9,6 +9,7 @@ import LocationPicker from '@/components/map/LocationPicker';
 import { safeErrorMessage } from '@/lib/api/safe-error';
 import TariffPriceFields, { TARIFF_PROVINCES } from '@/components/calculator/TariffPriceFields';
 import { normalizeProvince } from '@/lib/pricing/tariffs';
+import { provinceFromPickedLocation } from '@/lib/map/picked-province';
 
 export default function WindCalculatorPage() {
     const router = useRouter();
@@ -113,7 +114,12 @@ export default function WindCalculatorPage() {
                                 <div className="mb-4">
                                     <LocationPicker
                                         value={{ lat: formData.lat.toString(), lng: formData.lng.toString(), province: formData.province }}
-                                        onChange={v => setFormData({ ...formData, lat: v.lat, lng: v.lng, province: v.province || '' })}
+                                        onChange={v => setFormData({
+                                            ...formData,
+                                            lat: v.lat,
+                                            lng: v.lng,
+                                            province: provinceFromPickedLocation(formData.province, v.province),
+                                        })}
                                     />
                                 </div>
                                 <p data-testid="wind-location-summary" className="text-sm leading-6 text-slate-300">

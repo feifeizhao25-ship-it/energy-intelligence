@@ -7,6 +7,7 @@ import { domesticClimate } from '@/lib/api/domestic-station';
 import { formatPeakSunHours } from '@/lib/resource/peak-sun-hours';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
 import SunPathChart from './SunPathChart';
+import { ClimateEnvironment } from './ClimateEnvironment';
 
 interface LocationDetailProps {
     location: { lat: number; lng: number; name: string };
@@ -174,20 +175,7 @@ export default function LocationDetail({ location, onClose }: LocationDetailProp
                             <h3 className="text-sm font-bold text-green-400 flex items-center gap-2 mb-3">
                                 <CloudRain className="w-4 h-4" /> 气候环境
                             </h3>
-                            <div className="grid grid-cols-3 gap-2">
-                                <div className="text-center bg-gray-800 rounded p-2">
-                                    <p className="text-xs text-gray-400">年均温</p>
-                                    <p className="font-semibold">{climate.annual.temperature.toFixed(1)}°C</p>
-                                </div>
-                                <div className="text-center bg-gray-800 rounded p-2">
-                                    <p className="text-xs text-gray-400">年降水</p>
-                                    <p className="font-semibold">{Math.round(climate.annual.precipitation)}mm</p>
-                                </div>
-                                <div className="text-center bg-gray-800 rounded p-2">
-                                    <p className="text-xs text-gray-400">湿度</p>
-                                    <p className="font-semibold">{Math.round(climate.annual.humidity)}%</p>
-                                </div>
-                            </div>
+                            <ClimateEnvironment annual={climate.annual} />
                         </div>
                     </>
                 )}
