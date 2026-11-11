@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { MAP_SEARCH_MISS, resolveMapSearch } from './map-search';
+import { MAP_SEARCH_MISS, resolveMapSearch, windPickerSearchNote } from './map-search';
 
 function jsonResponse(body: unknown, ok = true): Response {
     return { ok, status: ok ? 200 : 404, json: async () => body } as Response;
@@ -27,8 +27,23 @@ describe('地图搜索', () => {
     it('没有结果时给出中文说明', async () => {
         const fetchImpl = jest.fn(async () => jsonResponse({ data: [] }));
         const hit = await resolveMapSearch('不存在的地点', fetchImpl as unknown as typeof fetch);
-        expect(hit).toEqual({ error: MAP_SEARCH_MISS });
+        expect(hit).toEqual({ error: MAP_SEARCH_MISS, code: 'not_found' });
         expect(MAP_SEARCH_MISS).toMatch(/未找到该地点/);
+    });
+
+    it('404 not_found 仍是未找到，503 key_missing 让风电选点显示未配置密钥', async () => {
+        const missing = await resolveMapSearch('无名地', jest.fn(async () => jsonResponse({ code: 'not_found', error: '未找到该地点' }, false)) as unknown as typeof fetch);
+        expect(missing).toEqual({ error: MAP_SEARCH_MISS, code: 'not_found' });
+        const noKey = await resolveMapSearch('上海', jest.fn(async () => ({
+            ok: false,
+            status: 503,
+            json: async () => ({ code: 'key_missing', error: '位置服务未配置（缺少 AMAP_WEB_SERVICE_KEY）' }),
+        } as Response)) as unknown as typeof fetch);
+        expect(noKey).toEqual({ error: '地图未配置密钥，请直接填写经纬度', code: 'key_missing' });
+        expect(windPickerSearchNote(noKey as { error: string; code: 'key_missing' })).toBe('地图服务暂不可用，地图未配置密钥，请直接填写经纬度');
+        const picker = readFileSync(join(__dirname, '../../components/map/LocationPicker.tsx'), 'utf8');
+        expect(picker).toContain('windPickerSearchNote');
+        expect(picker).toContain('地图未配置密钥，请直接填写经纬度');
     });
 
     it('/map 的搜索框接到这个解析，并把结果交给地图中心', () => {
@@ -38,5 +53,9 @@ describe('地图搜索', () => {
         expect(page).toContain('focus={mapCenter}');
         expect(page).toContain('role="alert"');
         expect(page).toContain('MAP_SEARCH_MISS');
+        expect(page).toContain('flex-col');
+        expect(page).toContain('max-w-full');
+        expect(page).toContain('whitespace-normal break-words');
+        expect(page).not.toContain('shadow-2xl w-56 space-y-3');
     });
 });

@@ -31,6 +31,9 @@ export async function GET(request: NextRequest) {
                     return NextResponse.json({ error: '请提供地址参数 address' }, { status: 400 });
                 }
                 data = await geocodeAddress(address);
+                if (!Array.isArray(data) || data.length === 0) {
+                    return NextResponse.json({ success: false, error: '未找到该地点', code: 'not_found' }, { status: 404 });
+                }
                 break;
 
             case 'reverse':
@@ -68,9 +71,25 @@ export async function GET(request: NextRequest) {
 
     } catch (error) {
         console.error('Location API Error:', error);
+        if (error instanceof Error && error.name === 'AmapError') {
+            const failure = error as Error & { code?: string; httpStatus?: number };
+            if (failure.code && typeof failure.httpStatus === 'number') {
+                return NextResponse.json(
+                    { success: false, error: failure.message, code: failure.code },
+                    { status: failure.httpStatus },
+                );
+            }
+        }
+        const message = error instanceof Error ? error.message : '';
+        if (message.includes('缺少 AMAP_WEB_SERVICE_KEY')) {
+            return NextResponse.json(
+                { success: false, error: '位置服务未配置（缺少 AMAP_WEB_SERVICE_KEY）', code: 'key_missing' },
+                { status: 503 },
+            );
+        }
         return NextResponse.json(
-            { error: safeErrorMessage(error, '位置服务出错') },
-            { status: 500 }
+            { success: false, error: safeErrorMessage(error, '位置服务出错'), code: 'upstream' },
+            { status: 500 },
         );
     }
 }

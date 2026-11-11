@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react';
 import { MapPin, Search, X, Crosshair, Loader2 } from 'lucide-react';
 import DomesticTileMap from './DomesticTileMap';
-import { resolveMapSearch } from '@/lib/map/map-search';
+import { resolveMapSearch, windPickerSearchNote } from '@/lib/map/map-search';
 
 const MAP_UNAVAILABLE = '地图服务暂不可用';
 const MAP_KEY_UNSET = '地图未配置密钥，请直接填写经纬度';
@@ -59,7 +59,7 @@ export default function LocationPicker({ value, onChange, placeholder = "点击�
         try {
             const result = await resolveMapSearch(searchQuery);
             if ('error' in result) {
-                setSearchNote(result.error);
+                setSearchNote(windPickerSearchNote(result));
                 return;
             }
             setTempLocation({ lat: result.lat, lng: result.lng, address: result.name });

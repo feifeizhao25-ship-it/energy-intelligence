@@ -6,6 +6,7 @@ import {
     DEFAULT_MAP_CENTER,
     DEFAULT_ZOOM,
     TILE_SIZE,
+    latLngToPixel,
     pixelToLatLng,
     tileGrid,
 } from '@/lib/map/tile-layout';
@@ -24,11 +25,13 @@ export default function DomesticTileMap({
     const frameRef = useRef<HTMLDivElement>(null);
     const [zoom, setZoom] = useState(DEFAULT_ZOOM);
     const [picked, setPicked] = useState<{ lat: number; lng: number } | null>(null);
+    const [marker, setMarker] = useState<{ lat: number; lng: number } | null>(focus ?? initial ?? null);
     const [seenFocus, setSeenFocus] = useState(focus ? `${focus.lat},${focus.lng}` : '');
     const focusKey = focus ? `${focus.lat},${focus.lng}` : '';
     if (focusKey !== seenFocus) {
         setSeenFocus(focusKey);
         setPicked(null);
+        setMarker(focus ?? null);
     }
     const center = picked ?? focus ?? initial ?? DEFAULT_MAP_CENTER;
     const [measured, setMeasured] = useState(frameSize ?? { width: 0, height: 0 });
@@ -49,6 +52,7 @@ export default function DomesticTileMap({
     }, [frameSize]);
 
     const grid = size.width > 0 && size.height > 0 ? tileGrid(center, zoom, size.width, size.height) : null;
+    const markerPx = marker && grid ? latLngToPixel(center, zoom, grid.width, grid.height, marker.lat, marker.lng) : null;
 
     return (
         <div ref={frameRef} className="relative h-full min-h-[400px] w-full overflow-hidden bg-slate-100">
@@ -57,7 +61,9 @@ export default function DomesticTileMap({
                 onClick={(event) => {
                     if (!grid) return;
                     const rect = (event.currentTarget as HTMLDivElement).getBoundingClientRect();
-                    onPick(pixelToLatLng(center, zoom, grid.width, grid.height, event.clientX - rect.left, event.clientY - rect.top));
+                    const next = pixelToLatLng(center, zoom, grid.width, grid.height, event.clientX - rect.left, event.clientY - rect.top);
+                    setMarker(next);
+                    onPick(next);
                 }}
             >
                 {grid?.tiles.map((tile) => (
@@ -71,11 +77,20 @@ export default function DomesticTileMap({
                         src={`/api/map-tiles/tile?z=${zoom}&x=${tile.x}&y=${tile.y}`}
                     />
                 ))}
+                {markerPx && (
+                    <span
+                        data-testid="map-marker"
+                        role="img"
+                        aria-label="已选位置"
+                        className="pointer-events-none absolute z-10 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-rose-600 shadow"
+                        style={{ left: markerPx.x, top: markerPx.y }}
+                    />
+                )}
             </div>
-            <div className="absolute right-3 top-3 flex gap-2">
-                <button type="button" className="rounded bg-white px-2 py-1 text-sm shadow" onClick={() => setZoom((value) => Math.min(12, value + 1))}>放大</button>
-                <button type="button" className="rounded bg-white px-2 py-1 text-sm shadow" onClick={() => setZoom((value) => Math.max(3, value - 1))}>缩小</button>
-                <button type="button" className="rounded bg-white px-2 py-1 text-sm shadow" onClick={() => setPicked(DEFAULT_MAP_CENTER)}>回到全国</button>
+            <div className="absolute right-3 top-3 z-20 flex gap-2">
+                <button type="button" aria-label="放大" className="rounded bg-white px-2 py-1 text-sm font-medium text-slate-900 shadow" onClick={() => setZoom((value) => Math.min(12, value + 1))}>放大</button>
+                <button type="button" aria-label="缩小" className="rounded bg-white px-2 py-1 text-sm font-medium text-slate-900 shadow" onClick={() => setZoom((value) => Math.max(3, value - 1))}>缩小</button>
+                <button type="button" aria-label="回到全国" className="rounded bg-white px-2 py-1 text-sm font-medium text-slate-900 shadow" onClick={() => setPicked(DEFAULT_MAP_CENTER)}>回到全国</button>
             </div>
             <p className="absolute bottom-3 left-3 rounded bg-white/90 px-3 py-1 text-xs text-slate-600">点击地图选择位置。瓦片密钥留在服务端。</p>
             <MapApprovalNotice />
