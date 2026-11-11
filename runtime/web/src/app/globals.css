@@ -580,6 +580,15 @@ input[type="datetime-local"] {
   max-width: 100%;
 }
 
+/* Tailwind preflight sets img { max-width: 100%; height: auto }. Inside a
+   shrink-wrapped tile layer that percentage is 0, so tiles paint as 0×0.
+   These images keep their natural 256px slippy-map size. */
+img.map-tile {
+  max-width: none;
+  width: 256px;
+  height: 256px;
+}
+
 .ei-bottom-nav {
   position: fixed;
   left: 0;
