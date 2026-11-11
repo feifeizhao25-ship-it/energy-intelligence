@@ -17,6 +17,17 @@ const AMAP_API = 'https://restapi.amap.com/v3';
  * 安全密钥不能放到浏览器。若以后要加载 JS SDK，只能把
  * `_AMapSecurityConfig.serviceHost` 指到服务端代理。
  */
+export class AmapError extends Error {
+  readonly code: 'not_found' | 'upstream';
+  readonly httpStatus: number;
+  constructor(message: string, code: 'not_found' | 'upstream', httpStatus: number) {
+    super(message);
+    this.name = 'AmapError';
+    this.code = code;
+    this.httpStatus = httpStatus;
+  }
+}
+
 function apiKey(): string {
   const key = process.env.AMAP_WEB_SERVICE_KEY;
   if (!key) throw new Error('位置服务未配置（缺少 AMAP_WEB_SERVICE_KEY）');
@@ -29,9 +40,12 @@ async function request(path: string, parameters: Record<string, string>) {
     signal: AbortSignal.timeout(8000),
     next: { revalidate: 300 },
   });
-  if (!response.ok) throw new Error(`位置服务请求失败（${response.status}）`);
+  if (!response.ok) throw new AmapError('位置服务请求失败', 'upstream', 503);
   const payload = await response.json();
-  if (payload.status !== '1') throw new Error(payload.info || '位置服务返回错误');
+  if (payload.status !== '1') {
+    if (payload.info === 'ENGINE_RESPONSE_DATA_ERROR') throw new AmapError('未找到该地点', 'not_found', 404);
+    throw new AmapError('位置服务返回错误', 'upstream', 503);
+  }
   return payload;
 }
 

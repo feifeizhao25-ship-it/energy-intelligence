@@ -54,9 +54,9 @@ export default function ResourceMapPage() {
     return (
         <div className="relative flex h-[calc(100dvh-48px-env(safe-area-inset-bottom))] flex-col overflow-hidden bg-slate-950 text-white">
             {/* Minimal High-Tech Search & Layer Controls */}
-            <div className="absolute top-8 left-8 right-8 z-20 pointer-events-none flex justify-between items-start">
-                <div className="space-y-4 pointer-events-auto">
-                    <form onSubmit={handleSearch} className="group flex items-center gap-3 bg-slate-950 border border-white/10 p-2 pr-4 rounded-[32px] shadow-2xl w-80">
+            <div className="pointer-events-none absolute inset-x-3 top-4 z-20 flex flex-col gap-3 sm:inset-x-8 sm:top-8 sm:flex-row sm:items-start sm:justify-between">
+                <div className="pointer-events-auto min-w-0 space-y-4">
+                    <form onSubmit={handleSearch} className="group flex w-full max-w-full items-center gap-3 rounded-[32px] border border-white/10 bg-slate-950 p-2 pr-4 shadow-2xl sm:w-80">
                         <button type="submit" className="bg-emerald-800 p-3 rounded-2xl" aria-label="搜索地点">
                             <Search className="w-5 h-5 text-white" />
                         </button>
@@ -89,7 +89,7 @@ export default function ResourceMapPage() {
                     </div>
                 </div>
 
-                <div className="flex flex-col items-end gap-4 pointer-events-auto text-white">
+                <div className="pointer-events-auto flex w-full min-w-0 flex-col gap-4 text-white sm:w-56 sm:items-end">
                     <div className="bg-slate-950 border border-white/10 p-1.5 rounded-2xl shadow-2xl flex gap-1">
                         <button
                             onClick={() => setCompareMode(!compareMode)}
@@ -110,9 +110,9 @@ export default function ResourceMapPage() {
                     </div>
 
                     {/* Legend */}
-                    <div className="bg-slate-950 border border-white/10 p-5 rounded-3xl shadow-2xl w-56 space-y-3">
-                        <div className="flex items-center justify-between">
-                            <h4 className="text-[10px] font-black text-slate-200 uppercase tracking-widest">
+                    <div className="w-full max-w-full space-y-3 rounded-3xl border border-white/10 bg-slate-950 p-4 shadow-2xl sm:p-5">
+                        <div className="flex items-center justify-between gap-2">
+                            <h4 className="whitespace-normal break-words text-[10px] font-black uppercase tracking-widest text-slate-200">
                                 {selectedLayer === 'solar' ? '辐照分级' : '风速分级'}
                             </h4>
                             <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>

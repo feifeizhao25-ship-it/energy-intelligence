@@ -12,6 +12,22 @@ export function worldToTile(lat: number, lng: number, zoom: number) {
     return { x, y };
 }
 
+export function latLngToPixel(
+    center: { lat: number; lng: number },
+    zoom: number,
+    width: number,
+    height: number,
+    lat: number,
+    lng: number,
+) {
+    const origin = worldToTile(center.lat, center.lng, zoom);
+    const point = worldToTile(lat, lng, zoom);
+    return {
+        x: width / 2 + (point.x - origin.x) * TILE_SIZE,
+        y: height / 2 + (point.y - origin.y) * TILE_SIZE,
+    };
+}
+
 export function pixelToLatLng(
     center: { lat: number; lng: number },
     zoom: number,

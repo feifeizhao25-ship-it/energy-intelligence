@@ -18,6 +18,31 @@ describe('瓦片图', () => {
         expect(html).toContain(`width:${TILE_SIZE}px`);
         expect(html).toContain(`height:${TILE_SIZE}px`);
         expect(html).not.toContain('left:400');
+        expect(html).not.toContain('已选位置');
+        expect(html).toContain('aria-label="放大"');
+        expect(html).toContain('aria-label="缩小"');
+        expect(html).toContain('aria-label="回到全国"');
+        expect(html).toContain('text-slate-900');
+        expect(html).toContain('>放大</button>');
+        expect(html).toContain('>缩小</button>');
+        expect(html).toContain('>回到全国</button>');
+    });
+
+    it('搜索或选中的点有标记，标记落在该经纬度上', () => {
+        const center = { lat: 31.23, lng: 121.47 };
+        const html = renderToStaticMarkup(
+            <DomesticTileMap frameSize={{ width: 1280, height: 400 }} focus={center} onPick={() => undefined} />,
+        );
+        expect(html).toContain('aria-label="已选位置"');
+        expect(html).toContain('data-testid="map-marker"');
+        expect(html).toContain('left:640px');
+        expect(html).toContain('top:200px');
+        const picked = renderToStaticMarkup(
+            <DomesticTileMap frameSize={{ width: 375, height: 400 }} initial={{ lat: 32.06, lng: 118.8 }} onPick={() => undefined} />,
+        );
+        expect(picked).toContain('aria-label="已选位置"');
+        expect(picked).toContain('left:187.5px');
+        expect(picked).toContain('top:200px');
     });
 
     it('按容器尺寸把选中的经纬度放在中心，并铺满 1280px 宽的容器', () => {
