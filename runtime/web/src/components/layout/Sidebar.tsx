@@ -15,6 +15,7 @@ import { useStation } from '@/contexts/StationContext';
 import { useSession } from 'next-auth/react';
 import { PLAN_DETAILS } from '@/lib/membership/plans';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { UserAccountMenu } from '@/components/layout/UserAccountMenu';
 
 interface NavItem {
     name: string;
@@ -39,6 +40,7 @@ export default function Sidebar() {
     // 登录态直接取 useSession（AuthProvider 在未配置时挂载空会话），
     // 不再裸 fetch /api/auth/session——未配置时该接口 fail-closed 返回 503。
     const isLoggedIn = !!session?.user;
+    const planLabel = PLAN_DETAILS[(session?.user?.plan as keyof typeof PLAN_DETAILS) || 'FREE']?.name ?? '免费版';
 
     const unresolvedIssuesCount = issues.filter(i => !i.solved && (i.severity === 'error' || i.severity === 'warning')).length;
 
@@ -243,15 +245,7 @@ export default function Sidebar() {
                 <div className="border-t border-white/10 p-4">
                     <div className="mb-3 flex justify-end"><ThemeToggle className="text-white" /></div>
                     {isLoggedIn ? (
-                        <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-slate-50 dark:bg-surface-dark border border-slate-200 dark:border-white/5">
-                            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white font-bold text-xs shadow-lg shadow-primary/20">
-                                {session?.user?.name?.[0] || 'U'}
-                            </div>
-                            <div className="flex flex-col overflow-hidden">
-                                <p className="text-slate-900 dark:text-white text-xs font-bold truncate">{session?.user?.name || '用户'}</p>
-                                <p className="text-slate-500 dark:text-white/50 text-[10px] truncate">{PLAN_DETAILS[(session?.user?.plan as keyof typeof PLAN_DETAILS) || 'FREE']?.name ?? '免费版'}</p>
-                            </div>
-                        </div>
+                        <UserAccountMenu name={session?.user?.name || '用户'} planLabel={planLabel} />
                     ) : (
                         <Link
                             href="/login"
@@ -332,7 +326,11 @@ export default function Sidebar() {
                                 </div>
                             );
                         })}
-                        {!isLoggedIn && (
+                        {isLoggedIn ? (
+                            <div className="mt-4">
+                                <UserAccountMenu name={session?.user?.name || '用户'} planLabel={planLabel} />
+                            </div>
+                        ) : (
                             <Link
                                 href="/login"
                                 onClick={() => setMobileMenuOpen(false)}
