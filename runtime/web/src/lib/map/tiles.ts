@@ -49,3 +49,25 @@ export function tileUpstream(env: NodeJS.ProcessEnv, z: number, x: number, y: nu
         .replace('{y}', String(y))
         .replace('{key}', (env.TIANDITU_KEY || '').trim());
 }
+
+/** 同一服务商的另一台瓦片主机。不是新的地图供应商。 */
+export function siblingTileUpstream(url: string): string | null {
+    const gaode = url.match(/^(https:\/\/webrd0)([1-4])(\.is\.autonavi\.com\/.*)$/);
+    if (gaode) return `${gaode[1]}${(Number(gaode[2]) % 4) + 1}${gaode[3]}`;
+    const tianditu = url.match(/^(https:\/\/t)([0-7])(\.tianditu\.gov\.cn\/.*)$/);
+    if (tianditu) return `${tianditu[1]}${(Number(tianditu[2]) + 1) % 8}${tianditu[3]}`;
+    return null;
+}
+
+/** 上游 502/503/504 或连接失败时换一台同服务商主机再试一次。403/418 这类拒绝不重试。 */
+export const TILE_RETRY_STATUSES = new Set([502, 503, 504]);
+
+export function tileBytesLookLikeImage(contentType: string | null, bytes: Uint8Array): boolean {
+    const type = (contentType || '').split(';')[0].trim().toLowerCase();
+    if (type.startsWith('image/') && bytes.byteLength > 32) return true;
+    if (bytes.byteLength < 8) return false;
+    const png = bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47;
+    const jpeg = bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+    const webp = bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46;
+    return (png || jpeg || webp) && bytes.byteLength > 32;
+}

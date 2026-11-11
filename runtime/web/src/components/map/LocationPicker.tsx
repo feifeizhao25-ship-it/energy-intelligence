@@ -1,26 +1,31 @@
 // 地图位置选择器。国内只走服务端瓦片，或让用户直接填经纬度。
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { MapPin, Search, X, Crosshair, Loader2 } from 'lucide-react';
 import DomesticTileMap from './DomesticTileMap';
 import { resolveMapSearch, windPickerSearchNote } from '@/lib/map/map-search';
-import { provinceFromGeocodeRecord } from '@/lib/map/picked-province';
+import { placeNameFromGeocodeRecord, provinceFromGeocodeRecord } from '@/lib/map/picked-province';
 
 const MAP_UNAVAILABLE = '地图服务暂不可用';
 const MAP_KEY_UNSET = '地图未配置密钥，请直接填写经纬度';
 
-/** 搜索结果里已有省名就用它；地图点选只有坐标时再逆地理编码，失败则保持原样。 */
-async function withProvince(location: LocationData): Promise<LocationData> {
-    if (location.province) return location;
+/** 搜索结果里已有省名和地名就用它；地图点选只有坐标时再逆地理编码，失败则保持原样。 */
+async function withPlace(location: LocationData): Promise<LocationData> {
+    if (location.province && location.address) return location;
     try {
         const response = await fetch(
             `/api/location?action=reverse&lat=${encodeURIComponent(String(location.lat))}&lng=${encodeURIComponent(String(location.lng))}`,
             { signal: AbortSignal.timeout(8000) },
         );
         const body = await response.json().catch(() => null);
-        const province = provinceFromGeocodeRecord(body?.data);
-        return province ? { ...location, province } : location;
+        const province = location.province || provinceFromGeocodeRecord(body?.data);
+        const address = location.address || placeNameFromGeocodeRecord(body?.data);
+        return {
+            ...location,
+            ...(province ? { province } : {}),
+            ...(address ? { address } : {}),
+        };
     } catch {
         return location;
     }
@@ -36,7 +41,7 @@ interface LocationData {
 }
 
 interface LocationPickerProps {
-    value?: { lat: string; lng: string; province?: string };
+    value?: { lat: string; lng: string; province?: string; name?: string };
     onChange: (location: LocationData) => void;
     placeholder?: string;
 }
@@ -52,6 +57,23 @@ export default function LocationPicker({ value, onChange, placeholder = "点击�
     const [manualLat, setManualLat] = useState('');
     const [manualLng, setManualLng] = useState('');
     const [confirming, setConfirming] = useState(false);
+    const openedAt = useRef<LocationData | null>(null);
+
+    const publish = (location: LocationData) => {
+        setSelectedLocation(location);
+        setTempLocation(location);
+        onChange(location);
+    };
+
+    const openPicker = () => {
+        const lat = Number(value?.lat);
+        const lng = Number(value?.lng);
+        openedAt.current = Number.isFinite(lat) && Number.isFinite(lng)
+            ? { lat, lng, address: value?.name || '', province: value?.province }
+            : null;
+        setTempLocation(null);
+        setIsMapOpen(true);
+    };
 
     useEffect(() => {
         if (!isMapOpen) return;
@@ -80,7 +102,7 @@ export default function LocationPicker({ value, onChange, placeholder = "点击�
                 setSearchNote(windPickerSearchNote(result));
                 return;
             }
-            setTempLocation({
+            publish({
                 lat: result.lat,
                 lng: result.lng,
                 address: result.name,
@@ -100,7 +122,7 @@ export default function LocationPicker({ value, onChange, placeholder = "点击�
         }
         navigator.geolocation.getCurrentPosition(
             (position) => {
-                setTempLocation({ lat: position.coords.latitude, lng: position.coords.longitude });
+                publish({ lat: position.coords.latitude, lng: position.coords.longitude, address: '' });
             },
             () => setSearchNote(MAP_KEY_UNSET),
         );
@@ -110,31 +132,38 @@ export default function LocationPicker({ value, onChange, placeholder = "点击�
         if (!tempLocation || confirming) return;
         setConfirming(true);
         try {
-            const picked = await withProvince(tempLocation);
-            setSelectedLocation(picked);
-            onChange(picked);
+            const picked = await withPlace(tempLocation);
+            publish(picked);
             setIsMapOpen(false);
         } finally {
             setConfirming(false);
         }
     };
 
+    const handleDismiss = () => {
+        setIsMapOpen(false);
+    };
+
     const handleCancel = () => {
-        setTempLocation(null);
+        const snapshot = openedAt.current;
+        if (snapshot) publish(snapshot);
+        else setTempLocation(null);
         setIsMapOpen(false);
     };
 
     const displayText = selectedLocation
         ? (selectedLocation.address || `${selectedLocation.lat.toFixed(4)}, ${selectedLocation.lng.toFixed(4)}`)
-        : (value?.lat && value?.lng
-            ? `${value.lat}, ${value.lng}`
-            : placeholder);
+        : (value?.name
+            ? value.name
+            : (value?.lat && value?.lng
+                ? `${value.lat}, ${value.lng}`
+                : placeholder));
 
     return (
         <div className="relative">
             <button
                 type="button"
-                onClick={() => setIsMapOpen(true)}
+                onClick={openPicker}
                 className="w-full flex items-center gap-2 px-4 py-3 bg-white border border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors text-left group"
             >
                 <MapPin className="w-5 h-5 text-blue-600 group-hover:text-blue-700" />
@@ -147,36 +176,41 @@ export default function LocationPicker({ value, onChange, placeholder = "点击�
             </button>
 
             {isMapOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
-                        <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-blue-600 to-blue-700">
+                <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/50 sm:items-center sm:p-4">
+                    <div className="flex h-[100dvh] w-full max-w-4xl flex-col overflow-hidden bg-white sm:h-auto sm:max-h-[90dvh] sm:rounded-xl sm:shadow-2xl">
+                        <div className="flex shrink-0 items-center justify-between border-b bg-gradient-to-r from-blue-600 to-blue-700 p-4">
                             <h3 className="text-lg font-semibold text-white flex items-center gap-2">
                                 <MapPin className="w-5 h-5" />
                                 选择项目位置
                             </h3>
-                            <button type="button" onClick={handleCancel} className="text-white/80 hover:text-white transition-colors">
+                            <button type="button" onClick={handleDismiss} className="text-white/80 hover:text-white transition-colors" aria-label="关闭">
                                 <X className="w-6 h-6" />
                             </button>
                         </div>
 
-                        <div className="p-4 border-b bg-gray-50">
-                            <div className="flex gap-2">
-                                <div className="flex-1 relative">
+                        <form
+                            className="shrink-0 border-b bg-gray-50 p-4"
+                            onSubmit={(event) => {
+                                event.preventDefault();
+                                void handleSearch();
+                            }}
+                        >
+                            <div className="flex flex-wrap gap-2">
+                                <div className="relative min-w-0 basis-full sm:flex-1">
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                                     <input
-                                        type="text"
+                                        type="search"
+                                        enterKeyHint="search"
                                         placeholder="搜索地址、城市或地名..."
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
-                                        onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                                         className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     />
                                 </div>
                                 <button
-                                    type="button"
-                                    onClick={handleSearch}
+                                    type="submit"
                                     disabled={isSearching}
-                                    className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+                                    className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex flex-1 items-center justify-center gap-2 sm:flex-none"
                                 >
                                     {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
                                     搜索
@@ -191,7 +225,9 @@ export default function LocationPicker({ value, onChange, placeholder = "点击�
                                 </button>
                             </div>
                             {searchNote && <p className="mt-2 text-sm text-slate-600" role="status">{searchNote}</p>}
-                        </div>
+                        </form>
+
+                        <div className="min-h-0 flex-1 overflow-y-auto">
 
                         {tileMode === 'loading' && (
                             <div className="flex h-40 items-center justify-center">
@@ -217,7 +253,7 @@ export default function LocationPicker({ value, onChange, placeholder = "点击�
                                         const lat = Number(manualLat);
                                         const lng = Number(manualLng);
                                         if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) return;
-                                        setTempLocation({ lat, lng });
+                                        publish({ lat, lng, address: '' });
                                     }}
                                 >使用这两个坐标</button>
                             </div>
@@ -226,7 +262,7 @@ export default function LocationPicker({ value, onChange, placeholder = "点击�
                             <DomesticTileMap
                                 initial={value?.lat && value?.lng ? { lat: parseFloat(value.lat), lng: parseFloat(value.lng) } : undefined}
                                 focus={tempLocation ? { lat: tempLocation.lat, lng: tempLocation.lng } : undefined}
-                                onPick={(location) => setTempLocation(location)}
+                                onPick={(location) => publish({ lat: location.lat, lng: location.lng, address: '' })}
                             />
                         )}
 
@@ -235,8 +271,9 @@ export default function LocationPicker({ value, onChange, placeholder = "点击�
                                 已选 {tempLocation.address || '位置'}：纬度 {tempLocation.lat.toFixed(6)}，经度 {tempLocation.lng.toFixed(6)}
                             </div>
                         )}
+                        </div>
 
-                        <div className="p-4 border-t bg-gray-50 flex justify-end gap-3">
+                        <div className="flex shrink-0 justify-end gap-3 border-t bg-gray-50 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
                             <button type="button" onClick={handleCancel} className="px-6 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors">
                                 取消
                             </button>

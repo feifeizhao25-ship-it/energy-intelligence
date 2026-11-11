@@ -589,6 +589,13 @@ img.map-tile {
   height: 256px;
 }
 
+/* 手机上 <details> 默认收起说明。桌面不靠 open 属性，直接展开同一份正文。 */
+@media (min-width: 768px) {
+  details.map-explanation > .map-explanation-body {
+    display: block !important;
+  }
+}
+
 .ei-bottom-nav {
   position: fixed;
   left: 0;

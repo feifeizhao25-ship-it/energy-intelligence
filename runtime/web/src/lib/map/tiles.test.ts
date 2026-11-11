@@ -1,4 +1,4 @@
-import { mapTileStatus, tileUpstream } from './tiles';
+import { mapTileStatus, siblingTileUpstream, tileBytesLookLikeImage, tileUpstream } from './tiles';
 
 describe('国内地图瓦片', () => {
     it('未配置密钥时关闭，返回值不含密钥', () => {
@@ -37,5 +37,21 @@ describe('国内地图瓦片', () => {
             MAP_TILE_URL: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
         });
         expect(status.reason).toBe('osm-blocked');
+    });
+
+    it('502 时只换同一服务商的下一台主机', () => {
+        const gaode = tileUpstream({ APP_EDITION: 'cn', MAP_TILE_PROVIDER: 'gaode', GAODE_MAP_KEY: 'secret' }, 4, 12, 6);
+        const nextGaode = siblingTileUpstream(gaode || '');
+        expect(nextGaode).toContain('autonavi.com');
+        expect(nextGaode).not.toBe(gaode);
+        expect(nextGaode).not.toContain('secret');
+        const tianditu = tileUpstream({ APP_EDITION: 'cn', MAP_TILE_PROVIDER: 'tianditu', TIANDITU_KEY: 'secret-key' }, 4, 12, 6);
+        const nextTianditu = siblingTileUpstream(tianditu || '');
+        expect(nextTianditu).toContain('tianditu.gov.cn');
+        expect(nextTianditu).toContain('tk=secret-key');
+        expect(nextTianditu).not.toBe(tianditu);
+        const png = Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, ...Array.from({ length: 40 }, () => 2)]);
+        expect(tileBytesLookLikeImage('image/png', png)).toBe(true);
+        expect(tileBytesLookLikeImage('text/html', new TextEncoder().encode('<html>no tile</html>'))).toBe(false);
     });
 });
