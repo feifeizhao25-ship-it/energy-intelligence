@@ -99,8 +99,11 @@ describe('风电选点张北', () => {
         const searchFn = picker.slice(picker.indexOf('const handleSearch'), picker.indexOf('const handleLocateMe'));
         expect(searchFn).toContain('address: result.name');
         expect(searchFn).toContain('province: result.province');
-        expect(searchFn).toContain('publish(');
-        expect(picker).toContain('onPick={(location) => publish({ lat: location.lat, lng: location.lng, address:');
+        expect(searchFn).toContain('stage(');
+        expect(searchFn).not.toContain('onChange(');
+        expect(picker).toContain("onPick={(location) => stage({ lat: location.lat, lng: location.lng, address: '' })}");
+        const confirmFn = picker.slice(picker.indexOf('const handleConfirm'), picker.indexOf('const handleCancel'));
+        expect(confirmFn).toContain('onChange(result.applied)');
         expect(picker).toContain('z-[70]');
     });
 

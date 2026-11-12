@@ -21,7 +21,7 @@ import { PageShell, type ShellFact } from '@/components/layout/PageShell';
 import { DashboardSkeleton } from '@/components/ui/Skeleton';
 import { BuildStamp } from '@/components/layout/BuildStamp';
 import type { Personalization, ModuleId } from '@/lib/dashboard/personalization';
-import { DISMISSIBLE_TIPS as DISMISSIBLE } from '@/lib/dashboard/personal-summary';
+import { DISMISSIBLE_TIPS as DISMISSIBLE, RECENT_WORK_EMPTY, projectCountFact, recentWorkDetail, recentWorkTitle } from '@/lib/dashboard/personal-summary';
 
 // ---------------------------------------------------------------------------
 // 数据来源：GET /api/dashboard —— 只包含当前登录用户自己的项目、测算、电站、额度。
@@ -32,7 +32,7 @@ import { DISMISSIBLE_TIPS as DISMISSIBLE } from '@/lib/dashboard/personal-summar
 interface PersonalDashboard {
     greeting: string;
     plan: { code: string; expiresAt: string | null; expiresOn: string | null; expiringSoon: boolean };
-    counts: { projects: number; calculations: number; savedPapers: number; stations: number };
+    counts: { projects: number; calculations: number; savedEstimates?: number; savedPapers: number; stations: number };
     recentProjects: { id: string; name: string; type: string; capacity: number | null; reportStatus: string; updatedAt: string; href?: string }[];
     stationAlerts: { id: string; name: string; status: string; lastUpdated: string | null }[];
     usage: { type: string; used: number; limit: number }[];
@@ -43,7 +43,6 @@ interface PersonalDashboard {
 const PLAN_NAMES: Record<string, string> = {
     FREE: '免费', PRO: '标准·数据库订阅', MAINTENANCE: '运维版（已停售）', FULL: '专业', TEAM: '团队', ENTERPRISE: '上限档',
 };
-const TYPE_LABEL: Record<string, string> = { SOLAR: '光伏', WIND: '风电', STORAGE: '储能' };
 
 // 静态导航（非编造数据，沿用原页面设计）
 const quickActions = [
@@ -170,8 +169,9 @@ function DashboardContent() {
     }
 
     const paid = data && data.plan.code !== 'FREE';
+    const projectFact = data ? projectCountFact(data.counts) : { label: '项目', value: '—' };
     const facts: [ShellFact, ShellFact, ShellFact] = [
-        { label: '项目', value: data ? String(data.counts.projects) : '—' },
+        projectFact,
         { label: '测算', value: data ? String(data.counts.calculations) : '—' },
         { label: '档位', value: data ? (PLAN_NAMES[data.plan.code] ?? '免费') : '—' },
     ];
@@ -271,15 +271,15 @@ function DashboardContent() {
                                 projects: (<>
                         <div className="ei-panel">
                             <div className="flex items-center justify-between mb-2">
-                                <span className="font-bold text-[var(--ink)]">最近的项目</span>
+                                <span className="font-bold text-[var(--ink)]">{recentWorkTitle(data.recentProjects)}</span>
                                 <Link href="/projects" className="text-xs text-green-600 font-bold flex items-center gap-0.5">全部<ChevronRight className="w-3 h-3" /></Link>
                             </div>
                             {data.recentProjects.length === 0 ? (
-                                <p className="text-xs text-slate-400 py-2">还没有项目。做一次测算并保存，就会出现在这里。</p>
+                                <p className="text-xs text-slate-400 py-2">{RECENT_WORK_EMPTY}</p>
                             ) : data.recentProjects.map(p => (
                                 <Link key={p.id} href={p.href || `/projects/${p.id}`} className="flex items-center justify-between py-2 text-sm hover:bg-slate-50 -mx-2 px-2 rounded-lg">
                                     <span className="text-slate-800 font-medium">{p.name}</span>
-                                    <span className="text-xs text-slate-400">{TYPE_LABEL[p.type] ?? p.type}{p.capacity ? ` · ${p.capacity} kW` : ''}</span>
+                                    <span className="text-xs text-slate-400">{recentWorkDetail(p)}</span>
                                 </Link>
                             ))}
                         </div>
