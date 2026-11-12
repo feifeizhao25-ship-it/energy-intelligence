@@ -62,7 +62,7 @@ export interface PersonalDashboard {
   greeting: string;
   /** expiresOn 为北京时间的到期日（YYYY-MM-DD），页面直接显示它，不要截 expiresAt 的前 10 位（那是 UTC） */
   plan: { code: string; expiresAt: string | null; expiresOn: string | null; expiringSoon: boolean };
-  counts: { projects: number; calculations: number; savedPapers: number; stations: number };
+  counts: { projects: number; calculations: number; savedEstimates: number; savedPapers: number; stations: number };
   recentProjects: { id: string; name: string; type: string; capacity: number | null; reportStatus: string; updatedAt: string; href: string }[];
   stationAlerts: { id: string; name: string; status: string; lastUpdated: string | null }[];
   usage: { type: string; used: number; limit: number }[];
@@ -108,6 +108,31 @@ export function projectTypeLabel(type: string): string {
   return TYPE_LABEL[type?.toUpperCase?.()] ?? type;
 }
 
+/** 没有项目、但有已保存测算时，不要把计数标成「项目 0」。 */
+export function projectCountFact(counts: { projects: number; savedEstimates?: number }): { label: string; value: string } {
+  const saved = counts.savedEstimates ?? 0;
+  if (counts.projects === 0 && saved > 0) return { label: '已保存测算', value: String(saved) };
+  return { label: '项目', value: String(counts.projects) };
+}
+
+/** 列表里只有测算快照时不叫「最近的项目」。空列表仍用原标题，空状态文案另外说明。 */
+export function recentWorkTitle(items: { reportStatus: string }[]): string {
+  if (items.length === 0) return '最近的项目';
+  const saved = items.filter((item) => item.reportStatus === 'SAVED').length;
+  if (saved === 0) return '最近的项目';
+  if (saved === items.length) return '最近的测算';
+  return '最近的项目与测算';
+}
+
+export const RECENT_WORK_EMPTY = '还没有项目，也没有已保存的测算。做一次测算并保存，就会出现在这里。';
+
+export function recentWorkDetail(item: { type: string; capacity: number | null; reportStatus: string }): string {
+  const type = projectTypeLabel(item.type);
+  const saved = item.reportStatus === 'SAVED' ? ' · 已保存测算' : '';
+  const capacity = item.capacity ? ` · ${item.capacity} kW` : '';
+  return `${type}${saved}${capacity}`;
+}
+
 export function buildPersonalDashboard(input: SummaryInput): PersonalDashboard {
   const now = input.now ?? new Date();
   const expires = input.user.planExpireAt;
@@ -128,14 +153,20 @@ export function buildPersonalDashboard(input: SummaryInput): PersonalDashboard {
     actions.push({ id: 'station-alert', title: `处理 ${stationAlerts.length} 个电站的告警`, reason: '你的电站有告警或故障状态', href: '/my/stations' });
   }
   // 今日测算额度已用完时，不再推荐去测算（推荐要考虑额度）
-  const calculationTotal = input.calculationCount + (input.snapshotCount ?? 0);
+  const snapshotCount = input.snapshotCount ?? 0;
+  const calculationTotal = input.calculationCount + snapshotCount;
   const calcUsage = usage.find((u) => u.type === '收益测算');
   const calcExhausted = Boolean(calcUsage && calcUsage.used >= calcUsage.limit);
   if (input.projectCount === 0 && !calcExhausted) {
+    const reason = snapshotCount > 0
+      ? `已保存 ${snapshotCount} 条测算，还没有建立项目`
+      : calculationTotal
+        ? `你已完成 ${calculationTotal} 次测算，还没有建立项目`
+        : '还没有任何项目';
     actions.push({
       id: 'first-project',
       title: calculationTotal ? '把测算结果保存为项目' : '做第一次收益测算',
-      reason: calculationTotal ? `你已完成 ${calculationTotal} 次测算，还没有保存项目` : '还没有任何项目',
+      reason,
       href: '/calculator/solar',
     });
   } else {
@@ -168,6 +199,7 @@ export function buildPersonalDashboard(input: SummaryInput): PersonalDashboard {
     counts: {
       projects: input.projectCount,
       calculations: calculationTotal,
+      savedEstimates: snapshotCount,
       savedPapers: input.savedPaperCount,
       stations: input.stations.length,
     },

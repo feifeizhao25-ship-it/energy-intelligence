@@ -1,11 +1,17 @@
 // 地图位置选择器。国内只走服务端瓦片，或让用户直接填经纬度。
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { MapPin, Search, X, Crosshair, Loader2 } from 'lucide-react';
 import DomesticTileMap from './DomesticTileMap';
 import { resolveMapSearch, windPickerSearchNote } from '@/lib/map/map-search';
 import { placeNameFromGeocodeRecord, provinceFromGeocodeRecord } from '@/lib/map/picked-province';
+import {
+    confirmPickerSelection,
+    dismissPickerSelection,
+    openPickerSession,
+    stagePickerSelection,
+} from '@/lib/map/picker-selection';
 
 const MAP_UNAVAILABLE = '地图服务暂不可用';
 const MAP_KEY_UNSET = '地图未配置密钥，请直接填写经纬度';
@@ -52,27 +58,26 @@ export default function LocationPicker({ value, onChange, placeholder = "点击�
     const [isSearching, setIsSearching] = useState(false);
     const [searchNote, setSearchNote] = useState<string | null>(null);
     const [selectedLocation, setSelectedLocation] = useState<LocationData | null>(null);
-    const [tempLocation, setTempLocation] = useState<LocationData | null>(null);
+    const [pickerSession, setPickerSession] = useState(() => openPickerSession<LocationData>(null));
     const [tileMode, setTileMode] = useState<'loading' | 'domestic' | 'disabled'>('loading');
     const [manualLat, setManualLat] = useState('');
     const [manualLng, setManualLng] = useState('');
     const [confirming, setConfirming] = useState(false);
     const [searchSession, setSearchSession] = useState(0);
-    const openedAt = useRef<LocationData | null>(null);
+    const tempLocation = pickerSession.pending;
 
-    const publish = (location: LocationData) => {
-        setSelectedLocation(location);
-        setTempLocation(location);
-        onChange(location);
+    // 点选、搜索、定位和手填只记在待确认位置上，确认选择才写回表单。
+    const stage = (location: LocationData) => {
+        setPickerSession((current) => stagePickerSelection(current, location));
     };
 
     const openPicker = () => {
         const lat = Number(value?.lat);
         const lng = Number(value?.lng);
-        openedAt.current = Number.isFinite(lat) && Number.isFinite(lng)
+        const committed = Number.isFinite(lat) && Number.isFinite(lng)
             ? { lat, lng, address: value?.name || '', province: value?.province }
             : null;
-        setTempLocation(null);
+        setPickerSession(openPickerSession(committed));
         // 已确认的位置留在按钮上；只清搜索框，避免再次打开时接着上次的字继续输入。
         setSearchQuery('');
         setSearchNote(null);
@@ -107,7 +112,7 @@ export default function LocationPicker({ value, onChange, placeholder = "点击�
                 setSearchNote(windPickerSearchNote(result));
                 return;
             }
-            publish({
+            stage({
                 lat: result.lat,
                 lng: result.lng,
                 address: result.name,
@@ -127,7 +132,7 @@ export default function LocationPicker({ value, onChange, placeholder = "点击�
         }
         navigator.geolocation.getCurrentPosition(
             (position) => {
-                publish({ lat: position.coords.latitude, lng: position.coords.longitude, address: '' });
+                stage({ lat: position.coords.latitude, lng: position.coords.longitude, address: '' });
             },
             () => setSearchNote(MAP_KEY_UNSET),
         );
@@ -138,22 +143,29 @@ export default function LocationPicker({ value, onChange, placeholder = "点击�
         setConfirming(true);
         try {
             const picked = await withPlace(tempLocation);
-            publish(picked);
+            const result = confirmPickerSelection(pickerSession, picked);
+            if (!result) return;
+            setPickerSession(result.session);
+            setSelectedLocation(result.applied);
+            onChange(result.applied);
             setIsMapOpen(false);
         } finally {
             setConfirming(false);
         }
     };
 
-    const handleDismiss = () => {
+    const handleCancel = () => {
+        const result = dismissPickerSelection(pickerSession);
+        setPickerSession(result.session);
+        if (result.restored) {
+            setSelectedLocation(result.restored);
+            onChange(result.restored);
+        }
         setIsMapOpen(false);
     };
 
-    const handleCancel = () => {
-        const snapshot = openedAt.current;
-        if (snapshot) publish(snapshot);
-        else setTempLocation(null);
-        setIsMapOpen(false);
+    const handleDismiss = () => {
+        handleCancel();
     };
 
     const displayText = selectedLocation
@@ -267,7 +279,7 @@ export default function LocationPicker({ value, onChange, placeholder = "点击�
                                         const lat = Number(manualLat);
                                         const lng = Number(manualLng);
                                         if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) return;
-                                        publish({ lat, lng, address: '' });
+                                        stage({ lat, lng, address: '' });
                                     }}
                                 >使用这两个坐标</button>
                             </div>
@@ -276,7 +288,7 @@ export default function LocationPicker({ value, onChange, placeholder = "点击�
                             <DomesticTileMap
                                 initial={value?.lat && value?.lng ? { lat: parseFloat(value.lat), lng: parseFloat(value.lng) } : undefined}
                                 focus={tempLocation ? { lat: tempLocation.lat, lng: tempLocation.lng } : undefined}
-                                onPick={(location) => publish({ lat: location.lat, lng: location.lng, address: '' })}
+                                onPick={(location) => stage({ lat: location.lat, lng: location.lng, address: '' })}
                             />
                         )}
 

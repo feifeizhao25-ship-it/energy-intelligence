@@ -19,8 +19,24 @@ import { cn } from '@/lib/utils';
 import { MAP_SEARCH_MISS, resolveMapSearch } from '@/lib/map/map-search';
 
 
+/** 图例与工具：收起时是「展开」，展开后改成「收起」，并带上 aria-expanded。 */
+export function LegendToolsSummary({ open }: { open: boolean }) {
+    const label = open ? '收起' : '展开';
+    return (
+        <summary
+            className="map-side-tools-summary flex cursor-pointer list-none items-center justify-between rounded-2xl border border-white/10 bg-slate-950 px-3 py-2 text-xs font-bold text-white"
+            aria-expanded={open}
+            aria-label={label}
+        >
+            图例与工具
+            <span className="text-[10px] font-medium text-slate-300">{label}</span>
+        </summary>
+    );
+}
+
 export default function ResourceMapPage() {
     const [selectedLayer, setSelectedLayer] = useState<string>('solar'); // solar, wind, hybrid
+    const [legendOpen, setLegendOpen] = useState(false);
     const [selectedLocation, setSelectedLocation] = useState<any>(null);
     const [compareMode, setCompareMode] = useState(false);
     const [compareList, setCompareList] = useState<any[]>([]);
@@ -89,11 +105,11 @@ export default function ResourceMapPage() {
                     </div>
                 </div>
 
-                <details className="map-side-tools pointer-events-auto w-full min-w-0 text-white sm:w-56">
-                    <summary className="map-side-tools-summary flex cursor-pointer list-none items-center justify-between rounded-2xl border border-white/10 bg-slate-950 px-3 py-2 text-xs font-bold text-white">
-                        图例与工具
-                        <span className="text-[10px] font-medium text-slate-300">展开</span>
-                    </summary>
+                <details
+                    className="map-side-tools pointer-events-auto w-full min-w-0 text-white sm:w-56"
+                    onToggle={(event) => setLegendOpen(event.currentTarget.open)}
+                >
+                    <LegendToolsSummary open={legendOpen} />
                     <div className="map-side-tools-body mt-2 flex w-full min-w-0 flex-col gap-3 sm:mt-0 sm:items-end sm:gap-4">
                     <div className="flex gap-1 rounded-2xl border border-white/10 bg-slate-950 p-1.5 shadow-2xl">
                         <button
@@ -192,10 +208,10 @@ export default function ResourceMapPage() {
             )}
 
             {!compareMode && !selectedLocation && (
-                <div className="absolute inset-0 z-10 flex items-end justify-center pointer-events-none pb-20">
-                    <div className="bg-slate-900/80 backdrop-blur-xl border border-white/10 px-6 py-3 rounded-full flex items-center gap-3 animate-bounce shadow-2xl">
-                        <MapIcon className="w-4 h-4 text-green-400" />
-                        <span className="text-xs font-black uppercase tracking-widest text-white">请在地图上点击任意位置，或在上方搜索地址</span>
+                <div className="pointer-events-none fixed inset-x-3 z-30 flex justify-center bottom-[calc(9rem+env(safe-area-inset-bottom))] sm:bottom-[calc(5.75rem+env(safe-area-inset-bottom))] lg:absolute lg:inset-x-0 lg:bottom-8 lg:z-10">
+                    <div className="flex max-w-full items-center gap-3 rounded-3xl border border-white/10 bg-slate-900/80 px-4 py-3 shadow-2xl backdrop-blur-xl sm:rounded-full sm:px-6">
+                        <MapIcon className="h-4 w-4 shrink-0 text-green-400" />
+                        <span className="text-center text-xs font-black uppercase tracking-widest text-white">请在地图上点击任意位置，或在上方搜索地址</span>
                     </div>
                 </div>
             )}

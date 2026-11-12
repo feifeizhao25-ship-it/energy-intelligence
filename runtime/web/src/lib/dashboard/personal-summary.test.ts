@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { buildPersonalDashboard, type SummaryInput } from './personal-summary';
+import { buildPersonalDashboard, projectCountFact, recentWorkDetail, recentWorkTitle, RECENT_WORK_EMPTY, type SummaryInput } from './personal-summary';
 
 const ROOT = join(__dirname, '..', '..', '..');
 const base: SummaryInput = {
@@ -58,11 +58,17 @@ describe('已保存的光伏估算', () => {
       }],
     });
     expect(d.counts.calculations).toBe(1);
+    expect(d.counts.projects).toBe(0);
+    expect(d.counts.savedEstimates).toBe(1);
+    expect(projectCountFact(d.counts)).toEqual({ label: '已保存测算', value: '1' });
+    expect(recentWorkTitle(d.recentProjects)).toBe('最近的测算');
+    expect(recentWorkDetail(d.recentProjects[0])).toBe('光伏 · 已保存测算 · 100 kW');
     expect(d.recentProjects).toEqual([expect.objectContaining({
       id: 'snap-1', name: '张北光伏', href: '/audit/snap-1', type: 'SOLAR', capacity: 100,
     })]);
     expect(d.nextActions[0]).toMatchObject({ id: 'first-project', title: '把测算结果保存为项目' });
-    expect(d.nextActions[0].reason).toContain('1 次测算');
+    expect(d.nextActions[0].reason).toBe('已保存 1 条测算，还没有建立项目');
+    expect(d.nextActions[0].reason).not.toContain('还没有保存项目');
   });
 
   it('已经出现在项目里的快照不重复列出，别人的项目编号也不会被当成自己的项目', () => {
@@ -78,8 +84,26 @@ describe('已保存的光伏估算', () => {
       ],
     });
     expect(d.counts.calculations).toBe(3);
+    expect(d.counts.savedEstimates).toBe(1);
+    expect(projectCountFact(d.counts)).toEqual({ label: '项目', value: '1' });
+    expect(recentWorkTitle(d.recentProjects)).toBe('最近的项目与测算');
     expect(d.recentProjects.map((item) => item.id)).toEqual(['p1', 'snap/new']);
     expect(d.recentProjects[1].href).toBe('/audit/snap%2Fnew');
+  });
+
+  it('项目和测算都没有时才是空状态，计数仍写项目 0', () => {
+    const d = buildPersonalDashboard(base);
+    expect(projectCountFact(d.counts)).toEqual({ label: '项目', value: '0' });
+    expect(recentWorkTitle(d.recentProjects)).toBe('最近的项目');
+    expect(d.recentProjects).toEqual([]);
+    expect(RECENT_WORK_EMPTY).toContain('也没有已保存的测算');
+    expect(d.nextActions[0].reason).toBe('还没有任何项目');
+    const page = readFileSync(join(ROOT, 'src/app/(dashboard)/dashboard/page.tsx'), 'utf8');
+    expect(page).toContain('projectCountFact');
+    expect(page).toContain('recentWorkTitle');
+    expect(page).toContain('RECENT_WORK_EMPTY');
+    expect(page).not.toContain('还没有保存项目');
+    expect(page).not.toContain('还没有项目。做一次测算并保存');
   });
 });
 
