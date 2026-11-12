@@ -33,7 +33,7 @@ interface PersonalDashboard {
     greeting: string;
     plan: { code: string; expiresAt: string | null; expiresOn: string | null; expiringSoon: boolean };
     counts: { projects: number; calculations: number; savedPapers: number; stations: number };
-    recentProjects: { id: string; name: string; type: string; capacity: number | null; reportStatus: string; updatedAt: string }[];
+    recentProjects: { id: string; name: string; type: string; capacity: number | null; reportStatus: string; updatedAt: string; href?: string }[];
     stationAlerts: { id: string; name: string; status: string; lastUpdated: string | null }[];
     usage: { type: string; used: number; limit: number }[];
     nextActions: { id: string; title: string; reason: string; href: string }[];
@@ -277,7 +277,7 @@ function DashboardContent() {
                             {data.recentProjects.length === 0 ? (
                                 <p className="text-xs text-slate-400 py-2">还没有项目。做一次测算并保存，就会出现在这里。</p>
                             ) : data.recentProjects.map(p => (
-                                <Link key={p.id} href={`/projects/${p.id}`} className="flex items-center justify-between py-2 text-sm hover:bg-slate-50 -mx-2 px-2 rounded-lg">
+                                <Link key={p.id} href={p.href || `/projects/${p.id}`} className="flex items-center justify-between py-2 text-sm hover:bg-slate-50 -mx-2 px-2 rounded-lg">
                                     <span className="text-slate-800 font-medium">{p.name}</span>
                                     <span className="text-xs text-slate-400">{TYPE_LABEL[p.type] ?? p.type}{p.capacity ? ` · ${p.capacity} kW` : ''}</span>
                                 </Link>

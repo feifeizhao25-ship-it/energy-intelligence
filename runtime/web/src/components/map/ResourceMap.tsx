@@ -71,6 +71,7 @@ export default function ResourceMap({ layer, mapStyle, onSelectLocation, focus }
         <div className="relative h-full min-h-[400px] w-full flex-1">
             <DomesticTileMap
                 focus={focus}
+                controlsClassName="fixed bottom-[calc(5.75rem+env(safe-area-inset-bottom))] right-3 z-40 flex gap-1.5 sm:absolute sm:bottom-auto sm:top-3 sm:z-30"
                 onPick={(location) => onSelectLocation({
                     lat: location.lat,
                     lng: location.lng,

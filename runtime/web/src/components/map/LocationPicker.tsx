@@ -57,6 +57,7 @@ export default function LocationPicker({ value, onChange, placeholder = "点击�
     const [manualLat, setManualLat] = useState('');
     const [manualLng, setManualLng] = useState('');
     const [confirming, setConfirming] = useState(false);
+    const [searchSession, setSearchSession] = useState(0);
     const openedAt = useRef<LocationData | null>(null);
 
     const publish = (location: LocationData) => {
@@ -72,6 +73,10 @@ export default function LocationPicker({ value, onChange, placeholder = "点击�
             ? { lat, lng, address: value?.name || '', province: value?.province }
             : null;
         setTempLocation(null);
+        // 已确认的位置留在按钮上；只清搜索框，避免再次打开时接着上次的字继续输入。
+        setSearchQuery('');
+        setSearchNote(null);
+        setSearchSession((session) => session + 1);
         setIsMapOpen(true);
     };
 
@@ -177,7 +182,7 @@ export default function LocationPicker({ value, onChange, placeholder = "点击�
 
             {isMapOpen && (
                 <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/50 sm:items-center sm:p-4">
-                    <div className="flex h-[100dvh] w-full max-w-4xl flex-col overflow-hidden bg-white sm:h-auto sm:max-h-[90dvh] sm:rounded-xl sm:shadow-2xl">
+                    <div className="scheme-light flex h-[100dvh] w-full max-w-4xl flex-col overflow-hidden bg-white text-slate-900 sm:h-auto sm:max-h-[90dvh] sm:rounded-xl sm:shadow-2xl">
                         <div className="flex shrink-0 items-center justify-between border-b bg-gradient-to-r from-blue-600 to-blue-700 p-4">
                             <h3 className="text-lg font-semibold text-white flex items-center gap-2">
                                 <MapPin className="w-5 h-5" />
@@ -197,14 +202,22 @@ export default function LocationPicker({ value, onChange, placeholder = "点击�
                         >
                             <div className="flex flex-wrap gap-2">
                                 <div className="relative min-w-0 basis-full sm:flex-1">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                    <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-600" />
                                     <input
+                                        key={searchSession}
                                         type="search"
                                         enterKeyHint="search"
+                                        autoComplete="off"
+                                        autoCorrect="off"
+                                        spellCheck={false}
                                         placeholder="搜索地址、城市或地名..."
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        onFocus={(event) => {
+                                            const field = event.currentTarget;
+                                            requestAnimationFrame(() => field.select());
+                                        }}
+                                        className="scheme-light w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-10 pr-4 text-slate-900 caret-slate-900 placeholder:text-slate-500 placeholder:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     />
                                 </div>
                                 <button
@@ -218,10 +231,11 @@ export default function LocationPicker({ value, onChange, placeholder = "点击�
                                 <button
                                     type="button"
                                     onClick={handleLocateMe}
-                                    className="px-4 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-100 flex items-center gap-2"
+                                    className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-slate-800 hover:bg-gray-100"
                                     title="定位到当前位置"
+                                    aria-label="定位到当前位置"
                                 >
-                                    <Crosshair className="w-4 h-4" />
+                                    <Crosshair className="h-4 w-4 text-slate-800" />
                                 </button>
                             </div>
                             {searchNote && <p className="mt-2 text-sm text-slate-600" role="status">{searchNote}</p>}
@@ -240,10 +254,10 @@ export default function LocationPicker({ value, onChange, placeholder = "点击�
                                 <p className="mt-1 text-sm text-slate-600">{MAP_KEY_UNSET}</p>
                                 <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
                                     <label>纬度
-                                        <input value={manualLat} onChange={(event) => setManualLat(event.target.value)} inputMode="decimal" placeholder="例如 31.23" className="mt-1 w-full rounded border px-2 py-1.5" />
+                                        <input value={manualLat} onChange={(event) => setManualLat(event.target.value)} inputMode="decimal" placeholder="例如 31.23" className="scheme-light mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-slate-900 placeholder:text-slate-500" />
                                     </label>
                                     <label>经度
-                                        <input value={manualLng} onChange={(event) => setManualLng(event.target.value)} inputMode="decimal" placeholder="例如 121.47" className="mt-1 w-full rounded border px-2 py-1.5" />
+                                        <input value={manualLng} onChange={(event) => setManualLng(event.target.value)} inputMode="decimal" placeholder="例如 121.47" className="scheme-light mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-slate-900 placeholder:text-slate-500" />
                                     </label>
                                 </div>
                                 <button
@@ -274,7 +288,7 @@ export default function LocationPicker({ value, onChange, placeholder = "点击�
                         </div>
 
                         <div className="flex shrink-0 justify-end gap-3 border-t bg-gray-50 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-                            <button type="button" onClick={handleCancel} className="px-6 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors">
+                            <button type="button" onClick={handleCancel} className="rounded-lg border border-gray-300 bg-white px-6 py-2.5 text-slate-900 transition-colors hover:bg-gray-100">
                                 取消
                             </button>
                             <button

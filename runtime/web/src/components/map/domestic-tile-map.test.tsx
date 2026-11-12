@@ -26,6 +26,16 @@ describe('瓦片图', () => {
         expect(html).toContain('>放大</button>');
         expect(html).toContain('>缩小</button>');
         expect(html).toContain('>回到全国</button>');
+        expect(html).toContain('data-testid="map-zoom-controls"');
+        expect(html).toContain('right-3 top-3');
+    });
+
+    it('资源地图可以把缩放条放到右下角', () => {
+        const html = renderToStaticMarkup(
+            <DomesticTileMap frameSize={{ width: 402, height: 700 }} controlsClassName="fixed bottom-[calc(5.75rem+env(safe-area-inset-bottom))] right-3 z-40 flex gap-1.5" onPick={() => undefined} />,
+        );
+        expect(html).toContain('bottom-[calc(5.75rem+env(safe-area-inset-bottom))]');
+        expect(html).toContain('aria-label="回到全国"');
     });
 
     it('搜索或选中的点有标记，标记落在该经纬度上', () => {

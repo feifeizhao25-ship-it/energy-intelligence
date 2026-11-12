@@ -6,6 +6,7 @@ import { USAGE_LIMITS } from '@/lib/membership/plans';
 import { effectivePlan } from '@/lib/auth/token-refresh';
 import { sameShanghaiDay } from '@/lib/membership/day';
 import { buildPersonalDashboard } from '@/lib/dashboard/personal-summary';
+import { savedCalculationRef } from '@/lib/dashboard/saved-calculations';
 import { buildPersonalization, parsePreferences, PREFERENCE_LOG_TYPES, dedupeNextActions } from '@/lib/dashboard/personalization';
 import { TIP_DISMISS_DAYS, TIP_DISMISSED_TYPE } from '@/lib/dashboard/tips';
 
@@ -27,13 +28,21 @@ export async function GET() {
     if (!user) return NextResponse.json({ error: '请先登录' }, { status: 401 });
 
     const now = new Date();
-    const [projects, projectCount, calculationCount, savedPaperCount, stations, prefLog, policies, dismissedLogs] = await Promise.all([
+    const [projects, projectCount, calculationCount, snapshotCount, snapshots, savedPaperCount, stations, prefLog, policies, dismissedLogs] = await Promise.all([
         prisma.project.findMany({
             where: { userId }, orderBy: { updatedAt: 'desc' }, take: 5,
             select: { id: true, name: true, type: true, capacity: true, reportStatus: true, updatedAt: true, location: true },
         }),
         prisma.project.count({ where: { userId } }),
         prisma.calculation.count({ where: { userId } }),
+        // 光伏「生成估算并保存」只写 calculation_snapshots，不写 calculations。两条都按当前用户过滤。
+        prisma.calculationSnapshot.count({ where: { userId } }),
+        prisma.calculationSnapshot.findMany({
+            where: { userId },
+            orderBy: { createdAt: 'desc' },
+            take: 5,
+            select: { id: true, calcType: true, projectId: true, createdAt: true, inputSnapshot: true },
+        }),
         prisma.savedPaper.count({ where: { userId } }),
         prisma.station.findMany({ where: { userId }, select: { id: true, name: true, status: true, lastUpdated: true } }),
         // 个性化偏好：设置页或引导页保存的最新一条
@@ -63,7 +72,9 @@ export async function GET() {
 
     const dashboard = buildPersonalDashboard({
             user: { name: user.name, plan: user.plan, planExpireAt: user.planExpireAt },
-            projects: projects.map(({ location: _location, ...p }) => p), projectCount, calculationCount, savedPaperCount, stations,
+            projects: projects.map(({ location: _location, ...p }) => p), projectCount, calculationCount,
+            snapshotCount, savedCalculations: snapshots.map(savedCalculationRef),
+            savedPaperCount, stations,
             usageToday,
             limits: {
                 'AI 对话': limits.ai_chat, '收益测算': limits.calculation,

@@ -54,11 +54,11 @@ export default function ResourceMapPage() {
     return (
         <div className="relative flex h-[calc(100dvh-48px-env(safe-area-inset-bottom))] flex-col overflow-hidden bg-slate-950 text-white">
             {/* Minimal High-Tech Search & Layer Controls */}
-            <div className="pointer-events-none absolute inset-x-3 top-4 z-20 flex flex-col gap-3 sm:inset-x-8 sm:top-8 sm:flex-row sm:items-start sm:justify-between">
-                <div className="pointer-events-auto min-w-0 space-y-4">
-                    <form onSubmit={handleSearch} className="group flex w-full max-w-full items-center gap-3 rounded-[32px] border border-white/10 bg-slate-950 p-2 pr-4 shadow-2xl sm:w-80">
-                        <button type="submit" className="bg-emerald-800 p-3 rounded-2xl" aria-label="搜索地点">
-                            <Search className="w-5 h-5 text-white" />
+            <div className="pointer-events-none absolute inset-x-3 top-2 z-20 flex flex-col gap-2 sm:inset-x-8 sm:top-8 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+                <div className="pointer-events-auto min-w-0 space-y-2 sm:space-y-4">
+                    <form onSubmit={handleSearch} className="group flex w-full max-w-full items-center gap-2 rounded-2xl border border-white/10 bg-slate-950 p-1.5 pr-3 shadow-2xl sm:w-80 sm:gap-3 sm:rounded-[32px] sm:p-2 sm:pr-4">
+                        <button type="submit" className="rounded-xl bg-emerald-800 p-2.5 sm:rounded-2xl sm:p-3" aria-label="搜索地点">
+                            <Search className="h-5 w-5 text-white" />
                         </button>
                         <input
                             type="text"
@@ -77,7 +77,7 @@ export default function ResourceMapPage() {
                                 key={l}
                                 onClick={() => setSelectedLayer(l)}
                                 className={cn(
-                                    "px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all",
+                                    "rounded-2xl px-3 py-2 text-[10px] font-black uppercase tracking-widest transition-all sm:px-6 sm:py-3",
                                     selectedLayer === l
                                         ? "bg-white text-slate-900 shadow-xl"
                                         : "bg-slate-950 border border-white/10 text-slate-200 hover:text-white"
@@ -89,8 +89,13 @@ export default function ResourceMapPage() {
                     </div>
                 </div>
 
-                <div className="pointer-events-auto flex w-full min-w-0 flex-col gap-4 text-white sm:w-56 sm:items-end">
-                    <div className="bg-slate-950 border border-white/10 p-1.5 rounded-2xl shadow-2xl flex gap-1">
+                <details className="map-side-tools pointer-events-auto w-full min-w-0 text-white sm:w-56">
+                    <summary className="map-side-tools-summary flex cursor-pointer list-none items-center justify-between rounded-2xl border border-white/10 bg-slate-950 px-3 py-2 text-xs font-bold text-white">
+                        图例与工具
+                        <span className="text-[10px] font-medium text-slate-300">展开</span>
+                    </summary>
+                    <div className="map-side-tools-body mt-2 flex w-full min-w-0 flex-col gap-3 sm:mt-0 sm:items-end sm:gap-4">
+                    <div className="flex gap-1 rounded-2xl border border-white/10 bg-slate-950 p-1.5 shadow-2xl">
                         <button
                             onClick={() => setCompareMode(!compareMode)}
                             className={cn(
@@ -129,7 +134,8 @@ export default function ResourceMapPage() {
                             ))}
                         </div>
                     </div>
-                </div>
+                    </div>
+                </details>
             </div>
 
             {/* Compare Sidebar / Drawer */}

@@ -596,6 +596,22 @@ img.map-tile {
   }
 }
 
+/* 窄屏资源地图默认只留搜索和图层；图例与工具行收起，桌面仍展开。 */
+details.map-side-tools > summary.map-side-tools-summary {
+  list-style: none;
+}
+details.map-side-tools > summary.map-side-tools-summary::-webkit-details-marker {
+  display: none;
+}
+@media (min-width: 640px) {
+  details.map-side-tools > summary.map-side-tools-summary {
+    display: none;
+  }
+  details.map-side-tools > .map-side-tools-body {
+    display: flex !important;
+  }
+}
+
 .ei-bottom-nav {
   position: fixed;
   left: 0;
@@ -624,6 +640,21 @@ img.map-tile {
 .ei-bottom-nav a[aria-current="page"] {
   background: rgba(20, 145, 155, 0.28);
   color: white;
+}
+
+/* 手机键盘把 position:fixed 的底栏抬到键盘上方，会挡住表单主按钮。
+   文本框、多行输入或下拉获得焦点时藏起底栏，失焦后恢复。 */
+.ei-bottom-nav.is-hidden-for-keyboard {
+  display: none;
+}
+@media (max-width: 1023px) {
+  body:has(
+    textarea:focus,
+    select:focus,
+    input:not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):not([type="hidden"]):not([type="image"]):not([type="color"]):focus
+  ) .ei-bottom-nav {
+    display: none;
+  }
 }
 
 .ai-markdown table {
