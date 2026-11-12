@@ -46,6 +46,43 @@ describe('个人工作台只用本人的数据', () => {
   });
 });
 
+describe('已保存的光伏估算', () => {
+  it('测算次数把 calculation_snapshots 算进去，最近列表出现未挂项目的快照', () => {
+    const created = new Date('2026-11-12T10:00:00Z');
+    const d = buildPersonalDashboard({
+      ...base,
+      calculationCount: 0,
+      snapshotCount: 1,
+      savedCalculations: [{
+        id: 'snap-1', name: '张北光伏', type: 'SOLAR', capacity: 100, projectId: null, createdAt: created,
+      }],
+    });
+    expect(d.counts.calculations).toBe(1);
+    expect(d.recentProjects).toEqual([expect.objectContaining({
+      id: 'snap-1', name: '张北光伏', href: '/audit/snap-1', type: 'SOLAR', capacity: 100,
+    })]);
+    expect(d.nextActions[0]).toMatchObject({ id: 'first-project', title: '把测算结果保存为项目' });
+    expect(d.nextActions[0].reason).toContain('1 次测算');
+  });
+
+  it('已经出现在项目里的快照不重复列出，别人的项目编号也不会被当成自己的项目', () => {
+    const d = buildPersonalDashboard({
+      ...base,
+      projectCount: 1,
+      calculationCount: 2,
+      snapshotCount: 1,
+      projects: [{ id: 'p1', name: '保定项目', type: 'SOLAR', capacity: 50, reportStatus: 'LOCKED', updatedAt: new Date('2026-11-11T00:00:00Z') }],
+      savedCalculations: [
+        { id: 'snap-owned', name: '保定光伏', type: 'SOLAR', capacity: 50, projectId: 'p1', createdAt: new Date('2026-11-12T00:00:00Z') },
+        { id: 'snap/new', name: '另一处估算', type: 'SOLAR', capacity: 80, projectId: 'someone-else', createdAt: new Date('2026-11-10T00:00:00Z') },
+      ],
+    });
+    expect(d.counts.calculations).toBe(3);
+    expect(d.recentProjects.map((item) => item.id)).toEqual(['p1', 'snap/new']);
+    expect(d.recentProjects[1].href).toBe('/audit/snap%2Fnew');
+  });
+});
+
 describe('部署拓扑', () => {
   it('只把后端的权益注册表暴露给浏览器', () => {
     const cfg = readFileSync(join(ROOT, 'next.config.js'), 'utf8');

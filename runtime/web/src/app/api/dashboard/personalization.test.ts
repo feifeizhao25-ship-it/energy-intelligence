@@ -17,6 +17,7 @@ jest.mock('@/lib/prisma', () => ({
             count: jest.fn(async () => 1),
         },
         calculation: { count: jest.fn(async () => 0) },
+        calculationSnapshot: { count: jest.fn(async () => 0), findMany: jest.fn(async () => []) },
         savedPaper: { count: jest.fn(async () => 0) },
         station: { findMany: jest.fn(async () => []) },
         usageLog: {

@@ -16,11 +16,14 @@ export default function DomesticTileMap({
     initial,
     focus,
     frameSize,
+    controlsClassName = 'absolute right-3 top-3 z-20 flex gap-2',
 }: {
     onPick: (location: { lat: number; lng: number }) => void;
     initial?: { lat: number; lng: number };
     focus?: { lat: number; lng: number };
     frameSize?: { width: number; height: number };
+    /** 资源地图在窄屏把缩放条放到右下，避免盖住顶部搜索。位置选择器保持右上。 */
+    controlsClassName?: string;
 }) {
     const frameRef = useRef<HTMLDivElement>(null);
     const pointerOnMap = useRef(false);
@@ -107,7 +110,7 @@ export default function DomesticTileMap({
                     地图瓦片暂时不可用
                 </p>
             )}
-            <div className="absolute right-3 top-3 z-20 flex gap-2">
+            <div data-testid="map-zoom-controls" className={controlsClassName}>
                 <button type="button" aria-label="放大" className="rounded bg-white px-2 py-1 text-sm font-medium text-slate-900 shadow" onClick={() => setZoom((value) => Math.min(12, value + 1))}>放大</button>
                 <button type="button" aria-label="缩小" className="rounded bg-white px-2 py-1 text-sm font-medium text-slate-900 shadow" onClick={() => setZoom((value) => Math.max(3, value - 1))}>缩小</button>
                 <button type="button" aria-label="回到全国" className="rounded bg-white px-2 py-1 text-sm font-medium text-slate-900 shadow" onClick={() => setPicked(DEFAULT_MAP_CENTER)}>回到全国</button>
