@@ -31,10 +31,15 @@ RECALL_FILE = ROOT / "data" / "eval" / "retrieval_recall.json"
 # 拒答题改由 refusal_accuracy 把关，下限 1.0。指标缺失一律不通过。
 RECALL_AT_8_MIN = 1.0
 REFUSAL_ACCURACY_MIN = 1.0
+# 扩充拒答集（无来源电价、补贴、地方政策猜测）单独过门。不得低于 0.95，也不替换上面的 1.0。
+REFUSAL_SET_MIN = 0.95
 THRESHOLDS = GateThresholds(
     recall_at_8_min=RECALL_AT_8_MIN,
     not_applicable=frozenset({"faithfulness"}),
-    extra_floors=(("refusal_accuracy", REFUSAL_ACCURACY_MIN),),
+    extra_floors=(
+        ("refusal_accuracy", REFUSAL_ACCURACY_MIN),
+        ("refusal_set_accuracy", REFUSAL_SET_MIN),
+    ),
 )
 FAMILIES = ("investment_advice", "return_promise", "rating", "absolute_claim")
 
@@ -72,6 +77,11 @@ def measured_metrics(eval_file: Path | None = None, now: datetime | None = None,
         value = stored.get(key)
         if isinstance(value, (int, float)):
             out[key] = float(value)
+    from app.services.retrieval_eval import refusal_set_accuracy
+
+    expanded = refusal_set_accuracy()
+    if expanded is not None:
+        out["refusal_set_accuracy"] = float(expanded)
     return out
 
 

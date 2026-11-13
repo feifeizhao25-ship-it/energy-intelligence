@@ -116,7 +116,7 @@ def test_stored_golden_numbers_match_a_fresh_measurement():
     assert report["refusal_accuracy"] == REPORT["refusal_accuracy"]
 
 
-GOOD = {"recall_at_8": 1.0, "citation_accuracy": 1.0, "freshness_correctness": 1.0, "redteam_pass_rate": 1.0, "calc_error": 0.0, "cost_ratio": 1.0, "latency_ratio": 1.0, "refusal_accuracy": 1.0}
+GOOD = {"recall_at_8": 1.0, "citation_accuracy": 1.0, "freshness_correctness": 1.0, "redteam_pass_rate": 1.0, "calc_error": 0.0, "cost_ratio": 1.0, "latency_ratio": 1.0, "refusal_accuracy": 1.0, "refusal_set_accuracy": 1.0}
 
 
 def test_gate_requires_refusal_accuracy_and_fails_closed_when_missing():
