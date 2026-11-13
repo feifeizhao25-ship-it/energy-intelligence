@@ -1,4 +1,5 @@
 import { shanghaiDate } from '@/lib/membership/day';
+import { greetingFor } from './greeting';
 
 /**
  * 个人工作台：只由当前用户自己的数据生成（免费档同样有）。
@@ -18,7 +19,7 @@ export interface SavedCalculationRef {
 }
 
 export interface SummaryInput {
-  user: { name: string | null; plan: string; planExpireAt: Date | null };
+  user: { name: string | null; nickname?: string | null; plan: string; planExpireAt: Date | null };
   projects: { id: string; name: string; type: string; capacity: number | null; reportStatus: string; updatedAt: Date }[];
   projectCount: number;
   calculationCount: number;
@@ -194,7 +195,7 @@ export function buildPersonalDashboard(input: SummaryInput): PersonalDashboard {
   const visible = actions.filter((a) => !(dismissed.has(a.id) && (DISMISSIBLE_TIPS as readonly string[]).includes(a.id)));
 
   return {
-    greeting: input.user.name ? `你好，${input.user.name}` : '你好',
+    greeting: greetingFor(input.user),
     plan: { code: plan, expiresAt: paid && expires ? expires.toISOString() : null, expiresOn: paid && expires ? shanghaiDate(expires) : null, expiringSoon },
     counts: {
       projects: input.projectCount,

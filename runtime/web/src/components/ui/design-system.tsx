@@ -69,12 +69,14 @@ export function LoadingBlock() {
 export function DataState({
     status,
     emptyTitle,
+    emptyDetail,
     errorTitle = '这一页暂时没有加载成功',
     onRetry,
     children,
 }: {
     status: 'loading' | 'empty' | 'error' | 'ready';
     emptyTitle: string;
+    emptyDetail?: string;
     errorTitle?: string;
     onRetry?: () => void;
     children?: ReactNode;
@@ -93,7 +95,7 @@ export function DataState({
         return (
             <div data-testid="empty-state" className="ei-empty">
                 <p className="font-semibold">{emptyTitle}</p>
-                <p className="mt-1 text-sm text-[var(--ink-soft)]">下一步：调整筛选，或先打开一份已审核的记录。</p>
+                <p className="mt-1 text-sm text-[var(--ink-soft)]">{emptyDetail || '下一步：调整筛选，或先打开一份已审核的记录。'}</p>
             </div>
         );
     }

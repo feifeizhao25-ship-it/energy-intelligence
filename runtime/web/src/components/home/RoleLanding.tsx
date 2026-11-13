@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
     Bell,
@@ -17,7 +16,9 @@ import { AppChrome } from '@/components/layout/AppChrome';
 import { DataTable } from '@/components/ui/DataTable';
 import { HomeAside } from '@/components/home/HomeAside';
 import roleTemplates from '@/lib/dashboard/role_templates.json';
-import { PRODUCT_ROLES } from '@/lib/dashboard/personalization';
+import { PRODUCT_ROLES, ROLE_LABELS, ROLE_MODULE_ORDER } from '@/lib/dashboard/personalization';
+import { isKnownRole, landingTemplateRole } from '@/lib/dashboard/visible-role';
+import { useRolePreference } from '@/components/layout/RolePreference';
 
 const MODULES: Record<string, { label: string; description: string; href: string; icon: LucideIcon }> = {
     tariff: { label: '电价', description: '已收录省份的分时参考价和截至日期。', href: '/pricing', icon: Plug },
@@ -52,12 +53,10 @@ function RoleLandingBody({
         export: string;
         forbidden_modules?: string[];
     }>;
-    const [role, setRole] = useState<RoleKey>('ci_owner');
-    useEffect(() => {
-        const requested = new URLSearchParams(window.location.search).get('role');
-        if (requested && requested in templates) setRole(requested as RoleKey);
-    }, [templates]);
-    const current = templates[role];
+    const { role, ready } = useRolePreference();
+    const templateKey = landingTemplateRole(isKnownRole(role) ? role : null);
+    const current = templateKey ? templates[templateKey] : null;
+    const moduleIds = current?.modules ?? ROLE_MODULE_ORDER.default;
     const rows = PRODUCT_ROLES.map((key) => ({
         role: templates[key].label,
         order: templates[key].modules.map((id) => MODULES[id]?.label || id).join('、'),
@@ -69,23 +68,24 @@ function RoleLandingBody({
             crumbs={[{ href: '/', label: '首页' }]}
             summary="按角色查看已收录的事实、数据和可复核的计算方法。"
             facts={[
-                { label: '角色', value: current.label },
+                { label: '角色', value: !ready && !role ? '读取中' : (role ? (isKnownRole(role) ? ROLE_LABELS[role] : role) : '未选择') },
                 { label: '已收录电价省份', value: String(coveredProvinces) },
-                { label: '术语深度', value: current.term_depth },
+                { label: '术语深度', value: current?.term_depth ?? '未设置' },
             ]}
             aside={<HomeAside />}
         >
             <div className="space-y-4" data-testid="role-landing">
                 <p className="text-xs text-[var(--ink-soft)]">
-                    默认导出：{EXPORT_LABEL[current.export] || '文档'}
-                    {current.forbidden_modules?.length ? '。项目开发不展示排序模块。' : ''}
+                    {current
+                        ? `默认导出：${EXPORT_LABEL[current.export] || '文档'}${current.forbidden_modules?.length ? '。项目开发不展示排序模块。' : ''}`
+                        : '还没有读取到已保存的角色。'}
                 </p>
-                <div className="grid gap-3 sm:grid-cols-2">
-                    {current.modules.map((id) => {
+                <div className="ei-role-modules">
+                    {moduleIds.map((id) => {
                         const item = MODULES[id] || { label: id, description: '入口说明待补充。', href: '/dashboard', icon: Target };
                         const Icon = item.icon;
                         return (
-                            <Link key={id} href={item.href} className="ei-tile">
+                            <Link key={id} href={item.href} data-module={id} className="ei-tile">
                                 <span className="ei-tile-icon" aria-hidden="true"><Icon className="h-4 w-4" /></span>
                                 <span>
                                     <span className="block text-sm font-semibold">{item.label}</span>

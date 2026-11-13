@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic';
 import Sidebar from '@/components/layout/Sidebar';
 import { MobileNav } from '@/components/layout/MobileNav';
 import { TopBar } from '@/components/layout/TopBar';
+import { RolePreferenceProvider } from '@/components/layout/RolePreference';
 import { ShellErrorBoundary } from '@/components/ui/ShellErrorBoundary';
 import { StationProvider } from '@/contexts/StationContext';
 
@@ -13,6 +14,7 @@ const OnboardingFlow = dynamic(() => import('@/components/onboarding/OnboardingF
 export function AppChrome({ children }: { children: React.ReactNode }) {
     return (
         <StationProvider>
+            <RolePreferenceProvider>
             <div className="min-h-screen bg-[var(--paper)] text-[var(--ink)]">
                 <Sidebar />
                 <OnboardingFlow />
@@ -24,6 +26,7 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
                 </div>
                 <MobileNav />
             </div>
+            </RolePreferenceProvider>
         </StationProvider>
     );
 }

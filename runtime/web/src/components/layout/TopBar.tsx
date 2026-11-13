@@ -4,17 +4,16 @@ import { FormEvent, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search } from 'lucide-react';
 import { BuildStamp } from '@/components/layout/BuildStamp';
-import { PRODUCT_ROLES, ROLE_LABELS, type ProductRole } from '@/lib/dashboard/personalization';
+import { ROLE_LABELS } from '@/lib/dashboard/personalization';
+import { isKnownRole, SELECTABLE_ROLES } from '@/lib/dashboard/visible-role';
+import { useRolePreference } from '@/components/layout/RolePreference';
 
 function TopBarInner() {
     const router = useRouter();
-    const [role, setRole] = useState<ProductRole>('ci_owner');
+    const { role, ready, selectRole } = useRolePreference();
     const [query, setQuery] = useState('');
     useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-        const current = params.get('role');
-        if (current && (PRODUCT_ROLES as readonly string[]).includes(current)) setRole(current as ProductRole);
-        setQuery(params.get('q') || '');
+        setQuery(new URLSearchParams(window.location.search).get('q') || '');
     }, []);
 
     function submit(event: FormEvent) {
@@ -43,11 +42,14 @@ function TopBarInner() {
                 角色
                 <select
                     aria-label="切换角色"
-                    value={role}
-                    onChange={(event) => router.push(`/?role=${encodeURIComponent(event.target.value)}`)}
+                    value={role ?? ''}
+                    disabled={!ready && !role}
+                    onChange={(event) => selectRole(event.target.value)}
                     className="max-w-[9rem] rounded-lg border border-[var(--line)] bg-[var(--paper)] px-2 py-1.5 text-sm text-[var(--ink)]"
                 >
-                    {PRODUCT_ROLES.map((key) => (
+                    {!role ? <option value="">读取中</option> : null}
+                    {role && !isKnownRole(role) ? <option value={role}>{role}</option> : null}
+                    {SELECTABLE_ROLES.map((key) => (
                         <option key={key} value={key}>{ROLE_LABELS[key]}</option>
                     ))}
                 </select>

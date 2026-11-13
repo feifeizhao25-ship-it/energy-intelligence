@@ -58,6 +58,8 @@ describe('工作台计入本人的测算快照', () => {
     expect(db.calculationWhere).toEqual({ userId: 'owner' });
     expect(db.snapshotCountWhere).toEqual({ userId: 'owner' });
     expect(db.snapshotListWhere).toEqual({ userId: 'owner' });
+    expect(body.data.greeting).toBe('你好');
+    expect(body.data.greeting).not.toContain('用户_');
     expect(body.data.counts).toMatchObject({ projects: 0, calculations: 1 });
     expect(body.data.recentProjects).toEqual([expect.objectContaining({
       id: 'snap-owner', name: '河北张家口', type: 'SOLAR', capacity: 100, href: '/audit/snap-owner',

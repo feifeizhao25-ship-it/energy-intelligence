@@ -41,22 +41,26 @@ export function PageShell({
                     ))}
                 </nav>
             ) : null}
-            <header className="ei-hero">
-                {title ? <h1>{title}</h1> : null}
-                <p className="text-sm leading-6">{summary}</p>
-                {sample ? <p className="mt-1 text-xs text-amber-200">示例</p> : null}
-                <dl className="ei-stats">
-                    {facts.map((fact) => (
-                        <div key={fact.label} className="ei-stat">
-                            <dt>{fact.label}</dt>
-                            <dd>{fact.value}</dd>
-                        </div>
-                    ))}
-                </dl>
-            </header>
-            <div className="ei-split">
-                <div className="min-w-0">{children}</div>
-                <aside className="min-w-0 space-y-3">{aside}</aside>
+            <div className="ei-page-flow">
+                <header className="ei-hero">
+                    <div className="ei-hero-copy">
+                        {title ? <h1>{title}</h1> : null}
+                        <p className="text-sm leading-6">{summary}</p>
+                        {sample ? <p className="mt-1 text-xs text-amber-200">示例</p> : null}
+                    </div>
+                    <dl className="ei-stats">
+                        {facts.map((fact) => (
+                            <div key={fact.label} className="ei-stat">
+                                <dt>{fact.label}</dt>
+                                <dd>{fact.value}</dd>
+                            </div>
+                        ))}
+                    </dl>
+                </header>
+                <div className="ei-split">
+                    <div className="min-w-0">{children}</div>
+                    <aside className="min-w-0 space-y-3">{aside}</aside>
+                </div>
             </div>
             <footer data-testid="compliance-bar" className="ei-compliance">
                 测算值不是承诺。示例数据会标明「示例」。个性化可在设置里关闭。人工智能生成内容会单独标明。

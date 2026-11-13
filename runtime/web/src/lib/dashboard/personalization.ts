@@ -193,7 +193,7 @@ export const ROLE_MODULE_ORDER: Record<Role | 'default', ModuleId[]> = {
 
 export interface FocusCard { title: string; reason: string; href: string }
 
-function focusCard(role: Role, province: string | null, interest: Interest | null, tariff: TariffDefaults | null, milestoneCount: number, noPolicies = false): FocusCard {
+function focusCard(role: Role, province: string | null, interest: Interest | null, tariff: TariffDefaults | null, milestoneCount: number, noPolicies = false, hasStationAlerts = false): FocusCard {
     const where = province ? `${province}` : '你的项目所在省份';
     const calc = interest === 'wind' ? '/calculator/wind' : interest === 'storage' ? '/calculator/storage' : '/calculator/solar';
     const calcName = interest === 'wind' ? '风电' : interest === 'storage' ? '储能' : '光伏';
@@ -203,7 +203,9 @@ function focusCard(role: Role, province: string | null, interest: Interest | nul
                 ? { title: `${where}已取消固定分时，测算需用合同电价`, reason: '你是投资者/开发商：收益对电价最敏感，按合同价或市场价重算一次', href: calc }
                 : { title: `按${where}电价测一次${calcName}收益`, reason: '你是投资者/开发商：先看内部收益率与回收期', href: calc };
         case 'owner':
-            return { title: '查看电站运行与告警', reason: '你是电站业主/运维：优先处理告警，再看发电情况', href: '/my/stations' };
+            return hasStationAlerts
+                ? { title: '查看电站运行与告警', reason: '你是电站业主/运维：优先处理告警，再看发电情况', href: '/my/stations' }
+                : { title: '当前没有告警', reason: '你是电站业主/运维：还没有告警数据。下一步打开电站页接入设备；已保存的发电记录也在该页查看。', href: '/my/stations' };
         case 'engineer':
             return { title: '核对系统损耗与衰减假设', reason: '你是工程师/设计院：测算页逐项列出遮挡、线损、温度等损耗，可与设计值对照', href: '/calculator/solar' };
         case 'researcher':
@@ -223,7 +225,9 @@ function focusCard(role: Role, province: string | null, interest: Interest | nul
         case 'epc':
             return { title: '核对系统损耗与衰减假设', reason: '你是 EPC/设计院：逐项对照假设', href: '/calculator/solar' };
         case 'om':
-            return { title: '查看电站运行与告警', reason: '你是运维：先看告警，再看发电记录', href: '/my/stations' };
+            return hasStationAlerts
+                ? { title: '查看电站运行与告警', reason: '你是运维：先看告警，再看发电记录', href: '/my/stations' }
+                : { title: '当前没有告警', reason: '你是运维：还没有告警数据。下一步打开电站页接入设备；已保存的发电记录也在该页查看。', href: '/my/stations' };
     }
 }
 
@@ -347,7 +351,7 @@ export function buildPersonalization(input: {
         provinceSource,
         interest,
         moduleOrder,
-        focus: role ? adjustFocusForQuota(focusCard(role, province, interest, tariff, milestones.length, noPolicies), Boolean(input.calcQuotaExhausted), province, reasons) : null,
+        focus: role ? adjustFocusForQuota(focusCard(role, province, interest, tariff, milestones.length, noPolicies, input.hasStationAlerts), Boolean(input.calcQuotaExhausted), province, reasons) : null,
         quickActionOrder: interest ? order[interest] : [...QUICK_ACTION_IDS],
         tariff,
         policies: related.slice(0, 3).map(p => ({ id: p.id, title: policyTitle(p), docNumber: p.docNumber, sourceUrl: p.sourceUrl, value: p.value, unit: p.unit, region: p.region })),

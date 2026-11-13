@@ -36,6 +36,17 @@ describe('5 种角色同一天的工作台各不相同', () => {
         expect(v.moduleOrder[0]).toBe('stationAlerts');
     });
 
+    it('运维没有告警数据时不说先看告警，有告警时才先看', () => {
+        const empty = buildPersonalization({ ...base, hasStationAlerts: false, prefs: prefs({ role: 'om', province: '江苏' }) });
+        expect(empty.focus!.title).toBe('当前没有告警');
+        expect(empty.focus!.reason).not.toContain('先看告警');
+        expect(empty.focus!.reason).toContain('下一步');
+        expect(empty.focus!.href).toBe('/my/stations');
+        const live = buildPersonalization({ ...base, hasStationAlerts: true, prefs: prefs({ role: 'om', province: '江苏' }) });
+        expect(live.focus!.reason).toContain('先看告警');
+        expect(live.moduleOrder[0]).toBe('stationAlerts');
+    });
+
     it('关注领域决定快捷入口顺序：风电用户先看到风电测算', () => {
         const v = buildPersonalization({ ...base, prefs: prefs({ role: 'investor', interest: 'wind' }) });
         expect(v.quickActionOrder[0]).toBe('wind');
