@@ -12,6 +12,8 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 from datetime import date
+
+from app.services.policy_term import valid_until
 from typing import Dict, List, Optional
 
 from app.services.citation_record import is_blocked_from_retrieval
@@ -96,15 +98,9 @@ def _detect_countries(query: str, market: str = "") -> set:
 
 
 def _currently_effective(doc: Dict, today: date) -> bool:
-    if doc.get("superseded_by"):
-        return False
-    expiry = doc.get("expiry") or doc.get("expiry_date")
-    if not expiry:
-        return True
-    try:
-        return date.fromisoformat(str(expiry)) >= today
-    except ValueError:
-        return False
+    from app.services.policy_term import is_expired_policy
+
+    return not is_expired_policy(doc, today)
 
 
 _LATIN_RE = re.compile(r"[a-z0-9]+(?:[.\-][a-z0-9]+)*")
@@ -207,6 +203,8 @@ class RAGService:
                     "authors": doc.get("authors"),
                     "version": doc.get("version"),
                     "published_at": doc.get("published_at"),
+                    "publish_date": doc.get("publish_date") or doc.get("issue_date"),
+                    "valid_until": (valid_until(doc).isoformat() if valid_until(doc) else None),
                     "date_kind": doc.get("date_kind"),
                     "sign_date": doc.get("sign_date"),
                     "effective_date_stated": doc.get("effective_date_stated"),

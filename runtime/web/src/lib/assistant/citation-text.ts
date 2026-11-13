@@ -18,6 +18,7 @@ export function dateLines(source: StoredSource): string[] {
   } else if (published) {
     lines.push(`记录中的日期：${published}。日期类型：未标明。`);
   }
+  if (source.publish_date) lines.push(`发文日期：${source.publish_date}。`);
   if (source.sign_date) lines.push(`落款日期：${source.sign_date}。`);
   if (source.effective_date_stated === true && source.effective_date) {
     lines.push(`生效日：${source.effective_date}。${source.effective_date_basis || ''}`.trim());

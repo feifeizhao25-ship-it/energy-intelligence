@@ -15,9 +15,12 @@ test('国内资料库命中保留原文定位，并标明没有人工复核', ()
   expect(reply.sources[0]?.note).toContain('没有人工复核记录');
   const copied = citationText(reply.text, reply.sources);
   expect(copied).toContain('页面发布时间：2025-02-09');
+  expect(copied).toContain('发文日期：2025-02-09');
   expect(copied).toContain('落款日期：2025-01-27');
   expect(copied).toContain('原文未写单一施行日');
-  expect(copied).not.toContain('日期：2025-02-09');
+  expect(copied).not.toContain('记录中的日期：2025-02-09');
+  expect(copied).not.toContain('发布日期');
+  expect(reply.text).toContain('发文日期：2025-02-09');
   expect(copied).toContain(reply.sources[0]?.url || '');
   expect(copied).toContain('定位：');
   expect(copied).not.toContain('已审核');

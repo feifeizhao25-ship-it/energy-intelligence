@@ -6,6 +6,7 @@ export interface StoredSource {
   publisher?: string;
   issuer?: string;
   published_at?: string;
+  publish_date?: string;
   date_kind?: string;
   sign_date?: string;
   effective_date?: string;
