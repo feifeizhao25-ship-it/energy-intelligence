@@ -16,6 +16,9 @@ interface LibraryDoc {
   status?: string;
   evidence_status?: string;
   published_at?: string;
+  publish_date?: string;
+  valid_until?: string;
+  expiry?: string | null;
   date_kind?: string;
   sign_date?: string;
   effective_date?: string;
@@ -60,6 +63,20 @@ function documents(): LibraryDoc[] {
 
 export function clearLibraryCache(): void {
   cached = null;
+}
+
+function parseDay(value?: string | null): number | null {
+  if (!value || !/^\d{4}-\d{2}-\d{2}/.test(value)) return null;
+  const [year, month, day] = value.slice(0, 10).split('-').map(Number);
+  return Date.UTC(year, month - 1, day);
+}
+
+export function isExpiredPolicy(doc: Pick<LibraryDoc, 'valid_until' | 'expiry_date' | 'expiry' | 'superseded_by'>, today = new Date()): boolean {
+  if (doc.superseded_by) return true;
+  const days = [doc.valid_until, doc.expiry_date, doc.expiry].map(parseDay).filter((value): value is number => value !== null);
+  if (!days.length) return false;
+  const now = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate());
+  return Math.min(...days) < now;
 }
 
 function blocked(doc: LibraryDoc): boolean {
@@ -126,6 +143,7 @@ function toSource(doc: LibraryDoc): StoredSource {
     publisher: doc.source_org || undefined,
     issuer: doc.issuer || undefined,
     published_at: doc.published_at || undefined,
+    publish_date: doc.publish_date || undefined,
     date_kind: doc.date_kind || undefined,
     sign_date: doc.sign_date || undefined,
     effective_date: doc.effective_date || undefined,
@@ -149,7 +167,7 @@ export function searchLibrary(query: string, market: 'cn' | 'en' = 'cn'): Stored
   if (!queryTokens.length) return [];
   const overseas = allowsOverseas(query);
   const ranked = documents()
-    .filter((doc) => !blocked(doc))
+    .filter((doc) => !blocked(doc) && !isExpiredPolicy(doc))
     .filter((doc) => (market === 'cn' && !overseas ? doc.lang === 'cn' : true))
     .map((doc) => {
       const hay = tokens([doc.title, doc.content, doc.doc_number, doc.locator].filter(Boolean).join(' '));
@@ -169,9 +187,14 @@ export function libraryStandIn(query: string): { text: string; sources: StoredSo
   if (!sources.length) {
     return { text: '没有可引用的来源，不能回答这个问题。未调用模型。', sources, synthetic: false };
   }
-  const text = synthetic
+  const issued = sources
+    .map((source) => (source.publish_date ? `发文日期：${source.publish_date}。` : ''))
+    .filter(Boolean)
+    .join('');
+  const lead = synthetic
     ? '合成测试数据。不是真实出版物。未调用模型。下面只列资料库命中，不是模型结论。'
     : '未调用模型。下面只列资料库命中，不是模型结论。';
+  const text = issued ? `${lead}\n${issued}` : lead;
   return { text, sources, synthetic };
 }
 

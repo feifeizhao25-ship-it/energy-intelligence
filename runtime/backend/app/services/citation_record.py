@@ -104,6 +104,9 @@ def date_lines(src: Dict[str, Any], lang: str = "zh") -> list:
             if en else
             f"记录中的日期：{published}。日期类型：未标明。"
         )
+    issued = src.get("publish_date") or src.get("issue_date")
+    if issued and not en:
+        lines.append(f"发文日期：{issued}。")
     if src.get("sign_date"):
         lines.append(f"Signature date: {src['sign_date']}." if en else f"落款日期：{src['sign_date']}。")
     if src.get("effective_date_stated") is True and src.get("effective_date"):
