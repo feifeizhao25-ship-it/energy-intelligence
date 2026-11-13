@@ -13,6 +13,7 @@ import { buildAnswerDateLine } from '@/lib/ai/answer-date-line';
 import { VerificationBadge } from '@/components/evidence/VerificationBadge';
 import type { EvidenceVerification } from '@/lib/evidence/verification';
 import { citationText, dateLines } from '@/lib/assistant/citation-text';
+import { ASSISTANT_UNREACHABLE_ZH, visibleAssistantError } from '@/lib/assistant/chat-failure';
 import type { StoredSource } from '@/lib/assistant/answer-store';
 
 interface Message {
@@ -176,7 +177,7 @@ export default function AssistantPage() {
                                     ));
                                 } else if (parsed.type === 'error') {
                                     // 服务端错误事件：记下来，读完流后统一报错（原来在内层 try 里抛出，被“忽略解析错误”吞掉，界面留下一个空白的 AI 气泡）
-                                    streamError = String(parsed.data?.message || 'AI 响应失败');
+                                    streamError = visibleAssistantError(String(parsed.data?.message || ''));
                                 }
                             } catch (e) {
                                 // 忽略解析错误
@@ -187,8 +188,7 @@ export default function AssistantPage() {
             }
 
             if (streamError && !accumulatedContent) {
-                // 不把内部配置名（如 *_API_KEY）展示给用户
-                throw new Error(/API_KEY|未配置/.test(streamError) ? 'AI 服务暂时不可用，请稍后再试' : streamError);
+                throw new Error(streamError);
             }
 
             // 完成流式传输
@@ -201,7 +201,7 @@ export default function AssistantPage() {
         } catch (err: any) {
             if (err.name === 'AbortError') return;
 
-            setError(safeErrorMessage(err, 'AI 响应失败'));
+            setError(visibleAssistantError(safeErrorMessage(err, ASSISTANT_UNREACHABLE_ZH)));
             setMessages(prev => prev.filter(m => m.id !== aiMessageId));
         } finally {
             setIsLoading(false);

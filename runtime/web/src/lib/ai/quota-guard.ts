@@ -37,6 +37,8 @@ export interface QuotaStore {
   take(userId: string): Promise<boolean>;
   /** 真实数据库把重置和扣次放在同一把锁里。内存假存储不实现它。 */
   consume?(userId: string, now: Date, limit: number): Promise<{ ok: boolean; remaining: number | null }>;
+  /** 模型调用失败时把已经扣掉的一次还回去。计数不会减成负数。 */
+  release(userId: string): Promise<void>;
 }
 
 // 一天按北京时间算（容器没设 TZ 时服务器是 UTC，按本地日期会晚 8 小时重置）
@@ -100,6 +102,12 @@ export const prismaQuotaStore: QuotaStore = {
     await tx.user.update({ where: { id: userId }, data: { dailyAiCalls: { increment: 1 } } });
     return { ok: true, remaining: Number.isFinite(limit) ? Math.max(0, limit - used - 1) : null };
   }),
+  release: async (userId) => {
+    await prisma.user.updateMany({
+      where: { id: userId, deletedAt: null, dailyAiCalls: { gt: 0 } },
+      data: { dailyAiCalls: { decrement: 1 } },
+    });
+  },
 };
 
 export async function requireAiQuota(store: QuotaStore = prismaQuotaStore): Promise<AiGuardResult> {
@@ -120,4 +128,13 @@ export async function requireAiQuota(store: QuotaStore = prismaQuotaStore): Prom
     };
   }
   return { ok: true, userId, plan: result.plan, remaining: result.remaining };
+}
+
+/** 对话没有成功调用模型时退还门禁里已扣的一次。退还失败不打断给用户的回答。 */
+export async function refundAiCall(userId: string, store: QuotaStore = prismaQuotaStore): Promise<void> {
+  try {
+    await store.release(userId);
+  } catch (error) {
+    console.warn('AI 次数退还失败:', error);
+  }
 }
