@@ -82,6 +82,8 @@ export default function AssistantPage() {
         scrollToBottom();
     }, [messages]);
 
+    useEffect(() => () => abortControllerRef.current?.abort(), []);
+
     const handleSend = async (text?: string) => {
         const messageText = text || inputValue.trim();
         if (!messageText || isLoading) return;
@@ -198,11 +200,11 @@ export default function AssistantPage() {
                     : m
             ));
 
-        } catch (err: any) {
-            if (err.name === 'AbortError') return;
+        } catch (err: unknown) {
+            setMessages(prev => prev.filter(m => m.id !== aiMessageId));
+            if (err instanceof Error && err.name === 'AbortError') return;
 
             setError(visibleAssistantError(safeErrorMessage(err, ASSISTANT_UNREACHABLE_ZH)));
-            setMessages(prev => prev.filter(m => m.id !== aiMessageId));
         } finally {
             setIsLoading(false);
             abortControllerRef.current = null;
@@ -483,11 +485,18 @@ export default function AssistantPage() {
                                     />
                                 </div>
                                 <button
-                                    onClick={() => handleSend()}
-                                    disabled={!inputValue.trim() || isLoading}
+                                    type="button"
+                                    onClick={() => {
+                                        if (isLoading) {
+                                            abortControllerRef.current?.abort();
+                                            return;
+                                        }
+                                        void handleSend();
+                                    }}
+                                    disabled={!isLoading && !inputValue.trim()}
                                     className={cn(
                                         "px-4 py-2 rounded-xl flex items-center gap-2 text-sm font-medium transition-all",
-                                        inputValue.trim() && !isLoading
+                                        inputValue.trim() || isLoading
                                             ? "bg-primary hover:bg-primary-600 text-white shadow-lg shadow-primary/20"
                                             : "bg-surface-dark text-text-secondary cursor-not-allowed"
                                     )}
@@ -495,7 +504,7 @@ export default function AssistantPage() {
                                     {isLoading ? (
                                         <>
                                             <Loader2 className="w-4 h-4 animate-spin" />
-                                            思考中
+                                            停止
                                         </>
                                     ) : (
                                         <>

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Sparkles, Loader2, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AigcLabel } from '@/components/ui/AigcLabel';
+import { ANALYSIS_UNAVAILABLE_ZH, analysisKey, requestCalculatorAnalysis, retainAnalysis } from '@/lib/calculator/analysis-request';
 
 interface AIAnalysisProps {
     type: string;
@@ -13,31 +14,38 @@ interface AIAnalysisProps {
 export default function AIProjectAnalysis({ type, data }: AIAnalysisProps) {
     const [analysis, setAnalysis] = useState<string>('');
     const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    // 父组件每次渲染都会重新 JSON.parse，data 引用会变。用内容做键，同一份结果只请求一次。
+    const requestKey = analysisKey(type, data);
 
     useEffect(() => {
-        async function fetchAnalysis() {
-            try {
-                const res = await fetch('/api/calculator/analysis', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ type, data }),
-                });
-                const result = await res.json();
-                if (result.results) {
-                    setAnalysis(result.results);
-                } else {
-                    setError(true);
-                }
-            } catch (err) {
-                setError(true);
-            } finally {
-                setIsLoading(false);
+        let alive = true;
+        setIsLoading(true);
+        setError(null);
+        const held = retainAnalysis(requestKey, (signal) => requestCalculatorAnalysis(type, data, signal));
+        held.promise.then((outcome) => {
+            if (!alive) return;
+            if (outcome.ok) {
+                setAnalysis(outcome.text);
+                setError(null);
+            } else {
+                setAnalysis('');
+                setError(outcome.message);
             }
-        }
-
-        if (data) fetchAnalysis();
-    }, [type, data]);
+            setIsLoading(false);
+        }).catch(() => {
+            if (!alive) return;
+            setAnalysis('');
+            setError(ANALYSIS_UNAVAILABLE_ZH);
+            setIsLoading(false);
+        });
+        return () => {
+            alive = false;
+            held.release();
+        };
+        // requestKey 已经覆盖 type 和 data 的内容。把 data 放进依赖会在父组件重渲染时再请求一次。
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [requestKey]);
 
     return (
         <div className="mt-8 pt-6 border-t border-slate-800">
@@ -64,7 +72,7 @@ export default function AIProjectAnalysis({ type, data }: AIAnalysisProps) {
                         className="flex items-center gap-3 p-4 rounded-2xl bg-red-500/5 border border-red-500/10"
                     >
                         <AlertCircle className="w-4 h-4 text-red-500" />
-                        <span className="text-xs text-slate-500">分析暂时不可用，请稍后刷新。</span>
+                        <span className="text-xs text-slate-500">{error}</span>
                     </motion.div>
                 ) : (
                     <motion.div
