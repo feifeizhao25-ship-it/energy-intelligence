@@ -1,17 +1,21 @@
 name: Knowledge improvement audit
 
+# 生产代码在 runtime/backend。本工作流只跑离线检查，不调用模型、地图、支付或短信，也不自动发布。
+
 on:
   workflow_dispatch:
   push:
     paths:
       - ".github/workflows/knowledge-improvement.yml"
-      - "后端/app/services/continuous_improvement.py"
-      - "后端/app/services/openrouter_client.py"
-      - "后端/app/services/rag_refresh.py"
-      - "后端/data/improvement_sources.json"
-      - "后端/scripts/knowledge_improvement_audit.py"
-      - "后端/tests/test_continuous_improvement.py"
-      - "后端/tests/test_rag_sources.py"
+      - "runtime/backend/app/services/continuous_improvement.py"
+      - "runtime/backend/app/services/rag_refresh.py"
+      - "runtime/backend/data/improvement/watchlist.yaml"
+      - "runtime/backend/scripts/knowledge_improvement_audit.py"
+      - "runtime/backend/tests/test_continuous_improvement.py"
+      - "runtime/backend/tests/test_rag_sources.py"
+      - "runtime/backend/tests/test_knowledge_improvement_paths.py"
+      - "automation/domestic_research/cycle.py"
+      - ".agents/skills/cn-energy-evidence/SKILL.md"
   schedule:
     - cron: "17 2 * * 1"
 
@@ -24,18 +28,19 @@ jobs:
     timeout-minutes: 15
     defaults:
       run:
-        working-directory: 后端
+        working-directory: runtime/backend
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: pip
-          cache-dependency-path: 后端/requirements.txt
+          cache-dependency-path: runtime/backend/requirements.txt
       - run: pip install -r requirements.txt
       - name: Validate improvement controls
         run: >
           pytest -q
+          tests/test_knowledge_improvement_paths.py
           tests/test_continuous_improvement.py
           tests/test_rag_sources.py
       - name: Produce freshness report
@@ -47,11 +52,11 @@ jobs:
               json.dump(refresh_report(), output, ensure_ascii=False, indent=2)
           PY
       - name: Build quarantined candidate report
-        run: python scripts/knowledge_improvement_audit.py --online
+        run: python scripts/knowledge_improvement_audit.py
       - uses: actions/upload-artifact@v4
         with:
           name: knowledge-improvement-audit
           path: |
-            后端/knowledge-freshness.json
-            后端/knowledge-improvement-candidates.json
+            runtime/backend/knowledge-freshness.json
+            runtime/backend/knowledge-improvement-candidates.json
           retention-days: 30
