@@ -28,6 +28,8 @@ import { WIND_GENERATION_METHOD, WIND_GENERATION_SOURCES } from '@/lib/calculato
 import { FreshnessBadge } from '@/components/freshness/FreshnessBadge';
 import { formatPercentRange, formatRange, type NullableRange, type ValueRange } from '@/lib/calculator/ranges';
 import { formulaHtml, reportFormula } from '@/lib/ai/formula-html';
+// KaTeX 同时写出 HTML 和 MathML。没有样式时 MathML 会在公式下面再显示一行乱码。
+import 'katex/dist/katex.min.css';
 
 const PDFDownloadLink = dynamic(
     () => import('@react-pdf/renderer').then((mod) => mod.PDFDownloadLink),

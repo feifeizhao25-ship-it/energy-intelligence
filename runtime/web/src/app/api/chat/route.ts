@@ -1,4 +1,4 @@
-import { requireAiQuota } from '@/lib/ai/quota-guard';
+import { refundAiCall, requireAiQuota } from '@/lib/ai/quota-guard';
 import { NextRequest } from 'next/server';
 import { aiService } from '@/lib/ai/unified';
 import { Message } from '@/types';
@@ -13,7 +13,8 @@ import { BOTTOM_LINE_NOTICE_ZH, neutralizeCnText } from '@/lib/compliance/bottom
 import { recordFeedback } from '@/lib/feedback/samples';
 import { collectSourcesFromToolResult, verifySources, type EvidenceSource } from '@/lib/evidence/verification';
 import { saveAnswer, type StoredSource } from '@/lib/assistant/answer-store';
-import { isSyntheticUrl, storeLibraryStandIn } from '@/lib/assistant/library-fallback';
+import { isSyntheticUrl } from '@/lib/assistant/library-fallback';
+import { ASSISTANT_UNREACHABLE_ZH, modelFailureReply } from '@/lib/assistant/chat-failure';
 import { EXPORT_FORMATS } from '@/lib/membership/plans';
 
 export const runtime = 'nodejs';
@@ -72,6 +73,7 @@ export async function POST(request: NextRequest) {
         const encoder = new TextEncoder();
         const stream = new ReadableStream({
             async start(controller) {
+                let modelFinished = false;
                 try {
                     const currentProvider = provider || aiService.getAIProvider();
 
@@ -90,7 +92,7 @@ export async function POST(request: NextRequest) {
                         ? assistantChatStream(messages, actualModel, guard.userId)
                         : aiService.chatStream(messages, { provider: currentProvider, model: actualModel } as any);
 
-                    // 次数已在门禁里扣减；这里只记明细日志
+                    // 次数已在门禁里扣减；模型流没跑完时在下面退还。这里只记明细日志。
                     try {
                         const { logUsage } = await import('@/lib/membership/usage');
                         await logUsage(guard.userId, 'ai_chat', { model: actualModel, isAssistant });
@@ -126,6 +128,7 @@ export async function POST(request: NextRequest) {
                         const data = JSON.stringify(transformedEvent);
                         controller.enqueue(encoder.encode(`data: ${data}\n\n`));
                     }
+                    modelFinished = true;
                     const rawAnswer = textParts.join('');
                     const answer = neutralizeCnText(rawAnswer);
                     if (answer === BOTTOM_LINE_NOTICE_ZH && rawAnswer && rawAnswer !== answer) {
@@ -157,10 +160,18 @@ export async function POST(request: NextRequest) {
                     controller.enqueue(encoder.encode('data: [DONE]\n\n'));
                     controller.close();
                 } catch (error) {
-                    const unavailable = /未配置|拒绝生成替代内容|not configured/i.test(error instanceof Error ? error.message : String(error));
-                    if (unavailable) {
-                        const question = String(latestUser?.content || '');
-                        const saved = storeLibraryStandIn(guard.userId, question);
+                    // 次数在开流前已扣。模型流没跑完就退还，避免连不上也算一次。
+                    if (!modelFinished) await refundAiCall(guard.userId);
+                    const question = String(latestUser?.content || '');
+                    const failure = modelFinished ? null : modelFailureReply(error, question);
+                    if (failure?.kind === 'library') {
+                        const saved = saveAnswer({
+                            userId: guard.userId,
+                            text: failure.text,
+                            sources: failure.sources,
+                            standIn: true,
+                            synthetic: failure.synthetic,
+                        });
                         controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'content', data: saved.text })}\n\n`));
                         controller.enqueue(encoder.encode(`data: ${JSON.stringify({
                             type: 'evidence',
@@ -185,7 +196,7 @@ export async function POST(request: NextRequest) {
                     console.error('流处理错误:', error);
                     const errorData = JSON.stringify({
                         type: 'error',
-                        data: { message: safeErrorMessage(error, '未知错误') }
+                        data: { message: failure?.kind === 'message' ? failure.message : safeErrorMessage(error, ASSISTANT_UNREACHABLE_ZH) }
                     });
                     controller.enqueue(encoder.encode(`data: ${errorData}\n\n`));
                     controller.close();

@@ -3,7 +3,7 @@ import { join } from 'node:path';
 // 纯逻辑测试：不实例化真实 Prisma 客户端（会通过 globalThis 泄漏到同进程的其他测试文件）
 jest.mock('@/lib/prisma', () => ({ prisma: {} }));
 jest.mock('next-auth', () => ({ getServerSession: jest.fn() }));
-import { consumeAiCall, type QuotaStore, type QuotaUser } from './quota-guard';
+import { consumeAiCall, refundAiCall, type QuotaStore, type QuotaUser } from './quota-guard';
 
 function store(user: QuotaUser | null) {
   const state = { user, calls: 0 };
@@ -20,6 +20,10 @@ function store(user: QuotaUser | null) {
       return true;
     },
     take: async () => { state.user = { ...state.user!, dailyAiCalls: state.user!.dailyAiCalls + 1 }; return true; },
+    release: async () => {
+      if (!state.user || state.user.dailyAiCalls <= 0) return;
+      state.user = { ...state.user, dailyAiCalls: state.user.dailyAiCalls - 1 };
+    },
   };
   return { s, state };
 }
@@ -43,6 +47,15 @@ describe('AI 次数门禁', () => {
 
   it('用户不存在不放行', async () => {
     expect((await consumeAiCall(store(null).s, 'u', now)).ok).toBe(false);
+  });
+
+  it('模型调用失败时退还已扣次数，再退也不会变成负数', async () => {
+    const { s, state } = store({ plan: 'FREE', planExpireAt: null, dailyAiCalls: 0, lastResetAt: now });
+    expect((await consumeAiCall(s, 'u', now)).ok).toBe(true);
+    expect(state.user!.dailyAiCalls).toBe(1);
+    await refundAiCall('u', s);
+    await refundAiCall('u', s);
+    expect(state.user!.dailyAiCalls).toBe(0);
   });
 
   it('所有调用模型的接口都经过门禁', () => {

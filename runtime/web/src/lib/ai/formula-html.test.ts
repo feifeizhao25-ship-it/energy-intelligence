@@ -24,6 +24,22 @@ describe('国内回答和报告里的公式', () => {
         expect(reportFormula('storage').name).not.toContain('平准化度电成本（LCOE）');
     });
 
+    it('结果页加载 KaTeX 样式，MathML 不会再画成第二行公式', () => {
+        const page = readFileSync(join(__dirname, '../../app/(dashboard)/calculator/result/page.tsx'), 'utf8');
+        const html = formulaHtml(reportFormula('solar').latex, true);
+        const hasHtml = html.includes('katex-html');
+        const hasMathml = html.includes('katex-mathml');
+        expect(hasHtml || hasMathml).toBe(true);
+        if (hasHtml && hasMathml) {
+            expect(page).toContain("katex/dist/katex.min.css");
+            // 直接读样式文件。require.resolve 会被测试里的 css 桩拦截，读不到隐藏规则。
+            const css = readFileSync(join(__dirname, '../../../node_modules/katex/dist/katex.min.css'), 'utf8');
+            expect(css).toMatch(/\.katex-mathml\{[^}]*clip-path:[^}]*overflow:hidden/);
+        } else {
+            expect(hasHtml && hasMathml).toBe(false);
+        }
+    });
+
     it('Word 测算报告有 1、2、3 级标题且不跳级', async () => {
         const buffer = await calculationDocxBuffer({
             energy: { year1: 1, monthly: [1], lifetime: 1, equivalentHours: 1, pr: 0.8 },
