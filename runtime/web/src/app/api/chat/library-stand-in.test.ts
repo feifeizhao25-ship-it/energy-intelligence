@@ -1,9 +1,23 @@
 jest.mock('next-auth/next', () => ({ getServerSession: jest.fn(async () => ({ user: { id: 'u1' } })) }));
 jest.mock('@/lib/auth/auth-options', () => ({ authOptions: {} }));
-jest.mock('@/lib/ai/quota-guard', () => ({
-  requireAiQuota: jest.fn(async () => ({ ok: true, userId: 'u1', plan: 'FREE', remaining: 4 })),
-  refundAiCall: jest.fn(async () => undefined),
-}));
+jest.mock('@/lib/ai/quota-guard', () => {
+  const refundAiCall = jest.fn(async () => undefined);
+  return {
+    requireAiQuota: jest.fn(async () => ({ ok: true, userId: 'u1', plan: 'FREE', remaining: 4 })),
+    refundAiCall,
+    trackAiQuota: (userId: string) => {
+      let closed = false;
+      return {
+        settle() { closed = true; },
+        async refund() {
+          if (closed) return;
+          closed = true;
+          await refundAiCall(userId);
+        },
+      };
+    },
+  };
+});
 var assistantStream: () => AsyncGenerator<{ type: string; data: unknown }> = async function* () {
   throw new Error('SILICONFLOW_API_KEY 未配置，国内 AI 服务已拒绝生成替代内容');
 };
@@ -84,6 +98,51 @@ test('国内模型后端连不上且资料库没有命中时，提示暂时连�
   expect(raw).not.toContain('ECONNREFUSED');
   expect(raw).not.toContain('"standIn":true');
   expect(refund).toHaveBeenCalledWith('u1');
+});
+
+test('用户取消进行中的助手请求时退还次数，而且只退一次', async () => {
+  let release: () => void = () => {};
+  let started: () => void = () => {};
+  const startedP = new Promise<void>((resolve) => { started = resolve; });
+  assistantStream = async function* () {
+    started();
+    await new Promise<void>((resolve) => { release = resolve; });
+    yield { type: 'text', data: '晚到的回答' };
+  };
+  const controller = new AbortController();
+  const pending = POST(new Request('http://x/api/chat', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ isAssistant: true, messages: [{ role: 'user', content: '光伏发电站设计标准' }] }),
+    signal: controller.signal,
+  }) as never);
+  await startedP;
+  controller.abort();
+  release();
+  const raw = await (await pending).text();
+  expect(raw).not.toContain('晚到的回答');
+  expect(raw).not.toContain('未知错误');
+  expect(refund).toHaveBeenCalledTimes(1);
+  expect(refund).toHaveBeenCalledWith('u1');
+});
+
+test('请求在模型开始前已取消时退还次数，不再调用模型', async () => {
+  let called = false;
+  assistantStream = async function* () {
+    called = true;
+    yield { type: 'text', data: '不应出现' };
+  };
+  const controller = new AbortController();
+  controller.abort();
+  const response = await POST(new Request('http://x/api/chat', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ isAssistant: true, messages: [{ role: 'user', content: '光伏' }] }),
+    signal: controller.signal,
+  }) as never);
+  expect(response.status).toBe(499);
+  expect(called).toBe(false);
+  expect(refund).toHaveBeenCalledTimes(1);
 });
 
 test('模型正常回答时不退还次数', async () => {

@@ -138,3 +138,25 @@ export async function refundAiCall(userId: string, store: QuotaStore = prismaQuo
     console.warn('AI 次数退还失败:', error);
   }
 }
+
+/**
+ * 一次已经扣掉的模型调用。
+ * 失败、客户端取消、连接中断都可能走到退还，重复调用只退一次。
+ * 成功交付后调用 settle()，之后不再退还。
+ */
+export function trackAiQuota(userId: string, store: QuotaStore = prismaQuotaStore): {
+  refund: () => Promise<void>;
+  settle: () => void;
+} {
+  let closed = false;
+  return {
+    settle() {
+      closed = true;
+    },
+    async refund() {
+      if (closed) return;
+      closed = true;
+      await refundAiCall(userId, store);
+    },
+  };
+}

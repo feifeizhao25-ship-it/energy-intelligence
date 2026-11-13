@@ -1,4 +1,4 @@
-import { refundAiCall, requireAiQuota } from '@/lib/ai/quota-guard';
+import { requireAiQuota, trackAiQuota } from '@/lib/ai/quota-guard';
 import { NextRequest } from 'next/server';
 import { aiService } from '@/lib/ai/unified';
 import { Message } from '@/types';
@@ -14,13 +14,15 @@ import { recordFeedback } from '@/lib/feedback/samples';
 import { collectSourcesFromToolResult, verifySources, type EvidenceSource } from '@/lib/evidence/verification';
 import { saveAnswer, type StoredSource } from '@/lib/assistant/answer-store';
 import { isSyntheticUrl } from '@/lib/assistant/library-fallback';
-import { ASSISTANT_UNREACHABLE_ZH, modelFailureReply } from '@/lib/assistant/chat-failure';
+import { ASSISTANT_UNREACHABLE_ZH } from '@/lib/assistant/chat-failure';
+import { modelFailureReply } from '@/lib/assistant/model-failure';
 import { EXPORT_FORMATS } from '@/lib/membership/plans';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
 export async function POST(request: NextRequest) {
+    let quota: ReturnType<typeof trackAiQuota> | null = null;
     try {
         const session = await getServerSession(authOptions) as any;
         const body = await request.json().catch(() => null);
@@ -58,6 +60,11 @@ export async function POST(request: NextRequest) {
         // 登录 + 按库里的会员档扣减当日 AI 次数（原来不登录也能用，登录后也只事后记一笔）
         const guard = await requireAiQuota();
         if (!guard.ok) return guard.response;
+        quota = trackAiQuota(guard.userId);
+        if (request.signal.aborted) {
+            await quota.refund();
+            return new Response(JSON.stringify({ error: ASSISTANT_UNREACHABLE_ZH }), { status: 499, headers: { 'Content-Type': 'application/json' } });
+        }
         const userPlan = guard.plan as Plan;
 
         // Determine the actual model based on user plan
@@ -71,10 +78,21 @@ export async function POST(request: NextRequest) {
 
         // 创建可读流
         const encoder = new TextEncoder();
+        let modelFinished = false;
+        const refundIfIncomplete = () => {
+            if (modelFinished || !quota) return Promise.resolve();
+            return quota.refund();
+        };
+        const onAbort = () => { void refundIfIncomplete(); };
+        request.signal.addEventListener('abort', onAbort, { once: true });
         const stream = new ReadableStream({
             async start(controller) {
-                let modelFinished = false;
                 try {
+                    if (request.signal.aborted) {
+                        await refundIfIncomplete();
+                        controller.close();
+                        return;
+                    }
                     const currentProvider = provider || aiService.getAIProvider();
 
                     // 发送提供商信息
@@ -103,6 +121,7 @@ export async function POST(request: NextRequest) {
                     const evidenceSources: EvidenceSource[] = [];
                     const textParts: string[] = [];
                     for await (const event of chatSource) {
+                        if (request.signal.aborted) break;
                         // 转换事件类型以匹配前端期望
                         let transformedEvent = event;
                         if (event.type === 'text') {
@@ -128,7 +147,13 @@ export async function POST(request: NextRequest) {
                         const data = JSON.stringify(transformedEvent);
                         controller.enqueue(encoder.encode(`data: ${data}\n\n`));
                     }
+                    if (request.signal.aborted) {
+                        await refundIfIncomplete();
+                        controller.close();
+                        return;
+                    }
                     modelFinished = true;
+                    quota?.settle();
                     const rawAnswer = textParts.join('');
                     const answer = neutralizeCnText(rawAnswer);
                     if (answer === BOTTOM_LINE_NOTICE_ZH && rawAnswer && rawAnswer !== answer) {
@@ -160,8 +185,8 @@ export async function POST(request: NextRequest) {
                     controller.enqueue(encoder.encode('data: [DONE]\n\n'));
                     controller.close();
                 } catch (error) {
-                    // 次数在开流前已扣。模型流没跑完就退还，避免连不上也算一次。
-                    if (!modelFinished) await refundAiCall(guard.userId);
+                    // 次数在开流前已扣。模型流没跑完、用户取消或连接中断时退还，而且只退一次。
+                    await refundIfIncomplete();
                     const question = String(latestUser?.content || '');
                     const failure = modelFinished ? null : modelFailureReply(error, question);
                     if (failure?.kind === 'library') {
@@ -201,7 +226,10 @@ export async function POST(request: NextRequest) {
                     controller.enqueue(encoder.encode(`data: ${errorData}\n\n`));
                     controller.close();
                 }
-            }
+            },
+            async cancel() {
+                await refundIfIncomplete();
+            },
         });
 
         return new Response(stream, {
@@ -213,6 +241,7 @@ export async function POST(request: NextRequest) {
             }
         });
     } catch (error) {
+        await quota?.refund();
         console.error('Chat API错误:', error);
         return new Response(
             JSON.stringify({

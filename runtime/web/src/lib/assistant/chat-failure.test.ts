@@ -1,4 +1,5 @@
-import { ASSISTANT_UNREACHABLE_ZH, modelFailureReply, visibleAssistantError } from './chat-failure';
+import { ASSISTANT_UNREACHABLE_ZH, visibleAssistantError } from './chat-failure';
+import { modelFailureReply } from './model-failure';
 import { clearLibraryCache } from './library-fallback';
 
 beforeEach(() => clearLibraryCache());

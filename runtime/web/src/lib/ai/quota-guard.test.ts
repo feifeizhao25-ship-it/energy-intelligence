@@ -3,7 +3,7 @@ import { join } from 'node:path';
 // 纯逻辑测试：不实例化真实 Prisma 客户端（会通过 globalThis 泄漏到同进程的其他测试文件）
 jest.mock('@/lib/prisma', () => ({ prisma: {} }));
 jest.mock('next-auth', () => ({ getServerSession: jest.fn() }));
-import { consumeAiCall, refundAiCall, type QuotaStore, type QuotaUser } from './quota-guard';
+import { consumeAiCall, refundAiCall, trackAiQuota, type QuotaStore, type QuotaUser } from './quota-guard';
 
 function store(user: QuotaUser | null) {
   const state = { user, calls: 0 };
@@ -56,6 +56,17 @@ describe('AI 次数门禁', () => {
     await refundAiCall('u', s);
     await refundAiCall('u', s);
     expect(state.user!.dailyAiCalls).toBe(0);
+  });
+
+  it('同一次调用的退还只执行一次，成功后不再退', async () => {
+    const { s, state } = store({ plan: 'FREE', planExpireAt: null, dailyAiCalls: 2, lastResetAt: now });
+    const tracked = trackAiQuota('u', s);
+    await Promise.all([tracked.refund(), tracked.refund()]);
+    expect(state.user!.dailyAiCalls).toBe(1);
+    const succeeded = trackAiQuota('u', s);
+    succeeded.settle();
+    await succeeded.refund();
+    expect(state.user!.dailyAiCalls).toBe(1);
   });
 
   it('所有调用模型的接口都经过门禁', () => {
