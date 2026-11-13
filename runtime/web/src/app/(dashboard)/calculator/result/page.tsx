@@ -27,6 +27,7 @@ import { ExplainLayer } from '@/components/explain/ExplainLayer';
 import { WIND_GENERATION_METHOD, WIND_GENERATION_SOURCES } from '@/lib/calculator/wind-explain';
 import { FreshnessBadge } from '@/components/freshness/FreshnessBadge';
 import { formatPercentRange, formatRange, type NullableRange, type ValueRange } from '@/lib/calculator/ranges';
+import { formulaHtml, reportFormula } from '@/lib/ai/formula-html';
 
 const PDFDownloadLink = dynamic(
     () => import('@react-pdf/renderer').then((mod) => mod.PDFDownloadLink),
@@ -72,6 +73,7 @@ function CalculatorResultPage() {
     }
 
     const levelized = levelizedDisplay(data, type);
+    const formula = reportFormula(type);
 
     return (
         <div className="min-h-screen overflow-x-hidden bg-[#020617] pb-20 text-slate-200">
@@ -166,6 +168,15 @@ function CalculatorResultPage() {
                                 color="border-purple-500/20"
                             />
                         </div>
+
+                        <section data-testid="cn-formula" className="rounded-3xl border border-slate-800 bg-slate-900 p-5 sm:p-8">
+                            <h3 className="text-lg font-bold text-white">计算公式</h3>
+                            <p className="mt-2 text-sm text-slate-400">{formula.name}</p>
+                            <div
+                                className="mt-4 overflow-x-auto text-white"
+                                dangerouslySetInnerHTML={{ __html: formulaHtml(formula.latex, true) }}
+                            />
+                        </section>
 
                         {/* Monthly Generation Analysis */}
                         <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-8">

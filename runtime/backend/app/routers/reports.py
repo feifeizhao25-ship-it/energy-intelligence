@@ -982,6 +982,13 @@ def _add_heading(doc, text: str, level: int = 1):
     return p
 
 
+def _add_cn_formulas(doc):
+    """中文报告里的公式标题。层级是 3，跟在已有的 2 级标题后面。"""
+    _add_heading(doc, "计算公式", level=3)
+    _add_body(doc, "净现值 NPV = Σ C_t / (1+r)^t")
+    _add_body(doc, "平准化度电成本 LCOE = 生命周期成本现值 / 折现发电量")
+
+
 def _add_body(doc, text: str, bold: bool = False):
     """正文段落"""
     from docx.shared import Pt, RGBColor
@@ -1240,6 +1247,7 @@ def _add_feasibility_content(doc, data: Dict, metrics: Dict):
     )
 
     _add_heading(doc, "4.2 核心财务指标", level=2)
+    _add_cn_formulas(doc)
     irr_display = fmt_pct(metrics["irr"])
     _add_styled_table(
         doc, ["指标", "数值", "对照"],
@@ -1314,6 +1322,7 @@ def _add_investment_content(doc, data: Dict, metrics: Dict):
         "引用时须核对国家能源局当年统计公报的口径与发布日期。"
     )
     _add_heading(doc, "2.2 电价数据来源", level=2)
+    _add_cn_formulas(doc)
     _add_body(doc,
         "电价取自用户输入或已收录的省级代理购电价格表，并标注来源与数据截至日期。"
         "本报告不预测电价涨跌，也不把历史电价外推为未来价格。"

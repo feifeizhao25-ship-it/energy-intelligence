@@ -59,6 +59,8 @@ describe('风电结果页', () => {
         expect(html).toContain('倾斜面年辐照');
         expect(html).toContain('光伏发电站设计标准（2024 年版）');
         expect(html).not.toContain('轮毂高度');
+        expect(html).toContain('计算公式');
+        expect(html).toContain('katex');
     });
 });
 
