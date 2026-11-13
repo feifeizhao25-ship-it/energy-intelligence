@@ -105,6 +105,21 @@ def load_gate_questions(root: Path | None = None) -> list[dict]:
     return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
 
 
+def load_refusal_expand(root: Path | None = None) -> list[dict]:
+    """扩充拒答集：无来源电价、补贴、地方政策猜测。不并入黄金集，避免改动既有分母。"""
+    path = (root or ROOT) / "data" / "eval" / "refusal_expand_en2.jsonl"
+    if not path.is_file():
+        return []
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
+def refusal_set_accuracy(questions: list[dict] | None = None) -> float | None:
+    rows = load_refusal_expand() if questions is None else questions
+    if not rows:
+        return None
+    return sum(1 for row in rows if refusal_check(row)["ok"]) / len(rows)
+
+
 def claim_overlap(docs: list[dict], questions: list[dict]) -> dict:
     """主张和所要求来源的分块是否重合。没有可切分主张的题不计入平均。"""
     from app.services.faithfulness import faithfulness_gate, faithfulness_threshold
