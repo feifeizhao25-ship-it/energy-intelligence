@@ -290,6 +290,20 @@
       "region": "global",
       "license": "NASA 数据政策",
       "language": "en"
+    },
+    {
+      "id": "EN-CMA-2025",
+      "product": "energy-cn",
+      "url": "https://www.cma.gov.cn/2011xwzx/2011xqxxw/2011xqxyw/202601/t20260129_7573866.html",
+      "doi": "",
+      "publisher": "中国气象局",
+      "excerpt": "《2025年中国风能太阳能资源年景公报》，页面日期 2026-01-29。政府公开文件，可以引用。引用任何数字须附年份与原文页。本候选不摘录具体辐照或风速数字。",
+      "published_at": "2026-01-29",
+      "effective_at": "",
+      "expires_at": "",
+      "region": "cn",
+      "license": "政府公开（引用）",
+      "language": "zh"
     }
   ]
 }
