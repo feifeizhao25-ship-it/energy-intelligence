@@ -9,6 +9,7 @@
 import {
     AlignmentType, BorderStyle, Document, Footer, HeadingLevel, Packer, PageNumber, Paragraph, Table, TableCell, TableRow, TextRun, WidthType,
 } from 'docx';
+import { reportFormula } from '@/lib/ai/formula-html';
 import {
     REPORT_TITLE, REPORT_DISCLAIMER, NOT_FILLED,
     reportConclusion, reportNumber, degradationText, displayOrNotFilled, extractReportFigures, typeLabelOf, capacityUnitOf,
@@ -29,8 +30,8 @@ function text(value: string, opts: { bold?: boolean; size?: number; color?: stri
 function para(value: string, opts: { bold?: boolean; size?: number; color?: string; align?: (typeof AlignmentType)[keyof typeof AlignmentType] } = {}) {
     return new Paragraph({ children: [text(value, opts)], alignment: opts.align, spacing: { after: 120 } });
 }
-function heading(value: string) {
-    return new Paragraph({ heading: HeadingLevel.HEADING_2, children: [text(value, { bold: true, size: 26 })], spacing: { before: 240, after: 120 } });
+function heading(value: string, level: (typeof HeadingLevel)[keyof typeof HeadingLevel] = HeadingLevel.HEADING_2, size = 26) {
+    return new Paragraph({ heading: level, children: [text(value, { bold: true, size })], spacing: { before: 240, after: 120 } });
 }
 const border = { style: BorderStyle.SINGLE, size: 4, color: 'CBD5E1' };
 function table(rows: string[][]) {
@@ -57,13 +58,18 @@ export function buildCalculationDocx(data: any, type: string, options: DocxRepor
     const hasAi = typeof options.aiAnalysis === 'string' && options.aiAnalysis.trim().length > 0;
     const aiStatus = hasAi ? '含 AI 辅助生成内容（已标注）' : '规则引擎测算，未含 AI 生成文字';
 
+    const formula = reportFormula(type);
     const children: (Paragraph | Table)[] = [
         para(`新能源智库 · ${REPORT_TITLE} / ${typeLabel}`, { color: '64748B', size: 18 }),
+        heading('测算报告', HeadingLevel.HEADING_1, 32),
         new Paragraph({ heading: HeadingLevel.TITLE, children: [text(f.projectName || `${typeLabel}项目${REPORT_TITLE}`, { bold: true, size: 36 })], spacing: { after: 120 } }),
         para(`编号：${reportId}　项目所在地：${displayOrNotFilled(f.province)}　测算日期：${dateStr}`, { size: 19, color: '475569' }),
         para(`${REPORT_DISCLAIMER}${aiStatus}。`, { size: 19, color: '475569' }),
 
         heading('核心测算指标'),
+        heading('计算公式', HeadingLevel.HEADING_3, 24),
+        para(formula.name),
+        para(formula.latex.replace(/\\/g, '')),
         table([
             ['指标', '数值'],
             ['内部收益率（IRR）', f.irr === null ? '无法确认' : `${f.irr.toFixed(2)}%`],
