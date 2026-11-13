@@ -2,18 +2,25 @@
 
 import { useEffect, useState } from 'react';
 import { Loader2, Save, SlidersHorizontal } from 'lucide-react';
-import { ROLES, ROLE_LABELS, INTERESTS, INTEREST_LABELS, PROVINCES, type Preferences } from '@/lib/dashboard/personalization';
+import { ROLE_LABELS, INTERESTS, INTEREST_LABELS, PROVINCES, type Preferences } from '@/lib/dashboard/personalization';
+import { SELECTABLE_ROLES } from '@/lib/dashboard/visible-role';
 
 /** 设置页「工作台个性化」：角色、所在省份、关注领域，以及关闭个性化的开关。免费用户同样可用。 */
 export default function PersonalizationSettings() {
     const [prefs, setPrefs] = useState<Preferences>({ role: null, province: null, interest: null, personalized: true, tags: [] });
+    const [nickname, setNickname] = useState('');
     const [state, setState] = useState<'loading' | 'idle' | 'saving' | 'saved' | 'error'>('loading');
     const [message, setMessage] = useState('');
 
     useEffect(() => {
         fetch('/api/user/preferences', { cache: 'no-store' })
             .then(r => r.json())
-            .then(body => { if (body?.preferences) setPrefs(body.preferences); setState('idle'); })
+            .then(body => {
+                if (body?.preferences) setPrefs(body.preferences);
+                const saved = body?.profile?.nickname;
+                if (typeof saved === 'string') setNickname(saved);
+                setState('idle');
+            })
             .catch(() => setState('idle'));
     }, []);
 
@@ -21,7 +28,7 @@ export default function PersonalizationSettings() {
         setState('saving');
         setMessage('');
         try {
-            const res = await fetch('/api/user/preferences', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(prefs) });
+            const res = await fetch('/api/user/preferences', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...prefs, nickname }) });
             const body = await res.json().catch(() => ({}));
             if (!res.ok) throw new Error(typeof body.error === 'string' ? body.error : '保存失败');
             setState('saved');
@@ -39,12 +46,17 @@ export default function PersonalizationSettings() {
                 <h2 className="flex items-center gap-2 font-black text-slate-900"><SlidersHorizontal className="w-4 h-4" />工作台个性化</h2>
                 <p className="mt-1 text-xs text-slate-500">工作台会按你的角色调整模块顺序，按所在省份显示电价与已审核政策。免费版同样适用；也可以关闭个性化，回到通用版。</p>
             </div>
+            <label className="space-y-2 text-xs font-bold text-slate-500">
+                <span>昵称</span>
+                <input className={select} value={nickname} maxLength={32} placeholder="怎么称呼你，可不填" onChange={e => setNickname(e.target.value)} />
+                <span className="block font-normal text-slate-500">填写后工作台问候使用这个称呼。留空时，如果姓名仍是自动编号，问候里不显示编号。</span>
+            </label>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <label className="space-y-2 text-xs font-bold text-slate-500">
                     <span>角色</span>
                     <select className={select} value={prefs.role ?? ''} onChange={e => setPrefs({ ...prefs, role: (e.target.value || null) as Preferences['role'] })}>
                         <option value="">未选择</option>
-                        {ROLES.map(r => <option key={r} value={r}>{ROLE_LABELS[r]}</option>)}
+                        {SELECTABLE_ROLES.map(r => <option key={r} value={r}>{ROLE_LABELS[r]}</option>)}
                     </select>
                 </label>
                 <label className="space-y-2 text-xs font-bold text-slate-500">

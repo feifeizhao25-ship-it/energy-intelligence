@@ -680,14 +680,70 @@ details.map-side-tools > summary.map-side-tools-summary::-webkit-details-marker 
   padding: 8px 0;
 }
 
-@media (max-width: 767px) {
-  .ei-stats {
-    grid-template-columns: 1fr;
+.ei-role-modules {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.ei-module-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .ei-role-modules {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .ei-hero,
+}
+
+@media (max-width: 767px) {
   .ei-page-head {
     border-radius: var(--radius-md);
     padding: var(--space-4);
+  }
+  /* 窄屏先看正文里的当前关注，三个关键数改成一行，不再把关注挤出首屏。 */
+  .ei-page-flow {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+  .ei-hero {
+    display: contents;
+  }
+  .ei-hero-copy {
+    order: 1;
+    background: linear-gradient(160deg, var(--navy) 0%, var(--navy-2) 70%);
+    color: #f4f8fb;
+    border-radius: var(--radius-md);
+    padding: 12px;
+    box-shadow: var(--shadow-md);
+  }
+  .ei-split {
+    order: 2;
+    margin-top: 0;
+  }
+  .ei-stats {
+    order: 3;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    margin-top: 0;
+    padding: 8px;
+    background: linear-gradient(160deg, var(--navy) 0%, var(--navy-2) 70%);
+    border-radius: var(--radius-md);
+  }
+  .ei-stat {
+    padding: 6px 8px;
+  }
+  .ei-stat dd {
+    margin-top: 2px;
+    font-size: 0.95rem;
+    line-height: 1.25;
+  }
+  .ei-module-stack > [data-module="focus"],
+  .ei-role-modules > [data-module="focus"] {
+    order: -1;
   }
 }
 

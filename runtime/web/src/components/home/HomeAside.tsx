@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Calculator, Landmark, TimerReset } from 'lucide-react';
 import { TARIFFS, provincesWithPrices, tariffDisclosure } from '@/lib/pricing/tariffs';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { policyLibraryEmptyCopy } from '@/lib/policy/empty-copy';
 
 interface PolicyItem {
     title: string;
@@ -80,7 +82,9 @@ export function HomeAside() {
                 {policy.todayCount !== null ? (
                     <p className="text-sm tabular-nums">今日已审核更新 {policy.todayCount} 条</p>
                 ) : null}
-                {policy.phase === 'empty' ? <p className="text-sm">今天没有新的已审核政策。</p> : null}
+                {policy.phase === 'empty' ? (
+                    <EmptyState title={policyLibraryEmptyCopy().title} detail={policyLibraryEmptyCopy().detail} />
+                ) : null}
                 <ul className="space-y-2">
                     {policy.items.map((item) => (
                         <li key={`${item.title}-${item.when}`} className="text-sm">

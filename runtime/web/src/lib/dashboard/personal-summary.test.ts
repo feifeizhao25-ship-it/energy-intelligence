@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { buildPersonalDashboard, projectCountFact, recentWorkDetail, recentWorkTitle, RECENT_WORK_EMPTY, type SummaryInput } from './personal-summary';
+import { accountLabel, greetingFor, readNickname } from './greeting';
 
 const ROOT = join(__dirname, '..', '..', '..');
 const base: SummaryInput = {
@@ -13,6 +14,16 @@ describe('个人工作台只用本人的数据', () => {
   it('新用户：问候本人，引导第一次测算', () => {
     const d = buildPersonalDashboard(base);
     expect(d.greeting).toBe('你好，张三');
+    expect(greetingFor({ name: '用户_1003' })).toBe('你好');
+    expect(greetingFor({ name: '用户_1003', nickname: '小王' })).toBe('你好，小王');
+    expect(greetingFor({ name: null })).toBe('你好');
+    expect(accountLabel('用户_1008')).toBe('用户');
+    expect(accountLabel('张三')).toBe('张三');
+    expect(readNickname({ profile: { nickname: ' 小王 ' } })).toBe('小王');
+    expect(readNickname({ preferences: { nickname: '用户_1001' } })).toBeNull();
+    const auto = buildPersonalDashboard({ ...base, user: { name: '用户_1002', nickname: null, plan: 'FREE', planExpireAt: null } });
+    expect(auto.greeting).toBe('你好');
+    expect(auto.greeting).not.toContain('用户_');
     expect(d.nextActions[0]).toMatchObject({ id: 'first-project', href: '/calculator/solar' });
     expect(JSON.stringify(d)).not.toMatch(/陈欣|王强|李娜|john_smith/);
   });

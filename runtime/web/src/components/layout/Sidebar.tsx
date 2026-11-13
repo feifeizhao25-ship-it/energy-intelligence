@@ -16,6 +16,7 @@ import { useSession } from 'next-auth/react';
 import { PLAN_DETAILS } from '@/lib/membership/plans';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { UserAccountMenu } from '@/components/layout/UserAccountMenu';
+import { accountLabel } from '@/lib/dashboard/greeting';
 
 interface NavItem {
     name: string;
@@ -245,7 +246,7 @@ export default function Sidebar() {
                 <div className="border-t border-white/10 p-4">
                     <div className="mb-3 flex justify-end"><ThemeToggle className="text-white" /></div>
                     {isLoggedIn ? (
-                        <UserAccountMenu name={session?.user?.name || '用户'} planLabel={planLabel} />
+                        <UserAccountMenu name={accountLabel(session?.user?.name)} planLabel={planLabel} />
                     ) : (
                         <Link
                             href="/login"
@@ -328,7 +329,7 @@ export default function Sidebar() {
                         })}
                         {isLoggedIn ? (
                             <div className="mt-4">
-                                <UserAccountMenu name={session?.user?.name || '用户'} planLabel={planLabel} />
+                                <UserAccountMenu name={accountLabel(session?.user?.name)} planLabel={planLabel} />
                             </div>
                         ) : (
                             <Link

@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/auth-options';
 import { prisma } from '@/lib/prisma';
 import { parsePreferences, validatePreferences, PREFERENCE_LOG_TYPES } from '@/lib/dashboard/personalization';
+import { rawSavedRole } from '@/lib/dashboard/visible-role';
 import { profileFromUsageMetadata } from '@/lib/dashboard/user-profile';
 import { safeErrorMessage } from '@/lib/api/safe-error';
 
@@ -20,7 +21,7 @@ export async function GET() {
     });
     const preferences = log ? parsePreferences(log.metadata) : parsePreferences(null);
     const profile = profileFromUsageMetadata(log?.metadata ?? null);
-    return NextResponse.json({ success: true, preferences, profile });
+    return NextResponse.json({ success: true, preferences, profile, savedRole: rawSavedRole(log?.metadata ?? null) });
 }
 
 export async function PUT(req: Request) {

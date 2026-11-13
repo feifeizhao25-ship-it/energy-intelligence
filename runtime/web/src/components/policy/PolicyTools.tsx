@@ -4,6 +4,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { citationFieldsReady, formatGbt7714 } from '@/lib/citation/gbt7714';
 import { successionLabel } from '@/lib/policy/succession';
 import { DataState } from '@/components/ui/design-system';
+import { policyLibraryEmptyCopy } from '@/lib/policy/empty-copy';
 
 interface PolicyRow {
     id?: string;
@@ -135,7 +136,7 @@ export function PolicyTools({
                 <button className="self-end rounded-xl bg-slate-900 px-4 py-2 text-white">按日期回看</button>
             </form>
             <p>{note}</p>
-            <DataState status={phase === 'loading' ? 'loading' : phase === 'error' ? 'error' : rows.length === 0 ? 'empty' : 'ready'} emptyTitle="这一天没有匹配的生效条目。" errorTitle="政策暂时没有加载成功" onRetry={() => void load()}>
+            <DataState status={phase === 'loading' ? 'loading' : phase === 'error' ? 'error' : rows.length === 0 ? 'empty' : 'ready'} emptyTitle={policyLibraryEmptyCopy({ filtered: query.trim().length > 0 }).title} emptyDetail={policyLibraryEmptyCopy({ filtered: query.trim().length > 0 }).detail} errorTitle="政策暂时没有加载成功" onRetry={() => void load()}>
             <ul className="space-y-2">
                 {rows.map((row) => {
                     const name = row.sourceTitle || row.title || row.type || '未命名条目';

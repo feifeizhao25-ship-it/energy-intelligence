@@ -67,4 +67,11 @@ describe('工作台个性化接口', () => {
         const { data } = await (await dashboard()).json();
         expect(data.personalization.personalized).toBe(false);
     });
+
+    it('已保存的非枚举角色原样返回，不改写成工商业业主', async () => {
+        db.prefMeta = { preferences: { role: '储能项目经理', province: '江苏' } };
+        const saved = await (await getPrefs()).json();
+        expect(saved.savedRole).toBe('储能项目经理');
+        expect(saved.preferences.role).toBeNull();
+    });
 });

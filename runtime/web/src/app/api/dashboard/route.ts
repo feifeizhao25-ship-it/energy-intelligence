@@ -6,6 +6,7 @@ import { USAGE_LIMITS } from '@/lib/membership/plans';
 import { effectivePlan } from '@/lib/auth/token-refresh';
 import { sameShanghaiDay } from '@/lib/membership/day';
 import { buildPersonalDashboard } from '@/lib/dashboard/personal-summary';
+import { readNickname } from '@/lib/dashboard/greeting';
 import { savedCalculationRef } from '@/lib/dashboard/saved-calculations';
 import { buildPersonalization, parsePreferences, PREFERENCE_LOG_TYPES, dedupeNextActions } from '@/lib/dashboard/personalization';
 import { TIP_DISMISS_DAYS, TIP_DISMISSED_TYPE } from '@/lib/dashboard/tips';
@@ -71,7 +72,7 @@ export async function GET() {
     } : {};
 
     const dashboard = buildPersonalDashboard({
-            user: { name: user.name, plan: user.plan, planExpireAt: user.planExpireAt },
+            user: { name: user.name, nickname: readNickname(prefLog?.metadata), plan: user.plan, planExpireAt: user.planExpireAt },
             projects: projects.map(({ location: _location, ...p }) => p), projectCount, calculationCount,
             snapshotCount, savedCalculations: snapshots.map(savedCalculationRef),
             savedPaperCount, stations,

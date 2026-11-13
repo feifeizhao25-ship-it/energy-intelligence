@@ -22,6 +22,8 @@ import { DashboardSkeleton } from '@/components/ui/Skeleton';
 import { BuildStamp } from '@/components/layout/BuildStamp';
 import type { Personalization, ModuleId } from '@/lib/dashboard/personalization';
 import { DISMISSIBLE_TIPS as DISMISSIBLE, RECENT_WORK_EMPTY, projectCountFact, recentWorkDetail, recentWorkTitle } from '@/lib/dashboard/personal-summary';
+import { policyLibraryEmptyCopy } from '@/lib/policy/empty-copy';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 // ---------------------------------------------------------------------------
 // 数据来源：GET /api/dashboard —— 只包含当前登录用户自己的项目、测算、电站、额度。
@@ -95,9 +97,10 @@ function TariffCard({ tariff, provinceSource }: { tariff: NonNullable<Personaliz
 }
 
 function PolicyCard({ p }: { p: Personalization }) {
+    const empty = policyLibraryEmptyCopy({ province: p.province });
     return (
         <div id="policies" data-testid="policy-card" className="ei-panel">
-            <div className="flex items-center gap-2 font-bold text-[var(--ink)] mb-1"><Landmark className="w-4 h-4 text-green-600" />{p.province}政策</div>
+            <div className="flex items-center gap-2 font-bold text-[var(--ink)] mb-1"><Landmark className="w-4 h-4 text-green-600" />{p.province ? `${p.province}政策` : '已审核政策'}</div>
             <p className="text-[11px] text-slate-400 mb-2">只显示经人工审核通过的政策</p>
             {p.milestones.length > 0 && (
                 <div className="mb-2">
@@ -113,10 +116,7 @@ function PolicyCard({ p }: { p: Personalization }) {
                 </div>
             )}
             {p.policies.length === 0 ? (
-                <p className="text-xs leading-5 text-slate-500">
-                    政策库里暂时没有{p.province}审核通过的政策。新抓取的政策要由审核员对照原文核对后才会显示在这里，也才会计入测算；
-                    在此之前可先看上方的{p.province}电价与分时规则。
-                </p>
+                <EmptyState title={empty.title} detail={empty.detail} />
             ) : p.policies.map(item => (
                 <div key={item.id} className="py-1 text-xs text-slate-600">
                     {item.sourceUrl ? <a href={item.sourceUrl} target="_blank" rel="noreferrer" className="underline">{item.title}</a> : item.title}
@@ -209,7 +209,7 @@ function DashboardContent() {
                 </div>
             )}
         >
-            <div className="space-y-4">
+            <div className="ei-module-stack">
                 {status === 'error' || !data ? (
                     <div className="ei-error flex flex-col items-center p-8 text-center">
                         <div className="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center mb-4">
@@ -298,7 +298,7 @@ function DashboardContent() {
                         )}
                                 </>),
                                 tariff: p?.tariff ? <TariffCard key="tariff" tariff={p.tariff} provinceSource={p.provinceSource} /> : null,
-                                policies: p?.personalized && p.province ? <PolicyCard key="policies" p={p} /> : null,
+                                policies: p?.personalized ? <PolicyCard key="policies" p={p} /> : null,
                             };
                             const order: ModuleId[] = p?.moduleOrder ?? ['nextActions', 'stationAlerts', 'projects', 'usage'];
                             return <>

@@ -1,4 +1,5 @@
 import { defaultReadingMode, parsePreferences, type PreferenceTag, type Role } from './personalization';
+import { isAutoAccountName } from './greeting';
 import { bottomLineTerms } from '@/lib/compliance/bottom-line';
 
 export interface FollowItem {
@@ -18,6 +19,8 @@ export interface UserProfileDraft {
     tags: PreferenceTag[];
     follows: FollowItem[];
     understoodTerms: string[];
+    /** 用户自己填的称呼。自动编号不算昵称。 */
+    nickname: string | null;
 }
 
 function asRecord(value: unknown): Record<string, unknown> {
@@ -26,6 +29,11 @@ function asRecord(value: unknown): Record<string, unknown> {
 
 function text(value: unknown): string | null {
     return typeof value === 'string' && value.trim() ? value.trim() : null;
+}
+
+function cleanNickname(value: unknown): string | null {
+    const name = text(value)?.slice(0, 32) ?? null;
+    return name && !isAutoAccountName(name) ? name : null;
 }
 
 function textList(value: unknown): string[] {
@@ -59,6 +67,7 @@ export function profileFromUsageMetadata(metadata: unknown): UserProfileDraft {
         tags: prefs.tags,
         follows: cleanFollows(extra.follows ?? source.follows),
         understoodTerms: textList(extra.understoodTerms ?? source.understoodTerms),
+        nickname: cleanNickname(extra.nickname ?? source.nickname),
     };
 }
 
