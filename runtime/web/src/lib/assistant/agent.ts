@@ -7,10 +7,17 @@ import { assistantToolDefinitions, handleToolCall } from "./tools";
  * 能源智库 Agent 核心逻辑
  * 支持多轮工具调用，直到给出最终回答
  */
+function abortError(): Error {
+    const error = new Error('The operation was aborted');
+    error.name = 'AbortError';
+    return error;
+}
+
 export async function* assistantChatStream(
     messages: Message[],
     model: string = 'glm-4-plus',
-    userId?: string
+    userId?: string,
+    signal?: AbortSignal,
 ): AsyncGenerator<{ type: string; data: any }> {
 
     const MAX_ITERATIONS = 5;
@@ -33,14 +40,17 @@ export async function* assistantChatStream(
 
     while (iteration < MAX_ITERATIONS) {
         iteration++;
+        if (signal?.aborted) throw abortError();
 
         // @ts-ignore
         const response = await callAI({
             model: model as any, // 推荐使用 GLM-4 或 DeepSeek V3 进行工具调用
             messages: currentMessages,
             tools: assistantToolDefinitions.filter((tool) => new Set<string>(modelToolNames(isCnEdition() ? 'cn' : 'global', 'assistant')).has(tool.function.name)),
-            tool_choice: 'auto'
+            tool_choice: 'auto',
+            signal,
         }) as any;
+        if (signal?.aborted) throw abortError();
 
         const message = response.choices[0].message;
 
@@ -54,6 +64,7 @@ export async function* assistantChatStream(
         currentMessages.push(message); // 将模型的“调用意图”加入对话历史
 
         for (const toolCall of message.tool_calls) {
+            if (signal?.aborted) throw abortError();
             const toolName = toolCall.function.name;
             const toolArgs = toolCall.function.arguments;
 
@@ -75,6 +86,7 @@ export async function* assistantChatStream(
                     content: JSON.stringify(result)
                 });
             } catch (err: any) {
+                if (signal?.aborted || err?.name === 'AbortError') throw err?.name === 'AbortError' ? err : abortError();
                 currentMessages.push({
                     role: 'tool',
                     tool_call_id: toolCall.id,

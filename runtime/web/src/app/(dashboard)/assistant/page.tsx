@@ -4,16 +4,17 @@ import { AiMarkdown } from '@/components/ai/AiMarkdown';
 import React, { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { useSession } from 'next-auth/react';
-import { Sparkles, Send, Paperclip, Copy, RefreshCw, Loader2, FileText, Image as ImageIcon, AlertCircle } from 'lucide-react';
+import { Sparkles, Paperclip, Copy, RefreshCw, AlertCircle } from 'lucide-react';
 import { VoiceInput } from '@/components/input/VoiceInput';
 import { BubbleSpeaker } from '@/components/ai/BubbleSpeaker';
-import { safeErrorMessage } from '@/lib/api/safe-error';
+import { AssistantComposerButton } from '@/components/assistant/AssistantComposerButton';
 import { AigcLabel } from '@/components/ui/AigcLabel';
 import { buildAnswerDateLine } from '@/lib/ai/answer-date-line';
 import { VerificationBadge } from '@/components/evidence/VerificationBadge';
 import type { EvidenceVerification } from '@/lib/evidence/verification';
 import { citationText, dateLines } from '@/lib/assistant/citation-text';
 import { ASSISTANT_UNREACHABLE_ZH, visibleAssistantError } from '@/lib/assistant/chat-failure';
+import { applyAssistantStreamEvent, runAssistantRequest, settleAssistantMessages } from '@/lib/assistant/live-turn';
 import type { StoredSource } from '@/lib/assistant/answer-store';
 
 interface Message {
@@ -111,100 +112,25 @@ export default function AssistantPage() {
         };
         setMessages(prev => [...prev, aiMessage]);
 
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
         try {
-            abortControllerRef.current = new AbortController();
-
-            const response = await fetch('/api/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    messages: [...messages, userMessage].map(m => ({
-                        role: m.role,
-                        content: m.content
-                    })),
-                    isAssistant: true
-                }),
-                signal: abortControllerRef.current.signal
+            const outcome = await runAssistantRequest({
+                endpoint: '/api/chat',
+                history: [...messages, userMessage].map(m => ({
+                    role: m.role,
+                    content: m.content
+                })),
+                question: userMessage.content,
+                signal: controller.signal,
+                onEvent: (event) => {
+                    setMessages(prev => applyAssistantStreamEvent(prev, aiMessageId, event));
+                },
             });
-
-            if (!response.ok) {
-                const payload = await response.json().catch(() => null);
-                const message = typeof payload?.message === 'string' && payload.message.trim()
-                    ? payload.message
-                    : 'AI 服务暂时不可用';
-                throw new Error(message);
+            setMessages(prev => settleAssistantMessages(prev, aiMessageId, outcome));
+            if (!outcome.aborted && outcome.error) {
+                setError(visibleAssistantError(outcome.error || ASSISTANT_UNREACHABLE_ZH));
             }
-
-            const reader = response.body?.getReader();
-            const decoder = new TextDecoder();
-            let accumulatedContent = '';
-            let streamError: string | null = null;
-
-            if (reader) {
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-
-                    const chunk = decoder.decode(value);
-                    const lines = chunk.split('\n');
-
-                    for (const line of lines) {
-                        if (line.startsWith('data: ')) {
-                            const data = line.slice(6);
-                            if (data === '[DONE]') continue;
-
-                            try {
-                                const parsed = JSON.parse(data);
-                                if (parsed.type === 'provider') {
-                                    const model = parsed.data?.model;
-                                    setMessages(prev => prev.map(m => m.id === aiMessageId ? { ...m, model, question: userMessage.content } : m));
-                                } else if (parsed.type === 'evidence') {
-                                    const verification = parsed.data?.verification;
-                                    const sources = Array.isArray(parsed.data?.sources) ? parsed.data.sources : [];
-                                    setMessages(prev => prev.map(m => m.id === aiMessageId ? {
-                                        ...m,
-                                        verification,
-                                        sources,
-                                        answerId: parsed.data?.answerId ?? null,
-                                        standIn: Boolean(parsed.data?.standIn),
-                                        synthetic: Boolean(parsed.data?.synthetic),
-                                        downloads: parsed.data?.downloads || { pdf: true, docx: false },
-                                    } : m));
-                                } else if (parsed.type === 'content') {
-                                    accumulatedContent += parsed.data;
-                                    setMessages(prev => prev.map(m =>
-                                        m.id === aiMessageId
-                                            ? { ...m, content: accumulatedContent }
-                                            : m
-                                    ));
-                                } else if (parsed.type === 'error') {
-                                    // 服务端错误事件：记下来，读完流后统一报错（原来在内层 try 里抛出，被“忽略解析错误”吞掉，界面留下一个空白的 AI 气泡）
-                                    streamError = visibleAssistantError(String(parsed.data?.message || ''));
-                                }
-                            } catch (e) {
-                                // 忽略解析错误
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (streamError && !accumulatedContent) {
-                throw new Error(streamError);
-            }
-
-            // 完成流式传输
-            setMessages(prev => prev.map(m =>
-                m.id === aiMessageId
-                    ? { ...m, isStreaming: false }
-                    : m
-            ));
-
-        } catch (err: unknown) {
-            setMessages(prev => prev.filter(m => m.id !== aiMessageId));
-            if (err instanceof Error && err.name === 'AbortError') return;
-
-            setError(visibleAssistantError(safeErrorMessage(err, ASSISTANT_UNREACHABLE_ZH)));
         } finally {
             setIsLoading(false);
             abortControllerRef.current = null;
@@ -484,35 +410,12 @@ export default function AssistantPage() {
                                         }}
                                     />
                                 </div>
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        if (isLoading) {
-                                            abortControllerRef.current?.abort();
-                                            return;
-                                        }
-                                        void handleSend();
-                                    }}
-                                    disabled={!isLoading && !inputValue.trim()}
-                                    className={cn(
-                                        "px-4 py-2 rounded-xl flex items-center gap-2 text-sm font-medium transition-all",
-                                        inputValue.trim() || isLoading
-                                            ? "bg-primary hover:bg-primary-600 text-white shadow-lg shadow-primary/20"
-                                            : "bg-surface-dark text-text-secondary cursor-not-allowed"
-                                    )}
-                                >
-                                    {isLoading ? (
-                                        <>
-                                            <Loader2 className="w-4 h-4 animate-spin" />
-                                            停止
-                                        </>
-                                    ) : (
-                                        <>
-                                            发送
-                                            <Send className="w-4 h-4" />
-                                        </>
-                                    )}
-                                </button>
+                                <AssistantComposerButton
+                                    loading={isLoading}
+                                    draft={inputValue}
+                                    onStop={() => abortControllerRef.current?.abort()}
+                                    onSend={() => { void handleSend(); }}
+                                />
                             </div>
                         </div>
                     </div>
