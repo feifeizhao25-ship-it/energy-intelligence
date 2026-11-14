@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
     5. 总字数控制在200字以内，Markdown 列表格式。
     `;
 
-        const analysis = await simpleChat(prompt, 'deepseek-v3');
+        const analysis = await simpleChat(prompt, 'deepseek-v3', req.signal);
         if (req.signal.aborted) {
             await refundIfPending();
             return NextResponse.json({ error: '分析已取消' }, { status: 499 });

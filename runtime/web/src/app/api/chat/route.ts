@@ -14,7 +14,7 @@ import { recordFeedback } from '@/lib/feedback/samples';
 import { collectSourcesFromToolResult, verifySources, type EvidenceSource } from '@/lib/evidence/verification';
 import { saveAnswer, type StoredSource } from '@/lib/assistant/answer-store';
 import { isSyntheticUrl } from '@/lib/assistant/library-fallback';
-import { ASSISTANT_UNREACHABLE_ZH } from '@/lib/assistant/chat-failure';
+import { ASSISTANT_UNREACHABLE_ZH, isAbortError } from '@/lib/assistant/chat-failure';
 import { modelFailureReply } from '@/lib/assistant/model-failure';
 import { EXPORT_FORMATS } from '@/lib/membership/plans';
 
@@ -23,6 +23,28 @@ export const maxDuration = 60;
 
 export async function POST(request: NextRequest) {
     let quota: ReturnType<typeof trackAiQuota> | null = null;
+    let quotaClosed = false;
+    const upstream = new AbortController();
+    let clientCancelled = false;
+    const abortUpstream = () => {
+        if (!upstream.signal.aborted) upstream.abort();
+    };
+    const cancelled = () => request.signal.aborted || clientCancelled;
+    const refundIfPending = () => {
+        if (quotaClosed || !quota) return Promise.resolve();
+        quotaClosed = true;
+        return quota.refund();
+    };
+    const keepQuota = () => {
+        if (quotaClosed || !quota) return false;
+        quotaClosed = true;
+        quota.settle();
+        return true;
+    };
+    const onAbort = () => {
+        abortUpstream();
+        void refundIfPending();
+    };
     try {
         const session = await getServerSession(authOptions) as any;
         const body = await request.json().catch(() => null);
@@ -61,10 +83,11 @@ export async function POST(request: NextRequest) {
         const guard = await requireAiQuota();
         if (!guard.ok) return guard.response;
         quota = trackAiQuota(guard.userId);
-        if (request.signal.aborted) {
-            await quota.refund();
+        if (cancelled()) {
+            await refundIfPending();
             return new Response(JSON.stringify({ error: ASSISTANT_UNREACHABLE_ZH }), { status: 499, headers: { 'Content-Type': 'application/json' } });
         }
+        request.signal.addEventListener('abort', onAbort, { once: true });
         const userPlan = guard.plan as Plan;
 
         // Determine the actual model based on user plan
@@ -79,18 +102,15 @@ export async function POST(request: NextRequest) {
         // 创建可读流
         const encoder = new TextEncoder();
         let modelFinished = false;
-        const refundIfIncomplete = () => {
-            if (modelFinished || !quota) return Promise.resolve();
-            return quota.refund();
-        };
-        const onAbort = () => { void refundIfIncomplete(); };
-        request.signal.addEventListener('abort', onAbort, { once: true });
         const stream = new ReadableStream({
             async start(controller) {
+                const closeQuietly = () => {
+                    try { controller.close(); } catch { /* 客户端已经离开 */ }
+                };
                 try {
-                    if (request.signal.aborted) {
-                        await refundIfIncomplete();
-                        controller.close();
+                    if (cancelled()) {
+                        await refundIfPending();
+                        closeQuietly();
                         return;
                     }
                     const currentProvider = provider || aiService.getAIProvider();
@@ -107,8 +127,8 @@ export async function POST(request: NextRequest) {
                     })}\n\n`));
 
                     const chatSource = isAssistant
-                        ? assistantChatStream(messages, actualModel, guard.userId)
-                        : aiService.chatStream(messages, { provider: currentProvider, model: actualModel } as any);
+                        ? assistantChatStream(messages, actualModel, guard.userId, upstream.signal)
+                        : aiService.chatStream(messages, { provider: currentProvider, model: actualModel, signal: upstream.signal } as any);
 
                     // 次数已在门禁里扣减；模型流没跑完时在下面退还。这里只记明细日志。
                     try {
@@ -117,11 +137,16 @@ export async function POST(request: NextRequest) {
                     } catch (usageError) {
                         console.warn('Usage log failed (non-blocking):', usageError);
                     }
+                    if (cancelled()) {
+                        await refundIfPending();
+                        closeQuietly();
+                        return;
+                    }
 
                     const evidenceSources: EvidenceSource[] = [];
                     const textParts: string[] = [];
                     for await (const event of chatSource) {
-                        if (request.signal.aborted) break;
+                        if (cancelled()) break;
                         // 转换事件类型以匹配前端期望
                         let transformedEvent = event;
                         if (event.type === 'text') {
@@ -147,13 +172,16 @@ export async function POST(request: NextRequest) {
                         const data = JSON.stringify(transformedEvent);
                         controller.enqueue(encoder.encode(`data: ${data}\n\n`));
                     }
-                    if (request.signal.aborted) {
-                        await refundIfIncomplete();
-                        controller.close();
+                    if (cancelled()) {
+                        await refundIfPending();
+                        closeQuietly();
+                        return;
+                    }
+                    if (!keepQuota()) {
+                        closeQuietly();
                         return;
                     }
                     modelFinished = true;
-                    quota?.settle();
                     const rawAnswer = textParts.join('');
                     const answer = neutralizeCnText(rawAnswer);
                     if (answer === BOTTOM_LINE_NOTICE_ZH && rawAnswer && rawAnswer !== answer) {
@@ -186,7 +214,11 @@ export async function POST(request: NextRequest) {
                     controller.close();
                 } catch (error) {
                     // 次数在开流前已扣。模型流没跑完、用户取消或连接中断时退还，而且只退一次。
-                    await refundIfIncomplete();
+                    await refundIfPending();
+                    if (cancelled() || isAbortError(error)) {
+                        closeQuietly();
+                        return;
+                    }
                     const question = String(latestUser?.content || '');
                     const failure = modelFinished ? null : modelFailureReply(error, question);
                     if (failure?.kind === 'library') {
@@ -225,10 +257,14 @@ export async function POST(request: NextRequest) {
                     });
                     controller.enqueue(encoder.encode(`data: ${errorData}\n\n`));
                     controller.close();
+                } finally {
+                    request.signal.removeEventListener('abort', onAbort);
                 }
             },
             async cancel() {
-                await refundIfIncomplete();
+                clientCancelled = true;
+                abortUpstream();
+                await refundIfPending();
             },
         });
 
@@ -241,7 +277,9 @@ export async function POST(request: NextRequest) {
             }
         });
     } catch (error) {
-        await quota?.refund();
+        abortUpstream();
+        await refundIfPending();
+        request.signal.removeEventListener('abort', onAbort);
         console.error('Chat API错误:', error);
         return new Response(
             JSON.stringify({

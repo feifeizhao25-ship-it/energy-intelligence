@@ -19,6 +19,8 @@ export interface AIRequest {
     stream?: boolean;
     tools?: any[];
     tool_choice?: any;
+    /** 用户取消时中止正在进行的上游请求。 */
+    signal?: AbortSignal;
 }
 
 const siliconFlowKey = process.env.SILICONFLOW_API_KEY;
@@ -51,6 +53,7 @@ async function callDomesticBackend(req: AIRequest) {
             model: cnRequestModel(req.model),
             messages: req.messages,
         }),
+        signal: req.signal,
     });
     if (!response.ok) {
         throw new Error('国内 AI 服务已拒绝生成替代内容');
@@ -67,7 +70,16 @@ async function callDomesticBackend(req: AIRequest) {
  * 统一 AI 路由服务
  * 国内版走后端 DeepSeek → 百炼 → 智谱。其他环境仍可使用 SiliconFlow。
  */
+function isAbortError(error: unknown): boolean {
+    return !!error && typeof error === 'object' && (error as { name?: string }).name === 'AbortError';
+}
+
 export async function callAI(req: AIRequest) {
+    if (req.signal?.aborted) {
+        const error = new Error('The operation was aborted');
+        error.name = 'AbortError';
+        throw error;
+    }
     if (isCnEdition()) return callDomesticBackend(req);
     const model = req.model || 'glm-4-plus';
 
@@ -89,10 +101,11 @@ export async function callAI(req: AIRequest) {
             stream: req.stream || false,
             tools: req.tools,
             tool_choice: req.tool_choice,
-        });
+        }, { signal: req.signal });
 
         return response;
     } catch (error: any) {
+        if (req.signal?.aborted || isAbortError(error)) throw error;
         console.error(`AI Router Error (${model}):`, error);
 
         // 如果是流式请求失败，可能较难自动 fallback，直接抛出

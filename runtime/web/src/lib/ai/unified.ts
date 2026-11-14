@@ -11,6 +11,7 @@ export function getAIProvider(): string {
 export interface AIServiceConfig {
     model?: AIModel;
     temperature?: number;
+    signal?: AbortSignal;
 }
 
 // 统一的聊天响应
@@ -58,10 +59,12 @@ export async function* chatStream(
         model,
         messages: messages.map(m => ({ role: m.role, content: m.content })),
         temperature: config?.temperature || 0.7,
-        stream: true
+        stream: true,
+        signal: config?.signal,
     });
 
     for await (const chunk of stream) {
+        if (config?.signal?.aborted) return;
         const content = chunk.choices[0]?.delta?.content || '';
         if (content) {
             yield { type: 'content', data: content };
@@ -74,13 +77,15 @@ export async function* chatStream(
  */
 export async function simpleChat(
     prompt: string,
-    model?: AIModel
+    model?: AIModel,
+    signal?: AbortSignal,
 ): Promise<string> {
     // @ts-ignore
     const response = await callAI({
         model: model || 'glm-4-plus',
         messages: [{ role: 'user', content: prompt }],
-        temperature: 0.7
+        temperature: 0.7,
+        signal,
     });
 
     // @ts-ignore

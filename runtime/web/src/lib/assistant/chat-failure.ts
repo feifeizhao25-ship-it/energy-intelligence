@@ -32,6 +32,10 @@ export function isModelUnreachable(error: unknown): boolean {
   return /ECONNREFUSED|ECONNRESET|ENOTFOUND|ETIMEDOUT|EAI_AGAIN|EHOSTUNREACH|EPIPE|fetch failed|failed to fetch|network|socket hang up|UND_ERR_|other side closed|connect ECONN/i.test(errorChain(error));
 }
 
+export function isAbortError(error: unknown): boolean {
+  return !!error && typeof error === 'object' && (error as { name?: unknown }).name === 'AbortError';
+}
+
 /** 界面上不要出现「未知错误」或英文网络报错。 */
 export function visibleAssistantError(message: string): string {
   const trimmed = message.trim();
