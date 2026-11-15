@@ -152,15 +152,8 @@ class RAGService:
         query_tokens = tokenize(query) - STOPWORDS
         if not query_tokens:
             return RAGResult(hits=[])
-        # Legal expiry follows the wall clock. Verification age of the bundled
-        # JSON does not: LIBRARY_FRESHNESS is off, so the file is a snapshot.
-        # Measuring that age from a later wall clock drops policy-cn-136 and
-        # policy-us-itc (both last verified 2026-10-15, 30-day interval) once
-        # the clock passes 2026-11-14, and the next shared-term document is
-        # cited in their place.
-        retrieved_on = date.today()
-        freshness_on = self._freshness_clock(retrieved_on)
-        retrieved_at = retrieved_on.isoformat()
+        today = date.today()
+        retrieved_at = today.isoformat()
 
         scored: List[RAGHit] = []
         for doc in self._corpus:
@@ -177,14 +170,14 @@ class RAGService:
             if is_blocked_from_retrieval(doc):
                 continue
             review = doc.get("evidence_status")
-            if effective_only and not _currently_effective(doc, retrieved_on):
+            if effective_only and not _currently_effective(doc, today):
                 continue
             source_countries = set(doc.get("countries") or [])
             if countries and source_countries and not (countries & source_countries):
                 continue
             if countries and not source_countries and doc.get("applicability_status") != "reviewed":
                 continue
-            freshness = self._freshness_of(doc, freshness_on)
+            freshness = self._freshness_of(doc, today)
             if exclude_stale and freshness == "stale":
                 continue
             doc_tokens = tokenize(
@@ -266,23 +259,9 @@ class RAGService:
         ranked["rows"] = ranked["rows"][:top_k]
         return ranked
 
-    def _freshness_clock(self, retrieved_on: date) -> date:
-        """Verification 'today' for a file-backed snapshot.
-
-        Injected corpora have no snapshot date and stay on the wall clock, so a
-        row that is overdue relative to the test clock is still excluded.
-        A file-backed registry uses its newest recorded check when that check
-        is earlier than the wall clock, and never a date after the wall clock.
-        """
-        registry = self._registry
-        if registry is None or registry.path is None:
-            return retrieved_on
-        snapshot = registry.latest_verification_date()
-        if snapshot is None or snapshot >= retrieved_on:
-            return retrieved_on
-        return snapshot
-
     def _freshness_of(self, doc: Dict, today: Optional[date] = None) -> str:
+        # Same instant search() already took from the wall clock. Callers that
+        # omit it still resolve "now" inside freshness_status.
         if self._registry is not None:
             return self._registry.freshness_of(doc, today=today)
         # 注入 corpus 且未给注册表时，按条目自带周期（缺省 365 天）计算

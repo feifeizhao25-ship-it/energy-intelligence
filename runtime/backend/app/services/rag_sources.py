@@ -131,19 +131,6 @@ class SourceRegistry:
     def get(self, source_id: str) -> Optional[Dict]:
         return self._by_id.get(source_id)
 
-    def latest_verification_date(self) -> Optional[date]:
-        """Newest ``last_verified_at`` in this registry. Dates that do not parse are skipped."""
-        found: List[date] = []
-        for source in self._sources:
-            raw = source.get("last_verified_at")
-            if not raw:
-                continue
-            try:
-                found.append(date.fromisoformat(str(raw)[:10]))
-            except ValueError:
-                continue
-        return max(found) if found else None
-
     def freshness_of(self, source: Dict, today: Optional[date] = None) -> str:
         return freshness_status(
             source.get("last_verified_at", ""),
