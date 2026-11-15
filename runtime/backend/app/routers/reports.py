@@ -1058,12 +1058,12 @@ def _add_styled_table(
             for cell in table.columns[i].cells:
                 cell.width = Cm(w)
 
-    # 表头
+    # 表头。直接写入文字：先 cell.text = "" 再 add_run 会在可见文字前留下一个空 run。
     for i, h in enumerate(headers):
         cell = table.rows[0].cells[i]
-        cell.text = ""
+        cell.text = h
         p = cell.paragraphs[0]
-        run = p.add_run(h)
+        run = p.runs[0]
         run.font.size = Pt(fs["table_head"])
         run.font.bold = True
         run.font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
@@ -1079,9 +1079,9 @@ def _add_styled_table(
     for row_idx, row_data in enumerate(rows):
         for col_idx, val in enumerate(row_data):
             cell = table.rows[row_idx + 1].cells[col_idx]
-            cell.text = ""
+            cell.text = str(val)
             p = cell.paragraphs[0]
-            run = p.add_run(str(val))
+            run = p.runs[0]
             run.font.size = Pt(fs["table_body"])
             _set_run_fonts(run, FONT_BODY_CN)
             # 斑马纹
