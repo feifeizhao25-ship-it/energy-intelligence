@@ -98,12 +98,29 @@ def _reverification_note(query: str, market: str, has_other: bool) -> str:
     return _reverification_sentence(labels, market, has_other)
 
 
-def _append_reverification(text: str, query: str, market: str, has_other: bool) -> str:
+def _lead_with_reverification(text: str, query: str, market: str, has_other: bool) -> str:
+    """Put the named-document notice ahead of any cited document.
+
+    When other documents are in the answer, that sentence is the first thing the reader sees. The
+    wording is unchanged. If the model already wrote the exact sentence later, it is moved to the
+    front once. A reply that cites nothing keeps its own opening line — the no-source status stays
+    on line 1 — and the notice follows it.
+    """
     note = _reverification_note(query, market, has_other)
     body = text or ""
-    if not note or note in body:
+    if not note:
         return body
-    return note if not body else body + "\n\n" + note
+    if not has_other:
+        if note in body:
+            return body
+        return note if not body else body + "\n\n" + note
+    if body.startswith(note):
+        return body
+    if note in body:
+        body = body.replace(note, "", 1).strip()
+    if not body:
+        return note
+    return note + "\n\n" + body
 
 
 def _reverification_prompt(query: str, market: str, has_other: bool) -> str:
@@ -174,7 +191,7 @@ def _grounding(hits: list, status: Optional[str] = None) -> dict:
 
 def _no_source_payload(market: str, style: Optional[str], query: str = "") -> dict:
     """Fixed reply for a policy/tax/legal question with no retrieved source. The model is not called."""
-    message = _append_reverification(grounding.no_source_reply(market), query, market, has_other=False)
+    message = _lead_with_reverification(grounding.no_source_reply(market), query, market, has_other=False)
     return {
         "message": message,
         "ai_metadata": {"grounding": "no_source", "model_called": False},
@@ -189,13 +206,14 @@ def _finish_answer(message: str, hits: list, market: str, query: str = "") -> tu
     """Note any past deadline the answer still states. A policy question with no source never reaches here (it gets the
     fixed no-source reply, status on line 1); general explanations carry ``grounding.status`` for the client to show.
 
-    When the query names a document whose library record was dropped as stale, the answer says so here. That sentence
-    is not a citation: the excluded record stays out of the source list.
+    When the query names a document whose library record was dropped as stale and other documents are cited,
+    that sentence leads the answer. It is not a citation: the excluded record stays out of the source list.
+    A reply that cites nothing keeps its opening line and carries the sentence after it.
     """
     today = _today()
     expired = grounding.date_check(message, today)
     body = grounding.mark_expired(message, today, market) + grounding.time_note(expired, today, market)
-    body = _append_reverification(body, query, market, has_other=bool(hits))
+    body = _lead_with_reverification(body, query, market, has_other=bool(hits))
     return body + _provenance_footer(message, hits, market, today), expired
 
 
@@ -390,7 +408,7 @@ async def chat(
                 chunks.append(chunk)
         full = _scrub_citations(enforce_bottom_line("".join(chunks), market=market), len(hits))
         if full:
-            structured = _structured(_append_reverification(full, message, market, bool(hits)), hits, market, style)
+            structured = _structured(_lead_with_reverification(full, message, market, bool(hits)), hits, market, style)
             shown, expired = _finish_answer(full, hits, market, query=message)
             yield f"data: {json.dumps({'content': shown, 'grounding': _grounding(hits), 'time_check': {'today': _today().isoformat(), 'expired_dates': expired}}, ensure_ascii=False)}\n\n"
             yield f"data: {json.dumps({'structured': structured}, ensure_ascii=False)}\n\n"
@@ -549,7 +567,7 @@ async def chat_json(
     await consume_ai_quota(user, db)
     _charge_cn(user_id, market)
     message = _scrub_citations(enforce_bottom_line(result["content"], market=market), len(hits))
-    structured = _structured(_append_reverification(message, body.message, market, bool(hits)), hits, market, body.style)
+    structured = _structured(_lead_with_reverification(message, body.message, market, bool(hits)), hits, market, body.style)
     evidence = _evidence_for(message, hits, market)
     message, expired = _finish_answer(message, hits, market, query=body.message)
     stored = _remember_answer(user, market, message, evidence.get("sources") or [], result["metadata"] or {})
@@ -585,7 +603,7 @@ async def analyze(
         assert_product_budget(user_id, market)
         hits = _retrieve(query, market)
         if not hits and grounding.is_policy_question(query):
-            reply = _append_reverification(grounding.no_source_reply(market), query, market, has_other=False)
+            reply = _lead_with_reverification(grounding.no_source_reply(market), query, market, has_other=False)
             return {"analysis": reply, "ai_metadata": {"grounding": "no_source", "model_called": False},
                     "evidence": _evidence_for("", [], market), "grounding": _grounding([], "no_source_refused")}
         prompt = _grounded_prompt(SYSTEM_PROMPT if market == "global" else CN_SYSTEM_PROMPT, hits, market, query=query)
@@ -778,7 +796,7 @@ async def ask(
                 for i, hit in enumerate(hits, 1)
             )
         if not blocked:
-            answer = _append_reverification(answer, body.query, market, has_other=bool(hits))
+            answer = _lead_with_reverification(answer, body.query, market, has_other=bool(hits))
         return {"answer": answer, "sources": _evidence_for(answer, hits, market).get("sources", []), "model": None,
                 "structured": _structured(answer, hits, market, body.style)}
     try:
@@ -791,7 +809,7 @@ async def ask(
         raise HTTPException(status_code=503, detail=_ai_unavailable(market)) from error
     _charge_cn(user_id, market)
     answer = _scrub_citations(enforce_bottom_line(result["content"], market=market), len(hits))
-    structured = _structured(_append_reverification(answer, body.query, market, bool(hits)), hits, market, body.style)
+    structured = _structured(_lead_with_reverification(answer, body.query, market, bool(hits)), hits, market, body.style)
     shown, expired = _finish_answer(answer, hits, market, query=body.query)
     return {"answer": shown, "sources": _evidence_for(answer, hits, market).get("sources", []), "model": result["metadata"],
             "structured": structured, "grounding": _grounding(hits),
