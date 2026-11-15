@@ -238,6 +238,9 @@ class Settings(BaseSettings):
     # DeepSeek 官方更新日志（2026-04-24）：旧模型名 deepseek-chat / deepseek-reasoner 于 2026-07-24 停止使用；
     # 现行定价页（2026-10-13 核对 https://api-docs.deepseek.com/zh-cn/quick_start/pricing/）列出 deepseek-flash（V4.1-Flash）。
     DEEPSEEK_MODEL: str = "deepseek-flash"
+    # DeepSeek 思考与正文共用 max_tokens。1500 在实测里会截断或把正文挤空。
+    # 可用环境变量 AI_MAX_TOKENS 覆盖。
+    AI_MAX_TOKENS: int = 4000
     GLM_BASE_URL: str = "https://open.bigmodel.cn/api/paas/v4/"
     # 智谱开放平台文档（docs.bigmodel.cn）当前模型号 glm-4.7-flash。
     # glm-4-flash / glm-4.5-flash 已停用，2026-01-30 后 GLM-4.5-Flash 路由到 GLM-4.7-Flash。
