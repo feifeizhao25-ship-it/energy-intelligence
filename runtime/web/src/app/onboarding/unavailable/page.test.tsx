@@ -10,6 +10,30 @@ import {
 
 const LEGAL = '我已年满 16 周岁；未满 16 周岁不得注册或使用。本条待法律顾问确认。';
 
+/** Tailwind 默认色阶。green-500 (#22c55e) 配白字约 2.28:1，低于 WCAG AA。 */
+const BUTTON_BG: Record<string, string> = {
+    'green-700': '#15803d',
+    'green-800': '#166534',
+    'emerald-700': '#047857',
+    'emerald-800': '#065f46',
+};
+
+function lin(channel: number) {
+    const c = channel / 255;
+    return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+}
+
+function luminance(hex: string) {
+    const n = parseInt(hex.slice(1), 16);
+    return 0.2126 * lin((n >> 16) & 255) + 0.7152 * lin((n >> 8) & 255) + 0.0722 * lin(n & 255);
+}
+
+function contrast(fg: string, bg: string) {
+    const lighter = Math.max(luminance(fg), luminance(bg));
+    const darker = Math.min(luminance(fg), luminance(bg));
+    return (lighter + 0.05) / (darker + 0.05);
+}
+
 describe('database-down age lookup message', () => {
     it('shows the temporary message and a retry, without the age checkbox or rewards', async () => {
         const html = renderToStaticMarkup(await Page({ searchParams: Promise.resolve({ next: '/assistant' }) }));
@@ -59,5 +83,24 @@ describe('database-down age lookup message', () => {
         expect(ageLookupUnavailablePath('/dashboard')).toBe('/onboarding/unavailable?next=%2Fdashboard');
         expect(ageLookupUnavailablePath('/pricing')).toBe('/onboarding/unavailable?next=%2Fdashboard');
         expect(ageLookupUnavailablePath('https://evil.example')).not.toContain('evil');
+    });
+
+    it('重试白字在按钮背景上至少 4.5:1', async () => {
+        const html = renderToStaticMarkup(await Page({ searchParams: Promise.resolve({ next: '/dashboard' }) }));
+        const rendered = html.match(/<a\b[^>]*class="([^"]*)"[^>]*>[\s\S]*?重试/);
+        expect(rendered).not.toBeNull();
+        const className = rendered?.[1] ?? '';
+        expect(className).toMatch(/(?:^|\s)text-white(?:\s|$)/);
+        const tone = className.match(/(?:^|\s)bg-(green|emerald)-(\d+)/);
+        expect(tone).not.toBeNull();
+        const key = `${tone?.[1]}-${tone?.[2]}`;
+        expect(BUTTON_BG[key]).toBeTruthy();
+        expect(contrast('#ffffff', BUTTON_BG[key])).toBeGreaterThanOrEqual(4.5);
+
+        expect(html).toContain('>重试<');
+        const source = readFileSync(join(__dirname, 'page.tsx'), 'utf8');
+        expect(source).toContain('bg-green-700');
+        expect(source).not.toContain('bg-green-500');
+        expect(source).toContain('重试');
     });
 });
