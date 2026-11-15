@@ -67,6 +67,26 @@ def library_clock_inside_review_window(monkeypatch):
     monkeypatch.setattr("app.services.rag_service.date", FrozenDate)
 
 
+@pytest.fixture
+def library_clock_past_review_window(monkeypatch):
+    """Freeze retrieval's wall clock after policy-cn-136's 30-day review window.
+
+    policy-cn-136 and policy-us-itc were last verified on 2026-10-15 with a
+    30-day interval, so 2026-11-15 is the first day outside that window.
+    2026-11-16 sits clearly past it. Production still calls date.today().
+    """
+    from datetime import date as date_cls
+
+    frozen = date_cls(2026, 11, 16)
+
+    class FrozenDate(date_cls):
+        @classmethod
+        def today(cls):
+            return frozen
+
+    monkeypatch.setattr("app.services.rag_service.date", FrozenDate)
+
+
 @pytest.fixture(scope="session", autouse=True)
 def _dispose_engine_at_session_end():
     """会话结束时释放引擎连接 — 否则 sqlite/pg 连接的底层线程会阻止解释器退出。"""
