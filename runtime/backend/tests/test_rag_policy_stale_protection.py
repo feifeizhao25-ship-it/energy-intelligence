@@ -57,7 +57,7 @@ def test_rag_hits_carry_full_provenance_metadata():
     assert metadata["published_at"] == "2026-01-01"   # 发布日期
     assert metadata["locator"] == "第二章 并网申请"     # 页码/段落
     assert metadata["last_verified_at"]               # 最近核验日期
-    assert metadata["retrieved_at"] == TODAY.isoformat()  # 检索时间
+    assert metadata["retrieved_at"] == date.today().isoformat()  # 检索时间 (call-time, 防 import 跨午夜)
     assert metadata["license_note"]                   # 许可
     assert metadata["source_url"].startswith("https://")
     assert metadata["source_org"]

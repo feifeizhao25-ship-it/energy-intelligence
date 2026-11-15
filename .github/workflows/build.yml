@@ -65,6 +65,10 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./runtime/backend
+          # runtime/backend/Dockerfile 里 COPY --from=services 需要 compose
+          # additional_contexts 的等价物：services 指向 runtime/services
+          build-contexts: |
+            services=./runtime/services
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -110,6 +114,8 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./runtime/backend
+          build-contexts: |
+            services=./runtime/services
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -157,6 +163,12 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./runtime/web
+          # 与 runtime/docker-compose.cn.production.yml 的 build.args 保持一致；
+          # 缺 NEXT_PUBLIC_API_URL 时 validate-public-build-config.mjs 直接红。
+          build-args: |
+            NEXT_PUBLIC_APP_EDITION=cn
+            NEXT_PUBLIC_API_URL=/api/backend
+            BACKEND_INTERNAL_URL=http://backend:8000
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

@@ -27,7 +27,12 @@ import 'widgets/ei_wide.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   installCalmErrorWidget(english: true);
-  await ApiService.init(region: 'GLOBAL');
+  try {
+    await ApiService.init(region: 'GLOBAL');
+  } catch (e) {
+    // Never crash on boot: fall back to bundled region config base URL.
+    debugPrint('ApiService.init failed, using fallback: $e');
+  }
   runApp(const EnergyIntelligenceApp());
 }
 

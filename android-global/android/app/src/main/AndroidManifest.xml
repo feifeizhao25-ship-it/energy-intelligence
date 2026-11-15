@@ -2,7 +2,7 @@
     <!-- Voice input fills the assistant composer. Recognition prefers on-device speech. -->
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <application
-        android:label="energy_global"
+        android:label="EnergyIQ"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

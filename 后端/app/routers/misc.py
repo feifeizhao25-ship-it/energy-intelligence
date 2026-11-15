@@ -45,9 +45,10 @@ async def get_settings(
 
 
 _PLAN_META = {
-    "free": {"name": "免费版", "price_cents": 0},
-    "pro": {"name": "专业版", "price_cents": 19900},
-    "enterprise": {"name": "企业版", "price_cents": None},
+    "free": {"name": "Free", "price_cents": 0},
+    "starter": {"name": "Starter", "price_cents": 900},
+    "pro": {"name": "Professional", "price_cents": 14900},
+    "enterprise": {"name": "Team", "price_cents": 39900},
 }
 
 
@@ -63,7 +64,7 @@ def _build_plans():
             "id": plan_id,
             "name": meta["name"],
             "price_cents": meta["price_cents"],
-            "currency": "CNY",
+            "currency": "USD",
             "report_exports_per_month": entitlements["report_exports_per_month"],
             "ai_queries_per_day": entitlements["ai_queries_per_day"],
             "entitlements": entitlements,

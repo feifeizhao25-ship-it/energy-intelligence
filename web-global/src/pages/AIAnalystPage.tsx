@@ -25,6 +25,7 @@ import {
   isUnpublishedRecord,
   postAnalystChat,
 } from '../lib/ai/analystChat';
+import { trackEvent } from '../lib/analytics';
 
 interface Message {
   role: 'user' | 'assistant' | 'system';
@@ -150,6 +151,9 @@ const AIAnalystPage: React.FC = () => {
     try {
       const reply = await postAnalystChat(question);
       setMessages((prev) => [...prev, { role: 'assistant', text: reply.text, reply }]);
+      void trackEvent('analysis_completed', {
+        question_chars: question.length,
+      });
     } catch {
       setMessages((prev) => [
         ...prev,

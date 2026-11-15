@@ -98,11 +98,13 @@ class ApiService {
   /// 不再让类型转换错误把登录页卡住且没有任何提示。
   static String accessTokenFrom(Map<String, dynamic> resp) {
     final data = resp['data'];
-    if (data is Map && data['access_token'] is String) {
-      return data['access_token'] as String;
+    final Object? token = data is Map && data['access_token'] is String
+        ? data['access_token']
+        : resp['access_token'];
+    if (token is! String || token.isEmpty) {
+      throw ApiException(500, 'Sign-in failed. Please try again.');
     }
-    if (resp['access_token'] is String) return resp['access_token'] as String;
-    throw ApiException(500, 'Sign-in failed. Please try again.');
+    return token;
   }
 
   static Future<void> logout() async {

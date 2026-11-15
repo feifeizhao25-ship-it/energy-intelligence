@@ -1,8 +1,9 @@
 name: Deploy to Production
 
 on:
-  push:
-    branches: [main]
+  # Manual-only until AWS deploy credentials + target are decided: the preflight
+  # job hard-fails without AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY, which made
+  # every main push structurally red. Re-enable push once secrets exist.
   workflow_dispatch:
 
 permissions:
@@ -36,7 +37,7 @@ jobs:
     - name: Setup pnpm
       uses: pnpm/action-setup@v2
       with:
-        version: 8
+        version: 9
 
     - name: Setup Node.js
       uses: actions/setup-node@v4

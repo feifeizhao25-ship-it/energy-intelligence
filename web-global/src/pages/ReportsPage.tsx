@@ -17,6 +17,7 @@ import GlobalShell from '../components/GlobalShell';
 import EmptyState from '../components/EmptyState';
 import useApiList from '../hooks/useApiList';
 import { API_BASE, fetchJson } from '../lib/config';
+import { trackEvent } from '../lib/analytics';
 
 const REPORT_TYPES = [
   { label: 'Feasibility', value: 'feasibility' },
@@ -50,6 +51,7 @@ const ReportsPage: React.FC = () => {
         kind: 'success',
         text: 'Report request accepted. It will appear in the list once generation completes.',
       });
+      void trackEvent('report_exported', { type, format });
       reload();
     } catch {
       setNotice({

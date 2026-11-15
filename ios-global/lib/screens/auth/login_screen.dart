@@ -9,39 +9,20 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _LoginScreenState extends State<LoginScreen> {
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
   bool _showPass = false;
   bool _loading = false;
 
   @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-  }
-
-  @override
   void dispose() {
-    _tabController.dispose();
     _emailCtrl.dispose();
     _passCtrl.dispose();
     super.dispose();
   }
 
   Future<void> _login() async {
-    if (_tabController.index == 1) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Magic-link sign-in is not configured yet. Use your password.',
-          ),
-        ),
-      );
-      return;
-    }
     if (_emailCtrl.text.trim().isEmpty || _passCtrl.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Enter your email and password.')),
@@ -55,11 +36,18 @@ class _LoginScreenState extends State<LoginScreen>
         password: _passCtrl.text,
       );
       if (mounted) Navigator.pushReplacementNamed(context, '/main');
-    } on ApiException catch (error) {
-      if (mounted)
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(error.message)));
+    } catch (error) {
+      final msg = error is ApiException
+          ? error.message
+          : 'Sign-in failed. Please check your connection and try again.';
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(msg),
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -138,131 +126,50 @@ class _LoginScreenState extends State<LoginScreen>
                   constraints: const BoxConstraints(maxWidth: 480),
                   child: Column(
                 children: [
-                  OutlinedButton.icon(
-                    onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Google sign-in is not configured.'),
-                      ),
-                    ),
-                    icon: const Icon(Icons.login, size: 20),
-                    label: const Text('Continue with Google'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: context.eiBody,
-                      side: BorderSide(color: context.eiLine),
-                      minimumSize: const Size(double.infinity, 48),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(child: Divider(color: context.eiLine)),
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 12),
-                        child: Text(
-                          'or',
-                          style: TextStyle(
-                            color: context.eiMuted,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                      Expanded(child: Divider(color: context.eiLine)),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
                   Container(
                     decoration: BoxDecoration(
                       color: context.eiLine,
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    child: TabBar(
-                      controller: _tabController,
-                      indicator: BoxDecoration(
-                        color: context.eiCard,
-                        borderRadius: BorderRadius.circular(8),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.06),
-                            blurRadius: 4,
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      children: [
+                        TextField(
+                          controller: _emailCtrl,
+                          keyboardType: TextInputType.emailAddress,
+                          autofillHints: const [AutofillHints.email],
+                          textInputAction: TextInputAction.next,
+                          decoration: const InputDecoration(
+                            labelText: 'Email',
+                            hintText: 'you@company.com',
+                            prefixIcon: Icon(Icons.email_outlined),
                           ),
-                        ],
-                      ),
-                      indicatorSize: TabBarIndicatorSize.tab,
-                      labelColor: context.eiBody,
-                      unselectedLabelColor: context.eiMuted,
-                      dividerColor: Colors.transparent,
-                      tabs: const [
-                        Tab(text: 'Password'),
-                        Tab(text: 'Magic Link'),
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: _passCtrl,
+                          obscureText: !_showPass,
+                          autofillHints: const [AutofillHints.password],
+                          onSubmitted: (_) => _login(),
+                          decoration: InputDecoration(
+                            labelText: 'Password',
+                            hintText: '••••••••',
+                            prefixIcon: const Icon(Icons.lock_outline),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _showPass
+                                    ? Icons.visibility_off
+                                    : Icons.visibility,
+                              ),
+                              onPressed: () =>
+                                  setState(() => _showPass = !_showPass),
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
                   const SizedBox(height: 20),
-                  SizedBox(
-                    // grows with the text scale: two fields + helper text no longer fit in a fixed 200 at 200% type
-                    height: 200 + 80 * (MediaQuery.textScalerOf(context).scale(16) / 16 - 1).clamp(0.0, 1.5),
-                    child: TabBarView(
-                      controller: _tabController,
-                      children: [
-                        Column(
-                          children: [
-                            TextField(
-                              controller: _emailCtrl,
-                              keyboardType: TextInputType.emailAddress,
-                              decoration: const InputDecoration(
-                                labelText: 'Email',
-                                hintText: 'you@company.com',
-                                prefixIcon: Icon(Icons.email_outlined),
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            TextField(
-                              controller: _passCtrl,
-                              obscureText: !_showPass,
-                              decoration: InputDecoration(
-                                labelText: 'Password',
-                                hintText: '••••••••',
-                                prefixIcon: const Icon(Icons.lock_outline),
-                                suffixIcon: IconButton(
-                                  icon: Icon(
-                                    _showPass
-                                        ? Icons.visibility_off
-                                        : Icons.visibility,
-                                  ),
-                                  onPressed: () =>
-                                      setState(() => _showPass = !_showPass),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        Column(
-                          children: [
-                            TextField(
-                              controller: _emailCtrl,
-                              keyboardType: TextInputType.emailAddress,
-                              decoration: const InputDecoration(
-                                labelText: 'Email',
-                                hintText: 'you@company.com',
-                                prefixIcon: Icon(Icons.email_outlined),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'We\'ll send a magic sign-in link to your email.',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: context.eiMuted,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
                   const SizedBox(height: 8),
                   ElevatedButton(
                     onPressed: _loading ? null : _login,

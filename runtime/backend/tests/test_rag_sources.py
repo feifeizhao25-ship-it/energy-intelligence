@@ -196,10 +196,18 @@ def test_refresh_report_overdue_days():
         assert entry["needs_refetch"]
 
 
+def test_fetch_snapshot_returns_status_never_raises():
+    result = fetch_snapshot({"source_id": "std-gb50797"})
+    assert result["source_id"] == "std-gb50797"
+    assert result["status"] == "no_source_url"
+    assert result["fetched_at"]
+
+
 def test_fetch_snapshot_does_not_overwrite_the_registry(tmp_path):
     """快照只落盘。没有地址时不抓取，有注入内容时也不改注册表。"""
     skipped = fetch_snapshot({"source_id": "std-gb50797"}, snapshot_dir=tmp_path)
     assert skipped["status"] == "no_source_url"
+    assert skipped["fetched_at"]
     assert list(tmp_path.iterdir()) == []
     saved = fetch_snapshot(
         {"source_id": "std-gb50797", "source_url": "https://example.invalid/policy"},

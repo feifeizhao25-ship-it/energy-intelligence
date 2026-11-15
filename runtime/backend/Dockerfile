@@ -6,7 +6,10 @@ FROM python:3.12-slim AS base
 WORKDIR /app
 
 # System dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# dist-upgrade first: pull security patches for preinstalled libs (e.g. sqlite
+# CVE-2026-119373 FTS5 heap overflow flagged HIGH by the Trivy image gate)
+RUN apt-get update && apt-get dist-upgrade -y \
+    && apt-get install -y --no-install-recommends \
     curl \
     libpq-dev \
     gcc \
@@ -16,8 +19,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Install Python dependencies
 COPY requirements.txt .
-RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --upgrade pip 'setuptools>=78.1.1' \
+    && pip install --no-cache-dir -r requirements.txt \
+    # ensurepip bundles a stale setuptools wheel (70.3.0 in py3.12.7+);
+    # Trivy flags it (CVE-2025-47273). Runtime never calls ensurepip.
+    && rm -f /usr/local/lib/python3.12/ensurepip/_bundled/setuptools-*.whl
 
 # ── Development stage ──────────────────────────────────────────────────────────
 FROM base AS development

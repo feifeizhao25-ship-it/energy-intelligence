@@ -12,10 +12,22 @@ class AIAssistant:
     def __init__(self):
         # 客户端惰性创建：未配置密钥时保持 None，调用方返回 503，
         # 而不是在导入期直接崩溃（红线：无密钥环境也要能启动）。
-        self.openai_client = (
-            AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
-            if settings.OPENAI_API_KEY else None
-        )
+        # 优先级：OPENAI_API_KEY（直连 OpenAI）> OPENROUTER_API_KEY（OpenRouter 网关，用 OPENROUTER_BASE_URL/OPENROUTER_MODELS）。
+        if settings.OPENAI_API_KEY:
+            self.openai_client = AsyncOpenAI(
+                api_key=settings.OPENAI_API_KEY,
+                base_url=getattr(settings, "OPENAI_BASE_URL", None) or None,
+            )
+            self._chat_model = getattr(settings, "OPENAI_CHAT_MODEL", None) or "gpt-4o"
+        elif getattr(settings, "OPENROUTER_API_KEY", None):
+            self.openai_client = AsyncOpenAI(
+                api_key=settings.OPENROUTER_API_KEY,
+                base_url=settings.OPENROUTER_BASE_URL,
+            )
+            self._chat_model = settings.OPENROUTER_MODELS or "openai/gpt-4o-mini"
+        else:
+            self.openai_client = None
+            self._chat_model = None
         self.anthropic_client = (
             Anthropic(api_key=settings.ANTHROPIC_API_KEY)
             if settings.ANTHROPIC_API_KEY else None
@@ -30,7 +42,7 @@ class AIAssistant:
         """Chat using OpenAI GPT-4."""
         client = self._require_openai()
         response = await client.chat.completions.create(
-            model="gpt-4o",
+            model=self._chat_model or getattr(settings, "OPENAI_CHAT_MODEL", None) or "gpt-4o",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": message},
@@ -44,7 +56,7 @@ class AIAssistant:
         """Stream chat response from OpenAI."""
         client = self._require_openai()
         stream = await client.chat.completions.create(
-            model="gpt-4o",
+            model=self._chat_model or "gpt-4o",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": message},

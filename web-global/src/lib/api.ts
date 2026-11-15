@@ -18,7 +18,12 @@ export function readStoredAuthToken(): string | null {
   return match ? decodeURIComponent(match[1]) : null;
 }
 
-async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
+/** Name used by product analytics. Same lookup as readStoredAuthToken. */
+export function getAuthToken(): string | null {
+  return readStoredAuthToken();
+}
+
+export async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const token = readStoredAuthToken();
   const res = await fetch(`${API_BASE}${endpoint}`, {
     headers: {

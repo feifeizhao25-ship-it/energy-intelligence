@@ -22,6 +22,67 @@ You can call tools to perform resource assessments, financial calculations, and 
 Respond in the user's language. Always cite data sources and provide confidence levels for estimates."""
 
 
+GLOBAL_ENGLISH_PROMPT = SYSTEM_PROMPT + "\nAlways respond in English only, regardless of the user's language. Keep answers practical and under 180 words."
+
+
+# ── Deterministic English tips engine (LLM-free fallback for review & offline) ──
+_TIPS = {
+    "bill": "To cut your electricity bill fast: 1) Shift heavy loads (dryer, dishwasher, EV charging) to off-peak hours — on time-of-use plans this saves 20-40% on those loads. 2) Set your thermostat 7-10°F closer to outdoor temperature for 8h/day (about 10% off HVAC). 3) Kill phantom loads with smart power strips (5-10% of typical bills). 4) Heat water to 120°F and wash clothes cold (another 5-10%). 5) Get a free utility energy audit — most US utilities offer one.",
+    "solar": "Home solar checklist: Check your annual kWh usage on your bill, then size roughly 100% of usage (typical US home needs 8-12 kW). South-facing roofs with minimal shade yield best. With the 30% federal Residential Clean Energy Credit, typical payback is 6-10 years. Always get 3 quotes and compare $/W (installed cost per watt) — the fair range is $2.50-3.50/W before credits.",
+    "wind": "Small wind for homes makes sense only with consistent wind: you need average wind speed above 10 mph (4.5 m/s) at hub height and open land — suburban roofs are usually too turbulent. A 5 kW turbine produces ~8,000-12,000 kWh/yr in a good site. Check zoning setbacks and bird/bat rules before buying, and prioritize a certified (AWEA 9.1) turbine.",
+    "battery": "Home battery economics: a 10-13 kWh pack (e.g., powerwall-class) covers evening peaks and short outages. Best value comes from stacking: time-of-use arbitrage (charge cheap, use at peak), demand-charge reduction, and backup. With the 30% federal credit, typical installed cost lands near $8-12k. Size to your evening consumption, not your daily total.",
+    "ev": "EV charging savings: charge after 9pm or during your utility's off-peak window (many offer special EV rates like PG&E EV2-A). A 40-mile daily top-up is ~12 kWh — off-peak that's $1.20-1.80 vs $3-5 at public fast chargers. Avoid charging 4-9pm on peak. Level 1 (regular outlet) covers ~40 miles overnight; Level 2 (240V) is only needed for long commutes or two-EV homes.",
+    "cooling": "Cooling for less: set AC to 78°F when home, 85°F when out. Use ceiling fans (feels 4°F cooler, costs ~1¢/h — turn off when you leave). Seal leaky ducts (can be 20-30% of cooling loss). Close blinds on sun-side windows 10am-4pm. Clean/replace filters monthly in summer — a clogged filter can raise AC energy use 5-15%.",
+    "heating": "Heating for less: set 68°F when home and awake, 60-62°F overnight or away (each degree saves ~3%). Add attic insulation to R-49 if yours is below R-30 — one of the highest-ROI upgrades. Seal drafts around doors/windows (a $20 weatherstrip kit). Service the furnace yearly. If you heat with electric resistance, a heat pump cuts heating energy 30-60%.",
+    "lighting": "Lighting: replace remaining incandescents/halogens with LEDs (75-80% less energy, 25x lifespan). Focus on the 5 most-used fixtures — they account for ~50% of lighting energy. Use timers/motion sensors for outdoor and hallway lights. One 60W-equivalent LED costs about $1/year at 3h/day vs $7 for incandescent.",
+    "appliance": "Appliance savings: run dishwashers and washers full, on eco mode, and air-dry. Keep the fridge at 35-38°F, freezer at 0°F; vacuum coils twice a year. Replace water heaters older than 12 years — heat pump water heaters cut water heating cost 60%+ and qualify for a 30% federal credit. When buying, look for ENERGY STAR Most Efficient.",
+    "rates": "Reading your rate plan: check if you're on a flat rate or time-of-use (TOU). On TOU, peak hours (often 4-9pm) can cost 2-3x off-peak — shifting usage is free money. Ask your utility about EV, medical baseline, or low-income CARE/FERA discounts. Compare plans yearly on your utility's Power to Choose / rate comparison page; staying on the wrong plan can cost $200-500/yr extra.",
+    "credit": "US clean-energy tax credits (through 2032, inflation-adjusted): 30% of solar/battery/wind-heat-pump costs (Residential Clean Energy Credit); up to $2,000/yr for heat pumps and heat pump water heaters plus $1,200 for insulation/air sealing (Energy Efficient Home Improvement Credit). Utilities often stack rebates on top — always check dsireusa.org and your utility's rebate page before purchasing.",
+    "grid": "Understanding grid signals: high wholesale prices usually hit 5-9pm on hot/cold days (duck curve evening ramp). Some utilities pay for demand response — letting them cycle your AC/water heater during peaks can earn $25-100/season. Smart panels and batteries can auto-respond. Follow your grid's alert days (Flex Alerts in CA, conservation appeals in TX) — shaving peak usage helps everyone's rates.",
+    "audit": "Start with an energy audit: it finds your biggest losses for $0-250 (many utilities do them free). Typical findings pay for themselves within months: attic air sealing, duct leaks, thermostat schedules, phantom loads. Get the blower-door test if offered — it quantifies exactly where your heated/cooled air escapes.",
+}
+_TIP_KEYS = [
+    ("bill", ("bill", "expensive", "save money", "reduce my", "lower my", "cheap", "cost")),
+    ("solar", ("solar", "pv", "photovoltaic", "panel")),
+    ("wind", ("wind", "turbine")),
+    ("battery", ("battery", "storage", "powerwall", "backup power", "outage")),
+    ("ev", ("ev", "electric car", "electric vehicle", "charging my car", "tesla")),
+    ("cooling", ("cool", "ac", "air condition", "hot", "summer", "fan")),
+    ("heating", ("heat", "furnace", "winter", "cold", "insulat", "draft")),
+    ("lighting", ("light", "led", "bulb")),
+    ("appliance", ("appliance", "fridge", "refrigerator", "dishwasher", "washer", "dryer", "water heater", "kettle")),
+    ("rates", ("rate", "plan", "tariff", "peak", "off-peak", "tou", "time of use")),
+    ("credit", ("credit", "rebate", "incentive", "subsidy", "tax")),
+    ("grid", ("grid", "demand response", "flex", "wholesale")),
+    ("audit", ("audit", "where to start", "begin")),
+]
+
+
+def _tips_reply(message: str) -> str:
+    m = (message or "").lower()
+    for topic, words in _TIP_KEYS:
+        if any(w in m for w in words):
+            return _TIPS[topic]
+    return ("Here are the five highest-ROI moves for most US homes: 1) Shift heavy loads to off-peak hours. "
+            "2) Set thermostat schedules (7-10°F setback, 8h/day). 3) Seal attic air leaks and check ducts. "
+            "4) LEDs in your top-5 used fixtures. 5) Cold-water washes and a 120°F water heater. "
+            "Ask me about solar, home batteries, EV charging, cooling, heating, rate plans, or tax credits for details.")
+
+
+class ChatJsonRequest(BaseModel):
+    message: str = Field(min_length=1, max_length=4000)
+
+
+@router.post("/chat-json")
+async def chat_json(req: ChatJsonRequest, user_id: str = Depends(get_current_user_id)):
+    """Non-streaming JSON chat (mobile app contract; English-enforced; deterministic fallback)."""
+    try:
+        reply = await ai_assistant.chat_openai(req.message, GLOBAL_ENGLISH_PROMPT)
+        return {"success": True, "reply": reply, "source": "llm"}
+    except Exception:  # noqa: BLE001 - deterministic English tips keep the app functional without an LLM key
+        return {"success": True, "reply": _tips_reply(req.message), "source": "tips"}
+
+
 @router.post("/chat")
 async def chat(message: str, project_id: Optional[str] = None, user_id: str = Depends(get_current_user_id)):
     """Chat with AI assistant (streaming)."""

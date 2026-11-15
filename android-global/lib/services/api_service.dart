@@ -21,7 +21,9 @@ class ApiService {
   static final _client = http.Client();
   static const _secureStorage = FlutterSecureStorage();
   static String? _token;
-  static final String _baseUrl = const String.fromEnvironment('API_BASE_URL');
+  static final String _baseUrl = const String.fromEnvironment('API_BASE_URL').isNotEmpty
+      ? const String.fromEnvironment('API_BASE_URL')
+      : 'https://energy-iq.app';
 
   /// Initialize with region — call from main() before runApp
   static Future<void> init({String region = 'CN'}) async {
@@ -336,7 +338,7 @@ class ApiService {
 
   // ── Missing methods needed by screens ──────────────────────────────────────
 
-  /// AI chat — calls POST /api/v1/ai/chat  (returns Map for assistant_screen)
+  /// AI chat — calls POST /api/v1/ai/chat-json  (returns Map for assistant_screen)
   static Future<Map<String, dynamic>> chat(String message) async {
     try {
       final resp = await _post('/api/v1/ai/chat-json', body: {'message': message});

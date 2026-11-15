@@ -21,6 +21,7 @@ import hashlib, json, os, re, urllib.request, urllib.robotparser
 from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Callable, Dict, List, Optional
+from urllib.parse import urlsplit
 
 from app.services.rag_sources import REGISTRY_PATH, SourceRegistry
 
@@ -61,6 +62,10 @@ def fetch_snapshot(source: Dict, *, fetcher: Optional[Callable[[str, float], tup
         return result
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}", str(source_id)):
         raise ValueError("unsafe source_id")
+    # 只允许 http/https：source_url 来自运营配置，仍要防 file:/ftp: 等注入
+    if urlsplit(url).scheme not in ("http", "https"):
+        result["status"] = "unsupported_scheme"
+        return result
     timeout = float(os.environ.get("RAG_REFRESH_TIMEOUT_SECONDS", "15"))
     max_bytes = int(os.environ.get("RAG_REFRESH_MAX_BYTES", "2000000"))
     if fetcher is None and not _robots_allowed(url, timeout):
@@ -71,7 +76,8 @@ def fetch_snapshot(source: Dict, *, fetcher: Optional[Callable[[str, float], tup
             final_url, status_code, content = fetcher(url, timeout)
         else:
             req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
-            with urllib.request.urlopen(req, timeout=timeout) as resp:
+            # source_url 已限制 http/https 且经 robots 检查，此处 urlopen 仅按配置抓取
+            with urllib.request.urlopen(req, timeout=timeout) as resp:  # nosec B310 - 配置驱动、scheme 白名单已校验
                 final_url, status_code = resp.geturl(), resp.status
                 content = resp.read(max_bytes + 1)
     except Exception as exc:  # 网络失败如实记录, 不编造内容
