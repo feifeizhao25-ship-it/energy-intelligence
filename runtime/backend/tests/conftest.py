@@ -33,6 +33,19 @@ from app.models.user import User  # noqa: E402
 from app.utils.security import get_password_hash  # noqa: E402
 
 
+@pytest.fixture
+def global_edition(monkeypatch):
+    """把本用例固定在 global 版，不跟随进程里的 APP_EDITION。
+
+    技能模块在执行时读 os.environ；资源/NASA 服务读的是导入时已经构造好的
+    Settings。两处都要钉住，ambient APP_EDITION=cn 与未设置才会得到同一条路径。
+    """
+    monkeypatch.setenv("APP_EDITION", "global")
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "APP_EDITION", "global", raising=False)
+
+
 @pytest.fixture(scope="session", autouse=True)
 def _dispose_engine_at_session_end():
     """会话结束时释放引擎连接 — 否则 sqlite/pg 连接的底层线程会阻止解释器退出。"""

@@ -19,21 +19,21 @@ class FailingClient:
 
 
 @pytest.mark.asyncio
-async def test_open_meteo_solar_failure_has_no_synthetic_result(monkeypatch):
+async def test_open_meteo_solar_failure_has_no_synthetic_result(monkeypatch, global_edition):
     monkeypatch.setattr(resource_service.httpx, "AsyncClient", FailingClient)
     with pytest.raises(RuntimeError, match="solar resource data is currently unavailable"):
         await resource_service.fetch_solar_resource(SolarResourceRequest(lat=31.2, lng=121.5))
 
 
 @pytest.mark.asyncio
-async def test_open_meteo_wind_failure_has_no_synthetic_result(monkeypatch):
+async def test_open_meteo_wind_failure_has_no_synthetic_result(monkeypatch, global_edition):
     monkeypatch.setattr(resource_service.httpx, "AsyncClient", FailingClient)
     with pytest.raises(RuntimeError, match="wind resource data is currently unavailable"):
         await resource_service.fetch_wind_resource(WindResourceRequest(lat=31.2, lng=121.5))
 
 
 @pytest.mark.asyncio
-async def test_nasa_failure_has_no_latitude_estimate(monkeypatch):
+async def test_nasa_failure_has_no_latitude_estimate(monkeypatch, global_edition):
     from app.services import nasa_power_service
 
     monkeypatch.setattr(nasa_power_service.httpx, "AsyncClient", FailingClient)
