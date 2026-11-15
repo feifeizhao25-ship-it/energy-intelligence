@@ -3,33 +3,38 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { FileText, Download, Printer, Share2 } from 'lucide-react';
-import { getSolarResource, getWindResource, getClimateData, getHistoricalData } from '@/lib/api/nasa-power';
+import { getSolarResource, getWindResource } from '@/lib/api/nasa-power';
+import { domesticClimate } from '@/lib/api/domestic-station';
 import { calculateSolarScore, calculateWindScore, analyzeComplementarity } from '@/lib/resource/analysis';
 import { generateResourceReport } from '@/lib/resource/report';
+import VectorLayerPanel from './VectorLayerPanel';
 
 export default function ReportPage() {
     const searchParams = useSearchParams();
     const [report, setReport] = useState<string>('');
     const [loading, setLoading] = useState(true);
 
-    const lat = parseFloat(searchParams.get('lat') || '0');
-    const lng = parseFloat(searchParams.get('lng') || '0');
+    const lat = readCoordinate(searchParams.get('lat'), 90);
+    const lng = readCoordinate(searchParams.get('lng'), 180);
     const name = searchParams.get('name') || '未知地点';
+    const hasPoint = lat !== null && lng !== null;
 
     useEffect(() => {
-        if (!lat || !lng) {
+        if (!hasPoint || lat === null || lng === null) {
             setLoading(false);
             return;
         }
+        const pointLat = lat;
+        const pointLng = lng;
 
         async function generate() {
             try {
-                const [solar, wind, climate, history] = await Promise.all([
-                    getSolarResource(lat, lng),
-                    getWindResource(lat, lng),
-                    getClimateData(lat, lng),
-                    getHistoricalData(lat, lng, 2020, 2022)
+                const [solar, wind] = await Promise.all([
+                    getSolarResource(pointLat, pointLng),
+                    getWindResource(pointLat, pointLng),
                 ]);
+                const climate = domesticClimate(pointLat, pointLng);
+                const history = { note: '历史逐年序列未随省级样本提供，本次报告不含趋势。' };
 
                 // Mock elevation or fetch if needed
                 const elevation = 0;
@@ -58,15 +63,24 @@ export default function ReportPage() {
             }
         }
         generate();
-    }, [lat, lng, name]);
+    }, [lat, lng, name, hasPoint]);
 
-    if (!lat || !lng) {
-        return <div className="p-8 text-white">无效的坐标参数</div>;
+    if (!hasPoint) {
+        return (
+            <div className="min-h-screen bg-gray-900 p-8 text-white">
+                <h1 className="text-xl font-bold">还没有地图选点</h1>
+                <p className="mt-3 max-w-xl text-sm leading-7 text-slate-300">
+                    这份评估报告需要一个地图上的位置。请先打开资源地图，点选项目所在地，再生成报告。
+                </p>
+                <a href="/map" className="mt-6 inline-block rounded-lg bg-blue-600 px-4 py-2 text-sm text-white">去地图选点</a>
+            </div>
+        );
     }
 
     return (
         <div className="min-h-screen bg-gray-900 text-white p-8 flex justify-center">
-            <div className="w-full max-w-4xl">
+            <div className="w-full max-w-4xl space-y-4">
+                <VectorLayerPanel />
                 <div className="flex justify-between items-center mb-6">
                     <h1 className="text-2xl font-bold flex items-center gap-2">
                         <FileText className="w-6 h-6 text-blue-400" />
@@ -87,7 +101,7 @@ export default function ReportPage() {
                         <div className="flex flex-col items-center justify-center h-[400px]">
                             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
                             <p className="text-gray-500">正在生成专业评估报告...</p>
-                            <p className="text-xs text-gray-400 mt-2">整合NASA气象数据与AI分析模型</p>
+                            <p className="text-xs text-gray-400 mt-2">数据来自国内省级离线样本，不是实时境外气象。</p>
                         </div>
                     ) : (
                         <div className="prose prose-lg max-w-none whitespace-pre-wrap font-sans">
@@ -98,4 +112,12 @@ export default function ReportPage() {
             </div>
         </div>
     );
+}
+
+/** 查询串里的纬度或经度。没传、空字符串或超出范围时视为未选点。0 是合法坐标。 */
+export function readCoordinate(value: string | null, limit: number): number | null {
+    if (value == null || value.trim() === '') return null;
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed) || Math.abs(parsed) > limit) return null;
+    return parsed;
 }

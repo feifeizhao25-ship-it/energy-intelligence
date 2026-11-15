@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/auth-options';
-import { getFromExportCache } from '@/lib/exports/cache';
+import { Readable } from 'stream';
+import { openExportReadStream } from '@/lib/exports/cache';
 
 export async function GET(req: NextRequest, props: { params: Promise<{ filename: string }> }) {
     const session = await getServerSession(authOptions);
@@ -9,11 +10,11 @@ export async function GET(req: NextRequest, props: { params: Promise<{ filename:
         return NextResponse.json({ error: 'UNAUTHORIZED', message: '请先登录' }, { status: 401 });
     }
     const { filename } = await props.params;
-    const cached = getFromExportCache(filename, session.user.id);
+    const cached = openExportReadStream(filename, session.user.id);
     if (!cached) {
         return NextResponse.json({ error: 'EXPORT_NOT_FOUND', message: '导出文件不存在或已过期，请重新导出' }, { status: 404 });
     }
-    return new Response(cached.content as any, {
+    return new Response(Readable.toWeb(cached.stream) as ReadableStream, {
         headers: {
             'Content-Type': cached.contentType,
             'Content-Disposition': `attachment; filename="${filename}"`,

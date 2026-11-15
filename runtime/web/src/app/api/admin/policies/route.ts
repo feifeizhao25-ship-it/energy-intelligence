@@ -9,7 +9,18 @@ const STATUSES = ['PENDING', 'APPROVED', 'REJECTED'] as const;
 /** GET /api/admin/policies?status=PENDING —— 政策审核列表（最多 100 条，新抓取的在前） */
 export async function GET(req: NextRequest) {
     const auth = await requireReviewer();
-    if (!auth.ok) return auth.response;
+    if (!auth.ok) {
+        if (auth.response.status === 404) {
+            return NextResponse.json({
+                success: true,
+                items: [],
+                counts: {},
+                roleFallback: true,
+                note: '当前角色不能审核政策，这里不展示待审列表。',
+            });
+        }
+        return auth.response;
+    }
     const raw = req.nextUrl.searchParams.get('status') ?? 'PENDING';
     const status = (STATUSES as readonly string[]).includes(raw) ? raw as typeof STATUSES[number] : 'PENDING';
     const [items, counts] = await Promise.all([

@@ -1,0 +1,8 @@
+{
+  "note": "发现接口只产生候选。vetted 留给已核对的来源，写入后仍须审批，不会自动进入检索。",
+  "github_topics": ["renewable-energy", "photovoltaic", "energy-storage"],
+  "huggingface_dataset_queries": ["solar photovoltaic", "wind power"],
+  "huggingface_model_queries": ["bge-m3"],
+  "arxiv_queries": ["cat:eess.SY AND all:photovoltaic"],
+  "vetted": []
+}

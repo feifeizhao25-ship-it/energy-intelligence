@@ -81,7 +81,7 @@ export const Input: React.FC<InputProps> = ({ icon, className, ...rest }) => (
     <input
       className={cn(
         'h-9 w-full rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--bg-primary)] px-3 text-[14px] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-[var(--color-brand-500)]',
-        icon && 'pl-9',
+        icon ? 'pl-9' : false,
         className,
       )}
       {...rest}
@@ -226,11 +226,13 @@ export const SegmentedControl: React.FC<SegmentedControlProps> = ({
 
 // ── Switch ─────────────────────────────────────────────
 
-export interface SwitchProps {
+export interface SwitchProps
+  extends Omit<
+    React.ButtonHTMLAttributes<HTMLButtonElement>,
+    'onChange' | 'onClick' | 'role' | 'aria-checked'
+  > {
   checked: boolean;
   onChange: (checked: boolean) => void;
-  disabled?: boolean;
-  className?: string;
 }
 
 export const Switch: React.FC<SwitchProps> = ({
@@ -238,8 +240,10 @@ export const Switch: React.FC<SwitchProps> = ({
   onChange,
   disabled,
   className,
+  ...rest
 }) => (
   <button
+    {...rest}
     type="button"
     role="switch"
     aria-checked={checked}
@@ -252,6 +256,7 @@ export const Switch: React.FC<SwitchProps> = ({
     )}
   >
     <span
+      aria-hidden="true"
       className={cn(
         'absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all',
         checked ? 'left-[18px]' : 'left-0.5',
@@ -411,12 +416,14 @@ export const StatCard: React.FC<StatCardProps> = ({
 
 export interface ProgressProps {
   value: number;
+  label?: string;
   className?: string;
 }
 
-export const Progress: React.FC<ProgressProps> = ({ value, className }) => (
+export const Progress: React.FC<ProgressProps> = ({ value, label = 'Progress', className }) => (
   <div
     role="progressbar"
+    aria-label={label}
     aria-valuenow={value}
     aria-valuemin={0}
     aria-valuemax={100}

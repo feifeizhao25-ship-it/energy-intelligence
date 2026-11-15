@@ -34,15 +34,22 @@ export async function POST(request: Request) {
       const now = new Date();
       // 只有同一方案才顺延；不同方案（下单时已拦截，这里兜底）从现在起算
       const base = existing?.endDate && existing.endDate > now && existing.plan === payment.plan ? existing.endDate : now;
+      const serviceEnd = expiryFrom(base, payment.billingPeriod);
       const subscription = await tx.subscription.upsert({
         where: { userId: payment.userId },
-        create: { userId: payment.userId, plan: payment.plan, status: 'ACTIVE', startDate: now, endDate: expiryFrom(base, payment.billingPeriod), autoRenew: false },
-        update: { plan: payment.plan, status: 'ACTIVE', endDate: expiryFrom(base, payment.billingPeriod) },
+        create: { userId: payment.userId, plan: payment.plan, status: 'ACTIVE', startDate: now, endDate: serviceEnd, autoRenew: false },
+        update: {
+          plan: payment.plan, status: 'ACTIVE', endDate: serviceEnd,
+          scheduledPlan: null, scheduledFromPlan: null, scheduledEffectiveAt: null,
+        },
       });
       await tx.user.update({ where: { id: payment.userId }, data: { plan: payment.plan, planExpireAt: subscription.endDate } });
       await tx.payment.update({
         where: { id: payment.id },
-        data: { subscriptionId: subscription.id, status: 'completed', transactionId: params.trade_no, paidAt: now },
+        data: {
+          subscriptionId: subscription.id, status: 'completed', transactionId: params.trade_no, paidAt: now,
+          serviceStart: base, serviceEnd,
+        },
       });
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
     return text('success');

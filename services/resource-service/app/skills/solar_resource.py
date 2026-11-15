@@ -29,7 +29,7 @@ except ImportError:  # 注册表从其他工作目录加载本文件时，补后
 
 NASA_POWER_URL = "https://power.larc.nasa.gov/api/temporal/climatology/point"
 
-# IEC 61724-1 典型系统效率（Performance Ratio）区间
+# 0.78–0.86 是工程假设，不是 IEC 61724-1 的条款。性能比的定义见该标准，区间本身待核实。
 PR_LOW = 0.78
 PR_MID = 0.82
 PR_HIGH = 0.86
@@ -74,7 +74,7 @@ def assess_solar_resource(ghi_annual: float, capacity_mw: float = 1.0) -> Dict[s
     """纯函数：GHI → 分级 / 年等效利用小时 / 产能系数区间。
 
     - 分级复用 _classify_solar（I≥2000, II≥1600, III≥1200, IV<1200）
-    - 年等效利用小时 = GHI × PR（IEC 61724 典型 PR 区间 0.78–0.86，中值 0.82）
+    - 年等效利用小时近似为水平面年辐照（kWh/m²）× 性能比。参照辐照度按 1 kW/m² 时数值才等于小时，且用水平面代替组件平面，结果是近似。0.78–0.86 不是标准条款。
     - 产能系数 = 等效利用小时 / 8760
     """
     resource_class, score = _classify_solar(ghi_annual)
@@ -110,7 +110,7 @@ class SolarResourceSkill:
     category = "RA"
     references = [
         "GB/T 31155-2014 太阳能资源等级 总辐射",
-        "IEC 61724-1:2021 光伏系统性能监测（PR 典型区间 0.78–0.86）",
+        "IEC 61724-1:2021 定义性能比。0.78–0.86 是工程假设，不是该标准条款，待核实。",
         "NREL National Solar Radiation Database / NASA POWER climatology",
     ]
 

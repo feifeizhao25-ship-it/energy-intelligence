@@ -24,6 +24,10 @@ class StripeService:
             raise RuntimeError(f"Stripe price is not configured for plan: {plan}")
         if not settings.STRIPE_SUCCESS_URL or not settings.STRIPE_CANCEL_URL:
             raise RuntimeError("Stripe checkout return URLs are not configured")
+        # The international currency is USD (owner decision 2026-11-01): refuse to sell a Price in another currency.
+        real = StripeService.get_price(plan)
+        if real and str(real.get("currency") or "").upper() != "USD":
+            raise RuntimeError(f"Stripe price for plan {plan} must be in USD (found {str(real.get('currency')).upper()})")
         kwargs = {
             "payment_method_types": ["card"],
             "mode": "subscription",
@@ -38,6 +42,20 @@ class StripeService:
 
         session = stripe.checkout.Session.create(**kwargs)
         return session.url
+
+    @staticmethod
+    def get_price(plan: str) -> Optional[dict]:
+        """Read the real recurring price of a plan from Stripe; None when Stripe or the price id is not configured."""
+        prices = {"pro": settings.STRIPE_PRO_PRICE_ID, "enterprise": settings.STRIPE_ENTERPRISE_PRICE_ID}
+        price_id = prices.get(plan)
+        if not price_id or not settings.STRIPE_SECRET_KEY:
+            return None
+        obj = stripe.Price.retrieve(price_id)
+        amount = obj.get("unit_amount")
+        if amount is None or not obj.get("currency"):
+            return None
+        recurring = obj.get("recurring") or {}
+        return {"amount_cents": int(amount), "currency": str(obj["currency"]), "interval": recurring.get("interval")}
 
     @staticmethod
     def create_billing_portal_session(customer_id: str) -> str:

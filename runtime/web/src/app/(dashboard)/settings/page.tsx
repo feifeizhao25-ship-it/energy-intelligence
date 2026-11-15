@@ -16,6 +16,7 @@ import {
 import { motion } from 'framer-motion';
 import { AccountDataPanel } from '@/components/account/AccountDataPanel';
 import PersonalizationSettings from '@/components/dashboard/PersonalizationSettings';
+import { ProfileDraftFields } from '@/components/dashboard/ProfileDraftFields';
 
 export default function ProfileSettingsPage() {
     const { data: session, update } = useSession();
@@ -93,7 +94,7 @@ export default function ProfileSettingsPage() {
         <div className="max-w-4xl mx-auto space-y-8">
             <div>
                 <h1 className="text-3xl font-black text-slate-900 tracking-tight mb-2">个人资料</h1>
-                <p className="text-slate-500 text-sm">完善您的职业背景信息，便于工作台和报告按您的情况展示相关内容。</p>
+                <p className="text-slate-500 text-sm">完善您的职业背景信息，便于工作台和报告按您的情况展示相关内容。尚未保存时，首页使用通用模板。</p>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -173,6 +174,7 @@ export default function ProfileSettingsPage() {
                         </div>
                     </form>
                     <PersonalizationSettings />
+                    <ProfileDraftFields />
                 </div>
 
                 {/* Right Info Sidebar */}

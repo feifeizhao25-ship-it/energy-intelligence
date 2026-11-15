@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_theme.dart';
 import '../../services/api_service.dart';
 
 class AnomalyScreen extends StatefulWidget {
@@ -68,9 +69,9 @@ class _AnomalyScreenState extends State<AnomalyScreen> {
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 6),
-          const Text(
+          Text(
             'Alerts must come from an authorised plant telemetry source.',
-            style: TextStyle(color: Color(0xFF64748B)),
+            style: TextStyle(color: context.eiMuted),
           ),
           const SizedBox(height: 16),
           if (_projects.isNotEmpty)
@@ -154,14 +155,14 @@ class _Empty extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       child: Column(
         children: [
-          Icon(icon, size: 42, color: const Color(0xFF94A3B8)),
+          Icon(icon, size: 42, color: context.eiMuted),
           const SizedBox(height: 10),
           Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
           const SizedBox(height: 4),
           Text(
             detail,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: Color(0xFF64748B)),
+            style: TextStyle(color: context.eiMuted),
           ),
           if (retry != null)
             TextButton(onPressed: retry, child: const Text('Try again')),

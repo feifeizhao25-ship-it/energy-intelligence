@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import '../../widgets/photo_widgets.dart';
 import '../../theme/app_theme.dart';
 import '../../services/api_service.dart';
+import '../../widgets/personal_home_section.dart';
+import '../../widgets/ei_wide.dart';
+import 'personal_home_binding.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -54,66 +58,75 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Text('Energy Intelligence'),
           ],
         ),
+        actions: [
+          IconButton(
+            key: const Key('openSettings'),
+            tooltip: 'Settings',
+            icon: const Icon(Icons.account_circle_outlined),
+            onPressed: () => Navigator.of(context).pushNamed('/settings'),
+          ),
+        ],
       ),
       body: RefreshIndicator(
         onRefresh: _load,
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            const Text(
-              'Portfolio overview',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
-            ),
-            const SizedBox(height: 6),
-            const Text(
-              'Only verified account and project data are shown.',
-              style: TextStyle(color: Color(0xFF64748B)),
+            const EnPhotoBanner(
+              asset: 'assets/images/eg_hero_solar.webp',
+              title: 'Portfolio overview',
+              subtitle: 'Only verified account and project data are shown.',
             ),
             const SizedBox(height: 20),
-            if (_loading)
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(48),
-                  child: CircularProgressIndicator(),
+            EiTwoColumn(
+              left: PersonalHomeSection(margin: EdgeInsets.zero, api: PersonalHomeBinding.api(), strings: PersonalHomeBinding.strings, onOpen: (c) => PersonalHomeBinding.open(context, c)),
+              right: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              if (_loading)
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(48),
+                    child: CircularProgressIndicator(),
+                  ),
+                )
+              else if (_error != null)
+                _StatusCard(
+                  icon: Icons.cloud_off_outlined,
+                  title: 'Data unavailable',
+                  detail: _error!,
+                  action: _load,
+                )
+              else ...[
+                Row(
+                  children: [
+                    Expanded(
+                      child: _Metric(
+                        title: 'Projects',
+                        value: _projects.length.toString(),
+                        icon: Icons.folder_outlined,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _Metric(
+                        title: 'Capacity',
+                        value: _capacity == 0
+                            ? 'Not provided'
+                            : _capacity.toStringAsFixed(1) + ' MW',
+                        icon: Icons.bolt,
+                      ),
+                    ),
+                  ],
                 ),
-              )
-            else if (_error != null)
-              _StatusCard(
-                icon: Icons.cloud_off_outlined,
-                title: 'Data unavailable',
-                detail: _error!,
-                action: _load,
-              )
-            else ...[
-              Row(
-                children: [
-                  Expanded(
-                    child: _Metric(
-                      title: 'Projects',
-                      value: _projects.length.toString(),
-                      icon: Icons.folder_outlined,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _Metric(
-                      title: 'Capacity',
-                      value: _capacity == 0
-                          ? 'Not provided'
-                          : _capacity.toStringAsFixed(1) + ' MW',
-                      icon: Icons.bolt,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              const _StatusCard(
-                icon: Icons.monitor_heart_outlined,
-                title: 'Operations metrics',
-                detail:
-                    'Connect verified telemetry to display generation, revenue, carbon impact, health and alerts.',
-              ),
-            ],
+                const SizedBox(height: 16),
+                const _StatusCard(
+                  icon: Icons.monitor_heart_outlined,
+                  title: 'Operations metrics',
+                  detail:
+                      'Connect verified telemetry to display generation, revenue, carbon impact, health and alerts.',
+                ),
+              ],
+              ]),
+            ),
             const SizedBox(height: 28),
             const Text(
               'Quick actions',
@@ -171,7 +184,7 @@ class _Metric extends StatelessWidget {
             value,
             style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
           ),
-          Text(title, style: const TextStyle(color: Color(0xFF64748B))),
+          Text(title, style: TextStyle(color: context.eiMuted)),
         ],
       ),
     ),
@@ -196,7 +209,7 @@ class _StatusCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: const Color(0xFF64748B)),
+          Icon(icon, color: context.eiMuted),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -207,7 +220,7 @@ class _StatusCard extends StatelessWidget {
                   style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 4),
-                Text(detail, style: const TextStyle(color: Color(0xFF64748B))),
+                Text(detail, style: TextStyle(color: context.eiMuted)),
                 if (action != null)
                   TextButton(onPressed: action, child: const Text('Try again')),
               ],
@@ -224,10 +237,18 @@ class _Action extends StatelessWidget {
   final String label;
   final String route;
   const _Action({required this.icon, required this.label, required this.route});
+
+  static const _photos = {
+    '/projects': 'eg_sites',
+    '/resource': 'eg_panels',
+    '/finance': 'eg_city',
+    '/ai': 'eg_grid',
+  };
+
   @override
-  Widget build(BuildContext context) => ActionChip(
-    avatar: Icon(icon, size: 18),
-    label: Text(label),
-    onPressed: () => Navigator.pushNamed(context, route),
-  );
+  Widget build(BuildContext context) => EnActionTile(
+        asset: 'assets/images/${_photos[route] ?? 'eg_grid'}.webp',
+        label: label,
+        onTap: () => Navigator.pushNamed(context, route),
+      );
 }

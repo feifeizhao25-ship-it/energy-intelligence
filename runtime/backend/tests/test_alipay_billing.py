@@ -81,6 +81,9 @@ def test_callback_signature_rejects_tampering(alipay_keys):
 async def test_verified_callback_activates_once(
     client, auth_headers, db_session, alipay_keys
 ):
+    user = (await db_session.execute(select(User))).scalar_one()
+    user.usage_quota = {"scheduled_downgrade": {"status": "scheduled"}, "used": 5}
+    await db_session.commit()
     created = await client.post(
         "/api/v1/billing/domestic/alipay/create",
         json={"plan": "full", "billing_period": "yearly"},
@@ -111,8 +114,12 @@ async def test_verified_callback_activates_once(
         )
     ).scalar_one()
     user = await db_session.get(User, order.user_id)
+    await db_session.refresh(user)
     assert order.status == "paid"
+    assert order.period_start is not None and order.period_end > order.period_start
     assert user.subscription_plan == "full"
+    assert user.usage_quota["scheduled_downgrade"]["status"] == "cancelled"
+    assert user.usage_quota["used"] == 5
 
 
 @pytest.mark.asyncio
@@ -200,3 +207,27 @@ async def test_postgres_concurrent_renewals_preserve_both_periods(client, auth_h
     assert [response.status_code for response in responses] == [200, 200]
     await db_session.refresh(user)
     assert user.subscription_expires_at == datetime(2032, 1, 15, tzinfo=timezone.utc)
+
+
+@pytest.mark.asyncio
+async def test_monthly_sale_rejected_but_historical_receipt_supported(client, auth_headers, db_session, alipay_keys):
+    from uuid import uuid4
+    from datetime import datetime, timezone
+    response = await client.post('/api/v1/billing/domestic/alipay/create',
+        json={'plan': 'full', 'billing_period': 'monthly'}, headers=auth_headers)
+    assert response.status_code == 400
+    assert (await db_session.execute(select(PaymentOrder))).scalars().all() == []
+    user = (await db_session.execute(select(User))).scalar_one()
+    user.subscription_plan = 'full'
+    user.subscription_expires_at = datetime(2030, 1, 15, tzinfo=timezone.utc)
+    order = PaymentOrder(id=str(uuid4()), order_no='historical-monthly', user_id=user.id,
+        plan='full', billing_period='monthly', amount_cny=580, status='pending', provider='alipay')
+    db_session.add(order)
+    await db_session.commit()
+    params = {'app_id': settings.ALIPAY_APP_ID, 'seller_id': settings.ALIPAY_SELLER_ID,
+        'out_trade_no': order.order_no, 'trade_no': 'historical-receipt', 'trade_status': 'TRADE_SUCCESS',
+        'total_amount': '580.00', 'sign_type': 'RSA2'}
+    params['sign'] = _sign_callback(alipay_keys, params)
+    assert (await client.post('/api/v1/billing/domestic/alipay/notify', data=params)).status_code == 200
+    await db_session.refresh(user)
+    assert user.subscription_expires_at.replace(tzinfo=timezone.utc) == datetime(2030, 2, 15, tzinfo=timezone.utc)

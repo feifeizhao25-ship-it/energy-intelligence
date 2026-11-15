@@ -1,0 +1,32 @@
+'use client';
+
+import dynamic from 'next/dynamic';
+import Sidebar from '@/components/layout/Sidebar';
+import { MobileNav } from '@/components/layout/MobileNav';
+import { TopBar } from '@/components/layout/TopBar';
+import { RolePreferenceProvider } from '@/components/layout/RolePreference';
+import { ShellErrorBoundary } from '@/components/ui/ShellErrorBoundary';
+import { StationProvider } from '@/contexts/StationContext';
+
+const OnboardingFlow = dynamic(() => import('@/components/onboarding/OnboardingFlow'), { ssr: false });
+
+/** 首页与工作台共用的侧栏、顶栏和移动导航。 */
+export function AppChrome({ children }: { children: React.ReactNode }) {
+    return (
+        <StationProvider>
+            <RolePreferenceProvider>
+            <div className="min-h-screen bg-[var(--paper)] text-[var(--ink)]">
+                <Sidebar />
+                <OnboardingFlow />
+                <div className="ei-shell-offset min-h-screen min-w-0 lg:ml-64">
+                    <TopBar />
+                    <main className="ei-main min-w-0 p-4 lg:p-8 lg:pb-8">
+                        <ShellErrorBoundary>{children}</ShellErrorBoundary>
+                    </main>
+                </div>
+                <MobileNav />
+            </div>
+            </RolePreferenceProvider>
+        </StationProvider>
+    );
+}

@@ -110,14 +110,14 @@ class _SolarResourceScreenState extends State<SolarResourceScreen> {
                               '组件类型: 单晶硅',
                               style: TextStyle(
                                 fontSize: 12,
-                                color: Color(0xFF64748B),
+                                color: context.eiMuted,
                               ),
                             ),
                             Text(
                               '倾角: 优化角',
                               style: TextStyle(
                                 fontSize: 12,
-                                color: Color(0xFF64748B),
+                                color: context.eiMuted,
                               ),
                             ),
                           ],
@@ -168,12 +168,12 @@ class _SolarResourceScreenState extends State<SolarResourceScreen> {
                 crossAxisSpacing: 12,
                 children: [
                   _buildDataCard(
-                    'GHI',
+                    '水平面总辐照量',
                     _result!.ghiAnnual.toStringAsFixed(1),
                     'kWh/m²',
                   ),
                   _buildDataCard(
-                    'DNI',
+                    '直射辐照量',
                     _result!.dniAnnual.toStringAsFixed(1),
                     'kWh/m²',
                   ),
@@ -191,7 +191,7 @@ class _SolarResourceScreenState extends State<SolarResourceScreen> {
               ),
               SizedBox(height: 24),
               BarChart(
-                title: '月均GHI分布',
+                title: '月均水平面总辐照量分布',
                 values: _result!.ghiMonthly,
                 labels: [
                   '1',
@@ -231,26 +231,6 @@ class _SolarResourceScreenState extends State<SolarResourceScreen> {
                 ],
                 barColor: Color(0xFFF59E0B),
               ),
-              SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () {},
-                      icon: Icon(Icons.description_outlined),
-                      label: Text('生成报告'),
-                    ),
-                  ),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () {},
-                      icon: Icon(Icons.bookmark_border),
-                      label: Text('保存'),
-                    ),
-                  ),
-                ],
-              ),
             ],
           ],
         ),
@@ -267,7 +247,7 @@ class _SolarResourceScreenState extends State<SolarResourceScreen> {
           children: [
             Text(
               label,
-              style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+              style: TextStyle(fontSize: 12, color: context.eiMuted),
             ),
             SizedBox(height: 6),
             Row(
@@ -282,7 +262,7 @@ class _SolarResourceScreenState extends State<SolarResourceScreen> {
                 SizedBox(width: 4),
                 Text(
                   unit,
-                  style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                  style: TextStyle(fontSize: 11, color: context.eiMuted),
                 ),
               ],
             ),

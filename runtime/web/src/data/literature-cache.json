@@ -1,0 +1,4 @@
+{
+  "license_note": "默认不附带论文。arXiv 元数据与 OpenAlex 元数据可在服务端批量任务中导入并注明许可（arXiv 元数据可按其 API 条款使用，OpenAlex 元数据为 CC0）。请求路径不访问境外。不抓取知网。",
+  "records": []
+}

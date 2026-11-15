@@ -13,25 +13,31 @@ class AIAssistant:
         self.cn_client = None
         self.cn_provider = None
         self.cn_model = None
-        if settings.DASHSCOPE_API_KEY:
-            self.cn_provider, self.cn_model = "dashscope", settings.DASHSCOPE_MODEL
-            self.cn_client = AsyncOpenAI(api_key=settings.DASHSCOPE_API_KEY, base_url=settings.DASHSCOPE_BASE_URL)
-        elif settings.DEEPSEEK_API_KEY:
+        # 批量文本优先 DeepSeek；百炼 qwen3.5-plus 留给高风险复核；智谱作兜底。
+        if settings.DEEPSEEK_API_KEY:
             self.cn_provider, self.cn_model = "deepseek", settings.DEEPSEEK_MODEL
             self.cn_client = AsyncOpenAI(api_key=settings.DEEPSEEK_API_KEY, base_url=settings.DEEPSEEK_BASE_URL)
+        elif settings.DASHSCOPE_API_KEY:
+            self.cn_provider, self.cn_model = "dashscope", settings.DASHSCOPE_MODEL
+            self.cn_client = AsyncOpenAI(api_key=settings.DASHSCOPE_API_KEY, base_url=settings.DASHSCOPE_BASE_URL)
         elif settings.GLM_API_KEY:
             self.cn_provider, self.cn_model = "glm", settings.GLM_MODEL
             self.cn_client = AsyncOpenAI(api_key=settings.GLM_API_KEY, base_url=settings.GLM_BASE_URL)
 
-        self.openai_client = (
-            AsyncOpenAI(
-                api_key=settings.OPENROUTER_API_KEY or settings.OPENAI_API_KEY,
-                base_url=settings.OPENROUTER_BASE_URL if settings.OPENROUTER_API_KEY else None,
-                default_headers={"HTTP-Referer": "https://energyiq.tianji-astrology.com", "X-Title": "Energy Intelligence"}
-                if settings.OPENROUTER_API_KEY else None,
-            ) if (settings.OPENROUTER_API_KEY or settings.OPENAI_API_KEY) else None
-        )
-        self.anthropic_client = Anthropic(api_key=settings.ANTHROPIC_API_KEY) if settings.ANTHROPIC_API_KEY else None
+        cn_edition = (settings.APP_EDITION or "").lower() == "cn"
+        if cn_edition:
+            self.openai_client = None
+            self.anthropic_client = None
+        else:
+            self.openai_client = (
+                AsyncOpenAI(
+                    api_key=settings.OPENROUTER_API_KEY or settings.OPENAI_API_KEY,
+                    base_url=settings.OPENROUTER_BASE_URL if settings.OPENROUTER_API_KEY else None,
+                    default_headers={"HTTP-Referer": "https://energyiq.tianji-astrology.com", "X-Title": "Energy Intelligence"}
+                    if settings.OPENROUTER_API_KEY else None,
+                ) if (settings.OPENROUTER_API_KEY or settings.OPENAI_API_KEY) else None
+            )
+            self.anthropic_client = Anthropic(api_key=settings.ANTHROPIC_API_KEY) if settings.ANTHROPIC_API_KEY else None
         self.openrouter_failures = 0
         self.openrouter_open_until = 0.0
 

@@ -4,12 +4,18 @@ import { AiMarkdown } from '@/components/ai/AiMarkdown';
 import React, { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { useSession } from 'next-auth/react';
-import { Sparkles, Send, Paperclip, Mic, Settings2, Copy, RefreshCw, Loader2, FileText, Image as ImageIcon, AlertCircle } from 'lucide-react';
-import { safeErrorMessage } from '@/lib/api/safe-error';
+import { Sparkles, Paperclip, Copy, RefreshCw, AlertCircle } from 'lucide-react';
+import { VoiceInput } from '@/components/input/VoiceInput';
+import { BubbleSpeaker } from '@/components/ai/BubbleSpeaker';
+import { AssistantComposerButton } from '@/components/assistant/AssistantComposerButton';
 import { AigcLabel } from '@/components/ui/AigcLabel';
 import { buildAnswerDateLine } from '@/lib/ai/answer-date-line';
 import { VerificationBadge } from '@/components/evidence/VerificationBadge';
 import type { EvidenceVerification } from '@/lib/evidence/verification';
+import { citationText, dateLines } from '@/lib/assistant/citation-text';
+import { ASSISTANT_UNREACHABLE_ZH, visibleAssistantError } from '@/lib/assistant/chat-failure';
+import { applyAssistantStreamEvent, runAssistantRequest, settleAssistantMessages } from '@/lib/assistant/live-turn';
+import type { StoredSource } from '@/lib/assistant/answer-store';
 
 interface Message {
     id: string;
@@ -20,6 +26,12 @@ interface Message {
     model?: string;
     question?: string;
     verification?: EvidenceVerification;
+    sources?: StoredSource[];
+    answerId?: string | null;
+    standIn?: boolean;
+    synthetic?: boolean;
+    downloads?: { pdf: boolean; docx: boolean };
+    exportError?: string;
 }
 
 const quickPrompts = [
@@ -71,6 +83,8 @@ export default function AssistantPage() {
         scrollToBottom();
     }, [messages]);
 
+    useEffect(() => () => abortControllerRef.current?.abort(), []);
+
     const handleSend = async (text?: string) => {
         const messageText = text || inputValue.trim();
         if (!messageText || isLoading) return;
@@ -98,96 +112,59 @@ export default function AssistantPage() {
         };
         setMessages(prev => [...prev, aiMessage]);
 
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
         try {
-            abortControllerRef.current = new AbortController();
-
-            const response = await fetch('/api/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    messages: [...messages, userMessage].map(m => ({
-                        role: m.role,
-                        content: m.content
-                    })),
-                    isAssistant: true
-                }),
-                signal: abortControllerRef.current.signal
+            const outcome = await runAssistantRequest({
+                endpoint: '/api/chat',
+                history: [...messages, userMessage].map(m => ({
+                    role: m.role,
+                    content: m.content
+                })),
+                question: userMessage.content,
+                signal: controller.signal,
+                onEvent: (event) => {
+                    setMessages(prev => applyAssistantStreamEvent(prev, aiMessageId, event));
+                },
             });
-
-            if (!response.ok) {
-                throw new Error('AI 服务暂时不可用');
+            setMessages(prev => settleAssistantMessages(prev, aiMessageId, outcome));
+            if (!outcome.aborted && outcome.error) {
+                setError(visibleAssistantError(outcome.error || ASSISTANT_UNREACHABLE_ZH));
             }
-
-            const reader = response.body?.getReader();
-            const decoder = new TextDecoder();
-            let accumulatedContent = '';
-            let streamError: string | null = null;
-
-            if (reader) {
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-
-                    const chunk = decoder.decode(value);
-                    const lines = chunk.split('\n');
-
-                    for (const line of lines) {
-                        if (line.startsWith('data: ')) {
-                            const data = line.slice(6);
-                            if (data === '[DONE]') continue;
-
-                            try {
-                                const parsed = JSON.parse(data);
-                                if (parsed.type === 'provider') {
-                                    const model = parsed.data?.model;
-                                    setMessages(prev => prev.map(m => m.id === aiMessageId ? { ...m, model, question: userMessage.content } : m));
-                                } else if (parsed.type === 'evidence') {
-                                    const verification = parsed.data?.verification;
-                                    setMessages(prev => prev.map(m => m.id === aiMessageId ? { ...m, verification } : m));
-                                } else if (parsed.type === 'content') {
-                                    accumulatedContent += parsed.data;
-                                    setMessages(prev => prev.map(m =>
-                                        m.id === aiMessageId
-                                            ? { ...m, content: accumulatedContent }
-                                            : m
-                                    ));
-                                } else if (parsed.type === 'error') {
-                                    // 服务端错误事件：记下来，读完流后统一报错（原来在内层 try 里抛出，被“忽略解析错误”吞掉，界面留下一个空白的 AI 气泡）
-                                    streamError = String(parsed.data?.message || 'AI 响应失败');
-                                }
-                            } catch (e) {
-                                // 忽略解析错误
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (streamError && !accumulatedContent) {
-                // 不把内部配置名（如 *_API_KEY）展示给用户
-                throw new Error(/API_KEY|未配置/.test(streamError) ? 'AI 服务暂时不可用，请稍后再试' : streamError);
-            }
-
-            // 完成流式传输
-            setMessages(prev => prev.map(m =>
-                m.id === aiMessageId
-                    ? { ...m, isStreaming: false }
-                    : m
-            ));
-
-        } catch (err: any) {
-            if (err.name === 'AbortError') return;
-
-            setError(safeErrorMessage(err, 'AI 响应失败'));
-            setMessages(prev => prev.filter(m => m.id !== aiMessageId));
         } finally {
             setIsLoading(false);
             abortControllerRef.current = null;
         }
     };
 
-    const handleCopy = (content: string) => {
-        navigator.clipboard.writeText(content);
+    const handleCopy = (message: Message) => {
+        const text = citationText(message.content, message.sources || []);
+        navigator.clipboard.writeText(text);
+    };
+
+    const handleDownload = async (message: Message, format: 'pdf' | 'docx') => {
+        if (!message.answerId) return;
+        setMessages(prev => prev.map(item => item.id === message.id ? { ...item, exportError: '' } : item));
+        const response = await fetch(`/api/assistant/answers/${message.answerId}/export`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ format }),
+        });
+        if (!response.ok) {
+            const payload = await response.json().catch(() => null);
+            const exportError = typeof payload?.message === 'string' && payload.message.trim()
+                ? payload.message
+                : '导出失败';
+            setMessages(prev => prev.map(item => item.id === message.id ? { ...item, exportError } : item));
+            return;
+        }
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = format === 'pdf' ? '回答.pdf' : '回答.docx';
+        link.click();
+        URL.revokeObjectURL(url);
     };
 
     const handleRegenerate = () => {
@@ -201,9 +178,9 @@ export default function AssistantPage() {
     };
 
     return (
-        <div className="flex h-[calc(100vh-4rem)] overflow-hidden bg-background-dark text-white">
+        <div className="flex h-[calc(100dvh-4rem-env(safe-area-inset-bottom))] overflow-hidden bg-background-dark text-white">
             {/* Left Sidebar: History & Attachments */}
-            <aside className="w-80 bg-surface-dark border-r border-border-dark flex-col shrink-0 overflow-hidden hidden md:flex">
+            <aside aria-label="最近对话" className="w-80 bg-surface-dark border-r border-border-dark flex-col shrink-0 overflow-hidden hidden md:flex">
                 {/* Upload Area */}
                 <div className="p-4 border-b border-border-dark">
                     <div className="rounded-xl bg-background-dark border border-dashed border-border-dark p-4 group hover:border-primary/50 transition-colors cursor-pointer">
@@ -213,6 +190,7 @@ export default function AssistantPage() {
                             </div>
                             <div>
                                 <p className="text-sm font-bold text-white">上传文件</p>
+                                <p className="text-xs text-white/70">还没有对话时，从下面的问题开始。不会编造未收录的数字。</p>
                                 <p className="text-xs text-text-secondary mt-1">支持 PDF / Excel / 图片</p>
                             </div>
                         </div>
@@ -234,7 +212,7 @@ export default function AssistantPage() {
             </aside>
 
             {/* Main Chat Interface */}
-            <main className="flex-1 flex flex-col bg-background-dark relative min-w-0">
+            <div className="flex-1 flex flex-col bg-background-dark relative min-w-0">
                 {/* Header */}
                 <div className="border-b border-border-dark px-6 py-4 bg-surface-dark/50 backdrop-blur">
                     <div className="flex items-center justify-between">
@@ -247,9 +225,10 @@ export default function AssistantPage() {
                                 <p className="text-xs text-text-secondary">专业的新能源项目分析助手</p>
                             </div>
                         </div>
-                        <button className="p-2 rounded-lg hover:bg-surface-dark transition-colors">
-                            <Settings2 className="w-5 h-5 text-text-secondary" />
-                        </button>
+                        <div className="flex gap-2">
+                            <button type="button" className="rounded-lg border border-border-dark px-3 py-2 text-xs" onClick={() => fetch('/api/feedback', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'thumbs_down', text: '回答无用' }) })}>回答无用</button>
+                            <button type="button" className="rounded-lg border border-border-dark px-3 py-2 text-xs" onClick={() => fetch('/api/feedback', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'low_rating', rating: 1, text: '低分' }) })}>低分</button>
+                        </div>
                     </div>
                 </div>
 
@@ -283,7 +262,7 @@ export default function AssistantPage() {
                                     : "bg-surface-dark border border-border-dark text-primary"
                             )}>
                                 {msg.role === 'user' ? (
-                                    <span>{session?.user?.name?.[0] || 'U'}</span>
+                                    <span>{session?.user?.name?.[0] || '我'}</span>
                                 ) : (
                                     <Sparkles className="w-5 h-5" />
                                 )}
@@ -316,20 +295,68 @@ export default function AssistantPage() {
                                 )}
                                 {msg.role === 'assistant' && !msg.isStreaming && msg.id !== '1' && (
                                     <p className="text-[11px] text-slate-400" data-testid="answer-date-line">
-                                        {buildAnswerDateLine({ content: msg.content, question: msg.question, model: msg.model, answeredAt: msg.timestamp }).text}
+                                        {buildAnswerDateLine({ content: msg.content, question: msg.question, model: msg.standIn ? '未调用模型' : msg.model, answeredAt: msg.timestamp, sourceDates: (msg.sources || []).map((source) => source.published_at) }).text}
                                     </p>
+                                )}
+
+                                {msg.role === 'assistant' && !msg.isStreaming && (msg.sources?.length || msg.standIn || msg.answerId) && (
+                                    <div className="mt-3 space-y-2 border-t border-border-dark pt-3" data-testid="answer-sources">
+                                        {msg.standIn && (
+                                            <p className="text-xs text-amber-200" data-testid="stand-in-banner">未调用模型。下面只列资料库命中，不是模型结论。</p>
+                                        )}
+                                        {msg.synthetic && (
+                                            <p className="text-xs font-semibold text-red-300" data-testid="synthetic-banner">合成测试数据。不是国家能源局、税务机关或其他机构的出版物。</p>
+                                        )}
+                                        {!!msg.sources?.length && (
+                                            <ul className="space-y-2">
+                                                {msg.sources.map((source, index) => (
+                                                    <li key={`${source.title}-${index}`} className="text-xs leading-relaxed break-words text-white/80">
+                                                        <span className="font-medium text-white">[{index + 1}] {source.title}</span>
+                                                        {source.publisher && <span className="block">发布机构：{source.publisher}</span>}
+                                                        {source.issuer && source.issuer !== source.publisher && <span className="block">发文机关：{source.issuer}</span>}
+                                                        {dateLines(source).map((line) => <span key={line} className="block">{line}</span>)}
+                                                        {source.url && <a className="block break-all text-primary" href={source.url}>{source.url}</a>}
+                                                        {source.locator && <span className="block">定位：{source.locator}</span>}
+                                                        {source.excerpt && <span className="block whitespace-pre-wrap">摘录：{source.excerpt}</span>}
+                                                        {source.freshness_status === 'current' && <span className="block">时效：现行</span>}
+                                                        {source.freshness_status === 'review_recommended' && <span className="block">时效：建议复核</span>}
+                                                        {source.freshness_status === 'stale' && <span className="block">时效：已过期</span>}
+                                                        {source.note && <span className="block">{source.note}</span>}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        )}
+                                        <div className="flex flex-wrap gap-2">
+                                            <button type="button" data-testid="copy-answer" onClick={() => handleCopy(msg)} className="rounded-lg border border-border-dark px-3 py-2 text-xs">复制全文</button>
+                                            {msg.answerId && (
+                                                <button type="button" data-testid="download-pdf" onClick={() => void handleDownload(msg, 'pdf')} className="rounded-lg border border-border-dark px-3 py-2 text-xs">下载 PDF</button>
+                                            )}
+                                            {msg.answerId && (
+                                                <button type="button" data-testid="download-word" onClick={() => void handleDownload(msg, 'docx')} className="rounded-lg border border-border-dark px-3 py-2 text-xs">下载 Word</button>
+                                            )}
+                                            {msg.answerId && !msg.downloads?.docx && (
+                                                <span className="text-xs text-white/60">当前套餐不含 Word 导出</span>
+                                            )}
+                                        </div>
+                                        {msg.exportError && <p className="text-xs text-red-300" data-testid="download-error">{msg.exportError}</p>}
+                                    </div>
                                 )}
 
                                 {/* Action Buttons */}
                                 {msg.role === 'assistant' && !msg.isStreaming && (
                                     <div className="flex gap-2">
+                                        <BubbleSpeaker id={msg.id} text={citationText(msg.content, msg.sources || [])} />
                                         <button
-                                            onClick={() => handleCopy(msg.content)}
+                                            type="button"
+                                            aria-label="复制"
+                                            onClick={() => handleCopy(msg)}
                                             className="p-2 rounded-lg bg-surface-dark border border-border-dark hover:border-primary/50 transition-colors"
                                         >
                                             <Copy className="w-4 h-4 text-text-secondary" />
                                         </button>
                                         <button
+                                            type="button"
+                                            aria-label="重新生成"
                                             onClick={handleRegenerate}
                                             className="p-2 rounded-lg bg-surface-dark border border-border-dark hover:border-primary/50 transition-colors"
                                         >
@@ -371,48 +398,41 @@ export default function AssistantPage() {
                             />
                             <div className="flex items-center justify-between px-2 pb-1">
                                 <div className="flex items-center gap-1">
-                                    <button className="p-2 rounded-lg text-text-secondary hover:bg-background-dark hover:text-primary transition-colors">
+                                    <button type="button" aria-label="添加附件" className="p-2 rounded-lg text-text-secondary hover:bg-background-dark hover:text-primary transition-colors">
                                         <Paperclip className="w-5 h-5" />
                                     </button>
-                                    <button className="p-2 rounded-lg text-text-secondary hover:bg-background-dark hover:text-primary transition-colors">
-                                        <Mic className="w-5 h-5" />
-                                    </button>
+                                    <VoiceInput
+                                        appearance="toolbar"
+                                        disabled={isLoading}
+                                        onTranscript={(text) => {
+                                            const heard = text.trim();
+                                            if (!heard) return;
+                                            setInputValue((prev) => {
+                                                const base = prev.trim();
+                                                return base ? `${base} ${heard}` : heard;
+                                            });
+                                        }}
+                                    />
                                 </div>
-                                <button
-                                    onClick={() => handleSend()}
-                                    disabled={!inputValue.trim() || isLoading}
-                                    className={cn(
-                                        "px-4 py-2 rounded-xl flex items-center gap-2 text-sm font-medium transition-all",
-                                        inputValue.trim() && !isLoading
-                                            ? "bg-primary hover:bg-primary-600 text-white shadow-lg shadow-primary/20"
-                                            : "bg-surface-dark text-text-secondary cursor-not-allowed"
-                                    )}
-                                >
-                                    {isLoading ? (
-                                        <>
-                                            <Loader2 className="w-4 h-4 animate-spin" />
-                                            思考中
-                                        </>
-                                    ) : (
-                                        <>
-                                            发送
-                                            <Send className="w-4 h-4" />
-                                        </>
-                                    )}
-                                </button>
+                                <AssistantComposerButton
+                                    loading={isLoading}
+                                    draft={inputValue}
+                                    onStop={() => abortControllerRef.current?.abort()}
+                                    onSend={() => { void handleSend(); }}
+                                />
                             </div>
                         </div>
                     </div>
                 </div>
-            </main>
+            </div>
 
             {/* Right Sidebar: Knowledge Graph */}
-            <aside className="w-80 bg-surface-dark border-l border-border-dark flex-col shrink-0 hidden xl:flex">
+            <aside aria-label="知识图谱" className="w-80 bg-surface-dark border-l border-border-dark flex-col shrink-0 hidden xl:flex">
                 <div className="p-4 border-b border-border-dark">
-                    <h3 className="text-white text-base font-bold flex items-center gap-2">
+                    <h2 className="text-white text-base font-bold flex items-center gap-2">
                         <Sparkles className="w-5 h-5 text-primary" />
                         知识图谱
-                    </h3>
+                    </h2>
                     <p className="text-xs text-text-secondary mt-1">实时关联技术概念</p>
                 </div>
                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -425,7 +445,7 @@ export default function AssistantPage() {
                                         card.color === 'primary' ? 'bg-primary' :
                                             card.color === 'purple' ? 'bg-purple-500' : 'bg-orange-500'
                                     )} />
-                                    <h4 className="text-white font-bold text-sm">{card.title}</h4>
+                                    <h3 className="text-white font-bold text-sm">{card.title}</h3>
                                 </div>
                             </div>
                             <p className="text-xs text-text-secondary leading-relaxed mb-3">

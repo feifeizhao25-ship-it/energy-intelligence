@@ -9,7 +9,7 @@ import { NextResponse } from 'next/server';
  *
  * 原来用户条款里写了「AI 生成内容可能包含显式及隐式标识」，但页面和接口里一处标识都没有。
  */
-export const AIGC_LABEL = '内容由人工智能生成，仅供参考，请自行核实后使用';
+export const AIGC_LABEL = '内容由人工智能生成合成，仅供参考，请自行核实后使用';
 export const AIGC_SHORT_LABEL = 'AI 生成';
 export const AIGC_HEADER = 'X-AIGC-Generated';
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 import '../services/api_service.dart';
 
 class AssistantScreen extends StatefulWidget {
@@ -68,7 +69,7 @@ class _AssistantScreenState extends State<AssistantScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: context.eiCard,
               boxShadow: [
                 BoxShadow(
                   color: Colors.grey[300]!,

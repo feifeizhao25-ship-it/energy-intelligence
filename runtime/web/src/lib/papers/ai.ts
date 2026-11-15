@@ -1,4 +1,11 @@
 import { simpleChat } from '../ai/unified';
+import { neutralizeCnText } from '../compliance/bottom-line';
+
+function guarded(text: string, citation?: string) {
+    const safe = neutralizeCnText(text);
+    const source = citation?.trim();
+    return source ? `${safe}\n\n引用：${source}` : safe;
+}
 
 /**
  * 生成论文中文摘要
@@ -25,7 +32,7 @@ export async function generateSummary(abstract: string, title: string): Promise<
     (对新能源领域的应用价值)
     `;
 
-    return await simpleChat(prompt); // Adjust temperature/model in unified if needed
+    return guarded(await simpleChat(prompt), title);
 }
 
 /**
@@ -47,7 +54,9 @@ export async function extractKeyData(content: string): Promise<any[]> {
 
     try {
         const raw = await simpleChat(prompt);
-        return JSON.parse(raw.replace(/```json|```/g, '').trim());
+        const parsed = JSON.parse(raw.replace(/```json|```/g, '').trim());
+        const safe = neutralizeCnText(JSON.stringify(parsed));
+        return safe === JSON.stringify(parsed) ? parsed : [{ label: '说明', value: safe, context: '原文片段' }];
     } catch (e) {
         return [];
     }
@@ -67,7 +76,7 @@ export async function explainTerm(term: string, context: string): Promise<string
     3. 简懂解释 (50字以内)
     `;
 
-    return await simpleChat(prompt);
+    return guarded(await simpleChat(prompt), term);
 }
 
 /**
@@ -79,7 +88,7 @@ export async function translateText(text: string): Promise<string> {
     
     "${text}"
     `;
-    return await simpleChat(prompt);
+    return guarded(await simpleChat(prompt), text.slice(0, 80));
 }
 
 /**
@@ -106,7 +115,12 @@ export async function generateFullTranslation(text: string): Promise<any[]> {
 
     try {
         const raw = await simpleChat(prompt, 'deepseek-v3');
-        return JSON.parse(raw.replace(/```json|```/g, '').trim());
+        const parsed = JSON.parse(raw.replace(/```json|```/g, '').trim());
+        if (!Array.isArray(parsed)) return parsed;
+        return parsed.map((row) => ({
+            ...row,
+            zh: typeof row?.zh === 'string' ? neutralizeCnText(row.zh) : row?.zh,
+        }));
     } catch (e) {
         console.error('Translation parse error', e);
         // Fallback

@@ -2,6 +2,40 @@ import math
 from typing import List, Optional
 
 
+def solve_irr_rate(cashflows: List[float], max_iter: int = 200, tol: float = 1e-12) -> Optional[float]:
+    """与前端 project-finance.solveIrr 相同的二分法，返回小数利率。无唯一解返回 None。"""
+    if len(cashflows) < 2:
+        return None
+    if any(cf != cf or cf in (float("inf"), float("-inf")) for cf in cashflows):
+        return None
+    signs = [1 if cf > 0 else -1 for cf in cashflows if cf != 0]
+    if sum(1 for i in range(1, len(signs)) if signs[i] != signs[i - 1]) != 1:
+        return None
+
+    def npv(rate: float) -> float:
+        total, divisor = 0.0, 1.0
+        for cf in cashflows:
+            total += cf / divisor
+            divisor *= (1 + rate)
+        return total
+
+    low, high = -0.999, 1.0
+    while (npv(low) > 0) == (npv(high) > 0) and high < 1e6:
+        high *= 2
+    if (npv(low) > 0) == (npv(high) > 0):
+        return None
+    low_positive = npv(low) > 0
+    for _ in range(max_iter):
+        mid = (low + high) / 2
+        if (npv(mid) > 0) == low_positive:
+            low = mid
+        else:
+            high = mid
+        if high - low < tol:
+            break
+    return (low + high) / 2
+
+
 def calc_irr(cashflows: List[float], max_iter: int = 300, tol: float = 1e-12) -> Optional[float]:
     """IRR（百分数，保留 4 位）。
 
@@ -37,6 +71,17 @@ def calc_irr(cashflows: List[float], max_iter: int = 300, tol: float = 1e-12) ->
         if high - low < tol:
             break
     return round((low + high) / 2 * 100, 4)
+
+
+def tax_assumptions(vat: str | None = None, income_tax: str | None = None) -> dict:
+    """税费默认未计。方法卡同时列出简化度电成本与含税口径的差别。"""
+    counted = bool(vat or income_tax)
+    return {
+        "增值税": vat or "未计",
+        "所得税优惠": income_tax or "未计",
+        "LCOE口径": "NREL 简化 LCOE（投资与运维折现，除以折现发电量）",
+        "含税LCOE": "与简化口径的差额需把税额单独列入分子" if counted else "未计",
+    }
 
 
 def calc_npv(rate: float, cashflows: List[float]) -> float:
@@ -91,6 +136,51 @@ def calc_optimal_cleaning_interval(
     return max(1, round(days))
 
 
+def _solar_projection(
+    capacity_mw: float,
+    capex_per_w: float,
+    opex_per_kw_yr: float,
+    electricity_price: float,
+    itc_rate: float,
+    capacity_factor: float,
+    degradation_rate: float,
+    debt_ratio: float,
+    interest_rate: float,
+    tax_rate: float,
+    project_life: int,
+) -> tuple:
+    """Equity cashflows plus each year's debt-service coverage. No debt → coverage is empty."""
+    capex = capacity_mw * 1_000_000 * capex_per_w  # USD
+    equity = capex * (1 - debt_ratio)
+    debt = capex * debt_ratio
+    annual_gen = capacity_mw * 1000 * 8760 * capacity_factor  # kWh/yr
+
+    cashflows = [-equity]  # year 0: equity investment
+    coverages: List[float] = []
+    debt_balance = debt
+    for yr in range(1, project_life + 1):
+        generation = annual_gen * (1 - degradation_rate) ** (yr - 1)
+        revenue = generation * electricity_price / 1000  # USD
+        opex = capacity_mw * 1000 * opex_per_kw_yr  # USD
+        interest = debt_balance * interest_rate
+        principal = debt / project_life
+        ebitda = revenue - opex
+        ebt_d = ebitda - interest
+        itc_benefit = capex * itc_rate if yr == 1 else 0
+        tax = max(0, ebt_d * tax_rate) - itc_benefit
+        net_income = ebt_d - tax
+        # Equity cash flow: principal repayment is a financing outflow, not income.
+        # (No depreciation is modelled here, so there is no non-cash add-back.)
+        cashflow = net_income - principal
+        cashflows.append(cashflow)
+        service = interest + principal
+        if service > 0:
+            coverages.append((ebitda - tax) / service)
+        debt_balance = max(0, debt_balance - principal)
+
+    return cashflows, coverages
+
+
 def build_solar_cashflows(
     capacity_mw: float,
     capex_per_w: float,
@@ -105,28 +195,43 @@ def build_solar_cashflows(
     project_life: int,
 ) -> List[float]:
     """Build annual equity cashflows for a solar project (USD)."""
-    capex = capacity_mw * 1_000_000 * capex_per_w  # USD
-    equity = capex * (1 - debt_ratio)
-    debt = capex * debt_ratio
-    annual_gen = capacity_mw * 1000 * 8760 * capacity_factor  # kWh/yr
-
-    cashflows = [-equity]  # year 0: equity investment
-    debt_balance = debt
-    for yr in range(1, project_life + 1):
-        generation = annual_gen * (1 - degradation_rate) ** (yr - 1)
-        revenue = generation * electricity_price / 1000  # USD
-        opex = capacity_mw * 1000 * opex_per_kw_yr  # USD
-        interest = debt_balance * interest_rate
-        principal = debt / project_life
-        ebitda = revenue - opex
-        ebt = ebt_d = ebitda - interest
-        itc_benefit = capex * itc_rate if yr == 1 else 0
-        tax = max(0, ebt_d * tax_rate) - itc_benefit
-        net_income = ebt_d - tax
-        # Equity cash flow: principal repayment is a financing outflow, not income.
-        # (No depreciation is modelled here, so there is no non-cash add-back.)
-        cashflow = net_income - principal
-        cashflows.append(cashflow)
-        debt_balance = max(0, debt_balance - principal)
-
+    cashflows, _coverages = _solar_projection(
+        capacity_mw, capex_per_w, opex_per_kw_yr, electricity_price, itc_rate,
+        capacity_factor, degradation_rate, debt_ratio, interest_rate, tax_rate, project_life,
+    )
     return cashflows
+
+
+def min_solar_dscr(**kwargs) -> Optional[float]:
+    """最低偿债覆盖倍数。没有借款时没有这一指标，返回 None，不用固定数代替。"""
+    _cashflows, coverages = _solar_projection(**kwargs)
+    if not coverages:
+        return None
+    return round(min(coverages), 4)
+
+
+def build_wind_cashflows(
+    capacity_mw: float,
+    capex_per_kw: float,
+    opex_per_kw_yr: float,
+    electricity_price: float,
+    wind_capacity_factor: float,
+    debt_ratio: float,
+    interest_rate: float,
+    tax_rate: float,
+    project_life: int,
+) -> List[float]:
+    """Wind equity cashflows. Capex is USD/kW; loan principal and interest are outflows."""
+    return build_solar_cashflows(
+        capacity_mw=capacity_mw,
+        capex_per_w=capex_per_kw / 1000,
+        opex_per_kw_yr=opex_per_kw_yr,
+        electricity_price=electricity_price,
+        itc_rate=0,
+        capacity_factor=wind_capacity_factor,
+        degradation_rate=0,
+        debt_ratio=debt_ratio,
+        interest_rate=interest_rate,
+        tax_rate=tax_rate,
+        project_life=project_life,
+    )

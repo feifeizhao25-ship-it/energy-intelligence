@@ -1,0 +1,11 @@
+{
+  "appid": "",
+  "projectname": "nengjian-miniprogram",
+  "miniprogramRoot": "./",
+  "compileType": "miniprogram",
+  "setting": {
+    "es6": true,
+    "urlCheck": true,
+    "minified": true
+  }
+}

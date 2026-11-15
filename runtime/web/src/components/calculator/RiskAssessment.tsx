@@ -20,8 +20,8 @@ export function RiskAssessment({ result }: RiskAssessmentProps) {
     if (result.paybackYears > 8) {
         risks.push({
             level: 'warning',
-            message: `回本年限${result.paybackYears}年，较长`,
-            suggestion: '建议与银行理财对比，或等待组件价格下降',
+            message: `静态回收期 ${result.paybackYears} 年。这是按当前输入算出的年数。`,
+            suggestion: '对照电价、造价和发电量假设后重新计算。',
         });
     }
 
@@ -29,8 +29,8 @@ export function RiskAssessment({ result }: RiskAssessmentProps) {
     if (result.irr < 10) {
         risks.push({
             level: 'danger',
-            message: `投资回报率仅${result.irr}%，偏低`,
-            suggestion: '当前条件下安装光伏可能不划算，建议暂缓',
+            message: `内部收益率 ${result.irr}%。这是测算值，随电价与造价假设变化。`,
+            suggestion: '可以改电价或造价后再次测算，结果仍不是承诺。',
         });
     }
 
@@ -39,7 +39,7 @@ export function RiskAssessment({ result }: RiskAssessmentProps) {
         risks.push({
             level: 'warning',
             message: '屋顶存在较多遮挡',
-            suggestion: '建议先清除遮挡物，或选择微型逆变器方案',
+            suggestion: '遮挡比例会改变倾斜面辐照，请把实测遮挡写入输入后重算。',
         });
     }
 
@@ -47,8 +47,8 @@ export function RiskAssessment({ result }: RiskAssessmentProps) {
     if (result.electricityPrice && result.electricityPrice < 0.35) {
         risks.push({
             level: 'warning',
-            message: '当地电价较低，收益受限',
-            suggestion: '自用比例越高越划算，建议白天多用电',
+            message: '录入电价低于 0.35 元/千瓦时。',
+            suggestion: '自用比例会改变测算结果，请按实际用电重算。',
         });
     }
 
@@ -66,7 +66,7 @@ export function RiskAssessment({ result }: RiskAssessmentProps) {
                     <div className={`p-2 rounded-xl ${hasDanger ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600'}`}>
                         <AlertTriangle className="w-5 h-5" />
                     </div>
-                    {hasDanger ? '风险评估报告' : '投资评估建议'}
+                    {hasDanger ? '测算提示' : '假设核对'}
                 </h3>
 
                 <div className="space-y-3">
@@ -94,8 +94,8 @@ export function RiskAssessment({ result }: RiskAssessmentProps) {
                         <div className="flex gap-3">
                             <div className="w-1 h-full bg-red-400 rounded-full py-6 opacity-30"></div>
                             <p className="text-xs text-red-800/80 leading-relaxed font-medium">
-                                <strong className="text-red-900">专家建议：</strong>
-                                当前项目存在较高风险，建议您暂缓决策。不仅是经济回报偏低，可能还存在长期的维护隐患。建议咨询第三方监理或重新评估选址。
+                                <strong className="text-red-900">核对：</strong>
+                                当前输入下有多项测算提示。请核对遮挡、电价和回收期假设。结果不是决策指令。
                             </p>
                         </div>
                     </div>

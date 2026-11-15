@@ -25,9 +25,16 @@ const intlMiddleware = createIntlMiddleware({
 });
 
 // 仅旧版语言目录中的页面需要语言重写；根目录页面必须保持原路径。
+function nextWithPath(req: NextRequest): NextResponse {
+  const requestHeaders = new Headers(req.headers);
+  // 覆盖客户端自带的同名头，年龄门只用这里的真实路径。与 age-confirmation.ts 的 AGE_GATE_PATH_HEADER 一致。
+  requestHeaders.set('x-nengjian-pathname', req.nextUrl.pathname);
+  return NextResponse.next({ request: { headers: requestHeaders } });
+}
+
 function domesticRoute(req: NextRequest) {
   const localizedOnly = ['/education/pitfalls'];
-  return localizedOnly.includes(req.nextUrl.pathname) ? intlMiddleware(req) : NextResponse.next();
+  return localizedOnly.includes(req.nextUrl.pathname) ? intlMiddleware(req) : nextWithPath(req);
 }
 
 // 公开路径列表（不需要登录）
@@ -43,6 +50,9 @@ const publicPaths = [
   '/quick-calc',
   '/api-docs',
   '/developer/docs',
+  '/preview/p0',
+  '/preview/p1',
+  '/preview/p2',
   '/auth/error' // 中文认证错误页必须始终可访问（尤其登录未配置时）
 ];
 
@@ -65,11 +75,13 @@ function isPublicPath(pathname: string): boolean {
 // /api/auth/error?error=Configuration 并返回 500）。
 // 新增页面路由时必须同步加入本表——宁可 404 也不绕过鉴权。
 const knownSegments = new Set([
-  'achievements', 'assistant', 'audit', 'auth', 'calculator', 'checkout',
+  'achievements', 'admin', 'assistant', 'audit', 'auth', 'calculator', 'checkout',
   'community', 'dashboard', 'demo-request', 'developer', 'education',
   'enterprise', 'login', 'maintenance', 'map', 'membership', 'my',
-  'onboarding', 'papers', 'pricing', 'privacy', 'project', 'projects',
+  'freshness', 'onboarding', 'papers', 'preview', 'pricing', 'privacy', 'project', 'projects',
+  'team',
   'quick-calc', 'referral', 'resource', 'settings', 'terms',
+  'policies', 'datasets', 'daily', 'alerts', 'briefs', 'ops',
 ]);
 
 function firstSegment(pathname: string): string {
@@ -83,10 +95,32 @@ function isKnownRoute(pathname: string): boolean {
   return knownSegments.has(firstSegment(pathname));
 }
 
+// 环境变量打开的登录豁免只允许开发服务器和测试。生产进程一律当没开过。
+function devOrTestBypass(): boolean {
+  return process.env.NODE_ENV !== 'production';
+}
+
 // 窄豁免：仅当显式开启 NEXT_PUBLIC_DEMO_PERSONA_PREVIEW=1 时，
-// 放行 /dashboard 单页用于个性化人设 demo 预览（不含 /dashboard 子路径）
+// 放行 /dashboard 单页用于个性化人设 demo 预览（不含 /dashboard 子路径）。
+// 页面数据仍只来自已登录会话的 /api/dashboard；没有会话时接口 401，页面不展示任何用户记录。
 function isDemoDashboardPreview(pathname: string): boolean {
-  return process.env.NEXT_PUBLIC_DEMO_PERSONA_PREVIEW === '1' && pathname === '/dashboard';
+  return devOrTestBypass() && process.env.NEXT_PUBLIC_DEMO_PERSONA_PREVIEW === '1' && pathname === '/dashboard';
+}
+
+// 只在本地截图时放行这些页。生产服务器忽略 NENGJIAN_SCREENSHOT。
+const screenshotPaths = new Set([
+  '/datasets', '/daily', '/briefs', '/alerts', '/preview/p0', '/preview/p1', '/preview/p2',
+  '/ops/policy-diff', '/ops/preflight', '/ops/solar-sample',
+]);
+
+function isScreenshotPreview(pathname: string): boolean {
+  if (!devOrTestBypass() || process.env.NENGJIAN_SCREENSHOT !== '1') return false;
+  const normalized = pathname.replace(/^\/(?:zh|en)(?=\/|$)/, '') || '/';
+  return screenshotPaths.has(normalized);
+}
+
+function isLanguageScan(pathname: string): boolean {
+  return devOrTestBypass() && process.env.NENGJIAN_LANGUAGE_SCAN === '1' && isKnownRoute(pathname);
 }
 
 const authMiddleware = withAuth(
@@ -112,7 +146,7 @@ const authMiddleware = withAuth(
       authorized: ({ token, req }) => {
         const path = req.nextUrl.pathname;
         // 所有公开路径都允许访问
-        if (isPublicPath(path) || path.startsWith('/api/auth') || isDemoDashboardPreview(path)) {
+        if (isPublicPath(path) || path.startsWith('/api/auth') || isDemoDashboardPreview(path) || isScreenshotPreview(path) || isLanguageScan(path)) {
           return true;
         }
         return !!token;
@@ -141,7 +175,7 @@ export default async function proxy(req: NextRequest) {
   if (path.startsWith('/api') ||
     path.includes('.') ||
     path.startsWith('/_next')) {
-    return NextResponse.next();
+    return nextWithPath(req);
   }
 
   // 未知路由：放行给路由层——单段垃圾路径会匹配 [locale] 动态段，
@@ -150,15 +184,15 @@ export default async function proxy(req: NextRequest) {
   // （历史上未知路由会被 withAuth 重定向到全英文 /api/auth/error 并 500）。
   // 注意：新增页面路由必须同步加入 knownSegments——宁可 404 也不绕过鉴权。
   if (!isKnownRoute(path)) {
-    return NextResponse.next();
+    return nextWithPath(req);
   }
 
   // 国内版公开转化页无需 locale 重写。next-intl 在 standalone 环境会把
   // `/pricing` 反复改写为 `/zh/pricing`，造成公开页面重定向循环。
   if (isPublicPath(path)) {
-    return NextResponse.next();
+    return nextWithPath(req);
   }
-  if (isDemoDashboardPreview(path)) {
+  if (isDemoDashboardPreview(path) || isScreenshotPreview(path) || isLanguageScan(path)) {
     return domesticRoute(req);
   }
 

@@ -127,7 +127,7 @@ class TestChatEndpointEvidence:
         )
         assert response.status_code == 200
         body = response.json()
-        assert body["message"] == "回答"  # 既有响应字段不回归
+        assert body["message"].startswith("回答")  # 既有响应字段不回归（I-11：末尾追加核验状态）
         evidence = body["evidence"]
         assert evidence["answer"] == "回答"
         assert evidence["confidence"] in ("high", "medium", "low")

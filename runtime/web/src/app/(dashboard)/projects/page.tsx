@@ -45,12 +45,18 @@ export default function ProjectsPage() {
   };
 
   const getProjectIcon = (type: string) => {
-    switch (type) {
+    switch ((type || '').toLowerCase()) {
       case 'solar': return <Zap className="h-6 w-6 text-amber-500" />
       case 'wind': return <Wind className="h-6 w-6 text-cyan-500" />
       case 'storage': return <Battery className="h-6 w-6 text-emerald-500" />
       default: return <Calculator className="h-6 w-6 text-slate-500" />
     }
+  }
+
+  const capacityText = (capacity: unknown) => {
+    const value = Number(capacity);
+    if (!Number.isFinite(value)) return '未填写';
+    return value >= 1000 ? `${value / 1000} MW` : `${value} kW`;
   }
 
   const getStatusBadge = (status: string) => {
@@ -96,7 +102,7 @@ export default function ProjectsPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="space-y-1">
           <h1 className="text-3xl font-black text-slate-900 tracking-tight">我的能源资产</h1>
-          <p className="text-slate-500 font-medium">全生命周期管理与 AI 智能诊断中心</p>
+          <p className="text-slate-500 font-medium">已保存的项目。没有接入运行数据时，不显示健康度或发电量。</p>
         </div>
         <div className="flex items-center gap-3">
           <div className="relative hidden md:block group">
@@ -192,13 +198,11 @@ export default function ProjectsPage() {
                   <div className="grid grid-cols-2 gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
                     <div className="space-y-1">
                       <div className="text-[10px] font-black text-slate-400 uppercase">容量</div>
-                      <div className="text-sm font-black text-slate-900">{project.capacity >= 1000 ? `${project.capacity / 1000} MW` : `${project.capacity} kW`}</div>
+                      <div className="text-sm font-black text-slate-900">{capacityText(project.capacity)}</div>
                     </div>
                     <div className="space-y-1">
                       <div className="text-[10px] font-black text-slate-400 uppercase">健康度</div>
-                      <div className="text-sm font-black text-emerald-600">
-                        {project.parameters?.status === 'running' ? '98%' : project.parameters?.status === 'warning' ? '72%' : '--'}
-                      </div>
+                      <div className="text-sm font-black text-slate-500">未接入</div>
                     </div>
                   </div>
 

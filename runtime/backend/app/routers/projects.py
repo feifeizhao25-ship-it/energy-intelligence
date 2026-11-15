@@ -18,7 +18,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_current_user_id
 from app.database import get_db
+from app.core.subscription import QuotaExceeded, assert_project_quota
 from app.models.database import Project
+from app.models.user import User
+from app.services.geo_hint import infer_country
 from app.utils.response import success
 
 router = APIRouter(prefix="/projects")
@@ -29,6 +32,13 @@ class LocationIn(BaseModel):
     longitude: float = Field(..., ge=-180, le=180)
     address: Optional[str] = None
     timezone: Optional[str] = None
+    # ISO 3166-1 alpha-2. Optional: when omitted it is recognised from the address, else left empty (never defaulted).
+    country_code: Optional[str] = Field(None, min_length=2, max_length=2, pattern="^[A-Za-z]{2}$")
+
+    @field_validator("country_code")
+    @classmethod
+    def upper_country(cls, v: Optional[str]) -> Optional[str]:
+        return v.upper() if v else None
 
 
 class ProjectCreate(BaseModel):
@@ -58,7 +68,9 @@ def _to_response(project: Project) -> Dict[str, Any]:
             "latitude": project.latitude,
             "longitude": project.longitude,
             "address": project.location,
+            "country_code": project.country_code,
         },
+        "country_code": project.country_code,
         "status": project.status,
         "created_at": project.created_at.isoformat() if project.created_at else None,
         "updated_at": project.updated_at.isoformat() if project.updated_at else None,
@@ -82,6 +94,19 @@ async def create_project(
     user_id: str = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db),
 ):
+    # The plan's project limit is shown on Plan & usage; enforce it here, in the account's language.
+    try:
+        await assert_project_quota(user_id, db)
+    except QuotaExceeded as error:
+        market = (await db.execute(select(User.market).where(User.id == user_id))).scalar_one_or_none() or "cn"
+        if market == "global":
+            message = f"Your plan includes {error.limit} project{'s' if error.limit != 1 else ''}. Upgrade your plan to add more."
+        else:
+            message = f"当前套餐最多可创建 {error.limit} 个项目，如需更多请升级会员。"
+        raise HTTPException(
+            status_code=429,
+            detail={"error": "PROJECT_QUOTA_EXCEEDED", "message": message, "upgrade_url": "/pricing", "limit": error.limit},
+        ) from error
     now = datetime.now(timezone.utc)
     project = Project(
         id=str(uuid.uuid4()),
@@ -90,6 +115,7 @@ async def create_project(
         description=body.description,
         technology=body.technology,
         location=body.location.address,
+        country_code=body.location.country_code or infer_country(body.location.address),
         latitude=body.location.latitude,
         longitude=body.location.longitude,
         capacity_mw=body.capacity_kw / 1000,
@@ -123,6 +149,32 @@ async def get_project(
 ):
     project = await _get_owned(project_id, user_id, db)
     return success(data=_to_response(project))
+
+
+class CountryUpdate(BaseModel):
+    # ISO 3166-1 alpha-2; null clears it (and re-recognises it from the address).
+    country_code: Optional[str] = Field(None, min_length=2, max_length=2, pattern="^[A-Za-z]{2}$")
+
+    @field_validator("country_code")
+    @classmethod
+    def upper_country(cls, v: Optional[str]) -> Optional[str]:
+        return v.upper() if v else None
+
+
+@router.put("/{project_id}/country")
+async def set_project_country(
+    project_id: str,
+    body: CountryUpdate,
+    user_id: str = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+):
+    """The user corrects the project's country (reports use it for standards, currency and wording)."""
+    project = await _get_owned(project_id, user_id, db)
+    project.country_code = body.country_code or infer_country(project.location)
+    project.updated_at = datetime.now(timezone.utc)
+    await db.flush()
+    await db.refresh(project)
+    return success(data=_to_response(project), message="updated")
 
 
 @router.delete("/{project_id}")

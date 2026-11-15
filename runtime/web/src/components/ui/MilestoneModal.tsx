@@ -20,7 +20,7 @@ export function MilestoneModal() {
         try {
             localStorage.setItem(MILESTONE_STORAGE_KEY, 'true');
         } catch (e) {
-            console.warn('无法保存里程碑状态到 localStorage');
+            console.warn('无法保存里程碑状态到本地存储');
         }
     }, []);
 

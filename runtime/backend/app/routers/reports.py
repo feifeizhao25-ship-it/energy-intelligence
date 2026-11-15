@@ -1,11 +1,11 @@
 """
-报告生成路由 — 专业投资分析报告生成器
+报告生成路由 — 测算报告生成器
 ========================================
 依赖: python-docx, reportlab (pip install python-docx reportlab)
 可选: jinja2 (模板渲染)
 
 功能:
-  - 4 种专业报告模板: 可行性研究 / 投资分析 / 合规 / ESG
+  - 4 种报告模板: 可行性研究 / 测算结果 / 合规 / ESG
   - Word (.docx) 专业排版: 封面 + 目录 + 正文 + 表格 + 页眉页脚
   - PDF 生成: reportlab 流式布局
   - 项目数据查询 → fallback demo 数据
@@ -36,6 +36,7 @@ from fastapi import (
     Depends,
     HTTPException,
     Query,
+    Request,
     status,
 )
 from fastapi.responses import StreamingResponse, JSONResponse
@@ -46,12 +47,25 @@ from sqlalchemy.ext.asyncio import AsyncSession
 # ── 项目内部依赖 ──────────────────────────────────────────────
 from app.database import AsyncSessionLocal, get_db
 from app.core.dependencies import get_current_user_id
+from app.core.subscription import (
+    QuotaExceeded,
+    lock_for_update,
+    session_is_postgresql,
+    assert_report_quota,
+    consume_report_quota,
+    release_report_quota,
+    report_format_included,
+    report_quota_lock,
+)
 from app.models.report import Report
+from app.models.user import User
 from app.models.project import Project
 from app.models.cashflow import CashflowProjection
 from app.schemas.common import SuccessResponse
 from app.utils.response import success
 from app.services.evidence_envelope import build_envelope, source_from_dict
+from app.services.emission_units import avoided_wan_ton, factor_sentence
+from app.services import report_pdf_support as _pdf_support
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/reports", tags=["报告中心"])
@@ -177,7 +191,7 @@ def _confidential_label_cn(confidential: str) -> str:
 class ReportTemplateType(str, Enum):
     """报告模板类型"""
     FEASIBILITY = "feasibility"    # 可行性研究报告
-    INVESTMENT = "investment"      # 投资分析报告
+    INVESTMENT = "investment"      # 测算报告（历史模板 id 仍为 investment）
     COMPLIANCE = "compliance"      # 合规报告
     ESG = "esg"                    # ESG报告
 
@@ -214,6 +228,7 @@ class GenerateReportRequest(BaseModel):
     format: OutputFormat = Field(OutputFormat.PDF, description="输出格式 pdf/docx")
     title: Optional[str] = Field(None, description="自定义标题 (空则自动生成)")
     confidential: ConfidentialLevel = Field(ConfidentialLevel.CONFIDENTIAL, description="机密等级")
+    market: Optional[str] = Field(None, description="cn | global；空则取请求头 X-Market，再取用户所属市场")
 
 
 class GenerateReportResponse(BaseModel):
@@ -259,31 +274,31 @@ TEMPLATES: Dict[str, TemplateInfo] = {
         id="feasibility",
         name_zh="可行性研究报告",
         name_en="Feasibility Study Report",
-        description_zh="资源评估、技术方案、财务分析(NPV/IRR/LCOE)、风险评估、结论建议",
-        description_en="Resource assessment, technical design, financial analysis (NPV/IRR/LCOE), risk assessment, recommendations",
+        description_zh="资源评估、技术方案、财务分析(NPV/IRR/LCOE)、风险评估、方法与假设",
+        description_en="Resource assessment, technical design, financial analysis (NPV/IRR/LCOE), risk assessment, methods and assumptions",
         sections_zh=[
             "项目概述", "资源评估", "技术方案",
-            "财务分析", "风险评估", "结论与建议",
+            "财务分析", "风险评估", "方法与假设",
         ],
         sections_en=[
             "Project Overview", "Resource Assessment", "Technical Design",
-            "Financial Analysis", "Risk Assessment", "Conclusions & Recommendations",
+            "Financial Analysis", "Risk Assessment", "Methods and Assumptions",
         ],
         icon="📊",
     ),
     "investment": TemplateInfo(
         id="investment",
-        name_zh="投资分析报告",
-        name_en="Investment Analysis Report",
-        description_zh="执行摘要、市场分析、财务模型、敏感性分析、ESG评估、投资建议",
-        description_en="Executive summary, market analysis, financial modeling, sensitivity analysis, ESG assessment, investment recommendation",
+        name_zh="测算报告",
+        name_en="Calculation Report",
+        description_zh="执行摘要、已发布数据、财务测算、敏感性分析、排放核算、测算结果",
+        description_en="Executive summary, published data, financial model, sensitivity analysis, emissions accounting, calculation result",
         sections_zh=[
-            "执行摘要", "市场分析", "财务模型",
-            "敏感性分析", "ESG评估", "投资建议",
+            "执行摘要", "已发布数据", "财务测算",
+            "敏感性分析", "排放核算", "测算结果",
         ],
         sections_en=[
             "Executive Summary", "Market Analysis", "Financial Model",
-            "Sensitivity Analysis", "ESG Assessment", "Investment Recommendation",
+            "Sensitivity Analysis", "Emissions Accounting", "Calculation Result",
         ],
         icon="💰",
     ),
@@ -354,16 +369,26 @@ async def fetch_project_data(
 
 def _build_project_dict(project: Any, cf: Any = None) -> Dict[str, Any]:
     """从 ORM 对象构建数据字典"""
+    # Project stores one free-text address (``location``) plus latitude/longitude; it has no country, region, city or
+    # currency column. The old code read those attributes with a "CN"/"CNY" default, so every export said China/CNY.
+    from app.services.geo_hint import infer_country
+
+    address = str(getattr(project, "location", "") or "").strip()
     data: Dict[str, Any] = {
-        "name": getattr(project, "name", "未命名项目"),
-        "project_type": getattr(project, "project_type", "solar_pv"),
+        "name": getattr(project, "name", None) or "未命名项目",
+        "project_type": {"solar": "solar_pv"}.get(
+            str(getattr(project, "project_type", None) or getattr(project, "technology", None) or "solar_pv"),
+            str(getattr(project, "project_type", None) or getattr(project, "technology", None) or "solar_pv")),
         "capacity_mw": float(getattr(project, "capacity_mw", 0) or 0),
-        "country_code": getattr(project, "country_code", "CN"),
-        "province_or_region": getattr(project, "province_or_region", ""),
-        "city": getattr(project, "city", ""),
-        "currency": getattr(project, "currency", "CNY"),
-        "description": getattr(project, "description", ""),
-        "status": getattr(project, "status", "development"),
+        "address": address,
+        "latitude": getattr(project, "latitude", None),
+        "longitude": getattr(project, "longitude", None),
+        "country_code": getattr(project, "country_code", None) or infer_country(address) or "",
+        "province_or_region": getattr(project, "province_or_region", None) or "",
+        "city": getattr(project, "city", None) or "",
+        "currency": getattr(project, "currency", None) or "",
+        "description": getattr(project, "description", None) or "",
+        "status": getattr(project, "status", None) or "development",
     }
 
     payload = getattr(cf, "yearly_cashflows", None) if cf else None
@@ -379,6 +404,11 @@ def _build_project_dict(project: Any, cf: Any = None) -> Dict[str, Any]:
         data["financial"] = {}
         data["data_sources"] = []
 
+    # The currency the user modelled in is the report currency (a USD model must not be labelled CNY).
+    model_currency = str((data["financial"] or {}).get("currency") or "").strip().upper()
+    if model_currency:
+        data["currency"] = model_currency
+
     return data
 
 
@@ -388,19 +418,42 @@ REQUIRED_FINANCIAL_INPUTS = {
 }
 
 
-def validate_financial_evidence(data: Dict[str, Any]) -> None:
-    """Reject investment conclusions unless assumptions and traceable sources exist."""
+def _is_global(market: Optional[str]) -> bool:
+    return (market or "cn").lower() in ("global", "en", "int")
+
+
+# Machine-readable hint so the report screen can offer "add a data source" instead of a bare 422 (B11).
+_MISSING_HDR = {"X-Error-Code": "MISSING_REPORT_INPUT", "X-Error-Action": "add_data_source_or_save_model"}
+
+NO_SOURCE_NOTICE_ZH = "【重要】本项目未登记任何可核验的数据来源，本报告不得作为决策依据；请先在项目的“数据来源”页添加带链接的来源后重新生成。"
+NO_SOURCE_NOTICE_EN = ("IMPORTANT: no verifiable data source is attached to this project. Do not rely on this report for a decision; "
+                       "add a source with a link on the project's data-sources screen and generate it again.")
+
+
+def has_verified_sources(data: Dict[str, Any]) -> bool:
+    return any(isinstance(s, dict) and s.get("title") and s.get("url") and s.get("retrieved_at")
+               for s in (data.get("data_sources") or []))
+
+
+def validate_financial_evidence(data: Dict[str, Any], market: str = "cn") -> None:
+    """Reject a calculation report unless assumptions and traceable sources exist."""
+    en = _is_global(market)
     financial = data.get("financial") or {}
     missing = sorted(REQUIRED_FINANCIAL_INPUTS - set(financial))
     if missing:
-        raise HTTPException(status_code=422, detail=f"财务模型缺少必要输入: {', '.join(missing)}")
+        raise HTTPException(status_code=422, headers=_MISSING_HDR, detail=(
+            f"The project has no saved financial model (missing: {', '.join(missing)}). Save a model for this project first (POST /finance/models/{{project_id}}), then generate the report."
+            if en else f"财务模型缺少必要输入: {', '.join(missing)}。请先为该项目保存财务模型，再生成报告。"))
     if not financial.get("yearly_cashflows"):
-        raise HTTPException(status_code=422, detail="财务模型缺少年度现金流序列")
+        raise HTTPException(status_code=422, headers=_MISSING_HDR, detail=(
+            "The financial model has no yearly cash-flow series; save the model again." if en else "财务模型缺少年度现金流序列"))
     sources = data.get("data_sources") or []
     verified = [s for s in sources if isinstance(s, dict) and s.get("title") and s.get("url") and s.get("retrieved_at")]
     if not verified:
-        raise HTTPException(status_code=422, detail="财务模型缺少可核验的数据来源（标题、URL、获取日期）")
-    # fail-closed：已标记过期（stale）的政策类来源不得支撑投资结论，
+        raise HTTPException(status_code=422, headers=_MISSING_HDR, detail=(
+            "The financial model has no verifiable data source (title, URL and retrieval date). Add a source with a link on the project's data-sources screen."
+            if en else "财务模型缺少可核验的数据来源（标题、URL、获取日期）。请在项目的“数据来源”页添加带链接的来源。"))
+    # fail-closed：已标记过期（stale）的政策类来源不得进入测算引用，
     # 必须重新核验后才能生成报告。
     stale_policy = [
         s for s in sources
@@ -409,29 +462,16 @@ def validate_financial_evidence(data: Dict[str, Any]) -> None:
     if stale_policy:
         titles = ", ".join(str(s.get("title", "<untitled>")) for s in stale_policy)
         raise HTTPException(
-            status_code=422,
-            detail=f"政策类数据来源已过期（stale），需重新核验后方可生成投资结论: {titles}",
+            status_code=422, headers={"X-Error-Code": "STALE_POLICY_SOURCE", "X-Error-Action": "reverify_source"},
+            detail=(f"Policy sources are stale and must be re-verified before a report can cite them: {titles}"
+                    if en else f"政策类数据来源已过期（stale），需重新核验后方可生成测算引用: {titles}"),
         )
 
 
-def _format_citation(index: int, src: Dict[str, Any]) -> str:
-    """格式化单条数据来源引用；文献溯源字段（作者/版本/发布日期/页码）存在即透出。"""
-    parts = [
-        f"[{index}] {src.get('title', '未命名来源')}",
-        str(src.get('url', '无URL')),
-    ]
-    if src.get("authors"):
-        parts.append(f"作者：{src['authors']}")
-    if src.get("version"):
-        parts.append(f"版本：{src['version']}")
-    if src.get("published_at"):
-        parts.append(f"发布日期：{src['published_at']}")
-    if src.get("locator"):
-        parts.append(f"页码/段落：{src['locator']}")
-    parts.append(f"获取日期：{src.get('retrieved_at', '未记录')}")
-    if src.get("license_note"):
-        parts.append(f"许可：{src['license_note']}")
-    return " | ".join(parts)
+def _format_citation(index: int, src: Dict[str, Any], lang: str = "zh") -> str:
+    """格式化单条数据来源引用。有页码才写页码；待审核记录标明未发布。"""
+    from app.services.citation_record import format_citation
+    return format_citation(index, src, "en" if lang == "en" else "zh")
 
 
 def _demo_data() -> Dict[str, Any]:
@@ -525,22 +565,13 @@ def calc_financial_metrics(fin: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def _calc_irr(cashflows: List[float], max_iter: int = 100, tol: float = 1e-6) -> float:
-    """Newton-Raphson 法求 IRR"""
-    rate = 0.10  # 初始猜测 10%
-    for _ in range(max_iter):
-        npv = sum(cf / ((1 + rate) ** i) for i, cf in enumerate(cashflows))
-        dnpv = sum(
-            -i * cf / ((1 + rate) ** (i + 1)) for i, cf in enumerate(cashflows)
-        )
-        if abs(dnpv) < 1e-12:
-            break
-        rate_new = rate - npv / dnpv
-        if abs(rate_new - rate) < tol:
-            return rate_new
-        rate = rate_new
-        if rate < -0.99:
-            rate = -0.99
+def _calc_irr(cashflows: List[float], max_iter: int = 200, tol: float = 1e-12) -> float:
+    """与前端 solveIrr 共用二分法。无唯一解时返回 nan，报告显示「无法确认唯一值」。"""
+    from app.utils.financial_utils import solve_irr_rate
+
+    rate = solve_irr_rate(cashflows, max_iter=max_iter, tol=tol)
+    if rate is None:
+        return float("nan")
     return rate
 
 
@@ -554,7 +585,9 @@ def fmt_money(v: float, unit: str = "元", decimals: int = 0) -> str:
 
 
 def fmt_pct(v: float, decimals: int = 1) -> str:
-    """百分比格式化 — 全报告统一 1 位小数"""
+    """百分比格式化 — 全报告统一 1 位小数。无唯一解时不编造数字。"""
+    if v is None or (isinstance(v, float) and v != v):
+        return "无法确认唯一值"
     return f"{v * 100:.{decimals}f}%"
 
 
@@ -562,161 +595,24 @@ def fmt_pct(v: float, decimals: int = 1) -> str:
 # 6. Word 生成器 (python-docx)
 # ═══════════════════════════════════════════════════════════════
 
-def _global_section_body(section: str, data: Dict[str, Any], metrics: Dict[str, Any]) -> str:
-    """English body copy for one report section (global market)."""
-    name = data.get("name", "the project")
-    capacity = data.get("capacity_mw", "-")
-    city = data.get("city", "")
-    region = data.get("province_or_region", "")
-    irr = metrics.get("irr")
-    npv = metrics.get("npv")
-    lcoe = metrics.get("lcoe")
-    irr_txt = f"{irr:.2%}" if isinstance(irr, (int, float)) else "n/a"
-    npv_txt = f"{npv:,.0f}" if isinstance(npv, (int, float)) else "n/a"
-    lcoe_txt = f"{lcoe:.4f}" if isinstance(lcoe, (int, float)) else "n/a"
-    bodies = {
-        "Executive Summary": (
-            f"{name} is a {capacity} MW renewable energy project located in "
-            f"{city}, {region}. Key indicators: IRR {irr_txt}, NPV {npv_txt} "
-            f"{data.get('currency', 'USD')}, LCOE {lcoe_txt}."
-        ),
-        "Market Analysis": (
-            "Market conditions are summarized from public sources cited in the "
-            "assumptions register; figures are estimates, not guarantees."
-        ),
-        "Financial Model": (
-            f"The model spans {data.get('financial', {}).get('project_life_years', 25)} years "
-            f"with a discount rate of {data.get('financial', {}).get('discount_rate', 0.08):.1%}."
-        ),
-        "Sensitivity Analysis": (
-            "Sensitivity is assessed on electricity price, capex and capacity "
-            "factor within +/-20% bands."
-        ),
-        "ESG Assessment": (
-            "ESG screening covers land use, grid impact and community "
-            "consultation status as declared in the project register."
-        ),
-        "Investment Recommendation": (
-            "The recommendation is conditional on the validation items listed "
-            "below being completed by qualified parties."
-        ),
-    }
-    return bodies.get(section, f"{section}: see project documentation for {name}.")
+def _global_model(data, report_type, template_info, metrics, title, confidential):
+    from app.services import report_global
+
+    return report_global.build_report(data, report_type, template_info, metrics, title, confidential, calc=calc_financial_metrics)
 
 
-def _generate_docx_global(
-    data: Dict[str, Any],
-    report_type: str,
-    template_info: TemplateInfo,
-    metrics: Dict[str, Any],
-    title: str,
-    confidential: str,
-) -> bytes:
-    """Global-market DOCX: fully English output (no untranslated Chinese)."""
-    from docx import Document
-    from docx.shared import Pt
+def _generate_docx_global(data, report_type, template_info, metrics, title, confidential) -> bytes:
+    """Global-market DOCX: real English content (cover, contents, tables, appendix)."""
+    from app.services import report_global
 
-    doc = Document()
-    style = doc.styles["Normal"]
-    style.font.name = "Helvetica"
-    style.font.size = Pt(11)
-
-    doc.add_heading(title, level=0)
-    doc.add_paragraph(f"Confidentiality: {confidential}")
-    doc.add_paragraph(
-        f"Project: {data.get('name', '-')} | Capacity: {data.get('capacity_mw', '-')} MW | "
-        f"Location: {data.get('city', '-')}, {data.get('province_or_region', '-')}, "
-        f"{data.get('country_code', '-')} | Currency: {data.get('currency', 'USD')}"
-    )
-
-    for section in template_info.sections_en:
-        doc.add_heading(section, level=1)
-        doc.add_paragraph(_global_section_body(section, data, metrics))
-
-    doc.add_heading("Assumptions and evidence", level=1)
-    doc.add_paragraph(
-        "All figures in this report are estimates derived from the assumptions "
-        "register. Each key input lists its evidence source and verification date."
-    )
-
-    doc.add_heading("Required validation before decision", level=1)
-    doc.add_paragraph(
-        "Independent engineering review, grid interconnection confirmation and "
-        "legal due diligence must be completed before any investment decision."
-    )
-
-    doc.add_paragraph(
-        "Disclaimer: forecasts depend on assumptions; actual results may differ. "
-        "The authors accept no liability for decisions made on this report."
-    )
-
-    buf = io.BytesIO()
-    doc.save(buf)
-    buf.seek(0)
-    return buf.read()
+    return report_global.render_docx(_global_model(data, report_type, template_info, metrics, title, confidential))
 
 
-def _generate_pdf_global(
-    data: Dict[str, Any],
-    report_type: str,
-    template_info: TemplateInfo,
-    metrics: Dict[str, Any],
-    title: str,
-    confidential: str,
-) -> bytes:
-    """Global-market PDF: fully English output (no untranslated Chinese)."""
-    from reportlab.lib.pagesizes import A4
-    from reportlab.lib.styles import getSampleStyleSheet
-    from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
-    from reportlab.lib.units import mm
+def _generate_pdf_global(data, report_type, template_info, metrics, title, confidential) -> bytes:
+    """Global-market PDF: real English content with a contents page that carries page numbers."""
+    from app.services import report_global
 
-    buf = io.BytesIO()
-    doc = SimpleDocTemplate(
-        buf, pagesize=A4,
-        leftMargin=20 * mm, rightMargin=20 * mm,
-        topMargin=20 * mm, bottomMargin=20 * mm,
-        title=title,
-    )
-    styles = getSampleStyleSheet()
-    story = [
-        Paragraph(title, styles["Title"]),
-        Spacer(1, 6 * mm),
-        Paragraph(f"Confidentiality: {confidential}", styles["Normal"]),
-        Paragraph(
-            f"Project: {data.get('name', '-')} | Capacity: {data.get('capacity_mw', '-')} MW | "
-            f"Location: {data.get('city', '-')}, {data.get('province_or_region', '-')}, "
-            f"{data.get('country_code', '-')} | Currency: {data.get('currency', 'USD')}",
-            styles["Normal"],
-        ),
-        Spacer(1, 6 * mm),
-    ]
-    for section in template_info.sections_en:
-        story.append(Paragraph(section, styles["Heading1"]))
-        story.append(Paragraph(_global_section_body(section, data, metrics), styles["Normal"]))
-        story.append(Spacer(1, 3 * mm))
-
-    story.append(Paragraph("Assumptions and evidence", styles["Heading1"]))
-    story.append(Paragraph(
-        "All figures in this report are estimates derived from the assumptions "
-        "register. Each key input lists its evidence source and verification date.",
-        styles["Normal"],
-    ))
-    story.append(Paragraph("Required validation before decision", styles["Heading1"]))
-    story.append(Paragraph(
-        "Independent engineering review, grid interconnection confirmation and "
-        "legal due diligence must be completed before any investment decision.",
-        styles["Normal"],
-    ))
-    story.append(Spacer(1, 3 * mm))
-    story.append(Paragraph(
-        "Disclaimer: forecasts depend on assumptions; actual results may differ. "
-        "The authors accept no liability for decisions made on this report.",
-        styles["Italic"],
-    ))
-
-    doc.build(story)
-    buf.seek(0)
-    return buf.read()
+    return report_global.render_pdf(_global_model(data, report_type, template_info, metrics, title, confidential))
 
 
 def generate_docx(
@@ -774,6 +670,8 @@ def generate_docx(
 
     # ════ 正文 ════（目录函数已写入分页符）
 
+    if report_type in ("compliance", "esg") and not has_verified_sources(data):
+        _add_body(doc, NO_SOURCE_NOTICE_ZH, bold=True)  # first thing on the first content page, not only in the appendix
     if report_type == "feasibility":
         _add_feasibility_content(doc, data, metrics)
     elif report_type == "investment":
@@ -787,11 +685,12 @@ def generate_docx(
     doc.add_page_break()
     _add_appendix(doc, data, metrics)
 
-    # ── 导出 ──
+    # ── 导出 ──（目录域预渲染：标题 + 页码直接写进文件，不必手动更新域）
     buf = io.BytesIO()
     doc.save(buf)
-    buf.seek(0)
-    return buf.read()
+    from app.services.docx_toc import prerender_toc
+
+    return prerender_toc(buf.getvalue())
 
 
 def _setup_heading_styles(doc):
@@ -919,7 +818,7 @@ def _add_cover_page(doc, title: str, report_type: str, confidential: str, data: 
     # 报告类型
     type_names = {
         "feasibility": "可行性研究报告",
-        "investment": "投资分析报告",
+        "investment": "测算报告",
         "compliance": "合规审查报告",
         "esg": "ESG 专项报告",
     }
@@ -973,6 +872,18 @@ def _add_cover_page(doc, title: str, report_type: str, confidential: str, data: 
     doc.add_page_break()
 
 
+def _enable_update_fields_on_open(doc) -> None:
+    """settings.xml 加 <w:updateFields w:val="true"/>，TOC 域在 Word 中打开时即刷新页码。"""
+    from docx.oxml import OxmlElement
+    from docx.oxml.ns import qn
+
+    settings_el = doc.settings.element
+    if settings_el.find(qn("w:updateFields")) is None:
+        el = OxmlElement("w:updateFields")
+        el.set(qn("w:val"), "true")
+        settings_el.append(el)
+
+
 def _add_toc_page(doc, template_info: TemplateInfo):
     """目录页 — Word 原生 TOC 域 (可右键更新页码)"""
     from docx.shared import Pt, RGBColor
@@ -1001,7 +912,7 @@ def _add_toc_page(doc, template_info: TemplateInfo):
     fldChar2 = OxmlElement('w:fldChar')
     fldChar2.set(qn('w:fldCharType'), 'separate')
     fldChar3 = OxmlElement('w:t')
-    fldChar3.text = "右键此处 → 更新域 可生成带页码的目录"
+    fldChar3.text = ""
     fldChar4 = OxmlElement('w:fldChar')
     fldChar4.set(qn('w:fldCharType'), 'end')
     run._element.append(fldChar1)
@@ -1010,21 +921,8 @@ def _add_toc_page(doc, template_info: TemplateInfo):
     run._element.append(fldChar3)
     run._element.append(fldChar4)
 
-    # 静态章节预览 (非页码版)
-    doc.add_paragraph()
-    for i, section_name in enumerate(template_info.sections, 1):
-        p = doc.add_paragraph()
-        # 添加书签便于导航
-        run = p.add_run(f"第{i}章  {section_name}")
-        run.font.size = Pt(12)
-        _set_run_fonts(run, FONT_BODY_CN)
-
-    # 附录
-    p = doc.add_paragraph()
-    run = p.add_run("附录")
-    run.font.size = Pt(12)
-    run.font.color.rgb = RGBColor(0x88, 0x88, 0x88)
-    _set_run_fonts(run, FONT_BODY_CN)
+    # 打开文档时让 Word 自动更新目录页码（Word 会提示一次"更新域"）
+    _enable_update_fields_on_open(doc)
 
     doc.add_page_break()
 
@@ -1070,15 +968,25 @@ def _add_heading(doc, text: str, level: int = 1):
 
     level = max(1, min(level, 3))
     p = doc.add_paragraph(style=f"Heading {level}")
+    p.paragraph_format.keep_with_next = True
+    p.paragraph_format.keep_together = True
     run = p.add_run(text)
     _set_run_fonts(run, FONT_TITLE_CN)
     if level == 1:
-        # 下方金色装饰线
+        # 下方金色装饰线（也跟下一段连在一起，否则标题只和装饰线连着，仍会孤立在页尾）
         p2 = doc.add_paragraph()
+        p2.paragraph_format.keep_with_next = True
         r2 = p2.add_run("━" * 20)
         r2.font.size = Pt(8)
         r2.font.color.rgb = RGBColor(0xC9, 0xA9, 0x61)
     return p
+
+
+def _add_cn_formulas(doc):
+    """中文报告里的公式标题。层级是 3，跟在已有的 2 级标题后面。"""
+    _add_heading(doc, "计算公式", level=3)
+    _add_body(doc, "净现值 NPV = Σ C_t / (1+r)^t")
+    _add_body(doc, "平准化度电成本 LCOE = 生命周期成本现值 / 折现发电量")
 
 
 def _add_body(doc, text: str, bold: bool = False):
@@ -1150,12 +1058,12 @@ def _add_styled_table(
             for cell in table.columns[i].cells:
                 cell.width = Cm(w)
 
-    # 表头
+    # 表头。直接写入文字：先 cell.text = "" 再 add_run 会在可见文字前留下一个空 run。
     for i, h in enumerate(headers):
         cell = table.rows[0].cells[i]
-        cell.text = ""
+        cell.text = h
         p = cell.paragraphs[0]
-        run = p.add_run(h)
+        run = p.runs[0]
         run.font.size = Pt(fs["table_head"])
         run.font.bold = True
         run.font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
@@ -1171,9 +1079,9 @@ def _add_styled_table(
     for row_idx, row_data in enumerate(rows):
         for col_idx, val in enumerate(row_data):
             cell = table.rows[row_idx + 1].cells[col_idx]
-            cell.text = ""
+            cell.text = str(val)
             p = cell.paragraphs[0]
-            run = p.add_run(str(val))
+            run = p.runs[0]
             run.font.size = Pt(fs["table_body"])
             _set_run_fonts(run, FONT_BODY_CN)
             # 斑马纹
@@ -1270,7 +1178,7 @@ def _add_feasibility_content(doc, data: Dict, metrics: Dict):
             ["装机容量", f"{cap:.0f} MW"],
             ["项目地点", _format_location(data)],
             ["预计寿命", f"{fin.get('project_life_years', 25)} 年"],
-            ["货币单位", data.get("currency", "CNY")],
+            ["货币单位", data.get("currency") or "CNY"],
         ],
         col_widths=[6, 10],
         caption="项目基本信息一览",
@@ -1283,9 +1191,9 @@ def _add_feasibility_content(doc, data: Dict, metrics: Dict):
     annual_gen = fin.get("annual_generation_mwh", 0)
     utilization_hours = annual_gen / cap if cap > 0 else 0
     _add_body(doc,
-        f"根据气象数据评估，项目场址年等效利用小时数约 {utilization_hours:,.0f} 小时，"
-        f"首年预计发电量 {annual_gen:,.0f} MWh。"
-        f"资源等级评定为「良好」，具备开发价值。"
+        f"按输入的气象数据，项目场址年等效利用小时数约 {utilization_hours:,.0f} 小时，"
+        f"首年发电量（按输入）{annual_gen:,.0f} MWh。"
+        "资源等级需对照所引气象数据源的分级标准，本报告不另作评级。"
     )
 
     _add_heading(doc, "2.2 发电量预测", level=2)
@@ -1304,14 +1212,14 @@ def _add_feasibility_content(doc, data: Dict, metrics: Dict):
 
     _add_heading(doc, "3.1 系统设计", level=2)
     _add_body(doc,
-        f"推荐采用分块发电、集中并网方案。"
+        f"本方案按分块发电、集中并网描述。"
         f"主设备包括光伏组件/风力发电机组、逆变器、升压变压器及监控系统。"
-        f"总装机容量 {cap:.0f} MW，建议配置适当比例的储能系统以提高消纳率。"
+        f"总装机容量 {cap:.0f} MW。储能容量若纳入测算，须在财务假设中单独列出。"
     )
 
     _add_heading(doc, "3.2 主要设备选型", level=2)
     _add_styled_table(
-        doc, ["设备类别", "规格建议", "数量"],
+        doc, ["设备类别", "规格（示例）", "数量"],
         [
             ["发电组件", "高效单晶硅 / 双面组件", f"{cap:.0f} MW"],
             ["逆变器", "组串式 / 集中式逆变器", f"{cap * 1.1:.0f} MW"],
@@ -1319,7 +1227,7 @@ def _add_feasibility_content(doc, data: Dict, metrics: Dict):
             ["监控系统", "SCADA 远程监控", "1 套"],
         ],
         col_widths=[5, 8, 4],
-        caption="主要设备选型建议",
+        caption="主要设备选型（示例规格）",
     )
 
     # 第4章 财务分析
@@ -1339,31 +1247,32 @@ def _add_feasibility_content(doc, data: Dict, metrics: Dict):
     )
 
     _add_heading(doc, "4.2 核心财务指标", level=2)
+    _add_cn_formulas(doc)
     irr_display = fmt_pct(metrics["irr"])
     _add_styled_table(
-        doc, ["指标", "数值", "评价"],
+        doc, ["指标", "数值", "对照"],
         [
             ["净现值 (NPV)", fmt_money(metrics["npv"]),
-             "✓ 达标" if metrics["npv"] > 0 else "✗ 不达标"],
+             "相对 0 为正" if metrics["npv"] > 0 else "相对 0 为负"],
             ["内部收益率 (IRR)", irr_display,
-             "✓ 良好" if metrics["irr"] > 0.08 else "⚠ 一般"],
+             "高于对照折现率 8%" if metrics["irr"] > 0.08 else "不高于对照折现率 8%"],
             ["投资回收期", f"{metrics['payback_years']:.1f} 年",
-             "✓ 合理" if metrics["payback_years"] < 10 else "⚠ 偏长"],
+             "短于 10 年" if metrics["payback_years"] < 10 else "不少于 10 年"],
             ["LCOE 度电成本", f"{metrics['lcoe']:.4f} 元/kWh",
-             "✗ 偏高" if metrics["lcoe"] > 0.35 else "✓ 合理"],
-            ["投资回报率 (ROI)", fmt_pct(metrics["roi"]), "—"],
+             "高于 0.35 元/kWh" if metrics["lcoe"] > 0.35 else "不高于 0.35 元/kWh"],
+            ["投资回报率 (ROI)", fmt_pct(metrics["roi"]), "按输入假设"],
         ],
         col_widths=[5, 5, 6],
-        caption="核心财务指标评价",
+        caption="核心财务指标（对照输入假设，不是评级）",
     )
 
-    _add_heading(doc, "4.3 现金流预测 (前10年)", level=2)
+    _add_heading(doc, "4.3 前10年净现金流", level=2)
     cf_rows = []
     for y in range(1, min(11, len(metrics["cashflows"]))):
         cf = metrics["cashflows"][y]
         cf_rows.append([f"第 {y} 年", fmt_money(cf)])
     _add_styled_table(doc, ["年度", "净现金流"], cf_rows, col_widths=[6, 10],
-                      caption="前10年净现金流预测")
+                      caption="前10年净现金流（按输入假设）")
 
     # 第5章 风险评估
     _add_heading(doc, "第五章  风险评估", level=1)
@@ -1375,56 +1284,51 @@ def _add_feasibility_content(doc, data: Dict, metrics: Dict):
         {"name": "市场风险", "level": "中", "description": "电力市场化交易电价不确定性"},
     ])
 
-    # 第6章 结论
-    _add_heading(doc, "第六章  结论与建议", level=1)
-    npv_ok = metrics["npv"] > 0
-    irr_ok = metrics["irr"] > 0.08
+    # 第6章 方法与假设
+    _add_heading(doc, "第六章  方法与假设", level=1)
     _add_body(doc,
-        f"综合以上分析，项目净现值为 {fmt_money(metrics['npv'])}，"
-        f"内部收益率为 {irr_display}，投资回收期为 {metrics['payback_years']:.1f} 年。"
+        f"按所列假设测算，项目净现值为 {fmt_money(metrics['npv'])}，"
+        f"内部收益率为 {irr_display}，静态回收期为 {metrics['payback_years']:.1f} 年。"
+        "8% 只作为读数对照，不是结论门槛。"
     )
-    if npv_ok and irr_ok:
-        _add_body(doc,
-            "结论：项目各项财务指标均达到投资要求，财务可行性良好，"
-            "建议推进项目开发。",
-            bold=True,
-        )
-    else:
-        _add_body(doc,
-            "结论：项目部分财务指标未达预期，建议优化方案后重新评估。",
-            bold=True,
-        )
+    _add_body(doc,
+        "主要假设见财务分析与资源评估章节。改变电价、造价、发电量或折现率后须重算。"
+        "本报告给出测算结果与方法，不给出开发或配置结论。",
+        bold=True,
+    )
 
 
-# ── 投资分析报告 正文 ──
+# ── 测算报告 正文 ──
 
 def _add_investment_content(doc, data: Dict, metrics: Dict):
-    """投资分析报告"""
+    """测算报告：只列方法、假设与计算结果。"""
     cap = data.get("capacity_mw", 0)
 
     _add_heading(doc, "第一章  执行摘要", level=1)
     _add_body(doc,
-        f"本报告对「{data['name']}」进行发电量与财务指标测算分析。"
+        f"本报告对「{data['name']}」进行发电量与财务指标测算。"
         f"项目装机容量 {cap:.0f} MW，总投资 {fmt_money(metrics['initial_investment'])}。"
-        f"经测算，项目 IRR 为 {fmt_pct(metrics['irr'])}，"
+        f"按本章所列假设，IRR 为 {fmt_pct(metrics['irr'])}，"
         f"NPV 为 {fmt_money(metrics['npv'])}，"
-        f"投资回收期 {metrics['payback_years']:.1f} 年。"
+        f"静态回收期 {metrics['payback_years']:.1f} 年。"
+        "以上为测算值，随电价、造价与发电量假设变化。"
     )
 
-    _add_heading(doc, "第二章  市场分析", level=1)
-    _add_heading(doc, "2.1 行业概况", level=2)
+    _add_heading(doc, "第二章  已发布数据", level=1)
+    _add_heading(doc, "2.1 已发布装机统计", level=2)
     _add_body(doc,
-        "在国家「双碳」目标驱动下，新能源行业持续高速增长。"
-        "2024年全国光伏新增装机超 200GW，风电新增超 70GW。"
-        "预计 2025-2030 年复合增长率维持在 15-20%。"
+        "本章只转述已发布统计，不外推未来装机或电价。"
+        "国家能源局已发布数据：2024 年全国光伏新增装机超过 200GW，风电新增超过 70GW。"
+        "引用时须核对国家能源局当年统计公报的口径与发布日期。"
     )
-    _add_heading(doc, "2.2 电价趋势", level=2)
+    _add_heading(doc, "2.2 电价数据来源", level=2)
+    _add_cn_formulas(doc)
     _add_body(doc,
-        "随着电力市场化改革推进，新能源上网电价逐步从标杆电价向市场化电价过渡。"
-        "绿电交易和绿证制度为新能源项目提供额外溢价空间。"
+        "电价取自用户输入或已收录的省级代理购电价格表，并标注来源与数据截至日期。"
+        "本报告不预测电价涨跌，也不把历史电价外推为未来价格。"
     )
 
-    _add_heading(doc, "第三章  财务模型", level=1)
+    _add_heading(doc, "第三章  财务测算", level=1)
     _add_styled_table(
         doc, ["核心指标", "数值", "行业基准"],
         [
@@ -1458,28 +1362,60 @@ def _add_investment_content(doc, data: Dict, metrics: Dict):
         caption="电价敏感性分析 (±10%)",
     )
 
-    _add_heading(doc, "第五章  ESG 评估", level=1)
+    _add_heading(doc, "第五章  排放核算", level=1)
     annual_gen_kwh = fin.get("annual_generation_mwh", 0) * 1000
-    co2_reduction = annual_gen_kwh * 0.585  # kg CO2/kWh
+    province = data.get("province_or_region")
+    co2_wan_ton = avoided_wan_ton(annual_gen_kwh, province=province)
     _add_body(doc,
-        f"项目年发电量约 {annual_gen_kwh / 1e6:,.1f} GWh，"
-        f"年等效减排 CO₂ 约 {co2_reduction / 1e6:,.2f} 万吨。"
-        "符合国家碳中和战略方向，ESG 评级为 A 级。"
+        f"按年发电量约 {annual_gen_kwh / 1e6:,.1f} GWh，"
+        f"{factor_sentence(province)}，"
+        f"年等效减排 CO₂ 约 {co2_wan_ton:,.2f} 万吨。"
+        "这是电力消费间接排放的测算值，不是评级结果。"
+        "标煤、二氧化硫和氮氧化物若未单独引用公告，标为待核实。"
     )
 
-    _add_heading(doc, "第六章  投资建议", level=1)
+    _add_heading(doc, "第六章  测算结果", level=1)
     _add_body(doc,
-        f"综合财务模型和风险分析，项目 IRR ({fmt_pct(metrics['irr'])}) "
-        f"{'高于' if metrics['irr'] > 0.08 else '低于'}行业基准 (8%)，"
-        f"NPV {'为正' if metrics['npv'] > 0 else '为负'}。"
+        f"按本报告输入与假设：IRR 为 {fmt_pct(metrics['irr'])}，"
+        f"对照常用折现基准 8% {'高于' if metrics['irr'] > 0.08 else '低于'}该基准；"
+        f"NPV {'为正' if metrics['npv'] > 0 else '为负'}（{fmt_money(metrics['npv'])}）。"
+        "对照基准只用于读数，不是投资结论。"
     )
-    recommendation = (
-        "建议：推荐投资。项目财务指标良好，政策风险可控，ESG 效益显著。"
-        if metrics["npv"] > 0 and metrics["irr"] > 0.08
-        else "建议：暂缓投资。需优化成本结构或提升电价水平后再行评估。"
+    _add_body(doc,
+        "方法与假设见财务测算与敏感性分析章节。结果随电价、造价、发电量与折现率变化。"
+        "数据来源见附录。本报告不给出买入、暂缓或配置结论。",
+        bold=True,
     )
-    _add_body(doc, recommendation, bold=True)
 
+
+# ── 合规清单：只做能核对的事 ──
+_LAWS = ("《可再生能源法》", "《电力法》", "《环境保护法》", "《土地管理法》")
+
+
+def _source_titles(data: Dict[str, Any]) -> str:
+    return " ".join(str(s.get("title", "")) for s in (data.get("data_sources") or []) if isinstance(s, dict))
+
+
+def compliance_rows(data: Dict[str, Any]) -> List[List[str]]:
+    """Legal checklist rows. We cannot judge whether a project complies, so there is no
+    "符合" claim: each row says whether the user has registered a source for that law
+    (a real check on the project's own data) and that a person must confirm."""
+    titles = _source_titles(data)
+    rows: List[List[str]] = []
+    for law in _LAWS:
+        name = law.strip("《》")
+        registered = name in titles
+        rows.append([law, "全国", "已登记来源，待人工确认" if registered else "未登记来源，待核对"])
+    region = str(data.get("province_or_region") or "").strip()
+    if not region:
+        rows.append(["地方新能源规划", "未填写所在省份", "无法核对，请先填写项目所在省份"])
+    else:
+        registered = region in titles
+        rows.append(["地方新能源规划", region, "已登记来源，待人工确认" if registered else "未登记来源，待核对"])
+    return rows
+
+
+COMPLIANCE_TABLE_CAPTION = "适用法规清单（本表只核对是否登记来源，符合性须人工确认）"
 
 # ── 合规报告 正文 ──
 
@@ -1488,21 +1424,15 @@ def _add_compliance_content(doc, data: Dict, metrics: Dict):
 
     _add_heading(doc, "第一章  法规清单", level=1)
     _add_styled_table(
-        doc, ["法规名称", "适用范围", "合规状态"],
-        [
-            ["《可再生能源法》", "全国", "✓ 符合"],
-            ["《电力法》", "全国", "✓ 符合"],
-            ["《环境保护法》", "全国", "✓ 符合"],
-            ["《土地管理法》", "全国", "⚠ 待确认"],
-            ["地方新能源规划", data.get("province_or_region", ""), "✓ 符合"],
-        ],
-        col_widths=[6, 4, 5],
-        caption="适用法规合规性清单",
+        doc, ["法规名称", "适用范围", "核对状态"],
+        compliance_rows(data),
+        col_widths=[5, 4, 6],
+        caption=COMPLIANCE_TABLE_CAPTION,
     )
 
     _add_heading(doc, "第二章  许可证状态", level=1)
     _add_styled_table(
-        doc, ["许可证/批文", "主管部门", "状态", "预计取得时间"],
+        doc, ["许可证/批文", "主管部门", "状态", "参考周期（经验估计）"],
         [
             ["项目核准/备案", "发改委", "待办理", "T+3 月"],
             ["环评批复", "生态环境局", "待办理", "T+6 月"],
@@ -1511,27 +1441,27 @@ def _add_compliance_content(doc, data: Dict, metrics: Dict):
             ["施工许可证", "住建局", "待办理", "T+8 月"],
         ],
         col_widths=[5, 4, 3, 4],
-        caption="许可证/批文办理状态",
+        caption="许可证/批文办理状态（周期仅作参考，以主管部门答复为准）",
     )
 
     _add_heading(doc, "第三章  环境影响评估", level=1)
     _add_body(doc,
         "项目建设和运营对环境的影响主要为：施工期噪声和扬尘、"
         "运营期电磁辐射和生态影响。"
-        "建议委托具有资质的环评机构开展详细评估，并编制水土保持方案。"
+        "环评与水土保持以有资质机构出具的评估文件为准。"
     )
 
     _add_heading(doc, "第四章  土地使用分析", level=1)
     _add_body(doc,
         f"项目选址位于{_format_location(data)}，"
         "需确认土地性质（未利用地/农用地/建设用地），"
-        "办理建设用地审批手续。建议优先使用未利用地或戈壁荒漠。"
+        "用地范围以建设用地审批文件为准。"
     )
 
     _add_heading(doc, "第五章  电网接入方案", level=1)
     cap = data.get("capacity_mw", 0)
     _add_body(doc,
-        f"项目装机 {cap:.0f} MW，建议接入 110kV 或 220kV 变电站。"
+        f"项目装机 {cap:.0f} MW。接入电压等级以电网答复为准，本测算按 110kV 或 220kV 记入假设。"
         "需与当地电网公司签订并网协议，明确接入系统方案、"
         "计量点及电价结算方式。"
     )
@@ -1542,12 +1472,11 @@ def _add_compliance_content(doc, data: Dict, metrics: Dict):
 def _add_esg_content(doc, data: Dict, metrics: Dict):
     """ESG 报告"""
     fin = data.get("financial", {})
-    cap = data.get("capacity_mw", 0)
     annual_gen_kwh = fin.get("annual_generation_mwh", 0) * 1000
 
     _add_heading(doc, "第一章  碳排放与减排", level=1)
-    co2_reduction_tons = annual_gen_kwh * 0.585 / 1000  # tons
-    coal_equivalent = annual_gen_kwh * 0.3 / 1000  # kg → tons standard coal
+    province = data.get("province_or_region")
+    co2_reduction_tons = avoided_wan_ton(annual_gen_kwh, province=province) * 10000  # 吨
 
     _add_styled_table(
         doc, ["减排指标", "年度值", "25年累计"],
@@ -1556,21 +1485,17 @@ def _add_esg_content(doc, data: Dict, metrics: Dict):
              f"{annual_gen_kwh / 1e6 * 25 * 0.98:,.0f} GWh"],
             ["CO₂ 减排", f"{co2_reduction_tons / 1e4:,.2f} 万吨",
              f"{co2_reduction_tons * 25 / 1e4 * 0.98:,.0f} 万吨"],
-            ["标煤替代", f"{coal_equivalent / 1e4:,.2f} 万吨",
-             f"{coal_equivalent * 25 / 1e4 * 0.98:,.0f} 万吨"],
-            ["SO₂ 减排", f"{annual_gen_kwh * 0.00003 / 1e4:,.2f} 万吨", "—"],
-            ["NOx 减排", f"{annual_gen_kwh * 0.000015 / 1e4:,.2f} 万吨", "—"],
+            ["标煤替代", "待核实", "待核实"],
+            ["SO₂ 减排", "待核实", "—"],
+            ["NOx 减排", "待核实", "—"],
         ],
         col_widths=[5, 5, 5],
         caption="年度减排指标与 25 年累计",
     )
+    _add_body(doc, f"{factor_sentence(province)}。标煤、二氧化硫、氮氧化物系数未核对，表内写待核实。累计列按 25 年、年发电量逐年乘 0.98 的假设，不是承诺。")
 
     _add_heading(doc, "第二章  社会影响", level=1)
-    _add_body(doc,
-        f"项目建设期间预计创造就业 {int(cap * 5)} 个施工岗位，"
-        f"运营期间提供 {int(cap / 10)} 个长期运维岗位。"
-        "项目将为当地贡献税收，带动装备制造、运维服务等产业链发展。"
-    )
+    _add_body(doc, "建设期和运营期就业人数、税收待项目单位填报。本报告不估算岗位，也不把产业链带动写成结论。")
 
     _add_heading(doc, "第三章  公司治理", level=1)
     _add_styled_table(
@@ -1591,10 +1516,10 @@ def _add_esg_content(doc, data: Dict, metrics: Dict):
         doc, ["SDG 目标", "项目贡献"],
         [
             ["SDG 7 经济适用的清洁能源", f"年提供 {annual_gen_kwh / 1e6:,.0f} GWh 清洁电力"],
-            ["SDG 9 产业创新", "推动新能源装备技术升级"],
+            ["SDG 9 产业创新", "待核实"],
             ["SDG 13 气候行动", f"年减排 CO₂ {co2_reduction_tons / 1e4:,.1f} 万吨"],
-            ["SDG 8 体面工作", f"创造 {int(cap / 10)} 个运维岗位"],
-            ["SDG 11 可持续城市", "促进区域能源结构转型"],
+            ["SDG 8 体面工作", "待核实"],
+            ["SDG 11 可持续城市", "待核实"],
         ],
         col_widths=[6, 9],
         caption="SDG 目标对接情况",
@@ -1602,7 +1527,7 @@ def _add_esg_content(doc, data: Dict, metrics: Dict):
 
     _add_heading(doc, "第五章  持续改进", level=1)
     _add_body(doc,
-        "建议建立全生命周期 ESG 管理体系，"
+        "本段记录 ESG 管理范围，具体制度以项目单位文件为准。"
         "定期开展碳排放核查、社会影响评估和治理审计，"
         "持续提升项目 ESG 绩效水平。"
     )
@@ -1629,7 +1554,7 @@ def _add_appendix(doc, data: Dict, metrics: Dict):
             ["贷款比例", fmt_pct(fin.get("loan_ratio", 0.70))],
             ["贷款利率", fmt_pct(fin.get("loan_interest_rate", 0.045))],
             ["贷款期限", f"{fin.get('loan_term_years', 15)} 年"],
-        ],
+        ] + _storage_assumption_rows(fin),
         col_widths=[6, 10],
         caption="财务模型假设条件",
     )
@@ -1639,7 +1564,8 @@ def _add_appendix(doc, data: Dict, metrics: Dict):
     if not sources:
         _add_body(doc, "未附可核验来源；本报告不得用于投资决策。")
     for i, src in enumerate(sources, 1):
-        _add_body(doc, _format_citation(i, src))
+        from app.services.report_global import _add_paragraph_with_links
+        _add_paragraph_with_links(doc, _format_citation(i, src))
 
     _add_heading(doc, "C. 免责声明", level=2)
     p = doc.add_paragraph()
@@ -1648,6 +1574,7 @@ def _add_appendix(doc, data: Dict, metrics: Dict):
         "报告中的预测和结论受假设条件影响，实际结果可能与预测存在差异。"
         "报告制作方不对依据本报告做出的投资决策承担任何责任。"
         "未经书面许可，不得复制、转发或引用本报告内容。"
+        "本文件由软件根据所列输入和来源生成，不是经人工签字的审核结论，也不填写审核人。"
     )
     run.font.size = Pt(9)
     run.font.color.rgb = RGBColor(0x88, 0x88, 0x88)
@@ -1687,7 +1614,8 @@ def _format_location(data: Dict) -> str:
         parts.append(data["province_or_region"])
     if data.get("city") and data["city"] != data.get("province_or_region"):
         parts.append(data["city"])
-    return "".join(parts) or "待确认"
+    # The project's own address (Project.location) is the location the user typed; use it before giving up.
+    return "".join(parts) or str(data.get("address") or "").strip() or "待确认"
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -1725,6 +1653,11 @@ def generate_pdf(
     # 尝试注册中文字体
     cn_font = _register_cn_font()
     cn_font_bold = cn_font  # reportlab 对粗体用同一字体
+    if _pdf_support.needs_swap(cn_font):
+        # 内置 CID 字体没有 "·"/"•" 字形，会显示成方框；换成它支持的 "・"
+        data = _pdf_support.sanitize_for_cid(data)
+        metrics = _pdf_support.sanitize_for_cid(metrics)
+        title = _pdf_support.sanitize_text(title)
 
     primary = colors.HexColor(f"#{COLOR_PRIMARY}")
     accent = colors.HexColor(f"#{COLOR_ACCENT}")
@@ -1749,12 +1682,12 @@ def generate_pdf(
     style_h1 = ParagraphStyle(
         "H1", parent=styles["Heading1"],
         fontName=cn_font_bold, fontSize=fs["h1"], textColor=primary,
-        spaceAfter=sp["h1_after"], spaceBefore=sp["h1_before"],
+        spaceAfter=sp["h1_after"], spaceBefore=sp["h1_before"], keepWithNext=1,
     )
     style_h2 = ParagraphStyle(
         "H2", parent=styles["Heading2"],
         fontName=cn_font_bold, fontSize=fs["h2"], textColor=colors.HexColor("#2C3E50"),
-        spaceAfter=sp["h2_after"], spaceBefore=sp["h2_before"],
+        spaceAfter=sp["h2_after"], spaceBefore=sp["h2_before"], keepWithNext=1,
     )
     style_body = ParagraphStyle(
         "Body", parent=styles["Normal"],
@@ -1782,7 +1715,7 @@ def generate_pdf(
 
     type_names = {
         "feasibility": "可行性研究报告",
-        "investment": "投资分析报告",
+        "investment": "测算报告",
         "compliance": "合规审查报告",
         "esg": "ESG 专项报告",
     }
@@ -1815,11 +1748,10 @@ def generate_pdf(
     story.append(PageBreak())
 
     # ── 目录 ──
-    story.append(Paragraph("目  录", style_h1))
+    style_toc_title = ParagraphStyle("TOCTitle", parent=style_h1)  # 不进入目录
+    story.append(Paragraph("目  录", style_toc_title))
     story.append(Spacer(1, 10))
-    for i, sec in enumerate(template_info.sections, 1):
-        story.append(Paragraph(f"第{i}章  {sec}", style_body))
-    story.append(Paragraph("附录", style_small))
+    story.append(_pdf_support.build_toc(cn_font))
     story.append(PageBreak())
 
     # ── 正文 ──
@@ -1845,13 +1777,13 @@ def generate_pdf(
         canvas.restoreState()
 
     page = LAYOUT["page"]
-    doc_pdf = SimpleDocTemplate(
+    doc_pdf = _pdf_support.ReportDocTemplate(
         buf, pagesize=A4,
         topMargin=page["margin_top_cm"] * cm, bottomMargin=page["margin_bottom_cm"] * cm,
         leftMargin=page["margin_left_cm"] * cm, rightMargin=page["margin_right_cm"] * cm,
         title=title, author="新能源智库",
     )
-    doc_pdf.build(story, onFirstPage=on_page, onLaterPages=on_page)
+    doc_pdf.multiBuild(story, onFirstPage=on_page, onLaterPages=on_page)  # 两遍：先排版再回填目录页码
     buf.seek(0)
     return buf.read()
 
@@ -1863,14 +1795,19 @@ def _register_cn_font() -> str:
 
     # 按优先级查找系统中文字体
     font_paths = [
+        # 随仓库打包的 Noto Sans SC 子集（OFL，TrueType 轮廓，可内嵌，含 "·"）
+        (os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "assets", "fonts", "NotoSansSC-Regular-subset.ttf"), "NotoSansSCSubset"),
         ("/System/Library/Fonts/STHeiti Light.ttc", "STHeiti"),
         ("/System/Library/Fonts/PingFang.ttc", "PingFang"),
         ("/System/Library/Fonts/Hiragino Sans GB.ttc", "HiraginoSansGB"),
         ("/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc", "WQYZenHei"),
         ("/usr/share/fonts/truetype/wqy/wqy-microhei.ttc", "WQYMicroHei"),
-        ("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc", "NotoSansCJK"),
         ("/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc", "NotoSansCJK"),
+        ("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc", "NotoSansCJK"),
     ]
+    override = os.environ.get("REPORT_CJK_FONT")  # 指向一个 TrueType 轮廓的 .ttf/.ttc
+    if override:
+        font_paths.insert(0, (override, "ReportCJKOverride"))
     for path, name in font_paths:
         try:
             pdfmetrics.registerFont(TTFont(name, path))
@@ -1922,6 +1859,8 @@ def _build_pdf_content(story, data, metrics, report_type, style_h1, style_h2, st
         t.setStyle(TableStyle(style_cmds))
         return t
 
+    if report_type in ("compliance", "esg") and not has_verified_sources(data):
+        story.append(Paragraph(NO_SOURCE_NOTICE_ZH, style_body))
     if report_type == "feasibility":
         # Ch1
         story.append(Paragraph("第一章  项目概述", style_h1))
@@ -1951,24 +1890,24 @@ def _build_pdf_content(story, data, metrics, report_type, style_h1, style_h2, st
         # Ch3
         story.append(Paragraph("第三章  技术方案", style_h1))
         story.append(Paragraph(
-            f"推荐分块发电、集中并网方案。总装机 {cap:.0f} MW。", style_body))
+            f"技术方案按分块发电、集中并网记录。总装机 {cap:.0f} MW。", style_body))
 
         # Ch4
         story.append(Paragraph("第四章  财务分析", style_h1))
         story.append(Paragraph("4.1 核心财务指标", style_h2))
         story.append(make_table(
             ["指标", "数值", "评价"],
-            [["NPV", fmt_money(metrics["npv"]), "✓" if metrics["npv"] > 0 else "✗"],
-             ["IRR", fmt_pct(metrics["irr"]), "✓" if metrics["irr"] > 0.08 else "⚠"],
-             ["回收期", f"{metrics['payback_years']:.1f} 年", "✓" if metrics["payback_years"] < 10 else "⚠"],
-             ["LCOE", f"{metrics['lcoe']:.4f} 元/kWh", "✓" if metrics["lcoe"] < 0.35 else "✗"]],
+            [["NPV", fmt_money(metrics["npv"]), "达标" if metrics["npv"] > 0 else "超出基准"],
+             ["IRR", fmt_pct(metrics["irr"]), "达标" if metrics["irr"] > 0.08 else "需关注"],
+             ["回收期", f"{metrics['payback_years']:.1f} 年", "达标" if metrics["payback_years"] < 10 else "需关注"],
+             ["LCOE", f"{metrics['lcoe']:.4f} 元/kWh", "达标" if metrics["lcoe"] < 0.35 else "超出基准"]],
             [5, 5, 5], caption="核心财务指标评价"))
         story.append(Spacer(1, 10))
-        story.append(Paragraph("4.2 现金流预测 (前5年)", style_h2))
+        story.append(Paragraph("4.2 前5年净现金流", style_h2))
         cf_rows = [[f"第 {y} 年", fmt_money(metrics["cashflows"][y])]
                     for y in range(1, min(6, len(metrics["cashflows"])))]
         story.append(make_table(["年度", "净现金流"], cf_rows, [6, 10],
-                                caption="前5年净现金流预测"))
+                                caption="前5年净现金流（按输入假设）"))
 
         # Ch5
         story.append(Paragraph("第五章  风险评估", style_h1))
@@ -1980,15 +1919,11 @@ def _build_pdf_content(story, data, metrics, report_type, style_h1, style_h2, st
                                 caption="主要风险识别与等级评定"))
 
         # Ch6
-        story.append(Paragraph("第六章  结论与建议", style_h1))
-        npv_ok = metrics["npv"] > 0
-        irr_ok = metrics["irr"] > 0.08
-        if npv_ok and irr_ok:
-            story.append(Paragraph(
-                "项目各项财务指标均达到投资要求，建议推进项目开发。", style_body))
-        else:
-            story.append(Paragraph(
-                "部分指标未达预期，建议优化方案后重新评估。", style_body))
+        story.append(Paragraph("第六章  方法与假设", style_h1))
+        story.append(Paragraph(
+            f"IRR {fmt_pct(metrics['irr'])}，NPV {fmt_money(metrics['npv'])}，"
+            f"静态回收期 {metrics['payback_years']:.1f} 年。对照基准只用于读数，改变假设后须重算。",
+            style_body))
 
     elif report_type == "investment":
         story.append(Paragraph("第一章  执行摘要", style_h1))
@@ -1996,11 +1931,12 @@ def _build_pdf_content(story, data, metrics, report_type, style_h1, style_h2, st
             f"项目装机 {cap:.0f} MW，总投资 {fmt_money(metrics['initial_investment'])}。"
             f"IRR {fmt_pct(metrics['irr'])}，NPV {fmt_money(metrics['npv'])}。", style_body))
 
-        story.append(Paragraph("第二章  市场分析", style_h1))
+        story.append(Paragraph("第二章  已发布数据", style_h1))
         story.append(Paragraph(
-            "2024年全国光伏新增装机超200GW。预计2025-2030年CAGR 15-20%。", style_body))
+            "2024年全国光伏新增装机超200GW（国家能源局已发布统计，引用须核对原文）。本报告不外推未来装机或电价。",
+            style_body))
 
-        story.append(Paragraph("第三章  财务模型", style_h1))
+        story.append(Paragraph("第三章  财务测算", style_h1))
         story.append(make_table(
             ["核心指标", "数值", "基准"],
             [["NPV", fmt_money(metrics["npv"]), "> 0"],
@@ -2021,33 +1957,33 @@ def _build_pdf_content(story, data, metrics, report_type, style_h1, style_h2, st
         story.append(make_table(["电价变动", "IRR", "变化"], sens_rows, [5, 5, 5],
                                 caption="电价敏感性分析"))
 
-        story.append(Paragraph("第五章  ESG 评估", style_h1))
-        co2 = fin.get("annual_generation_mwh", 0) * 1000 * 0.585 / 1e6
+        story.append(Paragraph("第五章  排放核算", style_h1))
+        province = data.get("province_or_region")
+        co2 = avoided_wan_ton(fin.get("annual_generation_mwh", 0) * 1000, province=province)
         story.append(Paragraph(
-            f"年减排 CO₂ 约 {co2:,.2f} 万吨，ESG 评级 A 级。", style_body))
+            f"{factor_sentence(province)}，年减排 CO₂ 约 {co2:,.2f} 万吨。此为核算值，不是评级。",
+            style_body))
 
-        story.append(Paragraph("第六章  投资建议", style_h1))
-        ok = metrics["npv"] > 0 and metrics["irr"] > 0.08
+        story.append(Paragraph("第六章  测算结果", style_h1))
         story.append(Paragraph(
-            "推荐投资。" if ok else "暂缓投资，需优化后重新评估。", style_body))
+            f"IRR {fmt_pct(metrics['irr'])}，NPV {fmt_money(metrics['npv'])}。"
+            "结果随假设变化。本报告不给出买入或配置结论。",
+            style_body))
 
     elif report_type == "compliance":
         story.append(Paragraph("第一章  法规清单", style_h1))
         story.append(make_table(
             ["法规名称", "适用", "状态"],
-            [["《可再生能源法》", "全国", "✓ 符合"],
-             ["《电力法》", "全国", "✓ 符合"],
-             ["《环境保护法》", "全国", "✓ 符合"],
-             ["《土地管理法》", "全国", "⚠ 待确认"]],
-            [7, 3, 4], caption="适用法规合规性清单"))
+            compliance_rows(data),
+            [5, 3, 6], caption=COMPLIANCE_TABLE_CAPTION))
 
         story.append(Paragraph("第二章  许可证状态", style_h1))
         story.append(make_table(
-            ["许可证", "主管部门", "状态", "预计时间"],
+            ["许可证", "主管部门", "状态", "参考周期"],
             [["项目核准", "发改委", "待办理", "T+3月"],
              ["环评批复", "生态环境局", "待办理", "T+6月"],
              ["土地预审", "自然资源局", "待办理", "T+4月"]],
-            [4, 4, 3, 3], caption="许可证办理状态"))
+            [4, 4, 3, 3], caption="许可证办理状态（周期仅作参考）"))
 
         story.append(Paragraph("第三章  环境影响评估", style_h1))
         story.append(Paragraph(
@@ -2059,11 +1995,12 @@ def _build_pdf_content(story, data, metrics, report_type, style_h1, style_h2, st
 
         story.append(Paragraph("第五章  电网接入方案", style_h1))
         story.append(Paragraph(
-            f"装机 {cap:.0f} MW，建议接入 110kV/220kV 变电站。", style_body))
+            f"装机 {cap:.0f} MW。接入电压等级以电网答复为准，本测算按 110kV/220kV 记入假设。", style_body))
 
     elif report_type == "esg":
         annual_gen_kwh = fin.get("annual_generation_mwh", 0) * 1000
-        co2 = annual_gen_kwh * 0.585 / 1e6  # 万吨
+        province = data.get("province_or_region")
+        co2 = avoided_wan_ton(annual_gen_kwh, province=province)
 
         story.append(Paragraph("第一章  碳排放与减排", style_h1))
         story.append(make_table(
@@ -2072,17 +2009,17 @@ def _build_pdf_content(story, data, metrics, report_type, style_h1, style_h2, st
               f"{annual_gen_kwh / 1e6 * 25:,.0f} GWh"],
              ["CO₂减排", f"{co2:,.2f} 万吨", f"{co2 * 25:,.0f} 万吨"]],
             [5, 5, 5], caption="年度减排指标与 25 年累计"))
+        story.append(Paragraph(f"{factor_sentence(province)}。此为核算值，不是评级。", style_body))
 
         story.append(Paragraph("第二章  社会影响", style_h1))
-        story.append(Paragraph(
-            f"建设期就业 {int(cap * 5)} 人，运营期 {int(cap / 10)} 人。", style_body))
+        story.append(Paragraph("建设期和运营期就业人数待项目单位填报，本报告不估算。", style_body))
 
         story.append(Paragraph("第三章  公司治理", style_h1))
         story.append(make_table(
             ["维度", "情况"],
-            [["ESG委员会", "已设立"],
-             ["信息披露", "季度+年度"],
-             ["风险管理", "三道防线"]],
+            [["ESG委员会", "待核实"],
+             ["信息披露", "待核实"],
+             ["风险管理", "待核实"]],
             [5, 10], caption="公司治理实施情况"))
 
         story.append(Paragraph("第四章  SDG 对接", style_h1))
@@ -2117,7 +2054,7 @@ def _build_pdf_appendix(story, data, metrics, style_h1, style_h2, style_body, cn
         ["运维成本年涨幅", fmt_pct(fin.get("opex_escalation_rate", 0.025))],
         ["组件年衰减率", "0.5%"],
         ["贷款比例", fmt_pct(fin.get("loan_ratio", 0.70))],
-    ]
+    ] + _storage_assumption_rows(fin)
     t = Table([["参数", "数值"]] + rows, colWidths=[6 * cm, 10 * cm])
     t.setStyle(TableStyle([
         ("FONT", (0, 0), (-1, -1), cn_font, LAYOUT["font_size"]["table_body"]),
@@ -2134,13 +2071,15 @@ def _build_pdf_appendix(story, data, metrics, style_h1, style_h2, style_body, cn
     if not sources:
         story.append(Paragraph("未附可核验来源；本报告不得用于投资决策。", style_body))
     for i, source in enumerate(sources, 1):
-        story.append(Paragraph(_format_citation(i, source), style_body))
+        from app.services.citation_record import pdf_link_markup
+        story.append(Paragraph(pdf_link_markup(_format_citation(i, source)), style_body))
 
     story.append(Paragraph("C. 免责声明", style_h2))
     story.append(Paragraph(
         "本报告基于公开资料和项目方提供的数据编制，仅供参考。"
         "报告中的预测和结论受假设条件影响。"
-        "未经书面许可不得复制或转发。", style_small))
+        "未经书面许可不得复制或转发。"
+        "本文件由软件根据所列输入和来源生成，不是经人工签字的审核结论，也不填写审核人。", style_small))
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -2151,6 +2090,51 @@ def _build_pdf_appendix(story, data, metrics, style_h1, style_h2, style_body, cn
 _report_store: Dict[str, Dict[str, Any]] = {}
 
 
+def _quota_state(report: Report) -> str:
+    raw = report.data_sources if isinstance(report.data_sources, dict) else {}
+    quota = raw.get("quota") if isinstance(raw, dict) else None
+    if isinstance(quota, dict):
+        return str(quota.get("state") or "")
+    return ""
+
+
+def _set_quota_state(report: Report, state: str) -> None:
+    raw = dict(report.data_sources) if isinstance(report.data_sources, dict) else {}
+    quota = dict(raw.get("quota") or {})
+    quota["state"] = state
+    raw["quota"] = quota
+    report.data_sources = raw
+
+
+async def _load_user(db: AsyncSession, user_id: str) -> Optional[User]:
+    result = await db.execute(select(User).where(User.id == user_id))
+    return result.scalar_one_or_none()
+
+
+async def _refund_held_report(db: AsyncSession, report: Report) -> None:
+    """Return the monthly export if this job is still reserved and not completed.
+
+    The report row is locked on PostgreSQL before the state is read again.
+    A second process, cancelling or finishing the same failure, sees
+    ``released`` or no row and does not subtract a second time. The caller
+    commits this change together with the status update or the delete.
+    """
+    async with report_quota_lock(str(report.user_id)):
+        postgres = await session_is_postgresql(db)
+        locked = (
+            await db.execute(lock_for_update(select(Report).where(Report.id == report.id), postgres))
+        ).scalar_one_or_none()
+        if locked is None or _quota_state(locked) != "held" or locked.status == "completed":
+            return
+        account = (
+            await db.execute(lock_for_update(select(User).where(User.id == locked.user_id), postgres))
+        ).scalar_one_or_none()
+        if account is None:
+            return
+        _set_quota_state(locked, "released")
+        await release_report_quota(account, db)
+
+
 async def _generate_report_task(
     report_id: str,
     data: Dict[str, Any],
@@ -2158,22 +2142,27 @@ async def _generate_report_task(
     output_format: str,
     title: str,
     confidential: str,
+    market: str = "cn",
 ):
     """后台任务: 实际生成报告文件"""
     template_info = TEMPLATES[report_type]
     metrics = calc_financial_metrics(data.get("financial", {}))
+    # 仅测试常驻服务时用来拉长“生成中”，默认不设置，不影响正式生成。
+    pause = os.environ.get("REPORT_TASK_DELAY_SECONDS", "").strip()
+    if pause:
+        await asyncio.sleep(float(pause))
 
     try:
         if output_format == "docx":
             if not HAS_DOCX:
                 raise ImportError("python-docx 未安装")
-            file_bytes = generate_docx(data, report_type, template_info, metrics, title, confidential)
+            file_bytes = generate_docx(data, report_type, template_info, metrics, title, confidential, market)
             mime = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
             ext = "docx"
         else:
             if not HAS_REPORTLAB:
                 raise ImportError("reportlab 未安装")
-            file_bytes = generate_pdf(data, report_type, template_info, metrics, title, confidential)
+            file_bytes = generate_pdf(data, report_type, template_info, metrics, title, confidential, market)
             mime = "application/pdf"
             ext = "pdf"
 
@@ -2201,10 +2190,14 @@ async def _generate_report_task(
                 result = await db.execute(select(Report).where(Report.id == report_id))
                 report = result.scalar_one_or_none()
                 if report:
-                    report.status = "completed"
-                    report.file_path = filepath
-                    report.updated_at = datetime.now()
-                    await db.commit()
+                    async with report_quota_lock(str(report.user_id)):
+                        await db.refresh(report)
+                        report.status = "completed"
+                        report.file_path = filepath
+                        report.updated_at = datetime.now()
+                        if _quota_state(report) == "held":
+                            _set_quota_state(report, "settled")
+                        await db.commit()
             except Exception as e:
                 await db.rollback()
                 logger.exception("更新报告完成状态失败")
@@ -2223,6 +2216,7 @@ async def _generate_report_task(
             result = await db.execute(select(Report).where(Report.id == report_id))
             report = result.scalar_one_or_none()
             if report:
+                await _refund_held_report(db, report)
                 report.status = "failed"
                 report.content = str(e)[:1000]
                 report.updated_at = datetime.now()
@@ -2234,11 +2228,14 @@ async def _generate_report_task(
 # ═══════════════════════════════════════════════════════════════
 
 @router.get("/templates")
-async def get_report_templates(market: str = "cn"):
+async def get_report_templates(request: Request, market: Optional[str] = None):
     """
-    获取可用报告模板列表 — 支持 market=cn|global 双语
+    获取可用报告模板列表 — 支持 market=cn|global 双语；未显式传 market 时看 X-App-Market / X-Market 头
     """
-    is_gl = market in ("global", "en", "int")
+    from app.core.market import request_market
+
+    market = request_market(request, market)
+    is_gl = market == "global"
 
     # 专业模板 — 根据 market 返回对应语言
     pro_templates = []
@@ -2275,7 +2272,7 @@ async def get_report_templates(market: str = "cn"):
         legacy = [
             {"id": "t1", "name": "财务分析报告", "description": "IRR、NPV、LCOE完整分析", "category": "financial"},
             {"id": "t2", "name": "资源评估报告", "description": "GHI、发电量、站址评分", "category": "resource"},
-            {"id": "t3", "name": "投资决策建议书", "description": "可行性分析与投资建议", "category": "comprehensive"},
+            {"id": "t3", "name": "测算结果说明", "description": "方法、假设与测算结果", "category": "comprehensive"},
             {"id": "t4", "name": "项目尽职调查", "description": "技术、财务、法务尽调", "category": "due_diligence"},
             {"id": "t5", "name": "年度运营报告", "description": "发电量、收益、运维总结", "category": "annual"},
         ]
@@ -2289,15 +2286,41 @@ async def get_report_templates(market: str = "cn"):
     }
 
 
+def _storage_assumption_rows(fin: dict) -> list:
+    """Extra assumption rows for a storage model: states which figures the user did not enter."""
+    if (fin or {}).get("model_type") != "storage_arbitrage":
+        return []
+    names = {"roundtrip_efficiency": "往返效率", "annual_degradation_rate": "年衰减率",
+             "annual_opex_rate": "年运维费率", "discount_rate": "折现率", "project_life": "项目年限"}
+    rows = [["模型类型", "储能价差套利：收入 = 放电量 × 峰谷价差"]]
+    missing = [names[k] for k in (fin.get("defaulted_assumptions") or []) if k in names]
+    if missing:
+        rows.append(["用户未填写（系统默认值，未核实来源）", "、".join(missing)])
+    return rows
+
+
+async def _resolve_market(requested: Optional[str], request: Request, db: AsyncSession, user_id: str) -> str:
+    """Body field, then X-App-Market / X-Market header, then the user's own market; default cn."""
+    for cand in (requested, request.headers.get("x-app-market"), request.headers.get("x-market")):
+        if cand:
+            return "global" if _is_global(cand) else "cn"
+    try:
+        row = await db.execute(select(User.market).where(User.id == user_id))
+        return "global" if _is_global(row.scalar_one_or_none()) else "cn"
+    except Exception:
+        return "cn"
+
+
 @router.post("/generate")
 async def generate_report(
     req: GenerateReportRequest,
+    request: Request,
     background_tasks: BackgroundTasks,
     user_id: str = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db),
 ):
     """
-    生成专业投资分析报告
+    生成测算、合规或排放核算报告
 
     - 支持 4 种模板: feasibility / investment / compliance / esg
     - 支持两种格式: pdf / docx
@@ -2305,17 +2328,36 @@ async def generate_report(
     """
     report_id = str(uuid4())
     template_info = TEMPLATES[req.report_type.value]
+    market = await _resolve_market(req.market, request, db, user_id)
+    en = _is_global(market)
 
     # 自动标题
-    title = req.title or f"{template_info.name} — {datetime.now().strftime('%Y%m%d')}"
+    title = req.title or (
+        f"{template_info.name_en} - {datetime.now().strftime('%Y-%m-%d')}" if en
+        else f"{template_info.name} — {datetime.now().strftime('%Y%m%d')}"
+    )
 
-    # 获取数据
+    # 归属先于套餐：别人的项目保持 404，不把它改写成格式或额度错误。
     data = await fetch_project_data(db, req.project_id, user_id)
+    account = await _load_user(db, user_id)
+    if account is None:
+        raise HTTPException(status_code=404, detail="项目不存在或无权访问")
+    if not report_format_included(account, req.format.value):
+        label = "Word" if req.format.value == "docx" else req.format.value.upper()
+        message = (
+            f"{label} export is not included in this plan."
+            if en else
+            f"当前套餐不含 {label} 导出，可导出 PDF，或升级到专业版及以上"
+        )
+        raise HTTPException(
+            status_code=403,
+            detail={"error": "FORMAT_NOT_INCLUDED", "message": message},
+        )
     if req.report_type in (ReportTemplateType.FEASIBILITY, ReportTemplateType.INVESTMENT):
-        validate_financial_evidence(data)
+        validate_financial_evidence(data, market)
 
     # 统一证据封装（19 项要求第 1 项）：来源/假设/计算轨迹随响应透出
-    evidence = _build_report_evidence(title, data)
+    evidence = _build_report_evidence(title, data, en)
 
     # 初始化状态
     _report_store[report_id] = {
@@ -2331,26 +2373,55 @@ async def generate_report(
         "user_id": user_id,
     }
 
-    # 如果 DB 可用，创建记录
+    # 校验通过后才占一份月度导出。格式用 export.formats，不套用回答下载的 citation_export。
     if db:
+        await db.commit()
         try:
-            report = Report(
-                id=report_id,
-                user_id=user_id,
-                project_id=req.project_id,
-                title=title,
-                report_type=req.report_type.value,
-                language="zh",
-                status="generating",
-                data_sources={"sources": data.get("data_sources", []), "generated_at": datetime.now().isoformat()},
+            async with report_quota_lock(user_id):
+                account = await assert_report_quota(user_id, db)
+                await consume_report_quota(account, db)
+                report = Report(
+                    id=report_id,
+                    user_id=user_id,
+                    project_id=req.project_id,
+                    title=title,
+                    report_type=req.report_type.value,
+                    language="en" if en else "zh",
+                    status="generating",
+                    data_sources={
+                        "sources": data.get("data_sources", []),
+                        "generated_at": datetime.now().isoformat(),
+                        "quota": {"state": "held"},
+                    },
+                )
+                db.add(report)
+                try:
+                    await db.commit()
+                except Exception:
+                    await db.rollback()
+                    fresh = await _load_user(db, user_id)
+                    if fresh is not None:
+                        await release_report_quota(fresh, db)
+                        await db.commit()
+                    raise
+        except QuotaExceeded as error:
+            _report_store.pop(report_id, None)
+            message = (
+                f"You have used this month's report exports ({error.limit})."
+                if en else
+                "本月报告导出额度已用尽，请查看套餐或下月再试"
             )
-            db.add(report)
-            await db.commit()
-        except Exception as e:
+            raise HTTPException(
+                status_code=429,
+                detail={"error": "REPORT_QUOTA_EXCEEDED", "message": message, "limit": error.limit},
+            ) from error
+        except HTTPException:
+            raise
+        except Exception as error:
             _report_store.pop(report_id, None)
             await db.rollback()
             logger.exception("创建报告记录失败")
-            raise HTTPException(status_code=503, detail="报告任务创建失败") from e
+            raise HTTPException(status_code=503, detail="报告任务创建失败") from error
 
     # 后台生成
     background_tasks.add_task(
@@ -2361,6 +2432,7 @@ async def generate_report(
         output_format=req.format.value,
         title=title,
         confidential=req.confidential.value,
+        market=market,
     )
 
     return {
@@ -2371,14 +2443,15 @@ async def generate_report(
             "format": req.format.value,
             "download_url": f"/api/v1/reports/{report_id}/file",
             "status_url": f"/api/v1/reports/{report_id}",
-            "message": "报告生成中，请轮询 status_url 获取进度",
+            "message": ("Report is being generated; poll status_url for progress." if en else "报告生成中，请轮询 status_url 获取进度"),
+            "market": market,
         },
         "meta": {"template": template_info.name},
         "evidence": evidence,
     }
 
 
-def _build_report_evidence(title: str, data: Dict[str, Any]) -> Dict[str, Any]:
+def _build_report_evidence(title: str, data: Dict[str, Any], en: bool = False) -> Dict[str, Any]:
     """为报告生成响应组装 evidence_envelope。
 
     sources 复用项目/财务模型已有的来源元数据（标题/URL/作者/版本/发布日期/
@@ -2402,20 +2475,22 @@ def _build_report_evidence(title: str, data: Dict[str, Any]) -> Dict[str, Any]:
         trace = [
             {"formula": "NPV = Σ CF_t / (1 + r)^t", "inputs": inputs,
              "result": round(metrics["npv"], 2)},
-            {"formula": "IRR: NPV(r) = 0（Newton-Raphson 求解）", "inputs": inputs,
+            {"formula": "IRR: NPV(r) = 0 (solved with Newton-Raphson)" if en else "IRR: NPV(r) = 0（Newton-Raphson 求解）", "inputs": inputs,
              "result": round(metrics["irr"], 6)},
-            {"formula": "LCOE = 全生命周期成本现值 / 总发电量", "inputs": inputs,
+            {"formula": "LCOE = present value of lifetime cost / total generation" if en else "LCOE = 全生命周期成本现值 / 总发电量", "inputs": inputs,
              "result": round(metrics["lcoe"], 6)},
-            {"formula": "静态回收期 = 累计现金流转正年份", "inputs": inputs,
+            {"formula": "Simple payback = first year cumulative cash flow turns positive" if en else "静态回收期 = 累计现金流转正年份", "inputs": inputs,
              "result": metrics["payback_years"]},
         ]
 
     return build_envelope(
-        f"报告生成任务已受理：{title}",
+        f"Report job accepted: {title}" if en else f"报告生成任务已受理：{title}",
         sources,
         assumptions=assumptions,
         calculation_trace=trace,
-        limitations=["报告基于用户提供的项目假设与来源生成，仅供辅助分析，不构成投资建议"],
+        lang="en" if en else "zh",
+        limitations=["The report is built from the project assumptions and sources you provided. It is an aid to analysis and is not investment advice."] if en
+        else ["报告基于用户提供的项目假设与来源生成，仅供辅助分析，不构成投资建议"],
     )
 
 
@@ -2568,13 +2643,19 @@ async def delete_report(
 ):
     """删除报告"""
     report = await _assert_report_owner(report_id, user_id, db)
+    await _refund_held_report(db, report)
+    current = (
+        await db.execute(select(Report).where(Report.id == report_id, Report.user_id == user_id))
+    ).scalar_one_or_none()
+    if current is None:
+        raise HTTPException(status_code=404, detail="报告不存在或无权访问")
 
     _report_store.pop(report_id, None)
     # 文件路径一律由 UUID 推导，不信任存储的 file_path（旧部署路径可能已失效）。
     found = _existing_report_file(report_id)
     if found:
         os.remove(found[0])
-    await db.delete(report)
+    await db.delete(current)
     await db.commit()
 
     return {"data": {"message": "报告已删除", "report_id": report_id}}

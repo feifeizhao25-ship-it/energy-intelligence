@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "as_of": "2026-10-27",
+  "note": "分类型时效。未接入实时抓取的类别达标率显示为未连接，不把空数据算成达标。",
+  "types": [
+    {"id": "policy", "label": "政策", "rule": "发布后 24 小时内入库待审，48 小时内审完", "ingest_hours": 24, "review_hours": 48},
+    {"id": "agency_tariff", "label": "代理购电电价", "rule": "公告发布后 72 小时内更新", "update_hours": 72},
+    {"id": "tou_window", "label": "分时时段", "rule": "变更后 72 小时内更新", "update_hours": 72},
+    {"id": "standard", "label": "标准", "rule": "每季检查新版本", "check_days": 90},
+    {"id": "statistics", "label": "统计数据", "rule": "发布后 7 天内入库", "update_days": 7},
+    {"id": "irradiance", "label": "辐照资源", "rule": "年更", "update_days": 365},
+    {"id": "literature", "label": "文献元数据", "rule": "日更", "update_days": 1}
+  ]
+}

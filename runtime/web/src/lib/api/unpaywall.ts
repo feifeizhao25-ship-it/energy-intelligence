@@ -20,6 +20,9 @@ export interface UnpaywallResult {
  * 查找论文的OA状态和下载链接
  */
 export async function findOpenAccess(doi: string): Promise<UnpaywallResult | null> {
+    if ((process.env.NEXT_PUBLIC_APP_EDITION || process.env.APP_EDITION || '').toLowerCase() === 'cn') {
+        throw new Error('OVERSEAS_SOURCE_DISABLED');
+    }
     try {
         if (!doi) return null;
 

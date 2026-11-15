@@ -21,8 +21,7 @@
 
 ## 证据文件
 
-- `docs/report-samples/energy-cn-investment-report.docx`
-- `docs/report-samples/energy-cn-investment-report.pdf`
+- 原中文测算样例因含投资结论措辞已从仓库移除。新样例由报告生成器按「测算结果 / 方法与假设」输出。
 - `docs/report-samples/energy-global-investment-report.docx`
 - `docs/report-samples/energy-global-investment-report.pdf`
 - `docs/screenshots/report-export/`

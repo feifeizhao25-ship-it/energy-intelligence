@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_theme.dart';
 import '../../services/api_service.dart';
 import '../../widgets/bar_chart.dart';
 
@@ -121,9 +122,9 @@ class _WindResourceScreenState extends State<WindResourceScreen> {
           ),
         if (_result != null) ...[
           const SizedBox(height: 24),
-          const Text(
+          Text(
             'Source: Open-Meteo provider response',
-            style: TextStyle(color: Color(0xFF475569)),
+            style: TextStyle(color: context.eiBody2),
           ),
           const SizedBox(height: 12),
           Wrap(
@@ -177,7 +178,7 @@ class _WindMetric extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, style: const TextStyle(color: Color(0xFF64748B))),
+            Text(label, style: TextStyle(color: context.eiMuted)),
             const SizedBox(height: 6),
             Text(value, style: const TextStyle(fontWeight: FontWeight.w700)),
           ],

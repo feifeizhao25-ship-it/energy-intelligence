@@ -1,0 +1,3 @@
+黄金集 v1 为起草稿，expert_signed 全部为 false。
+人工须抽 10% 对照原文签字后，才能把 draft 改为 false。
+未在来源登记表中的事实没有写入 must_include。

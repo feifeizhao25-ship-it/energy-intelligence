@@ -46,6 +46,13 @@ export const NON_USER_MODELS: Record<string, { how: 'owner' | 'viaParent' | 'ema
   Achievement: { how: 'global', note: '成就定义' },
   CalcVersionRegistry: { how: 'global', note: '测算版本登记' },
   AssumptionSet: { how: 'global', note: '测算假设集，系统预置' },
+  WorkOrder: { how: 'viaParent', note: '随 Project 级联' },
+  WorkOrderAttachment: { how: 'viaParent', note: '随 WorkOrder 级联' },
+  WorkOrderEvent: { how: 'viaParent', note: '随 WorkOrder 级联' },
+  TelemetryCredential: { how: 'viaParent', note: '随 Project 级联' },
+  TelemetrySample: { how: 'viaParent', note: '随 Project 级联' },
+  AlarmRule: { how: 'viaParent', note: '随 Project 级联' },
+  AlarmEvent: { how: 'viaParent', note: '随 Project 级联' },
 };
 const SECRET_FIELD = /(password|keyHash|token|secret|code)$/i;
 // 导出时省略的字段：文献向量是模型内部表示，用户读不了；文本原文（content）仍然导出

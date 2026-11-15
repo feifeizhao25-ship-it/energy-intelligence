@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { VoiceInput } from '../input/VoiceInput';
+import { BubbleSpeaker } from '../input/BubbleSpeaker';
 
 interface Message {
     id: string;
@@ -278,6 +279,11 @@ export default function ConversationalWizard({ type, config }: ConversationalWiz
                                     : "bg-slate-900 text-white rounded-br-none"
                             )}>
                                 {msg.content}
+                                {msg.type === 'bot' && typeof msg.content === 'string' && msg.content && (
+                                    <div className="mt-3 flex justify-end">
+                                        <BubbleSpeaker id={msg.id} text={msg.content} />
+                                    </div>
+                                )}
                             </div>
                         </div>
                     ))}

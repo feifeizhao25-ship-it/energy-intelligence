@@ -5,6 +5,7 @@ import { withMembershipCheck } from '@/lib/membership/middleware';
 import { prisma } from '@/lib/prisma';
 import { safeErrorMessage } from '@/lib/api/safe-error';
 import { resolveWindPrices, PriceInputError } from '@/lib/pricing/tariff-defaults';
+import { isWindResourceUnavailable, windResourceUnavailableBody } from '@/lib/api/wind-resource-error';
 
 export async function POST(req: NextRequest) {
     return withMembershipCheck(
@@ -30,8 +31,9 @@ export async function POST(req: NextRequest) {
                 input.businessModel = { ...businessModel, mode, feedInTariff: prices.feedInTariff, electricityPrice: prices.electricityPrice };
                 const result = { ...(await calculateWind(input)), pricing: prices.pricing };
 
+                let calculationId: string | undefined;
                 try {
-                    await prisma.calculation.create({
+                    const saved = await prisma.calculation.create({
                         data: {
                             userId: user.id,
                             type: 'WIND',
@@ -39,12 +41,16 @@ export async function POST(req: NextRequest) {
                             output: result
                         }
                     });
+                    calculationId = saved.id;
                 } catch (dbError) {
                     console.error('Database logging failed:', dbError);
                 }
 
-                return NextResponse.json({ success: true, data: result });
+                return NextResponse.json({ success: true, data: { ...result, calculationId } });
             } catch (error) {
+                if (isWindResourceUnavailable(error)) {
+                    return NextResponse.json(windResourceUnavailableBody(), { status: 422 });
+                }
                 return NextResponse.json(
                     { error: 'CALCULATION_ERROR', message: safeErrorMessage(error, '计算失败') },
                     { status: 500 }

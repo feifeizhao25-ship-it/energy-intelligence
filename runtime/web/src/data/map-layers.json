@@ -1,0 +1,7 @@
+{
+  "license_note": "安装包不附带并网或用地矢量。全国用地和电网地理数据多数不可再分发。导入接口只接受调用方声明许可允许保存的 GeoJSON；空图层不是边界。",
+  "layers": [
+    { "id": "grid-connection", "title": "并网点", "kind": "grid", "features": [] },
+    { "id": "land-use", "title": "用地边界", "kind": "land", "features": [] }
+  ]
+}

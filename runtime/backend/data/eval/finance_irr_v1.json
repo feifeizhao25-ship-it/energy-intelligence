@@ -1,0 +1,719 @@
+[
+  {
+    "cashflows": [
+      -100,
+      60,
+      60
+    ],
+    "expected_percent": 13.0662
+  },
+  {
+    "cashflows": [
+      -100,
+      40,
+      40,
+      40
+    ],
+    "expected_percent": 9.701
+  },
+  {
+    "cashflows": [
+      -100,
+      50,
+      50,
+      50
+    ],
+    "expected_percent": 23.3752
+  },
+  {
+    "cashflows": [
+      -100,
+      30,
+      30,
+      30,
+      30
+    ],
+    "expected_percent": 7.7138
+  },
+  {
+    "cashflows": [
+      -100,
+      35,
+      35,
+      35,
+      35
+    ],
+    "expected_percent": 14.9625
+  },
+  {
+    "cashflows": [
+      -100,
+      25,
+      25,
+      25,
+      25,
+      25
+    ],
+    "expected_percent": 7.9308
+  },
+  {
+    "cashflows": [
+      -100,
+      28,
+      28,
+      28,
+      28,
+      28
+    ],
+    "expected_percent": 12.3762
+  },
+  {
+    "cashflows": [
+      -100,
+      22,
+      22,
+      22,
+      22,
+      22,
+      22
+    ],
+    "expected_percent": 8.5595
+  },
+  {
+    "cashflows": [
+      -100,
+      20,
+      20,
+      20,
+      20,
+      20,
+      20
+    ],
+    "expected_percent": 5.4718
+  },
+  {
+    "cashflows": [
+      -100,
+      18,
+      18,
+      18,
+      18,
+      18,
+      18,
+      18
+    ],
+    "expected_percent": 6.1357
+  },
+  {
+    "cashflows": [
+      -100,
+      16,
+      16,
+      16,
+      16,
+      16,
+      16,
+      16,
+      16
+    ],
+    "expected_percent": 5.8372
+  },
+  {
+    "cashflows": [
+      -100,
+      18,
+      18,
+      18,
+      18,
+      18,
+      18,
+      18,
+      18
+    ],
+    "expected_percent": 8.8995
+  },
+  {
+    "cashflows": [
+      -100,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15
+    ],
+    "expected_percent": 6.4632
+  },
+  {
+    "cashflows": [
+      -100,
+      14,
+      14,
+      14,
+      14,
+      14,
+      14,
+      14,
+      14,
+      14,
+      14
+    ],
+    "expected_percent": 6.6373
+  },
+  {
+    "cashflows": [
+      -100,
+      16,
+      16,
+      16,
+      16,
+      16,
+      16,
+      16,
+      16,
+      16,
+      16
+    ],
+    "expected_percent": 9.6059
+  },
+  {
+    "cashflows": [
+      -100,
+      12,
+      12,
+      12,
+      12,
+      12,
+      12,
+      12,
+      12,
+      12,
+      12,
+      12,
+      12
+    ],
+    "expected_percent": 6.1104
+  },
+  {
+    "cashflows": [
+      -100,
+      13,
+      13,
+      13,
+      13,
+      13,
+      13,
+      13,
+      13,
+      13,
+      13,
+      13,
+      13
+    ],
+    "expected_percent": 7.6062
+  },
+  {
+    "cashflows": [
+      -100,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10
+    ],
+    "expected_percent": 5.5565
+  },
+  {
+    "cashflows": [
+      -100,
+      11,
+      11,
+      11,
+      11,
+      11,
+      11,
+      11,
+      11,
+      11,
+      11,
+      11,
+      11,
+      11,
+      11,
+      11
+    ],
+    "expected_percent": 7.0296
+  },
+  {
+    "cashflows": [
+      -100,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9
+    ],
+    "expected_percent": 5.6581
+  },
+  {
+    "cashflows": [
+      -100,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8
+    ],
+    "expected_percent": 4.9643
+  },
+  {
+    "cashflows": [
+      -100,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9
+    ],
+    "expected_percent": 6.3949
+  },
+  {
+    "cashflows": [
+      -100,
+      7,
+      7,
+      7,
+      7,
+      7,
+      7,
+      7,
+      7,
+      7,
+      7,
+      7,
+      7,
+      7,
+      7,
+      7,
+      7,
+      7,
+      7,
+      7,
+      7,
+      7,
+      7,
+      7,
+      7,
+      7
+    ],
+    "expected_percent": 4.8656
+  },
+  {
+    "cashflows": [
+      -100,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8
+    ],
+    "expected_percent": 6.2374
+  },
+  {
+    "cashflows": [
+      -80,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      70
+    ],
+    "expected_percent": 9.8529
+  },
+  {
+    "cashflows": [
+      -200,
+      40,
+      40,
+      40,
+      40,
+      40,
+      40,
+      40
+    ],
+    "expected_percent": 9.1961
+  },
+  {
+    "cashflows": [
+      -50,
+      5,
+      5,
+      5,
+      5,
+      60
+    ],
+    "expected_percent": 11.5871
+  },
+  {
+    "cashflows": [
+      -120,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      15,
+      30
+    ],
+    "expected_percent": 4.3495
+  },
+  {
+    "cashflows": [
+      -90,
+      12,
+      12,
+      12,
+      12,
+      12,
+      12,
+      40
+    ],
+    "expected_percent": 4.828
+  },
+  {
+    "cashflows": [
+      -70,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      50
+    ],
+    "expected_percent": 7.6154
+  },
+  {
+    "cashflows": [
+      -150,
+      25,
+      25,
+      25,
+      25,
+      25,
+      25
+    ],
+    "expected_percent": 0.0
+  },
+  {
+    "cashflows": [
+      -110,
+      22,
+      22,
+      22,
+      22,
+      22
+    ],
+    "expected_percent": 0.0
+  },
+  {
+    "cashflows": [
+      -95,
+      18,
+      18,
+      18,
+      18,
+      18,
+      18
+    ],
+    "expected_percent": 3.7922
+  },
+  {
+    "cashflows": [
+      -60,
+      9,
+      9,
+      9,
+      9,
+      9,
+      30
+    ],
+    "expected_percent": 5.5831
+  },
+  {
+    "cashflows": [
+      -130,
+      16,
+      16,
+      16,
+      16,
+      16,
+      16,
+      16,
+      16
+    ],
+    "expected_percent": -0.3433
+  },
+  {
+    "cashflows": [
+      -40,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      20
+    ],
+    "expected_percent": 7.633
+  },
+  {
+    "cashflows": [
+      -250,
+      35,
+      35,
+      35,
+      35,
+      35,
+      35,
+      35,
+      35,
+      35
+    ],
+    "expected_percent": 4.8897
+  },
+  {
+    "cashflows": [
+      -75,
+      11,
+      11,
+      11,
+      11,
+      11,
+      11,
+      11,
+      11
+    ],
+    "expected_percent": 3.6956
+  },
+  {
+    "cashflows": [
+      -160,
+      20,
+      20,
+      20,
+      20,
+      20,
+      20,
+      20,
+      20,
+      20
+    ],
+    "expected_percent": 2.4227
+  },
+  {
+    "cashflows": [
+      -55,
+      7,
+      7,
+      7,
+      7,
+      7,
+      28
+    ],
+    "expected_percent": 3.2239
+  },
+  {
+    "cashflows": [
+      -100,
+      250,
+      -180,
+      40
+    ],
+    "expected_percent": null
+  },
+  {
+    "cashflows": [
+      -50,
+      80,
+      -70,
+      90,
+      -30
+    ],
+    "expected_percent": null
+  },
+  {
+    "cashflows": [
+      100,
+      -40,
+      20,
+      -90
+    ],
+    "expected_percent": null
+  },
+  {
+    "cashflows": [
+      -20,
+      50,
+      -40,
+      30,
+      -25
+    ],
+    "expected_percent": null
+  },
+  {
+    "cashflows": [
+      -80,
+      10,
+      100,
+      -90,
+      70
+    ],
+    "expected_percent": null
+  },
+  {
+    "cashflows": [
+      -30,
+      80,
+      -60,
+      40,
+      -20,
+      15
+    ],
+    "expected_percent": null
+  },
+  {
+    "cashflows": [
+      -100,
+      230,
+      -160,
+      20,
+      15
+    ],
+    "expected_percent": null
+  },
+  {
+    "cashflows": [
+      -40,
+      90,
+      -70,
+      30
+    ],
+    "expected_percent": null
+  },
+  {
+    "cashflows": [
+      -15,
+      40,
+      -35,
+      20,
+      -10
+    ],
+    "expected_percent": null
+  },
+  {
+    "cashflows": [
+      20,
+      -50,
+      40,
+      -30
+    ],
+    "expected_percent": null
+  },
+  {
+    "cashflows": [
+      -100,
+      110
+    ],
+    "expected_percent": 10.0
+  },
+  {
+    "cashflows": [
+      -100,
+      0,
+      121
+    ],
+    "expected_percent": 10.0
+  }
+]

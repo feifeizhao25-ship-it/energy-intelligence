@@ -1,13 +1,15 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth/auth-options';
+import { loadOwnedSamples, monitoringResponse } from '@/lib/maintenance/project-telemetry';
 
-export async function GET() {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) return NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 });
-    return NextResponse.json({
-        success: false,
-        error: 'TELEMETRY_NOT_CONNECTED',
-        message: '该项目尚未连接经验证的 SCADA/IoT 数据源，系统不会生成模拟监控数据。',
-    }, { status: 503 });
+type RouteContext = { params: Promise<{ id: string }> };
+
+export async function GET(_req: Request, { params }: RouteContext) {
+    const { id } = await params;
+    const loaded = await loadOwnedSamples(id);
+    if ('error' in loaded) return loaded.error;
+    return monitoringResponse(loaded.points);
+}
+
+export async function POST() {
+    return NextResponse.json({ error: '请使用遥测接入接口写入数据' }, { status: 405 });
 }

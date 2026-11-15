@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_theme.dart';
 import '../../services/api_service.dart';
 import '../../widgets/bar_chart.dart';
 
@@ -122,7 +123,7 @@ class _SolarResourceScreenState extends State<SolarResourceScreen> {
           Text(
             'Source: ' +
                 (_result?['data_source']?.toString() ?? 'Not supplied'),
-            style: const TextStyle(color: Color(0xFF475569)),
+            style: TextStyle(color: context.eiBody2),
           ),
           const SizedBox(height: 12),
           Wrap(
@@ -179,7 +180,7 @@ class _Metric extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, style: const TextStyle(color: Color(0xFF64748B))),
+            Text(label, style: TextStyle(color: context.eiMuted)),
             const SizedBox(height: 6),
             Text(value, style: const TextStyle(fontWeight: FontWeight.w700)),
           ],

@@ -122,8 +122,9 @@ const InterconnectionPage: React.FC = () => {
           padding="lg"
         >
           {state === 'loading' ? (
-            <div className="py-10 text-center text-[13px] text-[var(--text-tertiary)]">
-              Checking interconnection queue service…
+            <div className="py-10 text-center" role="status">
+              <p className="text-[13px] text-[var(--text-primary)]">Checking whether the interconnection queue service is connected.</p>
+              <p className="mt-1 text-[12px] text-[var(--text-secondary)]">Wait a few seconds. If it is not connected, the next card explains that and offers Retry. No queue rows are hidden on a blank page.</p>
             </div>
           ) : state === 'unavailable' ? (
             <EmptyState

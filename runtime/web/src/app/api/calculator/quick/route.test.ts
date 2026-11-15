@@ -9,6 +9,7 @@ import { NextRequest } from 'next/server';
 import { POST } from './route';
 import { calculateSolar } from '@/lib/calculator/solar';
 import { lookupTariff } from '@/lib/pricing/tariffs';
+import { clearVerifiedSolarCache, seedVerifiedSolarCache } from '@/lib/api/verified-solar';
 
 const YEAR = new Date().getUTCFullYear() - 1;
 function nasa(lat: number, lng: number) {
@@ -18,12 +19,13 @@ function nasa(lat: number, lng: number) {
         properties: { parameter: { ALLSKY_SFC_SW_DWN: months(3.9), T2M: months(16) } } };
 }
 beforeEach(() => {
-    jest.spyOn(global, 'fetch').mockImplementation(async (url: any) => {
-        const u = new URL(String(url));
-        return new Response(JSON.stringify(nasa(Number(u.searchParams.get('latitude')), Number(u.searchParams.get('longitude')))));
-    });
+    clearVerifiedSolarCache();
+    for (const [lat, lng] of [[32.0603, 118.7969], [38.0428, 114.5149]] as const) {
+        seedVerifiedSolarCache(lat, lng, YEAR, JSON.stringify(nasa(lat, lng)));
+    }
+    jest.spyOn(global, 'fetch').mockImplementation(async () => new Response('{}', { status: 500 }));
 });
-afterEach(() => jest.restoreAllMocks());
+afterEach(() => { clearVerifiedSolarCache(); jest.restoreAllMocks(); });
 
 const post = (body: object) => POST(new NextRequest('http://x/api/calculator/quick', { method: 'POST', body: JSON.stringify(body) }));
 

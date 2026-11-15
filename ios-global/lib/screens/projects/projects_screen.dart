@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_theme.dart';
+import '../../widgets/photo_widgets.dart';
+
+import '../../utils/project_display.dart';
 import '../../services/api_service.dart';
+import 'create_project_screen.dart';
 
 class ProjectsScreen extends StatefulWidget {
-  const ProjectsScreen({super.key});
+  /// Test hook: replaces the network call.
+  final Future<List<Map<String, dynamic>>> Function()? loader;
+  const ProjectsScreen({super.key, this.loader});
   @override
   State<ProjectsScreen> createState() => _ProjectsScreenState();
 }
@@ -24,7 +31,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
       _error = null;
     });
     try {
-      final projects = await ApiService.getProjects();
+      final projects = await (widget.loader ?? ApiService.getProjects)();
       if (mounted) setState(() => _projects = projects);
     } on ApiException catch (error) {
       if (mounted) setState(() => _error = error.message);
@@ -36,10 +43,27 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
     }
   }
 
+  Future<void> _create() async {
+    final created = await Navigator.of(context).push<Map<String, dynamic>>(
+      MaterialPageRoute(builder: (_) => const CreateProjectScreen()),
+    );
+    if (created != null && mounted) await _load();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Projects')),
+      appBar: AppBar(
+        title: const Text('Projects'),
+        actions: [
+          IconButton(
+            key: const Key('createProjectButton'),
+            tooltip: 'New project',
+            icon: const Icon(Icons.add_business_outlined),
+            onPressed: _create,
+          ),
+        ],
+      ),
       body: RefreshIndicator(
         onRefresh: _load,
         child: _loading
@@ -48,10 +72,10 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
             ? ListView(
                 children: [
                   const SizedBox(height: 180),
-                  const Icon(
+                  Icon(
                     Icons.cloud_off_outlined,
                     size: 48,
-                    color: Color(0xFF94A3B8),
+                    color: context.eiMuted,
                   ),
                   const SizedBox(height: 12),
                   Text(_error!, textAlign: TextAlign.center),
@@ -60,23 +84,23 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
               )
             : _projects.isEmpty
             ? ListView(
-                children: const [
-                  SizedBox(height: 180),
-                  Icon(
-                    Icons.folder_open_outlined,
-                    size: 48,
-                    color: Color(0xFF94A3B8),
+                key: const Key('projectsEmpty'),
+                children: [
+                  const SizedBox(height: 40),
+                  EnEmptyPhoto(
+                    asset: 'assets/images/eg_empty.webp',
+                    title: 'No projects yet',
+                    message:
+                        'Tap “New project” to add your first one. The button at the bottom right starts a resource assessment.',
                   ),
-                  SizedBox(height: 12),
-                  Text(
-                    'No projects yet',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                  SizedBox(height: 6),
-                  Text(
-                    'Create a project on the web or with the add button.',
-                    textAlign: TextAlign.center,
+                  const SizedBox(height: 16),
+                  Center(
+                    child: FilledButton.icon(
+                      key: const Key('createProjectEmptyCta'),
+                      onPressed: _create,
+                      icon: const Icon(Icons.add),
+                      label: const Text('New project'),
+                    ),
                   ),
                 ],
               )
@@ -89,8 +113,9 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
               ),
       ),
       floatingActionButton: FloatingActionButton(
+        tooltip: 'Resource assessment',
         onPressed: () => Navigator.pushNamed(context, '/resource'),
-        child: const Icon(Icons.add),
+        child: const Icon(Icons.travel_explore),
       ),
     );
   }
@@ -106,10 +131,9 @@ class _ProjectCard extends StatelessWidget {
         .toString()
         .toLowerCase();
     final name = (project['name'] ?? 'Untitled project').toString();
-    final location = (project['location'] ?? 'Location not provided')
-        .toString();
-    final capacity =
-        project['capacity_mw'] ?? project['capacityMw'] ?? project['capacity'];
+    final location =
+        projectLocationText(project['location']) ?? 'Location not provided';
+    final capacity = projectCapacityText(project);
     final status = (project['status'] ?? 'planning').toString();
     return Semantics(
       button: true,
@@ -118,28 +142,18 @@ class _ProjectCard extends StatelessWidget {
         margin: EdgeInsets.zero,
         child: ListTile(
           contentPadding: const EdgeInsets.all(16),
-          leading: Text(
-            type.contains('solar')
-                ? '☀️'
-                : type.contains('wind')
-                ? '💨'
-                : '🔋',
-            style: const TextStyle(fontSize: 24),
-          ),
+          leading: EnTypeThumb(type: type),
           title: Text(
             name,
             style: const TextStyle(fontWeight: FontWeight.w700),
           ),
           subtitle: Padding(
             padding: const EdgeInsets.only(top: 6),
-            child: Text(
-              location +
-                  (capacity == null ? '' : '\n' + capacity.toString() + ' MW'),
-            ),
+            child: Text(location + (capacity == null ? '' : '\n$capacity')),
           ),
           trailing: Text(
             status,
-            style: const TextStyle(fontSize: 12, color: Color(0xFF475569)),
+            style: TextStyle(fontSize: 12, color: context.eiBody2),
           ),
           onTap: () => Navigator.pushNamed(
             context,

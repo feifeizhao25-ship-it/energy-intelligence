@@ -1,4 +1,4 @@
-import { requireAiQuota } from '@/lib/ai/quota-guard';
+import { requireAiQuota, trackAiQuota } from '@/lib/ai/quota-guard';
 import { NextRequest } from 'next/server';
 import { aiService } from '@/lib/ai/unified';
 import { Message } from '@/types';
@@ -9,12 +9,42 @@ import { getDefaultModel, getAvailableModels } from "@/lib/membership/plans";
 import { Plan } from "@/lib/membership/plans";
 import { safeErrorMessage } from '@/lib/api/safe-error';
 import { aigcMeta, AIGC_HEADER } from '@/lib/ai/aigc';
+import { BOTTOM_LINE_NOTICE_ZH, neutralizeCnText } from '@/lib/compliance/bottom-line';
+import { recordFeedback } from '@/lib/feedback/samples';
 import { collectSourcesFromToolResult, verifySources, type EvidenceSource } from '@/lib/evidence/verification';
+import { saveAnswer, type StoredSource } from '@/lib/assistant/answer-store';
+import { isSyntheticUrl } from '@/lib/assistant/library-fallback';
+import { ASSISTANT_UNREACHABLE_ZH, isAbortError } from '@/lib/assistant/chat-failure';
+import { modelFailureReply } from '@/lib/assistant/model-failure';
+import { EXPORT_FORMATS } from '@/lib/membership/plans';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
 export async function POST(request: NextRequest) {
+    let quota: ReturnType<typeof trackAiQuota> | null = null;
+    let quotaClosed = false;
+    const upstream = new AbortController();
+    let clientCancelled = false;
+    const abortUpstream = () => {
+        if (!upstream.signal.aborted) upstream.abort();
+    };
+    const cancelled = () => request.signal.aborted || clientCancelled;
+    const refundIfPending = () => {
+        if (quotaClosed || !quota) return Promise.resolve();
+        quotaClosed = true;
+        return quota.refund();
+    };
+    const keepQuota = () => {
+        if (quotaClosed || !quota) return false;
+        quotaClosed = true;
+        quota.settle();
+        return true;
+    };
+    const onAbort = () => {
+        abortUpstream();
+        void refundIfPending();
+    };
     try {
         const session = await getServerSession(authOptions) as any;
         const body = await request.json().catch(() => null);
@@ -28,6 +58,20 @@ export async function POST(request: NextRequest) {
             isAssistant?: boolean;
         };
 
+        const latestUser = [...(body.messages || [])].reverse().find((item: Message) => item?.role === 'user');
+        if (latestUser && neutralizeCnText(String(latestUser.content || '')) === BOTTOM_LINE_NOTICE_ZH) {
+            void recordFeedback('blocked_output', String(latestUser.content || ''));
+            const encoder = new TextEncoder();
+            const blocked = new ReadableStream({
+                start(controller) {
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'content', data: BOTTOM_LINE_NOTICE_ZH })}\n\n`));
+                    controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+                    controller.close();
+                },
+            });
+            return new Response(blocked, { headers: { 'Content-Type': 'text/event-stream', [AIGC_HEADER]: '1' } });
+        }
+
         if (!messages || !Array.isArray(messages) || messages.length === 0 || messages.length > 50) {
             return new Response(
                 JSON.stringify({ error: '无效的消息格式' }),
@@ -38,6 +82,12 @@ export async function POST(request: NextRequest) {
         // 登录 + 按库里的会员档扣减当日 AI 次数（原来不登录也能用，登录后也只事后记一笔）
         const guard = await requireAiQuota();
         if (!guard.ok) return guard.response;
+        quota = trackAiQuota(guard.userId);
+        if (cancelled()) {
+            await refundIfPending();
+            return new Response(JSON.stringify({ error: ASSISTANT_UNREACHABLE_ZH }), { status: 499, headers: { 'Content-Type': 'application/json' } });
+        }
+        request.signal.addEventListener('abort', onAbort, { once: true });
         const userPlan = guard.plan as Plan;
 
         // Determine the actual model based on user plan
@@ -51,9 +101,18 @@ export async function POST(request: NextRequest) {
 
         // 创建可读流
         const encoder = new TextEncoder();
+        let modelFinished = false;
         const stream = new ReadableStream({
             async start(controller) {
+                const closeQuietly = () => {
+                    try { controller.close(); } catch { /* 客户端已经离开 */ }
+                };
                 try {
+                    if (cancelled()) {
+                        await refundIfPending();
+                        closeQuietly();
+                        return;
+                    }
                     const currentProvider = provider || aiService.getAIProvider();
 
                     // 发送提供商信息
@@ -68,23 +127,31 @@ export async function POST(request: NextRequest) {
                     })}\n\n`));
 
                     const chatSource = isAssistant
-                        ? assistantChatStream(messages, actualModel, guard.userId)
-                        : aiService.chatStream(messages, { provider: currentProvider, model: actualModel } as any);
+                        ? assistantChatStream(messages, actualModel, guard.userId, upstream.signal)
+                        : aiService.chatStream(messages, { provider: currentProvider, model: actualModel, signal: upstream.signal } as any);
 
-                    // 次数已在门禁里扣减；这里只记明细日志
+                    // 次数已在门禁里扣减；模型流没跑完时在下面退还。这里只记明细日志。
                     try {
                         const { logUsage } = await import('@/lib/membership/usage');
                         await logUsage(guard.userId, 'ai_chat', { model: actualModel, isAssistant });
                     } catch (usageError) {
                         console.warn('Usage log failed (non-blocking):', usageError);
                     }
+                    if (cancelled()) {
+                        await refundIfPending();
+                        closeQuietly();
+                        return;
+                    }
 
                     const evidenceSources: EvidenceSource[] = [];
+                    const textParts: string[] = [];
                     for await (const event of chatSource) {
+                        if (cancelled()) break;
                         // 转换事件类型以匹配前端期望
                         let transformedEvent = event;
                         if (event.type === 'text') {
-                            transformedEvent = { type: 'content', data: event.data };
+                            textParts.push(String(event.data || ''));
+                            continue;
                         } else if (event.type === 'tool_call') {
                             // 发送工具调用状态
                             controller.enqueue(encoder.encode(`data: ${JSON.stringify({
@@ -105,23 +172,100 @@ export async function POST(request: NextRequest) {
                         const data = JSON.stringify(transformedEvent);
                         controller.enqueue(encoder.encode(`data: ${data}\n\n`));
                     }
-                    // 审计 7-5：回答结束时按多源验证规则给出核验状态（前端引用卡显示 已核验/待核验/冲突）
+                    if (cancelled()) {
+                        await refundIfPending();
+                        closeQuietly();
+                        return;
+                    }
+                    if (!keepQuota()) {
+                        closeQuietly();
+                        return;
+                    }
+                    modelFinished = true;
+                    const rawAnswer = textParts.join('');
+                    const answer = neutralizeCnText(rawAnswer);
+                    if (answer === BOTTOM_LINE_NOTICE_ZH && rawAnswer && rawAnswer !== answer) {
+                        void recordFeedback('blocked_output', rawAnswer);
+                    }
+                    if (answer) {
+                        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'content', data: answer })}\n\n`));
+                    }
+                    const verification = verifySources(evidenceSources);
+                    if (evidenceSources.length && verification.status !== 'verified') {
+                        void recordFeedback('failed_citation', rawAnswer || answer);
+                    }
+                    const sources = evidenceSources.slice(0, 20).map(storedSource);
+                    const synthetic = sources.some((source) => isSyntheticUrl(source.url));
+                    const saved = answer
+                        ? saveAnswer({ userId: guard.userId, text: answer, sources, standIn: false, synthetic })
+                        : null;
                     controller.enqueue(encoder.encode(`data: ${JSON.stringify({
                         type: 'evidence',
-                        data: { verification: verifySources(evidenceSources), sources: evidenceSources.slice(0, 20) },
+                        data: {
+                            verification,
+                            sources,
+                            answerId: saved?.id ?? null,
+                            standIn: false,
+                            synthetic,
+                            downloads: exportDownloads(userPlan),
+                        },
                     })}\n\n`));
                     controller.enqueue(encoder.encode('data: [DONE]\n\n'));
                     controller.close();
                 } catch (error) {
+                    // 次数在开流前已扣。模型流没跑完、用户取消或连接中断时退还，而且只退一次。
+                    await refundIfPending();
+                    if (cancelled() || isAbortError(error)) {
+                        closeQuietly();
+                        return;
+                    }
+                    const question = String(latestUser?.content || '');
+                    const failure = modelFinished ? null : modelFailureReply(error, question);
+                    if (failure?.kind === 'library') {
+                        const saved = saveAnswer({
+                            userId: guard.userId,
+                            text: failure.text,
+                            sources: failure.sources,
+                            standIn: true,
+                            synthetic: failure.synthetic,
+                        });
+                        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'content', data: saved.text })}\n\n`));
+                        controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                            type: 'evidence',
+                            data: {
+                                verification: {
+                                    status: 'unverified',
+                                    label: '待核验',
+                                    reason: saved.sources.length ? '资料库记录没有人工复核记录' : '没有可引用的来源',
+                                    usable_as_conclusion: false,
+                                },
+                                sources: saved.sources,
+                                answerId: saved.id,
+                                standIn: true,
+                                synthetic: saved.synthetic,
+                                downloads: exportDownloads(userPlan),
+                            },
+                        })}\n\n`));
+                        controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+                        controller.close();
+                        return;
+                    }
                     console.error('流处理错误:', error);
                     const errorData = JSON.stringify({
                         type: 'error',
-                        data: { message: safeErrorMessage(error, '未知错误') }
+                        data: { message: failure?.kind === 'message' ? failure.message : safeErrorMessage(error, ASSISTANT_UNREACHABLE_ZH) }
                     });
                     controller.enqueue(encoder.encode(`data: ${errorData}\n\n`));
                     controller.close();
+                } finally {
+                    request.signal.removeEventListener('abort', onAbort);
                 }
-            }
+            },
+            async cancel() {
+                clientCancelled = true;
+                abortUpstream();
+                await refundIfPending();
+            },
         });
 
         return new Response(stream, {
@@ -133,6 +277,9 @@ export async function POST(request: NextRequest) {
             }
         });
     } catch (error) {
+        abortUpstream();
+        await refundIfPending();
+        request.signal.removeEventListener('abort', onAbort);
         console.error('Chat API错误:', error);
         return new Response(
             JSON.stringify({
@@ -141,6 +288,28 @@ export async function POST(request: NextRequest) {
             { status: 500, headers: { 'Content-Type': 'application/json' } }
         );
     }
+}
+
+function exportDownloads(plan: Plan): { pdf: boolean; docx: boolean } {
+    const formats = (EXPORT_FORMATS[plan] ?? []) as readonly string[];
+    return { pdf: true, docx: formats.includes('Word') };
+}
+
+function storedSource(source: EvidenceSource): StoredSource {
+    const extra = source as EvidenceSource & Partial<StoredSource>;
+    return {
+        title: source.title || source.publisher || '未命名来源',
+        url: source.url,
+        publisher: source.publisher,
+        published_at: extra.published_at,
+        locator: extra.locator,
+        excerpt: extra.excerpt,
+        freshness_status: extra.freshness_status,
+        evidence_status: extra.evidence_status,
+        status: extra.status,
+        license: extra.license,
+        note: extra.note,
+    };
 }
 
 // API信息端点

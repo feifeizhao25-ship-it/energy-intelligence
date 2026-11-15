@@ -20,14 +20,27 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'UNAUTHORIZED', message: '请先登录后再导出报告' }, { status: 401 });
     }
 
-    const body = await req.json().catch(() => null);
-    const format = body?.format === 'docx' ? 'docx' : 'pdf';
-    if (format === 'docx') {
+    // Only an absent body/format defaults to PDF; malformed requests must not consume quota.
+    const raw = await req.text();
+    let body;
+    try { body = raw.trim() ? JSON.parse(raw) : {}; } catch {
+        return NextResponse.json({ error: 'INVALID_REQUEST', message: '导出请求格式无效，请重试' }, { status: 400 });
+    }
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+        return NextResponse.json({ error: 'INVALID_REQUEST', message: '导出请求格式无效，请重试' }, { status: 400 });
+    }
+    const format = body.format === undefined ? 'pdf' : body.format;
+    const formatName: Record<string, string> = { pdf: 'PDF', docx: 'Word', xlsx: 'Excel', pptx: 'PPT' };
+    if (typeof format !== 'string' || !(format in formatName)) {
+        return NextResponse.json({ error: 'UNSUPPORTED_FORMAT', message: '报告导出格式仅支持 PDF、Word、Excel 或 PPT' }, { status: 400 });
+    }
+    if (format !== 'pdf') {
         const user = await prisma.user.findUnique({ where: { id: session.user.id }, select: { plan: true, planExpireAt: true } });
         const plan = effectivePlan(user?.plan, user?.planExpireAt) as keyof typeof EXPORT_FORMATS;
         const allowed = (EXPORT_FORMATS[plan] ?? []) as readonly string[];
-        if (!allowed.includes('Word')) {
-            return NextResponse.json({ error: 'FORMAT_NOT_INCLUDED', message: '当前套餐不含 Word 导出，可导出 PDF，或升级到专业版及以上' }, { status: 403 });
+        const label = formatName[format];
+        if (!allowed.includes(label)) {
+            return NextResponse.json({ error: 'FORMAT_NOT_INCLUDED', message: `当前套餐不含 ${label} 导出，可导出 PDF，或升级到专业版及以上` }, { status: 403 });
         }
     }
 
@@ -35,7 +48,7 @@ export async function POST(req: Request) {
     if (!result.success) {
         return NextResponse.json({
             error: 'EXPORT_QUOTA_EXCEEDED',
-            message: result.usage.exceeded ? '今日报告导出额度已用尽，请升级套餐或明日再试' : '导出额度暂时无法核验，请稍后重试',
+            message: result.usage.exceeded ? '本月报告导出额度已用尽，请查看套餐或下月再试' : '导出额度暂时无法核验，请稍后重试',
             usage: result.usage,
         }, { status: result.usage.exceeded ? 429 : 503 });
     }

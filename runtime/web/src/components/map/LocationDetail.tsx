@@ -2,9 +2,12 @@
 
 import React, { useEffect, useState } from 'react';
 import { X, Sun, Wind, CloudRain, TrendingUp, Info } from 'lucide-react';
-import { getSolarResource, getWindResource, getClimateData } from '@/lib/api/nasa-power';
+import { getSolarResource, getWindResource } from '@/lib/api/nasa-power';
+import { domesticClimate } from '@/lib/api/domestic-station';
+import { formatPeakSunHours } from '@/lib/resource/peak-sun-hours';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
 import SunPathChart from './SunPathChart';
+import { ClimateEnvironment } from './ClimateEnvironment';
 
 interface LocationDetailProps {
     location: { lat: number; lng: number; name: string };
@@ -21,11 +24,11 @@ export default function LocationDetail({ location, onClose }: LocationDetailProp
             setLoading(true);
             try {
                 // 并行获取数据
-                const [solar, wind, climate] = await Promise.all([
+                const [solar, wind] = await Promise.all([
                     getSolarResource(location.lat, location.lng),
                     getWindResource(location.lat, location.lng),
-                    getClimateData(location.lat, location.lng)
                 ]);
+                const climate = domesticClimate(location.lat, location.lng);
 
                 setData({ solar, wind, climate });
             } catch (error) {
@@ -43,8 +46,8 @@ export default function LocationDetail({ location, onClose }: LocationDetailProp
         return (
             <div className="absolute top-20 left-4 w-96 bg-gray-800/95 backdrop-blur border border-gray-700 text-white p-6 rounded-lg shadow-2xl z-30 min-h-[400px] flex flex-col items-center justify-center">
                 <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500 mb-4"></div>
-                <p className="text-gray-400">正在分析NASA卫星数据...</p>
-                <p className="text-xs text-gray-500 mt-2">获取40年历史气象记录</p>
+                <p className="text-gray-400">正在读取国内省级资源样本...</p>
+                <p className="text-xs text-gray-500 mt-2">请求路径不访问境外气象</p>
             </div>
         );
     }
@@ -52,6 +55,7 @@ export default function LocationDetail({ location, onClose }: LocationDetailProp
     if (!data) return null;
 
     const { solar, wind, climate } = data;
+    const peakSun = formatPeakSunHours(solar.annual.peakSunHours);
 
     // 准备图表数据
     const chartData = solar.monthly.map((m: any, i: number) => ({
@@ -123,7 +127,7 @@ export default function LocationDetail({ location, onClose }: LocationDetailProp
                                 </div>
                                 <div>
                                     <p className="text-xs text-gray-400">峰值日照时数</p>
-                                    <p className="text-xl font-bold">{solar.annual.peakSunHours.toFixed(2)} <span className="text-xs font-normal text-gray-400">h/天</span></p>
+                                    <p className="text-xl font-bold">{peakSun.value} <span className="text-xs font-normal text-gray-400">{peakSun.unit}</span></p>
                                 </div>
                                 <div>
                                     <p className="text-xs text-gray-400">最佳倾角</p>
@@ -171,20 +175,7 @@ export default function LocationDetail({ location, onClose }: LocationDetailProp
                             <h3 className="text-sm font-bold text-green-400 flex items-center gap-2 mb-3">
                                 <CloudRain className="w-4 h-4" /> 气候环境
                             </h3>
-                            <div className="grid grid-cols-3 gap-2">
-                                <div className="text-center bg-gray-800 rounded p-2">
-                                    <p className="text-xs text-gray-400">年均温</p>
-                                    <p className="font-semibold">{climate.annual.temperature.toFixed(1)}°C</p>
-                                </div>
-                                <div className="text-center bg-gray-800 rounded p-2">
-                                    <p className="text-xs text-gray-400">年降水</p>
-                                    <p className="font-semibold">{Math.round(climate.annual.precipitation)}mm</p>
-                                </div>
-                                <div className="text-center bg-gray-800 rounded p-2">
-                                    <p className="text-xs text-gray-400">湿度</p>
-                                    <p className="font-semibold">{Math.round(climate.annual.humidity)}%</p>
-                                </div>
-                            </div>
+                            <ClimateEnvironment annual={climate.annual} />
                         </div>
                     </>
                 )}
@@ -250,7 +241,7 @@ export default function LocationDetail({ location, onClose }: LocationDetailProp
             </div>
 
             <div className="p-3 border-t border-gray-700 text-xs text-gray-500 bg-gray-800/95 sticky bottom-0 text-center">
-                数据来源: NASA POWER (1991-2022) | 经度: {location.lng.toFixed(2)} 纬度: {location.lat.toFixed(2)}
+                数据来源: {data?.climate?.provenance || '国内省级离线样本'} | 经度: {location.lng.toFixed(2)} 纬度: {location.lat.toFixed(2)}
             </div>
         </div>
     );

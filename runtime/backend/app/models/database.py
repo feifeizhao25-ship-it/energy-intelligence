@@ -19,6 +19,9 @@ class Project(Base):
     description = Column(Text)
     technology = Column(String(50))  # solar, wind, hybrid
     location = Column(String(255))
+    # ISO 3166-1 alpha-2 (e.g. "US", "IN", "CN"). Nullable: projects created before this column existed are
+    # backfilled from the address by migration 0010, and anything the address does not name stays NULL.
+    country_code = Column(String(2), nullable=True)
     latitude = Column(Float)
     longitude = Column(Float)
     capacity_mw = Column(Float)

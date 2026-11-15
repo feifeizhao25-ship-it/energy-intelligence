@@ -59,7 +59,7 @@ export default function LoginForm({ authConfigured, callbackUrl = '/dashboard' }
         // 服务端说「60 秒内已发过」时，按钮也进入冷却，避免用户连点
         if (response.status === 429) setCooldown(RESEND_SECONDS);
       } else {
-        setNotice(copy.sent);
+        setNotice(typeof payload?.devCode === 'string' ? `开发环境验证码：${payload.devCode}` : copy.sent);
         setCooldown(RESEND_SECONDS);
       }
     } catch {
@@ -98,12 +98,12 @@ export default function LoginForm({ authConfigured, callbackUrl = '/dashboard' }
   return <main className="grid min-h-screen bg-slate-50 lg:grid-cols-2">
     <section className="hidden bg-slate-950 p-12 text-white lg:flex lg:flex-col lg:justify-between">
       <Link href="/" className="flex items-center gap-3 text-xl font-black"><span className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500"><Zap className="h-6 w-6" /></span>{copy.brand}</Link>
-      <div><p className="text-sm font-bold tracking-[.2em] text-emerald-400">登录</p><h1 className="mt-4 max-w-xl text-5xl font-black leading-tight">{copy.intro}</h1><div className="mt-9 space-y-4">{copy.safeguards.map(item => <div key={item} className="flex items-center gap-3 text-slate-300"><Check className="h-5 w-5 text-emerald-400" />{item}</div>)}</div><p className="mt-9 max-w-xl text-sm leading-6 text-slate-400">{copy.disclaimer}</p></div>
-      <p className="text-sm text-slate-500">© {new Date().getFullYear()} {copy.brand}</p>
+      <div><p className="text-sm font-bold tracking-[.2em] text-emerald-400">登录</p><h1 className="mt-4 max-w-xl text-5xl font-black leading-tight">{copy.intro}</h1><div className="mt-9 space-y-4">{copy.safeguards.map(item => <div key={item} className="flex items-center gap-3 text-slate-300"><Check className="h-5 w-5 text-emerald-400" />{item}</div>)}</div><p className="mt-9 max-w-xl text-sm leading-6 text-[var(--text-muted-inverse)]">{copy.disclaimer}</p></div>
+      <p className="text-sm text-slate-300">© {new Date().getFullYear()} {copy.brand}</p>
     </section>
 
     <section className="flex items-center justify-center p-4 sm:p-8"><div className="w-full max-w-md"><Link href="/" className="mb-8 flex items-center justify-center gap-2 text-xl font-black lg:hidden"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500 text-white"><Zap className="h-5 w-5" /></span>{copy.brand}</Link><div className="rounded-3xl border border-slate-200 bg-white p-7 shadow-xl shadow-slate-200/60 sm:p-8">
-        <h2 className="text-2xl font-black">{copy.title}</h2><p className="mt-2 text-slate-500">{copy.intro}</p>
+        <h1 className="sr-only lg:hidden">{copy.title}</h1><h2 className="text-2xl font-black">{copy.title}</h2><p className="mt-2 text-slate-500">{copy.intro}</p>
         {!authConfigured && <div role="status" className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-800">{copy.authNotConfigured}</div>}
         <form onSubmit={handleSubmit} className="mt-7 space-y-4">
           <label className="block text-sm font-semibold text-slate-700">{copy.phone}<input type="tel" inputMode="numeric" autoComplete="tel" value={phone} onChange={e => setPhone(digitsOnly(e.target.value, 11))} required className={field} placeholder={copy.phonePlaceholder} /></label>
@@ -113,7 +113,7 @@ export default function LoginForm({ authConfigured, callbackUrl = '/dashboard' }
           <label className="flex items-start gap-3 text-xs leading-5 text-slate-600"><input type="checkbox" checked={accepted} onChange={e => { setAccepted(e.target.checked); if (e.target.checked) setError(''); }} className="mt-1 h-4 w-4 accent-emerald-600" /><span>{copy.consentPrefix} <Link href="/terms" target="_blank" className="font-bold text-emerald-700">{copy.terms}</Link> {copy.and} <Link href="/privacy" target="_blank" className="font-bold text-emerald-700">{copy.privacy}</Link>。</span></label>
           {notice && <div role="status" className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">{notice}</div>}
           {error && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div>}
-          <button disabled={loading || !authConfigured} className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 py-3.5 font-bold text-white hover:bg-emerald-500 disabled:opacity-50">{loading ? copy.waiting : copy.submit}<ArrowRight className="h-4 w-4" /></button>
+          <button disabled={loading || !authConfigured} className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-700 py-3.5 font-bold text-white hover:bg-emerald-800 disabled:opacity-50">{loading ? copy.waiting : copy.submit}<ArrowRight className="h-4 w-4" /></button>
         </form>
         <div className="mt-6 flex items-start gap-2 rounded-xl bg-slate-50 p-3 text-xs leading-5 text-slate-500"><Shield className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />{copy.disclaimer}</div>
       </div>{supportEmail && <a href={`mailto:${supportEmail}`} className="mt-6 block text-center text-sm text-slate-500 hover:text-emerald-700">{copy.support}: {supportEmail}</a>}</div></section>

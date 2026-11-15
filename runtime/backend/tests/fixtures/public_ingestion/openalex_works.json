@@ -1,0 +1,20 @@
+{
+  "results": [
+    {
+      "id": "https://openalex.org/W1",
+      "display_name": "光伏组件积灰综述",
+      "publication_year": 2024,
+      "doi": "https://doi.org/10.1000/soiling",
+      "authorships": [{"author": {"display_name": "李微"}}],
+      "referenced_works": ["https://openalex.org/W2"]
+    },
+    {
+      "id": "https://openalex.org/W2",
+      "display_name": "被引论文",
+      "publication_year": 2020,
+      "doi": "https://doi.org/10.1000/cited",
+      "authorships": [{"author": {"display_name": "王敏"}}],
+      "referenced_works": []
+    }
+  ]
+}

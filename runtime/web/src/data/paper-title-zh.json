@@ -1,0 +1,571 @@
+{
+  "_meta": {
+    "说明": "英文论文标题的中文译名。展示时以译名为主，同时保留原文标题与原文链接。",
+    "翻译方式": "助手翻译（未经人工审校）；DeepSeek 密钥额度不足，未使用机器翻译服务",
+    "reviewStatus": "待审核",
+    "范围": "runtime/backend/data/research/research_items.json 中论文条目里标题为英文的记录；仅 arXiv 编号、无标题的记录不收录，未编造译名",
+    "注意": "译名仅便于阅读，引用请以原文标题为准；人工审校通过后才可把 reviewStatus 改为 已审核"
+  },
+  "items": [
+    {
+      "key": "arxiv:2607.18147",
+      "titleOriginal": "LLMs and Agentic AI Systems for Smart Grids: A Tutorial on Architectures and Applications",
+      "titleZh": "面向智能电网的大语言模型与智能体 AI 系统：架构与应用教程",
+      "sourceUrl": "https://arxiv.org/abs/2607.18147",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "arxiv:2508.12682",
+      "titleOriginal": "GridCodex: A RAG-Driven AI Framework for Power Grid Code Reasoning and Compliance",
+      "titleZh": "GridCodex：面向电网规程推理与合规的检索增强生成 AI 框架",
+      "sourceUrl": "https://arxiv.org/abs/2508.12682",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "arxiv:2610.04832",
+      "titleOriginal": "Agent Skill Evolution: How Revisions Affect Coding Agents",
+      "titleZh": "智能体技能的演化：修订如何影响编码智能体",
+      "sourceUrl": "https://arxiv.org/abs/2610.04832",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "arxiv:2608.06891",
+      "titleOriginal": "SkillEval: Decomposing Agent Skill Quality into Interpretable Signals",
+      "titleZh": "SkillEval：将智能体技能质量分解为可解释的信号",
+      "sourceUrl": "https://arxiv.org/abs/2608.06891",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "arxiv:2609.39065",
+      "titleOriginal": "Can Agents Trust Their Skills? Uncovering Unsafe Chains of Trust in Skill-Based LLM Agents",
+      "titleZh": "智能体能信任自己的技能吗？揭示基于技能的大模型智能体中的不安全信任链",
+      "sourceUrl": "https://arxiv.org/abs/2609.39065",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "arxiv:2610.00093",
+      "titleOriginal": "Safety in Self-Evolving Agents: A Survey",
+      "titleZh": "自演化智能体的安全性：综述",
+      "sourceUrl": "https://arxiv.org/abs/2610.00093",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "doi:10.1038/s41586-023-06180-8",
+      "titleOriginal": "Accelerating the energy transition towards photovoltaic and wind in China",
+      "titleZh": "加速中国向光伏与风电的能源转型",
+      "sourceUrl": "https://doi.org/10.1038/s41586-023-06180-8",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "doi:10.1016/j.joule.2024.05.009",
+      "titleOriginal": "Exploring the capabilities and limitations of large language models in the electric energy sector",
+      "titleZh": "大语言模型在电力能源领域的能力与局限",
+      "sourceUrl": "https://doi.org/10.1016/j.joule.2024.05.009",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "doi:10.1016/j.apenergy.2024.123838",
+      "titleOriginal": "Optimization of electricity generation and assessment of provincial grid emission factors from 2020 to 2060 in China",
+      "titleZh": "2020—2060 年中国发电优化与省级电网排放因子评估",
+      "sourceUrl": "https://doi.org/10.1016/j.apenergy.2024.123838",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "doi:10.3390/en18030654",
+      "titleOriginal": "A Comparative Study on the Average CO2 Emission Factors of Electricity of China",
+      "titleZh": "中国电力平均二氧化碳排放因子的比较研究",
+      "sourceUrl": "https://doi.org/10.3390/en18030654",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "arxiv:2606.26346",
+      "titleOriginal": "How Do Tool-Augmented LLM Agents Perform on Real-World Energy Analytics Tasks?",
+      "titleZh": "工具增强的大模型智能体在真实能源分析任务中表现如何？",
+      "sourceUrl": "https://arxiv.org/abs/2606.26346",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "arxiv:2512.13004",
+      "titleOriginal": "Large Language Models for Power System Applications: A Comprehensive Literature Survey",
+      "titleZh": "大语言模型在电力系统中的应用：全面文献综述",
+      "sourceUrl": "https://arxiv.org/abs/2512.13004",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "arxiv:2607.24791",
+      "titleOriginal": "From Naive RAG to Deep Agentic Retrieval: An Evolving Context Engineering Pipeline for Regulatory Compliance",
+      "titleZh": "从朴素 RAG 到深度智能体检索：面向合规监管的演进式上下文工程流水线",
+      "sourceUrl": "https://arxiv.org/abs/2607.24791",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "arxiv:2509.06813",
+      "titleOriginal": "A Comparative Benchmark of Large Language Models for Labelling Wind Turbine Maintenance Logs",
+      "titleZh": "用于标注风电机组运维日志的大语言模型比较基准",
+      "sourceUrl": "https://arxiv.org/abs/2509.06813",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "arxiv:2608.15396",
+      "titleOriginal": "Large Language Model Assisted Operational Monitoring for Battery Energy Storage System Integrated Power Distribution Networks",
+      "titleZh": "大语言模型辅助的含储能配电网运行监测",
+      "sourceUrl": "https://arxiv.org/abs/2608.15396",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "arxiv:2507.23147",
+      "titleOriginal": "Foundation Models for Clean Energy Forecasting: A Comprehensive Review",
+      "titleZh": "清洁能源预测的基础模型：全面综述",
+      "sourceUrl": "https://arxiv.org/abs/2507.23147",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "arxiv:2604.22077",
+      "titleOriginal": "Empirical Assessment of Time-Series Foundation Models For Power System Forecasting Applications",
+      "titleZh": "时间序列基础模型在电力系统预测应用中的实证评估",
+      "sourceUrl": "https://arxiv.org/abs/2604.22077",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "arxiv:2607.15705",
+      "titleOriginal": "A Benchmark for Electrical Load Forecasting Across Grid Levels: Time-Series Transformers Outperform Established Methods",
+      "titleZh": "跨电网层级的电力负荷预测基准：时间序列 Transformer 优于传统方法",
+      "sourceUrl": "https://arxiv.org/abs/2607.15705",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "arxiv:2608.08453",
+      "titleOriginal": "What Keeps Agent Skills from Being Reusable? Evidence from 138K SKILL.md Files",
+      "titleZh": "是什么阻碍了智能体技能的复用？来自 13.8 万个 SKILL.md 文件的证据",
+      "sourceUrl": "https://arxiv.org/abs/2608.08453",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "arxiv:2610.11169",
+      "titleOriginal": "Skill Constellations: Tracing the Supply Chain of Agent Skills on GitHub",
+      "titleZh": "技能星座：追踪 GitHub 上智能体技能的供应链",
+      "sourceUrl": "https://arxiv.org/abs/2610.11169",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "arxiv:2609.05677",
+      "titleOriginal": "Who Maintains Agent Skills? A Longitudinal Study of Human-Governed, AI-Assisted Skill Maintenance",
+      "titleZh": "谁在维护智能体技能？人类治理、AI 辅助的技能维护纵向研究",
+      "sourceUrl": "https://arxiv.org/abs/2609.05677",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "arxiv:2607.10113",
+      "titleOriginal": "Dynamic Agent Skills: A Lifecycle Survey and Taxonomy of Evolving Skill Libraries",
+      "titleZh": "动态智能体技能：演化中技能库的生命周期综述与分类",
+      "sourceUrl": "https://arxiv.org/abs/2607.10113",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "arxiv:2609.24663",
+      "titleOriginal": "Beyond Endpoint Performance: Process-Level Evaluation of Self-Evolving Agents",
+      "titleZh": "超越终点性能：自演化智能体的过程级评估",
+      "sourceUrl": "https://arxiv.org/abs/2609.24663",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "arxiv:2610.02369",
+      "titleOriginal": "Automating the Application of HCI Principles: Skills for On-Demand UI Construction, the Human-AI Space to Think, and the Future of HCI",
+      "titleZh": "HCI 原则的自动化应用：按需界面构建的技能、人机思考空间与 HCI 的未来",
+      "sourceUrl": "https://arxiv.org/abs/2610.02369",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "arxiv:2601.17692",
+      "titleOriginal": "LegalMALR:Multi-Agent Query Understanding and LLM-Based Reranking for Chinese Statute Retrieval",
+      "titleZh": "LegalMALR：面向中文法条检索的多智能体查询理解与基于大模型的重排序",
+      "sourceUrl": "https://arxiv.org/abs/2601.17692",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "arxiv:2601.06126",
+      "titleOriginal": "NL2Dashboard: A Lightweight and Controllable Framework for Generating Dashboards with LLMs",
+      "titleZh": "NL2Dashboard：用大模型生成仪表盘的轻量可控框架",
+      "sourceUrl": "https://arxiv.org/abs/2601.06126",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "arxiv:2508.04679",
+      "titleOriginal": "MisVisFix: An Interactive Dashboard for Detecting, Explaining, and Correcting Misleading Visualizations using Large Language Models",
+      "titleZh": "MisVisFix：利用大语言模型检测、解释并纠正误导性可视化的交互式仪表盘",
+      "sourceUrl": "https://arxiv.org/abs/2508.04679",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "arxiv:2312.10997",
+      "titleOriginal": "Retrieval-Augmented Generation for Large Language Models: A Survey",
+      "titleZh": "面向大语言模型的检索增强生成：综述",
+      "sourceUrl": "https://arxiv.org/abs/2312.10997",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "arxiv:2408.08921",
+      "titleOriginal": "Graph Retrieval-Augmented Generation: A Survey",
+      "titleZh": "图检索增强生成：综述",
+      "sourceUrl": "https://arxiv.org/abs/2408.08921",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "doi:10.1016/j.apenergy.2021.117766",
+      "titleOriginal": "A review of wind speed and wind power forecasting with deep neural networks",
+      "titleZh": "基于深度神经网络的风速与风电功率预测综述",
+      "sourceUrl": "https://doi.org/10.1016/j.apenergy.2021.117766",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "doi:10.1016/j.egyai.2021.100060",
+      "titleOriginal": "A review and taxonomy of wind and solar energy forecasting methods based on deep learning",
+      "titleZh": "基于深度学习的风能与太阳能预测方法综述与分类",
+      "sourceUrl": "https://doi.org/10.1016/j.egyai.2021.100060",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "doi:10.1038/s41467-021-27671-0",
+      "titleOriginal": "Assessing the energy transition in China towards carbon neutrality with a probabilistic framework",
+      "titleZh": "以概率框架评估中国迈向碳中和的能源转型",
+      "sourceUrl": "https://doi.org/10.1038/s41467-021-27671-0",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "doi:10.1038/s41467-022-30747-0",
+      "titleOriginal": "Cost increase in the electricity supply to achieve carbon neutrality in China",
+      "titleZh": "中国实现碳中和所带来的电力供应成本上升",
+      "sourceUrl": "https://doi.org/10.1038/s41467-022-30747-0",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "doi:10.1016/j.apenergy.2025.126670",
+      "titleOriginal": "A systematic review of transformers and large language models in the energy sector: towards agentic digital twins",
+      "titleZh": "Transformer 与大语言模型在能源领域的系统综述：迈向智能体数字孪生",
+      "sourceUrl": "https://doi.org/10.1016/j.apenergy.2025.126670",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "doi:10.1016/j.eneco.2023.107104",
+      "titleOriginal": "Which combinations of renewable energy policies work better? Insights from policy text synergies in China",
+      "titleZh": "哪些可再生能源政策组合效果更好？来自中国政策文本协同性的启示",
+      "sourceUrl": "https://doi.org/10.1016/j.eneco.2023.107104",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "doi:10.1109/oajpe.2020.3029979",
+      "titleOriginal": "Energy Forecasting: A Review and Outlook",
+      "titleZh": "能源预测：回顾与展望",
+      "sourceUrl": "https://doi.org/10.1109/oajpe.2020.3029979",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "doi:10.1016/j.egyai.2026.100688",
+      "titleOriginal": "Power system operational reliability evaluation with retrieval-augmented generation enhanced large language models",
+      "titleZh": "基于检索增强大语言模型的电力系统运行可靠性评估",
+      "sourceUrl": "https://doi.org/10.1016/j.egyai.2026.100688",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "doi:10.35833/mpce.2025.000760",
+      "titleOriginal": "Large Language Model Applications in Power Systems: A Comprehensive Review and Outlook",
+      "titleZh": "大语言模型在电力系统中的应用：全面综述与展望",
+      "sourceUrl": "https://doi.org/10.35833/mpce.2025.000760",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "doi:10.1049/ses2.70000",
+      "titleOriginal": "AI Large Models for Power System: A Survey and Outlook",
+      "titleZh": "面向电力系统的 AI 大模型：综述与展望",
+      "sourceUrl": "https://doi.org/10.1049/ses2.70000",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "doi:10.1016/j.ijhcs.2020.102429",
+      "titleOriginal": "Creating design guidelines for building city dashboards from a user's perspectives",
+      "titleZh": "从用户视角制定城市仪表盘的设计指南",
+      "sourceUrl": "https://doi.org/10.1016/j.ijhcs.2020.102429",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "doi:10.1109/tvcg.2022.3209448",
+      "titleOriginal": "Dashboard Design Patterns",
+      "titleZh": "仪表盘设计模式",
+      "sourceUrl": "https://doi.org/10.1109/tvcg.2022.3209448",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "arxiv:2507.22911",
+      "titleOriginal": "ElectriQ: A Benchmark for Assessing the Response Capability of Large Language Models in Power Marketing",
+      "titleZh": "ElectriQ：评估大语言模型在电力营销中应答能力的基准",
+      "sourceUrl": "https://arxiv.org/abs/2507.22911",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "arxiv:2602.03070",
+      "titleOriginal": "ProOPF: Benchmarking and Improving LLMs for Professional-Grade Power Systems Optimization Modeling",
+      "titleZh": "ProOPF：面向专业级电力系统优化建模的大模型基准与改进",
+      "sourceUrl": "https://arxiv.org/abs/2602.03070",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "arxiv:2607.11459",
+      "titleOriginal": "A Multimodal Dataset for Large Language Model Applications in the Energy Domain",
+      "titleZh": "面向能源领域大语言模型应用的多模态数据集",
+      "sourceUrl": "https://arxiv.org/abs/2607.11459",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "arxiv:2609.24444",
+      "titleOriginal": "WPBench: A Comprehensive Benchmark for Wind Power Forecasting",
+      "titleZh": "WPBench：风电功率预测综合基准",
+      "sourceUrl": "https://arxiv.org/abs/2609.24444",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "arxiv:2509.06311",
+      "titleOriginal": "WindFM: An Open-Source Foundation Model for Zero-Shot Wind Power Forecasting",
+      "titleZh": "WindFM：用于零样本风电功率预测的开源基础模型",
+      "sourceUrl": "https://arxiv.org/abs/2509.06311",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "arxiv:2609.06187",
+      "titleOriginal": "SolarBench: A global solar energy nowcasting benchmark",
+      "titleZh": "SolarBench：全球太阳能临近预报基准",
+      "sourceUrl": "https://arxiv.org/abs/2609.06187",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "doi:10.1109/access.2026.3693610",
+      "titleOriginal": "Towards EnergyGPT: A Large Language Model Specialized for the Energy Sector",
+      "titleZh": "迈向 EnergyGPT：面向能源行业的专用大语言模型",
+      "sourceUrl": "https://doi.org/10.1109/access.2026.3693610",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "arxiv:2506.06359",
+      "titleOriginal": "From Transformers to Large Language Models: A systematic review of AI applications in the energy sector towards Agentic Digital Twins",
+      "titleZh": "从 Transformer 到大语言模型：能源领域 AI 应用的系统综述，迈向智能体数字孪生",
+      "sourceUrl": "https://arxiv.org/abs/2506.06359",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "arxiv:2603.14541",
+      "titleOriginal": "Expert Mind: A Retrieval-Augmented Architecture for Expert Knowledge Preservation in the Energy Sector",
+      "titleZh": "专家之心：面向能源行业专家知识留存的检索增强架构",
+      "sourceUrl": "https://arxiv.org/abs/2603.14541",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "arxiv:2609.25788",
+      "titleOriginal": "Evaluating Accuracy and Probabilistic Reliability of Zero-Shot Time Series Foundation Models",
+      "titleZh": "零样本时间序列基础模型的准确性与概率可靠性评估",
+      "sourceUrl": "https://arxiv.org/abs/2609.25788",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "arxiv:2604.05467",
+      "titleOriginal": "CUE-R: Beyond the Final Answer in Retrieval-Augmented Generation",
+      "titleZh": "CUE-R：超越最终答案的检索增强生成评估",
+      "sourceUrl": "https://arxiv.org/abs/2604.05467",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "arxiv:2505.23695",
+      "titleOriginal": "Data-to-Dashboard: Multi-Agent LLM Framework for Insightful Visualization in Enterprise Analytics",
+      "titleZh": "数据到仪表盘：面向企业分析中洞察式可视化的多智能体大模型框架",
+      "sourceUrl": "https://arxiv.org/abs/2505.23695",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "arxiv:2601.11531",
+      "titleOriginal": "NOVAID: Natural-language Observability Visualization Assistant for ITOps Dashboard Widget Generation",
+      "titleZh": "NOVAID：面向 IT 运维仪表盘组件生成的自然语言可观测性可视化助手",
+      "sourceUrl": "https://arxiv.org/abs/2601.11531",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "doi:10.1016/j.eneco.2024.107838",
+      "titleOriginal": "The impact of renewable energy policies on the energy transition -– An empirical analysis of Chinese cities",
+      "titleZh": "可再生能源政策对能源转型的影响——基于中国城市的实证分析",
+      "sourceUrl": "https://doi.org/10.1016/j.eneco.2024.107838",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "doi:10.1016/j.jclepro.2024.143684",
+      "titleOriginal": "Unveiling energy transition strategy: A deep dive into China's ambitious renewable energy policy and its impact on carbon emission dynamics",
+      "titleZh": "解读能源转型战略：深入分析中国雄心勃勃的可再生能源政策及其对碳排放动态的影响",
+      "sourceUrl": "https://doi.org/10.1016/j.jclepro.2024.143684",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "doi:10.1038/s42256-021-00312-3",
+      "titleOriginal": "Machine learning pipeline for battery state-of-health estimation",
+      "titleZh": "电池健康状态估计的机器学习流水线",
+      "sourceUrl": "https://doi.org/10.1038/s42256-021-00312-3",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "doi:10.1016/j.apenergy.2021.116983",
+      "titleOriginal": "Forecasting day-ahead electricity prices: A review of state-of-the-art algorithms, best practices and an open-access benchmark",
+      "titleZh": "日前电价预测：前沿算法、最佳实践与开放获取基准综述",
+      "sourceUrl": "https://doi.org/10.1016/j.apenergy.2021.116983",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "doi:10.1016/j.apenergy.2021.116731",
+      "titleOriginal": "Trends in tools and approaches for modelling the energy transition",
+      "titleZh": "能源转型建模的工具与方法趋势",
+      "sourceUrl": "https://doi.org/10.1016/j.apenergy.2021.116731",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "doi:10.1016/j.joule.2020.11.002",
+      "titleOriginal": "Leveraging Open-Source Tools for Collaborative Macro-energy System Modeling Efforts",
+      "titleZh": "利用开源工具开展宏观能源系统协同建模",
+      "sourceUrl": "https://doi.org/10.1016/j.joule.2020.11.002",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "doi:10.1007/s41019-025-00335-5",
+      "titleOriginal": "Retrieval-Augmented Generation for AI-Generated Content: A Survey",
+      "titleZh": "面向 AI 生成内容的检索增强生成：综述",
+      "sourceUrl": "https://doi.org/10.1007/s41019-025-00335-5",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "arxiv:2606.20401",
+      "titleOriginal": "PowerAgentBench-Dyn: A Benchmark for Agentic AI in Power System Dynamic Studies",
+      "titleZh": "PowerAgentBench-Dyn：电力系统动态研究中智能体 AI 的基准",
+      "sourceUrl": "https://arxiv.org/abs/2606.20401",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "arxiv:2512.20789",
+      "titleOriginal": "X-GridAgent: An LLM-Powered Agentic AI System for Assisting Power Grid Analysis",
+      "titleZh": "X-GridAgent：辅助电网分析的大模型驱动智能体 AI 系统",
+      "sourceUrl": "https://arxiv.org/abs/2512.20789",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "arxiv:2605.12728",
+      "titleOriginal": "Grid-Orch: An LLM-Powered Orchestrator for Distribution Grid Simulation and Analytics",
+      "titleZh": "Grid-Orch：面向配电网仿真与分析的大模型驱动编排器",
+      "sourceUrl": "https://arxiv.org/abs/2605.12728",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "arxiv:2607.25155",
+      "titleOriginal": "VeraGrid-Agent: Tool-Augmented LLMs for Distribution Optimal Power Flow at the Grid Edge",
+      "titleZh": "VeraGrid-Agent：面向电网边缘配电最优潮流的工具增强大模型",
+      "sourceUrl": "https://arxiv.org/abs/2607.25155",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "arxiv:2610.35160",
+      "titleOriginal": "AutoEnergyDesign: An LLM-Driven Agent for Automatic Energy System Design Optimization",
+      "titleZh": "AutoEnergyDesign：面向能源系统设计自动优化的大模型驱动智能体",
+      "sourceUrl": "https://arxiv.org/abs/2610.35160",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "arxiv:2606.08630",
+      "titleOriginal": "Tyan-WP: A Wind Power Foundation Model for Ultra-Short-Term Probabilistic Forecasting",
+      "titleZh": "Tyan-WP：面向超短期概率预测的风电基础模型",
+      "sourceUrl": "https://arxiv.org/abs/2606.08630",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "arxiv:2509.25268",
+      "titleOriginal": "A Weather Foundation Model for the Power Grid",
+      "titleZh": "面向电网的天气基础模型",
+      "sourceUrl": "https://arxiv.org/abs/2509.25268",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "arxiv:2602.15961",
+      "titleOriginal": "R$^2$Energy: A Large-Scale Benchmark for Robust Renewable Energy Forecasting under Diverse and Extreme Conditions",
+      "titleZh": "R²Energy：面向多样与极端条件下稳健可再生能源预测的大规模基准",
+      "sourceUrl": "https://arxiv.org/abs/2602.15961",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "arxiv:2610.28200",
+      "titleOriginal": "Parameter-Efficient Adaptation of Time Series Foundation Models for Electrical Load Forecasting",
+      "titleZh": "时间序列基础模型在电力负荷预测中的参数高效适配",
+      "sourceUrl": "https://arxiv.org/abs/2610.28200",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "arxiv:2604.04145",
+      "titleOriginal": "Solar-VLM: Multimodal Vision-Language Models for Augmented Solar Power Forecasting",
+      "titleZh": "Solar-VLM：用于增强光伏发电预测的多模态视觉语言模型",
+      "sourceUrl": "https://arxiv.org/abs/2604.04145",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "arxiv:2603.14845",
+      "titleOriginal": "Integrating Weather Foundation Model and Satellite to Enable Fine-Grained Solar Irradiance Forecasting",
+      "titleZh": "融合天气基础模型与卫星数据实现精细化太阳辐照度预测",
+      "sourceUrl": "https://arxiv.org/abs/2603.14845",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "arxiv:2607.08079",
+      "titleOriginal": "PARA-PV: Physics-Aware Retrieval-Augmented PV Prediction Based on Frozen Foundation Model and Distribution Shift Correction",
+      "titleZh": "PARA-PV：基于冻结基础模型与分布偏移校正的物理感知检索增强光伏预测",
+      "sourceUrl": "https://arxiv.org/abs/2607.08079",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "arxiv:2412.06112",
+      "titleOriginal": "PowerMamba: A Deep State Space Model and Comprehensive Benchmark for Time Series Prediction in Electric Power Systems",
+      "titleZh": "PowerMamba：面向电力系统时间序列预测的深度状态空间模型与综合基准",
+      "sourceUrl": "https://arxiv.org/abs/2412.06112",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "arxiv:2508.04875",
+      "titleOriginal": "PriceFM: Foundation Model for Probabilistic Electricity Price Forecasting",
+      "titleZh": "PriceFM：面向概率性电价预测的基础模型",
+      "sourceUrl": "https://arxiv.org/abs/2508.04875",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "arxiv:2604.23276",
+      "titleOriginal": "Lightweight and Production-Ready PDF Visual Element Parsing",
+      "titleZh": "轻量且可用于生产的 PDF 视觉元素解析",
+      "sourceUrl": "https://arxiv.org/abs/2604.23276",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "arxiv:2606.15396",
+      "titleOriginal": "CHILLGuard: Towards Fine-Grained Chinese LLM Safety Guardrail with Scalable Data Construction and Model-aware Preference Alignment",
+      "titleZh": "CHILLGuard：基于可扩展数据构建与模型感知偏好对齐的细粒度中文大模型安全护栏",
+      "sourceUrl": "https://arxiv.org/abs/2606.15396",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "doi:10.1038/s44172-026-00709-1",
+      "titleOriginal": "Operating smart grids by customizing large model agents",
+      "titleZh": "通过定制大模型智能体运行智能电网",
+      "sourceUrl": "https://doi.org/10.1038/s44172-026-00709-1",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "doi:10.1016/j.segan.2026.102207",
+      "titleOriginal": "A review of multimodal large language models for smart grids management and control",
+      "titleZh": "面向智能电网管理与控制的多模态大语言模型综述",
+      "sourceUrl": "https://doi.org/10.1016/j.segan.2026.102207",
+      "reviewStatus": "待审核"
+    },
+    {
+      "key": "arxiv:2508.05702",
+      "titleOriginal": "Grid-Agent: An LLM-Powered Multi-Agent System for Power Grid Control",
+      "titleZh": "Grid-Agent：面向电网控制的大模型驱动多智能体系统",
+      "sourceUrl": "https://arxiv.org/abs/2508.05702",
+      "reviewStatus": "待审核"
+    }
+  ]
+}

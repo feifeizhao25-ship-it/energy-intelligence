@@ -5,6 +5,7 @@ import { OfflineIndicator } from '@/components/network/OfflineIndicator';
 import { StationProvider } from '@/contexts/StationContext';
 import { MilestoneModal } from '@/components/ui/MilestoneModal';
 import { AccessibilityPanel } from '@/components/accessibility/AccessibilityPanel';
+import { ShellErrorBoundary } from '@/components/ui/ShellErrorBoundary';
 
 export default function DashboardLayout({
     children,
@@ -23,7 +24,7 @@ export default function DashboardLayout({
                 {/* Responsive: no margin on mobile (< lg), sidebar margin on desktop */}
                 <main className="lg:ml-64 min-h-screen transition-all duration-300">
                     <div className="p-4 lg:p-8 pt-16 lg:pt-8">
-                        {children}
+                        <ShellErrorBoundary>{children}</ShellErrorBoundary>
                     </div>
                 </main>
             </div>

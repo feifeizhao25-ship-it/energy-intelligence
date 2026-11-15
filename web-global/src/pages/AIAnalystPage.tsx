@@ -2,25 +2,134 @@
 /**
  * EnergyIQ — AI Analyst Page
  *
- * Chat with the AI analyst via POST /api/v1/ai/chat. If the service is
- * unreachable the failure is stated in the thread — no canned answers are
- * ever presented as AI output.
+ * Chat with the AI analyst via POST /api/v1/ai/chat-json (JSON body plus the
+ * stored login token). The streaming /api/v1/ai/chat route is a different
+ * contract and is not used here. If the service is unreachable the failure is
+ * stated in the thread — no canned answers are ever presented as AI output.
  *
  * All copy in English. Uses CSS Variables for theming.
  */
 
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { Send, Sparkles } from 'lucide-react';
+import { AnalystMic, AnalystSpeaker } from '../components/voice/AnalystVoice';
 import { Button, Card, cn } from '@energy-intelligence/ui-web';
 import GlobalShell from '../components/GlobalShell';
 import EmptyState from '../components/EmptyState';
-import { API_BASE, fetchJson } from '../lib/config';
+import {
+  AnalystReply,
+  AnalystSource,
+  clipboardAnswer,
+  dateLines,
+  downloadAnalystAnswer,
+  isUnpublishedRecord,
+  postAnalystChat,
+} from '../lib/ai/analystChat';
 import { trackEvent } from '../lib/analytics';
 
 interface Message {
   role: 'user' | 'assistant' | 'system';
   text: string;
+  reply?: AnalystReply;
 }
+
+function reviewNote(source: AnalystSource): string | null {
+  if (source.evidence_status === 'auto_extracted') {
+    return 'Machine extract, not a human-reviewed publication.';
+  }
+  if (source.evidence_status === 'legacy_unreviewed') {
+    return 'Review status is not recorded as a human review.';
+  }
+  if (isUnpublishedRecord(source)) {
+    return 'Not published: pending review.';
+  }
+  return null;
+}
+
+const AnswerSources: React.FC<{ reply: AnalystReply }> = ({ reply }) => {
+  const [copied, setCopied] = React.useState(false);
+  const [downloadError, setDownloadError] = React.useState('');
+
+  async function copyAll() {
+    try {
+      await navigator.clipboard.writeText(clipboardAnswer(reply.text, reply.sources));
+      setCopied(true);
+    } catch {
+      setCopied(false);
+    }
+  }
+
+  async function download(format: 'pdf' | 'docx') {
+    if (!reply.answerId) return;
+    setDownloadError('');
+    try {
+      const blob = await downloadAnalystAnswer(reply.answerId, format);
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = `answer-${reply.answerId}.${format}`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      setDownloadError(error instanceof Error ? error.message : 'Download failed');
+    }
+  }
+
+  return (
+    <div className="mt-3 space-y-2 border-t border-[var(--border-default)] pt-2" data-testid="answer-sources">
+      {reply.standIn && (
+        <p className="text-[12px] text-[var(--color-warning)]">
+          Model provider is not connected. This text is the library record or the no-source reply, not a signed model answer.
+        </p>
+      )}
+      {reply.synthetic && (
+        <p className="text-[12px] font-semibold text-[var(--color-danger)]">
+          SYNTHETIC TEST DATA. Not a real NEA, IRS, or government publication.
+        </p>
+      )}
+      {reply.sources.length > 0 && (
+        <ul className="space-y-2">
+          {reply.sources.map((source, index) => (
+            <li key={`${source.title}-${index}`} className="text-[12px] leading-relaxed break-words">
+              <span className="font-medium text-[var(--text-primary)]">[{index + 1}] {source.title}</span>
+              {source.publisher && <span className="block text-[var(--text-secondary)]">{source.publisher}</span>}
+              {source.issuer && source.issuer !== source.publisher && <span className="block">Issuing body: {source.issuer}</span>}
+              {dateLines(source).map((line) => <span key={line} className="block">{line}</span>)}
+              {source.url && (
+                <a className="block break-all text-[var(--color-brand-600)]" href={source.url}>
+                  {source.url}
+                </a>
+              )}
+              {source.locator && <span className="block">Locator: {source.locator}</span>}
+              {source.excerpt && <span className="block whitespace-pre-wrap">Excerpt: {source.excerpt}</span>}
+              {source.freshness_status && <span className="block">Freshness: {source.freshness_status}</span>}
+              {reviewNote(source) && <span className="block">{reviewNote(source)}</span>}
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className="flex flex-wrap gap-2">
+        <button type="button" className="rounded border border-[var(--border-default)] px-2 py-1 text-[12px]" onClick={() => void copyAll()}>
+          {copied ? 'Copied with sources' : 'Copy answer and sources'}
+        </button>
+        {reply.downloads.pdf && reply.answerId && (
+          <button type="button" className="rounded border border-[var(--border-default)] px-2 py-1 text-[12px]" onClick={() => void download('pdf')}>
+            Download PDF
+          </button>
+        )}
+        {reply.answerId && (
+          <button type="button" className="rounded border border-[var(--border-default)] px-2 py-1 text-[12px]" onClick={() => void download('docx')}>
+            Download Word
+          </button>
+        )}
+        {!reply.downloads.docx && (
+          <span className="text-[12px] text-[var(--text-tertiary)]">Word export is not included in this plan.</span>
+        )}
+      </div>
+      {downloadError && <p className="text-[12px] text-[var(--color-danger)]" data-testid="download-error">{downloadError}</p>}
+    </div>
+  );
+};
 
 const SUGGESTIONS = [
   'How does the domestic content bonus affect my ITC rate?',
@@ -28,27 +137,10 @@ const SUGGESTIONS = [
   'What should I watch in the interconnection study phase?',
 ];
 
-function extractReply(payload: unknown): string | null {
-  if (!payload || typeof payload !== 'object') return null;
-  const body = payload as Record<string, unknown>;
-  if (typeof body.code === 'number' && body.code !== 0) return null;
-  const sources: unknown[] = [body, body.data];
-  for (const source of sources) {
-    if (source && typeof source === 'object') {
-      const record = source as Record<string, unknown>;
-      for (const key of ['reply', 'message', 'answer', 'content', 'text']) {
-        if (typeof record[key] === 'string' && record[key]) return record[key] as string;
-      }
-    }
-  }
-  return null;
-}
-
 const AIAnalystPage: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
-  const conversationId = useRef(`conv-${Date.now().toString(36)}`);
 
   const send = async (text: string) => {
     const question = text.trim();
@@ -57,16 +149,9 @@ const AIAnalystPage: React.FC = () => {
     setSending(true);
     setMessages((prev) => [...prev, { role: 'user', text: question }]);
     try {
-      const payload = await fetchJson(`${API_BASE}/api/v1/ai/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ conversation_id: conversationId.current, message: question }),
-      });
-      const reply = extractReply(payload);
-      if (!reply) throw new Error('unrecognized payload');
-      setMessages((prev) => [...prev, { role: 'assistant', text: reply }]);
+      const reply = await postAnalystChat(question);
+      setMessages((prev) => [...prev, { role: 'assistant', text: reply.text, reply }]);
       void trackEvent('analysis_completed', {
-        conversation_id: conversationId.current,
         question_chars: question.length,
       });
     } catch {
@@ -115,7 +200,9 @@ const AIAnalystPage: React.FC = () => {
                       'bg-[var(--color-danger-bg)] text-[var(--color-danger)]',
                   )}
                 >
-                  {message.text}
+                  <p className="whitespace-pre-wrap break-words">{message.text}</p>
+                  {message.reply && <AnswerSources reply={message.reply} />}
+                  {message.role !== 'user' && <AnalystSpeaker id={`bubble-${i}`} text={message.text} />}
                 </div>
               ))
             )}
@@ -150,6 +237,17 @@ const AIAnalystPage: React.FC = () => {
               placeholder="Ask the AI analyst…"
               aria-label="Ask the AI analyst"
               className="h-10 flex-1 rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--bg-primary)] px-3 text-[14px] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-[var(--color-brand-500)]"
+            />
+            <AnalystMic
+              disabled={sending}
+              onTranscript={(text) => {
+                const heard = text.trim();
+                if (!heard) return;
+                setInput((prev) => {
+                  const base = prev.trim();
+                  return base ? `${base} ${heard}` : heard;
+                });
+              }}
             />
             <Button
               variant="primary"

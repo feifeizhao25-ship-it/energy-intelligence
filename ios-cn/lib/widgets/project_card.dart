@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 import '../models/project.dart';
 
 class ProjectCard extends StatelessWidget {
@@ -6,6 +7,26 @@ class ProjectCard extends StatelessWidget {
   final VoidCallback? onTap;
 
   const ProjectCard({super.key, required this.project, this.onTap});
+
+  /// 省份优先，没有省份时显示用户填的地点；两者都没有就只显示容量，不留空的「 · 」。
+  String _placeAndCapacity() {
+    final place = project.province.trim().isNotEmpty ? project.province.trim() : project.address.trim();
+    final mw = '${project.capacityMw.toStringAsFixed(0)}MW';
+    return place.isEmpty ? mw : '$place · $mw';
+  }
+
+  String _photo() {
+    switch (project.projectType) {
+      case 'solar_pv':
+        return 'assets/images/en_res_solar.webp';
+      case 'wind':
+        return 'assets/images/en_res_wind.webp';
+      case 'storage':
+        return 'assets/images/en_res_storage.webp';
+      default:
+        return 'assets/images/en_res_compare.webp';
+    }
+  }
 
   IconData _getTypeIcon() {
     switch (project.projectType) {
@@ -68,6 +89,12 @@ class ProjectCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Image.asset(_photo(), height: 96, width: double.infinity, fit: BoxFit.cover,
+                    errorBuilder: (_, _, _) => SizedBox(height: 96)),
+              ),
+              SizedBox(height: 12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -102,7 +129,7 @@ class ProjectCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF0F172A),
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -113,13 +140,13 @@ class ProjectCard extends StatelessWidget {
                   Icon(
                     Icons.location_on_outlined,
                     size: 14,
-                    color: Color(0xFF64748B),
+                    color: context.eiMuted,
                   ),
                   SizedBox(width: 4),
                   Expanded(
                     child: Text(
-                      '${project.province} · ${project.capacityMw.toStringAsFixed(0)}MW',
-                      style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                      _placeAndCapacity(),
+                      style: TextStyle(fontSize: 12, color: context.eiMuted),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -134,14 +161,14 @@ class ProjectCard extends StatelessWidget {
                     return Container(
                       padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: Color(0xFFF1F5F9),
+                        color: Theme.of(context).colorScheme.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
                         tag,
                         style: TextStyle(
                           fontSize: 10,
-                          color: Color(0xFF475569),
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
                     );

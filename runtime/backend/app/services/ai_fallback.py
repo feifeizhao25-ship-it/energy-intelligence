@@ -10,11 +10,19 @@ class AIFallbackService:
     """AI服务降级策略"""
     
     def __init__(self):
-        self.providers = {
-            'primary': ['dashscope'],  # 国内主用
-            'fallback': ['openai'],    # 备用
-            'local': ['ollama']        # 本地模型
-        }
+        if (settings.APP_EDITION or "").lower() == "cn":
+            # 国内编排只走深度求索、百炼和智谱。OpenAI 不在这条链上。
+            self.providers = {
+                'primary': ['deepseek'],
+                'fallback': ['dashscope', 'glm'],
+                'local': [],
+            }
+        else:
+            self.providers = {
+                'primary': ['dashscope'],
+                'fallback': ['openai'],
+                'local': ['ollama'],
+            }
     
     async def chat_with_fallback(
         self,
@@ -58,6 +66,10 @@ class AIFallbackService:
     
     async def _call_provider(self, provider: str, messages: List[dict]) -> str:
         """调用特定提供商"""
+        if (settings.APP_EDITION or "").lower() == "cn" and provider in {"openai", "anthropic", "openrouter", "ollama"}:
+            raise RuntimeError("overseas provider disabled in cn edition")
+        if provider in {"deepseek", "dashscope", "glm"} and (settings.APP_EDITION or "").lower() == "cn":
+            return await self._call_domestic(provider, messages)
         if provider == 'dashscope':
             from app.services.ai.dashscope import DashScopeService
             service = DashScopeService()
@@ -75,6 +87,31 @@ class AIFallbackService:
         
         else:
             raise ValueError(f"Unknown provider: {provider}")
+
+    async def _call_domestic(self, provider: str, messages: List[dict]) -> str:
+        """国内兼容 OpenAI 协议的三家。没有密钥或端点落在境外主机时直接失败，不改道。"""
+        from urllib.parse import urlparse
+        from openai import AsyncOpenAI
+
+        spec = {
+            "deepseek": (settings.DEEPSEEK_API_KEY, settings.DEEPSEEK_BASE_URL, settings.DEEPSEEK_MODEL),
+            "dashscope": (settings.DASHSCOPE_API_KEY, settings.DASHSCOPE_BASE_URL, settings.DASHSCOPE_MODEL),
+            "glm": (settings.GLM_API_KEY, settings.GLM_BASE_URL, settings.GLM_MODEL),
+        }
+        key, base, model = spec[provider]
+        host = (urlparse(base).hostname or "").lower()
+        blocked = ("api.openai.com", "openrouter.ai", "api.anthropic.com", "api.moonshot.ai", "sentry.io")
+        if host in blocked or host.endswith(".openai.com"):
+            raise RuntimeError("overseas host blocked")
+        if not key:
+            raise RuntimeError(f"{provider} api key missing")
+        client = AsyncOpenAI(api_key=key, base_url=base)
+        response = await client.chat.completions.create(
+            model=model,
+            messages=messages,
+            temperature=0.2,
+        )
+        return response.choices[0].message.content or ""
     
     def _get_static_fallback_response(self, messages: List[dict]) -> str:
         """获取静态降级回复"""

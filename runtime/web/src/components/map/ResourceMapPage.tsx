@@ -16,14 +16,46 @@ import {
     Trash2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { MAP_SEARCH_MISS, resolveMapSearch } from '@/lib/map/map-search';
 
+
+/** 图例与工具：收起时是「展开」，展开后改成「收起」，并带上 aria-expanded。 */
+export function LegendToolsSummary({ open }: { open: boolean }) {
+    const label = open ? '收起' : '展开';
+    return (
+        <summary
+            className="map-side-tools-summary flex cursor-pointer list-none items-center justify-between rounded-2xl border border-white/10 bg-slate-950 px-3 py-2 text-xs font-bold text-white"
+            aria-expanded={open}
+            aria-label={label}
+        >
+            图例与工具
+            <span className="text-[10px] font-medium text-slate-300">{label}</span>
+        </summary>
+    );
+}
 
 export default function ResourceMapPage() {
     const [selectedLayer, setSelectedLayer] = useState<string>('solar'); // solar, wind, hybrid
+    const [legendOpen, setLegendOpen] = useState(false);
     const [selectedLocation, setSelectedLocation] = useState<any>(null);
     const [compareMode, setCompareMode] = useState(false);
     const [compareList, setCompareList] = useState<any[]>([]);
     const [mapStyle, setMapStyle] = useState('dark');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchError, setSearchError] = useState<string | null>(null);
+    const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | undefined>();
+
+    const handleSearch = async (event?: React.FormEvent) => {
+        event?.preventDefault();
+        const result = await resolveMapSearch(searchQuery);
+        if ('error' in result) {
+            setSearchError(result.error || MAP_SEARCH_MISS);
+            return;
+        }
+        setSearchError(null);
+        setMapCenter({ lat: result.lat, lng: result.lng });
+        setSelectedLocation({ lat: result.lat, lng: result.lng, name: result.name });
+    };
 
     const handleSelectLocation = (loc: any) => {
         if (compareMode) {
@@ -36,21 +68,24 @@ export default function ResourceMapPage() {
     };
 
     return (
-        <div className="flex flex-col h-[calc(100vh-48px)] bg-slate-950 text-white relative overflow-hidden">
+        <div className="relative flex h-[calc(100dvh-48px-env(safe-area-inset-bottom))] flex-col overflow-hidden bg-slate-950 text-white">
             {/* Minimal High-Tech Search & Layer Controls */}
-            <div className="absolute top-8 left-8 right-8 z-20 pointer-events-none flex justify-between items-start">
-                <div className="space-y-4 pointer-events-auto">
-                    <div className="group flex items-center gap-3 bg-slate-900/40 backdrop-blur-2xl border border-white/5 p-2 pr-4 rounded-[32px] shadow-2xl transition-all hover:bg-slate-900/60 w-80">
-                        <div className="bg-green-500 p-3 rounded-2xl shadow-lg shadow-green-500/20">
-                            <Search className="w-5 h-5 text-white" />
-                        </div>
+            <div className="pointer-events-none absolute inset-x-3 top-2 z-20 flex flex-col gap-2 sm:inset-x-8 sm:top-8 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+                <div className="pointer-events-auto min-w-0 space-y-2 sm:space-y-4">
+                    <form onSubmit={handleSearch} className="group flex w-full max-w-full items-center gap-2 rounded-2xl border border-white/10 bg-slate-950 p-1.5 pr-3 shadow-2xl sm:w-80 sm:gap-3 sm:rounded-[32px] sm:p-2 sm:pr-4">
+                        <button type="submit" className="rounded-xl bg-emerald-800 p-2.5 sm:rounded-2xl sm:p-3" aria-label="搜索地点">
+                            <Search className="h-5 w-5 text-white" />
+                        </button>
                         <input
                             type="text"
                             id="map-search-input"
+                            value={searchQuery}
+                            onChange={(event) => setSearchQuery(event.target.value)}
                             placeholder="搜索地点或经纬度..."
-                            className="bg-transparent border-none focus:ring-0 text-sm font-bold text-white placeholder-slate-500 w-full outline-none pointer-events-auto"
+                            className="bg-transparent border-none focus:ring-0 text-sm font-bold text-white placeholder-slate-300 w-full outline-none pointer-events-auto"
                         />
-                    </div>
+                    </form>
+                    {searchError && <p role="alert" className="max-w-xs rounded-2xl bg-slate-950 px-4 py-2 text-sm text-white">{searchError}</p>}
 
                     <div className="flex gap-2">
                         {['solar', 'wind'].map((l) => (
@@ -58,10 +93,10 @@ export default function ResourceMapPage() {
                                 key={l}
                                 onClick={() => setSelectedLayer(l)}
                                 className={cn(
-                                    "px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all",
+                                    "rounded-2xl px-3 py-2 text-[10px] font-black uppercase tracking-widest transition-all sm:px-6 sm:py-3",
                                     selectedLayer === l
                                         ? "bg-white text-slate-900 shadow-xl"
-                                        : "bg-slate-900/40 backdrop-blur-xl border border-white/5 text-slate-400 hover:text-white"
+                                        : "bg-slate-950 border border-white/10 text-slate-200 hover:text-white"
                                 )}
                             >
                                 {l === 'solar' ? '光伏 GHI' : '风电 100M'}
@@ -70,30 +105,35 @@ export default function ResourceMapPage() {
                     </div>
                 </div>
 
-                <div className="flex flex-col items-end gap-4 pointer-events-auto text-white">
-                    <div className="bg-slate-900/40 backdrop-blur-2xl border border-white/5 p-1.5 rounded-2xl shadow-2xl flex gap-1">
+                <details
+                    className="map-side-tools pointer-events-auto w-full min-w-0 text-white sm:w-56"
+                    onToggle={(event) => setLegendOpen(event.currentTarget.open)}
+                >
+                    <LegendToolsSummary open={legendOpen} />
+                    <div className="map-side-tools-body mt-2 flex w-full min-w-0 flex-col gap-3 sm:mt-0 sm:items-end sm:gap-4">
+                    <div className="flex gap-1 rounded-2xl border border-white/10 bg-slate-950 p-1.5 shadow-2xl">
                         <button
                             onClick={() => setCompareMode(!compareMode)}
                             className={cn(
                                 "p-3 rounded-xl transition-all",
-                                compareMode ? "bg-green-500 text-white shadow-lg" : "text-slate-400 hover:bg-white/5"
+                                compareMode ? "bg-emerald-800 text-white shadow-lg" : "text-slate-200 hover:bg-white/5"
                             )}
                             title="多点资源对比"
                         >
                             <ArrowRightLeft className="w-5 h-5" />
                         </button>
-                        <button className="p-3 rounded-xl text-slate-400 hover:bg-white/5" title="历史 34 年序列查询">
+                        <button className="p-3 rounded-xl text-slate-200 hover:bg-white/5" title="历史 34 年序列查询">
                             <History className="w-5 h-5" />
                         </button>
-                        <button className="p-3 rounded-xl text-slate-400 hover:bg-white/5" title="导出评估报告">
+                        <button className="p-3 rounded-xl text-slate-200 hover:bg-white/5" title="导出评估报告">
                             <Download className="w-5 h-5" />
                         </button>
                     </div>
 
                     {/* Legend */}
-                    <div className="bg-slate-900/40 backdrop-blur-2xl border border-white/5 p-5 rounded-3xl shadow-2xl w-56 space-y-3">
-                        <div className="flex items-center justify-between">
-                            <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                    <div className="w-full max-w-full space-y-3 rounded-3xl border border-white/10 bg-slate-950 p-4 shadow-2xl sm:p-5">
+                        <div className="flex items-center justify-between gap-2">
+                            <h4 className="whitespace-normal break-words text-[10px] font-black uppercase tracking-widest text-slate-200">
                                 {selectedLayer === 'solar' ? '辐照分级' : '风速分级'}
                             </h4>
                             <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
@@ -105,12 +145,13 @@ export default function ResourceMapPage() {
                                         "w-8 h-1.5 rounded-full",
                                         v === 1 ? "bg-red-500" : v === 2 ? "bg-orange-500" : v === 3 ? "bg-yellow-400" : "bg-blue-400"
                                     )}></div>
-                                    <span className="text-[10px] font-bold text-slate-300">Level {v}</span>
+                                    <span className="text-[10px] font-bold text-slate-300">第 {v} 级</span>
                                 </div>
                             ))}
                         </div>
                     </div>
-                </div>
+                    </div>
+                </details>
             </div>
 
             {/* Compare Sidebar / Drawer */}
@@ -140,7 +181,7 @@ export default function ResourceMapPage() {
                                         <span className="text-sm font-black text-slate-900">{idx === 0 ? '1650' : idx === 1 ? '1420' : '1580'}</span>
                                     </div>
                                     <div className="bg-slate-50 p-3 rounded-2xl">
-                                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block">IRR</span>
+                                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block">内部收益率（IRR）·示例</span>
                                         <span className="text-sm font-black text-green-600">14.2%</span>
                                     </div>
                                 </div>
@@ -167,10 +208,10 @@ export default function ResourceMapPage() {
             )}
 
             {!compareMode && !selectedLocation && (
-                <div className="absolute inset-0 z-10 flex items-end justify-center pointer-events-none pb-20">
-                    <div className="bg-slate-900/80 backdrop-blur-xl border border-white/10 px-6 py-3 rounded-full flex items-center gap-3 animate-bounce shadow-2xl">
-                        <MapIcon className="w-4 h-4 text-green-400" />
-                        <span className="text-xs font-black uppercase tracking-widest text-white">请在地图上点击任意位置，或在上方搜索地址</span>
+                <div className="pointer-events-none fixed inset-x-3 z-30 flex justify-center bottom-[calc(9rem+env(safe-area-inset-bottom))] sm:bottom-[calc(5.75rem+env(safe-area-inset-bottom))] lg:absolute lg:inset-x-0 lg:bottom-8 lg:z-10">
+                    <div className="flex max-w-full items-center gap-3 rounded-3xl border border-white/10 bg-slate-900/80 px-4 py-3 shadow-2xl backdrop-blur-xl sm:rounded-full sm:px-6">
+                        <MapIcon className="h-4 w-4 shrink-0 text-green-400" />
+                        <span className="text-center text-xs font-black uppercase tracking-widest text-white">请在地图上点击任意位置，或在上方搜索地址</span>
                     </div>
                 </div>
             )}
@@ -179,6 +220,7 @@ export default function ResourceMapPage() {
             <ResourceMap
                 layer={selectedLayer}
                 mapStyle={mapStyle}
+                focus={mapCenter}
                 onSelectLocation={handleSelectLocation}
             />
 

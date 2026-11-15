@@ -359,7 +359,7 @@ export default function DashboardPage() {
                             </div>
                             <div>
                                 <div className="font-bold">AI能源助手</div>
-                                <div className="text-xs text-white/70">解答所有新能源问题</div>
+                                <div className="text-xs text-white/70">按已收录的公开资料说明技术与政策问题，并注明假设与来源，仅供参考</div>
                             </div>
                         </div>
                         <ArrowRight className="w-5 h-5 text-white/70" />

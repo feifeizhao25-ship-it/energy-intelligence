@@ -21,7 +21,7 @@ def _unavailable(skill_id: str, adapter: str) -> dict[str, Any]:
         "adapter": adapter,
         "result": None,
         "message": (
-            f"The {adapter} is not configured. "
+            f"未配置。The {adapter} is not configured. "
             "No synthetic result was generated."
         ),
     }
@@ -111,7 +111,7 @@ def _fail_closed(skill_id: str, dependency: str) -> dict:
         "error_code": "DEPENDENCY_NOT_CONFIGURED",
         "result": None,
         "message": (
-            f"The {dependency} dependency is not configured. "
+            f"未配置。The {dependency} dependency is not configured. "
             "No synthetic result was generated."
         ),
     }

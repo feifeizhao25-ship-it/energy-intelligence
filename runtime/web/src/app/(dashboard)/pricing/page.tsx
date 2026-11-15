@@ -62,7 +62,7 @@ export default function PricingPage() {
       <div className="mx-auto max-w-4xl">
         <div className="mx-auto inline-flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700"><Crown className="h-4 w-4" />会员方案与权益</div>
         <h1 className="mt-6 text-4xl font-black sm:text-6xl">选择与项目阶段匹配的能力</h1>
-        <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-slate-600">价格、额度和导出权益直接来自统一会员配置；最终金额、续费与退款以下单确认页为准。</p>
+        <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-slate-600">价格、额度和导出权益直接来自统一会员配置；最终金额、续费与退款以下单确认页为准。权益服务未连接时，展示本页已核对的档位说明。</p>
       </div>
     </header>
 
@@ -79,13 +79,13 @@ export default function PricingPage() {
               : `/checkout?plan=${plan}&billing=yearly`;
           const features = tier.features_zh;
           return <article key={plan} className={`relative flex flex-col rounded-3xl border bg-white p-7 ${recommended ? 'border-emerald-500 shadow-xl shadow-emerald-100' : 'border-slate-200'}`}>
-            {recommended && <span className="absolute -top-3 left-6 rounded-full bg-emerald-600 px-3 py-1 text-xs font-bold text-white">常用方案</span>}
+            {recommended && <span className="absolute -top-3 left-6 rounded-full bg-emerald-800 px-3 py-1 text-xs font-bold text-white">常用方案</span>}
             <h2 className="text-2xl font-black">{tier.name}</h2>
             <p className="mt-2 min-h-12 text-sm leading-6 text-slate-500">{tier.description}</p>
             <p className="mt-5 text-3xl font-black">{domesticPrice(tier)}</p>
             <p className="mt-1 text-sm text-slate-500">年付制（月付已停用）</p>
             <ul className="mt-6 flex-1 space-y-3">{features.map(feature => <li key={feature} className="flex gap-2 text-sm leading-6 text-slate-700"><Check className="mt-1 h-4 w-4 shrink-0 text-emerald-600" />{feature}</li>)}</ul>
-            <Link href={href} className={`mt-7 rounded-xl px-4 py-3 text-center text-sm font-bold ${recommended ? 'bg-emerald-600 text-white hover:bg-emerald-500' : 'bg-slate-900 text-white hover:bg-slate-800'}`}>{plan === Plan.FREE ? ('免费开始') : (plan === Plan.TEAM || plan === Plan.ENTERPRISE ? ('联系销售') : '选择方案')}</Link>
+            <Link href={href} className={`mt-7 rounded-xl px-4 py-3 text-center text-sm font-bold ${recommended ? 'bg-emerald-800 text-white hover:bg-emerald-700' : 'bg-slate-900 text-white hover:bg-slate-800'}`}>{plan === Plan.FREE ? ('免费开始') : (plan === Plan.TEAM || plan === Plan.ENTERPRISE ? ('联系销售') : '选择方案')}</Link>
           </article>;
         })}
       </div>

@@ -90,11 +90,9 @@ export default function ProjectDetailPage(props: ProjectDetailProps) {
                         value: Number(item.generationActual),
                     })));
                     setAlerts(p.alerts || []);
-                } else {
-                    console.error('Project not found API error');
                 }
-            } catch (e) {
-                console.error('Failed to fetch project details', e);
+            } catch {
+                setProject(null);
             } finally {
                 setLoading(false);
             }
@@ -223,10 +221,9 @@ export default function ProjectDetailPage(props: ProjectDetailProps) {
                             <div className="p-2 bg-purple-50 rounded-lg">
                                 <Activity className="w-5 h-5 text-purple-500" />
                             </div>
-                            <span className="text-xs font-bold text-slate-400">实时</span>
                         </div>
-                        <div className="text-sm font-bold text-slate-500">及格率 (PR)</div>
-                        <div className="text-2xl font-black text-slate-900">82.4 <span className="text-xs font-bold text-slate-400">%</span></div>
+                        <div className="text-sm font-bold text-slate-500">性能比（PR）</div>
+                        <div className="text-2xl font-black text-slate-900">未接入</div>
                     </div>
                     <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
                         <div className="flex justify-between items-start mb-2">
@@ -430,7 +427,7 @@ export default function ProjectDetailPage(props: ProjectDetailProps) {
                             ) : (
                                 <div className="text-center py-8 text-slate-400">
                                     <BrainCircuit className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                                    <div className="text-sm font-bold">点击&ldquo;开始诊断&rdquo;获取 AI 智能分析报告</div>
+                                    <div className="text-sm font-bold">点击「开始诊断」获取人工智能分析报告</div>
                                     <div className="text-xs mt-1">基于大模型的结构化运维建议</div>
                                 </div>
                             )}

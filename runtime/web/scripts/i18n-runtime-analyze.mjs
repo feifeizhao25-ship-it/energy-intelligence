@@ -2,7 +2,7 @@
 // 不再只靠一份“已知英文短语”黑名单（黑名单漏掉新加的英文）。
 import { isAllowed } from './language-allowlist.mjs';
 
-export const RUNTIME_MAX_NON_ALLOWLISTED = Number(process.env.LANGUAGE_PURITY_MAX ?? 3);
+export const RUNTIME_MAX_NON_ALLOWLISTED = Number(process.env.LANGUAGE_PURITY_MAX ?? 0);
 
 // 保留旧黑名单作为硬失败（出现即失败，不计入阈值）
 export const ENGLISH_MARKERS = ['Energy Intelligence', 'Terms of Service', 'Privacy Policy', 'Request a quote', 'Back to plans', 'Order review', 'Switch to English'];
@@ -13,6 +13,8 @@ export function nonAllowlistedWords(text) {
   for (const w of stripped.match(/(?<![0-9])[A-Za-z][A-Za-z0-9&/.-]*[A-Za-z0-9]|[A-Za-z]/g) ?? []) {
     const clean = w.replace(/[./-]+$/, '');
     if (/^(https?:|www\.)/i.test(clean) || /@/.test(clean)) continue;
+    // 构建时写入的提交号是十六进制，不是英文单词。
+    if (/^[0-9a-f]{7,40}$/i.test(clean)) continue;
     if (!isAllowed(clean)) out.push(clean);
   }
   return out;

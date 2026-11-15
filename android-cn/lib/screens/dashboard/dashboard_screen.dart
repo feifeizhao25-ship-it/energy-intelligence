@@ -1,6 +1,10 @@
+import '../../widgets/photo_widgets.dart';
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../../services/api_service.dart';
+import '../../widgets/personal_home_section.dart';
+import '../../widgets/ei_wide.dart';
+import 'personal_home_binding.dart';
 import '../resource/resource_screen.dart';
 import '../finance/finance_screen.dart';
 import '../ai_assistant/ai_assistant_screen.dart';
@@ -107,54 +111,69 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
         const SizedBox(height: 6),
-        const Text(
+        Text(
           '仅展示当前账号中经过验证的项目数据',
-          style: TextStyle(color: Color(0xFF64748B)),
+          style: TextStyle(color: context.eiMuted),
         ),
         const SizedBox(height: 20),
-        if (_loading)
-          const Center(
-            child: Padding(
-              padding: EdgeInsets.all(48),
-              child: CircularProgressIndicator(),
+        const EnBanner(
+          asset: 'assets/images/en_res_compare.webp',
+          caption: '光伏、风电、储能项目统一管理',
+          chips: [
+            (Icons.wb_sunny_outlined, '光伏'),
+            (Icons.air, '风电'),
+            (Icons.battery_charging_full, '储能'),
+          ],
+        ),
+        const SizedBox(height: 16),
+        EiTwoColumn(
+          left: PersonalHomeSection(margin: EdgeInsets.zero, api: PersonalHomeBinding.api(), strings: PersonalHomeBinding.strings, onOpen: (c) => PersonalHomeBinding.open(context, c)),
+          right: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          if (_loading)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(48),
+                child: CircularProgressIndicator(),
+              ),
+            )
+          else if (_error != null)
+            _Status(
+              icon: Icons.cloud_off_outlined,
+              title: '数据加载失败',
+              detail: _error!,
+              action: _load,
+            )
+          else ...[
+            Row(
+              children: [
+                Expanded(
+                  child: _Metric(
+                    title: '项目数量',
+                    value: _projects.length.toString(),
+                    icon: Icons.folder_outlined,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _Metric(
+                    title: '装机容量',
+                    value: _capacity == 0
+                        ? '未填写'
+                        : '${_capacity.toStringAsFixed(1)} MW',
+                    icon: Icons.bolt,
+                  ),
+                ),
+              ],
             ),
-          )
-        else if (_error != null)
-          _Status(
-            icon: Icons.cloud_off_outlined,
-            title: '数据加载失败',
-            detail: _error!,
-            action: _load,
-          )
-        else ...[
-          Row(
-            children: [
-              Expanded(
-                child: _Metric(
-                  title: '项目数量',
-                  value: _projects.length.toString(),
-                  icon: Icons.folder_outlined,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _Metric(
-                  title: '装机容量',
-                  value: _capacity == 0
-                      ? '未填写'
-                      : '${_capacity.toStringAsFixed(1)} MW',
-                  icon: Icons.bolt,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          const _Status(
-            icon: Icons.monitor_heart_outlined,
-            title: '运行指标待接入',
-            detail: '接入经过授权的 SCADA/IoT 数据后，才会展示发电量、收益、碳减排、健康度和告警。',
-          ),
-        ],
+            const SizedBox(height: 16),
+            const _Status(
+              icon: Icons.monitor_heart_outlined,
+              title: '运行指标待接入',
+              detail: '接入经过授权的监控系统与物联网数据后，才会展示发电量、收益、碳减排、健康度和告警。',
+            ),
+          ],
+          ]),
+        ),
       ],
     ),
   );
@@ -178,7 +197,7 @@ class _Metric extends StatelessWidget {
             value,
             style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
           ),
-          Text(title, style: const TextStyle(color: Color(0xFF64748B))),
+          Text(title, style: TextStyle(color: context.eiMuted)),
         ],
       ),
     ),
@@ -203,7 +222,7 @@ class _Status extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: const Color(0xFF64748B)),
+          Icon(icon, color: context.eiMuted),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -214,7 +233,7 @@ class _Status extends StatelessWidget {
                   style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 4),
-                Text(detail, style: const TextStyle(color: Color(0xFF64748B))),
+                Text(detail, style: TextStyle(color: context.eiMuted)),
                 if (action != null)
                   TextButton(onPressed: action, child: const Text('重试')),
               ],

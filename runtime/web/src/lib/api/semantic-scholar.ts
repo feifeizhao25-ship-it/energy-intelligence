@@ -1,6 +1,6 @@
 import { Paper, SearchOptions, SearchResult } from '@/types';
 
-const BASE_URL = 'https://api.semanticscholar.org/graph/v1';
+const BASE_URL = '';
 const PAPER_FIELDS = 'paperId,title,authors,year,abstract,citationCount,venue,url,openAccessPdf,externalIds,tldr';
 
 function headers(): HeadersInit {
@@ -10,6 +10,8 @@ function headers(): HeadersInit {
 }
 
 async function fetchJson(url: string, retries = 2): Promise<any> {
+  void url; void retries;
+  throw new Error('OVERSEAS_SOURCE_DISABLED');
   let delay = 750;
   for (let attempt = 0; attempt <= retries; attempt += 1) {
     try {

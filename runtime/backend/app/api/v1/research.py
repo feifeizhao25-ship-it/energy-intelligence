@@ -2,12 +2,15 @@
 from datetime import datetime, timezone
 from typing import Optional
 import httpx
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 from app.core.dependencies import get_current_user_id
+from app.services.overseas_gate import overseas_live_allowed
 
 router = APIRouter(prefix='/research')
 
 async def search_arxiv(q: str, max_results: int = 10) -> list:
+    if not overseas_live_allowed():
+        return []
     try:
         url = 'https://export.arxiv.org/api/query'
         params = {
@@ -58,6 +61,17 @@ async def search_papers(
     user_id: str = Depends(get_current_user_id),
 ):
     papers = await search_arxiv(q, max_results=30)
+    source = 'arxiv'
+    notice = None
+    if not papers:
+        from app.api.v1.research_new import search_domestic_corpus
+        domestic = search_domestic_corpus(q)
+        if domestic:
+            papers = domestic
+            source = 'domestic-cache'
+        elif not overseas_live_allowed():
+            source = 'domestic-cache'
+            notice = '未配置国内学术源/未开启境外'
     if year_from:
         papers = [p for p in papers if p['year'] >= year_from]
     if year_to:
@@ -72,7 +86,8 @@ async def search_papers(
         'page': page,
         'page_size': page_size,
         'pages': max(1, (total + page_size - 1) // page_size),
-        'source': 'arxiv',
+        'source': source,
+        **({'notice': notice} if notice else {}),
     }
 
 @router.get('/trends')
@@ -123,9 +138,27 @@ async def get_trends(
 
 @router.get('/market-trends')
 async def market_trends(
+    request: Request,
     region: str = Query('global'),
     user_id: str = Depends(get_current_user_id),
 ):
+    from app.core.market import request_market
+
+    if request_market(request) == "global":
+        # International view: no China-only company list, no China capacity rows, no policy summary that predates
+        # the 2025 US law changes. Keep only the global cost/investment rows already cited to IEA/BNEF.
+        return {
+            'region': region,
+            'solar_capex_2024_usd_per_mw': 850000,
+            'wind_capex_2024_usd_per_mw': 1350000,
+            'battery_prices_usd_per_kwh': 98,
+            'battery_price_trend': 'declining 12% YoY',
+            'global_capacity_gw_2024': 2150,
+            'annual_investment_bn_usd_2024': 712,
+            'source': 'IEA WEO 2024, BNEF',
+            'note': 'Policy support differs by country and changes often; check each government source for the current rules.',
+            'updated_at': datetime.now(timezone.utc).isoformat(),
+        }
     return {
         'region': region,
         'solar_capex_2024_usd_per_mw': 850000,

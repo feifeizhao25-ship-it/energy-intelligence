@@ -6,6 +6,7 @@ FastAPI 应用入口（恢复重建版）。
 （tests/test_redlines.py）的契约为准。
 """
 
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 
@@ -15,7 +16,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.config import settings
-from app.database import close_db, init_db
+from app.database import CommitBeforeResponse, close_db, init_db
 
 logger = logging.getLogger(__name__)
 
@@ -26,11 +27,23 @@ async def lifespan(app: FastAPI):
         await init_db()
     except Exception as exc:  # 数据库未就绪时不阻断进程启动（健康检查仍可用）
         logger.warning("init_db 失败（数据库未就绪？）: %s", exc)
-    yield
     try:
-        await close_db()
-    except Exception:
-        pass
+        yield
+    finally:
+        # Close on the application's event loop, before the server closes it.
+        # A Redis shutdown failure must not prevent database cleanup.
+        from app.redis_client import redis_client
+
+        try:
+            close = getattr(redis_client, "aclose", None) or redis_client.close
+            await close()
+        except Exception:
+            logger.warning("Redis 连接关闭失败", exc_info=True)
+        finally:
+            try:
+                await close_db()
+            except Exception:
+                logger.warning("数据库连接关闭失败", exc_info=True)
 
 
 app = FastAPI(
@@ -39,6 +52,12 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+from app.services.language_guard import LanguageGuardMiddleware  # noqa: E402
+
+app.add_middleware(LanguageGuardMiddleware)
+# Commit before this wrapper forwards http.response.start. FastAPI otherwise
+# commits a yield dependency only after the client has already been sent the body.
+app.add_middleware(CommitBeforeResponse)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
@@ -46,6 +65,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+from starlette.exceptions import HTTPException as StarletteHTTPException  # noqa: E402
 
 
 @app.exception_handler(RequestValidationError)
@@ -58,26 +80,81 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         if ctx:
             err["ctx"] = {k: str(v) for k, v in ctx.items()}
         safe_errors.append(err)
+    from app.core.market import request_market
+    message = "请求参数无效"
+    if request_market(request) == "global":
+        from app.services.market_localization import localize_error_text
+        message = localize_error_text(message, 422)
     return JSONResponse(
         status_code=422,
         content={
             "code": 422,
-            "message": "请求参数无效",
+            "message": message,
             "error": {"details": safe_errors},
         },
     )
 
 
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler_by_market(request: Request, exc: StarletteHTTPException):
+    """International callers (X-App-Market: global) never get Chinese error text: billing, AI and other routes raise
+    Chinese ``detail`` strings, which are answered with the English counterpart (or a generic English line)."""
+    from fastapi.exception_handlers import http_exception_handler
+    from app.core.market import request_market
+    if request_market(request) == "global":
+        from app.services.market_localization import localize_error_detail
+        exc = StarletteHTTPException(
+            status_code=exc.status_code,
+            detail=localize_error_detail(exc.detail, exc.status_code),
+            headers=getattr(exc, "headers", None),
+        )
+    return await http_exception_handler(request, exc)
+
+
+async def _probe_database() -> str:
+    try:
+        from sqlalchemy import text
+        from app.database import engine
+
+        async with engine.connect() as conn:
+            await conn.execute(text("SELECT 1"))
+        return "ok"
+    except Exception:
+        logger.warning("健康检查无法连接数据库", exc_info=True)
+        return "unavailable"
+
+
+async def _probe_redis() -> str:
+    try:
+        from app.redis_client import _MemoryRedis, redis_client
+
+        if isinstance(redis_client, _MemoryRedis):
+            return "memory" if settings.ENVIRONMENT != "production" else "unavailable"
+        pong = await asyncio.wait_for(redis_client.ping(), timeout=1)
+        if pong in (True, "PONG", b"PONG"):
+            return "ok"
+        return "unavailable"
+    except Exception:
+        logger.warning("健康检查无法连接 Redis", exc_info=True)
+        return "unavailable"
+
+
 @app.get("/health")
 async def health():
-    """健康检查。设置 SKILLS_MIN_COUNT 时，已加载技能数不足则返回 503（部署自检/回滚用）。"""
+    """健康检查。生产环境必须同时连上数据库和 Redis；技能数量不足时也返回 503。"""
     import os
 
     body = {
         "status": "ok",
         "version": app.version,
         "environment": getattr(settings, "ENVIRONMENT", "development"),
+        "database": await _probe_database(),
+        "redis": await _probe_redis(),
     }
+    if body["database"] != "ok" or (settings.ENVIRONMENT == "production" and body["redis"] != "ok"):
+        body["status"] = "degraded"
+        body["detail"] = "数据库或 Redis 不可用"
+        return JSONResponse(status_code=503, content=body)
     min_skills = os.getenv("SKILLS_MIN_COUNT", "").strip()
     if min_skills.isdigit():
         from app.skills.registry import get_registry
@@ -93,14 +170,21 @@ async def health():
 
 # ── 路由挂载（仅挂载仓库中真实存在的模块）──────────────────────────────────────
 from app.api.v1 import ai_assistant as v1_ai  # noqa: E402
+from app.api.v1.domestic_product import router as domestic_product_router  # noqa: E402
+from app.api.v1.wecom_callback import router as wecom_callback_router  # noqa: E402
 from app.api.v1 import billing as v1_billing  # noqa: E402
 from app.api.v1 import auth as v1_auth  # noqa: E402
 from app.api.v1 import finance as v1_finance  # noqa: E402
+from app.api.v1 import asset_rating as v1_asset_rating  # noqa: E402
 from app.api.v1 import operations as v1_operations  # noqa: E402
+from app.api.v1 import alerts as v1_alerts  # noqa: E402
 from app.api.v1 import research as v1_research  # noqa: E402
 from app.api.v1 import resource as v1_resource  # noqa: E402
 from app.api.v1 import users as v1_users  # noqa: E402
 from app.api.v1 import privacy as v1_privacy  # noqa: E402
+from app.api.v1 import status as v1_status  # noqa: E402
+from app.api.v1 import workbench as v1_workbench  # noqa: E402
+from app.api.v1 import library as v1_library  # noqa: E402
 from app.routers import misc, personalization, projects  # noqa: E402
 from app.routers import entitlements as entitlements_router  # noqa: E402
 from app.routers import skills_executor  # noqa: E402
@@ -110,10 +194,17 @@ app.include_router(v1_users.router, prefix="/api/v1", tags=["users"])
 app.include_router(v1_resource.router, prefix="/api/v1", tags=["resource"])
 app.include_router(v1_research.router, prefix="/api/v1", tags=["research"])
 app.include_router(v1_ai.router, prefix="/api/v1", tags=["ai"])
+app.include_router(domestic_product_router, prefix="/api/v1", tags=["domestic"])
+app.include_router(wecom_callback_router, prefix="/api/v1", tags=["wecom"])
 app.include_router(v1_privacy.router, prefix="/api/v1", tags=["privacy"])
+app.include_router(v1_status.router, prefix="/api/v1", tags=["status"])
+app.include_router(v1_workbench.router, prefix="/api/v1", tags=["workbench"])
+app.include_router(v1_library.router, prefix="/api/v1", tags=["library"])
 app.include_router(v1_billing.router, prefix="/api/v1", tags=["billing"])
 app.include_router(v1_finance.router, prefix="/api/v1", tags=["finance"])
+app.include_router(v1_asset_rating.router, prefix="/api/v1", tags=["assets"])
 app.include_router(v1_operations.router, prefix="/api/v1", tags=["operations"])
+app.include_router(v1_alerts.router, prefix="/api/v1", tags=["alerts"])
 app.include_router(projects.router, prefix="/api/v1", tags=["projects"])
 app.include_router(misc.router, prefix="/api/v1", tags=["misc"])
 app.include_router(skills_executor.router, prefix="/api/v1")

@@ -5,7 +5,7 @@ RAG source registry — JSON 驱动的语料来源注册表。
 发布机构、版权说明与核验周期（verify_interval_days），并带文献溯源字段：
 作者（authors）、版本（version）、发布日期（published_at）、页码/段落（locator）：
 
-- 政策（policy）90 天
+- 政策（policy）30 天（至少每月复核一次；复测 B12：山东 871 号细则曾长期没收录）
 - 标准（standard）365 天
 - 价格数据（price）7 天
 
@@ -40,9 +40,27 @@ REQUIRED_FIELDS = (
     "source_org",
     "license_note",
     "verify_interval_days",
+    "doc_number",
+    "issuer",
+    "publish_date",
+    "effective_date",
+    "status",
+    "jurisdiction",
+    "source_tier",
+    "license",
+    "snapshot_sha256",
 )
 
-VALID_TYPES = ("policy", "standard", "price")
+# 这些字段必须出现，但允许 JSON null（表示原文未写截止日期，或尚未被替代）。
+NULLABLE_FIELDS = ("expiry_date", "superseded_by")
+
+# 政策类来源最长核验周期（天）。政策更新快，必须至少每月复核一次。
+POLICY_MAX_VERIFY_INTERVAL_DAYS = 30
+
+VALID_TYPES = ("policy", "standard", "price", "statistic")
+VALID_STATUS = ("现行", "征求意见", "废止", "被替代", "待核实")
+VALID_JURISDICTION = ("全国", "省", "市", "海外")
+VALID_TIERS = ("一手官方", "协会", "媒体", "学术")
 
 # 接近截止的阈值：已用掉超过 80% 核验周期即建议复核
 REVIEW_THRESHOLD_RATIO = 0.8
@@ -63,8 +81,11 @@ def freshness_status(
         verified = date.fromisoformat(str(last_verified_at))
     except ValueError:
         return "stale"
+    # 核验日在今天之后视为无效记录，不当作“刚核验过”。
+    if verified > today:
+        return "stale"
     interval = max(int(verify_interval_days), 1)
-    age = max((today - verified).days, 0)
+    age = (today - verified).days
     if age > interval:
         return "stale"
     if age > interval * REVIEW_THRESHOLD_RATIO:
@@ -126,6 +147,26 @@ class SourceRegistry:
             for field_name in REQUIRED_FIELDS:
                 if field_name not in source or source[field_name] in (None, ""):
                     problems.append("%s: missing required field %s" % (sid, field_name))
+            for field_name in NULLABLE_FIELDS:
+                if field_name not in source:
+                    problems.append("%s: missing required field %s" % (sid, field_name))
+            if source.get("status") not in VALID_STATUS:
+                problems.append("%s: status must be one of %s" % (sid, VALID_STATUS))
+            if source.get("jurisdiction") not in VALID_JURISDICTION:
+                problems.append("%s: jurisdiction must be one of %s" % (sid, VALID_JURISDICTION))
+            if source.get("source_tier") not in VALID_TIERS:
+                problems.append("%s: source_tier must be one of %s" % (sid, VALID_TIERS))
+            digest = str(source.get("snapshot_sha256") or "")
+            if len(digest) != 64 or any(ch not in "0123456789abcdef" for ch in digest):
+                problems.append("%s: snapshot_sha256 must be 64 hex chars" % sid)
+            if source.get("type") == "policy" and int(source.get("verify_interval_days") or 0) > POLICY_MAX_VERIFY_INTERVAL_DAYS:
+                problems.append("%s: policy sources must be reviewed at least every %d days" % (sid, POLICY_MAX_VERIFY_INTERVAL_DAYS))
+            if source.get("superseded_by") and source["superseded_by"] not in self._by_id:
+                problems.append("%s: superseded_by points to unknown source %s" % (sid, source["superseded_by"]))
+            if source.get("superseded_by") and source.get("status") not in ("被替代", "废止"):
+                problems.append("%s: has superseded_by but status is %s" % (sid, source.get("status")))
+            if source.get("status") == "被替代" and not source.get("superseded_by"):
+                problems.append("%s: superseded_by required when status is 被替代" % sid)
             if sid in seen:
                 problems.append("%s: duplicate source_id" % sid)
             seen.add(sid)

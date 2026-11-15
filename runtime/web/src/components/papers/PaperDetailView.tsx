@@ -29,6 +29,8 @@ import {
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { AigcLabel } from '@/components/ui/AigcLabel';
+import { BubbleSpeaker } from '@/components/ai/BubbleSpeaker';
+import { VoiceInput } from '@/components/input/VoiceInput';
 
 interface PaperDetailViewProps {
     paper: Paper;
@@ -237,7 +239,13 @@ export default function PaperDetailView({ paper, pdfStatus }: PaperDetailViewPro
                                 <span className="text-[10px] font-black text-green-600 bg-green-50 px-2.5 py-1 rounded-lg uppercase tracking-widest mb-4 inline-block">
                                     {paper.venue || 'ACADEMIC ARTICLE'}
                                 </span>
-                                <h1 className="text-2xl font-black text-slate-900 leading-tight mb-6">{paper.title}</h1>
+                                <h1 className="text-2xl font-black text-slate-900 leading-tight mb-2">{paper.titleZh || paper.title}</h1>
+                                {paper.titleZh && paper.titleZh !== paper.title ? (
+                                    <p className="mb-6 text-sm text-slate-500">
+                                        <span className="mr-2 rounded bg-amber-50 px-2 py-0.5 text-xs text-amber-800">译名{paper.titleZhStatus ? `（${paper.titleZhStatus}）` : ''}</span>
+                                        原文标题：{paper.title}
+                                    </p>
+                                ) : <div className="mb-4" />}
 
                                 <div className="space-y-6">
                                     <div className="space-y-2">
@@ -292,7 +300,7 @@ export default function PaperDetailView({ paper, pdfStatus }: PaperDetailViewPro
                                     </button>
                                 )}
                                 <div className="text-center">
-                                    <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">来源: Semantic Scholar</span>
+                                    <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">来源：文献索引</span>
                                 </div>
                             </div>
                         </div>
@@ -388,7 +396,7 @@ export default function PaperDetailView({ paper, pdfStatus }: PaperDetailViewPro
                                     <div className="relative">
                                         <div className="absolute -left-6 top-0 bottom-0 w-px bg-slate-100"></div>
                                         <p className="text-slate-600 font-medium leading-relaxed italic pr-10">
-                                            &quot;{(paper.abstract && !paper.abstract.includes('由于 Semantic Scholar API')) ? paper.abstract : "摘要请查看论文 PDF 全文。"}&quot;
+                                            &quot;{(paper.abstract && !paper.abstract.includes('由于文献索引接口')) ? paper.abstract : "摘要请查看论文 PDF 全文。"}&quot;
                                         </p>
                                     </div>
 
@@ -578,26 +586,49 @@ export default function PaperDetailView({ paper, pdfStatus }: PaperDetailViewPro
                                                                     <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-bounce [animation-delay:0.4s]"></div>
                                                                 </div>
                                                             ) : "")}
-                                                            {msg.role !== 'user' && msg.content && <AigcLabel compact />}
+                                                            {msg.role !== 'user' && msg.content && (
+                                                                <div className="mt-3 flex items-center justify-between gap-2">
+                                                                    <AigcLabel compact />
+                                                                    <BubbleSpeaker
+                                                                        id={`paper-${i}`}
+                                                                        text={msg.content}
+                                                                        className="border-slate-100 bg-slate-50 text-slate-500 hover:border-green-500"
+                                                                    />
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 ))}
                                             </div>
 
                                             <div className="pt-6 border-t border-slate-100">
-                                                <div className="relative group">
+                                                <div className="flex items-center gap-2">
                                                     <input
                                                         type="text"
                                                         value={chatInput}
                                                         onChange={e => setChatInput(e.target.value)}
                                                         onKeyDown={e => e.key === 'Enter' && handleSendMessage()}
                                                         placeholder="针对论文核心发现或实验背景提问..."
-                                                        className="w-full pl-6 pr-16 py-5 rounded-[24px] bg-white border border-slate-100 focus:ring-4 focus:ring-green-500/10 focus:border-green-500/50 shadow-sm transition-all text-sm font-bold"
+                                                        className="min-w-0 flex-1 px-5 py-4 rounded-[24px] bg-white border border-slate-100 focus:ring-4 focus:ring-green-500/10 focus:border-green-500/50 shadow-sm transition-all text-sm font-bold"
+                                                    />
+                                                    <VoiceInput
+                                                        appearance="toolbar"
+                                                        disabled={isSending}
+                                                        className="text-slate-500 hover:bg-slate-100 hover:text-green-600"
+                                                        onTranscript={(text) => {
+                                                            const heard = text.trim();
+                                                            if (!heard) return;
+                                                            setChatInput((prev) => {
+                                                                const base = prev.trim();
+                                                                return base ? `${base} ${heard}` : heard;
+                                                            });
+                                                        }}
                                                     />
                                                     <button
                                                         onClick={handleSendMessage}
                                                         disabled={isSending || !chatInput.trim()}
-                                                        className="absolute right-3 top-3 bottom-3 w-12 rounded-2xl bg-slate-900 text-white flex items-center justify-center hover:bg-green-600 disabled:opacity-20 transition-all shadow-lg"
+                                                        aria-label="发送"
+                                                        className="h-12 w-12 shrink-0 rounded-2xl bg-slate-900 text-white flex items-center justify-center hover:bg-green-600 disabled:opacity-20 transition-all shadow-lg"
                                                     >
                                                         <Send className="w-5 h-5" />
                                                     </button>

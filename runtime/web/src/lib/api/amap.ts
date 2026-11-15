@@ -1,3 +1,5 @@
+import { gcj02LocationToWgs84, wgs84ToGcj02Location } from '@/lib/map/gcj02';
+
 const AMAP_API = 'https://restapi.amap.com/v3';
 
 /**
@@ -11,13 +13,24 @@ const AMAP_API = 'https://restapi.amap.com/v3';
  * 这个文件只在服务端（route handler）里跑，没有任何理由读公开变量，
  * 所以把兜底去掉：**配错了就明确报"未配置"，而不是悄悄用一个会泄露的 Key。**
  *
- * 浏览器里的地图组件要用的是另一种 Key（高德 JS API Key，按域名白名单
- * 限制），那条路可以继续用 `NEXT_PUBLIC_AMAP_JS_KEY` 之类的名字，
- * 但**不要和这一个共用同一个 Key**。
+ * 页面上的地图不加载 JS SDK，也不读取 `NEXT_PUBLIC_AMAP_*`。
+ * 安全密钥不能放到浏览器。若以后要加载 JS SDK，只能把
+ * `_AMapSecurityConfig.serviceHost` 指到服务端代理。
  */
+export class AmapError extends Error {
+  readonly code: 'not_found' | 'upstream' | 'key_missing';
+  readonly httpStatus: number;
+  constructor(message: string, code: 'not_found' | 'upstream' | 'key_missing', httpStatus: number) {
+    super(message);
+    this.name = 'AmapError';
+    this.code = code;
+    this.httpStatus = httpStatus;
+  }
+}
+
 function apiKey(): string {
   const key = process.env.AMAP_WEB_SERVICE_KEY;
-  if (!key) throw new Error('位置服务未配置（缺少 AMAP_WEB_SERVICE_KEY）');
+  if (!key) throw new AmapError('位置服务未配置', 'key_missing', 503);
   return key;
 }
 
@@ -27,20 +40,40 @@ async function request(path: string, parameters: Record<string, string>) {
     signal: AbortSignal.timeout(8000),
     next: { revalidate: 300 },
   });
-  if (!response.ok) throw new Error(`位置服务请求失败（${response.status}）`);
+  if (!response.ok) throw new AmapError('位置服务请求失败', 'upstream', 503);
   const payload = await response.json();
-  if (payload.status !== '1') throw new Error(payload.info || '位置服务返回错误');
+  if (payload.status !== '1') {
+    if (payload.info === 'ENGINE_RESPONSE_DATA_ERROR') throw new AmapError('未找到该地点', 'not_found', 404);
+    throw new AmapError('位置服务返回错误', 'upstream', 503);
+  }
   return payload;
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === 'object' ? value as Record<string, unknown> : null;
+}
+
+/** Amap sends GCJ-02. Callers store WGS84, so location strings are converted on the way out. */
+function toStoredPlace<T>(place: T): T {
+  const record = asRecord(place);
+  if (!record || !('location' in record)) return place;
+  return { ...record, location: gcj02LocationToWgs84(record.location) } as T;
 }
 
 export async function geocodeAddress(address: string) {
   const payload = await request('geocode/geo', { address });
-  return payload.geocodes ?? [];
+  return (payload.geocodes ?? []).map(toStoredPlace);
 }
 
 export async function reverseGeocode(lat: number, lng: number) {
-  const payload = await request('geocode/regeo', { location: `${lng},${lat}`, extensions: 'all' });
-  return payload.regeocode ?? null;
+  const payload = await request('geocode/regeo', {
+    location: wgs84ToGcj02Location(lat, lng),
+    extensions: 'all',
+  });
+  const regeocode = asRecord(payload.regeocode);
+  if (!regeocode) return null;
+  const pois = Array.isArray(regeocode.pois) ? regeocode.pois.map(toStoredPlace) : regeocode.pois;
+  return { ...regeocode, pois };
 }
 
 export async function searchNearbyPOIs(
@@ -50,14 +83,14 @@ export async function searchNearbyPOIs(
   radius = 5000,
 ) {
   const payload = await request('place/around', {
-    location: `${lng},${lat}`,
+    location: wgs84ToGcj02Location(lat, lng),
     keywords: keywords.join('|'),
     radius: String(Math.min(Math.max(radius, 0), 50000)),
   });
-  return payload.pois ?? [];
+  return (payload.pois ?? []).map(toStoredPlace);
 }
 
 export async function getLocationSuggestions(query: string) {
   const payload = await request('assistant/inputtips', { keywords: query });
-  return payload.tips ?? [];
+  return (payload.tips ?? []).map(toStoredPlace);
 }

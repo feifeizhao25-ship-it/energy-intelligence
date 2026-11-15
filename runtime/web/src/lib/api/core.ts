@@ -4,6 +4,9 @@ const BASE_URL = 'https://api.core.ac.uk/v3';
 const API_KEY = process.env.CORE_API_KEY || '';
 
 export async function searchCore(query: string, limit: number = 10): Promise<Paper[]> {
+    if ((process.env.NEXT_PUBLIC_APP_EDITION || process.env.APP_EDITION || '').toLowerCase() === 'cn') {
+        throw new Error('OVERSEAS_SOURCE_DISABLED');
+    }
     if (!API_KEY) {
         console.warn('CORE API Key missing');
         return [];

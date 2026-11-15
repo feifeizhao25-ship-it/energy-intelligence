@@ -22,7 +22,7 @@ export default function SunPathChart({ lat, lng }: SunPathChartProps) {
 
     return (
         <div className="h-64 w-full bg-gray-800/50 rounded-lg p-2">
-            <h4 className="text-xs font-semibold text-gray-400 mb-2">太阳轨迹 (方位角 vs 高度角)</h4>
+            <h4 className="text-xs font-semibold text-gray-400 mb-2">太阳轨迹（方位角与高度角）</h4>
             <ResponsiveContainer width="100%" height="100%">
                 <ScatterChart margin={{ top: 10, right: 10, bottom: 10, left: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#374151" />

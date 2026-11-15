@@ -44,17 +44,17 @@ export const economicsRules: Rule[] = [
         }),
     },
 
-    // 规则：IRR 很高（>15%）→ 提示优质项目
+    // IRR 高于 15% 时只记下读数和对照阈值，不给奖牌或投资结论。
     {
         key: 'high_irr',
-        name: 'IRR 优秀',
+        name: 'IRR 高于 15%',
         priority: 50,
         when: (ctx) => ctx.signals.irr !== undefined && ctx.signals.irr > 0.15,
         then: (ctx) => ({
             actions: [{
                 id: 'high_irr_tip',
-                title: '🎯 优质投资机会',
-                description: `IRR 达到 ${((ctx.signals.irr || 0) * 100).toFixed(1)}%，远超银行理财`,
+                title: 'IRR 读数高于 15%',
+                description: `按当前输入，IRR 为 ${((ctx.signals.irr || 0) * 100).toFixed(1)}%，对照阈值是 15%。`,
                 priority: 1,
                 category: 'CALCULATION',
                 cta: {
@@ -63,10 +63,10 @@ export const economicsRules: Rule[] = [
                 },
                 rationale: {
                     type: 'DATA',
-                    summary: '投资回报率表现优异',
+                    summary: '内部收益率相对 15% 阈值的位置',
                     evidence: [
                         `内部收益率 ${((ctx.signals.irr || 0) * 100).toFixed(1)}%`,
-                        '是银行理财收益的 5-8 倍',
+                        '对照阈值 15%',
                     ],
                 },
             }],

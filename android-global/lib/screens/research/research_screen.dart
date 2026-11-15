@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_theme.dart';
 
 class ResearchScreen extends StatefulWidget {
   const ResearchScreen({super.key});
@@ -48,8 +49,8 @@ class _ResearchScreenState extends State<ResearchScreen> {
       appBar: AppBar(
         title: const Text('Research Papers'),
         elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF1E293B),
+        backgroundColor: context.eiCard,
+        foregroundColor: context.eiBody,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -76,9 +77,9 @@ class _ResearchScreenState extends State<ResearchScreen> {
                 padding: const EdgeInsets.only(bottom: 16),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: context.eiCard,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                    border: Border.all(color: context.eiLine),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.04),
@@ -92,18 +93,18 @@ class _ResearchScreenState extends State<ResearchScreen> {
                     children: [
                       Text(
                         paper['title'] as String,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF1E293B),
+                          color: context.eiBody,
                         ),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         '${paper['authors']} • ${paper['journal']} (${paper['year']})',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
-                          color: Color(0xFF64748B),
+                          color: context.eiMuted,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -112,14 +113,14 @@ class _ResearchScreenState extends State<ResearchScreen> {
                           Icon(
                             Icons.trending_up,
                             size: 14,
-                            color: const Color(0xFF94A3B8),
+                            color: context.eiMuted,
                           ),
                           const SizedBox(width: 4),
                           Text(
                             '${paper['citations']} citations',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 11,
-                              color: Color(0xFF64748B),
+                              color: context.eiMuted,
                             ),
                           ),
                         ],

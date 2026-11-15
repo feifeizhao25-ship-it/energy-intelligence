@@ -21,4 +21,7 @@ class PaymentOrder(Base):
     status = Column(String(20), nullable=False, default="pending", index=True)
     created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
     paid_at = Column(DateTime(timezone=True), nullable=True)
+    # 这笔付款实际覆盖的服务周期。退款测算只认这里。
+    period_start = Column(DateTime(timezone=True), nullable=True)
+    period_end = Column(DateTime(timezone=True), nullable=True)
 

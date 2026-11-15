@@ -16,37 +16,12 @@ export async function getPVWattsData(
   tilt = 30,
   azimuth = 180,
 ): Promise<PvWattsResult> {
-  const key = process.env.NREL_API_KEY;
-  if (!key) throw new Error('NREL_API_KEY 未配置');
-
-  const query = new URLSearchParams({
-    api_key: key,
-    lat: String(lat),
-    lon: String(lng),
-    system_capacity: String(capacityKw),
-    azimuth: String(azimuth),
-    tilt: String(tilt),
-    array_type: '1',
-    module_type: '1',
-    losses: '14',
-  });
-  const response = await fetch(`https://developer.nrel.gov/api/pvwatts/v8.json?${query}`, {
-    signal: AbortSignal.timeout(10000),
-    next: { revalidate: 86400 },
-  });
-  if (!response.ok) throw new Error(`NREL 请求失败（${response.status}）`);
-  const payload = await response.json();
-  if (payload.errors?.length) throw new Error(payload.errors.join('; '));
-  const outputs = payload.outputs;
-  return {
-    annualEnergyKwh: Number(outputs.ac_annual ?? 0),
-    monthlyEnergyKwh: (outputs.ac_monthly ?? []).map(Number),
-    capacityFactorPercent: Number(outputs.capacity_factor ?? 0),
-    stationDistanceKm: payload.station_info?.distance
-      ? Number(payload.station_info.distance) / 1000
-      : undefined,
-    source: 'NREL PVWatts v8',
-  };
+  void lat;
+  void lng;
+  void capacityKw;
+  void tilt;
+  void azimuth;
+  throw new Error('OVERSEAS_SOURCE_DISABLED');
 }
 
 /**
@@ -86,6 +61,6 @@ export async function calculateSolarOutput(
     performanceRatio: Number(model.energy.pr.toFixed(4)),
     coordinates: { lat, lng },
     source: '统一光伏模型（NASA POWER 上一完整年辐照与气温）',
-    warning: '估算结果仅供初筛，投资决策前应使用现场或权威长期数据复核。',
+    warning: '估算结果仅供初筛，正式核算前应使用现场或已授权的长期数据复核。',
   };
 }

@@ -3,7 +3,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { useSession } from 'next-auth/react';
-import { Sparkles, Send, Paperclip, Mic, Settings2, Copy, RefreshCw, Loader2, FileText, Image as ImageIcon, AlertCircle } from 'lucide-react';
+import { Sparkles, Send, Paperclip, Settings2, Copy, RefreshCw, Loader2, FileText, Image as ImageIcon, AlertCircle } from 'lucide-react';
+import { VoiceInput } from '@/components/input/VoiceInput';
+import { BubbleSpeaker } from '@/components/input/BubbleSpeaker';
 
 interface Message {
     id: string;
@@ -291,6 +293,11 @@ export default function AssistantPage() {
                                 {/* Action Buttons */}
                                 {msg.role === 'assistant' && !msg.isStreaming && (
                                     <div className="flex gap-2">
+                                        <BubbleSpeaker
+                                            id={msg.id}
+                                            text={msg.content}
+                                            className="border-border-dark bg-surface-dark text-text-secondary hover:border-primary/50"
+                                        />
                                         <button
                                             onClick={() => handleCopy(msg.content)}
                                             className="p-2 rounded-lg bg-surface-dark border border-border-dark hover:border-primary/50 transition-colors"
@@ -342,9 +349,18 @@ export default function AssistantPage() {
                                     <button className="p-2 rounded-lg text-text-secondary hover:bg-background-dark hover:text-primary transition-colors">
                                         <Paperclip className="w-5 h-5" />
                                     </button>
-                                    <button className="p-2 rounded-lg text-text-secondary hover:bg-background-dark hover:text-primary transition-colors">
-                                        <Mic className="w-5 h-5" />
-                                    </button>
+                                    <VoiceInput
+                                        appearance="toolbar"
+                                        disabled={isLoading}
+                                        onTranscript={(text) => {
+                                            const heard = text.trim();
+                                            if (!heard) return;
+                                            setInputValue((prev) => {
+                                                const base = prev.trim();
+                                                return base ? `${base} ${heard}` : heard;
+                                            });
+                                        }}
+                                    />
                                 </div>
                                 <button
                                     onClick={() => handleSend()}

@@ -43,7 +43,9 @@ def _is_production() -> bool:
 
 
 async def _fetch_mean_speed_nasa(latitude: float, longitude: float) -> float:
-    """从 NASA POWER 获取多年平均 50m 风速，返回 m/s。"""
+    """从 NASA POWER 获取多年平均 50m 风速，返回 m/s。国内构建不走这条请求路径。"""
+    if os.getenv("APP_EDITION", "").lower() == "cn":
+        raise RuntimeError("OVERSEAS_SOURCE_DISABLED")
     import httpx
 
     params = {
@@ -137,7 +139,7 @@ class WindResourceSkill:
                 engine = "nasa_power"
                 data_source = "NASA POWER climatology"
             except Exception as exc:
-                if _is_production():
+                if _is_production() or os.getenv("APP_EDITION", "").lower() == "cn":
                     raise RuntimeError(
                         "RA-002 外部气象数据不可达，生产环境拒绝返回合成估算结果: "
                         f"{exc}"
@@ -167,3 +169,30 @@ class WindResourceSkill:
                 else "启发式估算结果——非实测数据，仅供开发环境演示"
             )
         return result
+
+
+def _install_contract(cls, formula_ref, valid_range):
+    original = cls.execute
+
+    async def execute(self, params):
+        data = await original(self, params)
+        import sys
+        from pathlib import Path
+        root = str(Path(__file__).resolve().parents[3])
+        if root not in sys.path:
+            sys.path.insert(0, root)
+        from skill_contract import attach
+        return attach(
+            data,
+            skill_id=self.skill_id,
+            formula_ref=formula_ref,
+            inputs=params,
+            assumptions=["口径见引用，不额外承诺"],
+            sources=list(getattr(self, "references", []) or ["见方法卡"]),
+            valid_range=valid_range,
+        )
+
+    cls.execute = execute
+
+
+_install_contract(WindResourceSkill, "RA-002 风速分级", "风速为正")

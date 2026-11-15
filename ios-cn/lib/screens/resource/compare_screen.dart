@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_theme.dart';
 import '../../services/api_service.dart';
 import '../../models/resource_assessment.dart';
 
@@ -130,8 +131,8 @@ class _CompareScreenState extends State<CompareScreen> {
             Container(
               padding: EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Color(0xFFF8FAFC),
-                border: Border.all(color: Color(0xFFE2E8F0)),
+                color: context.eiPage,
+                border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
@@ -141,7 +142,7 @@ class _CompareScreenState extends State<CompareScreen> {
                     '添加站址',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF0F172A),
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                   SizedBox(height: 12),
@@ -220,7 +221,7 @@ class _CompareScreenState extends State<CompareScreen> {
               '待对比站址 (${_sites.length}/10)',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF0F172A),
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
             SizedBox(height: 8),
@@ -229,8 +230,8 @@ class _CompareScreenState extends State<CompareScreen> {
                 margin: EdgeInsets.only(bottom: 8),
                 padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border.all(color: Color(0xFFE2E8F0)),
+                  color: context.eiCard,
+                  border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
@@ -268,7 +269,7 @@ class _CompareScreenState extends State<CompareScreen> {
                               '${e.value['lat']}, ${e.value['lon']}',
                               style: TextStyle(
                                 fontSize: 11,
-                                color: Color(0xFF64748B),
+                                color: context.eiMuted,
                               ),
                             ),
                           ],
@@ -279,7 +280,7 @@ class _CompareScreenState extends State<CompareScreen> {
                       icon: Icon(
                         Icons.close,
                         size: 18,
-                        color: Color(0xFF94A3B8),
+                        color: context.eiMuted,
                       ),
                       onPressed: () => _removeSite(e.key),
                       padding: EdgeInsets.zero,
@@ -339,7 +340,7 @@ class _CompareScreenState extends State<CompareScreen> {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF0F172A),
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
               SizedBox(height: 12),
@@ -354,7 +355,7 @@ class _CompareScreenState extends State<CompareScreen> {
                   decoration: BoxDecoration(
                     color: isTop ? Color(0xFFFFFBEB) : Colors.white,
                     border: Border.all(
-                      color: isTop ? Color(0xFFF59E0B) : Color(0xFFE2E8F0),
+                      color: isTop ? Color(0xFFF59E0B) : Theme.of(context).colorScheme.outlineVariant,
                       width: isTop ? 2 : 1,
                     ),
                     borderRadius: BorderRadius.circular(12),
@@ -406,7 +407,7 @@ class _CompareScreenState extends State<CompareScreen> {
                         children: [
                           Expanded(
                             child: _buildResourceMetric(
-                              'GHI',
+                              '水平面总辐照量',
                               '${r['ghi']} kWh/m²',
                               '太阳资源 ${r['solarClass']}类',
                               _classColor(r['solarClass'] as String),
@@ -415,7 +416,7 @@ class _CompareScreenState extends State<CompareScreen> {
                           SizedBox(width: 12),
                           Expanded(
                             child: _buildResourceMetric(
-                              'WPD',
+                              '风功率密度',
                               '${r['wpd']} W/m²',
                               '风资源 ${r['windClass']}类',
                               _classColor(r['windClass'] as String),
@@ -450,14 +451,14 @@ class _CompareScreenState extends State<CompareScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+          Text(label, style: TextStyle(fontSize: 11, color: context.eiMuted)),
           SizedBox(height: 4),
           Text(
             value,
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 13,
-              color: Color(0xFF0F172A),
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
           SizedBox(height: 2),

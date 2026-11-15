@@ -18,6 +18,8 @@ os.environ.setdefault(
 os.environ.setdefault("APP_ENV", "test")
 os.environ.setdefault("ENVIRONMENT", "test")
 os.environ["ENERGY_TEST_MODE"] = "1"  # 见 app.database：测试使用 NullPool
+# 政策流水线的哈希链日志不写到 /var/lib（测试环境可能是 root）
+os.environ.setdefault("NENGJIAN_POLICY_CHANGELOG", "/tmp/energy_pytest_policy_changelog.jsonl")
 
 import pytest  # noqa: E402
 import pytest_asyncio  # noqa: E402
@@ -29,6 +31,60 @@ from app.main import app  # noqa: E402
 from app.models.database import Base  # noqa: E402
 from app.models.user import User  # noqa: E402
 from app.utils.security import get_password_hash  # noqa: E402
+
+
+@pytest.fixture
+def global_edition(monkeypatch):
+    """把本用例固定在 global 版，不跟随进程里的 APP_EDITION。
+
+    技能模块在执行时读 os.environ；资源/NASA 服务读的是导入时已经构造好的
+    Settings。两处都要钉住，ambient APP_EDITION=cn 与未设置才会得到同一条路径。
+    """
+    monkeypatch.setenv("APP_EDITION", "global")
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "APP_EDITION", "global", raising=False)
+
+
+@pytest.fixture
+def library_clock_inside_review_window(monkeypatch):
+    """Freeze retrieval's wall clock inside the recorded review window.
+
+    policy-cn-136 and policy-us-itc were last verified on 2026-10-15 with a
+    30-day interval. Ranking and citation tests use 2026-11-07, a date already
+    stored on the snapshot, so they do not depend on the wall clock later
+    passing that window. Production still calls date.today().
+    """
+    from datetime import date as date_cls
+
+    frozen = date_cls(2026, 11, 7)
+
+    class FrozenDate(date_cls):
+        @classmethod
+        def today(cls):
+            return frozen
+
+    monkeypatch.setattr("app.services.rag_service.date", FrozenDate)
+
+
+@pytest.fixture
+def library_clock_past_review_window(monkeypatch):
+    """Freeze retrieval's wall clock after policy-cn-136's 30-day review window.
+
+    policy-cn-136 and policy-us-itc were last verified on 2026-10-15 with a
+    30-day interval, so 2026-11-15 is the first day outside that window.
+    2026-11-16 sits clearly past it. Production still calls date.today().
+    """
+    from datetime import date as date_cls
+
+    frozen = date_cls(2026, 11, 16)
+
+    class FrozenDate(date_cls):
+        @classmethod
+        def today(cls):
+            return frozen
+
+    monkeypatch.setattr("app.services.rag_service.date", FrozenDate)
 
 
 @pytest.fixture(scope="session", autouse=True)

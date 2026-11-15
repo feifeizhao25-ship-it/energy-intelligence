@@ -8,21 +8,23 @@ export interface ApiResponse<T> {
   error?: { code: string; message: string };
 }
 
-export function getAuthToken(): string | null {
-  // V23: moresource token 探test (兼容 localStorage/sessionStorage/cookie)
+/** Login token written by AuthProvider, or the same keys older sessions used. */
+export function readStoredAuthToken(): string | null {
   if (typeof window === 'undefined') return null;
-  let token: string | null = localStorage.getItem('auth_token') || localStorage.getItem('token')
-       || sessionStorage.getItem('auth_token') || sessionStorage.getItem('token');
-  if (!token) {
-    // from cookie 找
-    const m = document.cookie.match(/(?:auth_token|access_token|token)=([^;]+)/);
-    if (m) token = decodeURIComponent(m[1]);
-  }
-  return token;
+  const stored = localStorage.getItem('auth_token') || localStorage.getItem('token')
+    || sessionStorage.getItem('auth_token') || sessionStorage.getItem('token');
+  if (stored) return stored;
+  const match = document.cookie.match(/(?:auth_token|access_token|token)=([^;]+)/);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+/** Name used by product analytics. Same lookup as readStoredAuthToken. */
+export function getAuthToken(): string | null {
+  return readStoredAuthToken();
 }
 
 export async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
-  const token = getAuthToken();
+  const token = readStoredAuthToken();
   const res = await fetch(`${API_BASE}${endpoint}`, {
     headers: {
       'Content-Type': 'application/json',
@@ -50,14 +52,34 @@ export interface User {
   created_at?: string;
 }
 
+/** The backend returns {code, message, data: {access_token, refresh_token}}. */
+export interface AuthTokens {
+  access_token: string;
+  refresh_token?: string;
+  /** legacy field name, kept so older callers keep compiling */
+  token?: string;
+}
+
+/** Read the access token from a login/register response (wrapper or legacy shape). */
+export function accessTokenFrom(res: { data?: Partial<AuthTokens> } | Partial<AuthTokens>): string {
+  const wrapped = (res as { data?: Partial<AuthTokens> }).data;
+  const token =
+    wrapped?.access_token ??
+    wrapped?.token ??
+    (res as Partial<AuthTokens>).access_token ??
+    (res as Partial<AuthTokens>).token;
+  if (!token) throw new Error('Sign-in failed. Please try again.');
+  return token;
+}
+
 export const authApi = {
   login: (email: string, password: string) =>
-    fetchApi<ApiResponse<{ user: User; token: string }>>('/api/v1/auth/login', {
+    fetchApi<ApiResponse<AuthTokens>>('/api/v1/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     }),
   register: (data: Record<string, unknown> & { data_transfer_consent: true }) =>
-    fetchApi<ApiResponse<{ user: User; token: string }>>('/api/v1/auth/register', {
+    fetchApi<ApiResponse<AuthTokens>>('/api/v1/auth/register', {
       method: 'POST',
       body: JSON.stringify({ ...data, market: 'global' }),
     }),
@@ -92,7 +114,7 @@ export const projectApi = {
     fetchApi<ApiResponse<ProjectListResponse>>(`/api/v1/projects?page=${page}&limit=${limit}`),
   get: (id: string) => fetchApi<ApiResponse<unknown>>(`/api/v1/projects/${id}`),
   create: (data: unknown) =>
-    fetchApi<ApiResponse<unknown>>('/api/projects', { method: 'POST', body: JSON.stringify(data) }),
+    fetchApi<ApiResponse<unknown>>('/api/v1/projects', { method: 'POST', body: JSON.stringify(data) }),
   update: (id: string, data: unknown) =>
     fetchApi<ApiResponse<unknown>>(`/api/v1/projects/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   delete: (id: string) =>
@@ -214,13 +236,14 @@ export const operationsApi = {
 // ── AI ────────────────────────────────────────────────────────────────────────
 
 export const aiApi = {
-  chat: (conversationId: string, message: string) =>
-    fetchApi<ApiResponse<unknown>>('/api/v1/ai/chat', {
+  // JSON + bearer. /api/v1/ai/chat is the streaming query-parameter route.
+  chat: (message: string) =>
+    fetchApi<Record<string, unknown>>('/api/v1/ai/chat-json', {
       method: 'POST',
-      body: JSON.stringify({ conversation_id: conversationId, message }),
+      body: JSON.stringify({ message }),
     }),
   conversations: () => fetchApi<ApiResponse<unknown[]>>('/api/v1/ai/conversations'),
-  skills: () => fetchApi<ApiResponse<unknown[]>>('/api/v1/ai/skills'),
+  skills: () => fetchApi<ApiResponse<unknown[]>>('/api/v1/skills'),
 };
 
 // ── Billing ───────────────────────────────────────────────────────────────────
@@ -368,7 +391,7 @@ export const adminApi = {
 };
 
 export const reportsApi = {
-  list: () => fetchApi<ApiResponse<{ reports: ReportItem[] }>>('/api/reports'),
+  list: () => fetchApi<ApiResponse<{ reports: ReportItem[] }>>('/api/v1/reports'),
   get: (id: string) => fetchApi<ApiResponse<{ report: ReportItem }>>(`/api/v1/reports/${id}`),
   generate: (data: { projectId: string; type: string; format?: string }) =>
     fetchApi<ApiResponse<unknown>>('/api/v1/reports/generate', {
@@ -450,7 +473,7 @@ export const skillsApi = {
     if (params?.page) q.set('page', String(params.page));
     if (params?.page_size) q.set('page_size', String(params.page_size));
     const qs = q.toString();
-    return fetchApi<ApiResponse<{ items: unknown[]; total: number }>>(`/api/v1/ai/skills${qs ? '?' + qs : ''}`);
+    return fetchApi<ApiResponse<{ items: unknown[]; total: number }>>(`/api/v1/skills${qs ? '?' + qs : ''}`);
   },
   //  Sync执line skill
   execute: (skillId: string, params: Record<string, unknown>) =>

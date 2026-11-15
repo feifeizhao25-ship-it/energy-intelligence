@@ -58,7 +58,7 @@ export function createAlipayPagePayUrl(input: {
       out_trade_no: input.orderNo,
       product_code: 'FAST_INSTANT_TRADE_PAY',
       total_amount: input.amount.toFixed(2),
-      subject: `新能源智库-${input.plan}-${input.billingPeriod}`,
+      subject: `新能源智库-${PLAN_DETAILS[input.plan].name}-${input.billingPeriod === 'yearly' ? '年付' : '月付'}`,
     }),
   };
   const signer = createSign('RSA-SHA256');

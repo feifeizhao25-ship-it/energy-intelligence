@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_theme.dart';
 import '../../services/api_service.dart';
 import '../../models/resource_assessment.dart';
 import '../../widgets/site_score_card.dart';
@@ -147,7 +148,7 @@ class _WindResourceScreenState extends State<WindResourceScreen> {
                     'W/m²',
                   ),
                   _buildDataCard(
-                    'Weibull k',
+                    '韦布尔形状参数',
                     _result!.weibullK.toStringAsFixed(2),
                     '-',
                   ),
@@ -200,26 +201,6 @@ class _WindResourceScreenState extends State<WindResourceScreen> {
                 ],
                 barColor: Color(0xFFF59E0B),
               ),
-              SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () {},
-                      icon: Icon(Icons.description_outlined),
-                      label: Text('生成报告'),
-                    ),
-                  ),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () {},
-                      icon: Icon(Icons.bookmark_border),
-                      label: Text('保存'),
-                    ),
-                  ),
-                ],
-              ),
             ],
           ],
         ),
@@ -236,7 +217,7 @@ class _WindResourceScreenState extends State<WindResourceScreen> {
           children: [
             Text(
               label,
-              style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+              style: TextStyle(fontSize: 12, color: context.eiMuted),
             ),
             SizedBox(height: 6),
             Row(
@@ -251,7 +232,7 @@ class _WindResourceScreenState extends State<WindResourceScreen> {
                 SizedBox(width: 4),
                 Text(
                   unit,
-                  style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                  style: TextStyle(fontSize: 11, color: context.eiMuted),
                 ),
               ],
             ),

@@ -32,8 +32,11 @@ export function classifyWindResource(speed100m: number): string {
  */
 export function calculateSolarScore(solar: SolarResource, climate: any): number {
     const ghiScore = Math.min(100, (solar.annual.ghi / 1800) * 100);
-    const tempScore = Math.max(0, 100 - Math.max(0, climate.annual.temperature - 25) * 5); // 25度以上每度扣5分
-    const precipScore = Math.max(0, 100 - (climate.annual.precipitation / 2000) * 50); // 降水太多扣分
+    const tempScore = Math.max(0, 100 - Math.max(0, climate.annual.temperature - 25) * 5);
+    if (typeof climate?.annual?.precipitation !== 'number') {
+        return Math.round(ghiScore * 0.75 + tempScore * 0.25);
+    }
+    const precipScore = Math.max(0, 100 - (climate.annual.precipitation / 2000) * 50);
 
     return Math.round(ghiScore * 0.6 + tempScore * 0.2 + precipScore * 0.2);
 }

@@ -1,7 +1,7 @@
 from typing import Optional
 from pydantic import BaseModel, Field
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,54 +10,298 @@ from app.config import settings
 from app.core.dependencies import get_current_user_id
 from app.core.database import get_db
 from app.services.ai_service import ai_assistant
-from app.core.subscription import QuotaExceeded, assert_ai_quota, consume_ai_quota
+from uuid import uuid4
+
+from app.core.subscription import (
+    QuotaExceeded,
+    answer_export_offer,
+    assert_ai_quota,
+    assert_report_quota,
+    consume_ai_quota,
+    consume_report_quota,
+)
+from app.services.answer_export import render_answer_file, sources_are_synthetic
+from app.services.citation_record import date_lines, excerpt_of, publication_note
 from app.services.evidence_envelope import envelope_from_rag
 from app.services.rag_service import RAGService
-from app.services.bottom_line import enforce_bottom_line
+from app.services.answer_structure import STYLES, structure_answer, style_instruction
+from app.services import grounding
+from app.services.bottom_line import NOTICE_EN, NOTICE_ZH, blocked_input_text, enforce_bottom_line, find_violations
+from app.services.budget_caps import BudgetExceeded, assert_product_budget, charge_product_budget
 from app.models.user import User
+import io
 import json
+import os
+from datetime import date
 
 router = APIRouter(prefix="/ai")
 
-_AI_LIMITATIONS = ["AI 生成内容仅供辅助分析，关键投资与工程决策需人工复核"]
+# Answers the server has already returned. Export reads this record, not a client-supplied source list.
+_ANSWER_EXPORTS: dict = {}
+
+# Retrieval scores are normalised to 0-1. Below this line the "match" is a stray word overlap
+# (an unrelated question scored 0.31, a North Sea wind question scored 0.14 against US tax credits),
+# and attaching such a source to an answer is worse than attaching none. Override with RAG_MIN_RELEVANCE.
+MIN_SOURCE_RELEVANCE = float(os.getenv("RAG_MIN_RELEVANCE", "0.35"))
+
+_AI_LIMITATIONS = ["AI 生成内容仅供辅助核对方法与来源，关键数据需人工复核"]
+_RAG_SERVICE = RAGService()
+
+
+def _today() -> date:
+    return date.today()
+
+
+def _llm_configured() -> bool:
+    return bool(settings.DEEPSEEK_API_KEY or settings.DASHSCOPE_API_KEY or settings.GLM_API_KEY)
 
 
 def _retrieve(query: str, market: str) -> list:
     """先检索、后生成：只保留有词面命中、且未过期的来源；检索失败降级为空。"""
     try:
-        hits = RAGService().search(query, top_k=3, market=market, exclude_stale=True).hits
+        hits = _RAG_SERVICE.search(query, top_k=3, market=market, exclude_stale=True).hits
     except Exception:
         return []
-    return [h for h in hits if h.score > 0]
+    return [h for h in hits if h.score >= MIN_SOURCE_RELEVANCE]
 
 
-def _grounded_prompt(base_prompt: str, hits: list, market: str) -> str:
+def _reverification_sentence(labels: list, market: str, has_other: bool) -> str:
+    """Tell the reader, in the answer language, that a document they named is not available until the library record is re-checked.
+
+    The label is the number or alias from the query. The stale record stays out of the citations.
+    """
+    if not labels:
+        return ""
+    if market == "global":
+        quoted = [f'"{label}"' for label in labels]
+        if len(quoted) == 1:
+            named = quoted[0]
+            sentence = f"The library record for {named} is awaiting re-verification."
+        elif len(quoted) == 2:
+            sentence = f"The library records for {quoted[0]} and {quoted[1]} are awaiting re-verification."
+        else:
+            sentence = "The library records for " + ", ".join(quoted[:-1]) + f" and {quoted[-1]} are awaiting re-verification."
+        if has_other:
+            sentence += " Other retrieved documents are not that document."
+        return sentence
+    named = "、".join(f"「{label}」" for label in labels)
+    sentence = f"{named}的资料库记录正在等待重新核验。"
+    if has_other:
+        sentence += "检索到的其他文件不是该文件。"
+    return sentence
+
+
+def _reverification_note(query: str, market: str, has_other: bool) -> str:
+    if not query:
+        return ""
+    labels = _RAG_SERVICE.named_stale_labels(query, market)
+    return _reverification_sentence(labels, market, has_other)
+
+
+def _lead_with_reverification(text: str, query: str, market: str, has_other: bool) -> str:
+    """Put the named-document notice ahead of any cited document.
+
+    When other documents are in the answer, that sentence is the first thing the reader sees. The
+    wording is unchanged. If the model already wrote the exact sentence later, it is moved to the
+    front once. A reply that cites nothing keeps its own opening line — the no-source status stays
+    on line 1 — and the notice follows it.
+    """
+    note = _reverification_note(query, market, has_other)
+    body = text or ""
+    if not note:
+        return body
+    if not has_other:
+        if note in body:
+            return body
+        return note if not body else body + "\n\n" + note
+    if body.startswith(note):
+        return body
+    if note in body:
+        body = body.replace(note, "", 1).strip()
+    if not body:
+        return note
+    return note + "\n\n" + body
+
+
+def _reverification_prompt(query: str, market: str, has_other: bool) -> str:
+    note = _reverification_note(query, market, has_other)
+    if not note:
+        return ""
+    if market == "global":
+        return (
+            "\n\nThe user named a document that this library has dropped until its record is re-verified. "
+            f"The answer must say: {note} "
+            "Do not present any other document as the named one. Keep each document under its own title. "
+            "Do not cite the excluded record."
+        )
+    return (
+        "\n\n用户点名的文件已超过资料库复核期限，本次不能当作已核验来源引用。"
+        f"回答必须写明：{note}"
+        "不得把检索到的其他文件写成该文件，每份文件保持自己的标题，不要引用被排除的那一条记录。"
+    )
+
+
+_CITE = __import__("re").compile(r"[ \t]?\[S(\d+)\]")
+
+
+def _scrub_citations(answer: str, n_sources: int) -> str:
+    """Drop [S#] markers that point at a source we did not retrieve (the model sometimes invents [S3]).
+
+    A marker the reader cannot open is a false claim of support, so it is removed; markers 1..n stay."""
+    if not answer:
+        return answer
+    return _CITE.sub(lambda m: m.group(0) if 1 <= int(m.group(1)) <= n_sources else "", answer)
+
+
+def _style_for(style: Optional[str], market: str) -> str:
+    return style if style in STYLES else ("pro" if market == "global" else "plain")
+
+
+def _structured(answer: str, hits: list, market: str, style: Optional[str]) -> dict:
+    answer = grounding.mark_expired(answer, _today(), market)
+    sources = _evidence_for(answer, hits, market).get("sources", [])
+    return structure_answer(answer, market, sources, _style_for(style, market), limitations=_AI_LIMITATIONS if market != "global" else list(_AI_LIMITATIONS_EN))
+
+
+def _grounded_prompt(base_prompt: str, hits: list, market: str, style: Optional[str] = None, query: str = "") -> str:
     """把检索到的证据编号注入系统提示，要求模型按 [S1] 形式引用。"""
+    base_prompt = base_prompt + style_instruction(market, _style_for(style, market)) + grounding.key_dates_prompt(hits, _today(), market)
+    note = _reverification_prompt(query, market, has_other=bool(hits))
     if market == "global":
         if not hits:
-            return base_prompt + "\n\nRetrieved sources: none. Say the source library has no matching document; do not cite anything."
+            return base_prompt + "\n\nRetrieved sources: none. Say the source library has no matching document; do not cite anything." + note
         head = "\n\nRetrieved sources (cite as [S1], [S2] after each claim that uses them; do not cite anything else):"
     else:
         if not hits:
-            return base_prompt + "\n\n检索到的资料：无。请说明本库尚未收录相关资料，不得编造引用。"
+            return base_prompt + "\n\n检索到的资料：无。请说明本库尚未收录相关资料，不得编造引用。" + note
         head = "\n\n检索到的资料（使用时在句末以 [S1]、[S2] 标注引用；不得引用列表之外的来源）："
     lines = []
     for i, h in enumerate(hits, 1):
         md = h.metadata or {}
         lines.append(
-            f"[S{i}] {h.title} | {md.get('source_org') or ''} | {md.get('published_at') or md.get('year')} | "
+            f"[S{i}] {h.title} | {md.get('source_org') or ''} | {' '.join(date_lines(md, 'en' if market == 'global' else 'zh')) or md.get('year')} | "
             f"{md.get('source_url') or ''}\n{h.content}"
         )
-    return base_prompt + head + "\n" + "\n".join(lines)
+    return base_prompt + head + "\n" + "\n".join(lines) + note
 
 
-def _evidence_for(answer: str, hits: list) -> dict:
-    """证据封装使用与生成时相同的检索结果（不再事后另行检索）。"""
+def _grounding(hits: list, status: Optional[str] = None) -> dict:
+    return {"status": status or ("sourced" if hits else "no_source"), "source_count": len(hits)}
+
+
+def _no_source_payload(market: str, style: Optional[str], query: str = "") -> dict:
+    """Fixed reply for a policy/tax/legal question with no retrieved source. The model is not called."""
+    message = _lead_with_reverification(grounding.no_source_reply(market), query, market, has_other=False)
+    return {
+        "message": message,
+        "ai_metadata": {"grounding": "no_source", "model_called": False},
+        "evidence": _evidence_for("", [], market),
+        "sources": [],
+        "structured": _structured(message, [], market, style),
+        "grounding": _grounding([], "no_source_refused"),
+    }
+
+
+def _finish_answer(message: str, hits: list, market: str, query: str = "") -> tuple:
+    """Note any past deadline the answer still states. A policy question with no source never reaches here (it gets the
+    fixed no-source reply, status on line 1); general explanations carry ``grounding.status`` for the client to show.
+
+    When the query names a document whose library record was dropped as stale and other documents are cited,
+    that sentence leads the answer. It is not a citation: the excluded record stays out of the source list.
+    A reply that cites nothing keeps its opening line and carries the sentence after it.
+    """
+    today = _today()
+    expired = grounding.date_check(message, today)
+    body = grounding.mark_expired(message, today, market) + grounding.time_note(expired, today, market)
+    body = _lead_with_reverification(body, query, market, has_other=bool(hits))
+    return body + _provenance_footer(message, hits, market, today), expired
+
+
+_ASSUMED = __import__("re").compile(r"假设值|假设为|示例数值|assumed value|hypothetical|for illustration only|illustrative (?:value|number)", __import__("re").I)
+
+
+def _provenance_footer(answer: str, hits: list, market: str, today: date) -> str:
+    """Every answer states, in its own text, where it stands: the sources it cites with publisher and date, or that
+    nothing in the library backs it (UI test I-11: 6 of 10 answers had neither, and some filled the gap with 'assumed'
+    numbers). Built from the retrieved records only, never from the model's words. Retrieved-but-uncited documents are
+    not presented as support: an answer that cites none of them is labelled unverified."""
+    zh = market != "global"
+    lines = []
+    cited = sorted({int(m.group(1)) for m in _CITE.finditer(answer or "") if 1 <= int(m.group(1)) <= len(hits)})
+    if cited:
+        shown = []
+        for i in cited:
+            h = hits[i - 1]
+            md = h.metadata or {}
+            when = md.get("published_at") or md.get("year")
+            if when and str(when) in answer and (h.title or "")[:12] in answer:
+                continue  # the model already printed this source with its date
+            shown.append(h)
+        if shown:
+            lines.append(f"来源（检索于 {today.isoformat()}）：" if zh else f"Sources (retrieved {today.isoformat()}):")
+            for h in shown:
+                i = hits.index(h) + 1
+                md = h.metadata or {}
+                org = md.get("source_org") or md.get("publisher")
+                url = md.get("source_url") or md.get("url")
+                typed_dates = date_lines(md, "zh" if zh else "en")
+                when = " ".join(typed_dates) if typed_dates else ("发布日期未标注" if zh else "date not recorded")
+                bits = [b for b in (str(org) if org else None, when, str(url) if url else None) if b]
+                extra = []
+                if md.get("locator"):
+                    extra.append(f"页码/段落：{md['locator']}" if zh else f"Locator: {md['locator']}")
+                fragment = md.get("excerpt") or excerpt_of(getattr(h, "content", None) or md.get("content"))
+                if fragment:
+                    extra.append(f"摘录：{fragment}" if zh else f"Excerpt: {fragment}")
+                freshness = md.get("freshness_status")
+                if freshness and freshness != "unknown":
+                    extra.append(f"时效：{freshness}" if zh else f"Freshness: {freshness}")
+                note = publication_note(md, "zh" if zh else "en")
+                if note:
+                    extra.append(note)
+                license_note = md.get("license_note") or md.get("license")
+                if license_note:
+                    extra.append(f"许可：{license_note}" if zh else f"License: {license_note}")
+                line = f"[S{i}] {h.title} | " + " | ".join(bits)
+                if extra:
+                    line += " | " + " | ".join(extra)
+                lines.append(line)
+    else:
+        lines.append(
+            f"核验状态：未核验——回答没有引用来源库中的资料，以上是通用说明，不是引用资料的结论（{today.isoformat()}）。"
+            if zh else
+            f"Verification: not verified. The answer cites no document from the source library; it is general explanation, not a sourced finding ({today.isoformat()})."
+        )
+    if _ASSUMED.search(answer):
+        lines.append(
+            "注意：回答中标注“假设值”的数字不是来源数据，不能当作依据，请用你自己的数据或官方文件替换。"
+            if zh else
+            "Note: figures marked as assumed or illustrative above are not source data. Do not rely on them; replace them with your own data or the official document."
+        )
+    return ("\n\n" + "\n".join(lines)) if lines else ""
+
+
+_AI_LIMITATIONS_EN = ["AI-generated content is meant for checking methods and sources; verify key figures yourself."]
+
+
+def _evidence_for(answer: str, hits: list, market: str = "cn") -> dict:
+    """证据封装使用与生成时相同的检索结果（不再事后另行检索）。
+
+    International market: the envelope's own text (confidence reason, verification label, limitations,
+    sources status) is English; the domestic text is unchanged."""
+    if market == "global":
+        return envelope_from_rag(answer, hits, limitations=list(_AI_LIMITATIONS_EN), lang="en")
     return envelope_from_rag(answer, hits, limitations=_AI_LIMITATIONS)
+
+
+def _ai_unavailable(market: str) -> str:
+    return "The AI service is temporarily unavailable. Please try again later." if market == "global" else "AI 服务暂时不可用，请稍后重试"
 
 
 class MobileChatRequest(BaseModel):
     message: str = Field(..., min_length=1, max_length=4000)
+    # plain = everyday words with jargon explained, pro = technical wording. Default: plain (cn) / pro (global).
+    style: Optional[str] = Field(default=None, pattern="^(plain|pro)$")
 
 SYSTEM_PROMPT = """You are the Energy Intelligence AI Assistant for renewable energy (solar PV, wind, storage, project finance).
 Use only tool results or retrieved sources for specific figures, and cite source and date. If a tool fails or no source is
@@ -68,6 +312,10 @@ Bottom lines you must always follow:
 3. Never speak as or impersonate a government or official body; quote official documents with a link to the original.
 If asked for investment advice or a price prediction, reply: "I can provide facts, data, primary policy sources and
 verifiable calculations, but not investment advice or price predictions."
+Explaining terms, methods and formulas (what IRR, NPV, LCOE, payback or a break-even price means, how a metric is
+calculated, how storage earns revenue in general) is education, not advice: answer it fully and do not append that
+refusal. Refuse only when asked what to buy or invest in, whether something is worth investing in, what return is
+guaranteed, or where prices will go. If a question mixes both, answer the educational part and say the rest cannot be provided.
 Respond in the user's language."""
 
 CN_SYSTEM_PROMPT = """你是新能源智库的分析助手，熟悉中国光伏、风电、储能和项目财务。
@@ -77,7 +325,28 @@ CN_SYSTEM_PROMPT = """你是新能源智库的分析助手，熟悉中国光伏�
 2. 不做价格预测（电价、组件价格、碳价）；
 3. 不冒充官方，引用政府文件写"转引自……"并给出原文链接。
 用户要求投资建议或价格预测时回答："我只能提供事实、数据、政策原文和可验证的计算，不提供投资建议或价格预测。"
+解释术语、方法和公式（例如收益率、IRR、净现值、度电成本、投资回收期、保本电价、储能的收益来源）属于科普，不是投资建议：必须正常回答，且不要附加上面的拒答声明。
+只有用户问该不该投、买哪个、能保证多少收益或未来价格会怎样时才拒答。问题里两者都有时，回答科普部分，并说明其余部分无法提供。
 使用通俗中文回答。"""
+
+
+def _quota_detail(error: QuotaExceeded, market: str) -> dict:
+    """429 body in the account's language (the plain str(error) was an English code string for everyone)."""
+    if market == "global":
+        message = f"You have used today's AI questions ({error.limit} per day). Try again tomorrow or upgrade your plan."
+    else:
+        message = f"今日 AI 对话次数已用完（{error.limit} 次/日），可明日再试或升级会员获取更多次数。"
+    return {"error": "AI_QUOTA_EXCEEDED", "message": message, "upgrade_url": "/pricing", "limit": error.limit}
+
+
+def blocked_model_text(text: str, market: str) -> Optional[str]:
+    """国内输入和输出都过精确词 + 正则。命中则不再把原文交给模型。"""
+    return blocked_input_text(text, market)
+
+
+def _charge_cn(user_id: str, market: str) -> None:
+    if market != "global":
+        charge_product_budget(user_id)
 
 
 async def _market_for_user(user_id: str, db: AsyncSession) -> str:
@@ -89,6 +358,7 @@ async def _market_for_user(user_id: str, db: AsyncSession) -> str:
 async def chat(
     message: str,
     project_id: Optional[str] = None,
+    style: Optional[str] = Query(default=None, pattern="^(plain|pro)$"),
     user_id: str = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db),
 ):
@@ -102,17 +372,31 @@ async def chat(
     except QuotaExceeded as error:
         raise HTTPException(
             status_code=429,
-            detail={
-                "error": "AI_QUOTA_EXCEEDED",
-                "message": f"今日 AI 对话次数已用完（{error.limit} 次/日），可明日再试或升级会员获取更多次数。",
-                "upgrade_url": "/pricing",
-                "limit": error.limit,
-            },
+            detail=_quota_detail(error, await _market_for_user(user_id, db)),
         ) from error
     market = await _market_for_user(user_id, db)
+    blocked = blocked_model_text(message, market)
+    if blocked:
+        async def blocked_stream():
+            yield f"data: {json.dumps({'content': blocked}, ensure_ascii=False)}\n\n"
+            yield "data: [DONE]\n\n"
+        return StreamingResponse(blocked_stream(), media_type="text/event-stream", headers={"X-Accel-Buffering": "no"})
+    try:
+        assert_product_budget(user_id, market)
+    except BudgetExceeded as error:
+        raise HTTPException(status_code=429, detail={"error": "PRODUCT_BUDGET_EXCEEDED", "message": str(error)}) from error
     hits = _retrieve(message, market)
-    prompt = _grounded_prompt(SYSTEM_PROMPT if market == "global" else CN_SYSTEM_PROMPT, hits, market)
-    sources = _evidence_for("", hits)["sources"]
+    if not hits and grounding.is_policy_question(message):
+        refusal = _no_source_payload(market, style, message)
+
+        async def refusal_stream():
+            yield f"data: {json.dumps({'sources': []}, ensure_ascii=False)}\n\n"
+            yield f"data: {json.dumps({'content': refusal['message'], 'grounding': refusal['grounding']}, ensure_ascii=False)}\n\n"
+            yield f"data: {json.dumps({'structured': refusal['structured']}, ensure_ascii=False)}\n\n"
+            yield "data: [DONE]\n\n"
+        return StreamingResponse(refusal_stream(), media_type="text/event-stream", headers={"X-Accel-Buffering": "no"})
+    prompt = _grounded_prompt(SYSTEM_PROMPT if market == "global" else CN_SYSTEM_PROMPT, hits, market, style, query=message)
+    sources = _evidence_for("", hits, market)["sources"]
 
     async def stream():
         # 先下发本次回答所依据的来源，前端可按 [S1] 编号渲染引用
@@ -122,10 +406,14 @@ async def chat(
         async for chunk in ai_assistant.stream_openai(message, prompt, market=market):
             if chunk:
                 chunks.append(chunk)
-        full = enforce_bottom_line("".join(chunks), market=market)
+        full = _scrub_citations(enforce_bottom_line("".join(chunks), market=market), len(hits))
         if full:
-            yield f"data: {json.dumps({'content': full}, ensure_ascii=False)}\n\n"
+            structured = _structured(_lead_with_reverification(full, message, market, bool(hits)), hits, market, style)
+            shown, expired = _finish_answer(full, hits, market, query=message)
+            yield f"data: {json.dumps({'content': shown, 'grounding': _grounding(hits), 'time_check': {'today': _today().isoformat(), 'expired_dates': expired}}, ensure_ascii=False)}\n\n"
+            yield f"data: {json.dumps({'structured': structured}, ensure_ascii=False)}\n\n"
             await consume_ai_quota(user, db)
+            _charge_cn(user_id, market)
         yield "data: [DONE]\n\n"
 
     return StreamingResponse(
@@ -133,6 +421,100 @@ async def chat(
         media_type="text/event-stream",
         headers={"X-Accel-Buffering": "no"},
     )
+
+
+def _export_offer(user) -> dict:
+    offer = answer_export_offer(user)
+    return {"pdf": offer["pdf"], "docx": offer["docx"]}
+
+
+def _remember_answer(user, market: str, message: str, sources: list, metadata: dict) -> dict:
+    answer_id = str(uuid4())
+    synthetic = sources_are_synthetic(sources)
+    _ANSWER_EXPORTS[answer_id] = {
+        "user_id": str(user.id),
+        "market": market,
+        "message": message,
+        "sources": list(sources or []),
+        "synthetic": synthetic,
+        "stand_in": metadata.get("stand_in"),
+        "watermark": answer_export_offer(user)["watermark"],
+    }
+    if len(_ANSWER_EXPORTS) > 200:
+        _ANSWER_EXPORTS.pop(next(iter(_ANSWER_EXPORTS)))
+    return {
+        "answer_id": answer_id,
+        "downloads": _export_offer(user),
+        "synthetic": synthetic,
+    }
+
+
+def _library_stand_in(message: str, hits: list, market: str, style: Optional[str]):
+    """Used only when no model provider is configured. The text is the library record, not a model answer."""
+    if not hits:
+        answer = "No data available in the source library." if market == "global" else "本库尚未收录相关资料。"
+    else:
+        rows = []
+        for index, hit in enumerate(hits, 1):
+            md = hit.metadata or {}
+            typed = " ".join(date_lines(md, "en" if market == "global" else "zh"))
+            rows.append(f"[S{index}] {hit.title}" + (f"\n{typed}" if typed else ""))
+        answer = "\n".join(rows)
+    shown, expired = _finish_answer(answer, hits, market, query=message)
+    evidence = _evidence_for(shown, hits, market)
+    return shown, evidence, expired
+
+
+class AnswerExportRequest(BaseModel):
+    format: str = Field(pattern="^(pdf|docx)$")
+
+
+@router.post("/answers/{answer_id}/export")
+async def export_stored_answer(
+    answer_id: str,
+    body: AnswerExportRequest,
+    user_id: str = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+):
+    """Download one answer this user already received. The file is not built from client-supplied sources."""
+    record = _ANSWER_EXPORTS.get(answer_id)
+    user = await db.scalar(select(User).where(User.id == user_id))
+    market = "global" if user is not None and user.market == "global" else "cn"
+    missing = (
+        "This answer does not exist or you cannot access it."
+        if market == "global" else
+        "回答不存在或无权访问"
+    )
+    if not record or user is None or record["user_id"] != str(user_id):
+        raise HTTPException(status_code=404, detail=missing)
+    offer = _export_offer(user)
+    if not offer.get(body.format):
+        market = record["market"]
+        message = (
+            "Word export is not included in this plan."
+            if market == "global" else
+            "当前方案不包含 Word 导出。"
+        ) if body.format == "docx" else (
+            "PDF export is not included in this plan."
+            if market == "global" else
+            "当前方案不包含 PDF 导出。"
+        )
+        raise HTTPException(status_code=403, detail={"error": "EXPORT_FORMAT_NOT_INCLUDED", "message": message})
+    try:
+        await assert_report_quota(user_id, db)
+    except QuotaExceeded as error:
+        market = record["market"]
+        if market == "global":
+            message = f"You have used this month's report exports ({error.limit}). This is not an extra AI answer."
+        else:
+            message = f"本月报告导出次数已用完（{error.limit} 次）。这不是额外的 AI 回答次数。"
+        raise HTTPException(status_code=429, detail={"error": "REPORT_QUOTA_EXCEEDED", "message": message, "limit": error.limit}) from error
+    payload = render_answer_file(record, body.format)
+    await consume_report_quota(user, db)
+    ext = body.format
+    mime = "application/pdf" if ext == "pdf" else "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    filename = f"answer-{answer_id}.{ext}"
+    return StreamingResponse(io.BytesIO(payload), media_type=mime, headers={"Content-Disposition": f'attachment; filename="{filename}"'})
 
 
 @router.post("/chat-json")
@@ -145,19 +527,59 @@ async def chat_json(
     try:
         user = await assert_ai_quota(user_id, db)
     except QuotaExceeded as error:
-        raise HTTPException(status_code=429, detail=str(error)) from error
+        raise HTTPException(status_code=429, detail=_quota_detail(error, await _market_for_user(user_id, db))) from error
     try:
         market = await _market_for_user(user_id, db)
+        blocked = blocked_model_text(body.message, market)
+        if blocked:
+            evidence = _evidence_for("", [], market)
+            stored = _remember_answer(user, market, blocked, [], {"blocked": "bottom_line"})
+            return {"message": blocked, "ai_metadata": {"blocked": "bottom_line"}, "evidence": evidence, "sources": [], **stored}
+        assert_product_budget(user_id, market)
         hits = _retrieve(body.message, market)
-        prompt = _grounded_prompt(SYSTEM_PROMPT if market == "global" else CN_SYSTEM_PROMPT, hits, market)
-        result = await ai_assistant.chat_openai_with_metadata(body.message, prompt, market=market)
+        if not hits and grounding.is_policy_question(body.message):
+            payload = _no_source_payload(market, body.style, body.message)
+            stored = _remember_answer(user, market, payload["message"], [], {"stand_in": "no_source", "model_called": False})
+            return {**payload, "sources": [], **stored}
+        prompt = _grounded_prompt(SYSTEM_PROMPT if market == "global" else CN_SYSTEM_PROMPT, hits, market, body.style, query=body.message)
+        try:
+            result = await ai_assistant.chat_openai_with_metadata(body.message, prompt, market=market)
+        except RuntimeError as error:
+            if "not configured" not in str(error).lower():
+                raise
+            message, evidence, expired = _library_stand_in(body.message, hits, market, body.style)
+            meta = {"stand_in": "library_only", "model_called": False, "provider": None, "model": None}
+            stored = _remember_answer(user, market, message, evidence.get("sources") or [], meta)
+            return {
+                "message": message,
+                "ai_metadata": meta,
+                "evidence": evidence,
+                "sources": evidence.get("sources", []),
+                "structured": _structured(message, hits, market, body.style),
+                "grounding": _grounding(hits),
+                "time_check": {"today": _today().isoformat(), "expired_dates": expired},
+                **stored,
+            }
+    except BudgetExceeded as error:
+        raise HTTPException(status_code=429, detail={"error": "PRODUCT_BUDGET_EXCEEDED", "message": str(error)}) from error
     except RuntimeError as error:
-        raise HTTPException(status_code=503, detail="AI 服务暂时不可用，请稍后重试") from error
+        raise HTTPException(status_code=503, detail=_ai_unavailable(market)) from error
     await consume_ai_quota(user, db)
+    _charge_cn(user_id, market)
+    message = _scrub_citations(enforce_bottom_line(result["content"], market=market), len(hits))
+    structured = _structured(_lead_with_reverification(message, body.message, market, bool(hits)), hits, market, body.style)
+    evidence = _evidence_for(message, hits, market)
+    message, expired = _finish_answer(message, hits, market, query=body.message)
+    stored = _remember_answer(user, market, message, evidence.get("sources") or [], result["metadata"] or {})
     return {
-        "message": enforce_bottom_line(result["content"], market=market),
+        "message": message,
         "ai_metadata": result["metadata"],
-        "evidence": _evidence_for(result["content"], hits),
+        "evidence": evidence,
+        "sources": evidence.get("sources", []),
+        "structured": structured,
+        "grounding": _grounding(hits),
+        "time_check": {"today": _today().isoformat(), "expired_dates": expired},
+        **stored,
     }
 
 
@@ -172,19 +594,33 @@ async def analyze(
     try:
         user = await assert_ai_quota(user_id, db)
     except QuotaExceeded as error:
-        raise HTTPException(status_code=429, detail=str(error)) from error
+        raise HTTPException(status_code=429, detail=_quota_detail(error, await _market_for_user(user_id, db))) from error
     try:
         market = await _market_for_user(user_id, db)
+        blocked = blocked_model_text(query, market)
+        if blocked:
+            return {"analysis": blocked, "ai_metadata": {"blocked": "bottom_line"}, "evidence": _evidence_for("", [], market)}
+        assert_product_budget(user_id, market)
         hits = _retrieve(query, market)
-        prompt = _grounded_prompt(SYSTEM_PROMPT if market == "global" else CN_SYSTEM_PROMPT, hits, market)
+        if not hits and grounding.is_policy_question(query):
+            reply = _lead_with_reverification(grounding.no_source_reply(market), query, market, has_other=False)
+            return {"analysis": reply, "ai_metadata": {"grounding": "no_source", "model_called": False},
+                    "evidence": _evidence_for("", [], market), "grounding": _grounding([], "no_source_refused")}
+        prompt = _grounded_prompt(SYSTEM_PROMPT if market == "global" else CN_SYSTEM_PROMPT, hits, market, query=query)
         result = await ai_assistant.chat_openai_with_metadata(query, prompt, market=market)
+    except BudgetExceeded as error:
+        raise HTTPException(status_code=429, detail={"error": "PRODUCT_BUDGET_EXCEEDED", "message": str(error)}) from error
     except RuntimeError as error:
-        raise HTTPException(status_code=503, detail="AI 服务暂时不可用，请稍后重试") from error
+        raise HTTPException(status_code=503, detail=_ai_unavailable(market)) from error
     await consume_ai_quota(user, db)
+    _charge_cn(user_id, market)
+    analysis, expired = _finish_answer(enforce_bottom_line(result["content"], market=market), hits, market, query=query)
     return {
-        "analysis": enforce_bottom_line(result["content"], market=market),
+        "analysis": analysis,
         "ai_metadata": result["metadata"],
-        "evidence": _evidence_for(result["content"], hits),
+        "evidence": _evidence_for(result["content"], hits, market),
+        "grounding": _grounding(hits),
+        "time_check": {"today": _today().isoformat(), "expired_dates": expired},
     }
 
 
@@ -326,3 +762,55 @@ async def get_suggestions(
         "technology": tech,
         "suggestions": suggestions,
     }
+
+
+class AskRequest(BaseModel):
+    query: str = Field(min_length=1, max_length=4000)
+    market: str = "cn"
+    style: Optional[str] = Field(default=None, pattern="^(plain|pro)$")
+
+
+@router.post("/ask")
+async def ask(
+    body: AskRequest,
+    request: Request,
+    user_id: str = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+):
+    """检索优先的问答。未配置国内模型时只返回已收录来源，不外呼。"""
+    market = "global" if (body.market == "global" or (request.headers.get("x-app-market") or request.headers.get("x-market") or "").strip().lower() in ("global", "intl", "international", "en")) else "cn"
+    blocked = blocked_model_text(body.query, market)
+    hits = [] if blocked else _retrieve(body.query, market)
+    if not blocked and not hits and grounding.is_policy_question(body.query):
+        payload = _no_source_payload(market, body.style, body.query)
+        return {"answer": payload["message"], "sources": [], "model": None, "structured": payload["structured"],
+                "grounding": payload["grounding"]}
+    if blocked or not _llm_configured():
+        if blocked:
+            answer = blocked
+        elif not hits:
+            answer = "本库尚未收录相关资料。" if market != "global" else "No data available in the source library."
+        else:
+            answer = "\n".join(
+                f"[S{i}] {hit.title}（{' '.join(date_lines(hit.metadata or {}, 'en' if market == 'global' else 'zh')) or (hit.metadata or {}).get('year') or ''}）"
+                for i, hit in enumerate(hits, 1)
+            )
+        if not blocked:
+            answer = _lead_with_reverification(answer, body.query, market, has_other=bool(hits))
+        return {"answer": answer, "sources": _evidence_for(answer, hits, market).get("sources", []), "model": None,
+                "structured": _structured(answer, hits, market, body.style)}
+    try:
+        assert_product_budget(user_id, market)
+        prompt = _grounded_prompt(SYSTEM_PROMPT if market == "global" else CN_SYSTEM_PROMPT, hits, market, body.style, query=body.query)
+        result = await ai_assistant.chat_openai_with_metadata(body.query, prompt, market=market)
+    except BudgetExceeded as error:
+        raise HTTPException(status_code=429, detail={"error": "PRODUCT_BUDGET_EXCEEDED", "message": str(error)}) from error
+    except RuntimeError as error:
+        raise HTTPException(status_code=503, detail=_ai_unavailable(market)) from error
+    _charge_cn(user_id, market)
+    answer = _scrub_citations(enforce_bottom_line(result["content"], market=market), len(hits))
+    structured = _structured(_lead_with_reverification(answer, body.query, market, bool(hits)), hits, market, body.style)
+    shown, expired = _finish_answer(answer, hits, market, query=body.query)
+    return {"answer": shown, "sources": _evidence_for(answer, hits, market).get("sources", []), "model": result["metadata"],
+            "structured": structured, "grounding": _grounding(hits),
+            "time_check": {"today": _today().isoformat(), "expired_dates": expired}}

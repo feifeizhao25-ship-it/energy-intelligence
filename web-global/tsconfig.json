@@ -25,6 +25,15 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      // Workspace packages such as @energy-intelligence/ui-web are typechecked
+      // from their own folder. Next's webpack plugin ignores paths ending in
+      // .d.ts, so the client bundle still resolves the react package.
+      "react": [
+        "./node_modules/@types/react/index.d.ts"
+      ],
+      "react-dom": [
+        "./node_modules/@types/react-dom/index.d.ts"
       ]
     },
     "strictNullChecks": true

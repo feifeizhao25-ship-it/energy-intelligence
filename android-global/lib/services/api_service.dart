@@ -7,6 +7,7 @@ import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'project_wire.dart';
 
 class ApiException implements Exception {
   final int statusCode;
@@ -37,7 +38,10 @@ class ApiService {
   static void clearToken() => _token = null;
 
   static Map<String, String> get _headers {
-    final h = <String, String>{'Content-Type': 'application/json'};
+    final h = <String, String>{
+      'Content-Type': 'application/json',
+      'X-App-Market': 'global', // lets the server count wrong-language responses per edition
+    };
     if (_token != null) h['Authorization'] = 'Bearer $_token';
     return h;
   }
@@ -68,7 +72,7 @@ class ApiService {
         'data_transfer_consent': dataTransferConsent,
       },
     );
-    final token = resp['access_token'] as String;
+    final token = accessTokenFrom(resp);
     _token = token;
     await _secureStorage.write(key: 'energy_token', value: token);
     return token;
@@ -82,10 +86,22 @@ class ApiService {
       '/api/v1/auth/login',
       body: {'email': email, 'password': password},
     );
-    final token = resp['access_token'] as String;
+    final token = accessTokenFrom(resp);
     _token = token;
     await _secureStorage.write(key: 'energy_token', value: token);
     return token;
+  }
+
+  /// 后端统一返回 {code, message, data: {access_token, ...}}；
+  /// 兼容旧格式（access_token 在顶层）。取不到时抛出带英文提示的 ApiException，
+  /// 不再让类型转换错误把登录页卡住且没有任何提示。
+  static String accessTokenFrom(Map<String, dynamic> resp) {
+    final data = resp['data'];
+    if (data is Map && data['access_token'] is String) {
+      return data['access_token'] as String;
+    }
+    if (resp['access_token'] is String) return resp['access_token'] as String;
+    throw ApiException(500, 'Sign-in failed. Please try again.');
   }
 
   static Future<void> logout() async {
@@ -103,14 +119,10 @@ class ApiService {
 
   static Future<List<Map<String, dynamic>>> getProjects() async {
     final resp = await _get('/api/v1/projects');
-    if (resp is List) {
-      return (resp as List)
-          .map((e) => Map<String, dynamic>.from(e as Map))
-          .toList();
-    }
-    if (resp['data'] is List) {
-      return (resp['data'] as List)
-          .map((e) => Map<String, dynamic>.from(e as Map))
+    final rows = resp['data'];
+    if (rows is List) {
+      return rows
+          .map((e) => ProjectWire.fromWire(Map<String, dynamic>.from(e as Map)))
           .toList();
     }
     return [];
@@ -120,27 +132,14 @@ class ApiService {
     return await _get('/api/v1/projects/$id');
   }
 
-  static Future<Map<String, dynamic>> createProject({
-    required String name,
-    String? description,
-    String? technology,
-    double? latitude,
-    double? longitude,
-    double? capacityMw,
-    String? location,
-  }) async {
-    return await _post(
-      '/api/v1/projects',
-      body: {
-        'name': name,
-        'description': ?description,
-        'technology': ?technology,
-        'latitude': ?latitude,
-        'longitude': ?longitude,
-        'capacity_mw': ?capacityMw,
-        'location': ?location,
-      },
-    );
+  /// Creates a project. [body] comes from ProjectWire.toWire (the server's contract).
+  static Future<Map<String, dynamic>> createProject(Map<String, dynamic> body) async {
+    return await _post('/api/v1/projects', body: body);
+  }
+
+  /// Sets (or, with null, clears and re-recognises from the address) the project's country.
+  static Future<Map<String, dynamic>> updateProjectCountry(String id, String? code) async {
+    return await _put('/api/v1/projects/$id/country', body: {'country_code': code});
   }
 
   static Future<void> deleteProject(String id) async {
@@ -309,7 +308,7 @@ class ApiService {
   static Future<Map<String, dynamic>> getOperationsHealth(
     String projectId,
   ) async {
-    return await _get('/api/v1/operations/health', {'projectId': projectId});
+    return await _get('/api/v1/operations/health/$projectId');
   }
 
   static Future<Map<String, dynamic>> calculateCleaningSchedule({
@@ -342,10 +341,7 @@ class ApiService {
   /// AI chat — calls POST /api/v1/ai/chat-json  (returns Map for assistant_screen)
   static Future<Map<String, dynamic>> chat(String message) async {
     try {
-      final resp = await _post(
-        '/api/v1/ai/chat-json',
-        body: {'message': message},
-      );
+      final resp = await _post('/api/v1/ai/chat-json', body: {'message': message});
       return resp;
     } catch (_) {
       return {
@@ -417,6 +413,44 @@ class ApiService {
     return await getDashboardMetrics();
   }
 
+  // ── Report data sources ────────────────────────────────────────────────────
+
+  /// Sources attached to the project's latest financial model (what its reports cite).
+  static Future<Map<String, dynamic>> getReportSources(String projectId) async {
+    return await _get('/api/v1/finance/data-sources/$projectId');
+  }
+
+  /// Replaces the registered sources. The server validates and answers in the account's language.
+  static Future<Map<String, dynamic>> putReportSources(String projectId, List<Map<String, String>> sources) async {
+    return await _put('/api/v1/finance/data-sources/$projectId', body: {'sources': sources});
+  }
+
+  // ── Plan & usage, assistant, privacy ─────────────────────────────────────
+
+  /// Plan name, features, real usage and reset dates (GET /api/v1/billing/usage).
+  static Future<Map<String, dynamic>> getUsage() async {
+    return await _get('/api/v1/billing/usage');
+  }
+
+  /// Asks the assistant. [style] is "plain" (everyday words) or "pro" (technical). Throws [ApiException] on failure
+  /// so the screen can tell "quota used up" (429) from "service down".
+  static Future<Map<String, dynamic>> askAssistant(String message, String style) async {
+    final resp = await _client
+        .post(_uri('/api/v1/ai/chat-json'), headers: _headers, body: jsonEncode({'message': message, 'style': style}))
+        .timeout(const Duration(seconds: 90));
+    return _parse(resp);
+  }
+
+  /// A copy of the account's data (GET /api/v1/privacy/export).
+  static Future<Map<String, dynamic>> exportMyData() async {
+    return await _get('/api/v1/privacy/export');
+  }
+
+  /// Deletes the account and its data (POST /api/v1/privacy/delete-account).
+  static Future<void> deleteMyAccount() async {
+    await _post('/api/v1/privacy/delete-account', body: {'confirm': 'DELETE'});
+  }
+
   // ── HTTP helpers ──────────────────────────────────────────────────────────
 
   static Future<Map<String, dynamic>> _get(
@@ -439,6 +473,52 @@ class ApiService {
     return _parse(resp);
   }
 
+  // ── Personalised home ──────────────────────────────────────────────────────
+
+  /// The device's UTC offset, e.g. "UTC+05:30": lets the server pick the user's local day and hour.
+  static String _utcOffset() {
+    final o = DateTime.now().timeZoneOffset;
+    final m = o.inMinutes.abs();
+    final sign = o.isNegative ? '-' : '+';
+    return 'UTC$sign${(m ~/ 60).toString().padLeft(2, '0')}:${(m % 60).toString().padLeft(2, '0')}';
+  }
+
+  static Future<Map<String, dynamic>> getWorkbench() async {
+    return await _get('/api/v1/home/workbench', {'tz': _utcOffset()});
+  }
+
+  static Future<void> setWorkbenchEnabled(bool enabled) async {
+    await _put('/api/v1/home/workbench/preferences', body: {'enabled': enabled});
+  }
+
+  // ── Library (policy & data reference) ──────────────────────────────────────
+
+  static Future<Map<String, dynamic>> getLibraryEntries() async => await _get('/api/v1/library/entries', {'tz': _utcOffset()});
+
+  static Future<Map<String, dynamic>> getLibraryFeed() async => await _get('/api/v1/library/feed', {'tz': _utcOffset()});
+
+  static Future<void> setLibraryPrefs(Map<String, dynamic> body) async {
+    await _put('/api/v1/library/preferences', body: body);
+  }
+
+  static Future<void> libraryVisit() async {
+    await _post('/api/v1/library/visit', body: const {});
+  }
+
+  static Future<void> libraryOpened(String id) async {
+    await _post('/api/v1/library/opened/${Uri.encodeComponent(id)}', body: const {});
+  }
+
+  static Future<Map<String, dynamic>> _put(
+    String path, {
+    required Map<String, dynamic> body,
+  }) async {
+    final resp = await _client
+        .put(_uri(path), headers: _headers, body: jsonEncode(body))
+        .timeout(const Duration(seconds: 15));
+    return _parse(resp);
+  }
+
   static Future<void> _delete(String path) async {
     final resp = await _client
         .delete(_uri(path), headers: _headers)
@@ -455,7 +535,12 @@ class ApiService {
     }
     String msg = resp.body;
     try {
-      msg = jsonDecode(resp.body)['detail'] ?? msg;
+      final detail = jsonDecode(resp.body)['detail'];
+      if (detail is String) {
+        msg = detail;
+      } else if (detail is Map && detail['message'] is String) {
+        msg = detail['message'] as String;
+      }
     } catch (_) {}
     throw ApiException(resp.statusCode, msg);
   }

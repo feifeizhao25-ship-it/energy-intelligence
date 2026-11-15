@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'theme/app_theme.dart';
+import 'widgets/calm_error_card.dart';
+import 'widgets/responsive_frame.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/dashboard/dashboard_screen.dart';
@@ -13,13 +15,18 @@ import 'screens/operations/operations_screen.dart';
 import 'screens/operations/health_screen.dart';
 import 'screens/ai_assistant/ai_assistant_screen.dart';
 import 'screens/projects/projects_screen.dart';
+import 'screens/projects/create_project_screen.dart';
 import 'screens/projects/project_detail_screen.dart';
 import 'screens/research/research_screen.dart';
 import 'screens/settings/settings_screen.dart';
+import 'screens/library/energy_library.dart';
 import 'services/api_service.dart';
+import 'widgets/ei_nav_rail.dart';
+import 'widgets/ei_wide.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  installCalmErrorWidget(english: true);
   try {
     await ApiService.init(region: 'GLOBAL');
   } catch (e) {
@@ -85,6 +92,9 @@ class EnergyIntelligenceApp extends StatelessWidget {
       title: 'Energy Intelligence',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.buildTheme(),
+      darkTheme: AppTheme.buildDarkTheme(),
+      themeMode: ThemeMode.system,
+      builder: (context, child) => ResponsiveFrame(child: child ?? const SizedBox.shrink()),
       locale: const Locale('en', 'US'),
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
@@ -113,9 +123,11 @@ class EnergyIntelligenceApp extends StatelessWidget {
         '/operations/health': (context) => const HealthScreen(),
         '/ai': (context) => const AiAssistantScreen(),
         '/projects': (context) => const ProjectsScreen(),
+        '/projects/new': (context) => const CreateProjectScreen(),
         '/project-detail': (context) => const ProjectDetailScreen(),
         '/research': (context) => const ResearchScreen(),
         '/settings': (context) => const SettingsScreen(),
+        '/library': (context) => const EnergyLibraryPage(),
       },
     );
   }
@@ -141,11 +153,33 @@ class _MainNavigationState extends State<MainNavigation> {
 
   @override
   Widget build(BuildContext context) {
+    if (MediaQuery.of(context).size.width >= 600) {
+      return Scaffold(
+        body: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            EiNavRail(
+              dests: const [
+        EiNavDest(Icons.grid_view_rounded, Icons.grid_view_rounded, 'Dashboard'),
+        EiNavDest(Icons.folder_outlined, Icons.folder_outlined, 'Projects'),
+        EiNavDest(Icons.wb_sunny_outlined, Icons.wb_sunny_outlined, 'Resources'),
+        EiNavDest(Icons.calculate_outlined, Icons.calculate_outlined, 'Finance'),
+        EiNavDest(Icons.auto_awesome_outlined, Icons.auto_awesome_outlined, 'AI'),
+              ],
+              index: _currentIndex,
+              onSelect: (i) => setState(() => _currentIndex = i),
+            ),
+            Expanded(child: EiContentFrame(child: IndexedStack(index: _currentIndex, children: _screens))),
+          ],
+        ),
+      );
+    }
+
     return Scaffold(
       body: IndexedStack(index: _currentIndex, children: _screens),
       bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(
+          color: context.eiCard,
           boxShadow: [
             BoxShadow(
               color: Color(0x1A000000),
@@ -157,7 +191,9 @@ class _MainNavigationState extends State<MainNavigation> {
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 6),
-            child: Row(
+            child: MediaQuery(
+              data: MediaQuery.of(context).copyWith(textScaler: MediaQuery.textScalerOf(context).clamp(maxScaleFactor: 1.3)),
+              child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _NavItem(
@@ -197,6 +233,7 @@ class _MainNavigationState extends State<MainNavigation> {
                 ),
               ],
             ),
+            ),
           ),
         ),
       ),
@@ -222,31 +259,43 @@ class _NavItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isActive = index == current;
-    return GestureDetector(
+    return Expanded(child: Semantics(
+      button: true,
+      selected: isActive,
+      label: label,
+      excludeSemantics: true,
       onTap: () => onTap(index),
-      behavior: HitTestBehavior.opaque,
-      child: SizedBox(
-        width: 60,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 22,
-              color: isActive ? AppTheme.primary : const Color(0xFF94A3B8),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+      child: GestureDetector(
+        key: Key('navTab$index'),
+        onTap: () => onTap(index),
+        behavior: HitTestBehavior.opaque,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 48),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 22,
                 color: isActive ? AppTheme.primary : const Color(0xFF94A3B8),
               ),
-            ),
-          ],
+              const SizedBox(height: 2),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                softWrap: false,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+                  color: isActive ? AppTheme.primary : const Color(0xFF94A3B8),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-    );
+    ));
   }
 }

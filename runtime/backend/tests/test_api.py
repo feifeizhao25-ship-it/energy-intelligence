@@ -1,269 +1,147 @@
-"""Backend API integration tests — Energy Intelligence Platform
-Run with: pytest tests/test_api.py -v
-Requires backend running on http://localhost:8000
+"""Mounted API contract for auth, projects, resource checks, and finance.
+
+The live file used to call whatever was listening on port 8000 and expected a
+bare token. The mounted routes return the shared envelope from
+``app.utils.response.success`` for auth and projects (see
+``app.routers.projects`` and ``tests/test_domestic_gaps_20261027.py``).
+Finance and resource responses stay the pydantic models, not that envelope.
+Resource lookups are stubbed so this does not call NASA or Open-Meteo.
 """
-import pytest
-import httpx
 import uuid
 
-BASE_URL = "http://localhost:8000"
-TIMEOUT = 15.0
+import pytest
+from httpx import ASGITransport, AsyncClient
 
-def _live_server_reachable() -> bool:
-    """集成测试需要本地运行中的后端；未启动时整模块跳过。"""
-    import socket
-    from urllib.parse import urlparse
-    parsed = urlparse(BASE_URL)
-    try:
-        with socket.create_connection((parsed.hostname, parsed.port), timeout=1):
-            return True
-    except OSError:
-        return False
+from app.api.v1 import resource as resource_api
+from app.main import app
+from app.schemas.resource import SolarResourceResponse, WindResourceResponse
+
+pytestmark = pytest.mark.asyncio
 
 
-pytestmark = pytest.mark.skipif(
-    not _live_server_reachable(),
-    reason=f"live backend not running at {BASE_URL}",
-)
+async def _client():
+    return AsyncClient(transport=ASGITransport(app=app), base_url="http://test")
 
 
-class TestHealth:
-    def test_health(self):
-        r = httpx.get(f"{BASE_URL}/health", timeout=TIMEOUT)
-        assert r.status_code == 200
-        data = r.json()
-        assert data["status"] == "ok"
+async def _register(client: AsyncClient, prefix: str = "pytest") -> str:
+    email = f"{prefix}_{uuid.uuid4().hex[:8]}@test.com"
+    response = await client.post("/api/v1/auth/register", json={
+        "name": "Pytest User",
+        "email": email,
+        "password": "Test1234!",
+        "company": "Pytest Corp",
+        "role": "developer",
+    })
+    assert response.status_code == 201, response.text
+    body = response.json()
+    token = body["data"]["access_token"]
+    refresh = body["data"]["refresh_token"]
+    assert token and refresh and body["data"]["token_type"] == "bearer"
+    assert "access_token" not in body
+    return token
 
 
-class TestAuth:
-    def test_register(self):
-        email = f"pytest_{uuid.uuid4().hex[:8]}@test.com"
-        r = httpx.post(
-            f"{BASE_URL}/api/v1/auth/register",
-            json={
-                "name": "Pytest User",
-                "email": email,
-                "password": "Test1234!",
-                "company": "Pytest Corp",
-                "role": "developer",
-            },
-            timeout=TIMEOUT,
+async def test_health(client):
+    response = await client.get("/health")
+    assert response.status_code == 200
+    assert response.json()["status"] == "ok"
+
+
+async def test_register_returns_tokens_inside_the_envelope(client):
+    await _register(client)
+
+
+async def test_register_duplicate_is_conflict(client):
+    email = f"dup_{uuid.uuid4().hex[:8]}@test.com"
+    payload = {"name": "Dup", "email": email, "password": "Test1234!"}
+    assert (await client.post("/api/v1/auth/register", json=payload)).status_code == 201
+    again = await client.post("/api/v1/auth/register", json=payload)
+    assert again.status_code == 409
+
+
+async def test_login_success_and_wrong_password(client):
+    email = f"login_{uuid.uuid4().hex[:8]}@test.com"
+    assert (await client.post("/api/v1/auth/register", json={
+        "name": "Login", "email": email, "password": "Test1234!",
+    })).status_code == 201
+    ok = await client.post("/api/v1/auth/login", json={"email": email, "password": "Test1234!"})
+    assert ok.status_code == 200
+    assert ok.json()["data"]["access_token"]
+    bad = await client.post("/api/v1/auth/login", json={"email": email, "password": "WrongPassword!"})
+    assert bad.status_code == 401
+    missing = await client.post("/api/v1/auth/login", json={"email": "nobody@test.com", "password": "Test1234!"})
+    assert missing.status_code == 401
+
+
+async def test_projects_are_private_to_the_owner(client):
+    owner = await _register(client, "proj")
+    stranger = await _register(client, "other")
+    empty = await client.get("/api/v1/projects", headers={"Authorization": f"Bearer {owner}"})
+    assert empty.status_code == 200
+    assert empty.json()["data"] == []
+    created = await client.post("/api/v1/projects", headers={"Authorization": f"Bearer {owner}"}, json={
+        "name": "格尔木光伏电站",
+        "technology": "solar",
+        "capacity_kw": 100000,
+        "location": {"latitude": 36.42, "longitude": 94.91, "address": "格尔木"},
+        "description": "pytest test project",
+    })
+    assert created.status_code == 201, created.text
+    project = created.json()["data"]
+    assert project["name"] == "格尔木光伏电站"
+    assert project["technology"] == "solar"
+    assert project["capacity_kw"] == 100000
+    fetched = await client.get(f"/api/v1/projects/{project['id']}", headers={"Authorization": f"Bearer {owner}"})
+    assert fetched.status_code == 200
+    assert fetched.json()["data"]["name"] == "格尔木光伏电站"
+    hidden = await client.get(f"/api/v1/projects/{project['id']}", headers={"Authorization": f"Bearer {stranger}"})
+    assert hidden.status_code == 404
+    assert (await client.get("/api/v1/projects")).status_code == 401
+
+
+async def test_resource_validation_and_stubbed_lookup(client, monkeypatch):
+    token = await _register(client, "res")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    async def solar(body):
+        return SolarResourceResponse(
+            lat=body.lat, lng=body.lng, ghi=1456, dni=1, dhi=1, peak_sun_hours=4,
+            optimal_tilt=30, avg_temperature=10, resource_class="III", score=40,
+            data_source="fixture", monthly_ghi=[1.0] * 12,
         )
-        assert r.status_code == 201, f"Register failed: {r.text}"
-        data = r.json()
-        assert "access_token" in data
-        assert "refresh_token" in data
 
-    def test_register_duplicate(self):
-        import time
-        email = f"dup_{int(time.time())}@test.com"
-        httpx.post(
-            f"{BASE_URL}/api/v1/auth/register",
-            json={"name": "Dup", "email": email, "password": "Test1234!"},
-            timeout=TIMEOUT,
+    async def wind(body):
+        return WindResourceResponse(
+            lat=body.lat, lng=body.lng, mean_speed=6.5, wind_power_density=250,
+            weibull_k=2, weibull_c=7, turbulence_intensity=0.1,
+            resource_class="III", score=40, monthly_speed=[6.0] * 12,
         )
-        r = httpx.post(
-            f"{BASE_URL}/api/v1/auth/register",
-            json={"name": "Dup2", "email": email, "password": "Test1234!"},
-            timeout=TIMEOUT,
-        )
-        assert r.status_code == 409
 
-    def test_login_success(self):
-        import time
-        email = f"login_{int(time.time())}@test.com"
-        httpx.post(
-            f"{BASE_URL}/api/v1/auth/register",
-            json={"name": "Login", "email": email, "password": "Test1234!"},
-            timeout=TIMEOUT,
-        )
-        r = httpx.post(
-            f"{BASE_URL}/api/v1/auth/login",
-            json={"email": email, "password": "Test1234!"},
-            timeout=TIMEOUT,
-        )
-        assert r.status_code == 200
-        data = r.json()
-        assert "access_token" in data
-
-    def test_login_wrong_password(self):
-        import time
-        email = f"wrongpw_{int(time.time())}@test.com"
-        httpx.post(
-            f"{BASE_URL}/api/v1/auth/register",
-            json={"name": "WrongPw", "email": email, "password": "Test1234!"},
-            timeout=TIMEOUT,
-        )
-        r = httpx.post(
-            f"{BASE_URL}/api/v1/auth/login",
-            json={"email": email, "password": "WrongPassword!"},
-            timeout=TIMEOUT,
-        )
-        assert r.status_code == 401
-
-    def test_login_nonexistent(self):
-        r = httpx.post(
-            f"{BASE_URL}/api/v1/auth/login",
-            json={"email": "nobody@test.com", "password": "Test1234!"},
-            timeout=TIMEOUT,
-        )
-        assert r.status_code == 401
+    monkeypatch.setattr(resource_api, "fetch_solar_resource", solar)
+    monkeypatch.setattr(resource_api, "fetch_wind_resource", wind)
+    solar_response = await client.post("/api/v1/resource/solar", headers=headers, json={"lat": 36.42, "lng": 94.91})
+    assert solar_response.status_code == 200, solar_response.text
+    assert solar_response.json()["ghi"] == 1456
+    wind_response = await client.post("/api/v1/resource/wind", headers=headers, json={"lat": 36.42, "lng": 94.91})
+    assert wind_response.status_code == 200, wind_response.text
+    assert "mean_speed" in wind_response.json()
+    missing = await client.post("/api/v1/resource/solar", headers=headers, json={"lat": 36.42})
+    assert missing.status_code == 422
 
 
-class TestProjects:
-    def _register_and_get_token(self):
-        email = f"proj_{uuid.uuid4().hex[:8]}@test.com"
-        r = httpx.post(
-            f"{BASE_URL}/api/v1/auth/register",
-            json={"name": "Proj User", "email": email, "password": "Test1234!"},
-            timeout=TIMEOUT,
-        )
-        return r.json()["access_token"]
-
-    def test_list_projects_empty(self):
-        token = self._register_and_get_token()
-        r = httpx.get(
-            f"{BASE_URL}/api/v1/projects",
-            headers={"Authorization": f"Bearer {token}"},
-            timeout=TIMEOUT,
-        )
-        assert r.status_code == 200
-        assert isinstance(r.json(), list)
-
-    def test_create_project(self):
-        token = self._register_and_get_token()
-        r = httpx.post(
-            f"{BASE_URL}/api/v1/projects",
-            headers={"Authorization": f"Bearer {token}"},
-            json={
-                "name": "格尔木光伏电站",
-                "technology": "solar",
-                "latitude": 36.42,
-                "longitude": 94.91,
-                "capacity_mw": 100,
-                "description": "pytest test project",
-            },
-            timeout=TIMEOUT,
-        )
-        assert r.status_code == 201, f"Create failed: {r.text}"
-        data = r.json()
-        assert data["name"] == "格尔木光伏电站"
-        assert data["technology"] == "solar"
-        assert data["capacity_mw"] == 100.0
-
-    def test_get_project(self):
-        token = self._register_and_get_token()
-        r = httpx.post(
-            f"{BASE_URL}/api/v1/projects",
-            headers={"Authorization": f"Bearer {token}"},
-            json={"name": "Get Test", "technology": "wind"},
-            timeout=TIMEOUT,
-        )
-        proj_id = r.json()["id"]
-        r2 = httpx.get(
-            f"{BASE_URL}/api/v1/projects/{proj_id}",
-            headers={"Authorization": f"Bearer {token}"},
-            timeout=TIMEOUT,
-        )
-        assert r2.status_code == 200
-        assert r2.json()["name"] == "Get Test"
-
-    def test_unauthorized(self):
-        r = httpx.get(f"{BASE_URL}/api/v1/projects", timeout=TIMEOUT)
-        assert r.status_code == 401
-
-
-class TestResource:
-    def _register_and_get_token(self):
-        email = f"res_{uuid.uuid4().hex[:8]}@test.com"
-        r = httpx.post(
-            f"{BASE_URL}/api/v1/auth/register",
-            json={"name": "Res User", "email": email, "password": "Test1234!"},
-            timeout=TIMEOUT,
-        )
-        return r.json()["access_token"]
-
-    def test_solar_resource(self):
-        """Solar resource: NASA API may be unreachable in dev env (timeout/500).
-        Accept 200 (NASA reachable), 500 (NASA unreachable), or timeout."""
-        token = self._register_and_get_token()
-        try:
-            r = httpx.post(
-                f"{BASE_URL}/api/v1/resource/solar",
-                headers={"Authorization": f"Bearer {token}"},
-                json={"lat": 36.42, "lng": 94.91},
-                timeout=TIMEOUT,
-            )
-            assert r.status_code in (200, 500), f"Solar resource: {r.status_code} {r.text}"
-        except httpx.ReadTimeout:
-            # NASA API unreachable in dev — expected
-            assert True
-
-    def test_wind_resource(self):
-        token = self._register_and_get_token()
-        r = httpx.post(
-            f"{BASE_URL}/api/v1/resource/wind",
-            headers={"Authorization": f"Bearer {token}"},
-            json={"lat": 36.42, "lng": 94.91},
-            timeout=TIMEOUT,
-        )
-        assert r.status_code == 200
-        assert isinstance(r.json(), dict)
-
-    def test_solar_resource_missing_lng(self):
-        token = self._register_and_get_token()
-        r = httpx.post(
-            f"{BASE_URL}/api/v1/resource/solar",
-            headers={"Authorization": f"Bearer {token}"},
-            json={"lat": 36.42},
-            timeout=TIMEOUT,
-        )
-        assert r.status_code in (200, 422)
-
-
-class TestFinance:
-    def _register_and_get_token(self):
-        email = f"fin_{uuid.uuid4().hex[:8]}@test.com"
-        r = httpx.post(
-            f"{BASE_URL}/api/v1/auth/register",
-            json={"name": "Fin User", "email": email, "password": "Test1234!"},
-            timeout=TIMEOUT,
-        )
-        return r.json()["access_token"]
-
-    def test_solar_finance(self):
-        token = self._register_and_get_token()
-        r = httpx.post(
-            f"{BASE_URL}/api/v1/finance/solar",
-            headers={"Authorization": f"Bearer {token}"},
-            json={
-                "capacity_mw": 100,
-                "capex_per_w": 4.85,
-                "opex_per_kw_yr": 287.5,
-                "electricity_price": 0.35,
-                "ghi_annual": 1456,
-                "capacity_factor": 0.18,
-            },
-            timeout=TIMEOUT,
-        )
-        assert r.status_code == 200, f"Finance failed: {r.text}"
-        data = r.json()
-        assert isinstance(data, dict)
-
-    def test_wind_finance(self):
-        token = self._register_and_get_token()
-        r = httpx.post(
-            f"{BASE_URL}/api/v1/finance/wind",
-            headers={"Authorization": f"Bearer {token}"},
-            json={
-                "capacity_mw": 100,
-                "capex_per_kw": 9800,
-                "opex_per_kw_yr": 287.5,
-                "electricity_price": 350,
-                "wind_capacity_factor": 0.35,
-            },
-            timeout=TIMEOUT,
-        )
-        assert r.status_code == 200, f"Wind finance failed: {r.status_code} {r.text}"
-        data = r.json()
-        assert "irr" in data or "lcoe" in data
+async def test_finance_solar_and_wind_return_the_model(client):
+    token = await _register(client, "fin")
+    headers = {"Authorization": f"Bearer {token}"}
+    solar = await client.post("/api/v1/finance/solar", headers=headers, json={
+        "capacity_mw": 100, "capex_per_w": 4.85, "opex_per_kw_yr": 287.5,
+        "electricity_price": 0.35, "ghi_annual": 1456, "capacity_factor": 0.18,
+    })
+    assert solar.status_code == 200, solar.text
+    assert "irr" in solar.json() and "lcoe" in solar.json()
+    wind = await client.post("/api/v1/finance/wind", headers=headers, json={
+        "capacity_mw": 100, "capex_per_kw": 9800, "opex_per_kw_yr": 287.5,
+        "electricity_price": 350, "wind_capacity_factor": 0.35,
+    })
+    assert wind.status_code == 200, wind.text
+    body = wind.json()
+    assert "irr" in body or "lcoe" in body

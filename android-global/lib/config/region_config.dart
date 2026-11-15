@@ -6,5 +6,6 @@ class RegionConfig {
   static const String currency = 'USD';
   static const String currencySymbol = '\$';
   static const String apiBaseUrl = 'https://energy-iq.app';
-  static const String mapProvider = 'mapbox';
+  // No map page yet. This is not Mapbox and not Amap.
+  static const String mapProvider = 'none';
 }

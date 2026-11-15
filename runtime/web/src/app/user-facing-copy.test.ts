@@ -24,7 +24,8 @@ describe('用户可见文案', () => {
     it('结果页指标名配中文；装机单位按类型（风电不写 kWp）', () => {
         const page = read('src/app/(dashboard)/calculator/result/page.tsx');
         expect(page).toContain('label="内部收益率（IRR）"');
-        expect(page).toContain('label="平准化度电成本（LCOE）"');
+        expect(page).toContain('平准化度电成本（LCOE）');
+        expect(page).toContain('平准化储能成本（LCOS）');
         expect(page).not.toContain('label="项目 IRR"');
         expect(page).toContain("type === 'solar' || !type ? 'kWp' : 'kW'");
     });

@@ -280,7 +280,7 @@ export const TOOL_WHITELIST: Record<string, ToolDefinition> = {
     explain_site_recommendation: {
         id: 'explain_site_recommendation',
         name: '选址方案解读',
-        description: '把风光对比测算结果翻译成面向投资决策者的结构化解读',
+        description: '把风光对比测算结果整理成带假设与数据来源的结构化说明',
         category: 'RESOURCE',
         riskLevel: 'READ_ONLY',
         requiresConfirmation: false,

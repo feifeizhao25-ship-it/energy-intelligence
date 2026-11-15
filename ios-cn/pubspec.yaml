@@ -1,5 +1,5 @@
 name: energy_app
-description: "新能源智库 - 新能源行业智能决策与运维SaaS平台（国内版）"
+description: "新能源智库 - 测算、政策与数据（国内版）"
 
 publish_to: 'none'
 
@@ -17,6 +17,9 @@ dependencies:
   http: ^1.6.0
   shared_preferences: ^2.2.2
   flutter_secure_storage: ^10.0.0
+  flutter_math_fork: ^0.7.4
+  mobile_voice:
+    path: ../packages/mobile_voice
 
 dev_dependencies:
   flutter_test:
@@ -25,3 +28,6 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/library/
+    - assets/images/

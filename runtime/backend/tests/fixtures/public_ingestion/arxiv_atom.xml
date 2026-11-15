@@ -1,0 +1,10 @@
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:arxiv="http://arxiv.org/schemas/atom">
+  <entry>
+    <id>http://arxiv.org/abs/2401.00001v1</id>
+    <title>光伏组件积灰综述</title>
+    <published>2024-01-02T00:00:00Z</published>
+    <summary>只保留元数据。</summary>
+    <author><name>李微</name></author>
+    <arxiv:doi>10.1000/soiling</arxiv:doi>
+  </entry>
+</feed>

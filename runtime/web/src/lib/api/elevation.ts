@@ -2,7 +2,8 @@
 
 export async function getElevation(lat: number, lng: number): Promise<number> {
     try {
-        const url = `https://api.open-elevation.com/api/v1/lookup?locations=${lat},${lng}`;
+        throw new Error('OVERSEAS_SOURCE_DISABLED');
+        const url = `domestic-cache://elevation?locations=${lat},${lng}`;
         const response = await fetch(url);
 
         if (!response.ok) {

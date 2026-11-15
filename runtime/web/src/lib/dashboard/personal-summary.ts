@@ -1,4 +1,5 @@
 import { shanghaiDate } from '@/lib/membership/day';
+import { greetingFor } from './greeting';
 
 /**
  * 个人工作台：只由当前用户自己的数据生成（免费档同样有）。
@@ -8,11 +9,24 @@ import { shanghaiDate } from '@/lib/membership/day';
  * 真实用户打开工作台，看到的是别人的名字和数据。
  */
 
+export interface SavedCalculationRef {
+  id: string;
+  name: string;
+  type: string;
+  capacity: number | null;
+  projectId: string | null;
+  createdAt: Date;
+}
+
 export interface SummaryInput {
-  user: { name: string | null; plan: string; planExpireAt: Date | null };
+  user: { name: string | null; nickname?: string | null; plan: string; planExpireAt: Date | null };
   projects: { id: string; name: string; type: string; capacity: number | null; reportStatus: string; updatedAt: Date }[];
   projectCount: number;
   calculationCount: number;
+  /** 当前用户 calculation_snapshots 条数。光伏估算只写入这张表，要和 calculations 加在一起。 */
+  snapshotCount?: number;
+  /** 当前用户自己的快照。已出现在项目列表里的不重复列出。 */
+  savedCalculations?: SavedCalculationRef[];
   savedPaperCount: number;
   stations: { id: string; name: string; status: string; lastUpdated: Date | null }[];
   usageToday: Record<string, number>;
@@ -49,8 +63,8 @@ export interface PersonalDashboard {
   greeting: string;
   /** expiresOn 为北京时间的到期日（YYYY-MM-DD），页面直接显示它，不要截 expiresAt 的前 10 位（那是 UTC） */
   plan: { code: string; expiresAt: string | null; expiresOn: string | null; expiringSoon: boolean };
-  counts: { projects: number; calculations: number; savedPapers: number; stations: number };
-  recentProjects: { id: string; name: string; type: string; capacity: number | null; reportStatus: string; updatedAt: string }[];
+  counts: { projects: number; calculations: number; savedEstimates: number; savedPapers: number; stations: number };
+  recentProjects: { id: string; name: string; type: string; capacity: number | null; reportStatus: string; updatedAt: string; href: string }[];
   stationAlerts: { id: string; name: string; status: string; lastUpdated: string | null }[];
   usage: { type: string; used: number; limit: number }[];
   nextActions: NextAction[];
@@ -58,8 +72,66 @@ export interface PersonalDashboard {
 
 const TYPE_LABEL: Record<string, string> = { SOLAR: '光伏', WIND: '风电', STORAGE: '储能' };
 
+function recentWork(
+  projects: SummaryInput['projects'],
+  saved: SavedCalculationRef[],
+): PersonalDashboard['recentProjects'] {
+  const projectIds = new Set(projects.map((project) => project.id));
+  const rows = [
+    ...projects.map((project) => ({
+      id: project.id,
+      name: project.name,
+      type: project.type,
+      capacity: project.capacity,
+      reportStatus: project.reportStatus,
+      updatedAt: project.updatedAt,
+      href: `/projects/${project.id}`,
+    })),
+    ...saved
+      .filter((item) => !item.projectId || !projectIds.has(item.projectId))
+      .map((item) => ({
+        id: item.id,
+        name: item.name,
+        type: item.type,
+        capacity: item.capacity,
+        reportStatus: 'SAVED',
+        updatedAt: item.createdAt,
+        href: `/audit/${encodeURIComponent(item.id)}`,
+      })),
+  ];
+  return rows
+    .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime() || a.id.localeCompare(b.id))
+    .slice(0, 5)
+    .map(({ updatedAt, ...rest }) => ({ ...rest, updatedAt: updatedAt.toISOString() }));
+}
+
 export function projectTypeLabel(type: string): string {
   return TYPE_LABEL[type?.toUpperCase?.()] ?? type;
+}
+
+/** 没有项目、但有已保存测算时，不要把计数标成「项目 0」。 */
+export function projectCountFact(counts: { projects: number; savedEstimates?: number }): { label: string; value: string } {
+  const saved = counts.savedEstimates ?? 0;
+  if (counts.projects === 0 && saved > 0) return { label: '已保存测算', value: String(saved) };
+  return { label: '项目', value: String(counts.projects) };
+}
+
+/** 列表里只有测算快照时不叫「最近的项目」。空列表仍用原标题，空状态文案另外说明。 */
+export function recentWorkTitle(items: { reportStatus: string }[]): string {
+  if (items.length === 0) return '最近的项目';
+  const saved = items.filter((item) => item.reportStatus === 'SAVED').length;
+  if (saved === 0) return '最近的项目';
+  if (saved === items.length) return '最近的测算';
+  return '最近的项目与测算';
+}
+
+export const RECENT_WORK_EMPTY = '还没有项目，也没有已保存的测算。做一次测算并保存，就会出现在这里。';
+
+export function recentWorkDetail(item: { type: string; capacity: number | null; reportStatus: string }): string {
+  const type = projectTypeLabel(item.type);
+  const saved = item.reportStatus === 'SAVED' ? ' · 已保存测算' : '';
+  const capacity = item.capacity ? ` · ${item.capacity} kW` : '';
+  return `${type}${saved}${capacity}`;
 }
 
 export function buildPersonalDashboard(input: SummaryInput): PersonalDashboard {
@@ -82,13 +154,20 @@ export function buildPersonalDashboard(input: SummaryInput): PersonalDashboard {
     actions.push({ id: 'station-alert', title: `处理 ${stationAlerts.length} 个电站的告警`, reason: '你的电站有告警或故障状态', href: '/my/stations' });
   }
   // 今日测算额度已用完时，不再推荐去测算（推荐要考虑额度）
+  const snapshotCount = input.snapshotCount ?? 0;
+  const calculationTotal = input.calculationCount + snapshotCount;
   const calcUsage = usage.find((u) => u.type === '收益测算');
   const calcExhausted = Boolean(calcUsage && calcUsage.used >= calcUsage.limit);
   if (input.projectCount === 0 && !calcExhausted) {
+    const reason = snapshotCount > 0
+      ? `已保存 ${snapshotCount} 条测算，还没有建立项目`
+      : calculationTotal
+        ? `你已完成 ${calculationTotal} 次测算，还没有建立项目`
+        : '还没有任何项目';
     actions.push({
       id: 'first-project',
-      title: input.calculationCount ? '把测算结果保存为项目' : '做第一次收益测算',
-      reason: input.calculationCount ? `你已完成 ${input.calculationCount} 次测算，还没有保存项目` : '还没有任何项目',
+      title: calculationTotal ? '把测算结果保存为项目' : '做第一次收益测算',
+      reason,
       href: '/calculator/solar',
     });
   } else {
@@ -116,15 +195,16 @@ export function buildPersonalDashboard(input: SummaryInput): PersonalDashboard {
   const visible = actions.filter((a) => !(dismissed.has(a.id) && (DISMISSIBLE_TIPS as readonly string[]).includes(a.id)));
 
   return {
-    greeting: input.user.name ? `你好，${input.user.name}` : '你好',
+    greeting: greetingFor(input.user),
     plan: { code: plan, expiresAt: paid && expires ? expires.toISOString() : null, expiresOn: paid && expires ? shanghaiDate(expires) : null, expiringSoon },
     counts: {
       projects: input.projectCount,
-      calculations: input.calculationCount,
+      calculations: calculationTotal,
+      savedEstimates: snapshotCount,
       savedPapers: input.savedPaperCount,
       stations: input.stations.length,
     },
-    recentProjects: input.projects.slice(0, 3).map((p) => ({ ...p, updatedAt: p.updatedAt.toISOString() })),
+    recentProjects: recentWork(input.projects, input.savedCalculations ?? []),
     stationAlerts,
     usage,
     nextActions: visible.slice(0, 4),

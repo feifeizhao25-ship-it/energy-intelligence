@@ -1,0 +1,10 @@
+{
+  "product": "energy",
+  "research_engine": "runtime/backend/app/services/skill_improvement.py",
+  "sources_registry": "runtime/backend/data/rag_sources.json",
+  "daily": "metadata change detection",
+  "weekly": "evaluated local improvements",
+  "production_auto_deploy": false,
+  "status": "local_integration",
+  "frozen": false
+}

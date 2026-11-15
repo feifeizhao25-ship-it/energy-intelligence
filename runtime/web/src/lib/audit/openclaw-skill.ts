@@ -40,6 +40,17 @@ export interface OpenClawCapability {
     }>;
 }
 
+/** 对外站点。未配置时用站内路径，不写死域名。 */
+export function publicOrigin(): string {
+    return (process.env.NENGJIAN_PUBLIC_ORIGIN || process.env.NEXT_PUBLIC_SITE_URL || '').replace(/\/$/, '');
+}
+
+export function publicUrl(path: string): string {
+    const origin = publicOrigin();
+    const suffix = path.startsWith('/') ? path : `/${path}`;
+    return origin ? `${origin}${suffix}` : suffix;
+}
+
 /**
  * 新能源智库 OpenClaw Skill 配置
  */
@@ -49,14 +60,14 @@ export const XINNENGYUAN_SKILL: OpenClawSkill = {
     description: '新能源项目全生命周期智能助手：选址评估、收益测算、运维诊断、文献检索',
     version: '1.0.0',
     author: 'XinNengYuan Team',
-    homepage: 'https://xinnengyuan.ai',
-    apiEndpoint: 'https://api.xinnengyuan.ai/v1/openclaw',
+    homepage: publicUrl('/'),
+    apiEndpoint: publicUrl('/api/v1/openclaw'),
     authType: 'API_KEY',
     capabilities: [
         {
             id: 'solar_assessment',
             name: '光伏收益评估',
-            description: '输入位置坐标，获取太阳能资源评估和收益预测',
+            description: '输入位置坐标，获取太阳能资源评估和测算结果',
             inputSchema: {
                 type: 'object',
                 properties: {
@@ -85,7 +96,7 @@ export const XINNENGYUAN_SKILL: OpenClawSkill = {
                             totalRevenue25: { type: 'number', description: '25年总收益(万元)' },
                         },
                     },
-                    recommendation: { type: 'string', description: '投资建议' },
+                    calculation_note: { type: 'string', description: '测算说明（按输入假设计算）' },
                     reportUrl: { type: 'string', description: '详细报告链接' },
                 },
             },
@@ -95,8 +106,8 @@ export const XINNENGYUAN_SKILL: OpenClawSkill = {
                     output: {
                         resource: { annualGHI: 1420, resourceClass: 'II类', optimalTilt: 35 },
                         economics: { irr: 0.12, paybackYears: 6.5, totalRevenue25: 45.2 },
-                        recommendation: '年水平面辐照 1420 kWh/m²（II类），测算 IRR 12%（示例输出，按输入假设计算）',
-                        reportUrl: 'https://xinnengyuan.ai/report/xxx',
+                        calculation_note: '年水平面辐照 1420 kWh/m²（II类），测算 IRR 12%（示例输出，按输入假设计算）',
+                        reportUrl: publicUrl('/report/xxx'),
                     },
                 },
             ],
@@ -104,7 +115,7 @@ export const XINNENGYUAN_SKILL: OpenClawSkill = {
         {
             id: 'wind_assessment',
             name: '风电收益评估',
-            description: '输入位置坐标，获取风能资源评估和收益预测',
+            description: '输入位置坐标，获取风能资源评估和测算结果',
             inputSchema: {
                 type: 'object',
                 properties: {
@@ -232,7 +243,7 @@ export async function handleOpenClawRequest(
     if (!quota.allowed) {
         return {
             success: false,
-            error: '今日免费额度已用完，请访问 xinnengyuan.ai 升级',
+            error: publicOrigin() ? `今日免费额度已用完，请访问 ${publicOrigin()} 升级` : '今日免费额度已用完，请访问本站升级',
             quotaRemaining: 0,
         };
     }
@@ -354,8 +365,8 @@ async function handleSolarAssessment(input: Record<string, unknown>): Promise<un
             totalRevenue25: result.financial?.cashFlow.reduce((sum, value) => sum + Math.max(0, value), 0) || 0,
         },
         // 事实描述，不给投资结论；irr 单位为 %
-        recommendation: `测算 IRR ${(result.financial?.irr ?? 0).toFixed(2)}%，静态回收期 ${(result.financial?.paybackYears ?? 0).toFixed(1)} 年（按输入假设计算，不构成投资建议）`,
-        reportUrl: `https://xinnengyuan.ai/quick-calc/solar?lat=${lat}&lng=${lng}`,
+        calculation_note: `测算 IRR ${(result.financial?.irr ?? 0).toFixed(2)}%，静态回收期 ${(result.financial?.paybackYears ?? 0).toFixed(1)} 年（按输入假设计算）`,
+        reportUrl: publicUrl(`/quick-calc/solar?lat=${lat}&lng=${lng}`),
     };
 }
 

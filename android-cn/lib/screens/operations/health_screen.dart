@@ -1,3 +1,4 @@
+import '../../widgets/photo_widgets.dart';
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../../services/api_service.dart';
@@ -14,18 +15,45 @@ class HealthScreen extends StatefulWidget {
 class _HealthScreenState extends State<HealthScreen> {
   DiagnosticReport? _report;
   bool _isLoading = false;
-  String _selectedProject = 'proj_001';
+  List<Map<String, dynamic>> _projects = [];
+  String? _selectedProject;
+  bool _projectsLoaded = false;
 
   @override
   void initState() {
     super.initState();
-    _loadReport();
+    _loadProjects();
+  }
+
+  /// 项目列表来自账号里真实保存的项目，不再写死两个示例项目。
+  Future<void> _loadProjects() async {
+    setState(() => _isLoading = true);
+    try {
+      final rows = await ApiService.getProjects();
+      if (!mounted) return;
+      setState(() {
+        _projects = rows;
+        _projectsLoaded = true;
+        _selectedProject = rows.isEmpty ? null : rows.first['id']?.toString();
+        _isLoading = rows.isNotEmpty;
+      });
+      if (_selectedProject != null) _loadReport();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('项目列表加载失败，请稍后重试')));
+      setState(() {
+        _projectsLoaded = true;
+        _isLoading = false;
+      });
+    }
   }
 
   void _loadReport() async {
+    final projectId = _selectedProject;
+    if (projectId == null) return;
     setState(() => _isLoading = true);
     try {
-      final report = await ApiService.getHealthReport(_selectedProject);
+      final report = await ApiService.getHealthReport(projectId);
       if (!mounted) return;
       setState(() {
         _report = DiagnosticReport.fromJson(report);
@@ -51,37 +79,56 @@ class _HealthScreenState extends State<HealthScreen> {
           children: [
             Text('选择项目', style: Theme.of(context).textTheme.titleMedium),
             SizedBox(height: 12),
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                border: Border.all(color: Color(0xFFE2E8F0)),
-                borderRadius: BorderRadius.circular(8),
+            if (_projectsLoaded && _projects.isEmpty)
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  border: Border.all(color: context.eiLine),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: EnEmptyState(
+                  title: '还没有项目',
+                  message: '请先在「项目」页新建一个项目，再回来做健康诊断。',
+                ),
+              )
+            else if (_projects.isNotEmpty)
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  border: Border.all(color: context.eiLine),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: DropdownButton<String>(
+                  value: _selectedProject,
+                  isExpanded: true,
+                  underline: SizedBox(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() => _selectedProject = value);
+                      _loadReport();
+                    }
+                  },
+                  items: [
+                    for (final p in _projects)
+                      DropdownMenuItem(
+                        value: p['id']?.toString(),
+                        child: Text('${p['name'] ?? p['title'] ?? '未命名项目'}'),
+                      ),
+                  ],
+                ),
               ),
-              child: DropdownButton<String>(
-                value: _selectedProject,
-                isExpanded: true,
-                underline: SizedBox(),
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() => _selectedProject = value);
-                    _loadReport();
-                  }
-                },
-                items: [
-                  DropdownMenuItem(
-                    value: 'proj_001',
-                    child: Text('山东德州100MW光伏'),
-                  ),
-                  DropdownMenuItem(
-                    value: 'proj_002',
-                    child: Text('内蒙古乌兰察布50MW风电'),
-                  ),
-                ].toList(),
-              ),
-            ),
             SizedBox(height: 24),
             if (_isLoading)
               Center(child: CircularProgressIndicator())
+            else if (_report == null && _projects.isNotEmpty)
+              Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: EnEmptyState(
+                  title: '暂无诊断报告',
+                  message: '这个项目暂时没有可用的诊断报告。运行数据接入后会在这里生成，不会用示例数据代替。',
+                ),
+              )
             else if (_report != null)
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -140,7 +187,7 @@ class _HealthScreenState extends State<HealthScreen> {
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF475569),
+                        color: context.eiBody2,
                       ),
                     ),
                   ],
@@ -159,7 +206,7 @@ class _HealthScreenState extends State<HealthScreen> {
       {'label': '组件', 'value': 0.78},
       {'label': '通信', 'value': 0.92},
       {'label': '积灰', 'value': 0.65},
-      {'label': '综合PR', 'value': 0.88},
+      {'label': '综合性能比', 'value': 0.88},
     ];
 
     return Column(
@@ -199,7 +246,7 @@ class _HealthScreenState extends State<HealthScreen> {
                   child: LinearProgressIndicator(
                     value: (d['value'] as double),
                     minHeight: 6,
-                    backgroundColor: Color(0xFFE2E8F0),
+                    backgroundColor: context.eiLine,
                     valueColor: AlwaysStoppedAnimation(AppTheme.primaryColor),
                   ),
                 ),
@@ -258,7 +305,7 @@ class _HealthScreenState extends State<HealthScreen> {
                         finding.description,
                         style: TextStyle(
                           fontSize: 12,
-                          color: Color(0xFF0F172A),
+                          color: context.eiStrong,
                           fontWeight: FontWeight.w500,
                         ),
                         maxLines: 1,
@@ -270,7 +317,7 @@ class _HealthScreenState extends State<HealthScreen> {
                 SizedBox(height: 8),
                 Text(
                   '影响：${finding.impact}',
-                  style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                  style: TextStyle(fontSize: 11, color: context.eiMuted),
                 ),
               ],
             ),
@@ -297,7 +344,7 @@ class _HealthScreenState extends State<HealthScreen> {
             margin: EdgeInsets.only(bottom: 12),
             padding: EdgeInsets.all(12),
             decoration: BoxDecoration(
-              border: Border.all(color: Color(0xFFE2E8F0)),
+              border: Border.all(color: context.eiLine),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Column(
@@ -335,7 +382,7 @@ class _HealthScreenState extends State<HealthScreen> {
                 SizedBox(height: 8),
                 Text(
                   rec.action,
-                  style: TextStyle(fontSize: 12, color: Color(0xFF475569)),
+                  style: TextStyle(fontSize: 12, color: context.eiBody2),
                 ),
                 SizedBox(height: 4),
                 Text(

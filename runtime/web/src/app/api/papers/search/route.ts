@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     const acquired = await acquireMember({ usageType: 'paper_search' });
     if (!acquired.ok) return acquired.response;
     try {
-        const result = await unifiedSearch(body.query.trim(), options);
+        const result = await unifiedSearch(body.query.trim(), { ...options, userId: acquired.user.id });
         return NextResponse.json({ success: true, data: result });
     } catch {
         await acquired.refund();

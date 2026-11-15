@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 import 'dart:math' as math;
 
 class BarChart extends StatelessWidget {
@@ -43,7 +44,7 @@ class BarChart extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF0F172A),
+                  color: context.eiStrong,
                 ),
               ),
               SizedBox(height: 16),

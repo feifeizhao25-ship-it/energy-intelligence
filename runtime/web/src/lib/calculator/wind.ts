@@ -182,7 +182,10 @@ export async function calculateWind(input: WindCalculationInput) {
     assumptions: [
       `风速分布：Weibull k=${input.turbine.weibullK ?? 2}（未提供实测时默认瑞利分布）`,
       input.turbine.model ? `功率曲线：通用 v³ 曲线（尚未接入 ${input.turbine.model} 厂商曲线）` : '功率曲线：通用 v³ 曲线（未接入厂商曲线）',
-      `空气密度：${airDensity.toFixed(3)} kg/m³（海拔 ${input.elevation ?? 0} m、年均气温 ${input.annualMeanTemperature ?? 15}℃ 修正）`,
+      `空气密度：${airDensity.toFixed(3)} kg/m³（海拔 ${input.elevation ?? 0} m、年均气温 ${input.annualMeanTemperature ?? 15}℃ 修正，参照 IEC 61400-12-1）`,
+      `尾流损失单列为假设：${input.operation.wakeLoss ?? 5}%`,
+      `可利用率单列为假设：${((input.operation.availability ?? 0.97) * 100).toFixed(1)}%`,
+      '资源评估参照 GB/T 18710《风电场风能资源评估方法》',
       '结果为 P50 估计：卫星再分析数据（NASA POWER 约 0.5° 网格月均值）仅适合初筛，不能替代测风塔，不确定度通常在 ±15% 以上',
     ],
   };

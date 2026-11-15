@@ -21,16 +21,19 @@ beforeAll(() => {
   process.env.ALIPAY_SANDBOX = 'false';
 });
 
-test('page-pay URL carries canonical server price and independently valid RSA2 signature', () => {
-  expect(canonicalPrice(Plan.FULL, 'monthly')).toBe(580);
+test('page-pay URL carries the annual price and independently valid RSA2 signature', () => {
+  expect(() => canonicalPrice(Plan.FULL, 'monthly')).toThrow('该套餐不支持所选付费周期');
+  expect(canonicalPrice(Plan.FULL, 'yearly')).toBe(5800);
   const url = createAlipayPagePayUrl({
-    orderNo: 'ENE20260902001', plan: Plan.FULL, billingPeriod: 'monthly', amount: 580,
+    orderNo: 'ENE20260902001', plan: Plan.FULL, billingPeriod: 'yearly', amount: 5800,
   });
   const query = Object.fromEntries(new URL(url).searchParams.entries());
   const verifier = createVerify('RSA-SHA256');
   verifier.update(canonicalAlipayParams(query), 'utf8');
   expect(verifier.verify(publicKey, query.sign, 'base64')).toBe(true);
-  expect(JSON.parse(query.biz_content).total_amount).toBe('580.00');
+  const biz = JSON.parse(query.biz_content);
+  expect(biz.total_amount).toBe('5800.00');
+  expect(biz.subject).toBe('新能源智库-专业-年付');
 });
 
 test('callback verification excludes sign_type and rejects amount tampering', () => {

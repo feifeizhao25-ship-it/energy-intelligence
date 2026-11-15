@@ -1,0 +1,25 @@
+{
+  "license_note": "电价只在载入带来源链接和核实日期的记录后展示。政策元数据只列公开文号与标题，金额以原文为准。",
+  "datasets": [
+    {
+      "id": "proxy-purchase",
+      "title": "省级代理购电价格",
+      "kind": "verified_tariff",
+      "loaded": false,
+      "updated": null,
+      "columns": ["省份", "月份", "价格（元/千瓦时）", "来源链接", "核实日期"],
+      "rows": []
+    },
+    {
+      "id": "policy-metadata",
+      "title": "政策元数据",
+      "kind": "policy_metadata",
+      "loaded": true,
+      "updated": "2026-10-15",
+      "columns": ["文号", "标题", "地区", "说明"],
+      "rows": [
+        ["发改价格〔2025〕136号", "新能源上网电价市场化改革", "全国", "元数据，正文与生效日期以发布机关原文为准"]
+      ]
+    }
+  ]
+}

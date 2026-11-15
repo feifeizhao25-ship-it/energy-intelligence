@@ -23,7 +23,15 @@ def test_terms_match_web_copy():
 
 
 def test_backend_source_has_no_banned_phrases():
-    allow = {"app/core/bottom_line.py", "app/services/bottom_line.py", "app/api/v1/ai_assistant.py"}
+    # 守卫和提示词必须写出被禁止的说法，替换通知本身含「价格预测」
+    allow = {
+        "app/core/bottom_line.py",
+        "app/services/bottom_line.py",
+        "app/services/bottom_line_semantic.py",
+        "app/self_improve/compliance.py",
+        "app/api/v1/ai_assistant.py",
+        "app/growth/claims.py",  # growth kit claim scanner must spell the banned wording it blocks
+    }
     hits = []
     for f in (ROOT / "app").rglob("*.py"):
         rel = f.relative_to(ROOT).as_posix()

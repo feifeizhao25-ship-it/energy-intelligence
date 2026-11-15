@@ -192,7 +192,7 @@ export const AI_TOOLS = {
   // 生成报告
   generate_report: {
     name: 'generate_report',
-    description: '生成投资分析报告',
+    description: '生成测算报告（方法、假设与计算结果）',
     parameters: {
       type: 'object',
       properties: {
@@ -205,8 +205,8 @@ export const AI_TOOLS = {
     handler: async (params: { projectData: any; reportType?: string; format?: string }) => {
       // 生成报告摘要
       const summary = {
-        title: `${params.projectData.location?.city || '未知'}光伏项目投资分析报告`,
-        executiveSummary: `该项目装机容量${params.projectData.capacity}kW，预计投资${params.projectData.investment}万元，25年总收益${params.projectData.totalRevenue}万元，投资回收期${params.projectData.paybackYears}年。`,
+        title: `${params.projectData.location?.city || '未知'}光伏项目测算报告`,
+        executiveSummary: `该项目装机容量${params.projectData.capacity}kW，输入造价${params.projectData.investment}万元，按假设汇总的25年现金流${params.projectData.totalRevenue}万元，静态回收期${params.projectData.paybackYears}年。以上为测算值。`,
         keyMetrics: {
           irr: params.projectData.irr,
           npv: params.projectData.netProfit,

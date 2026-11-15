@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../../services/api_service.dart';
+import '../../widgets/reading_column.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -65,13 +66,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
+      body: ReadingColumn(child: Column(
         children: [
           Container(
             height: 140,
             width: double.infinity,
             decoration: BoxDecoration(
-              gradient: AppTheme.primaryGradient(),
+              image: const DecorationImage(
+                image: AssetImage('assets/images/eg_hero_solar.webp'),
+                fit: BoxFit.cover,
+                colorFilter: ColorFilter.mode(Color(0x99102A5C), BlendMode.darken),
+              ),
               borderRadius: const BorderRadius.only(
                 bottomLeft: Radius.circular(28),
                 bottomRight: Radius.circular(28),
@@ -104,13 +109,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
-              child: Column(
+              child: Center(
+                // iPad / wide screens: keep the auth card a single centred column instead of stretching.
+                child: ConstrainedBox(
+                  key: const Key('auth-form-card'),
+                  constraints: const BoxConstraints(maxWidth: 480),
+                  child: Column(
                 children: [
                   Text(
                     'Step ${_step + 1} of 2',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
-                      color: Color(0xFF64748B),
+                      color: context.eiMuted,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -199,11 +209,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             Expanded(
                               child: Padding(
                                 padding: const EdgeInsets.only(top: 8),
-                                child: const Text(
+                                child: Text(
                                   'I agree to the Terms of Service and Privacy Policy (GDPR compliant)',
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: Color(0xFF64748B),
+                                    color: context.eiMuted,
                                   ),
                                 ),
                               ),
@@ -245,10 +255,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text(
+                      Text(
                         'Already have an account? ',
                         style: TextStyle(
-                          color: Color(0xFF64748B),
+                          color: context.eiMuted,
                           fontSize: 14,
                         ),
                       ),
@@ -267,10 +277,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                 ],
               ),
+                ),
+              ),
             ),
           ),
         ],
-      ),
+      )),
     );
   }
 }

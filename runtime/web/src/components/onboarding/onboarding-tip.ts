@@ -7,11 +7,12 @@ export const TIP_DISMISSED_KEY = 'hasSeenOnboarding_v1';
 export const TIP_SNOOZED_KEY = 'onboardingTipSnoozed_v1';
 
 /** 主操作按钮位于页面底部/表单末尾的路由前缀：这些页面不弹提示 */
-export const TIP_SUPPRESSED_PREFIXES = ['/calculator', '/quick-calc', '/checkout', '/onboarding', '/login'];
+export const TIP_SUPPRESSED_PREFIXES = ['/calculator', '/quick-calc', '/checkout', '/onboarding', '/login', '/assistant', '/membership'];
 
 type KV = Pick<Storage, 'getItem'>;
 
-export function shouldShowOnboardingTip(pathname: string | null | undefined, local: KV | null, session: KV | null): boolean {
+export function shouldShowOnboardingTip(pathname: string | null | undefined, local: KV | null, session: KV | null, audit = false): boolean {
+  if (audit) return false;
   const path = pathname || '/';
   if (TIP_SUPPRESSED_PREFIXES.some((p) => path === p || path.startsWith(`${p}/`))) return false;
   if (local?.getItem(TIP_DISMISSED_KEY)) return false;

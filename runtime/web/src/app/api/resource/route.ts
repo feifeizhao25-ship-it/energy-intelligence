@@ -10,6 +10,7 @@ import {
 import { getAirQualityIndex } from '@/lib/api/open-meteo'; // Fallback or alternative
 import { enforceRateLimit, PUBLIC_RULES } from '@/lib/security/rate-limit';
 import { safeErrorMessage } from '@/lib/api/safe-error';
+import { isWindResourceUnavailable, windResourceUnavailableBody } from '@/lib/api/wind-resource-error';
 
 export async function GET(request: NextRequest) {
     const limited = await enforceRateLimit(request, PUBLIC_RULES.resource);
@@ -79,6 +80,9 @@ export async function GET(request: NextRequest) {
             duration: Date.now() - startTime
         });
     } catch (error) {
+        if (isWindResourceUnavailable(error)) {
+            return NextResponse.json({ ...windResourceUnavailableBody(), location: { lat, lng } }, { status: 422 });
+        }
         console.error('资源查询错误:', error);
         return NextResponse.json(
             {

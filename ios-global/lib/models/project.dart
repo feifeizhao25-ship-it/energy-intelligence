@@ -82,6 +82,8 @@ class Project {
 
   String get statusLabel {
     switch (status) {
+      case 'draft':
+        return 'Draft';
       case 'planning':
         return 'Planning';
       case 'construction':

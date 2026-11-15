@@ -196,8 +196,9 @@ async function fetchPaperDetails(paperId: string) {
     }
     const encodedPaperId = encodeURIComponent(paperId);
     try {
+        throw new Error('OVERSEAS_SOURCE_DISABLED');
         const response = await fetch(
-            `https://api.semanticscholar.org/graph/v1/paper/${encodedPaperId}?fields=title,authors,year,abstract,openAccessPdf`,
+            `https://domestic-cache.invalid/paper/${encodedPaperId}`,
             {
                 headers: {
                     'Content-Type': 'application/json',

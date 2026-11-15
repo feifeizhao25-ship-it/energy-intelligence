@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { USAGE_LIMITS } from '@/lib/membership/plans';
 import { effectivePlan } from '@/lib/auth/token-refresh';
 import { sameShanghaiDay } from '@/lib/membership/day';
+import { resetDailyCountersIfNeeded, withDailyLock } from '@/lib/membership/day-lock';
 
 /**
  * 调用模型前的统一门禁：必须登录，并按服务端记录的会员档扣减每日 AI 次数。
@@ -34,6 +35,10 @@ export interface QuotaStore {
   resetAndTake(userId: string, now: Date, previousReset: Date): Promise<boolean>;
   takeIfBelow(userId: string, limit: number): Promise<boolean>;
   take(userId: string): Promise<boolean>;
+  /** 真实数据库把重置和扣次放在同一把锁里。内存假存储不实现它。 */
+  consume?(userId: string, now: Date, limit: number): Promise<{ ok: boolean; remaining: number | null }>;
+  /** 模型调用失败时把已经扣掉的一次还回去。计数不会减成负数。 */
+  release(userId: string): Promise<void>;
 }
 
 // 一天按北京时间算（容器没设 TZ 时服务器是 UTC，按本地日期会晚 8 小时重置）
@@ -45,6 +50,10 @@ export async function consumeAiCall(store: QuotaStore, userId: string, now = new
   const plan = effectivePlan(user.plan, user.planExpireAt, now) as keyof typeof USAGE_LIMITS;
   const limit = (USAGE_LIMITS[plan] ?? USAGE_LIMITS.FREE).ai_chat;
   if (limit <= 0) return { ok: false, plan, limit, remaining: 0 };
+  if (store.consume) {
+    const taken = await store.consume(userId, now, limit);
+    return { ok: taken.ok, plan, limit, remaining: taken.remaining };
+  }
   if (!sameDay(new Date(user.lastResetAt), now)) {
     const reset = await store.resetAndTake(userId, now, user.lastResetAt);
     if (reset) return { ok: true, plan, limit, remaining: Number.isFinite(limit) ? limit - 1 : null };
@@ -81,6 +90,24 @@ export const prismaQuotaStore: QuotaStore = {
     const { count } = await prisma.user.updateMany({ where: { id: userId, deletedAt: null }, data: { dailyAiCalls: { increment: 1 } } });
     return count === 1;
   },
+  consume: (userId, now, limit) => withDailyLock(userId, async (tx) => {
+    const row = await tx.user.findFirst({
+      where: { id: userId, deletedAt: null },
+      select: { lastResetAt: true, dailyAiCalls: true },
+    });
+    if (!row) return { ok: false, remaining: 0 };
+    const reset = await resetDailyCountersIfNeeded(tx, userId, row.lastResetAt, now);
+    const used = reset ? 0 : row.dailyAiCalls;
+    if (Number.isFinite(limit) && used >= limit) return { ok: false, remaining: 0 };
+    await tx.user.update({ where: { id: userId }, data: { dailyAiCalls: { increment: 1 } } });
+    return { ok: true, remaining: Number.isFinite(limit) ? Math.max(0, limit - used - 1) : null };
+  }),
+  release: async (userId) => {
+    await prisma.user.updateMany({
+      where: { id: userId, deletedAt: null, dailyAiCalls: { gt: 0 } },
+      data: { dailyAiCalls: { decrement: 1 } },
+    });
+  },
 };
 
 export async function requireAiQuota(store: QuotaStore = prismaQuotaStore): Promise<AiGuardResult> {
@@ -101,4 +128,35 @@ export async function requireAiQuota(store: QuotaStore = prismaQuotaStore): Prom
     };
   }
   return { ok: true, userId, plan: result.plan, remaining: result.remaining };
+}
+
+/** 对话没有成功调用模型时退还门禁里已扣的一次。退还失败不打断给用户的回答。 */
+export async function refundAiCall(userId: string, store: QuotaStore = prismaQuotaStore): Promise<void> {
+  try {
+    await store.release(userId);
+  } catch (error) {
+    console.warn('AI 次数退还失败:', error);
+  }
+}
+
+/**
+ * 一次已经扣掉的模型调用。
+ * 失败、客户端取消、连接中断都可能走到退还，重复调用只退一次。
+ * 成功交付后调用 settle()，之后不再退还。
+ */
+export function trackAiQuota(userId: string, store: QuotaStore = prismaQuotaStore): {
+  refund: () => Promise<void>;
+  settle: () => void;
+} {
+  let closed = false;
+  return {
+    settle() {
+      closed = true;
+    },
+    async refund() {
+      if (closed) return;
+      closed = true;
+      await refundAiCall(userId, store);
+    },
+  };
 }

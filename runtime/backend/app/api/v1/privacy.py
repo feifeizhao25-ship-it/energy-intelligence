@@ -14,8 +14,12 @@ import secrets
 import uuid
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import JSONResponse
+import io
+import json
+import zipfile
+
+from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -54,7 +58,7 @@ async def _user_or_404(user_id: str, db: AsyncSession) -> User:
 
 
 @router.get("/export")
-async def export_my_data(user_id: str = Depends(get_current_user_id), db: AsyncSession = Depends(get_db)):
+async def export_my_data(request: Request, user_id: str = Depends(get_current_user_id), db: AsyncSession = Depends(get_db)):
     user = await _user_or_404(user_id, db)
     projects = (await db.execute(select(Project).where(Project.user_id == user_id))).scalars().all()
     pids = [p.id for p in projects]
@@ -85,6 +89,16 @@ async def export_my_data(user_id: str = Depends(get_current_user_id), db: AsyncS
                            for o in (await db.execute(select(PaymentOrder).where(PaymentOrder.user_id == user_id))).scalars().all()],
         "consent": _row(consent, ["marketing", "analytics", "third_party", "updated_at"]) if consent else None,
     }
+    if request.query_params.get("format") == "zip":
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(buffer, "w") as archive:
+            archive.writestr("projects.json", json.dumps(data["projects"], ensure_ascii=False))
+            archive.writestr("reports.json", json.dumps(data["reports"], ensure_ascii=False))
+            archive.writestr("snapshots.json", json.dumps({
+                "resource_assessments": data["resource_assessments"],
+                "financial_models": data["financial_models"],
+            }, ensure_ascii=False))
+        return Response(content=buffer.getvalue(), media_type="application/zip", headers={"Content-Disposition": f'attachment; filename="my-data-{user_id}.zip"'})
     return JSONResponse(data, headers={"Content-Disposition": f'attachment; filename="my-data-{user_id}.json"'})
 
 

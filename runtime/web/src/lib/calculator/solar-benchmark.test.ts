@@ -2,7 +2,8 @@
  * 光伏测算手算基准。每个用例都写明手算过程；引擎结果与手算偏差超过 ±2% 即失败。
  * 资源数据用固定值 mock，避免依赖网络。
  */
-import { calculateSolar, annualEnergyKWh, performanceRatio, LOSS_ASSUMPTIONS, normalizeSelfUseRatio, degradationFactor, defaultUnitCost, DEFAULT_SYSTEM_COST_PER_KW } from './solar';
+import { calculateSolar, annualEnergyKWh, performanceRatio, LOSS_ASSUMPTIONS, normalizeSelfUseRatio, degradationFactor, defaultUnitCost, DEFAULT_SYSTEM_COST_PER_KW, monthTemperatureFactor } from './solar';
+import { poaDaily } from './transposition';
 import { discountedLcoe } from './project-finance';
 import { SolarCalculationInput } from '@/types';
 
@@ -34,6 +35,23 @@ function expectWithin2Percent(actual: number, expected: number) {
     expect(Math.abs(actual - expected) / Math.abs(expected)).toBeLessThanOrEqual(0.02);
 }
 
+const GROUND_ETA = 0.99 * 0.98 * 0.985 * 0.97 * (1 - LOSS_ASSUMPTIONS.soilingLoss) * (1 - LOSS_ASSUMPTIONS.acLoss);
+
+/** 与引擎相同的逐月 SAPM 温度修正。气温 0°C 时电池仍可能低于 25°C，低温会提高出力。 */
+function handYear1KWh(): number {
+    let total = 0;
+    for (let month = 1; month <= 12; month += 1) {
+        const days = daysIn2024(month);
+        const ghi = 125 / days;
+        const plane = poaDaily({ lat: 30, month, ghi, dhi: 0, tilt: 0, azimuth: 180 }) * days;
+        const temp = monthTemperatureFactor({
+            airC: 0, dailyPoaKwhM2: plane / days, lat: 30, month, installationType: 'ground',
+        });
+        total += Math.round(1000 * plane * GROUND_ETA * temp);
+    }
+    return total;
+}
+
 const benchmarkInput: SolarCalculationInput = {
     lat: 30, lng: 120, capacity: 1000, installationType: 'ground', moduleType: 'standard',
     tilt: 0, azimuth: 180, selfUseRatio: 0, electricityPrice: 0.6, feedInTariff: 0.35,
@@ -53,13 +71,11 @@ describe('手算基准：发电量与 PR', () => {
         const result = await calculateSolar(benchmarkInput);
         // 手算系统效率（地面）：遮挡 0.99 × 失配 0.98 × 直流线损 0.985 × 逆变器 0.97
         //   × 灰尘 (1-0.02) × 交流及升压 (1-0.015) = 0.8948
-        const eta = 0.99 * 0.98 * 0.985 * 0.97 * (1 - LOSS_ASSUMPTIONS.soilingLoss) * (1 - LOSS_ASSUMPTIONS.acLoss);
-        expect(eta).toBeCloseTo(0.8948, 4);
-        // 手算年发电量：1000 × 1500 × 0.8948 ≈ 1,342,200 kWh
-        expectWithin2Percent(result.energy.year1, 1_342_200);
+        expect(GROUND_ETA).toBeCloseTo(0.8948, 4);
+        const expected = handYear1KWh();
+        expectWithin2Percent(result.energy.year1, expected);
         expectWithin2Percent(result.energy.planeIrradiation!, 1500);
-        // 手算 PR：1,342,200 ÷ (1000 × 1500) ≈ 0.8948
-        expectWithin2Percent(result.energy.pr, 0.8948);
+        expectWithin2Percent(result.energy.pr, expected / (1000 * result.energy.planeIrradiation!));
         expect(daysIn2024(2)).toBe(29); // 引擎按 2024 年天数折算月辐照，mock 已按同一天数构造
     });
 });
@@ -110,11 +126,10 @@ describe('手算基准：LCOE 折现口径', () => {
         // 手算：投资 I0 = 1000 × 3500 = 3,500,000 元
         //   运维现值 = 35,000 × Σ 1.02^(t−1)/1.08^t = 35,000 × (1/1.08) × (1 − (1.02/1.08)^25)/(1 − 1.02/1.08)
         //            = 35,000 × 12.674 = 443,591
-        //   发电现值（标准组件：首年衰减 1.5%，此后 0.45%/年）
-        //            = E1 × [1/1.08 + 0.985/1.08² × Σ_{k=0}^{23} (0.9955/1.08)^k] = E1 × 10.1917
-        //            = 1,342,212 × 10.1917 ≈ 13,679,500
-        //   LCOE = (3,500,000 + 443,591) ÷ 13,679,500 ≈ 0.2883 元/kWh
-        expectWithin2Percent(result.financial.lcoe, 0.2883);
+        //   发电现值系数（标准组件：首年衰减 1.5%，此后 0.45%/年）= 10.1917
+        //   LCOE = (3,500,000 + 443,591) ÷ (首年发电量 × 10.1917)
+        const expectedEnergy = handYear1KWh();
+        expectWithin2Percent(result.financial.lcoe, (3_500_000 + 443_591) / (expectedEnergy * 10.1917));
         expect(result.assumptions).toMatchObject({ discountRate: 0.08, firstYearDegradation: 1.5, annualDegradation: 0.45 });
     });
 
@@ -131,8 +146,7 @@ describe('碳减排：统一排放因子', () => {
     // 原断言固定用全国平均 0.5306；审计 8-2 指出应按项目所在省取省级因子，基准用例在浙江（0.4974）。
     it('首年减排 = 首年发电量 × 浙江省级因子 0.4974 kg/kWh，结果带因子年份、来源与口径', async () => {
         const result = await calculateSolar(benchmarkInput);
-        // 手算：1,342,212 kWh × 0.4974 ≈ 667,616 kg
-        expectWithin2Percent(result.environmental.co2Year1, 667_616);
+        expectWithin2Percent(result.environmental.co2Year1, handYear1KWh() * 0.4974);
         expect(result.environmental.emissionFactor).toBe(0.4974);
         expect(result.environmental.emissionFactorScope).toContain('浙江');
         expect(result.environmental.emissionFactorYear).toBe(2023);

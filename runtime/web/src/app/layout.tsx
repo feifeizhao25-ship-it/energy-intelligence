@@ -1,22 +1,32 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import AuthProvider from '@/components/providers/AuthProvider'
+import { ThemeProvider } from '@/components/providers/ThemeProvider'
 import { isAuthConfigured } from '@/lib/auth/availability'
+import { cnFormatDetection } from '@/lib/metadata/format-detection'
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
     title: '新能源智库 - 新能源项目测算与政策查询',
     description: '算清收益 · 看清假设。面向新能源从业者的光伏、风电、储能初步测算与政策查询工具，基于公开气象数据，结果仅供参考。',
+    formatDetection: cnFormatDetection,
     manifest: '/manifest.json',
+    icons: {
+      icon: [{ url: '/favicon.ico', sizes: 'any' }],
+      apple: [
+        { url: '/icons/icon-180x180.png', sizes: '180x180' },
+        { url: '/icons/icon-192x192.png', sizes: '192x192' },
+      ],
+    },
     appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: '新能源智库' },
   };
 }
 
 export const viewport: Viewport = {
-  themeColor: '#22c55e',
+  themeColor: '#0E2A2B',
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
+  viewportFit: 'cover',
 }
 
 import { NextIntlClientProvider } from 'next-intl';
@@ -31,17 +41,21 @@ export default async function RootLayout({
   const messages = await getMessages();
 
   return (
-    <html lang={locale} className="dark">
+    <html lang={locale} suppressHydrationWarning>
       <head>
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="apple-touch-icon" href="/icons/icon-180x180.png" />
         <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192x192.png" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
       </head>
       <body className="font-sans">
-        <NextIntlClientProvider locale={locale} messages={messages}>
-          <AuthProvider configured={isAuthConfigured()}>
-            {children}
-          </AuthProvider>
-        </NextIntlClientProvider>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
+          <NextIntlClientProvider locale={locale} messages={messages}>
+            <AuthProvider configured={isAuthConfigured()}>
+              {children}
+            </AuthProvider>
+          </NextIntlClientProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

@@ -1,5 +1,6 @@
 import Sidebar from '@/components/layout/Sidebar';
 import OnboardingFlow from '@/components/onboarding/OnboardingFlow';
+import { ShellErrorBoundary } from '@/components/ui/ShellErrorBoundary';
 
 export default function DashboardLayout({
     children,
@@ -13,7 +14,7 @@ export default function DashboardLayout({
             {/* Responsive: no margin on mobile (< lg), sidebar margin on desktop */}
             <main className="lg:ml-64 min-h-screen transition-all duration-300">
                 <div className="p-4 lg:p-8 pt-16 lg:pt-8">
-                    {children}
+                    <ShellErrorBoundary>{children}</ShellErrorBoundary>
                 </div>
             </main>
         </div>

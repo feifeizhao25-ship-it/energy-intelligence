@@ -4,6 +4,8 @@ import '../../theme/app_theme.dart';
 import '../resource/solar_resource_screen.dart';
 import '../finance/solar_finance_screen.dart';
 import '../operations/health_screen.dart';
+import '../../widgets/country_picker.dart';
+import 'report_sources_screen.dart';
 
 class ProjectDetailScreen extends StatelessWidget {
   final Project project;
@@ -19,7 +21,23 @@ class ProjectDetailScreen extends StatelessWidget {
             expandedHeight: 180,
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
-                decoration: BoxDecoration(gradient: _getProjectGradient()),
+                decoration: BoxDecoration(
+                  gradient: _getProjectGradient(),
+                  image: DecorationImage(
+                    image: AssetImage(
+                      project.projectType == 'solar_pv'
+                          ? 'assets/images/en_res_solar.webp'
+                          : project.projectType == 'wind'
+                              ? 'assets/images/en_res_wind.webp'
+                              : project.projectType == 'storage'
+                                  ? 'assets/images/en_res_storage.webp'
+                                  : 'assets/images/en_res_compare.webp',
+                    ),
+                    fit: BoxFit.cover,
+                    opacity: 0.65,
+                    colorFilter: const ColorFilter.mode(Color(0x59000000), BlendMode.darken),
+                  ),
+                ),
                 child: Padding(
                   padding: EdgeInsets.all(20),
                   child: Column(
@@ -83,7 +101,7 @@ class ProjectDetailScreen extends StatelessWidget {
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF0F172A),
+            color: context.eiStrong,
           ),
         ),
         SizedBox(height: 12),
@@ -94,6 +112,19 @@ class ProjectDetailScreen extends StatelessWidget {
           mainAxisSpacing: 12,
           crossAxisSpacing: 12,
           children: [
+            _buildActionCard(
+              title: '报告数据来源',
+              icon: Icons.fact_check,
+              color: Color(0xFF6366F1),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => ReportSourcesScreen(
+                    projectId: project.id,
+                    projectName: project.name,
+                  ),
+                ),
+              ),
+            ),
             _buildActionCard(
               title: '资源评估',
               icon: Icons.terrain,
@@ -122,9 +153,7 @@ class ProjectDetailScreen extends StatelessWidget {
               title: 'AI分析',
               icon: Icons.smart_toy,
               color: Color(0xFF3B82F6),
-              onTap: () => ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(SnackBar(content: Text('功能开发中'))),
+              onTap: () => Navigator.of(context).pushNamed('/ai-assistant'),
             ),
           ],
         ),
@@ -185,6 +214,7 @@ class ProjectDetailScreen extends StatelessWidget {
         _buildInfoRow('状态', project.statusLabel),
         _buildInfoRow('装机容量', '${project.capacityMw}MW'),
         _buildInfoRow('所在地', '${project.province}${project.address}'),
+        ProjectCountryRow(projectId: project.id, initial: project.countryCode),
         _buildInfoRow('纬度', '${project.lat.toStringAsFixed(4)}°N'),
         _buildInfoRow('经度', '${project.lng.toStringAsFixed(4)}°E'),
       ],
@@ -240,7 +270,7 @@ class ProjectDetailScreen extends StatelessWidget {
           title: '财务模型',
           date: project.createdAt.add(Duration(days: 60)),
           icon: Icons.schedule,
-          color: Color(0xFF94A3B8),
+          color: Color(0xFF64748B),
         ),
       ],
     );
@@ -276,7 +306,7 @@ class ProjectDetailScreen extends StatelessWidget {
                 ),
                 Text(
                   '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}',
-                  style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                  style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
                 ),
               ],
             ),

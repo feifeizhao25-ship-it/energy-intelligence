@@ -16,12 +16,20 @@ import {
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import InvestmentReport from '@/components/calculator/InvestmentReport';
+import { OfficeExportButtons } from '@/components/reports/OfficeExportButtons';
 import MonthlyGenerationBarChart from '@/components/charts/MonthlyGenerationBarChart';
 import CostBreakdownEditor from '@/components/calculator/CostBreakdownEditor';
 import AIProjectAnalysis from '@/components/calculator/AIProjectAnalysis';
 import { safeErrorMessage } from '@/lib/api/safe-error';
 import { co2AvoidedTonnesForProvince, emissionFactorNoteFor } from '@/lib/standards/emission-factor';
 import { priceAsOfText } from '@/lib/pricing/tariffs';
+import { ExplainLayer } from '@/components/explain/ExplainLayer';
+import { WIND_GENERATION_METHOD, WIND_GENERATION_SOURCES } from '@/lib/calculator/wind-explain';
+import { FreshnessBadge } from '@/components/freshness/FreshnessBadge';
+import { formatPercentRange, formatRange, type NullableRange, type ValueRange } from '@/lib/calculator/ranges';
+import { formulaHtml, reportFormula } from '@/lib/ai/formula-html';
+// KaTeX 同时写出 HTML 和 MathML。没有样式时 MathML 会在公式下面再显示一行乱码。
+import 'katex/dist/katex.min.css';
 
 const PDFDownloadLink = dynamic(
     () => import('@react-pdf/renderer').then((mod) => mod.PDFDownloadLink),
@@ -66,8 +74,11 @@ function CalculatorResultPage() {
         return <div className="p-20 text-center text-slate-400">计算结果不完整，请返回重新测算</div>;
     }
 
+    const levelized = levelizedDisplay(data, type);
+    const formula = reportFormula(type);
+
     return (
-        <div className="min-h-screen bg-[#020617] text-slate-200 pb-20">
+        <div className="min-h-screen overflow-x-hidden bg-[#020617] pb-20 text-slate-200">
             {/* Result Header：手机上标题与按钮分两行，标题正常换行，按钮可折行，不再撑出屏幕 */}
             <div className="bg-slate-900/50 border-b border-slate-800 sm:sticky sm:top-0 z-40 backdrop-blur-md">
                 <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -94,6 +105,7 @@ function CalculatorResultPage() {
 
                     <div className="flex flex-wrap items-start gap-2 sm:justify-end">
                         <WordDownloadButton data={data} type={type || 'solar'} />
+                        <OfficeExportButtons title="测算结果" rows={[['类型', type || 'solar']]} />
                         <PDFDownloadButton data={data} type={type || 'solar'} />
                     </div>
                 </div>
@@ -108,6 +120,23 @@ function CalculatorResultPage() {
                     {priceAsOfText(data.metadata?.pricing ?? data.pricing)}
                     {(data.metadata?.pricing ?? data.pricing)?.feedInBasis && <span className="mt-1 block">{(data.metadata?.pricing ?? data.pricing).feedInBasis}</span>}
                 </p>
+                <div className="mb-6 space-y-3">
+                    <ExplainLayer
+                        fact={type === 'wind'
+                            ? `年发电量 ${Math.round(Number(data.energy.year1) || 0)} kWh，按轮毂高度风速、功率曲线和损失假设算出。`
+                            : `年发电量 ${Math.round(Number(data.energy.year1) || 0)} kWh，按当前输入与假设算出。`}
+                        method={type === 'wind'
+                            ? WIND_GENERATION_METHOD
+                            : '年发电量等于倾斜面年辐照乘装机容量乘综合效率系数。性能比按国际电工委员会性能比定义，为实际发电量与标准测试条件参考发电量之比。'}
+                        sources={type === 'wind'
+                            ? WIND_GENERATION_SOURCES
+                            : [
+                                { title: '光伏发电站设计标准（2024 年版）', locator: '6.6', status: '待核验' },
+                                { title: '未绑定原文的数字', status: '不支持' },
+                            ]}
+                    />
+                    <FreshnessBadge asOf={(data.metadata?.pricing ?? data.pricing)?.updatedAt ?? null} intervalDays={90} />
+                </div>
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
 
                     {/* Main Dashboard */}
@@ -117,19 +146,19 @@ function CalculatorResultPage() {
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             <MetricCard
                                 label="内部收益率（IRR）"
-                                value={data.financial.irr === null || data.financial.irr === undefined ? '无法确认' : `${data.financial.irr.toFixed(2)}%`}
+                                value={irrDisplay(data)}
                                 icon={<TrendingUp className="w-5 h-5 text-emerald-400" />}
                                 color="border-emerald-500/20"
                             />
                             <MetricCard
                                 label="静态回收期"
-                                value={`${data.financial.paybackYears.toFixed(1)}年`}
+                                value={paybackDisplay(data)}
                                 icon={<Calendar className="w-5 h-5 text-blue-400" />}
                                 color="border-blue-500/20"
                             />
                             <MetricCard
-                                label="平准化度电成本（LCOE）"
-                                value={`¥${data.financial.lcoe.toFixed(3)}`}
+                                label={levelized.label}
+                                value={levelized.value}
                                 icon={<DollarSign className="w-5 h-5 text-orange-400" />}
                                 color="border-orange-500/20"
                             />
@@ -141,6 +170,15 @@ function CalculatorResultPage() {
                                 color="border-purple-500/20"
                             />
                         </div>
+
+                        <section data-testid="cn-formula" className="rounded-3xl border border-slate-800 bg-slate-900 p-5 sm:p-8">
+                            <h3 className="text-lg font-bold text-white">计算公式</h3>
+                            <p className="mt-2 text-sm text-slate-400">{formula.name}</p>
+                            <div
+                                className="mt-4 overflow-x-auto text-white"
+                                dangerouslySetInnerHTML={{ __html: formulaHtml(formula.latex, true) }}
+                            />
+                        </section>
 
                         {/* Monthly Generation Analysis */}
                         <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-8">
@@ -235,6 +273,40 @@ function MetricCard({ label, value, unit, icon, trend, color }: any) {
             </div>
         </div>
     );
+}
+
+function preparedText(range: { text?: unknown } | null | undefined): string | null {
+    return typeof range?.text === 'string' && range.text.trim() ? range.text : null;
+}
+
+/** 已有区间优先。缺区间或中值为空时不回退到单点 toFixed。 */
+function irrDisplay(data: { ranges?: { irr?: NullableRange & { text?: string } } }): string {
+    const range = data.ranges?.irr;
+    if (!range) return '无法确认';
+    return preparedText(range) ?? formatPercentRange(range);
+}
+
+function levelizedDisplay(data: { ranges?: { lcoe?: (ValueRange & { text?: string }) | null; lcos?: (ValueRange & { text?: string }) | null } }, type: string | null): { label: string; value: string } {
+    const storage = type === 'storage' || Boolean(data.ranges?.lcos && !data.ranges?.lcoe);
+    const range = storage ? data.ranges?.lcos ?? data.ranges?.lcoe : data.ranges?.lcoe;
+    const label = storage ? '平准化储能成本（LCOS）' : '平准化度电成本（LCOE）';
+    if (!range || range.median === null || range.median === undefined || !Number.isFinite(range.median)) {
+        return { label, value: preparedText(range) ?? '无法确认' };
+    }
+    return { label, value: preparedText(range) ?? formatRange(range, '元/度', { decimals: 3 }) };
+}
+
+function paybackDisplay(data: { ranges?: { paybackYears?: (ValueRange & { text?: string }) | null; payback?: (ValueRange & { text?: string }) | null }; financial?: { paybackYears?: number | null } }): string {
+    const range = data.ranges?.paybackYears ?? data.ranges?.payback;
+    if (range) {
+        if (range.median === null || range.median === undefined || !Number.isFinite(range.median)) {
+            return preparedText(range) ?? '无法确认';
+        }
+        return preparedText(range) ?? formatRange(range, '年', { decimals: 1 });
+    }
+    const years = data.financial?.paybackYears;
+    if (years === null || years === undefined || !Number.isFinite(years)) return '无法确认';
+    return `${years.toFixed(1)}年`;
 }
 
 /** 光伏装机按组件峰值功率 kWp，风电、储能按额定功率 kW */

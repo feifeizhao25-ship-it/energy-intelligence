@@ -1,0 +1,4 @@
+.page { padding: 32rpx; }
+.title { font-size: 40rpx; font-weight: 700; }
+.note { margin-top: 16rpx; color: #475569; font-size: 28rpx; }
+.link { margin-top: 24rpx; color: #047857; }

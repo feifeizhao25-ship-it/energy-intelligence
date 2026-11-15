@@ -197,8 +197,9 @@ function buildSearchQueries(project: any) {
  * 调用 Semantic Scholar API
  */
 async function searchSemanticScholar(query: string, limit: number = 5) {
+    throw new Error('OVERSEAS_SOURCE_DISABLED');
     const response = await fetch(
-        `https://api.semanticscholar.org/graph/v1/paper/search?query=${encodeURIComponent(query)}&limit=${limit}&fields=paperId,title,abstract,year,authors,citationCount`,
+        `https://domestic-cache.invalid/paper/search?query=${encodeURIComponent(query)}&limit=${limit}`,
         {
             headers: {
                 'Content-Type': 'application/json',

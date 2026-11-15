@@ -30,6 +30,8 @@ export const searchArxiv = withCache(async (
   query: string,
   options: { limit?: number } = {}
 ): Promise<Paper[]> => {
+  void query; void options;
+  throw new Error('OVERSEAS_SOURCE_DISABLED');
   try {
     const limit = options.limit || 10;
 
@@ -65,7 +67,7 @@ export const searchArxiv = withCache(async (
 /**
  * 解析arXiv XML响应
  */
-function parseArxivXML(xmlText: string): Paper[] {
+export function parseArxivXML(xmlText: string): Paper[] {
   const papers: Paper[] = [];
 
   try {

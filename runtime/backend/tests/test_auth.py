@@ -128,6 +128,9 @@ async def test_magic_link_returns_202():
         )
         # Should return 202 even for non-existent email
         assert resp.status_code in (200, 202)
+        body = resp.text
+        assert "access_token" not in body
+        assert "_debug_token" not in body
 
 
 # ── Protected route without token ─────────────────────────────────────────────

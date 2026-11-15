@@ -45,5 +45,9 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Used to turn your spoken question into text in the assistant composer. Recognition runs on this device.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Used to recognize your question on this device. Audio is not sent to our servers.</string>
 </dict>
 </plist>

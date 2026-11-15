@@ -158,6 +158,66 @@ class AppTheme {
     );
   }
 
+  static ThemeData buildDarkTheme() {
+    const primary = Color(0xFF93C5FD);
+    const surface = Color(0xFF0F172A);
+    const card = Color(0xFF1E293B);
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: primaryColor,
+        brightness: Brightness.dark,
+        primary: primary,
+        secondary: secondaryColor,
+        surface: surface,
+        error: errorColor,
+      ),
+      scaffoldBackgroundColor: surface,
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Color(0xFF111C33),
+        foregroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: false,
+      ),
+      cardTheme: CardThemeData(
+        color: card,
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: primary,
+          foregroundColor: const Color(0xFF0F172A),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: primary,
+          side: const BorderSide(color: primary, width: 1.5),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        filled: true,
+        fillColor: const Color(0xFF1E293B),
+        hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 14),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF334155))),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF334155))),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: primary, width: 2)),
+      ),
+      tabBarTheme: const TabBarThemeData(
+        labelColor: primary,
+        unselectedLabelColor: Color(0xFF94A3B8),
+        indicatorSize: TabBarIndicatorSize.label,
+      ),
+      dividerColor: const Color(0xFF334155),
+    );
+  }
+
   static LinearGradient primaryGradient() {
     return LinearGradient(
       colors: [Color(0xFF1D4ED8), Color(0xFF06B6D4)],
@@ -189,4 +249,18 @@ class AppTheme {
       end: Alignment.bottomRight,
     );
   }
+}
+
+
+/// Theme-aware slate palette. Screens use these instead of hard-coded light-theme colours so the app follows the
+/// system dark mode (retest N07).
+extension EiColors on BuildContext {
+  bool get eiDark => Theme.of(this).brightness == Brightness.dark;
+  Color get eiCard => eiDark ? const Color(0xFF1E293B) : Colors.white;
+  Color get eiPage => eiDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
+  Color get eiStrong => eiDark ? const Color(0xFFF1F5F9) : const Color(0xFF0F172A);
+  Color get eiBody => eiDark ? const Color(0xFFE2E8F0) : const Color(0xFF1E293B);
+  Color get eiBody2 => eiDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569);
+  Color get eiMuted => eiDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+  Color get eiLine => eiDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
 }

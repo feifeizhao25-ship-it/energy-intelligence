@@ -14,6 +14,9 @@ import { useState } from 'react';
 import { useStation } from '@/contexts/StationContext';
 import { useSession } from 'next-auth/react';
 import { PLAN_DETAILS } from '@/lib/membership/plans';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { UserAccountMenu } from '@/components/layout/UserAccountMenu';
+import { accountLabel } from '@/lib/dashboard/greeting';
 
 interface NavItem {
     name: string;
@@ -38,6 +41,7 @@ export default function Sidebar() {
     // 登录态直接取 useSession（AuthProvider 在未配置时挂载空会话），
     // 不再裸 fetch /api/auth/session——未配置时该接口 fail-closed 返回 503。
     const isLoggedIn = !!session?.user;
+    const planLabel = PLAN_DETAILS[(session?.user?.plan as keyof typeof PLAN_DETAILS) || 'FREE']?.name ?? '免费版';
 
     const unresolvedIssuesCount = issues.filter(i => !i.solved && (i.severity === 'error' || i.severity === 'warning')).length;
 
@@ -46,15 +50,19 @@ export default function Sidebar() {
         {
             label: '主控制台',
             items: [
+                { name: '智库首页', href: '/', icon: 'bolt', tier: 'L1' },
                 { name: '测算首页', href: '/dashboard', icon: 'bolt', tier: 'L1' },
                 { name: 'AI 能源专家', href: '/assistant', icon: 'smart_toy', tier: 'L1' },
                 { name: '资源地图', href: '/map', icon: 'map', tier: 'L2' },
+                { name: '充电测算', href: '/calculator/charging', icon: 'battery_charging_full', tier: 'L2' },
+                { name: '排放测算', href: '/calculator/carbon', icon: 'description', tier: 'L2' },
             ]
         },
         {
             label: '资产中心',
             items: [
                 { name: '我的项目', href: '/projects', icon: 'folder_open', tier: 'L3', requiresAuth: true },
+                { name: '运维诊断', href: '/maintenance', icon: 'build', tier: 'L3' },
                 { name: '项目日志', href: '/projects/timeline', icon: 'history', tier: 'L3', requiresAuth: true },
             ]
         },
@@ -62,6 +70,7 @@ export default function Sidebar() {
             label: '智库教育',
             items: [
                 { name: '专家文献', href: '/papers', icon: 'menu_book', tier: 'L2' },
+                { name: '文献图谱', href: '/papers/graph', icon: 'menu_book', tier: 'L2' },
                 { name: '问答社区', href: '/community', icon: 'forum', tier: 'L2' },
                 { name: '避坑指南', href: '/education/pitfalls', icon: 'error', tier: 'L2' },
             ]
@@ -69,7 +78,12 @@ export default function Sidebar() {
         {
             label: '标准与报表',
             items: [
-                { name: '审计记录', href: '/audit', icon: 'verified_user', tier: 'L3', requiresAuth: true }
+                { name: '审计记录', href: '/audit', icon: 'verified_user', tier: 'L3', requiresAuth: true },
+                { name: '政策检索', href: '/policies', icon: 'menu_book', tier: 'L2', requiresAuth: true },
+                { name: '数据集', href: '/datasets', icon: 'library_books', tier: 'L2', requiresAuth: true },
+                { name: '每日一数', href: '/daily', icon: 'history', tier: 'L1', requiresAuth: true },
+                { name: '政策提醒', href: '/alerts', icon: 'verified_user', tier: 'L3', requiresAuth: true },
+                { name: '季度简报', href: '/briefs', icon: 'description', tier: 'L4', requiresAuth: true },
             ]
         },
         {
@@ -78,6 +92,9 @@ export default function Sidebar() {
                 { name: '企业空间', href: '/enterprise', icon: 'domain', tier: 'L4', requiresAuth: true },
                 { name: '开发者中心', href: '/developer', icon: 'terminal', tier: 'L5', requiresAuth: true },
                 { name: '会员订阅', href: '/pricing', icon: 'workspace_premium', tier: 'L4' },
+                { name: '服务状态', href: '/status', icon: 'verified_user', tier: 'L1' },
+                { name: '管理台', href: '/admin', icon: 'domain', tier: 'L5', requiresAuth: true },
+                { name: '改进队列', href: '/admin/improvements', icon: 'verified_user', tier: 'L5', requiresAuth: true },
             ]
         }
     ];
@@ -96,21 +113,22 @@ export default function Sidebar() {
     return (
         <>
             {/* 顶部移动端导航栏 - Only visible on mobile */}
-            <header className="fixed top-0 left-0 right-0 h-14 bg-white dark:bg-background-dark border-b border-slate-200 dark:border-white/10 z-50 flex items-center px-4 lg:hidden">
+            <header className="ei-mobile-header">
                 {/* Logo */}
                 <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
                         <span className="material-symbols-outlined text-primary text-xl"><Zap className="w-5 h-5" aria-hidden="true" /></span>
                     </div>
-                    <span className="font-bold text-sm text-slate-900 dark:text-white">新能源智库</span>
+                    <span className="text-sm font-bold text-white">新能源智库</span>
                 </div>
 
                 {/* 右侧 */}
-                <div className="flex items-center gap-2 ml-auto">
+                <div className="ml-auto flex items-center gap-2">
+                    <ThemeToggle className="text-white" />
                     {/* 移动端菜单按钮 */}
                     <button
                         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                        className="p-2 text-slate-600 dark:text-white/70 hover:text-slate-900 dark:hover:text-white"
+                        className="rounded-lg p-2 text-white/80 hover:bg-white/10 hover:text-white"
                     >
                         <span className="material-symbols-outlined">{mobileMenuOpen ? <X aria-label="关闭菜单" /> : <Menu aria-label="打开菜单" />}</span>
                     </button>
@@ -118,29 +136,29 @@ export default function Sidebar() {
             </header>
 
             {/* Desktop Sidebar */}
-            <aside className="fixed top-0 left-0 bottom-0 w-64 bg-white dark:bg-[#101922] border-r border-slate-200 dark:border-white/5 hidden lg:flex flex-col z-40 transition-transform duration-300">
+            <aside aria-label="侧栏" className="fixed bottom-0 left-0 top-0 z-40 hidden w-64 flex-col border-r border-white/10 bg-[var(--navy)] text-white lg:flex">
                 <div className="p-6">
                     <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-2 mb-2">
                             <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
                                 <span className="material-symbols-outlined text-primary text-xl"><Zap className="w-5 h-5" aria-hidden="true" /></span>
                             </div>
-                            <h1 className="text-slate-900 dark:text-white text-lg font-bold tracking-tight">新能源智库</h1>
+                            <h1 className="text-lg font-bold tracking-tight text-white">新能源智库</h1>
                         </div>
-                        <p className="text-slate-500 dark:text-text-secondary text-xs font-normal">智能决策支持系统</p>
+                        <p className="text-xs font-normal text-white/80">事实、数据与可复核方法</p>
                     </div>
                 </div>
 
-                <nav className="flex-1 px-4 flex flex-col gap-4 overflow-y-auto scrollbar-thin">
+                <nav aria-label="功能导航" className="flex-1 px-4 flex flex-col gap-4 overflow-y-auto scrollbar-thin">
                     {navGroups.map((group) => {
                         const visibleItems = group.items.filter(item => !item.requiresAuth || isLoggedIn);
                         if (visibleItems.length === 0) return null;
 
                         return (
                             <div key={group.label} className="flex flex-col gap-1">
-                                <h3 className="px-3 text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">
+                                <h2 className="mb-1 px-3 text-[11px] font-semibold text-white/80">
                                     {group.label}
-                                </h3>
+                                </h2>
                                 <div className="flex flex-col gap-1">
                                     {(visibleItems as NavItem[]).map((item) => {
                                         const isAnySubActive = item.subItems?.some(sub => pathname === sub.href);
@@ -154,7 +172,7 @@ export default function Sidebar() {
                                                         onClick={() => toggleExpand(item.name)}
                                                         className={cn(
                                                             "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors group w-full text-left",
-                                                            isExpanded ? "bg-slate-50 dark:bg-white/5" : "text-slate-600 dark:text-white/70 hover:bg-slate-100 dark:hover:bg-white/5"
+                                                            isExpanded ? "bg-white/10 text-white" : "text-white/75 hover:bg-white/10"
                                                         )}
                                                     >
                                                         <span className="material-symbols-outlined text-slate-500 dark:text-white/70">
@@ -200,13 +218,13 @@ export default function Sidebar() {
                                                 className={cn(
                                                     "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors group",
                                                     isActive
-                                                        ? "bg-primary/10 text-primary border border-primary/20"
-                                                        : "text-slate-600 dark:text-white/70 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5"
+                                                        ? "border border-white/15 bg-white/10 text-white"
+                                                        : "text-white/75 hover:bg-white/10 hover:text-white"
                                                 )}
                                             >
                                                 <span className={cn(
                                                     "material-symbols-outlined transition-colors",
-                                                    isActive ? "text-primary fill-current" : "text-slate-500 dark:text-white/70 group-hover:text-primary"
+                                                    isActive ? "text-[#9ad7d4]" : "text-white/70 group-hover:text-white"
                                                 )}>
                                                     <NavIcon name={item.icon} />
                                                 </span>
@@ -225,17 +243,10 @@ export default function Sidebar() {
                     })}
                 </nav>
 
-                <div className="p-4 border-t border-slate-200 dark:border-white/5">
+                <div className="border-t border-white/10 p-4">
+                    <div className="mb-3 flex justify-end"><ThemeToggle className="text-white" /></div>
                     {isLoggedIn ? (
-                        <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-slate-50 dark:bg-surface-dark border border-slate-200 dark:border-white/5">
-                            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white font-bold text-xs shadow-lg shadow-primary/20">
-                                {session?.user?.name?.[0] || 'U'}
-                            </div>
-                            <div className="flex flex-col overflow-hidden">
-                                <p className="text-slate-900 dark:text-white text-xs font-bold truncate">{session?.user?.name || '用户'}</p>
-                                <p className="text-slate-500 dark:text-white/50 text-[10px] truncate">{PLAN_DETAILS[(session?.user?.plan as keyof typeof PLAN_DETAILS) || 'FREE']?.name ?? '免费版'}</p>
-                            </div>
-                        </div>
+                        <UserAccountMenu name={accountLabel(session?.user?.name)} planLabel={planLabel} />
                     ) : (
                         <Link
                             href="/login"
@@ -250,17 +261,17 @@ export default function Sidebar() {
 
             {/* 移动端菜单 Drawer */}
             {mobileMenuOpen && (
-                <div className="fixed inset-0 top-14 bg-white dark:bg-background-dark z-40 lg:hidden p-4 overflow-y-auto">
-                    <nav className="space-y-6">
+                <div data-testid="mobile-nav-drawer" className="fixed inset-x-0 bottom-0 top-[calc(3.5rem+env(safe-area-inset-top))] z-[60] overflow-y-auto bg-white p-4 pb-[calc(6rem+env(safe-area-inset-bottom))] dark:bg-background-dark lg:hidden">
+                    <nav aria-label="菜单" className="space-y-6">
                         {navGroups.map((group) => {
                             const visibleItems = group.items.filter(item => !item.requiresAuth || isLoggedIn);
                             if (visibleItems.length === 0) return null;
 
                             return (
                                 <div key={group.label} className="flex flex-col gap-2">
-                                    <h3 className="px-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                    <h2 className="px-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
                                         {group.label}
-                                    </h3>
+                                    </h2>
                                     <div className="flex flex-col gap-2">
                                         {(visibleItems as NavItem[]).map((item) => {
                                             if (item.subItems) {
@@ -316,7 +327,11 @@ export default function Sidebar() {
                                 </div>
                             );
                         })}
-                        {!isLoggedIn && (
+                        {isLoggedIn ? (
+                            <div className="mt-4">
+                                <UserAccountMenu name={accountLabel(session?.user?.name)} planLabel={planLabel} />
+                            </div>
+                        ) : (
                             <Link
                                 href="/login"
                                 onClick={() => setMobileMenuOpen(false)}

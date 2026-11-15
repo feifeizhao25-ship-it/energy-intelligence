@@ -6,7 +6,7 @@ import { buildPersonalDashboard, type SummaryInput } from './personal-summary';
 import { buildPersonalization, dedupeNextActions, type Preferences } from './personalization';
 
 const NOW = new Date('2026-10-10T01:30:00Z'); // 北京时间 10 月 10 日（周六）09:30
-const prefs = (p: Partial<Preferences>): Preferences => ({ role: null, province: null, interest: null, personalized: true, ...p });
+const prefs = (p: Partial<Preferences>): Preferences => ({ role: null, province: null, interest: null, personalized: true, tags: [], ...p });
 const base: SummaryInput = {
     user: { name: '测试', plan: 'FREE', planExpireAt: null },
     projects: [], projectCount: 0, calculationCount: 0, savedPaperCount: 0, stations: [],

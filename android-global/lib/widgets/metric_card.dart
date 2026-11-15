@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
 class MetricCard extends StatelessWidget {
   // Old android-global API
@@ -93,9 +94,9 @@ class MetricCard extends StatelessWidget {
               const SizedBox(height: 12),
               Text(
                 displayLabel,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
-                  color: Color(0xFF64748B),
+                  color: context.eiMuted,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -106,19 +107,19 @@ class MetricCard extends StatelessWidget {
                 children: [
                   Text(
                     displayValue,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF0F172A),
+                      color: context.eiStrong,
                     ),
                   ),
                   const SizedBox(width: 4),
                   if (displayUnit.isNotEmpty)
                     Text(
                       displayUnit,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: Color(0xFF64748B),
+                        color: context.eiMuted,
                         fontWeight: FontWeight.w500,
                       ),
                     ),

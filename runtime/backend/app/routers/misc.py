@@ -1,10 +1,11 @@
 """杂项基础端点：/me、/settings、/billing/plans。"""
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_current_user_id
+from app.core.market import request_market
 from app.core.subscription import ENTITLEMENTS
 from app.database import get_db
 from app.models.user import User
@@ -74,6 +75,12 @@ def _build_plans():
 
 
 @router.get("/billing/plans")
-async def list_billing_plans():
-    """公开端点：订阅计划列表（货币一律用整数 cents）。"""
-    return success(data={"plans": _build_plans()})
+async def list_billing_plans(request: Request):
+    """公开端点：订阅计划列表（货币一律用整数 cents）。global 市场：英文名、不出现 CNY，金额只来自 Stripe。"""
+    plans = _build_plans()
+    if request_market(request) == "global":
+        from app.services.entitlements_registry import load_registry
+        from app.services.market_localization import localize_plans
+
+        plans = localize_plans(plans, load_registry())
+    return success(data={"plans": plans})

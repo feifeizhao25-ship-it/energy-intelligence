@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAiQuota } from '@/lib/ai/quota-guard';
+import { requireAiQuota, trackAiQuota } from '@/lib/ai/quota-guard';
 import { simpleChat } from '@/lib/ai/unified';
 import { aigcJson } from '@/lib/ai/aigc';
 
+const ANALYSIS_FAILED_ZH = '生成分析失败，请稍后重试';
+
 export async function POST(req: NextRequest) {
+    let quota: ReturnType<typeof trackAiQuota> | null = null;
+    const refundIfPending = () => quota?.refund() ?? Promise.resolve();
+    const onAbort = () => { void refundIfPending(); };
     try {
         const { type, data } = await req.json();
 
@@ -12,6 +17,12 @@ export async function POST(req: NextRequest) {
         }
         const guard = await requireAiQuota();
         if (!guard.ok) return guard.response;
+        quota = trackAiQuota(guard.userId);
+        req.signal.addEventListener('abort', onAbort, { once: true });
+        if (req.signal.aborted) {
+            await refundIfPending();
+            return NextResponse.json({ error: '分析已取消' }, { status: 499 });
+        }
 
         const typeLabel = type === 'solar' ? '分布式光伏' : type === 'wind' ? '分散式风电' : '工商业储能';
         const metrics = data.financial.metrics || data.financial;
@@ -28,17 +39,27 @@ export async function POST(req: NextRequest) {
     
     要求：
     1. 语气专业、严谨。
-    2. 第一条关注财务收益率是否达标。
+    2. 第一条只复述内部收益率的测算值，不判断是否达标。
     3. 第二条关注资源稳健性或地区政策风险。
     4. 第三条给出明确的“建议推进”或“需进一步调研”结论。
     5. 总字数控制在200字以内，Markdown 列表格式。
     `;
 
-        const analysis = await simpleChat(prompt, 'deepseek-v3');
-
+        const analysis = await simpleChat(prompt, 'deepseek-v3', req.signal);
+        if (req.signal.aborted) {
+            await refundIfPending();
+            return NextResponse.json({ error: '分析已取消' }, { status: 499 });
+        }
+        quota.settle();
         return aigcJson({ results: analysis }, { model: 'deepseek-v3' });
     } catch (error: any) {
+        await refundIfPending();
+        if (req.signal.aborted) {
+            return NextResponse.json({ error: '分析已取消' }, { status: 499 });
+        }
         console.error('AI Analysis Error:', error);
-        return NextResponse.json({ error: '生成分析失败，请稍后重试' }, { status: 500 });
+        return NextResponse.json({ error: ANALYSIS_FAILED_ZH }, { status: 500 });
+    } finally {
+        req.signal.removeEventListener('abort', onAbort);
     }
 }

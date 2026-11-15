@@ -257,8 +257,13 @@ export interface Paper {
   doi?: string;
   sourceProvider?: string;
   sourceUrl?: string;
+  licence?: string;
+  licenceNote?: string;
   retrievedAt?: string;
   evidenceStatus?: 'provider_verified';
+  /** 中文译名（助手翻译，状态见 titleZhStatus）；title 始终是原文标题 */
+  titleZh?: string;
+  titleZhStatus?: string;
 }
 
 export interface SearchOptions {
@@ -267,6 +272,7 @@ export interface SearchOptions {
   openAccess?: boolean;
   limit?: number;
   offset?: number;
+  userId?: string;
 }
 
 export interface SearchResult {
@@ -274,7 +280,7 @@ export interface SearchResult {
   totalScope?: 'retrieved_window';
   papers: Paper[];
   providers?: Array<{
-    name: 'Semantic Scholar' | 'OpenAlex' | 'arXiv';
+    name: 'Semantic Scholar' | 'OpenAlex' | 'arXiv' | '国内学术语料' | '用户上传';
     status: 'available' | 'unavailable';
   }>;
 }

@@ -1,14 +1,14 @@
 // 国内版语言纯净度（白名单法）：扫描 src/app 与 src/components 中会显示给用户的文本
 // （JSX 文本节点、含中文的字符串字面量、placeholder/title/alt/aria-label 属性），
-// 统计不在白名单中的拉丁单词；单个文件超过 3 个即失败。国际版对应脚本见 runtime/web-int/scripts/check-claims.mjs（CJK > 0 即失败）。
+// 统计不在白名单中的拉丁单词；单个文件超过 0 个即失败。国际版对应脚本见 runtime/web-int/scripts/check-claims.mjs（CJK > 0 即失败）。
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import ts from 'typescript';
-import { isAllowed } from './language-allowlist.mjs';
+import { GLOSS_ON_FIRST, isAllowed } from './language-allowlist.mjs';
 
 const ROOT = new URL('..', import.meta.url).pathname;
 const DIRS = ['src/app', 'src/components'].map((d) => join(ROOT, d));
-const MAX = Number(process.env.LANGUAGE_PURITY_MAX ?? 3);
+const MAX = Number(process.env.LANGUAGE_PURITY_MAX ?? 0);
 const walk = (d) => readdirSync(d).flatMap((n) => {
   const f = join(d, n);
   if (statSync(f).isDirectory()) return n === 'api' ? [] : walk(f); // API 路由另由 chinese-errors.test.ts 检查
@@ -41,12 +41,28 @@ export function visibleSegments(src, fileName = 'x.tsx') {
   return out;
 }
 
+function latinWords(seg) {
+  const words = [];
+  for (const w of seg.match(/[A-Za-z][A-Za-z0-9&/.-]*[A-Za-z0-9]|[A-Za-z]/g) ?? []) {
+    const clean = w.replace(/[./-]+$/, '').replace(/&quot$/, '');
+    if (clean === 'quot' || clean === 'nbsp' || clean === 'ldquo' || clean === 'rdquo') continue;
+    words.push(clean);
+  }
+  return words;
+}
+
 export function offendingWords(src, fileName) {
   const words = [];
+  const glossed = new Set();
   for (const seg of visibleSegments(src, fileName)) {
-    for (const w of seg.match(/[A-Za-z][A-Za-z0-9&/.-]*[A-Za-z0-9]|[A-Za-z]/g) ?? []) {
-      const clean = w.replace(/[./-]+$/, '').replace(/&quot$/, '');
-      if (clean === 'quot' || clean === 'nbsp') continue;
+    const found = latinWords(seg);
+    const hasCjk = CJK.test(seg);
+    for (const clean of found) {
+      const key = clean.toLowerCase();
+      if (GLOSS_ON_FIRST.has(key) && !glossed.has(key)) {
+        glossed.add(key);
+        if (!hasCjk) words.push(clean);
+      }
       if (!isAllowed(clean)) words.push(clean);
     }
   }

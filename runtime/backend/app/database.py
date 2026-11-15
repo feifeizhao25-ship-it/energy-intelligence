@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import logging
 import os
+from contextvars import ContextVar
 from typing import AsyncGenerator
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
@@ -44,15 +45,52 @@ AsyncSessionLocal = async_sessionmaker(
 )
 
 
+# The session for the request currently inside get_db. FastAPI sends the HTTP
+# response before it leaves a yield dependency, so a commit only in the
+# dependency exit is not visible to the next request yet. The middleware below
+# commits on the way out, before the status line is written.
+request_session: ContextVar[AsyncSession | None] = ContextVar("request_session", default=None)
+
+
+async def commit_visible_session() -> None:
+    """Commit the open request transaction before any response byte is sent."""
+    session = request_session.get()
+    if session is None or not session.in_transaction():
+        return
+    await session.commit()
+
+
+class CommitBeforeResponse:
+    """ASGI wrapper: commit the request session before http.response.start."""
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope.get("type") != "http":
+            await self.app(scope, receive, send)
+            return
+
+        async def send_after_commit(message):
+            if message["type"] == "http.response.start":
+                await commit_visible_session()
+            await send(message)
+
+        await self.app(scope, receive, send_after_commit)
+
+
 # ── FastAPI dependency ─────────────────────────────────────────────────────────
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSessionLocal() as session:
+        token = request_session.set(session)
         try:
             yield session
             await session.commit()
         except Exception:
             await session.rollback()
             raise
+        finally:
+            request_session.reset(token)
 
 
 # ── Lifecycle ─────────────────────────────────────────────────────────────────

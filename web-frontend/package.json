@@ -1,7 +1,7 @@
 {
   "name": "xinnengyuan-ai",
   "version": "1.0.0",
-  "description": "新能源智库 - 光伏风电从业者的效率神器",
+  "description": "新能源智库 - 光伏与风电项目的测算工具",
   "main": "index.js",
   "scripts": {
     "dev": "next dev",

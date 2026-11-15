@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { AppShell } from '@energy-intelligence/ui-web';
 import type { SidebarItem } from '@energy-intelligence/ui-web';
+import ShellErrorBoundary from './ShellErrorBoundary';
 
 const ICON_SIZE = 16;
 
@@ -88,7 +89,7 @@ export const GlobalShell: React.FC<GlobalShellProps> = ({
       userName="Analyst"
       onNavigate={handleNavigate}
     >
-      {children}
+      <ShellErrorBoundary locale="en">{children}</ShellErrorBoundary>
     </AppShell>
   );
 };

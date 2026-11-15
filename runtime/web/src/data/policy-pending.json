@@ -1,0 +1,24 @@
+{
+  "label": "夹具",
+  "status": "pending_approval",
+  "published": 0,
+  "note": "这是入库夹具，不是线上抓取，也不是已发布政策。",
+  "items": [
+    {
+      "source_id": "fixture-ndrc-136",
+      "status": "pending_approval",
+      "label": "待审批，尚未发布",
+      "region": "全国",
+      "published": "2025-02-09",
+      "applicability": "发文之日起施行，具体适用期以原文为准",
+      "content_sha256": "fixture-not-a-real-digest",
+      "diff": {
+        "changed": true,
+        "added": 42,
+        "removed": 0,
+        "excerpt": "夹具页面：发改价格〔2025〕136号。地区：全国。发布日期：2025-02-09。适用期以原文为准。尚未发布。",
+        "previous_excerpt": ""
+      }
+    }
+  ]
+}

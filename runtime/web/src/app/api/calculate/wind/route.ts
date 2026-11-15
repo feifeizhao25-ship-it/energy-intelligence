@@ -4,6 +4,7 @@ import { WindCalculationInput } from '@/types';
 import { enforceRateLimit, PUBLIC_RULES } from '@/lib/security/rate-limit';
 import { safeErrorMessage } from '@/lib/api/safe-error';
 import { resolveWindPrices, PriceInputError } from '@/lib/pricing/tariff-defaults';
+import { isWindResourceUnavailable, WIND_RESOURCE_UNAVAILABLE_MESSAGE } from '@/lib/api/wind-resource-error';
 
 export async function POST(req: Request) {
     const limited = await enforceRateLimit(req, PUBLIC_RULES.calculators);
@@ -70,6 +71,12 @@ export async function POST(req: Request) {
 
         return NextResponse.json({ ...result, pricing: prices.pricing });
     } catch (error) {
+        if (isWindResourceUnavailable(error)) {
+            return NextResponse.json(
+                { error: WIND_RESOURCE_UNAVAILABLE_MESSAGE, message: WIND_RESOURCE_UNAVAILABLE_MESSAGE, code: 'WIND_RESOURCE_UNAVAILABLE' },
+                { status: 422 },
+            );
+        }
         console.error('Wind calculation error:', error);
         return NextResponse.json(
             { error: '计算服务出错' },

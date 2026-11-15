@@ -90,7 +90,7 @@ def test_registry_verify_interval_tiers():
     by_type = {}
     for source in registry.sources:
         by_type.setdefault(source["type"], set()).add(source["verify_interval_days"])
-    assert by_type["policy"] == {90}
+    assert by_type["policy"] == {30}  # monthly review (retest B12)
     assert by_type["standard"] == {365}
     assert by_type["price"] == {7}
 
@@ -201,6 +201,23 @@ def test_fetch_snapshot_returns_status_never_raises():
     assert result["source_id"] == "std-gb50797"
     assert result["status"] == "no_source_url"
     assert result["fetched_at"]
+
+
+def test_fetch_snapshot_does_not_overwrite_the_registry(tmp_path):
+    """快照只落盘。没有地址时不抓取，有注入内容时也不改注册表。"""
+    skipped = fetch_snapshot({"source_id": "std-gb50797"}, snapshot_dir=tmp_path)
+    assert skipped["status"] == "no_source_url"
+    assert skipped["fetched_at"]
+    assert list(tmp_path.iterdir()) == []
+    saved = fetch_snapshot(
+        {"source_id": "std-gb50797", "source_url": "https://example.invalid/policy"},
+        fetcher=lambda _url, _timeout: ("https://example.invalid/policy", 200, b"official text"),
+        snapshot_dir=tmp_path,
+    )
+    assert saved["status"] == "fetched_pending_review"
+    assert (tmp_path / "std-gb50797.snapshot").read_bytes() == b"official text"
+    from app.services.rag_sources import REGISTRY_PATH
+    assert b"official text" not in REGISTRY_PATH.read_bytes()
 
 
 def test_snapshot_sha256_stable():

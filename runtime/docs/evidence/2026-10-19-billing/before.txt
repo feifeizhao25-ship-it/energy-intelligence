@@ -1,0 +1,201 @@
+/tmp/energy-rag-20261017/lib/python3.11/site-packages/pytest_asyncio/plugin.py:208: PytestDeprecationWarning: The configuration option "asyncio_default_fixture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the fixture caching scope. Future versions of pytest-asyncio will default the loop scope for asynchronous fixtures to function scope. Set the default fixture loop scope explicitly in order to avoid unexpected behavior in the future. Valid fixture loop scopes are: "function", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))
+...FF.FF..FFFFF                                                          [100%]
+=================================== FAILURES ===================================
+__________________ test_refund_rejects_invalid_currency[NaN] ___________________
+
+amount = 'NaN'
+
+    @pytest.mark.parametrize('amount', ['NaN', 'Infinity', '-Infinity', 'abc', '', '0', '-1', '1.001', '1e100'])
+    def test_refund_rejects_invalid_currency(amount):
+        with pytest.raises(ValueError, match='金额'):
+>           refund_quote(paid_amount_cny=amount, period_start=NOW, period_end=NOW+timedelta(days=365), now=NOW)
+
+runtime/backend/tests/test_billing_rules.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def refund_quote(*, paid_amount_cny, period_start: datetime, period_end: datetime, now: datetime) -> dict:
+        """退款测算: 未使用按比例退, 只出测算不出款。"""
+        paid = Decimal(str(paid_amount_cny))
+>       if paid <= 0: raise ValueError("实付金额须大于 0")
+E       decimal.InvalidOperation: [<class 'decimal.InvalidOperation'>]
+
+runtime/backend/app/services/billing_rules.py:52: InvalidOperation
+________________ test_refund_rejects_invalid_currency[Infinity] ________________
+
+amount = 'Infinity'
+
+    @pytest.mark.parametrize('amount', ['NaN', 'Infinity', '-Infinity', 'abc', '', '0', '-1', '1.001', '1e100'])
+    def test_refund_rejects_invalid_currency(amount):
+        with pytest.raises(ValueError, match='金额'):
+>           refund_quote(paid_amount_cny=amount, period_start=NOW, period_end=NOW+timedelta(days=365), now=NOW)
+
+runtime/backend/tests/test_billing_rules.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def refund_quote(*, paid_amount_cny, period_start: datetime, period_end: datetime, now: datetime) -> dict:
+        """退款测算: 未使用按比例退, 只出测算不出款。"""
+        paid = Decimal(str(paid_amount_cny))
+        if paid <= 0: raise ValueError("实付金额须大于 0")
+        total_days = (period_end - period_start).days
+        if total_days <= 0: raise ValueError("周期无效")
+        if now <= period_start:
+            refund, remaining = paid, total_days
+        elif now >= period_end:
+            refund, remaining = Decimal("0.00"), 0
+        else:
+            remaining = (period_end - now).days
+            refund = (paid * Decimal(remaining) / Decimal(total_days)).quantize(Decimal("0.01"), rounding=ROUND_FLOOR)
+>       return {"paid_cny": str(paid.quantize(Decimal("0.01"))), "refund_cny": str(refund), "remaining_days": remaining,
+                "total_days": total_days, "status": "quote_only", "rule": "未使用天数按比例退, 向下取整到分; 实际退款由财务在支付渠道人工执行"}
+E       decimal.InvalidOperation: [<class 'decimal.InvalidOperation'>]
+
+runtime/backend/app/services/billing_rules.py:62: InvalidOperation
+__________________ test_refund_rejects_invalid_currency[abc] ___________________
+
+amount = 'abc'
+
+    @pytest.mark.parametrize('amount', ['NaN', 'Infinity', '-Infinity', 'abc', '', '0', '-1', '1.001', '1e100'])
+    def test_refund_rejects_invalid_currency(amount):
+        with pytest.raises(ValueError, match='金额'):
+>           refund_quote(paid_amount_cny=amount, period_start=NOW, period_end=NOW+timedelta(days=365), now=NOW)
+
+runtime/backend/tests/test_billing_rules.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def refund_quote(*, paid_amount_cny, period_start: datetime, period_end: datetime, now: datetime) -> dict:
+        """退款测算: 未使用按比例退, 只出测算不出款。"""
+>       paid = Decimal(str(paid_amount_cny))
+E       decimal.InvalidOperation: [<class 'decimal.ConversionSyntax'>]
+
+runtime/backend/app/services/billing_rules.py:51: InvalidOperation
+____________________ test_refund_rejects_invalid_currency[] ____________________
+
+amount = ''
+
+    @pytest.mark.parametrize('amount', ['NaN', 'Infinity', '-Infinity', 'abc', '', '0', '-1', '1.001', '1e100'])
+    def test_refund_rejects_invalid_currency(amount):
+        with pytest.raises(ValueError, match='金额'):
+>           refund_quote(paid_amount_cny=amount, period_start=NOW, period_end=NOW+timedelta(days=365), now=NOW)
+
+runtime/backend/tests/test_billing_rules.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def refund_quote(*, paid_amount_cny, period_start: datetime, period_end: datetime, now: datetime) -> dict:
+        """退款测算: 未使用按比例退, 只出测算不出款。"""
+>       paid = Decimal(str(paid_amount_cny))
+E       decimal.InvalidOperation: [<class 'decimal.ConversionSyntax'>]
+
+runtime/backend/app/services/billing_rules.py:51: InvalidOperation
+_________________ test_refund_rejects_invalid_currency[1.001] __________________
+
+amount = '1.001'
+
+    @pytest.mark.parametrize('amount', ['NaN', 'Infinity', '-Infinity', 'abc', '', '0', '-1', '1.001', '1e100'])
+    def test_refund_rejects_invalid_currency(amount):
+>       with pytest.raises(ValueError, match='金额'):
+E       Failed: DID NOT RAISE <class 'ValueError'>
+
+runtime/backend/tests/test_billing_rules.py:25: Failed
+_________________ test_refund_rejects_invalid_currency[1e100] __________________
+
+amount = '1e100'
+
+    @pytest.mark.parametrize('amount', ['NaN', 'Infinity', '-Infinity', 'abc', '', '0', '-1', '1.001', '1e100'])
+    def test_refund_rejects_invalid_currency(amount):
+        with pytest.raises(ValueError, match='金额'):
+>           refund_quote(paid_amount_cny=amount, period_start=NOW, period_end=NOW+timedelta(days=365), now=NOW)
+
+runtime/backend/tests/test_billing_rules.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def refund_quote(*, paid_amount_cny, period_start: datetime, period_end: datetime, now: datetime) -> dict:
+        """退款测算: 未使用按比例退, 只出测算不出款。"""
+        paid = Decimal(str(paid_amount_cny))
+        if paid <= 0: raise ValueError("实付金额须大于 0")
+        total_days = (period_end - period_start).days
+        if total_days <= 0: raise ValueError("周期无效")
+        if now <= period_start:
+            refund, remaining = paid, total_days
+        elif now >= period_end:
+            refund, remaining = Decimal("0.00"), 0
+        else:
+            remaining = (period_end - now).days
+            refund = (paid * Decimal(remaining) / Decimal(total_days)).quantize(Decimal("0.01"), rounding=ROUND_FLOOR)
+>       return {"paid_cny": str(paid.quantize(Decimal("0.01"))), "refund_cny": str(refund), "remaining_days": remaining,
+                "total_days": total_days, "status": "quote_only", "rule": "未使用天数按比例退, 向下取整到分; 实际退款由财务在支付渠道人工执行"}
+E       decimal.InvalidOperation: [<class 'decimal.InvalidOperation'>]
+
+runtime/backend/app/services/billing_rules.py:62: InvalidOperation
+_________________ test_refund_mixed_timezone_inputs_match_utc __________________
+
+    def test_refund_mixed_timezone_inputs_match_utc():
+        naive = NOW.replace(tzinfo=None)
+>       result = refund_quote(paid_amount_cny='365', period_start=naive, period_end=NOW+timedelta(days=365), now=NOW+timedelta(days=1))
+
+runtime/backend/tests/test_billing_rules.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def refund_quote(*, paid_amount_cny, period_start: datetime, period_end: datetime, now: datetime) -> dict:
+        """退款测算: 未使用按比例退, 只出测算不出款。"""
+        paid = Decimal(str(paid_amount_cny))
+        if paid <= 0: raise ValueError("实付金额须大于 0")
+>       total_days = (period_end - period_start).days
+E       TypeError: can't subtract offset-naive and offset-aware datetimes
+
+runtime/backend/app/services/billing_rules.py:53: TypeError
+___________ test_renewal_and_downgrade_accept_naive_database_expiry ____________
+
+    def test_renewal_and_downgrade_accept_naive_database_expiry():
+        expires = (NOW+timedelta(days=30)).replace(tzinfo=None)
+>       renewal = renewal_quote(current_plan='pro', current_expires_at=expires, now=NOW, yearly_price_cny='1980')
+
+runtime/backend/tests/test_billing_rules.py:37: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def renewal_quote(*, current_plan: str, current_expires_at, now: datetime, yearly_price_cny) -> dict:
+        """续费测算: 返回应付年付价与新到期日 (不扣款)。"""
+        if current_plan not in TIER_ORDER or current_plan == "free":
+            raise ValueError("免费版无需续费")
+>       base = current_expires_at if (current_expires_at and current_expires_at > now) else now
+E       TypeError: can't compare offset-naive and offset-aware datetimes
+
+runtime/backend/app/services/billing_rules.py:27: TypeError
+____________________ test_full_refund_is_formatted_in_cents ____________________
+
+    def test_full_refund_is_formatted_in_cents():
+        result = refund_quote(paid_amount_cny='1980', period_start=NOW, period_end=NOW+timedelta(days=365), now=NOW)
+>       assert result['refund_cny'] == '1980.00'
+E       AssertionError: assert '1980' == '1980.00'
+E         
+E         - 1980.00
+E         + 1980
+
+runtime/backend/tests/test_billing_rules.py:45: AssertionError
+=============================== warnings summary ===============================
+../../../../../tmp/energy-rag-20261017/lib/python3.11/site-packages/_pytest/cacheprovider.py:475
+  /tmp/energy-rag-20261017/lib/python3.11/site-packages/_pytest/cacheprovider.py:475: PytestCacheWarning: could not create cache path /dev/.pytest_cache/v/cache/nodeids: [Errno 1] Operation not permitted: '/dev/pytest-cache-files-olton_7w'
+    config.cache.set("cache/nodeids", sorted(self.cached_nodeids))
+
+../../../../../tmp/energy-rag-20261017/lib/python3.11/site-packages/_pytest/cacheprovider.py:429
+  /tmp/energy-rag-20261017/lib/python3.11/site-packages/_pytest/cacheprovider.py:429: PytestCacheWarning: could not create cache path /dev/.pytest_cache/v/cache/lastfailed: [Errno 1] Operation not permitted: '/dev/pytest-cache-files-nce_brml'
+    config.cache.set("cache/lastfailed", self.lastfailed)
+
+../../../../../tmp/energy-rag-20261017/lib/python3.11/site-packages/_pytest/stepwise.py:51
+  /tmp/energy-rag-20261017/lib/python3.11/site-packages/_pytest/stepwise.py:51: PytestCacheWarning: could not create cache path /dev/.pytest_cache/v/cache/stepwise: [Errno 1] Operation not permitted: '/dev/pytest-cache-files-wkgcrzh9'
+    session.config.cache.set(STEPWISE_CACHE_DIR, [])
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED ../../../../../dev::test_refund_rejects_invalid_currency[NaN] - decima...
+FAILED ../../../../../dev::test_refund_rejects_invalid_currency[Infinity] - d...
+FAILED ../../../../../dev::test_refund_rejects_invalid_currency[abc] - decima...
+FAILED ../../../../../dev::test_refund_rejects_invalid_currency[] - decimal.I...
+FAILED ../../../../../dev::test_refund_rejects_invalid_currency[1.001] - Fail...
+FAILED ../../../../../dev::test_refund_rejects_invalid_currency[1e100] - deci...
+FAILED ../../../../../dev::test_refund_mixed_timezone_inputs_match_utc - Type...
+FAILED ../../../../../dev::test_renewal_and_downgrade_accept_naive_database_expiry
+FAILED ../../../../../dev::test_full_refund_is_formatted_in_cents - Assertion...
+9 failed, 6 passed, 3 warnings in 0.09s

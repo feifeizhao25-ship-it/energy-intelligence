@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_theme.dart';
 import '../../widgets/bar_chart.dart';
 import '../../services/api_service.dart';
+import '../../widgets/reading_column.dart';
 
 class StorageFinanceScreen extends StatefulWidget {
   const StorageFinanceScreen({super.key});
@@ -77,7 +79,7 @@ class _StorageFinanceScreenState extends State<StorageFinanceScreen> {
         backgroundColor: const Color(0xFF1D4ED8),
         foregroundColor: Colors.white,
       ),
-      body: SingleChildScrollView(
+      body: ReadingColumn(child: SingleChildScrollView(
         padding: EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -150,7 +152,7 @@ class _StorageFinanceScreenState extends State<StorageFinanceScreen> {
                 '10年现金流 (万元)',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF0F172A),
+                  color: context.eiStrong,
                 ),
               ),
               SizedBox(height: 12),
@@ -167,7 +169,7 @@ class _StorageFinanceScreenState extends State<StorageFinanceScreen> {
             ],
           ],
         ),
-      ),
+      )),
     );
   }
 
@@ -177,7 +179,7 @@ class _StorageFinanceScreenState extends State<StorageFinanceScreen> {
       style: TextStyle(
         fontSize: 16,
         fontWeight: FontWeight.bold,
-        color: Color(0xFF0F172A),
+        color: context.eiStrong,
       ),
     );
   }
@@ -194,7 +196,7 @@ class _StorageFinanceScreenState extends State<StorageFinanceScreen> {
           label,
           style: TextStyle(
             fontSize: 13,
-            color: Color(0xFF64748B),
+            color: context.eiMuted,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -215,7 +217,7 @@ class _StorageFinanceScreenState extends State<StorageFinanceScreen> {
   Widget _buildResultCards() {
     final items = [
       {
-        'label': '项目IRR',
+        'label': '项目内部收益率',
         'value': '${(_result!['irr'] as double).toStringAsFixed(2)}%',
         'color': Color(0xFF059669),
       },
@@ -267,7 +269,7 @@ class _StorageFinanceScreenState extends State<StorageFinanceScreen> {
                 children: [
                   Text(
                     item['label'] as String,
-                    style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                    style: TextStyle(fontSize: 11, color: context.eiMuted),
                   ),
                   SizedBox(height: 6),
                   Text(

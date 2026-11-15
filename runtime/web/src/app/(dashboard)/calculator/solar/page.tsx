@@ -6,6 +6,7 @@ import { Sun, ArrowLeft, CheckCircle2, Loader2 } from 'lucide-react';
 import { requestSolarPreview, type SolarPreview, type SolarPreviewInput } from '@/lib/calculator/solar-preview-client';
 import { safeErrorMessage } from '@/lib/api/safe-error';
 import MonthlyGenerationBarChart from '@/components/charts/MonthlyGenerationBarChart';
+import { OfficeExportButtons } from '@/components/reports/OfficeExportButtons';
 
 const fields = [
     { key: 'lat', label: '项目纬度', unit: '度，南纬为负数', placeholder: '例如 39.90', min: -90, max: 90 },
@@ -41,7 +42,7 @@ export default function SolarCalculatorPage() {
         <header className="rounded-3xl bg-slate-900 p-6 text-white sm:p-8">
             <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-amber-400/15 px-3 py-1 text-sm text-amber-200"><Sun size={16} />光伏初步估算</div>
             <h1 className="text-2xl font-bold sm:text-3xl">先算清投入，再看回收可能</h1>
-            <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300">使用上一完整年的历史辐照资料和您填写的成本、电价，估算发电量与现金流。结果包含简化假设，不代表未来收益承诺或工程审计。</p>
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300">使用上一完整年的历史辐照资料和您填写的成本、电价，估算发电量与现金流。结果包含简化假设，不代表未来收益承诺或工程审计。没有填写地址和电价时不展示测算结果。</p>
         </header>
         <div className="grid items-start gap-6 lg:grid-cols-[1fr_0.8fr]">
             <form onSubmit={calculate} className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-7">
@@ -95,12 +96,17 @@ export default function SolarCalculatorPage() {
             <p className="text-sm leading-7 text-slate-600">内部收益率用于比较这组现金流的收益水平；净现值为按假设折现率折算后的净收益，可能为负。度电成本为折现后的成本与发电量之比。</p>
             <div className="rounded-xl bg-blue-50 p-4 text-sm leading-7 text-slate-700">
                 <h3 className="font-semibold">数据与输入依据</h3>
-                <p>美国航空航天局能源气象数据库：{date(result.source.start)} 至 {date(result.source.end)}；获取日期：{date(result.source.fetchedAt)}。</p>
+                <p>{result.source.label && result.source.label !== 'NASA POWER' ? result.source.label : '美国航空航天局能源气象数据库'}：{date(result.source.start)} 至 {date(result.source.end)}；获取日期：{date(result.source.fetchedAt)}。</p>
                 <p>位置：纬度 {submitted.lat}、经度 {submitted.lng}；装机 {submitted.capacity} 千瓦；单位投资 {submitted.unitCost} 元／千瓦；电价 {submitted.electricityPrice} 元／度（用户输入，未核验政策）。</p>
                 <p className="break-all text-xs">来源数据校验值：{result.source.hash}</p>
             </div>
-            <p className="text-sm leading-7 text-slate-600">估算期 {result.assumptions.lifetime} 年；按屋顶安装、标准组件、最佳倾角、正南朝向；综合效率（首年系统性能比，含各项损耗与温度影响）{number(result.assumptions.performanceRatio * 100)}%；年运维费为初始投资的 {number(result.assumptions.annualOperatingCostRatio * 100)}%{result.assumptions.operatingCostEscalation ? `，此后每年上涨 ${number(result.assumptions.operatingCostEscalation * 100)}%` : ''}；{result.assumptions.firstYearDegradationRate !== undefined ? `首年衰减 ${number(result.assumptions.firstYearDegradationRate * 100)}%，此后每年 ` : '年衰减 '}{number(result.assumptions.degradationRate * 100)}%；折现率 {number(result.assumptions.discountRate * 100)}%。</p>
+            <p className="text-sm leading-7 text-slate-600">估算期 {result.assumptions.lifetime} 年；按屋顶安装、标准组件、最佳倾角、正南朝向；性能比（发电量除以额定功率与斜面辐照对应的理论电量，不是综合效率系数）{number(result.assumptions.performanceRatio * 100)}%；年运维费为初始投资的 {number(result.assumptions.annualOperatingCostRatio * 100)}%{result.assumptions.operatingCostEscalation ? `，此后每年上涨 ${number(result.assumptions.operatingCostEscalation * 100)}%` : ''}；{result.assumptions.firstYearDegradationRate !== undefined ? `首年衰减 ${number(result.assumptions.firstYearDegradationRate * 100)}%，此后每年 ` : '年衰减 '}{number(result.assumptions.degradationRate * 100)}%；折现率 {number(result.assumptions.discountRate * 100)}%。</p>
             <ul className="list-disc space-y-2 pl-5 text-sm leading-6 text-slate-600">{result.limitations.map(item => <li key={item}>{item}</li>)}</ul>
+            <OfficeExportButtons title="光伏初步估算" rows={[
+                ['首年估算发电量', String(result.result.annualGeneration)],
+                ['初始投资', String(result.result.initialInvestment)],
+                ['资料', result.source.label || ''],
+            ]} />
         </section>}
     </div>;
 }

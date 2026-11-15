@@ -6,7 +6,7 @@
 import { buildPersonalization, policyMilestones, inferProvince, parsePreferences, validatePreferences, ROLES, type PolicyRow, type Preferences } from './personalization';
 
 const NOW = new Date('2026-10-08T01:00:00Z'); // 北京时间 10 月 8 日（寒露，节后第一个工作日）
-const prefs = (p: Partial<Preferences>): Preferences => ({ role: null, province: null, interest: null, personalized: true, ...p });
+const prefs = (p: Partial<Preferences>): Preferences => ({ role: null, province: null, interest: null, personalized: true, tags: [], ...p });
 const policy = (p: Partial<PolicyRow>): PolicyRow => ({
     id: 'p', region: '江苏', type: 'SUBSIDY_KWH', value: 0.1, unit: '元/kWh', sourceTitle: null, docNumber: null, sourceUrl: null,
     publishedAt: null, startDate: null, endDate: null, ...p,
@@ -34,6 +34,17 @@ describe('5 种角色同一天的工作台各不相同', () => {
     it('有电站告警时，任何角色都把告警置顶', () => {
         const v = buildPersonalization({ ...base, hasStationAlerts: true, prefs: prefs({ role: 'investor' }) });
         expect(v.moduleOrder[0]).toBe('stationAlerts');
+    });
+
+    it('运维没有告警数据时不说先看告警，有告警时才先看', () => {
+        const empty = buildPersonalization({ ...base, hasStationAlerts: false, prefs: prefs({ role: 'om', province: '江苏' }) });
+        expect(empty.focus!.title).toBe('当前没有告警');
+        expect(empty.focus!.reason).not.toContain('先看告警');
+        expect(empty.focus!.reason).toContain('下一步');
+        expect(empty.focus!.href).toBe('/my/stations');
+        const live = buildPersonalization({ ...base, hasStationAlerts: true, prefs: prefs({ role: 'om', province: '江苏' }) });
+        expect(live.focus!.reason).toContain('先看告警');
+        expect(live.moduleOrder[0]).toBe('stationAlerts');
     });
 
     it('关注领域决定快捷入口顺序：风电用户先看到风电测算', () => {
@@ -91,8 +102,8 @@ describe('近期政策节点只用库里已审核的政策', () => {
 describe('偏好读取、校验与关闭', () => {
     it('引导页保存的偏好（含目标等其他字段）可直接读取', () => {
         expect(parsePreferences({ preferences: { interest: 'solar', role: 'engineer', goal: 'calculate', province: '山东省' } }))
-            .toEqual({ role: 'engineer', province: '山东', interest: 'solar', personalized: true });
-        expect(parsePreferences(null)).toEqual({ role: null, province: null, interest: null, personalized: true });
+            .toEqual({ role: 'engineer', province: '山东', interest: 'solar', personalized: true, tags: [] });
+        expect(parsePreferences(null)).toEqual({ role: null, province: null, interest: null, personalized: true, tags: [] });
     });
 
     it('非法角色、省份报中文错误', () => {
@@ -107,5 +118,16 @@ describe('偏好读取、校验与关闭', () => {
         expect(v.tariff).toBeNull();
         expect(v.focus).toBeNull();
         expect(v.reasons[0]).toContain('已关闭个性化');
+        expect(v.tags).toEqual([]);
+    });
+
+    it('删除标签后，下一次工作台不再使用它', () => {
+        const tag = { id: 'solar-tag', label: '光伏', source: '浏览记录' };
+        const kept = buildPersonalization({ ...base, prefs: prefs({ role: 'owner', tags: [tag] }) });
+        expect(kept.tags.map(item => item.id)).toEqual(['solar-tag']);
+        const removed = buildPersonalization({ ...base, prefs: prefs({ role: 'owner', tags: [] }) });
+        expect(removed.tags).toEqual([]);
+        const off = buildPersonalization({ ...base, prefs: prefs({ role: 'owner', tags: [tag], personalized: false }) });
+        expect(off.tags).toEqual([]);
     });
 });

@@ -7,7 +7,7 @@ import warnings
 from functools import lru_cache
 from typing import List, Optional, Dict, Union
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, EnvSettingsSource, SettingsConfigDict
 
 _DEVELOPMENT_SECRET = "dev-secret-key-must-be-at-least-32-chars-long-for-security"
@@ -40,6 +40,8 @@ class Settings(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         extra="ignore",
+        # Compose 的 ${VAR:-} 会传入空字符串。空字符串视为未设置，保留代码默认值。
+        env_ignore_empty=True,
     )
     
     # 基础配置
@@ -229,13 +231,51 @@ class Settings(BaseSettings):
     DEEPSEEK_API_KEY: Optional[str] = None
     GLM_API_KEY: Optional[str] = None
     DASHSCOPE_BASE_URL: str = "https://dashscope.aliyuncs.com/compatible-mode/v1"
-    DASHSCOPE_MODEL: str = "qwen-plus"
+    # 高风险回答与复核走百炼 qwen3.5-plus。批量文本走 DEEPSEEK_MODEL。
+    DASHSCOPE_MODEL: str = "qwen3.5-plus"
+    DASHSCOPE_REVIEW_MODEL: str = "qwen3.5-plus"
     DEEPSEEK_BASE_URL: str = "https://api.deepseek.com"
     # DeepSeek 官方更新日志（2026-04-24）：旧模型名 deepseek-chat / deepseek-reasoner 于 2026-07-24 停止使用；
     # 现行定价页（2026-10-13 核对 https://api-docs.deepseek.com/zh-cn/quick_start/pricing/）列出 deepseek-flash（V4.1-Flash）。
     DEEPSEEK_MODEL: str = "deepseek-flash"
     GLM_BASE_URL: str = "https://open.bigmodel.cn/api/paas/v4/"
-    GLM_MODEL: str = "glm-4-flash"
+    # 智谱开放平台文档（docs.bigmodel.cn）当前模型号 glm-4.7-flash。
+    # glm-4-flash / glm-4.5-flash 已停用，2026-01-30 后 GLM-4.5-Flash 路由到 GLM-4.7-Flash。
+    GLM_MODEL: str = "glm-4.7-flash"
+    # 国内编排默认不是 cn，避免同一镜像在未设置时关掉国际路径。cn compose 显式设为 cn。
+    APP_EDITION: str = "global"
+    NENGJIAN_DEEPSEEK_API_KEY: Optional[str] = None
+    NENGJIAN_DASHSCOPE_API_KEY: Optional[str] = None
+    NENGJIAN_GLM_API_KEY: Optional[str] = None
+    NENGJIAN_GUARDRAIL_AK_ID: Optional[str] = None
+    NENGJIAN_GUARDRAIL_AK_SECRET: Optional[str] = None
+    # TODO: 阿里云内容安全的地域 endpoint 以控制台为准，空值时模块保持关闭。
+    NENGJIAN_GUARDRAIL_ENDPOINT: str = ""
+    # 空字符串视为未设置（env_ignore_empty）。Compose 的 ${VAR:-} 因此保留这里的默认值。
+    NENGJIAN_GUARDRAIL_SERVICE: str = "comment_detection_pro"
+    WECOM_SHA_CONTROL_ID: str = "Text-sha256"
+    NENGJIAN_GEO_QWEN_MODEL: str = "qwen3.5-plus"
+    NENGJIAN_GEO_WENXIN_MODEL: str = "ernie-4.5-turbo-32k"
+    NENGJIAN_ARK_API_KEY: Optional[str] = None
+    NENGJIAN_ARK_BASE_URL: str = "https://ark.cn-beijing.volces.com/api/v3"
+    # 方舟模型列表与 Seedream 教程（2026-10-27 核对
+    # https://ark.volcengine.com/region:cn-beijing/docs/model-list
+    # https://ark.volcengine.com/region:cn-beijing/docs/seedream-5-0-pro）：
+    # Seedream 5.0 flash 为 doubao-seedream-5-0-flash-260915，文档写明速度更快、价格更低。
+    # 视频侧没有 Seedance 2.5 的 lite/mini 号；成本档是 Seedance 2.0 mini
+    # doubao-seedance-2-0-mini-260615。控制台 ep- 接入点用环境变量覆盖，不要写进仓库。
+    NENGJIAN_SEEDREAM_MODEL: str = "doubao-seedream-5-0-flash-260915"
+    NENGJIAN_SEEDANCE_MODEL: str = "doubao-seedance-2-0-mini-260615"
+    NENGJIAN_EMBEDDING_MODEL: str = "text-embedding-v4"
+    NENGJIAN_RERANK_MODEL: str = "qwen3-rerank"
+    # TODO: qwen3-rerank 的 HTTP 路径以百炼当前文档为准。
+    NENGJIAN_RERANK_URL: str = ""
+    NENGJIAN_USER_DAILY_BUDGET_CNY: float = 20
+    NENGJIAN_USER_MONTHLY_BUDGET_CNY: float = 200
+    NENGJIAN_MODEL_CALL_CNY: float = 0.01
+    NENGJIAN_OVERSEAS_LIVE: str = "disabled"
+    NENGJIAN_NASA_BATCH_IMPORT: str = "0"
+    NENGJIAN_KILL_SWITCH: str = "0"
     
     # 国际版
     ANTHROPIC_API_KEY: Optional[str] = None
@@ -253,7 +293,11 @@ class Settings(BaseSettings):
     EMBEDDING_API_KEY: Optional[str] = None
     EMBEDDING_DIMENSIONS: int = 1024
     ALLOW_MOCK_EMBEDDINGS: bool = False
-    EMBEDDING_MODEL: str = "BAAI/bge-m3"  # 国内
+    EMBEDDING_MODEL: str = "BAAI/bge-m3"  # 国内本地默认
+    LOCAL_RERANK_MODEL: str = "BAAI/bge-reranker-v2-m3"
+    EMBEDDING_AB_MODEL: str = "Qwen/Qwen3-Embedding-0.6B"
+    EMBEDDING_AB_ENABLED: str = "0"
+    RAGAS_FAITHFULNESS_MIN: float = 0.90
     OPENAI_EMBEDDING_MODEL: str = "text-embedding-3-large"  # 国际
     
     # 向量库
@@ -270,11 +314,14 @@ class Settings(BaseSettings):
     MILVUS_HOST: str = "localhost"
     MILVUS_PORT: int = 19530
     
-    # 第三方服务
-    # 高德地图
+    # 地图瓦片。国内路径只用天地图或高德，密钥为空则关闭，不回退到 OSM。
+    MAP_TILE_PROVIDER: str = ""
+    MAP_TILE_URL: str = ""
+    TIANDITU_KEY: Optional[str] = None
     GAODE_MAP_KEY: Optional[str] = None
-    # OpenWeatherMap
+    # OpenWeatherMap 仅国际路径。国内版在校验里清空。
     OPENWEATHER_API_KEY: Optional[str] = None
+    CRAWLER_CONTACT_EMAIL: Optional[str] = None
     
     # 支付 - Stripe (国际)
     STRIPE_SECRET_KEY: Optional[str] = None
@@ -330,6 +377,34 @@ class Settings(BaseSettings):
     RATE_LIMIT_REQUESTS: int = 100
     RATE_LIMIT_WINDOW: int = 60
     
+    @model_validator(mode="after")
+    def apply_nengjian_key_aliases(self):
+        """产品密钥用 NENGJIAN_ 前缀。旧变量仍可用，避免现有 compose 和测试失效。"""
+        for src, dest in (
+            ("NENGJIAN_DEEPSEEK_API_KEY", "DEEPSEEK_API_KEY"),
+            ("NENGJIAN_DASHSCOPE_API_KEY", "DASHSCOPE_API_KEY"),
+            ("NENGJIAN_GLM_API_KEY", "GLM_API_KEY"),
+        ):
+            if getattr(self, src) and not getattr(self, dest):
+                setattr(self, dest, getattr(self, src))
+        if (self.APP_EDITION or "").lower() == "cn":
+            for name in (
+                "ANTHROPIC_API_KEY", "OPENAI_API_KEY", "OPENROUTER_API_KEY",
+                "STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET", "STRIPE_PRO_PRICE_ID",
+                "STRIPE_ENTERPRISE_PRICE_ID", "STRIPE_SUCCESS_URL", "STRIPE_CANCEL_URL",
+                "STRIPE_PORTAL_RETURN_URL", "PINECONE_API_KEY", "OPENWEATHER_API_KEY",
+                "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "APPLE_CLIENT_ID",
+                "APPLE_CLIENT_SECRET", "GITHUB_CLIENT_ID", "GITHUB_CLIENT_SECRET",
+                "FCM_SERVER_KEY", "SENTRY_DSN", "DATADOG_API_KEY",
+            ):
+                if getattr(self, name, None):
+                    setattr(self, name, None)
+            tile = (self.MAP_TILE_URL or "").lower()
+            if "openstreetmap.org" in tile or "tile.openstreetmap" in tile:
+                self.MAP_TILE_URL = ""
+                self.MAP_TILE_PROVIDER = ""
+        return self
+
     # 功能开关
     ENABLE_AI_CHAT: bool = True
     ENABLE_REALTIME_SIMULATION: bool = True

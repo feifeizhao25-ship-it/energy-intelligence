@@ -4,9 +4,11 @@ import { NextRequest } from 'next/server';
 
 jest.mock('@/lib/projects/owned', () => ({ ownedProject: jest.fn() }));
 jest.mock('@/lib/prisma', () => ({
-  prisma: {
+    prisma: {
     assetAlert: { findMany: jest.fn(), updateMany: jest.fn() },
     maintenancePlan: { findMany: jest.fn() },
+    workOrder: { findMany: jest.fn(), findFirst: jest.fn(), create: jest.fn(), update: jest.fn() },
+    workOrderEvent: { create: jest.fn() },
   },
 }));
 jest.mock('@/lib/timeline/service', () => ({ timelineService: { getTimeline: jest.fn(async () => []), recommendNextSteps: jest.fn(async () => []) } }));
@@ -55,9 +57,19 @@ describe('项目运维接口只对所有者开放，数据来自数据库', () =
     expect(jest.mocked(prisma.assetAlert.updateMany).mock.calls[0][0]).toMatchObject({ where: { id: 'other', projectId: 'p1' } });
   });
 
-  it('维护计划只读；手动建单如实返回未开放', async () => {
-    expect((await maintenance.POST()).status).toBe(501);
-    expect((await maintenance.PATCH()).status).toBe(501);
+  it('业主可以创建清洗或巡检工单并修改状态，操作写入审计', async () => {
+    jest.mocked(ownedProject).mockResolvedValue({ id: 'p1', userId: 'u1' });
+    jest.mocked(prisma.workOrder.create).mockResolvedValue({ id: 'w1', title: '组件清洗' } as never);
+    jest.mocked(prisma.workOrderEvent.create).mockResolvedValue({} as never);
+    const created = await maintenance.POST(req('http://x', { method: 'POST', body: JSON.stringify({ title: '组件清洗', type: 'cleaning', priority: 'medium', assignee: '张工' }) }), ctx());
+    expect(created.status).toBe(201);
+    expect(jest.mocked(prisma.workOrder.create).mock.calls[0][0].data).toMatchObject({ projectId: 'p1', type: 'cleaning', createdBy: 'u1' });
+    jest.mocked(ownedProject).mockResolvedValue({ id: 'p1', userId: 'u1' });
+    jest.mocked(prisma.workOrder.findFirst).mockResolvedValue({ id: 'w1', projectId: 'p1', title: '组件清洗' } as never);
+    jest.mocked(prisma.workOrder.update).mockResolvedValue({ id: 'w1', title: '组件清洗', status: 'in_progress', assignee: '张工' } as never);
+    const patched = await maintenance.PATCH(req('http://x', { method: 'PATCH', body: JSON.stringify({ id: 'w1', status: 'in_progress' }) }), ctx());
+    expect(patched.status).toBe(200);
+    expect(jest.mocked(prisma.workOrderEvent.create).mock.calls.some((call) => call[0].data.action === 'updated')).toBe(true);
   });
 
   it('测试端点与内存版配置接口已移除；定时任务在生产环境不接受默认口令', () => {

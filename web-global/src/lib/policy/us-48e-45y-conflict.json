@@ -1,0 +1,48 @@
+{
+  "topic": "US §48E / §45Y clean electricity credits",
+  "resolution": null,
+  "instruction": "Show every source with its date. Do not mark a winner.",
+  "conflict_ids": ["EI-06", "EI-08", "EI-09"],
+  "sources": [
+    {
+      "id": "EI-06",
+      "role": "IRS §48E page",
+      "title": "Clean Electricity Investment Credit (§48E)",
+      "publisher": "IRS",
+      "url": "https://www.irs.gov/credits-deductions/clean-electricity-investment-credit",
+      "dated": null,
+      "date_label": "Page does not show a date",
+      "statement": "The page still describes a phase-out in 2032, or when emissions fall to 25% of the 2022 level, and base rates of 6% and 30%."
+    },
+    {
+      "id": "EI-07",
+      "role": "IRS §45Y page",
+      "title": "Clean Electricity Production Credit (§45Y)",
+      "publisher": "IRS",
+      "url": "https://www.irs.gov/credits-deductions/clean-electricity-production-credit",
+      "dated": null,
+      "date_label": "Page does not show a date",
+      "statement": "The §45Y page is shown beside the §48E page. It is not treated as updating Notice 2025-42 or the vacatur report."
+    },
+    {
+      "id": "EI-08",
+      "role": "IRS Notice 2025-42",
+      "title": "IRS Notice 2025-42",
+      "publisher": "IRS",
+      "url": "https://www.irs.gov/pub/irs-drop/n-25-42.pdf",
+      "dated": "2025-08",
+      "date_label": "August 2025",
+      "statement": "Notice 2025-42 says wind and solar facilities placed in service after 2027-12-31 lose the §45Y and §48E credits unless construction began on or before 2026-07-04."
+    },
+    {
+      "id": "EI-09",
+      "role": "Vacatur report",
+      "title": "Court Restores 5% Safe Harbor for Wind and Solar",
+      "publisher": "Beveridge & Diamond",
+      "url": "https://www.bdlaw.com/publications/court-restores-5-safe-harbor-for-wind-and-solar-as-july-4-deadline-nears/",
+      "dated": "2026-06-16",
+      "date_label": "Article 2026-06-16, describing an order dated 2026-06-06",
+      "statement": "The article reports that on 2026-06-06 the U.S. District Court for the District of Columbia vacated Notice 2025-42 and restored the 5% safe harbor. The court opinion was not read for this card. This is a secondary report, not a decision about which rule applies."
+    }
+  ]
+}

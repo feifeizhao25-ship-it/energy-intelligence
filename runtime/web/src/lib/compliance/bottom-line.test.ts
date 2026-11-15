@@ -1,7 +1,7 @@
 // 底线禁词扫描：源码中的用户可见文案与接口输出不得包含投资建议/价格预测/冒充官方用语
 import fs from 'fs';
 import path from 'path';
-import { findBottomLineViolations, bottomLineTerms } from './bottom-line';
+import { findBottomLineViolations, bottomLineTerms, neutralizeCnText, BOTTOM_LINE_NOTICE_ZH } from './bottom-line';
 import { describeSolarOutput, parseV1SolarInput, auditUrlFor, V1InputError } from '@/lib/calculation/v1-solar';
 
 const SRC = path.resolve(__dirname, '../..');
@@ -13,11 +13,17 @@ const ALLOW = new Set([
     'lib/ai/system-prompt.ts', // 提示词里需要写出禁止的说法
 ]);
 
+/** 页面、组件和文案包。文献题名、接口实现和禁词表本身不在这里。 */
+function isUiCopy(rel: string): boolean {
+    if (rel.endsWith('.tsx') && !rel.endsWith('.test.tsx')) return true;
+    return rel.startsWith('messages/') && rel.endsWith('.json');
+}
+
 function walk(dir: string, out: string[] = []): string[] {
     for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
         const p = path.join(dir, e.name);
         if (e.isDirectory()) { if (e.name !== 'node_modules' && e.name !== '__tests__') walk(p, out); }
-        else if (/\.(ts|tsx|json)$/.test(e.name) && !/\.test\.tsx?$/.test(e.name)) out.push(p);
+        else out.push(p);
     }
     return out;
 }
@@ -29,15 +35,23 @@ describe('底线禁词扫描', () => {
         expect(bottomLineTerms('impersonating_official').length).toBeGreaterThan(2);
     });
 
-    it('源码（除禁词表/提示词外）不含禁词', () => {
+    it('用户可见文案不含禁词', () => {
         const hits: string[] = [];
-        for (const f of walk(SRC)) {
-            const rel = path.relative(SRC, f).split(path.sep).join('/');
+        const files = walk(SRC).map(f => path.relative(SRC, f).split(path.sep).join('/')).filter(isUiCopy);
+        expect(files.length).toBeGreaterThan(10);
+        for (const rel of files) {
             if (ALLOW.has(rel)) continue;
-            const v = findBottomLineViolations(fs.readFileSync(f, 'utf8'));
+            const v = findBottomLineViolations(fs.readFileSync(path.join(SRC, rel), 'utf8'));
             if (v.length) hits.push(`${rel}: ${v.join(', ')}`);
         }
         expect(hits).toEqual([]);
+    });
+
+    it('文献原题可以包含 price forecast，那不是产品在做价格预测', () => {
+        const titles = fs.readFileSync(path.join(SRC, 'data/paper-title-zh.json'), 'utf8');
+        expect(titles).toContain('Probabilistic Electricity Price Forecasting');
+        expect(findBottomLineViolations(titles)).toContain('price forecast');
+        expect(isUiCopy('data/paper-title-zh.json')).toBe(false);
     });
 
     it('v1 光伏接口的事实描述不含禁词，且随输入变化', () => {
@@ -68,5 +82,35 @@ describe('底线禁词扫描', () => {
         const route = fs.readFileSync(path.join(SRC, 'app/api/v1/calculate/solar/route.ts'), 'utf8');
         expect(route).not.toMatch(/solarwind\.pro|dummy_result/);
         expect(fs.readFileSync(path.join(SRC, 'lib/calculation/auditable-engine.ts'), 'utf8')).not.toMatch(/dummy_result|12\.5%/);
+    });
+});
+
+describe('国内运行时过滤', () => {
+    it('免责声明、引用和标准说明保留原文', () => {
+        const kept = [
+            '不构成价格预测',
+            '不提供投资建议、收益承诺或价格预测',
+            BOTTOM_LINE_NOTICE_ZH,
+            '国家发展改革委官方发布的文件是发改价格〔2025〕136号。',
+            '山东省代理购电价格以已公布的价格表为准。本段不构成价格预测。',
+            '该不该上网要看省级规则。',
+            '这批机组值得投入运行。',
+            '发改价格〔2025〕136号调整了机制电量。这属于价格预测范畴，我无法提供。',
+            '涉及价格预测的部分我不展开。',
+        ];
+        for (const text of kept) expect(neutralizeCnText(text)).toBe(text);
+    });
+
+    it('改写后的投资询问和官方背书仍整段替换', () => {
+        for (const text of ['这个光伏项目值得投吗', '该不该上', '这是官方发布的结论', '这个项目值得投资']) {
+            expect(neutralizeCnText(text)).toBe(BOTTOM_LINE_NOTICE_ZH);
+        }
+    });
+
+    it('「价格预测」改由运行时模式识别，源码扫描不再把免责声明里的这四个字当成禁词', () => {
+        expect(findBottomLineViolations('不构成价格预测')).toEqual([]);
+        expect(neutralizeCnText('请给出价格预测')).toBe(BOTTOM_LINE_NOTICE_ZH);
+        expect(neutralizeCnText('明年价格预测会涨')).toBe(BOTTOM_LINE_NOTICE_ZH);
+        expect(neutralizeCnText('不构成价格预测')).toBe('不构成价格预测');
     });
 });

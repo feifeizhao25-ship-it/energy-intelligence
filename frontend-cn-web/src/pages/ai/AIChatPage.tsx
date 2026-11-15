@@ -7,6 +7,7 @@
 
 import React, { useCallback, useRef, useState } from 'react';
 import MarkdownRenderer from '../../components/MarkdownRenderer';
+import { ChatMic, ChatSpeaker } from '../../components/ChatVoice';
 
 interface Citation {
   title: string;
@@ -111,6 +112,7 @@ export default function AIChatPage() {
               ) : (
                 <>
                   <MarkdownRenderer content={message.content} />
+                  <ChatSpeaker id={`a${index}`} text={message.content} />
                   {message.citations && message.citations.length > 0 && (
                     <ul className="mt-3 space-y-2">
                       {message.citations.map((citation, i) => (
@@ -140,7 +142,19 @@ export default function AIChatPage() {
             value={input}
             onChange={(event) => setInput(event.target.value)}
             placeholder="输入你的问题…"
-            className="h-10 flex-1 rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--bg-primary)] px-3 text-[14px] focus:outline-none focus:border-[var(--color-brand-500)]"
+            aria-label="输入你的问题"
+            className="h-10 min-w-0 flex-1 rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--bg-primary)] px-3 text-[14px] focus:outline-none focus:border-[var(--color-brand-500)]"
+          />
+          <ChatMic
+            disabled={sending}
+            onTranscript={(text) => {
+              const heard = text.trim();
+              if (!heard) return;
+              setInput((prev) => {
+                const base = prev.trim();
+                return base ? `${base} ${heard}` : heard;
+              });
+            }}
           />
           <button
             type="submit"

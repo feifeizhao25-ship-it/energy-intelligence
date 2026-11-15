@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_theme.dart';
+import '../../widgets/photo_widgets.dart';
 import 'solar_finance_screen.dart';
 import 'wind_finance_screen.dart';
 import 'storage_finance_screen.dart';
@@ -19,13 +21,14 @@ class FinanceScreen extends StatelessWidget {
             SizedBox(height: 8),
             Text(
               '全面计算项目财务指标，支持多种能源类型',
-              style: TextStyle(color: Color(0xFF64748B), fontSize: 13),
+              style: TextStyle(color: context.eiMuted, fontSize: 14, height: 1.5),
             ),
             SizedBox(height: 24),
             _buildFinanceCard(
               context,
+              asset: 'assets/images/en_res_solar.webp',
               title: '光伏电站',
-              subtitle: 'PV项目财务分析',
+              subtitle: '光伏项目财务分析',
               icon: Icons.wb_sunny,
               color: Color(0xFFFCD34D),
               onTap: () {
@@ -37,6 +40,7 @@ class FinanceScreen extends StatelessWidget {
             SizedBox(height: 16),
             _buildFinanceCard(
               context,
+              asset: 'assets/images/en_res_wind.webp',
               title: '风电项目',
               subtitle: '风电场财务计算',
               icon: Icons.cloud,
@@ -48,6 +52,7 @@ class FinanceScreen extends StatelessWidget {
             SizedBox(height: 16),
             _buildFinanceCard(
               context,
+              asset: 'assets/images/en_res_storage.webp',
               title: '储能系统',
               subtitle: '储能项目成本分析',
               icon: Icons.battery_charging_full,
@@ -56,17 +61,6 @@ class FinanceScreen extends StatelessWidget {
                 context,
               ).push(MaterialPageRoute(builder: (_) => StorageFinanceScreen())),
             ),
-            SizedBox(height: 16),
-            _buildFinanceCard(
-              context,
-              title: '方案对比',
-              subtitle: '多个方案对比分析',
-              icon: Icons.compare_arrows,
-              color: Color(0xFF3B82F6),
-              onTap: () => ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(SnackBar(content: Text('功能开发中'))),
-            ),
           ],
         ),
       ),
@@ -74,6 +68,19 @@ class FinanceScreen extends StatelessWidget {
   }
 
   Widget _buildFinanceCard(
+    BuildContext context, {
+    required String asset,
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return EnThumbRow(asset: asset, title: title, subtitle: subtitle, icon: icon, color: color, onTap: onTap);
+  }
+
+  // ignore: unused_element
+  Widget _buildFinanceCardPlain(
     BuildContext context, {
     required String title,
     required String subtitle,
@@ -110,13 +117,13 @@ class FinanceScreen extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF0F172A),
+                        color: context.eiStrong,
                       ),
                     ),
                     SizedBox(height: 4),
                     Text(
                       subtitle,
-                      style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                      style: TextStyle(fontSize: 13, color: context.eiMuted),
                     ),
                   ],
                 ),

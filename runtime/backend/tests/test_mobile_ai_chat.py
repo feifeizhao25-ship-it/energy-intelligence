@@ -27,7 +27,9 @@ async def test_mobile_ai_chat_returns_json(client, auth_headers, monkeypatch):
         headers=auth_headers,
     )
     assert response.status_code == 200
-    assert response.json()["message"] == "容量因子需结合项目所在地和可核验资源数据计算。"
+    message = response.json()["message"]
+    assert message.startswith("容量因子需结合项目所在地和可核验资源数据计算。")
+    assert "核验状态：未核验" in message  # I-11: an answer that cites nothing says so
     assert response.json()["ai_metadata"]["provider"] == "test"
 
 

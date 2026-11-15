@@ -5,41 +5,51 @@ import Link from 'next/link';
 import { AlertCircle, Award, Calendar, Database, Loader2, TrendingUp, Zap } from 'lucide-react';
 import { Plan, PLAN_DETAILS, USAGE_LIMITS } from '@/lib/membership/plans';
 
-type Payment = { id: string; amount: number; currency: string; description?: string | null; paidAt?: string | null; createdAt: string };
-type Member = {
-    id: string; name?: string | null; email: string; plan: Plan; planExpireAt?: string | null;
-    dailyAiCalls: number; dailyResourceQueries: number; dailyCalculations: number;
-    dailyPaperSearches: number; dailyDiagnoses: number; projectCount: number;
-    paperCount: number; stationCount: number; folderCount: number;
-    subscription?: { status: string; endDate: string; autoRenew: boolean; payments: Payment[] } | null;
-};
+import { loadMember, type Member, type Payment } from '@/lib/membership/load-member';
 
 export default function MembershipCenterPage() {
     const [member, setMember] = useState<Member | null>(null);
     const [error, setError] = useState('');
+    const [attempt, setAttempt] = useState(0);
+    const [paymentsLoading, setPaymentsLoading] = useState(false);
+    const [paymentsError, setPaymentsError] = useState('');
+
+    async function loadMorePayments() {
+        const nextCursor = member?.paymentPagination?.nextCursor;
+        if (!nextCursor || paymentsLoading) return;
+        setPaymentsLoading(true); setPaymentsError('');
+        try {
+            const data = await loadMember(`/api/membership/me?paymentCursor=${encodeURIComponent(nextCursor)}`);
+            if (data.id !== member?.id) throw new Error('账户已变化，请刷新页面');
+            setMember(current => current?.subscription ? { ...current,
+                paymentPagination: data.paymentPagination,
+                subscription: { ...current.subscription, payments: [...new Map(
+                    [...current.subscription.payments, ...(data.subscription?.payments || [])]
+                        .map((payment: Payment) => [payment.id, payment])).values()] }
+            } : current);
+        } catch (reason) {
+            setPaymentsError(reason instanceof Error ? reason.message : '付款记录加载失败，请重试');
+        } finally { setPaymentsLoading(false); }
+    }
 
     useEffect(() => {
         const controller = new AbortController();
-        fetch('/api/membership/me', { cache: 'no-store', signal: controller.signal })
-            .then(async response => {
-                const body = await response.json();
-                if (!response.ok) throw new Error(body.message || '会员信息加载失败');
-                setMember(body.data);
-            })
+        setError('');
+        loadMember('/api/membership/me', controller.signal)
+            .then(data => { if (!controller.signal.aborted) setMember(data); })
             .catch(reason => {
-                if (reason.name !== 'AbortError') setError(reason.message || '会员信息加载失败');
+                if (!controller.signal.aborted) setError(reason.message || '会员信息加载失败');
             });
         return () => controller.abort();
-    }, []);
+    }, [attempt]);
 
-    if (error) return <State message={error} error />;
+    if (error) return <State message={error} error onRetry={() => { setError(''); setAttempt(value => value + 1); }} />;
     if (!member) return <State message="正在读取您的会员权益…" />;
 
     const details = PLAN_DETAILS[member.plan] || PLAN_DETAILS.FREE;
-    const limits = USAGE_LIMITS[member.plan] || USAGE_LIMITS.FREE;
-    const expiry = member.planExpireAt || member.subscription?.endDate;
-    const active = member.plan === Plan.FREE || (!!expiry && new Date(expiry).getTime() > Date.now());
-    const effectivePlan = active ? member.plan : Plan.FREE;
+    const expiry = member.planExpireAt;
+    const effectivePlan = member.effectivePlan;
+    const active = member.plan === effectivePlan;
     const effectiveDetails = PLAN_DETAILS[effectivePlan];
     const effectiveLimits = USAGE_LIMITS[effectivePlan];
     const payments = member.subscription?.payments || [];
@@ -69,7 +79,8 @@ export default function MembershipCenterPage() {
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <section className="rounded-2xl bg-slate-900 border border-slate-800 p-6">
-                        <h3 className="text-xl font-bold flex items-center gap-2"><TrendingUp className="text-blue-400" />今日使用情况</h3>
+                        <h3 className="text-xl font-bold flex items-center gap-2"><TrendingUp className="text-blue-400" />我的权益</h3>
+                        <p className="text-sm text-slate-400 mt-2">按北京时间每日零点重置；下次重置：{new Date(member.nextResetAt).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false })}（北京时间）。</p>
                         <div className="mt-5 space-y-4">
                             <Usage label="AI 对话" value={member.dailyAiCalls} limit={effectiveLimits.ai_chat} />
                             <Usage label="资源查询" value={member.dailyResourceQueries} limit={effectiveLimits.resource_query} />
@@ -93,7 +104,7 @@ export default function MembershipCenterPage() {
                     <h3 className="text-xl font-bold flex items-center gap-2"><Award className="text-amber-400" />当前核心权益</h3>
                     <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-slate-200">
                         <Benefit icon={<Zap />} text={`${formatLimit(effectiveLimits.ai_chat)} AI 对话`} />
-                        <Benefit icon={<Database />} text={`${formatLimit(effectiveLimits.projects)} 项目`} />
+                        <Benefit icon={<Database />} text={`${effectiveLimits.projects === Infinity ? '不限量' : `最多 ${effectiveLimits.projects} 个`} 项目`} />
                         <Benefit icon={<Award />} text={effectivePlan === Plan.FREE ? '基础计算与查询' : '专业报告导出'} />
                         <Benefit icon={<Calendar />} text={member.subscription?.autoRenew ? '已开启自动续费' : '未开启自动续费'} />
                     </div>
@@ -103,17 +114,93 @@ export default function MembershipCenterPage() {
                     <h3 className="text-xl font-bold">付款记录</h3>
                     {payments.length === 0 ? <p className="mt-4 text-slate-400">暂无已完成的付款记录。</p> : (
                         <div className="mt-4 divide-y divide-slate-800">
-                            {payments.map(payment => <div key={payment.id} className="py-4 flex justify-between gap-4"><div><p>{payment.description || '会员订阅'}</p><p className="text-sm text-slate-400">{new Date(payment.paidAt || payment.createdAt).toLocaleDateString('zh-CN')}</p></div><strong>{payment.currency === 'CNY' ? '¥' : `${payment.currency} `}{payment.amount.toLocaleString('zh-CN')}</strong></div>)}
+                            {payments.map(payment => <div key={payment.id} className="py-4 flex flex-col sm:flex-row sm:justify-between gap-2 sm:gap-4"><div className="min-w-0 [overflow-wrap:anywhere]"><p>{payment.description || '会员订阅'}</p><p className="text-sm text-slate-400">{new Date(payment.paidAt || payment.createdAt).toLocaleDateString('zh-CN', { timeZone: 'Asia/Shanghai' })}（北京时间）</p></div><strong className="shrink-0 whitespace-nowrap">{payment.currency === 'CNY' ? '¥' : `${payment.currency} `}{Number(payment.amount).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong></div>)}
                         </div>
                     )}
+                    {paymentsError && <p role="alert" className="mt-4 text-red-300">{paymentsError}</p>}
+                    {member.paymentPagination?.nextCursor && <button type="button" onClick={loadMorePayments} disabled={paymentsLoading} className="mt-4 rounded-lg border border-slate-600 px-4 py-2 disabled:opacity-50">{paymentsLoading ? '正在加载付款记录…' : '加载更多付款记录'}</button>}
                 </section>
+
+                <ConsultBox />
+                <BillingActions member={member} onChanged={() => setAttempt(value => value + 1)} />
             </div>
         </main>
     );
 }
 
-function State({ message, error = false }: { message: string; error?: boolean }) {
-    return <main className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-6"><div className="flex items-center gap-3">{error ? <AlertCircle className="text-red-400" /> : <Loader2 className="animate-spin text-blue-400" />}<span>{message}</span></div></main>;
+function State({ message, error = false, onRetry }: { message: string; error?: boolean; onRetry?: () => void }) {
+    return <main className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-6"><div className="space-y-5">
+        <div role={error ? 'alert' : 'status'} className="flex items-center gap-3">{error ? <AlertCircle className="text-red-400 shrink-0" /> : <Loader2 className="animate-spin text-blue-400" />}<span>{message}</span></div>
+        {onRetry && <div className="flex flex-wrap items-center gap-5"><button type="button" onClick={onRetry} className="rounded-lg bg-indigo-600 px-5 py-3">重新加载会员信息</button><Link href="/login?callbackUrl=%2Fmembership" className="text-indigo-300 underline">重新登录</Link></div>}
+    </div></main>;
+}
+function BillingActions({ member, onChanged }: { member: Member; onChanged: () => void }) {
+    const [message, setMessage] = useState('');
+    const [pending, setPending] = useState('');
+    const [selectedPaymentId, setSelectedPaymentId] = useState('');
+    const expiry = member.planExpireAt ? new Date(member.planExpireAt) : null;
+    const active = member.plan !== Plan.FREE && expiry !== null && expiry.getTime() > Date.now() && member.plan === member.effectivePlan;
+    const targets = (Object.keys(PLAN_DETAILS) as Plan[]).filter(plan => {
+        const rank = [Plan.FREE, Plan.PRO, Plan.MAINTENANCE, Plan.FULL, Plan.TEAM, Plan.ENTERPRISE];
+        return plan !== Plan.MAINTENANCE && rank.indexOf(plan) >= 0 && rank.indexOf(plan) < rank.indexOf(member.plan);
+    });
+    async function run(key: string, url: string, body: unknown) {
+        setPending(key); setMessage('');
+        try {
+            const response = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(data.message || '操作没有完成，请稍后再试');
+            if (data.refundCny) setMessage(`测算应退 ¥${data.refundCny}（实付 ¥${data.paidCny}，剩余 ${data.remainingDays} 天）。这只是测算，不会自动退款。`);
+            else setMessage(data.message || '已登记');
+            if (url === '/api/membership/downgrade') onChanged();
+        } catch (reason) {
+            setMessage(reason instanceof Error ? reason.message : '操作没有完成，请稍后再试');
+        } finally { setPending(''); }
+    }
+    const payments = (member.subscription?.payments || []).filter(payment => payment.orderNo);
+    const selectedPayment = payments.find(payment => payment.id === selectedPaymentId) || payments[0];
+    return <section className="rounded-2xl bg-slate-900 border border-slate-800 p-6 space-y-4">
+        <h3 className="text-xl font-bold">续费、降级与退款测算</h3>
+        <p className="text-sm text-slate-400">续费请到价格页购买同一方案，未到期从现到期日顺延一年。降级到期后才生效，不退差价。退款只根据已支付订单测算，财务在支付宝后台人工办理。</p>
+        {member.subscription?.scheduledPlan && <p className="text-amber-100">已登记到期后改为 {PLAN_DETAILS[member.subscription.scheduledPlan as Plan]?.name || member.subscription.scheduledPlan}。</p>}
+        {active && <div className="flex flex-wrap gap-3">{targets.map(plan => <button key={plan} type="button" disabled={pending !== ''} onClick={() => run(plan, '/api/membership/downgrade', { plan })} className="rounded-lg border border-slate-600 px-4 py-2 disabled:opacity-50">{pending === plan ? '正在登记…' : `到期后改为${PLAN_DETAILS[plan].name}`}</button>)}</div>}
+        {selectedPayment && <div className="space-y-3 min-w-0">
+            <label htmlFor="refund-order" className="block text-sm font-medium">选择退款测算订单</label>
+            <select id="refund-order" value={selectedPayment.id} disabled={pending !== ''}
+                onChange={event => { setSelectedPaymentId(event.target.value); setMessage(''); }}
+                className="w-full min-w-0 rounded-lg border border-slate-600 bg-slate-950 px-3 py-3 text-white">
+                {payments.map(payment => <option key={payment.id} value={payment.id}>{payment.orderNo}</option>)}
+            </select>
+            <p className="text-sm text-slate-300 break-all">当前订单：{selectedPayment.orderNo}</p>
+            <p className="text-sm text-slate-400">可选择已加载的付款记录；更早订单请先在上方加载更多。没有完整服务周期的订单需要财务人工核对。</p>
+            <button type="button" disabled={pending !== ''}
+                onClick={() => run(selectedPayment.id, '/api/membership/refund/quote', { orderNo: selectedPayment.orderNo })}
+                className="rounded-lg border border-slate-600 px-4 py-2 disabled:opacity-50">
+                {pending === selectedPayment.id ? '正在测算…' : '测算所选订单退款'}
+            </button>
+        </div>}
+        {message && <p role="status" className="text-slate-200">{message}</p>}
+    </section>;
+}
+function ConsultBox() {
+    const [topic, setTopic] = useState('');
+    const [message, setMessage] = useState('');
+    async function submit() {
+        const response = await fetch('/api/membership/consult', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ topic }),
+        });
+        const body = await response.json().catch(() => ({}));
+        setMessage(typeof body.message === 'string' ? body.message : '预约没有完成');
+    }
+    return <section className="rounded-2xl bg-slate-900 border border-slate-800 p-6 space-y-3">
+        <h3 className="text-xl font-bold">口径咨询预约</h3>
+        <p className="text-sm text-slate-400">提交后进入待审批，不会自动通过。响应时限待人工确认。</p>
+        <input value={topic} onChange={(event) => setTopic(event.target.value)} placeholder="咨询主题" className="w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-3" />
+        <button type="button" onClick={submit} className="rounded-lg border border-slate-600 px-4 py-2">提交预约</button>
+        {message && <p role="status">{message}</p>}
+    </section>;
 }
 function formatLimit(limit: number) { return limit === Infinity ? '不限量' : `最多 ${limit} 次`; }
 function Usage({ label, value, limit }: { label: string; value: number; limit: number }) {

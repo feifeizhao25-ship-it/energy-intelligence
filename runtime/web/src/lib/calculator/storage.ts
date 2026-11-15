@@ -107,6 +107,42 @@ export async function calculateStorage(input: StorageCalculationInput) {
     };
 }
 
+/** Schmidt 等（2019，Joule）口径的简化 LCOS：折现后的投资、运维与充电成本，除以折现放电量。 */
+export function schmidtLcos(input: {
+    capex: number;
+    annualOm: number;
+    annualChargeCost: number;
+    annualDischargeKwh: number;
+    years: number;
+    discountRate?: number;
+}): number {
+    const rate = input.discountRate ?? 0.08;
+    let numerator = input.capex;
+    let denominator = 0;
+    for (let year = 1; year <= input.years; year++) {
+        const factor = (1 + rate) ** year;
+        numerator += (input.annualOm + input.annualChargeCost) / factor;
+        denominator += input.annualDischargeKwh / factor;
+    }
+    if (!(denominator > 0)) throw new Error('放电量为 0，无法计算储能度电成本');
+    return numerator / denominator;
+}
+
+/** 两段谷段充电、两段峰段放电。未给出第二段时只排一充一放。 */
+export function scheduleTwoWindows(input: {
+    usableKwh: number;
+    roundTripEfficiency: number;
+    windows: { charge: string; discharge: string }[];
+}): { cycles: number; dischargeKwh: number; note: string } {
+    const cycles = Math.min(2, input.windows.length);
+    const oneWay = Math.sqrt(input.roundTripEfficiency);
+    return {
+        cycles,
+        dischargeKwh: input.usableKwh * oneWay * cycles,
+        note: cycles === 2 ? '按两段分时窗口各充放一次' : '只配置了一段分时窗口',
+    };
+}
+
 function calculatePaybackPeriod(initialInvestment: number, annualCashFlows: number[]): number | null {
     let remaining = initialInvestment;
     for (let year = 0; year < annualCashFlows.length; year++) {

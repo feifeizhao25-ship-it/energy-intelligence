@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'services/api_service.dart';
 import 'theme/app_theme.dart';
+import 'widgets/calm_error_card.dart';
+import 'widgets/responsive_frame.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/dashboard/dashboard_screen.dart';
@@ -14,22 +16,33 @@ import 'screens/operations/operations_screen.dart';
 import 'screens/operations/health_screen.dart';
 import 'screens/ai_assistant/ai_assistant_screen.dart';
 import 'screens/projects/projects_screen.dart';
+import 'screens/projects/create_project_screen.dart';
 import 'screens/research/research_screen.dart';
 import 'screens/settings/settings_screen.dart';
+import 'screens/library/energy_library.dart';
+import 'widgets/ei_nav_rail.dart';
+import 'widgets/ei_wide.dart';
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  installCalmErrorWidget(english: false);
   await ApiService.init(region: 'CN');
-  runApp(const NewEnergyApp());
+  runApp(NewEnergyApp(configError: ApiService.configError));
 }
 
 class NewEnergyApp extends StatelessWidget {
-  const NewEnergyApp({super.key});
+  const NewEnergyApp({super.key, this.configError});
+
+  final String? configError;
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: '新能源智库',
       theme: AppTheme.buildTheme(),
+      darkTheme: AppTheme.buildDarkTheme(),
+      themeMode: ThemeMode.system,
+      builder: (context, child) => ResponsiveFrame(child: child ?? const SizedBox.shrink()),
       locale: const Locale('zh', 'CN'),
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
@@ -38,7 +51,10 @@ class NewEnergyApp extends StatelessWidget {
       ],
       supportedLocales: const [Locale('zh', 'CN')],
       debugShowCheckedModeBanner: false,
-      initialRoute: '/login',
+      home: configError == null
+          ? null
+          : ConfigErrorScreen(message: configError!),
+      initialRoute: configError == null ? '/login' : null,
       routes: {
         '/login': (context) => const LoginScreen(),
         '/register': (context) => const RegisterScreen(),
@@ -53,8 +69,10 @@ class NewEnergyApp extends StatelessWidget {
         '/operations/health': (context) => const HealthScreen(),
         '/ai-assistant': (context) => const AiAssistantScreen(),
         '/projects': (context) => const ProjectsScreen(),
+        '/projects/new': (context) => const CreateProjectScreen(),
         '/research': (context) => const ResearchScreen(),
         '/settings': (context) => const SettingsScreen(),
+        '/library': (context) => const EnergyLibraryPage(),
       },
     );
   }
@@ -71,7 +89,7 @@ class _MainNavigationState extends State<MainNavigation> {
   int _selectedIndex = 0;
 
   final List<Widget> _screens = const [
-    DashboardScreen(),
+    DashboardScreen(embedded: true),
     ProjectsScreen(),
     ResourceScreen(),
     FinanceScreen(),
@@ -104,11 +122,33 @@ class _MainNavigationState extends State<MainNavigation> {
 
   @override
   Widget build(BuildContext context) {
+    if (MediaQuery.of(context).size.width >= 600) {
+      return Scaffold(
+        body: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            EiNavRail(
+              dests: const [
+        EiNavDest(Icons.dashboard_outlined, Icons.dashboard, '首页'),
+        EiNavDest(Icons.folder_outlined, Icons.folder, '项目'),
+        EiNavDest(Icons.map_outlined, Icons.map, '资源'),
+        EiNavDest(Icons.calculate_outlined, Icons.calculate, '计算'),
+        EiNavDest(Icons.smart_toy_outlined, Icons.smart_toy, 'AI助手'),
+              ],
+              index: _selectedIndex,
+              onSelect: (i) => setState(() => _selectedIndex = i),
+            ),
+            Expanded(child: EiContentFrame(child: IndexedStack(index: _selectedIndex, children: _screens))),
+          ],
+        ),
+      );
+    }
+
     return Scaffold(
       body: IndexedStack(index: _selectedIndex, children: _screens),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.eiCard,
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.08),
@@ -126,32 +166,40 @@ class _MainNavigationState extends State<MainNavigation> {
                 final item = _navItems[i];
                 final selected = i == _selectedIndex;
                 return Expanded(
-                  child: InkWell(
+                  child: Semantics(
+                    button: true,
+                    selected: selected,
+                    label: item.label,
+                    excludeSemantics: true,
                     onTap: () => setState(() => _selectedIndex = i),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          selected ? item.activeIcon : item.icon,
-                          size: 22,
-                          color: selected
-                              ? const Color(0xFF1D4ED8)
-                              : const Color(0xFF94A3B8),
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          item.label,
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: selected
-                                ? FontWeight.w600
-                                : FontWeight.normal,
+                    child: InkWell(
+                      key: Key('navTab$i'),
+                      onTap: () => setState(() => _selectedIndex = i),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            selected ? item.activeIcon : item.icon,
+                            size: 22,
                             color: selected
                                 ? const Color(0xFF1D4ED8)
                                 : const Color(0xFF94A3B8),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 3),
+                          Text(
+                            item.label,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: selected
+                                  ? FontWeight.w600
+                                  : FontWeight.normal,
+                              color: selected
+                                  ? const Color(0xFF1D4ED8)
+                                  : const Color(0xFF94A3B8),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 );

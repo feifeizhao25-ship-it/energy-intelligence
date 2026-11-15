@@ -58,7 +58,7 @@ def _global_args(report_type: str = "investment"):
         report_type,
         TEMPLATES[report_type],
         calc_financial_metrics(data["financial"]),
-        "Investment Analysis Report",
+        "Calculation Report",
         "confidential",
         "global",
     )

@@ -43,7 +43,10 @@ model User {
   jobTitle         String?
   industry         String?
   bio              String?
-  profileCompleted Boolean @default(false)
+  profileCompleted Boolean   @default(false)
+  // 引导页确认已年满 16 周岁的时间。空值表示尚未确认。
+  // 已完成引导的老用户由迁移回填，避免被送回引导页。
+  ageConfirmedAt   DateTime?
 
   // 会员信息
   plan         Plan      @default(FREE)
@@ -109,6 +112,11 @@ model User {
   UserAchievementDetail UserAchievementDetail[]
   payments              Payment[]
   documentChunks        DocumentChunk[]
+  policyAlertSubscriptions PolicyAlertSubscription[]
+  policyAlertNotices       PolicyAlertNotice[]
+  datasetDownloads         DatasetDownload[]
+  literatureRecords        LiteratureRecord[]
+  profile                  UserProfile?
 
   @@map("users")
 }
@@ -124,6 +132,10 @@ model Subscription {
   autoRenew         Boolean            @default(false)
   trialEndsAt       DateTime? // 试用期结束时间
   cancelAtPeriodEnd Boolean            @default(false)
+  // 到期后要改成的续费档位。未到到期日不改变当前权益，也不退差价。
+  scheduledPlan        Plan?
+  scheduledFromPlan    Plan?
+  scheduledEffectiveAt DateTime?
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
 
@@ -149,6 +161,9 @@ model Payment {
   transactionId  String?   @unique
   description    String? // 支付描述
   paidAt         DateTime?
+  // 这笔付款实际覆盖的服务周期。退款测算只认这里，不接受调用方自报金额或日期。
+  serviceStart   DateTime?
+  serviceEnd     DateTime?
   createdAt      DateTime  @default(now())
 
   // 关联关系
@@ -215,6 +230,11 @@ model Project {
   reports              Report[]
   savedPapers          SavedPaper[]
   paperRecommendations ProjectPaperRecommendation[]
+  workOrders           WorkOrder[]
+  telemetrySamples     TelemetrySample[]
+  telemetryCredentials TelemetryCredential[]
+  alarmRules           AlarmRule[]
+  alarmEvents          AlarmEvent[]
 
   @@map("projects")
 }
@@ -587,6 +607,9 @@ model Policy {
   reviewedAt   DateTime?
   sourceTitle  String? // 文件标题
   docNumber    String? // 文号，如「发改价格〔2025〕136号」
+  effectiveDate DateTime?
+  expiryDate    DateTime?
+  supersededBy  String?
 
   @@index([region, type])
   @@index([reviewStatus, region])
@@ -1321,4 +1344,200 @@ model DocumentChunk {
 
   @@index([userId, documentId])
   @@map("document_chunks")
+}
+
+model PolicyAlertSubscription {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  province      String
+  topic         String   @default("")
+  channelInApp  Boolean  @default(true)
+  channelEmail  Boolean  @default(false)
+  channelWecom  Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  @@index([userId])
+  @@map("policy_alert_subscriptions")
+}
+
+model PolicyAlertNotice {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  body      String
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@map("policy_alert_notices")
+}
+
+model DatasetDownload {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  datasetId String
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@map("dataset_downloads")
+}
+
+// 运维工单。与按周生成的 maintenance_plans 分开，供业主创建、分派和留痕。
+model WorkOrder {
+  id          String    @id @default(cuid())
+  projectId   String
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title       String
+  description String    @default("")
+  type        String
+  status      String    @default("scheduled")
+  priority    String    @default("medium")
+  assignee    String?
+  dueAt       DateTime?
+  createdBy   String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  attachments WorkOrderAttachment[]
+  events      WorkOrderEvent[]
+
+  @@index([projectId, status])
+  @@map("work_orders")
+}
+
+model WorkOrderAttachment {
+  id          String    @id @default(cuid())
+  workOrderId String
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  filename    String
+  contentType String
+  sizeBytes   Int
+  content     Bytes
+  createdAt   DateTime  @default(now())
+
+  @@index([workOrderId])
+  @@map("work_order_attachments")
+}
+
+model WorkOrderEvent {
+  id          String    @id @default(cuid())
+  workOrderId String
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  actorId     String
+  action      String
+  detail      Json      @default("{}")
+  createdAt   DateTime  @default(now())
+
+  @@index([workOrderId, createdAt])
+  @@map("work_order_events")
+}
+
+model TelemetryCredential {
+  id        String    @id @default(cuid())
+  projectId String
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  label     String    @default("")
+  createdAt DateTime  @default(now())
+  revokedAt DateTime?
+
+  @@index([projectId])
+  @@map("telemetry_credentials")
+}
+
+model TelemetrySample {
+  id         String   @id @default(cuid())
+  projectId  String
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  pointId    String
+  recordedAt DateTime
+  powerKw    Float?
+  energyKwh  Float?
+  irradiance Float?
+  alarmCode  String   @default("")
+  source     String
+  createdAt  DateTime @default(now())
+
+  @@index([projectId, recordedAt])
+  @@map("telemetry_samples")
+}
+
+model AlarmRule {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  metric    String
+  operator  String
+  threshold Float
+  severity  String   @default("warning")
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@index([projectId])
+  @@map("alarm_rules")
+}
+
+model AlarmEvent {
+  id             String    @id @default(cuid())
+  projectId      String
+  project        Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  ruleId         String?
+  severity       String
+  title          String
+  observed       Float?
+  threshold      Float?
+  status         String    @default("active")
+  createdAt      DateTime  @default(now())
+  acknowledgedAt DateTime?
+
+  @@index([projectId, status])
+  @@map("alarm_events")
+}
+
+// 国内文献语料：批量导入的开放元数据与用户上传，请求路径不访问境外。
+model LiteratureRecord {
+  id          String   @id @default(cuid())
+  source      String
+  externalId  String
+  title       String
+  authors     String   @default("")
+  year        Int?
+  doi         String?
+  abstract    String   @default("")
+  pdfUrl      String?
+  licence     String   @default("")
+  licenceNote String   @default("")
+  citations   Json     @default("[]")
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  @@unique([source, externalId])
+  @@index([userId])
+  @@map("literature_records")
+}
+
+// 用户画像。旧的 usage_logs 偏好仍可读，迁移时写入本表。
+model UserProfile {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role             String?
+  subRole          String?
+  provinces        String[] @default([])
+  topics           String[] @default([])
+  projectStage     String?
+  readingMode      String   @default("professional")
+  notifyFrequency  String   @default("即时")
+  notifyChannel    String   @default("站内")
+  notifyWindow     String   @default("08:00-20:00")
+  personalized     Boolean  @default(true)
+  tags             Json     @default("[]")
+  follows          Json     @default("[]")
+  understoodTerms  String[] @default([])
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@map("user_profiles")
 }

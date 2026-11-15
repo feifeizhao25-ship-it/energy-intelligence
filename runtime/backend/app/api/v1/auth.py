@@ -4,9 +4,13 @@
 
 from typing import Dict, List, Optional, Type, Union
 """Auth API — real implementation with SQLAlchemy."""
+import os
+import secrets
 import uuid
 import time
 import logging
+
+from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 import httpx
@@ -347,3 +351,110 @@ async def forgot_password_reset(body: dict, db: AsyncSession = Depends(get_db)):
     
     await db.flush()
     return success(data={"message": "Password reset successfully"})
+
+
+class SmsLoginBody(BaseModel):
+    phone: str
+    consent: bool
+    code: str | None = None
+
+
+_sms_codes: dict[str, str] = {}
+
+
+async def _save_sms_code(phone: str, code: str) -> None:
+    from app.config import settings
+    try:
+        await _auth_redis.set(f"sms-login:{phone}", code, ex=300)
+        return
+    except Exception as exc:
+        if (os.environ.get("ENVIRONMENT") or settings.ENVIRONMENT) == "production":
+            logger.warning("验证码未能写入: %s", exc)
+            raise HTTPException(status_code=503, detail="验证码暂时无法保存") from exc
+        _sms_codes[phone] = code
+
+
+async def _read_sms_code(phone: str) -> str | None:
+    from app.config import settings
+    try:
+        stored = await _auth_redis.get(f"sms-login:{phone}")
+        if isinstance(stored, bytes):
+            stored = stored.decode()
+        if stored:
+            return str(stored)
+    except Exception as exc:
+        if (os.environ.get("ENVIRONMENT") or settings.ENVIRONMENT) == "production":
+            logger.warning("验证码未能读取: %s", exc)
+            raise HTTPException(status_code=503, detail="验证码暂时无法校验") from exc
+    return _sms_codes.get(phone)
+
+
+async def _drop_sms_code(phone: str) -> None:
+    _sms_codes.pop(phone, None)
+    try:
+        await _auth_redis.delete(f"sms-login:{phone}")
+    except Exception:
+        logger.warning("已使用的验证码未能从缓存删除")
+
+
+def _sms_phone(phone: str) -> str:
+    digits = "".join(ch for ch in phone if ch.isdigit())
+    if digits.startswith("86") and len(digits) == 13:
+        digits = digits[2:]
+    if len(digits) != 11 or not digits.startswith("1"):
+        raise HTTPException(status_code=400, detail="请输入有效的手机号")
+    return digits
+
+
+@router.post("/sms/send")
+async def sms_send(body: SmsLoginBody):
+    if body.consent is not True:
+        raise HTTPException(status_code=400, detail="需要同意接收验证码")
+    phone = _sms_phone(body.phone)
+    from app.services.sms_aliyun import deliver_sms, sms_mode
+    if sms_mode() == "unconfigured":
+        raise HTTPException(status_code=503, detail={"code": "SMS_NOT_CONFIGURED", "message": "短信服务未配置"})
+    import secrets as _secrets
+    code = f"{_secrets.randbelow(1_000_000):06d}"
+    await _save_sms_code(phone, code)
+    delivered = await deliver_sms(phone, code)
+    if not delivered.get("ok"):
+        await _drop_sms_code(phone)
+        raise HTTPException(status_code=503, detail={"code": "SMS_NOT_CONFIGURED", "message": "短信服务未配置"})
+    payload = {"sent": True}
+    if delivered.get("dev_code"):
+        payload["dev_code"] = delivered["dev_code"]
+    return success(data=payload)
+
+
+@router.post("/sms/login", response_model=SuccessResponse[TokenResponse])
+async def sms_login(body: SmsLoginBody, db: AsyncSession = Depends(get_db)):
+    if body.consent is not True:
+        raise HTTPException(status_code=400, detail="需要同意接收验证码")
+    phone = _sms_phone(body.phone)
+    submitted = (body.code or "").strip()
+    if not submitted:
+        raise HTTPException(status_code=400, detail="请填写验证码")
+    stored = await _read_sms_code(phone)
+    if not stored or len(stored) != len(submitted) or not secrets.compare_digest(stored, submitted):
+        raise HTTPException(status_code=401, detail="验证码不正确或已过期")
+    result = await db.execute(select(User).where(User.phone == phone))
+    user = result.scalar_one_or_none()
+    if user is None:
+        now = datetime.now(timezone.utc)
+        user = User(
+            id=str(uuid.uuid4()),
+            phone=phone,
+            name="手机用户",
+            password_hash=hash_password(secrets.token_urlsafe(24)),
+            market="cn",
+            plan="free",
+            created_at=now,
+            updated_at=now,
+        )
+        db.add(user)
+        await db.flush()
+    await _drop_sms_code(phone)
+    access_token = create_access_token(subject=user.id, token_version=user.token_version or 0)
+    refresh_token = create_refresh_token(subject=user.id, token_version=user.token_version or 0)
+    return success(data=TokenResponse(access_token=access_token, refresh_token=refresh_token))

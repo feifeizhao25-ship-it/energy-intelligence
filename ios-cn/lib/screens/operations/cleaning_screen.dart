@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_theme.dart';
 import '../../services/api_service.dart';
 
 class CleaningScreen extends StatefulWidget {
@@ -91,7 +92,7 @@ class _CleaningScreenState extends State<CleaningScreen> {
                   ),
                   SizedBox(height: 4),
                   Text(
-                    'N* = √(2C / (Rs × s))\n\nC=单次清洗成本, Rs=日发电收益, s=日积灰率',
+                    'N* = √(2C / (R × s))\n\nC=单次清洗成本, R=日发电收益, s=日积灰率',
                     style: TextStyle(
                       fontSize: 12,
                       color: Color(0xFF0C4A6E),
@@ -107,7 +108,7 @@ class _CleaningScreenState extends State<CleaningScreen> {
               '日积灰率',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF0F172A),
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
             SizedBox(height: 8),
@@ -127,7 +128,7 @@ class _CleaningScreenState extends State<CleaningScreen> {
               '单次清洗成本 (元)',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF0F172A),
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
             SizedBox(height: 8),
@@ -147,7 +148,7 @@ class _CleaningScreenState extends State<CleaningScreen> {
               '日均发电收益 (元)',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF0F172A),
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
             SizedBox(height: 8),
@@ -268,7 +269,7 @@ class _CleaningScreenState extends State<CleaningScreen> {
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 15,
-                  color: Color(0xFF0F172A),
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
               SizedBox(height: 12),
@@ -282,7 +283,7 @@ class _CleaningScreenState extends State<CleaningScreen> {
                   decoration: BoxDecoration(
                     color: isOptimal ? Color(0xFFEFF6FF) : Colors.white,
                     border: Border.all(
-                      color: isOptimal ? Color(0xFF1D4ED8) : Color(0xFFE2E8F0),
+                      color: isOptimal ? Color(0xFF1D4ED8) : Theme.of(context).colorScheme.outlineVariant,
                       width: isOptimal ? 2 : 1,
                     ),
                     borderRadius: BorderRadius.circular(8),
@@ -329,7 +330,7 @@ class _CleaningScreenState extends State<CleaningScreen> {
                           fontWeight: FontWeight.bold,
                           color: isOptimal
                               ? Color(0xFF1D4ED8)
-                              : Color(0xFF0F172A),
+                              : Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                     ],
@@ -355,7 +356,7 @@ class _CleaningScreenState extends State<CleaningScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(label, style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+          Text(label, style: TextStyle(fontSize: 11, color: context.eiMuted)),
           SizedBox(height: 6),
           Text(
             value,

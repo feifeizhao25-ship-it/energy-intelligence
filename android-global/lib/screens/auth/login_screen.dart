@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../../services/api_service.dart';
+import '../../widgets/reading_column.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -68,13 +69,19 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
+      body: ReadingColumn(child: Column(
         children: [
           Container(
-            height: 220,
+            // minHeight, not a fixed height: large text must grow the hero, not overflow it (200% text-scale check).
+            constraints: const BoxConstraints(minHeight: 220),
+            alignment: Alignment.bottomLeft,
             width: double.infinity,
             decoration: BoxDecoration(
-              gradient: AppTheme.primaryGradient(),
+              image: const DecorationImage(
+                image: AssetImage('assets/images/eg_login_offshore.webp'),
+                fit: BoxFit.cover,
+                colorFilter: ColorFilter.mode(Color(0x99102A5C), BlendMode.darken),
+              ),
               borderRadius: const BorderRadius.only(
                 bottomLeft: Radius.circular(28),
                 bottomRight: Radius.circular(28),
@@ -84,6 +91,7 @@ class _LoginScreenState extends State<LoginScreen>
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
@@ -91,12 +99,14 @@ class _LoginScreenState extends State<LoginScreen>
                       children: [
                         const Icon(Icons.bolt, color: Colors.white, size: 32),
                         const SizedBox(width: 8),
-                        const Text(
-                          'Energy Intelligence',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
+                        const Flexible(
+                          child: Text(
+                            'Energy Intelligence',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ],
@@ -122,7 +132,12 @@ class _LoginScreenState extends State<LoginScreen>
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
-              child: Column(
+              child: Center(
+                // iPad / wide screens: keep the auth card a single centred column instead of stretching.
+                child: ConstrainedBox(
+                  key: const Key('auth-form-card'),
+                  constraints: const BoxConstraints(maxWidth: 480),
+                  child: Column(
                 children: [
                   OutlinedButton.icon(
                     onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
@@ -133,8 +148,8 @@ class _LoginScreenState extends State<LoginScreen>
                     icon: const Icon(Icons.login, size: 20),
                     label: const Text('Continue with Google'),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF1E293B),
-                      side: const BorderSide(color: Color(0xFFE2E8F0)),
+                      foregroundColor: context.eiBody,
+                      side: BorderSide(color: context.eiLine),
                       minimumSize: const Size(double.infinity, 48),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
@@ -142,32 +157,32 @@ class _LoginScreenState extends State<LoginScreen>
                     ),
                   ),
                   const SizedBox(height: 16),
-                  const Row(
+                  Row(
                     children: [
-                      Expanded(child: Divider(color: Color(0xFFE2E8F0))),
+                      Expanded(child: Divider(color: context.eiLine)),
                       Padding(
                         padding: EdgeInsets.symmetric(horizontal: 12),
                         child: Text(
                           'or',
                           style: TextStyle(
-                            color: Color(0xFF94A3B8),
+                            color: context.eiMuted,
                             fontSize: 12,
                           ),
                         ),
                       ),
-                      Expanded(child: Divider(color: Color(0xFFE2E8F0))),
+                      Expanded(child: Divider(color: context.eiLine)),
                     ],
                   ),
                   const SizedBox(height: 16),
                   Container(
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF1F5F9),
+                      color: context.eiLine,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: TabBar(
                       controller: _tabController,
                       indicator: BoxDecoration(
-                        color: Colors.white,
+                        color: context.eiCard,
                         borderRadius: BorderRadius.circular(8),
                         boxShadow: [
                           BoxShadow(
@@ -177,8 +192,8 @@ class _LoginScreenState extends State<LoginScreen>
                         ],
                       ),
                       indicatorSize: TabBarIndicatorSize.tab,
-                      labelColor: const Color(0xFF1E293B),
-                      unselectedLabelColor: const Color(0xFF64748B),
+                      labelColor: context.eiBody,
+                      unselectedLabelColor: context.eiMuted,
                       dividerColor: Colors.transparent,
                       tabs: const [
                         Tab(text: 'Password'),
@@ -188,7 +203,8 @@ class _LoginScreenState extends State<LoginScreen>
                   ),
                   const SizedBox(height: 20),
                   SizedBox(
-                    height: 200,
+                    // grows with the text scale: two fields + helper text no longer fit in a fixed 200 at 200% type
+                    height: 200 + 80 * (MediaQuery.textScalerOf(context).scale(16) / 16 - 1).clamp(0.0, 1.5),
                     child: TabBarView(
                       controller: _tabController,
                       children: [
@@ -236,11 +252,11 @@ class _LoginScreenState extends State<LoginScreen>
                               ),
                             ),
                             const SizedBox(height: 8),
-                            const Text(
+                            Text(
                               'We\'ll send a magic sign-in link to your email.',
                               style: TextStyle(
                                 fontSize: 12,
-                                color: Color(0xFF64748B),
+                                color: context.eiMuted,
                               ),
                             ),
                           ],
@@ -263,13 +279,14 @@ class _LoginScreenState extends State<LoginScreen>
                         : const Text('Sign In'),
                   ),
                   const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  Wrap(
+                    alignment: WrapAlignment.center,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      const Text(
+                      Text(
                         "Don't have an account? ",
                         style: TextStyle(
-                          color: Color(0xFF64748B),
+                          color: context.eiMuted,
                           fontSize: 14,
                         ),
                       ),
@@ -287,17 +304,19 @@ class _LoginScreenState extends State<LoginScreen>
                     ],
                   ),
                   const SizedBox(height: 12),
-                  const Text(
+                  Text(
                     'By signing in, you agree to our Terms and Privacy Policy (GDPR compliant).',
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                    style: TextStyle(fontSize: 11, color: context.eiMuted),
                   ),
                 ],
+              ),
+                ),
               ),
             ),
           ),
         ],
-      ),
+      )),
     );
   }
 }

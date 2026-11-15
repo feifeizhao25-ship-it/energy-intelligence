@@ -1,0 +1,26 @@
+[
+  {
+    "id": "pvgis",
+    "name": "PVGIS",
+    "publisher": "EU Joint Research Centre",
+    "url": "https://joint-research-centre.ec.europa.eu/photovoltaic-geographical-information-system-pvgis_en",
+    "region": "Europe, Africa, and the rest of the PVGIS coverage",
+    "note": "Listed on its own. Not averaged with NSRDB or NASA POWER."
+  },
+  {
+    "id": "nsrdb",
+    "name": "NSRDB",
+    "publisher": "National Laboratory of the Rockies (formerly NREL)",
+    "url": "https://nsrdb.nlr.gov/",
+    "region": "Americas",
+    "note": "Listed on its own. The former NSRDB host name is not used here."
+  },
+  {
+    "id": "nasa-power",
+    "name": "NASA POWER",
+    "publisher": "NASA Langley Research Center",
+    "url": "https://power.larc.nasa.gov/docs/services/api/",
+    "region": "Global",
+    "note": "Listed on its own. Not merged into one irradiance figure with the other two."
+  }
+]

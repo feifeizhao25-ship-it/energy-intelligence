@@ -1,14 +1,15 @@
 // OpenWeatherMap API 封装
 import { WeatherData } from '@/types';
+import { refuseOverseas } from '@/lib/data/overseas-gate';
 
 // 简单的内存缓存
 const cache = new Map<string, { data: any; expires: number }>();
 const CACHE_DURATION = 10 * 60 * 1000; // 10分钟
 
 // 缓存装饰器
-function withCache<T extends (...args: any[]) => Promise<any>>(fn: T): T {
+function withCache<T extends (...args: any[]) => Promise<any>>(dataType: string, fn: T): T {
   return (async (...args: any[]) => {
-    const key = `${fn.name}:${JSON.stringify(args)}`;
+    const key = `${dataType}:${JSON.stringify(args)}`;
     const cached = cache.get(key);
 
     if (cached && cached.expires > Date.now()) {
@@ -24,7 +25,7 @@ function withCache<T extends (...args: any[]) => Promise<any>>(fn: T): T {
 /**
  * 获取实时天气数据
  */
-export const getCurrentWeather = withCache(async (lat: number, lng: number): Promise<WeatherData> => {
+export const getCurrentWeather = withCache('weather', async (lat: number, lng: number): Promise<WeatherData> => {
   try {
     const apiKey = process.env.OPENWEATHERMAP_API_KEY;
     if (!apiKey) {
@@ -33,7 +34,7 @@ export const getCurrentWeather = withCache(async (lat: number, lng: number): Pro
 
     const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lng}&appid=${apiKey}&units=metric&lang=zh_cn`;
 
-    const response = await fetch(url);
+    const response = await refuseOverseas(url);
     if (!response.ok) {
       if (response.status === 401) {
         throw new Error('OpenWeatherMap API Key无效');
@@ -68,7 +69,7 @@ export const getCurrentWeather = withCache(async (lat: number, lng: number): Pro
 /**
  * 获取天气预报
  */
-export const getWeatherForecast = withCache(async (lat: number, lng: number, days: number = 7) => {
+export const getWeatherForecast = withCache('forecast', async (lat: number, lng: number, days: number = 7) => {
   try {
     const apiKey = process.env.OPENWEATHERMAP_API_KEY;
     if (!apiKey) {
@@ -77,7 +78,7 @@ export const getWeatherForecast = withCache(async (lat: number, lng: number, day
 
     const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lng}&appid=${apiKey}&units=metric&lang=zh_cn&cnt=${days * 8}`; // 每3小时一个预报
 
-    const response = await fetch(url);
+    const response = await refuseOverseas(url);
     if (!response.ok) {
       throw new Error(`天气预报API请求失败: ${response.status}`);
     }
@@ -125,7 +126,7 @@ export const calculateFeelsLike = (temp: number, humidity: number, windSpeed: nu
 /**
  * 获取空气质量数据
  */
-export const getAirQuality = withCache(async (lat: number, lng: number) => {
+export const getAirQuality = withCache('air-quality', async (lat: number, lng: number) => {
   try {
     const apiKey = process.env.OPENWEATHERMAP_API_KEY;
     if (!apiKey) {
@@ -134,7 +135,7 @@ export const getAirQuality = withCache(async (lat: number, lng: number) => {
 
     const url = `https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lng}&appid=${apiKey}`;
 
-    const response = await fetch(url);
+    const response = await refuseOverseas(url);
     if (!response.ok) {
       throw new Error(`空气质量API请求失败: ${response.status}`);
     }
@@ -162,7 +163,7 @@ export const getAirQuality = withCache(async (lat: number, lng: number) => {
 /**
  * 获取紫外线指数
  */
-export const getUVIndex = withCache(async (lat: number, lng: number) => {
+export const getUVIndex = withCache('uv', async (lat: number, lng: number) => {
   try {
     const apiKey = process.env.OPENWEATHERMAP_API_KEY;
     if (!apiKey) {
@@ -171,7 +172,7 @@ export const getUVIndex = withCache(async (lat: number, lng: number) => {
 
     const url = `https://api.openweathermap.org/data/2.5/uvi?lat=${lat}&lon=${lng}&appid=${apiKey}`;
 
-    const response = await fetch(url);
+    const response = await refuseOverseas(url);
     if (!response.ok) {
       throw new Error(`UV指数API请求失败: ${response.status}`);
     }
@@ -193,7 +194,7 @@ export const getUVIndex = withCache(async (lat: number, lng: number) => {
 /**
  * 获取历史天气数据
  */
-export const getHistoricalWeather = withCache(async (lat: number, lng: number, timestamp: number) => {
+export const getHistoricalWeather = withCache('historical', async (lat: number, lng: number, timestamp: number) => {
   try {
     const apiKey = process.env.OPENWEATHERMAP_API_KEY;
     if (!apiKey) {
@@ -202,7 +203,7 @@ export const getHistoricalWeather = withCache(async (lat: number, lng: number, t
 
     const url = `https://api.openweathermap.org/data/3.0/onecall/timemachine?lat=${lat}&lon=${lng}&dt=${timestamp}&appid=${apiKey}&units=metric&lang=zh_cn`;
 
-    const response = await fetch(url);
+    const response = await refuseOverseas(url);
     if (!response.ok) {
       throw new Error(`历史天气API请求失败: ${response.status}`);
     }

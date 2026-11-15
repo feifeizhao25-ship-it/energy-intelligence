@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/reading_column.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -42,40 +43,49 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('创建账号'), elevation: 0),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(20),
-        child: Column(
-          children: [
-            _buildStepIndicator(),
-            SizedBox(height: 32),
-            _currentStep == 0 ? _buildStep1() : _buildStep2(),
-            SizedBox(height: 24),
-            Row(
+      body: ReadingColumn(child: SingleChildScrollView(
+        padding: EdgeInsets.symmetric(
+          horizontal: MediaQuery.sizeOf(context).width >= 700 ? 48 : 20,
+          vertical: 20,
+        ),
+        child: Center(
+          child: ConstrainedBox(
+            // iPad / 宽屏：注册表单收成一列居中，不随屏幕拉宽。
+            constraints: const BoxConstraints(maxWidth: 480),
+            child: Column(
               children: [
-                if (_currentStep > 0)
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => setState(() => _currentStep = 0),
-                      child: Text('上一步'),
+                _buildStepIndicator(),
+                SizedBox(height: 32),
+                _currentStep == 0 ? _buildStep1() : _buildStep2(),
+                SizedBox(height: 24),
+                Row(
+                  children: [
+                    if (_currentStep > 0)
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => setState(() => _currentStep = 0),
+                          child: Text('上一步'),
+                        ),
+                      ),
+                    if (_currentStep > 0) SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: _handleNextStep,
+                        child: Text(_currentStep == 0 ? '下一步' : '注册'),
+                      ),
                     ),
-                  ),
-                if (_currentStep > 0) SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: _handleNextStep,
-                    child: Text(_currentStep == 0 ? '下一步' : '注册'),
-                  ),
+                  ],
+                ),
+                SizedBox(height: 16),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text('返回登录'),
                 ),
               ],
             ),
-            SizedBox(height: 16),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text('返回登录'),
-            ),
-          ],
+          ),
         ),
-      ),
+      )),
     );
   }
 
@@ -88,7 +98,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
         Container(
           width: 40,
           height: 2,
-          color: _currentStep > 0 ? AppTheme.primaryColor : Color(0xFFE2E8F0),
+          color: _currentStep > 0
+              ? AppTheme.primaryColor
+              : Theme.of(context).colorScheme.outlineVariant,
         ),
         SizedBox(width: 24),
         _buildStepCircle(1, '公司信息'),
@@ -104,7 +116,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: isActive ? AppTheme.primaryColor : Color(0xFFE2E8F0),
+            color: isActive
+                ? AppTheme.primaryColor
+                : Theme.of(context).colorScheme.outlineVariant,
             shape: BoxShape.circle,
           ),
           child: Center(
@@ -215,7 +229,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   border: Border.all(
                     color: isSelected
                         ? AppTheme.primaryColor
-                        : Color(0xFFE2E8F0),
+                        : Theme.of(context).colorScheme.outlineVariant,
                     width: isSelected ? 2 : 1,
                   ),
                   borderRadius: BorderRadius.circular(12),
@@ -235,7 +249,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         fontWeight: FontWeight.w600,
                         color: isSelected
                             ? AppTheme.primaryColor
-                            : Color(0xFF475569),
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                       textAlign: TextAlign.center,
                     ),

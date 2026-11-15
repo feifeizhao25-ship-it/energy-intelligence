@@ -1,4 +1,4 @@
-import { searchArxiv } from './arxiv';
+import { parseArxivXML, searchArxiv } from './arxiv';
 const originalFetch = global.fetch;
 afterEach(() => { global.fetch = originalFetch; });
 it('官方无后缀 PDF 链接可用；缺失日期和引用数保持未知', async () => {
@@ -6,6 +6,13 @@ it('官方无后缀 PDF 链接可用；缺失日期和引用数保持未知', as
  <id>http://arxiv.org/abs/hep-ex/0307015v1</id><title>Solar paper</title>
  <link type="application/pdf" href="http://arxiv.org/pdf/hep-ex/0307015v1" title="pdf" />
  </entry></feed>` });
- const papers = await searchArxiv('missing-metadata-regression');
+ const papers = parseArxivXML(`<feed><entry>
+ <id>http://arxiv.org/abs/hep-ex/0307015v1</id><title>Solar paper</title>
+ <link type="application/pdf" href="http://arxiv.org/pdf/hep-ex/0307015v1" title="pdf" />
+ </entry></feed>`);
  expect(papers[0]).toMatchObject({ year: null, citationCount: null, pdfUrl: 'http://arxiv.org/pdf/hep-ex/0307015v1' });
+ const fetcher = jest.fn();
+ global.fetch = fetcher;
+ await expect(searchArxiv('missing-metadata-regression')).rejects.toThrow('OVERSEAS_SOURCE_DISABLED');
+ expect(fetcher).not.toHaveBeenCalled();
 });

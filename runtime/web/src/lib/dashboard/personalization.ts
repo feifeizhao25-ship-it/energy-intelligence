@@ -13,13 +13,21 @@ import { tariffDefaults, type TariffDefaults } from '@/lib/pricing/tariff-defaul
 import { normalizeProvince } from '@/lib/pricing/tariffs';
 
 export const ROLES = ['investor', 'owner', 'engineer', 'researcher', 'government'] as const;
-export type Role = typeof ROLES[number];
+/** 现行 7 类角色。旧的 5 个标识仍可读取，避免已保存的偏好失效。 */
+export const PRODUCT_ROLES = ['ci_owner', 'residential_owner', 'developer', 'epc', 'om', 'researcher', 'government'] as const;
+export type ProductRole = typeof PRODUCT_ROLES[number];
+export type Role = typeof ROLES[number] | ProductRole;
 export const ROLE_LABELS: Record<Role, string> = {
     investor: '投资者/开发商',
     owner: '电站业主/运维',
     engineer: '工程师/设计院',
-    researcher: '研究人员/学生',
+    researcher: '研究员/学生',
     government: '政府/园区',
+    ci_owner: '工商业业主',
+    residential_owner: '户用业主',
+    developer: '项目开发',
+    epc: 'EPC/设计院',
+    om: '运维',
 };
 
 export const INTERESTS = ['solar', 'wind', 'storage', 'all'] as const;
@@ -35,15 +43,37 @@ export const PROVINCES = [
 
 export const PREFERENCE_LOG_TYPES = ['PROFILE_PREFERENCES', 'ONBOARDING_COMPLETE'] as const;
 
+export interface PreferenceTag {
+    id: string;
+    label: string;
+    source: string;
+}
+
 export interface Preferences {
     role: Role | null;
     province: string | null;
     interest: Interest | null;
     /** false = 用户关闭了个性化 */
     personalized: boolean;
+    /** 可删除的兴趣标签。没有标签时为空数组。 */
+    tags: PreferenceTag[];
 }
 
-const isRole = (v: unknown): v is Role => typeof v === 'string' && (ROLES as readonly string[]).includes(v);
+function cleanTags(value: unknown): PreferenceTag[] {
+    if (!Array.isArray(value)) return [];
+    return value.flatMap((item) => {
+        if (!item || typeof item !== 'object') return [];
+        const row = item as Record<string, unknown>;
+        if (typeof row.id !== 'string' || typeof row.label !== 'string' || typeof row.source !== 'string') return [];
+        const label = row.label.trim();
+        if (!label) return [];
+        return [{ id: row.id, label, source: row.source }];
+    });
+}
+
+const isRole = (v: unknown): v is Role => typeof v === 'string' && (
+    (ROLES as readonly string[]).includes(v) || (PRODUCT_ROLES as readonly string[]).includes(v)
+);
 const isInterest = (v: unknown): v is Interest => typeof v === 'string' && (INTERESTS as readonly string[]).includes(v);
 
 export function cleanProvince(v: unknown): string | null {
@@ -60,6 +90,7 @@ export function parsePreferences(metadata: unknown): Preferences {
         province: cleanProvince(prefs.province),
         interest: isInterest(prefs.interest) ? prefs.interest : null,
         personalized: prefs.personalized !== false,
+        tags: cleanTags(prefs.tags),
     };
 }
 
@@ -77,6 +108,7 @@ export function validatePreferences(input: unknown): Preferences {
         province,
         interest: isInterest(body.interest) ? body.interest : null,
         personalized: body.personalized !== false,
+        tags: cleanTags(body.tags),
     };
 }
 
@@ -152,11 +184,16 @@ export const ROLE_MODULE_ORDER: Record<Role | 'default', ModuleId[]> = {
     engineer: ['focus', 'nextActions', 'tariff', 'projects', 'usage', 'policies', 'stationAlerts'],
     researcher: ['focus', 'policies', 'nextActions', 'usage', 'projects', 'tariff', 'stationAlerts'],
     government: ['policies', 'focus', 'tariff', 'projects', 'nextActions', 'usage', 'stationAlerts'],
+    ci_owner: ['tariff', 'focus', 'projects', 'nextActions', 'policies', 'usage', 'stationAlerts'],
+    residential_owner: ['focus', 'tariff', 'nextActions', 'projects', 'usage', 'policies', 'stationAlerts'],
+    developer: ['tariff', 'policies', 'projects', 'focus', 'nextActions', 'usage', 'stationAlerts'],
+    epc: ['focus', 'nextActions', 'projects', 'tariff', 'usage', 'policies', 'stationAlerts'],
+    om: ['stationAlerts', 'focus', 'projects', 'nextActions', 'tariff', 'usage', 'policies'],
 };
 
 export interface FocusCard { title: string; reason: string; href: string }
 
-function focusCard(role: Role, province: string | null, interest: Interest | null, tariff: TariffDefaults | null, milestoneCount: number, noPolicies = false): FocusCard {
+function focusCard(role: Role, province: string | null, interest: Interest | null, tariff: TariffDefaults | null, milestoneCount: number, noPolicies = false, hasStationAlerts = false): FocusCard {
     const where = province ? `${province}` : '你的项目所在省份';
     const calc = interest === 'wind' ? '/calculator/wind' : interest === 'storage' ? '/calculator/storage' : '/calculator/solar';
     const calcName = interest === 'wind' ? '风电' : interest === 'storage' ? '储能' : '光伏';
@@ -166,7 +203,9 @@ function focusCard(role: Role, province: string | null, interest: Interest | nul
                 ? { title: `${where}已取消固定分时，测算需用合同电价`, reason: '你是投资者/开发商：收益对电价最敏感，按合同价或市场价重算一次', href: calc }
                 : { title: `按${where}电价测一次${calcName}收益`, reason: '你是投资者/开发商：先看内部收益率与回收期', href: calc };
         case 'owner':
-            return { title: '查看电站运行与告警', reason: '你是电站业主/运维：优先处理告警，再看发电情况', href: '/my/stations' };
+            return hasStationAlerts
+                ? { title: '查看电站运行与告警', reason: '你是电站业主/运维：优先处理告警，再看发电情况', href: '/my/stations' }
+                : { title: '当前没有告警', reason: '你是电站业主/运维：还没有告警数据。下一步打开电站页接入设备；已保存的发电记录也在该页查看。', href: '/my/stations' };
         case 'engineer':
             return { title: '核对系统损耗与衰减假设', reason: '你是工程师/设计院：测算页逐项列出遮挡、线损、温度等损耗，可与设计值对照', href: '/calculator/solar' };
         case 'researcher':
@@ -177,7 +216,24 @@ function focusCard(role: Role, province: string | null, interest: Interest | nul
                 : noPolicies
                     ? { title: `${where}的电价规则`, reason: '你是政府/园区用户：政策库暂无该省已审核通过的政策，先看电价与分时规则', href: '#tariff' }
                     : { title: `${where}的电价规则与已审核政策`, reason: '你是政府/园区用户：政策与电价规则变化排在最前', href: '#tariff' };
+        case 'ci_owner':
+            return { title: `${where}分时电价与用电曲线`, reason: '你是工商业业主：先看已公布电价和本厂用电', href: '#tariff' };
+        case 'residential_owner':
+            return { title: '先看三个输入的家用测算', reason: '你是户用业主：默认新手展示', href: '/calculator/solar' };
+        case 'developer':
+            return { title: `${where}已公布电价与测算输入`, reason: '项目开发只列事实、数据与计算方法', href: calc };
+        case 'epc':
+            return { title: '核对系统损耗与衰减假设', reason: '你是 EPC/设计院：逐项对照假设', href: '/calculator/solar' };
+        case 'om':
+            return hasStationAlerts
+                ? { title: '查看电站运行与告警', reason: '你是运维：先看告警，再看发电记录', href: '/my/stations' }
+                : { title: '当前没有告警', reason: '你是运维：还没有告警数据。下一步打开电站页接入设备；已保存的发电记录也在该页查看。', href: '/my/stations' };
     }
+}
+
+export function defaultReadingMode(role: Role | null): 'beginner' | 'professional' {
+    if (role === 'researcher' || role === 'residential_owner') return 'beginner';
+    return 'professional';
 }
 
 /** 今日测算次数已用完时，原本指向测算页的主卡改为提示额度与可做的事 */
@@ -217,6 +273,7 @@ export interface Personalization {
     tariff: TariffDefaults | null;
     policies: { id: string; title: string; docNumber: string | null; sourceUrl: string | null; value: number; unit: string; region: string }[];
     milestones: PolicyMilestone[];
+    tags: PreferenceTag[];
     /** 为什么这样展示（逐条说明） */
     reasons: string[];
 }
@@ -231,12 +288,12 @@ export function buildPersonalization(input: {
     /** 今日测算次数已用完：不再把用户往测算页推 */
     calcQuotaExhausted?: boolean;
 }): Personalization {
-    const prefs = input.prefs ?? { role: null, province: null, interest: null, personalized: true };
+    const prefs = input.prefs ?? { role: null, province: null, interest: null, personalized: true, tags: [] };
     if (!prefs.personalized) {
         return {
             personalized: false, role: null, roleLabel: null, province: null, provinceSource: null, interest: null,
             moduleOrder: ROLE_MODULE_ORDER.default, focus: null, quickActionOrder: [...QUICK_ACTION_IDS],
-            tariff: null, policies: [], milestones: [], reasons: ['你已关闭个性化，工作台显示通用版（可在「设置」重新开启）'],
+            tariff: null, policies: [], milestones: [], tags: [], reasons: ['你已关闭个性化，工作台显示通用版（可在「设置」重新开启）'],
         };
     }
     const reasons: string[] = [];
@@ -294,11 +351,12 @@ export function buildPersonalization(input: {
         provinceSource,
         interest,
         moduleOrder,
-        focus: role ? adjustFocusForQuota(focusCard(role, province, interest, tariff, milestones.length, noPolicies), Boolean(input.calcQuotaExhausted), province, reasons) : null,
+        focus: role ? adjustFocusForQuota(focusCard(role, province, interest, tariff, milestones.length, noPolicies, input.hasStationAlerts), Boolean(input.calcQuotaExhausted), province, reasons) : null,
         quickActionOrder: interest ? order[interest] : [...QUICK_ACTION_IDS],
         tariff,
         policies: related.slice(0, 3).map(p => ({ id: p.id, title: policyTitle(p), docNumber: p.docNumber, sourceUrl: p.sourceUrl, value: p.value, unit: p.unit, region: p.region })),
         milestones,
+        tags: prefs.personalized ? (prefs.tags ?? []) : [],
         reasons,
     };
 }

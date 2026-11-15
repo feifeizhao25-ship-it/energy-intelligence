@@ -90,7 +90,7 @@ export default function DemoRequestPage() {
                             <input
                                 type="email" required value={form.email} onChange={update('email')}
                                 className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-green-500 outline-none text-sm"
-                                placeholder="name@company.com"
+                                placeholder="姓名@单位.cn"
                             />
                         </div>
                         <div>

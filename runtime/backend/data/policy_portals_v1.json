@@ -1,0 +1,1403 @@
+{
+  "label": "待核实",
+  "note": "栏目级网址除库内已有政府门户外均为空。健康检查不得把待核实记为通过。人工需补齐并实抓。",
+  "national": [
+    {
+      "name": "国家发展和改革委员会",
+      "url": "https://www.ndrc.gov.cn/",
+      "source": "policy_portals.json"
+    },
+    {
+      "name": "国家能源局",
+      "url": "https://www.nea.gov.cn/",
+      "source": "policy_portals.json"
+    },
+    {
+      "name": "国务院政策文件库",
+      "url": null,
+      "display": "待核实"
+    },
+    {
+      "name": "国家法律法规数据库",
+      "url": null,
+      "display": "待核实"
+    },
+    {
+      "name": "中电联",
+      "url": "https://www.cec.org.cn/",
+      "source": "policy_portals.json",
+      "license": "待核实引用方式"
+    },
+    {
+      "name": "国家统计局",
+      "url": null,
+      "display": "待核实"
+    }
+  ],
+  "provinces": [
+    {
+      "province": "北京",
+      "columns": [
+        {
+          "column": "已收录政府门户",
+          "url": "https://www.beijing.gov.cn/",
+          "source": "policy_portals.json",
+          "as_of": "2026-10-27",
+          "health": "未在本次执行抓取",
+          "robots": "未检查",
+          "collection": "沿用库内网址"
+        },
+        {
+          "column": "省能源局",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电网公司代理购电公告",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电力交易中心",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        }
+      ]
+    },
+    {
+      "province": "天津",
+      "columns": [
+        {
+          "column": "已收录政府门户",
+          "url": "https://www.tj.gov.cn/",
+          "source": "policy_portals.json",
+          "as_of": "2026-10-27",
+          "health": "未在本次执行抓取",
+          "robots": "未检查",
+          "collection": "沿用库内网址"
+        },
+        {
+          "column": "省能源局",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电网公司代理购电公告",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电力交易中心",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        }
+      ]
+    },
+    {
+      "province": "河北",
+      "columns": [
+        {
+          "column": "已收录政府门户",
+          "url": "https://www.hebei.gov.cn/",
+          "source": "policy_portals.json",
+          "as_of": "2026-10-27",
+          "health": "未在本次执行抓取",
+          "robots": "未检查",
+          "collection": "沿用库内网址"
+        },
+        {
+          "column": "省能源局",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电网公司代理购电公告",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电力交易中心",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        }
+      ]
+    },
+    {
+      "province": "山西",
+      "columns": [
+        {
+          "column": "已收录政府门户",
+          "url": "https://www.shanxi.gov.cn/",
+          "source": "policy_portals.json",
+          "as_of": "2026-10-27",
+          "health": "未在本次执行抓取",
+          "robots": "未检查",
+          "collection": "沿用库内网址"
+        },
+        {
+          "column": "省能源局",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电网公司代理购电公告",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电力交易中心",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        }
+      ]
+    },
+    {
+      "province": "内蒙古",
+      "columns": [
+        {
+          "column": "已收录政府门户",
+          "url": "https://www.nmg.gov.cn/",
+          "source": "policy_portals.json",
+          "as_of": "2026-10-27",
+          "health": "未在本次执行抓取",
+          "robots": "未检查",
+          "collection": "沿用库内网址"
+        },
+        {
+          "column": "省能源局",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电网公司代理购电公告",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电力交易中心",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        }
+      ]
+    },
+    {
+      "province": "辽宁",
+      "columns": [
+        {
+          "column": "已收录政府门户",
+          "url": "https://www.ln.gov.cn/",
+          "source": "policy_portals.json",
+          "as_of": "2026-10-27",
+          "health": "未在本次执行抓取",
+          "robots": "未检查",
+          "collection": "沿用库内网址"
+        },
+        {
+          "column": "省能源局",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电网公司代理购电公告",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电力交易中心",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        }
+      ]
+    },
+    {
+      "province": "吉林",
+      "columns": [
+        {
+          "column": "已收录政府门户",
+          "url": "https://www.jl.gov.cn/",
+          "source": "policy_portals.json",
+          "as_of": "2026-10-27",
+          "health": "未在本次执行抓取",
+          "robots": "未检查",
+          "collection": "沿用库内网址"
+        },
+        {
+          "column": "省能源局",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电网公司代理购电公告",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电力交易中心",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        }
+      ]
+    },
+    {
+      "province": "黑龙江",
+      "columns": [
+        {
+          "column": "已收录政府门户",
+          "url": "https://www.hlj.gov.cn/",
+          "source": "policy_portals.json",
+          "as_of": "2026-10-27",
+          "health": "未在本次执行抓取",
+          "robots": "未检查",
+          "collection": "沿用库内网址"
+        },
+        {
+          "column": "省能源局",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电网公司代理购电公告",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电力交易中心",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        }
+      ]
+    },
+    {
+      "province": "上海",
+      "columns": [
+        {
+          "column": "已收录政府门户",
+          "url": "https://www.shanghai.gov.cn/",
+          "source": "policy_portals.json",
+          "as_of": "2026-10-27",
+          "health": "未在本次执行抓取",
+          "robots": "未检查",
+          "collection": "沿用库内网址"
+        },
+        {
+          "column": "省能源局",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电网公司代理购电公告",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电力交易中心",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        }
+      ]
+    },
+    {
+      "province": "江苏",
+      "columns": [
+        {
+          "column": "已收录政府门户",
+          "url": "https://www.jiangsu.gov.cn/",
+          "source": "policy_portals.json",
+          "as_of": "2026-10-27",
+          "health": "未在本次执行抓取",
+          "robots": "未检查",
+          "collection": "沿用库内网址"
+        },
+        {
+          "column": "省能源局",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电网公司代理购电公告",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电力交易中心",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        }
+      ]
+    },
+    {
+      "province": "浙江",
+      "columns": [
+        {
+          "column": "已收录政府门户",
+          "url": "https://www.zj.gov.cn/",
+          "source": "policy_portals.json",
+          "as_of": "2026-10-27",
+          "health": "未在本次执行抓取",
+          "robots": "未检查",
+          "collection": "沿用库内网址"
+        },
+        {
+          "column": "省能源局",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电网公司代理购电公告",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电力交易中心",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        }
+      ]
+    },
+    {
+      "province": "安徽",
+      "columns": [
+        {
+          "column": "已收录政府门户",
+          "url": "https://www.ah.gov.cn/",
+          "source": "policy_portals.json",
+          "as_of": "2026-10-27",
+          "health": "未在本次执行抓取",
+          "robots": "未检查",
+          "collection": "沿用库内网址"
+        },
+        {
+          "column": "省能源局",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电网公司代理购电公告",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电力交易中心",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        }
+      ]
+    },
+    {
+      "province": "福建",
+      "columns": [
+        {
+          "column": "已收录政府门户",
+          "url": "https://www.fujian.gov.cn/",
+          "source": "policy_portals.json",
+          "as_of": "2026-10-27",
+          "health": "未在本次执行抓取",
+          "robots": "未检查",
+          "collection": "沿用库内网址"
+        },
+        {
+          "column": "省能源局",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电网公司代理购电公告",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电力交易中心",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        }
+      ]
+    },
+    {
+      "province": "江西",
+      "columns": [
+        {
+          "column": "已收录政府门户",
+          "url": "https://www.jiangxi.gov.cn/",
+          "source": "policy_portals.json",
+          "as_of": "2026-10-27",
+          "health": "未在本次执行抓取",
+          "robots": "未检查",
+          "collection": "沿用库内网址"
+        },
+        {
+          "column": "省能源局",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电网公司代理购电公告",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电力交易中心",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        }
+      ]
+    },
+    {
+      "province": "山东",
+      "columns": [
+        {
+          "column": "已收录政府门户",
+          "url": "https://www.shandong.gov.cn/",
+          "source": "policy_portals.json",
+          "as_of": "2026-10-27",
+          "health": "未在本次执行抓取",
+          "robots": "未检查",
+          "collection": "沿用库内网址"
+        },
+        {
+          "column": "省能源局",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电网公司代理购电公告",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电力交易中心",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        }
+      ]
+    },
+    {
+      "province": "河南",
+      "columns": [
+        {
+          "column": "已收录政府门户",
+          "url": "https://www.henan.gov.cn/",
+          "source": "policy_portals.json",
+          "as_of": "2026-10-27",
+          "health": "未在本次执行抓取",
+          "robots": "未检查",
+          "collection": "沿用库内网址"
+        },
+        {
+          "column": "省能源局",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电网公司代理购电公告",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电力交易中心",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        }
+      ]
+    },
+    {
+      "province": "湖北",
+      "columns": [
+        {
+          "column": "已收录政府门户",
+          "url": "https://www.hubei.gov.cn/",
+          "source": "policy_portals.json",
+          "as_of": "2026-10-27",
+          "health": "未在本次执行抓取",
+          "robots": "未检查",
+          "collection": "沿用库内网址"
+        },
+        {
+          "column": "省能源局",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电网公司代理购电公告",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电力交易中心",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        }
+      ]
+    },
+    {
+      "province": "湖南",
+      "columns": [
+        {
+          "column": "已收录政府门户",
+          "url": "https://www.hunan.gov.cn/",
+          "source": "policy_portals.json",
+          "as_of": "2026-10-27",
+          "health": "未在本次执行抓取",
+          "robots": "未检查",
+          "collection": "沿用库内网址"
+        },
+        {
+          "column": "省能源局",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电网公司代理购电公告",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电力交易中心",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        }
+      ]
+    },
+    {
+      "province": "广东",
+      "columns": [
+        {
+          "column": "已收录政府门户",
+          "url": "https://www.gd.gov.cn/",
+          "source": "policy_portals.json",
+          "as_of": "2026-10-27",
+          "health": "未在本次执行抓取",
+          "robots": "未检查",
+          "collection": "沿用库内网址"
+        },
+        {
+          "column": "省能源局",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电网公司代理购电公告",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电力交易中心",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        }
+      ]
+    },
+    {
+      "province": "广西",
+      "columns": [
+        {
+          "column": "已收录政府门户",
+          "url": "https://www.gxzf.gov.cn/",
+          "source": "policy_portals.json",
+          "as_of": "2026-10-27",
+          "health": "未在本次执行抓取",
+          "robots": "未检查",
+          "collection": "沿用库内网址"
+        },
+        {
+          "column": "省能源局",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电网公司代理购电公告",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电力交易中心",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        }
+      ]
+    },
+    {
+      "province": "海南",
+      "columns": [
+        {
+          "column": "已收录政府门户",
+          "url": "https://www.hainan.gov.cn/",
+          "source": "policy_portals.json",
+          "as_of": "2026-10-27",
+          "health": "未在本次执行抓取",
+          "robots": "未检查",
+          "collection": "沿用库内网址"
+        },
+        {
+          "column": "省能源局",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电网公司代理购电公告",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电力交易中心",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        }
+      ]
+    },
+    {
+      "province": "重庆",
+      "columns": [
+        {
+          "column": "已收录政府门户",
+          "url": "https://www.cq.gov.cn/",
+          "source": "policy_portals.json",
+          "as_of": "2026-10-27",
+          "health": "未在本次执行抓取",
+          "robots": "未检查",
+          "collection": "沿用库内网址"
+        },
+        {
+          "column": "省能源局",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电网公司代理购电公告",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电力交易中心",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        }
+      ]
+    },
+    {
+      "province": "四川",
+      "columns": [
+        {
+          "column": "已收录政府门户",
+          "url": "https://www.sc.gov.cn/",
+          "source": "policy_portals.json",
+          "as_of": "2026-10-27",
+          "health": "未在本次执行抓取",
+          "robots": "未检查",
+          "collection": "沿用库内网址"
+        },
+        {
+          "column": "省能源局",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电网公司代理购电公告",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电力交易中心",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        }
+      ]
+    },
+    {
+      "province": "贵州",
+      "columns": [
+        {
+          "column": "已收录政府门户",
+          "url": "https://www.guizhou.gov.cn/",
+          "source": "policy_portals.json",
+          "as_of": "2026-10-27",
+          "health": "未在本次执行抓取",
+          "robots": "未检查",
+          "collection": "沿用库内网址"
+        },
+        {
+          "column": "省能源局",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电网公司代理购电公告",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电力交易中心",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        }
+      ]
+    },
+    {
+      "province": "云南",
+      "columns": [
+        {
+          "column": "已收录政府门户",
+          "url": "https://www.yn.gov.cn/",
+          "source": "policy_portals.json",
+          "as_of": "2026-10-27",
+          "health": "未在本次执行抓取",
+          "robots": "未检查",
+          "collection": "沿用库内网址"
+        },
+        {
+          "column": "省能源局",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电网公司代理购电公告",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电力交易中心",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        }
+      ]
+    },
+    {
+      "province": "西藏",
+      "columns": [
+        {
+          "column": "已收录政府门户",
+          "url": "https://www.xizang.gov.cn/",
+          "source": "policy_portals.json",
+          "as_of": "2026-10-27",
+          "health": "未在本次执行抓取",
+          "robots": "未检查",
+          "collection": "沿用库内网址"
+        },
+        {
+          "column": "省能源局",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电网公司代理购电公告",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电力交易中心",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        }
+      ]
+    },
+    {
+      "province": "陕西",
+      "columns": [
+        {
+          "column": "已收录政府门户",
+          "url": "https://www.shaanxi.gov.cn/",
+          "source": "policy_portals.json",
+          "as_of": "2026-10-27",
+          "health": "未在本次执行抓取",
+          "robots": "未检查",
+          "collection": "沿用库内网址"
+        },
+        {
+          "column": "省能源局",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电网公司代理购电公告",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电力交易中心",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        }
+      ]
+    },
+    {
+      "province": "甘肃",
+      "columns": [
+        {
+          "column": "已收录政府门户",
+          "url": "https://www.gansu.gov.cn/",
+          "source": "policy_portals.json",
+          "as_of": "2026-10-27",
+          "health": "未在本次执行抓取",
+          "robots": "未检查",
+          "collection": "沿用库内网址"
+        },
+        {
+          "column": "省能源局",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电网公司代理购电公告",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电力交易中心",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        }
+      ]
+    },
+    {
+      "province": "青海",
+      "columns": [
+        {
+          "column": "已收录政府门户",
+          "url": "https://www.qinghai.gov.cn/",
+          "source": "policy_portals.json",
+          "as_of": "2026-10-27",
+          "health": "未在本次执行抓取",
+          "robots": "未检查",
+          "collection": "沿用库内网址"
+        },
+        {
+          "column": "省能源局",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电网公司代理购电公告",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电力交易中心",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        }
+      ]
+    },
+    {
+      "province": "宁夏",
+      "columns": [
+        {
+          "column": "已收录政府门户",
+          "url": "https://www.nx.gov.cn/",
+          "source": "policy_portals.json",
+          "as_of": "2026-10-27",
+          "health": "未在本次执行抓取",
+          "robots": "未检查",
+          "collection": "沿用库内网址"
+        },
+        {
+          "column": "省能源局",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电网公司代理购电公告",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电力交易中心",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        }
+      ]
+    },
+    {
+      "province": "新疆",
+      "columns": [
+        {
+          "column": "已收录政府门户",
+          "url": "https://www.xinjiang.gov.cn/",
+          "source": "policy_portals.json",
+          "as_of": "2026-10-27",
+          "health": "未在本次执行抓取",
+          "robots": "未检查",
+          "collection": "沿用库内网址"
+        },
+        {
+          "column": "省能源局",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电网公司代理购电公告",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        },
+        {
+          "column": "电力交易中心",
+          "url": null,
+          "source_url": null,
+          "as_of": null,
+          "health": "待核实",
+          "robots": "未检查",
+          "collection": "人工采集",
+          "display": "待核实"
+        }
+      ]
+    }
+  ]
+}

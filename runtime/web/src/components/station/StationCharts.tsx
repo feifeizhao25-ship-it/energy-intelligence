@@ -234,7 +234,7 @@ function StatCard({
                     {trend > 0 ? <TrendingUp className="w-3 h-3" /> :
                         trend < 0 ? <TrendingDown className="w-3 h-3" /> :
                             <Minus className="w-3 h-3" />}
-                    <span>vs 上期</span>
+                    <span>较上期</span>
                 </div>
             )}
         </div>

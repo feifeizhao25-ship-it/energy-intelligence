@@ -1,0 +1,5 @@
+{
+  "licence_note": "空缓存。批量导入只接受开放元数据，不抓取知网，请求路径不访问境外接口。",
+  "records": [],
+  "fetched_live_on_request": false
+}

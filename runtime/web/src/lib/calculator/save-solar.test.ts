@@ -1,12 +1,15 @@
 import { prisma } from '@/lib/prisma';
-import { saveSolar } from './save-solar';
+import { assertSolarQuota, saveSolar } from './save-solar';
 import { POST } from '@/app/api/v2/solar/calculate/route';
 import { getServerSession } from 'next-auth';
 import { NextRequest } from 'next/server';
 import { SolarCalculatorV2 } from './solar-v2';
 import { POST as analyze } from '@/app/api/v2/project/[id]/analyze/route';
 
-jest.mock('@/lib/prisma', () => ({ prisma: { $transaction: jest.fn(), project: { findFirst: jest.fn() } } }));
+jest.mock('@/lib/prisma', () => ({ prisma: {
+    $transaction: jest.fn(), project: { findFirst: jest.fn() },
+    user: { findUnique: jest.fn() }, quotaUsage: { findUnique: jest.fn() },
+} }));
 jest.mock('@/lib/auth/auth-options', () => ({ authOptions: {} }));
 jest.mock('next-auth', () => ({ getServerSession: jest.fn() }));
 jest.mock('./solar-v2', () => ({ SolarCalculatorV2: { calculate: jest.fn() } }));
@@ -25,6 +28,8 @@ beforeEach(() => {
     tx.calculationSnapshot.create.mockResolvedValue({ id: 'saved' });
     (getServerSession as jest.Mock).mockResolvedValue({ user: { id: 'owner' } });
     (SolarCalculatorV2.calculate as jest.Mock).mockResolvedValue(result);
+    (prisma.user.findUnique as jest.Mock).mockResolvedValue({ plan: 'FREE', planExpireAt: null });
+    (prisma.quotaUsage.findUnique as jest.Mock).mockResolvedValue({ count: 0 });
 });
 test('success writes snapshot, timeline and usage in the same transaction', async () => {
     expect(await saveSolar('owner', 'project', result)).toBe('saved');
@@ -54,6 +59,19 @@ test('failed timeline propagates and does not proceed to quota increment', async
     tx.projectTimeline.create.mockRejectedValue(new Error('write failed'));
     await expect(saveSolar('owner', 'project', result)).rejects.toThrow('write failed');
     expect(tx.quotaUsage.upsert).not.toHaveBeenCalled();
+});
+test('exhausted quota is rejected before the weather calculation', async () => {
+    (prisma.quotaUsage.findUnique as jest.Mock).mockResolvedValue({ count: 3 });
+    const response = await POST(new NextRequest('http://localhost/api/v2/solar/calculate', { method: 'POST', body: '{}' }));
+    expect(response.status).toBe(429);
+    expect(await response.json()).toMatchObject({ message: '今日测算次数已用完，请明天再试' });
+    expect(SolarCalculatorV2.calculate).not.toHaveBeenCalled();
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+});
+test('paid plans skip the pre-check read of the daily count', async () => {
+    (prisma.user.findUnique as jest.Mock).mockResolvedValue({ plan: 'PRO', planExpireAt: new Date(Date.now() + 60000) });
+    await assertSolarQuota('owner');
+    expect(prisma.quotaUsage.findUnique).not.toHaveBeenCalled();
 });
 test('route only returns persisted true after the database transaction succeeds', async () => {
     const req = () => new NextRequest('http://localhost/api/v2/solar/calculate', { method: 'POST', body: '{}' });

@@ -5,7 +5,13 @@ const BASE_URL = 'https://api.crossref.org/works';
 /**
  * 获取论文引用格式
  */
+function blockIfCn(): void {
+    const edition = (process.env.NEXT_PUBLIC_APP_EDITION || process.env.APP_EDITION || '').toLowerCase();
+    if (edition === 'cn') throw new Error('OVERSEAS_SOURCE_DISABLED');
+}
+
 export async function getCitation(doi: string, style: string = 'apa', lang: string = 'en-US'): Promise<string> {
+    blockIfCn();
     try {
         if (!doi) return '';
 
@@ -34,6 +40,7 @@ export async function getCitation(doi: string, style: string = 'apa', lang: stri
  * 批量导出引用 (BibTeX)
  */
 export async function getBibtex(doi: string): Promise<string> {
+    blockIfCn();
     try {
         if (!doi) return '';
 

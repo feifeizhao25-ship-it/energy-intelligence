@@ -10,7 +10,10 @@ import { prisma } from '@/lib/prisma';
 import { GET } from '@/app/api/exports/download/[filename]/route';
 
 jest.mock('@/lib/prisma', () => ({ prisma: { project: { findMany: jest.fn() }, calculation: { findMany: jest.fn() } } }));
-jest.mock('@/lib/audit/quota', () => ({ consumeQuota: jest.fn().mockResolvedValue({ success: true }) }));
+jest.mock('@/lib/audit/quota', () => ({
+    checkQuota: jest.fn(async () => ({ allowed: true, usage: { exceeded: false } })),
+    consumeQuota: jest.fn(async (_owner, _type, _amount, prepare) => { await prepare?.(); return { success: true, usage: { exceeded: false } }; }),
+}));
 jest.mock('next-auth', () => ({ getServerSession: jest.fn() }));
 jest.mock('@/lib/auth/auth-options', () => ({ authOptions: {} }));
 
@@ -108,4 +111,48 @@ test('zero generation remains zero in exported data', async () => {
     files.push(body.data.filename);
     const cached = getFromExportCache(body.data.filename, 'owner');
     expect(JSON.parse(cached!.content.toString())[0]['年发电量(kWh)']).toBe(0);
+});
+
+test('pages past the first batch and still exports every project', async () => {
+    (getServerSession as jest.Mock).mockResolvedValue({ user: { id: 'owner' } });
+    (prisma.project.findMany as jest.Mock).mockClear();
+    const rows = Array.from({ length: 201 }, (_, index) => ({
+        id: `project-${String(index).padStart(3, '0')}`, name: `n${index}`, type: index % 2 ? 'SOLAR' : 'WIND',
+        capacity: index, lng: 1, lat: 2, createdAt: new Date('2026-10-02'),
+    }));
+    (prisma.project.findMany as jest.Mock).mockImplementation(async ({ cursor, take, skip }: { cursor?: { id: string }; take: number; skip?: number }) => {
+        const start = cursor ? rows.findIndex((row) => row.id === cursor.id) + (skip ?? 0) : 0;
+        return rows.slice(start, start + take);
+    });
+    const response = await POST(new NextRequest('http://localhost/api/exports', { method: 'POST', body: JSON.stringify({ dataType: 'projects', format: 'json' }) }));
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    files.push(body.data.filename);
+    expect(prisma.project.findMany).toHaveBeenCalledTimes(2);
+    expect(prisma.project.findMany).toHaveBeenNthCalledWith(2, expect.objectContaining({ cursor: { id: 'project-199' }, skip: 1, take: 200 }));
+    expect(body.data.totalRecords).toBe(201);
+    const download = await GET(new NextRequest('http://localhost' + body.data.downloadUrl), { params: Promise.resolve({ filename: body.data.filename }) });
+    const exported = await download.json();
+    expect(exported).toHaveLength(201);
+    expect(exported[0].ID).toBe('project-000');
+    expect(exported[200].ID).toBe('project-200');
+});
+
+test('exports every calculation rather than silently stopping at fifty', async () => {
+    (getServerSession as jest.Mock).mockResolvedValue({ user: { id: 'owner' } });
+    const rows = Array.from({length: 73}, (_, i) => ({id:`calculation-${i}`,type:'SOLAR',input:{index:i},output:{energy:{annualGeneration:i}},createdAt:new Date('2026-10-01')}));
+    (prisma.calculation.findMany as jest.Mock).mockImplementation(async ({take}) => take ? rows.slice(0,take) : rows);
+    const response = await POST(new NextRequest('http://localhost/api/exports', {method:'POST',body:JSON.stringify({dataType:'calculations',format:'json'})}));
+    const body = await response.json();files.push(body.data.filename);
+    expect(body.data.totalRecords).toBe(73);
+    const download = await GET(new NextRequest('http://localhost'+body.data.downloadUrl),{params:Promise.resolve({filename:body.data.filename})});
+    const exported=await download.json();expect(exported.map((r:any)=>r.ID)).toEqual(rows.map(r=>r.id));
+});
+
+test.each(['{','null','[]'])('invalid export JSON returns Chinese 400 without quota or DB access: %s',async body=>{
+    (getServerSession as jest.Mock).mockResolvedValue({user:{id:'owner'}});
+    const {consumeQuota}=await import('@/lib/audit/quota');(consumeQuota as jest.Mock).mockClear();(prisma.project.findMany as jest.Mock).mockClear();(prisma.calculation.findMany as jest.Mock).mockClear();
+    const response=await POST(new NextRequest('http://localhost/api/exports',{method:'POST',body}));
+    expect(response.status).toBe(400);expect((await response.json()).message).toMatch(/请求/);
+    expect(consumeQuota).not.toHaveBeenCalled();expect(prisma.project.findMany).not.toHaveBeenCalled();expect(prisma.calculation.findMany).not.toHaveBeenCalled();
 });
