@@ -136,7 +136,7 @@ export default function Sidebar() {
             </header>
 
             {/* Desktop Sidebar */}
-            <aside className="fixed bottom-0 left-0 top-0 z-40 hidden w-64 flex-col border-r border-white/10 bg-[var(--navy)] text-white lg:flex">
+            <aside aria-label="侧栏" className="fixed bottom-0 left-0 top-0 z-40 hidden w-64 flex-col border-r border-white/10 bg-[var(--navy)] text-white lg:flex">
                 <div className="p-6">
                     <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-2 mb-2">
@@ -149,16 +149,16 @@ export default function Sidebar() {
                     </div>
                 </div>
 
-                <nav className="flex-1 px-4 flex flex-col gap-4 overflow-y-auto scrollbar-thin">
+                <nav aria-label="功能导航" className="flex-1 px-4 flex flex-col gap-4 overflow-y-auto scrollbar-thin">
                     {navGroups.map((group) => {
                         const visibleItems = group.items.filter(item => !item.requiresAuth || isLoggedIn);
                         if (visibleItems.length === 0) return null;
 
                         return (
                             <div key={group.label} className="flex flex-col gap-1">
-                                <h3 className="mb-1 px-3 text-[11px] font-semibold text-white/80">
+                                <h2 className="mb-1 px-3 text-[11px] font-semibold text-white/80">
                                     {group.label}
-                                </h3>
+                                </h2>
                                 <div className="flex flex-col gap-1">
                                     {(visibleItems as NavItem[]).map((item) => {
                                         const isAnySubActive = item.subItems?.some(sub => pathname === sub.href);
@@ -262,16 +262,16 @@ export default function Sidebar() {
             {/* 移动端菜单 Drawer */}
             {mobileMenuOpen && (
                 <div data-testid="mobile-nav-drawer" className="fixed inset-x-0 bottom-0 top-[calc(3.5rem+env(safe-area-inset-top))] z-[60] overflow-y-auto bg-white p-4 pb-[calc(6rem+env(safe-area-inset-bottom))] dark:bg-background-dark lg:hidden">
-                    <nav className="space-y-6">
+                    <nav aria-label="菜单" className="space-y-6">
                         {navGroups.map((group) => {
                             const visibleItems = group.items.filter(item => !item.requiresAuth || isLoggedIn);
                             if (visibleItems.length === 0) return null;
 
                             return (
                                 <div key={group.label} className="flex flex-col gap-2">
-                                    <h3 className="px-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                    <h2 className="px-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
                                         {group.label}
-                                    </h3>
+                                    </h2>
                                     <div className="flex flex-col gap-2">
                                         {(visibleItems as NavItem[]).map((item) => {
                                             if (item.subItems) {

@@ -4,8 +4,9 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/auth-options';
 import { prisma } from '@/lib/prisma';
 import { isCnEdition } from '@/lib/ai/router';
+import { ageLookupUnavailablePath, normalizePathname } from './age-status';
 
-export { isCnEdition };
+export { isCnEdition, normalizePathname };
 
 /** 与 proxy.ts 写入的请求头一致，供服务端布局判断当前路径。 */
 export const AGE_GATE_PATH_HEADER = 'x-nengjian-pathname';
@@ -38,14 +39,6 @@ export function isAgeConfirmed(user: AgeConfirmationRow | null | undefined): boo
     return user.profileCompleted === true;
 }
 
-export function normalizePathname(pathname: string | null | undefined): string {
-    if (!pathname) return '';
-    const bare = pathname.split('?')[0]?.split('#')[0] || '';
-    const stripped = bare.replace(/^\/(?:zh|en)(?=\/|$)/, '') || '/';
-    if (stripped.length > 1 && stripped.endsWith('/')) return stripped.slice(0, -1);
-    return stripped || '/';
-}
-
 /** 价格与结账页保持原有公开转化路径，不在这里改道。 */
 export function ageConfirmationExempt(pathname: string | null | undefined): boolean {
     return EXEMPT_PATHS.has(normalizePathname(pathname));
@@ -62,7 +55,7 @@ export function shouldRedirectForAge(input: {
     if (!input.signedIn) return false;
     // 价格与结账仍是公开转化页，查库失败也不在这里改道。
     if (ageConfirmationExempt(input.pathname)) return false;
-    // 国内版查不到年龄确认时不能放行工作台或助手，按未确认拦回引导页。
+    // 国内版查不到年龄确认时不能放行工作台或助手。具体改去哪一页由 enforceAgeConfirmation 决定。
     if (input.lookupFailed) return true;
     return !isAgeConfirmed(input.user);
 }
@@ -109,6 +102,7 @@ export async function enforceAgeConfirmation(): Promise<void> {
     }
 
     if (shouldRedirectForAge({ signedIn: true, pathname, user, lookupFailed })) {
-        redirect(AGE_CONFIRMATION_PATH);
+        // 查库失败仍拦住工作台和助手，但不要再让用户勾一次年龄。
+        redirect(lookupFailed ? ageLookupUnavailablePath(pathname) : AGE_CONFIRMATION_PATH);
     }
 }

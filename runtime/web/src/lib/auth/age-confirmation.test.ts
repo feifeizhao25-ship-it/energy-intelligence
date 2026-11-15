@@ -10,6 +10,7 @@ import {
     AGE_CONFIRMATION_PATH,
     AGE_GATE_PATH_HEADER,
 } from './age-confirmation';
+import { ageLookupUnavailablePath } from './age-status';
 
 const redirect = jest.fn((url: string) => {
     throw new Error(`REDIRECT:${url}`);
@@ -144,13 +145,17 @@ describe('age confirmation redirect', () => {
         expect(redirect).not.toHaveBeenCalled();
     });
 
-    it('CN lookup failure fails closed', async () => {
+    it('CN lookup failure fails closed onto the unavailable page, not the age checkbox', async () => {
         setEdition('cn');
         const user = { profileCompleted: false, ageConfirmedAt: null };
         expect(shouldRedirectForAge({ signedIn: true, pathname: '/dashboard', user, lookupFailed: true })).toBe(true);
         expect(shouldRedirectForAge({ signedIn: true, pathname: '/assistant', user: null, lookupFailed: true })).toBe(true);
+        expect(ageLookupUnavailablePath('/dashboard')).not.toBe(AGE_CONFIRMATION_PATH);
         findUnique.mockRejectedValue(new Error('db down'));
-        await expect(enforceAgeConfirmation()).rejects.toThrow(`REDIRECT:${AGE_CONFIRMATION_PATH}`);
+        await expect(enforceAgeConfirmation()).rejects.toThrow(`REDIRECT:${ageLookupUnavailablePath('/dashboard')}`);
+        headerState.pathname = '/assistant';
+        findUnique.mockRejectedValue(new Error('db down'));
+        await expect(enforceAgeConfirmation()).rejects.toThrow(`REDIRECT:${ageLookupUnavailablePath('/assistant')}`);
     });
 
     it('CN confirmed users are not redirected', async () => {
@@ -196,6 +201,7 @@ describe('age confirmation redirect', () => {
         expect(proxy).toContain(AGE_GATE_PATH_HEADER);
         const gate = readFileSync(join(__dirname, 'age-confirmation.ts'), 'utf8');
         expect(gate).toContain('isCnEdition');
+        expect(gate).toContain('ageLookupUnavailablePath');
         const route = readFileSync(join(root, 'app/api/user/onboarding/route.ts'), 'utf8');
         expect(route).toContain('isCnEdition');
         expect(readAgeConfirmed({ ageConfirmed: false })).toBe(false);
