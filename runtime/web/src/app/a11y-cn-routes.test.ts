@@ -51,6 +51,25 @@ describe('国内版关键页的对比度与按钮名', () => {
     expect(login).toContain('var(--text-muted-inverse)');
   });
 
+  it('登录提交按钮白字在常态和悬停背景上至少 4.5:1', () => {
+    // Tailwind 默认 emerald 色阶。600/500 与白字分别约 3.77:1、2.54:1，低于 WCAG AA。
+    const emerald: Record<string, string> = {
+      '500': '#10b981',
+      '600': '#059669',
+      '700': '#047857',
+      '800': '#065f46',
+    };
+    const button = login.match(/<button disabled=\{loading \|\| !authConfigured\} className="([^"]+)"/);
+    expect(button).not.toBeNull();
+    const className = button?.[1] ?? '';
+    const bg = className.match(/(?:^|\s)bg-emerald-(\d+)/)?.[1];
+    const hover = className.match(/hover:bg-emerald-(\d+)/)?.[1];
+    expect(bg).toBeTruthy();
+    expect(hover).toBeTruthy();
+    expect(contrast('#ffffff', emerald[bg as string])).toBeGreaterThanOrEqual(4.5);
+    expect(contrast('#ffffff', emerald[hover as string])).toBeGreaterThanOrEqual(4.5);
+  });
+
   it('次要文字令牌在对应背景上至少 4.5:1', () => {
     const muted = token(css, ':root', '--text-muted');
     const inverse = token(css, ':root', '--text-muted-inverse');
