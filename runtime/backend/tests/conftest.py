@@ -46,6 +46,27 @@ def global_edition(monkeypatch):
     monkeypatch.setattr(settings, "APP_EDITION", "global", raising=False)
 
 
+@pytest.fixture
+def library_clock_inside_review_window(monkeypatch):
+    """Freeze retrieval's wall clock inside the recorded review window.
+
+    policy-cn-136 and policy-us-itc were last verified on 2026-10-15 with a
+    30-day interval. Ranking and citation tests use 2026-11-07, a date already
+    stored on the snapshot, so they do not depend on the wall clock later
+    passing that window. Production still calls date.today().
+    """
+    from datetime import date as date_cls
+
+    frozen = date_cls(2026, 11, 7)
+
+    class FrozenDate(date_cls):
+        @classmethod
+        def today(cls):
+            return frozen
+
+    monkeypatch.setattr("app.services.rag_service.date", FrozenDate)
+
+
 @pytest.fixture(scope="session", autouse=True)
 def _dispose_engine_at_session_end():
     """会话结束时释放引擎连接 — 否则 sqlite/pg 连接的底层线程会阻止解释器退出。"""

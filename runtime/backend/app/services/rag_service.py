@@ -177,7 +177,7 @@ class RAGService:
                 continue
             if countries and not source_countries and doc.get("applicability_status") != "reviewed":
                 continue
-            freshness = self._freshness_of(doc)
+            freshness = self._freshness_of(doc, today)
             if exclude_stale and freshness == "stale":
                 continue
             doc_tokens = tokenize(
@@ -259,12 +259,15 @@ class RAGService:
         ranked["rows"] = ranked["rows"][:top_k]
         return ranked
 
-    def _freshness_of(self, doc: Dict) -> str:
+    def _freshness_of(self, doc: Dict, today: Optional[date] = None) -> str:
+        # Same instant search() already took from the wall clock. Callers that
+        # omit it still resolve "now" inside freshness_status.
         if self._registry is not None:
-            return self._registry.freshness_of(doc)
+            return self._registry.freshness_of(doc, today=today)
         # 注入 corpus 且未给注册表时，按条目自带周期（缺省 365 天）计算
         from app.services.rag_sources import freshness_status
         return freshness_status(
             doc.get("last_verified_at", ""),
             int(doc.get("verify_interval_days", 365)),
+            today=today,
         )

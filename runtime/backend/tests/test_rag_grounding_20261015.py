@@ -1,8 +1,12 @@
 """RAG：中文分词、先检索后生成、136号文 / OBBBA 语料已按原文校正。"""
 import json
+from datetime import date, timedelta
 from pathlib import Path
 
+import pytest
+
 from app.api.v1 import ai_assistant as aa
+from app.services import rag_service
 from app.services.rag_service import RAGService, tokenize
 
 DATA = json.loads((Path(__file__).resolve().parents[1] / "data" / "rag_sources.json").read_text("utf-8"))
@@ -14,15 +18,41 @@ def test_chinese_tokenize_produces_bigrams():
     assert {"新能", "电价", "itc", "2025"} <= toks
 
 
+@pytest.mark.usefixtures("library_clock_inside_review_window")
 def test_chinese_query_retrieves_136():
     hits = RAGService().search("新能源上网电价市场化改革 机制电价", top_k=3, market="cn").hits
     assert hits[0].source_id == "policy-cn-136"
     assert hits[0].score > 0
 
 
+@pytest.mark.usefixtures("library_clock_inside_review_window")
 def test_english_query_retrieves_obbba():
     hits = RAGService().search("solar tax credit 48E beginning of construction", top_k=3, market="global").hits
     assert hits[0].source_id == "policy-us-itc"
+
+
+def test_past_review_window_excludes_136_and_does_not_relabel_another_source(monkeypatch):
+    """After 136's own review window, that row is out. Another row keeps its own name."""
+    verified = date.fromisoformat(BY_ID["policy-cn-136"]["last_verified_at"])
+    interval = int(BY_ID["policy-cn-136"]["verify_interval_days"])
+    past = verified + timedelta(days=interval + 1)
+
+    class Frozen(date):
+        @classmethod
+        def today(cls):
+            return past
+
+    monkeypatch.setattr(rag_service, "date", Frozen)
+    query = "136号文 机制电价 存量 增量"
+    hits = RAGService().search(query, top_k=3, market="cn", exclude_stale=True).hits
+    assert all(hit.source_id != "policy-cn-136" for hit in hits)
+    for hit in hits:
+        assert hit.metadata.get("doc_number") != "发改价格〔2025〕136号"
+        assert "发改价格〔2025〕136号" not in hit.title
+    shown, evidence, _expired = aa._library_stand_in(query, aa._retrieve(query, "cn"), "cn", None)
+    assert "policy-cn-136" not in shown
+    assert "发改价格〔2025〕136号" not in shown
+    assert all(source.get("source_id") != "policy-cn-136" for source in evidence.get("sources") or [])
 
 
 def test_136_entry_matches_primary_source():
@@ -50,6 +80,7 @@ def test_us_itc_entry_reflects_obbba():
     assert faq["evidence_status"] == "legacy_unreviewed"
 
 
+@pytest.mark.usefixtures("library_clock_inside_review_window")
 def test_prompt_is_grounded_before_generation():
     hits = aa._retrieve("136号文 机制电价 存量 增量", "cn")
     assert hits and all(h.score > 0 for h in hits)

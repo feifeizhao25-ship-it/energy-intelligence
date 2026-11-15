@@ -199,6 +199,7 @@ async def _user(db_session, market: str, plan: str) -> dict:
     return {"Authorization": f"Bearer {create_access_token(str(user.id))}"}
 
 
+@pytest.mark.usefixtures("library_clock_inside_review_window")
 @pytest.mark.asyncio
 async def test_chat_download_uses_real_library_record_and_rejects_other_users(client, db_session, monkeypatch):
     async def unavailable(message, system_prompt, *, market):
