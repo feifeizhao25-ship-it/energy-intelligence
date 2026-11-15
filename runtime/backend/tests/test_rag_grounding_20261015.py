@@ -1,8 +1,10 @@
 """RAG：中文分词、先检索后生成、136号文 / OBBBA 语料已按原文校正。"""
 import json
+from datetime import date
 from pathlib import Path
 
 from app.api.v1 import ai_assistant as aa
+from app.services import rag_service
 from app.services.rag_service import RAGService, tokenize
 
 DATA = json.loads((Path(__file__).resolve().parents[1] / "data" / "rag_sources.json").read_text("utf-8"))
@@ -23,6 +25,25 @@ def test_chinese_query_retrieves_136():
 def test_english_query_retrieves_obbba():
     hits = RAGService().search("solar tax credit 48E beginning of construction", top_k=3, market="global").hits
     assert hits[0].source_id == "policy-us-itc"
+
+
+def test_snapshot_clock_keeps_the_same_sources_after_the_review_window(monkeypatch):
+    """The bundled file is not rewritten while LIBRARY_FRESHNESS is off.
+
+    A later wall clock must not drop 136 or Notice 2025-42 for a missed review
+    and cite a different document that shares the query words.
+    """
+
+    class Frozen(date):
+        @classmethod
+        def today(cls):
+            return date(2027, 6, 1)
+
+    monkeypatch.setattr(rag_service, "date", Frozen)
+    cn = RAGService().search("新能源上网电价市场化改革 机制电价", top_k=3, market="cn").hits
+    en = RAGService().search("solar tax credit 48E beginning of construction", top_k=3, market="global").hits
+    assert cn and cn[0].source_id == "policy-cn-136"
+    assert en and en[0].source_id == "policy-us-itc"
 
 
 def test_136_entry_matches_primary_source():
