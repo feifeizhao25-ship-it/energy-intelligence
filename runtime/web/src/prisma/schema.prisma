@@ -43,7 +43,10 @@ model User {
   jobTitle         String?
   industry         String?
   bio              String?
-  profileCompleted Boolean @default(false)
+  profileCompleted Boolean   @default(false)
+  // 引导页确认已年满 16 周岁的时间。空值表示尚未确认。
+  // 已完成引导的老用户由迁移回填，避免被送回引导页。
+  ageConfirmedAt   DateTime?
 
   // 会员信息
   plan         Plan      @default(FREE)

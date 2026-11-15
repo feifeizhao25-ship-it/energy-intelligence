@@ -1,20 +1,13 @@
-'use client';
+import { enforceAgeConfirmation } from '@/lib/auth/age-confirmation';
+import { DashboardShell } from './dashboard-shell';
 
-import { AppChrome } from '@/components/layout/AppChrome';
-import { StationProvider } from '@/contexts/StationContext';
-import { usePathname } from 'next/navigation';
+export const dynamic = 'force-dynamic';
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
-    const pathname = usePathname();
-    const isPublicConversionPage = pathname === '/pricing' || pathname === '/checkout';
-
-    if (isPublicConversionPage) {
-        return <StationProvider>{children}</StationProvider>;
-    }
-
-    return <AppChrome>{children}</AppChrome>;
+    await enforceAgeConfirmation();
+    return <DashboardShell>{children}</DashboardShell>;
 }
