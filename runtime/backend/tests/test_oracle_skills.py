@@ -90,7 +90,7 @@ class TestSolarResourceOracle:
         assert result["estimated"] is False
         assert result["references"]
 
-    async def test_dev_fallback_is_labeled_estimate(self):
+    async def test_dev_fallback_is_labeled_estimate(self, global_edition):
         async def unreachable(lat, lng):
             raise ConnectionError("offline")
 
@@ -103,7 +103,7 @@ class TestSolarResourceOracle:
         assert result["data_source"] == "estimate"
         assert "估算" in result["warning"]
 
-    async def test_dev_fallback_warning_english_for_global(self):
+    async def test_dev_fallback_warning_english_for_global(self, global_edition):
         async def unreachable(lat, lng):
             raise ConnectionError("offline")
 
@@ -164,7 +164,7 @@ class TestWindResourceOracle:
         assert result["engine"] == "measured_input"
         assert result["estimated"] is False
 
-    async def test_dev_fallback_is_labeled_estimate(self):
+    async def test_dev_fallback_is_labeled_estimate(self, global_edition):
         async def unreachable(lat, lng):
             raise ConnectionError("offline")
 
