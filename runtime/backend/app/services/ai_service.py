@@ -5,6 +5,13 @@ from anthropic import Anthropic
 from openai import AsyncOpenAI
 from app.config import settings
 
+# DeepSeek 思考模式和正文共用同一份 max_tokens。预算耗尽时 finish_reason=length，
+# 正文可能在句中截断，也可能被思考过程挤成空字符串。
+INCOMPLETE_NOTICE = {
+    "cn": "回答未完成：已达到生成长度上限，内容可能在句中截断。请缩短问题或分步提问。",
+    "global": "Answer incomplete: the reply hit the length limit and may stop mid-sentence. Please shorten the question or ask in steps.",
+}
+
 
 class AIAssistant:
     """Route CN data only to direct domestic providers and GL data globally."""
@@ -76,6 +83,38 @@ class AIAssistant:
             self.openrouter_failures = 0
             self.openrouter_open_until = 0.0
 
+    @staticmethod
+    def _max_tokens() -> int:
+        try:
+            value = int(settings.AI_MAX_TOKENS)
+        except (TypeError, ValueError):
+            return 4000
+        return value if value >= 1 else 4000
+
+    @staticmethod
+    def _extra_body(provider: str, extra_body):
+        """DeepSeek 默认会思考，思考文本和回答共用长度预算。事实回答关掉思考。"""
+        if provider != "deepseek":
+            return extra_body
+        merged = dict(extra_body or {})
+        thinking = dict(merged.get("thinking") or {})
+        thinking["type"] = "disabled"
+        merged["thinking"] = thinking
+        return merged
+
+    @staticmethod
+    def incomplete_notice(market: str) -> str:
+        return INCOMPLETE_NOTICE["global" if market == "global" else "cn"]
+
+    def _with_incomplete_notice(self, content: str, market: str) -> str:
+        notice = self.incomplete_notice(market)
+        text = (content or "").strip()
+        if not text:
+            return notice
+        if notice in text:
+            return text
+        return f"{text}\n\n{notice}"
+
     async def chat_openai(self, message: str, system_prompt: str, *, market: str = "cn") -> str:
         result = await self.chat_openai_with_metadata(message, system_prompt, market=market)
         return result["content"]
@@ -89,12 +128,17 @@ class AIAssistant:
             response = await client.chat.completions.create(
                 model=model,
                 messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": message}],
-                max_tokens=1500,
+                max_tokens=self._max_tokens(),
                 temperature=0.4,
-                extra_body=extra_body,
+                extra_body=self._extra_body(provider, extra_body),
             )
-            content = (response.choices[0].message.content or "").strip()
-            if not content:
+            choice = response.choices[0]
+            finish_reason = getattr(choice, "finish_reason", None) or ""
+            content = (getattr(choice.message, "content", None) or "").strip()
+            incomplete = finish_reason == "length"
+            if incomplete:
+                content = self._with_incomplete_notice(content, market)
+            elif not content:
                 raise RuntimeError("AI provider returned empty content")
         except Exception:
             self._record_openrouter_failure(market)
@@ -107,26 +151,42 @@ class AIAssistant:
             "tokens_output": usage.completion_tokens if usage else 0,
             "tokens_total": usage.total_tokens if usage else 0,
             "latency_ms": int((monotonic() - started_at) * 1000),
+            "finish_reason": finish_reason or None,
+            "incomplete": incomplete,
         }}
 
     async def stream_openai(self, message: str, system_prompt: str, *, market: str = "cn"):
         market = self._normalize_market(market)
-        client, _provider, model, extra_body = self._provider(market)
+        client, provider, model, extra_body = self._provider(market)
         if extra_body is not None:
             extra_body = dict(extra_body)
             extra_body["models"] = [settings.OPENROUTER_MODEL_FAST, settings.OPENROUTER_MODEL_QUALITY, "google/gemini-2.5-flash-lite"]
             model = settings.OPENROUTER_MODEL_FAST
         self._assert_openrouter_available(market)
+        truncated = False
+        produced = False
         try:
             stream = await client.chat.completions.create(
                 model=model,
                 messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": message}],
-                stream=True, max_tokens=1500, temperature=0.7, extra_body=extra_body,
+                stream=True, max_tokens=self._max_tokens(), temperature=0.7,
+                extra_body=self._extra_body(provider, extra_body),
             )
             async for chunk in stream:
-                delta = chunk.choices[0].delta
-                if delta.content:
-                    yield delta.content
+                choices = getattr(chunk, "choices", None) or []
+                if not choices:
+                    continue
+                choice = choices[0]
+                if getattr(choice, "finish_reason", None) == "length":
+                    truncated = True
+                delta = getattr(choice, "delta", None)
+                piece = getattr(delta, "content", None) if delta is not None else None
+                if piece:
+                    produced = True
+                    yield piece
+            if truncated:
+                notice = self.incomplete_notice(market)
+                yield f"\n\n{notice}" if produced else notice
         except Exception:
             self._record_openrouter_failure(market)
             raise

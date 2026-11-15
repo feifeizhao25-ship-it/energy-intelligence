@@ -9,6 +9,7 @@ global 市场只返回英文文档（禁止未翻译中文泄漏到国际版）�
 
 from __future__ import annotations
 
+import os
 import re
 from dataclasses import dataclass, field
 from datetime import date
@@ -261,6 +262,53 @@ _LATIN_RE = re.compile(r"[a-z0-9]+(?:[.\-][a-z0-9]+)*")
 _CJK_RUN_RE = re.compile(r"[\u4e00-\u9fff]+")
 
 
+# 词面重合低于这个值的条目不算相关。0.35 与问答接口的 MIN_SOURCE_RELEVANCE 一致，
+# 可用环境变量 RAG_MIN_RELEVANCE 覆盖（0 到 1）。
+DEFAULT_MIN_RELEVANCE = 0.35
+_STANDARD_RE = re.compile(
+    r"(?i)(?<![A-Za-z0-9])"
+    r"((?:GB|NB|DL)\s*/\s*[A-Za-z]|GB|NB|DL|IEC|IEEE|ISO)"
+    r"\s*"
+    r"(\d+(?:\.\d+)?)"
+    r"(?!\d)"
+)
+
+
+def min_relevance() -> float:
+    raw = os.environ.get("RAG_MIN_RELEVANCE", "").strip()
+    if not raw:
+        return DEFAULT_MIN_RELEVANCE
+    try:
+        value = float(raw)
+    except ValueError:
+        return DEFAULT_MIN_RELEVANCE
+    if value < 0 or value > 1:
+        return DEFAULT_MIN_RELEVANCE
+    return value
+
+
+def _standard_stems(text: str) -> set:
+    """标准号词干：GB 50797-2012 与 GB 50797 都是 GB50797。年份和分部分号不参与比较。"""
+    stems = set()
+    for match in _STANDARD_RE.finditer(text or ""):
+        prefix = re.sub(r"[\s/]+", "", match.group(1)).upper()
+        stems.add(prefix + match.group(2))
+    return stems
+
+
+def standard_number_score(query: str, doc: Dict) -> float:
+    """问句里的标准号与条目文号、标题或版本一致时给满分；只在正文里出现时略低。"""
+    query_stems = _standard_stems(query)
+    if not query_stems:
+        return 0.0
+    identity = " ".join(str(doc.get(key) or "") for key in ("doc_number", "title", "version"))
+    if query_stems & _standard_stems(identity):
+        return 1.0
+    if query_stems & _standard_stems(str(doc.get("content") or "")):
+        return 0.85
+    return 0.0
+
+
 def tokenize(text: str) -> set:
     """中英混合分词：英文/数字按词，中文按字 unigram + bigram。
 
@@ -328,9 +376,12 @@ class RAGService:
             alias = alias_score(query, doc_tokens)
             if alias is not None and alias > score:
                 score = alias
+            numbered = standard_number_score(query, doc)
+            if numbered > score:
+                score = numbered
             elif overlap < 2 and len(query_tokens) > 1:
                 continue  # one stray shared word ("work" in "Physical Work Test" vs "how does IRR work") is not a match
-            if score <= 0:
+            if score <= 0 or score < min_relevance():
                 continue
             hit = RAGHit(
                 source_id=doc["source_id"],

@@ -173,10 +173,6 @@ jobs:
       - name: Run translation key checker
         run: python scripts/verify_language_isolation.py
 
-      # 国内版 Flutter 界面必须全中文（从 main.dart 可达的文件里的字符串）
-      - name: Chinese-only Flutter UI (android-cn / ios-cn)
-        run: python scripts/verify_zh_ui_dart.py --app android-cn --app ios-cn --allow scripts/zh_ui_allow.json
-
   # ──────────────────────────────────────────
   # 5. Lint
   # ──────────────────────────────────────────
@@ -260,6 +256,7 @@ jobs:
       - name: Language isolation
         run: python3 scripts/verify_language_isolation.py
 
+      # 国内版 Flutter 全中文只在这里跑一次（translation-check 与 mobile-quality 不再重复）
       - name: Chinese-only Flutter UI (android-cn / ios-cn)
         run: python3 scripts/verify_zh_ui_dart.py --app android-cn --app ios-cn --allow scripts/zh_ui_allow.json
 
