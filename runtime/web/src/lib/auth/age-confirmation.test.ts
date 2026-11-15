@@ -98,7 +98,8 @@ describe('age confirmation redirect', () => {
         expect(shouldRedirectForAge({ signedIn: true, pathname: '/pricing', user })).toBe(false);
         expect(shouldRedirectForAge({ signedIn: true, pathname: '/checkout', user })).toBe(false);
         expect(ageConfirmationExempt('/zh/pricing')).toBe(true);
-        expect(shouldRedirectForAge({ signedIn: true, pathname: '/dashboard', user, lookupFailed: true })).toBe(false);
+        expect(shouldRedirectForAge({ signedIn: true, pathname: '/pricing', user, lookupFailed: true })).toBe(false);
+        expect(shouldRedirectForAge({ signedIn: true, pathname: '/checkout', user, lookupFailed: true })).toBe(false);
     });
 
     it('dashboard layout redirects an unconfirmed user to onboarding', async () => {
@@ -136,13 +137,49 @@ describe('age confirmation redirect', () => {
         expect(findUnique).not.toHaveBeenCalled();
     });
 
-    it('no session and database errors do not redirect', async () => {
+    it('no session does not redirect', async () => {
         session = null;
         await expect(enforceAgeConfirmation()).resolves.toBeUndefined();
         expect(findUnique).not.toHaveBeenCalled();
-        session = { user: { id: 'u1' } };
+        expect(redirect).not.toHaveBeenCalled();
+    });
+
+    it('CN lookup failure fails closed', async () => {
+        setEdition('cn');
+        const user = { profileCompleted: false, ageConfirmedAt: null };
+        expect(shouldRedirectForAge({ signedIn: true, pathname: '/dashboard', user, lookupFailed: true })).toBe(true);
+        expect(shouldRedirectForAge({ signedIn: true, pathname: '/assistant', user: null, lookupFailed: true })).toBe(true);
+        findUnique.mockRejectedValue(new Error('db down'));
+        await expect(enforceAgeConfirmation()).rejects.toThrow(`REDIRECT:${AGE_CONFIRMATION_PATH}`);
+    });
+
+    it('CN confirmed users are not redirected', async () => {
+        setEdition('cn');
+        const user = { profileCompleted: false, ageConfirmedAt: new Date('2026-01-01') };
+        expect(shouldRedirectForAge({ signedIn: true, pathname: '/dashboard', user })).toBe(false);
+        expect(shouldRedirectForAge({ signedIn: true, pathname: '/assistant', user, lookupFailed: false })).toBe(false);
+        findUnique.mockResolvedValue(user);
+        await expect(enforceAgeConfirmation()).resolves.toBeUndefined();
+        expect(redirect).not.toHaveBeenCalled();
+    });
+
+    it('CN unconfirmed users are redirected', async () => {
+        setEdition('cn');
+        const user = { profileCompleted: false, ageConfirmedAt: null };
+        expect(shouldRedirectForAge({ signedIn: true, pathname: '/dashboard', user })).toBe(true);
+        expect(shouldRedirectForAge({ signedIn: true, pathname: '/assistant', user })).toBe(true);
+        findUnique.mockResolvedValue(user);
+        await expect(enforceAgeConfirmation()).rejects.toThrow(`REDIRECT:${AGE_CONFIRMATION_PATH}`);
+    });
+
+    it('intl lookup failure stays open', async () => {
+        setEdition('intl');
+        const user = { profileCompleted: false, ageConfirmedAt: null };
+        expect(shouldRedirectForAge({ signedIn: true, pathname: '/dashboard', user, lookupFailed: true })).toBe(false);
+        expect(shouldRedirectForAge({ signedIn: true, pathname: '/assistant', user: null, lookupFailed: true })).toBe(false);
         findUnique.mockRejectedValue(new Error('db down'));
         await expect(enforceAgeConfirmation()).resolves.toBeUndefined();
+        expect(findUnique).not.toHaveBeenCalled();
         expect(redirect).not.toHaveBeenCalled();
     });
 

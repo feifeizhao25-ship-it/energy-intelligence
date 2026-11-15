@@ -103,7 +103,7 @@ export default function LoginForm({ authConfigured, callbackUrl = '/dashboard' }
     </section>
 
     <section className="flex items-center justify-center p-4 sm:p-8"><div className="w-full max-w-md"><Link href="/" className="mb-8 flex items-center justify-center gap-2 text-xl font-black lg:hidden"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500 text-white"><Zap className="h-5 w-5" /></span>{copy.brand}</Link><div className="rounded-3xl border border-slate-200 bg-white p-7 shadow-xl shadow-slate-200/60 sm:p-8">
-        <h2 className="text-2xl font-black">{copy.title}</h2><p className="mt-2 text-slate-500">{copy.intro}</p>
+        <h1 className="sr-only lg:hidden">{copy.title}</h1><h2 className="text-2xl font-black">{copy.title}</h2><p className="mt-2 text-slate-500">{copy.intro}</p>
         {!authConfigured && <div role="status" className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-800">{copy.authNotConfigured}</div>}
         <form onSubmit={handleSubmit} className="mt-7 space-y-4">
           <label className="block text-sm font-semibold text-slate-700">{copy.phone}<input type="tel" inputMode="numeric" autoComplete="tel" value={phone} onChange={e => setPhone(digitsOnly(e.target.value, 11))} required className={field} placeholder={copy.phonePlaceholder} /></label>

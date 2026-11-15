@@ -195,7 +195,7 @@ export default function OnboardingPage() {
     const canProceed = ageConfirmed && (step.options && step.id !== 'province' ? !!selections[step.id] : true);
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+        <main className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
             {/* Progress bar */}
             <div className="fixed top-0 left-0 right-0 h-1 bg-slate-800">
                 <div
@@ -375,6 +375,6 @@ export default function OnboardingPage() {
                     </div>
                 )}
             </div>
-        </div>
+        </main>
     );
 }
