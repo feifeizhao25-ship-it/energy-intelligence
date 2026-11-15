@@ -3,6 +3,9 @@ import { headers } from 'next/headers';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/auth-options';
 import { prisma } from '@/lib/prisma';
+import { isCnEdition } from '@/lib/ai/router';
+
+export { isCnEdition };
 
 /** 与 proxy.ts 写入的请求头一致，供服务端布局判断当前路径。 */
 export const AGE_GATE_PATH_HEADER = 'x-nengjian-pathname';
@@ -54,6 +57,8 @@ export function shouldRedirectForAge(input: {
     user: AgeConfirmationRow | null;
     lookupFailed?: boolean;
 }): boolean {
+    // 国际版（APP_EDITION / NEXT_PUBLIC_APP_EDITION 不是 cn）不走这条年龄门。
+    if (!isCnEdition()) return false;
     if (!input.signedIn) return false;
     if (input.lookupFailed) return false;
     if (ageConfirmationExempt(input.pathname)) return false;
@@ -74,6 +79,8 @@ export function readAgeConfirmed(body: unknown): boolean {
 }
 
 export async function enforceAgeConfirmation(): Promise<void> {
+    if (!isCnEdition()) return;
+
     const session = await getServerSession(authOptions);
     const userId = session?.user?.id;
     if (!userId) return;

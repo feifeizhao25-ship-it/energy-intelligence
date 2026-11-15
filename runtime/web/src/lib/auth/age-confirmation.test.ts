@@ -17,6 +17,22 @@ const redirect = jest.fn((url: string) => {
 const headerState: { pathname: string | null } = { pathname: '/dashboard' };
 const findUnique = jest.fn();
 let session: { user: { id: string } } | null = { user: { id: 'u1' } };
+const previousEdition = {
+    app: process.env.APP_EDITION,
+    pub: process.env.NEXT_PUBLIC_APP_EDITION,
+};
+
+function setEdition(value: string) {
+    process.env.APP_EDITION = value;
+    process.env.NEXT_PUBLIC_APP_EDITION = value;
+}
+
+function restoreEdition() {
+    if (previousEdition.app === undefined) delete process.env.APP_EDITION;
+    else process.env.APP_EDITION = previousEdition.app;
+    if (previousEdition.pub === undefined) delete process.env.NEXT_PUBLIC_APP_EDITION;
+    else process.env.NEXT_PUBLIC_APP_EDITION = previousEdition.pub;
+}
 
 jest.mock('next/navigation', () => ({ redirect: (url: string) => redirect(url) }));
 jest.mock('next/headers', () => ({
@@ -36,6 +52,11 @@ describe('age confirmation redirect', () => {
         findUnique.mockReset();
         session = { user: { id: 'u1' } };
         headerState.pathname = '/dashboard';
+        setEdition('cn');
+    });
+
+    afterEach(() => {
+        restoreEdition();
     });
 
     it('existing confirmed users are not blocked', () => {
@@ -50,6 +71,18 @@ describe('age confirmation redirect', () => {
             pathname: '/assistant',
             user: { profileCompleted: false, ageConfirmedAt: new Date('2026-01-01') },
         })).toBe(false);
+    });
+
+    it('intl users without ageConfirmedAt are not redirected', async () => {
+        setEdition('intl');
+        const user = { profileCompleted: false, ageConfirmedAt: null };
+        expect(shouldRedirectForAge({ signedIn: true, pathname: '/dashboard', user })).toBe(false);
+        expect(shouldRedirectForAge({ signedIn: true, pathname: '/en/dashboard', user })).toBe(false);
+        expect(shouldRedirectForAge({ signedIn: true, pathname: '/assistant', user })).toBe(false);
+        findUnique.mockResolvedValue(user);
+        await expect(enforceAgeConfirmation()).resolves.toBeUndefined();
+        expect(findUnique).not.toHaveBeenCalled();
+        expect(redirect).not.toHaveBeenCalled();
     });
 
     it('unconfirmed signed-in users leave /dashboard and /assistant', () => {
@@ -124,6 +157,10 @@ describe('age confirmation redirect', () => {
             expect(source).toContain("dynamic = 'force-dynamic'");
         }
         expect(proxy).toContain(AGE_GATE_PATH_HEADER);
+        const gate = readFileSync(join(__dirname, 'age-confirmation.ts'), 'utf8');
+        expect(gate).toContain('isCnEdition');
+        const route = readFileSync(join(root, 'app/api/user/onboarding/route.ts'), 'utf8');
+        expect(route).toContain('isCnEdition');
         expect(readAgeConfirmed({ ageConfirmed: false })).toBe(false);
         expect(readAgeConfirmed({ ageConfirmed: true })).toBe(true);
     });

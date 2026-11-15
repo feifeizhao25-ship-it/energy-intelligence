@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/auth-options';
 import { prisma } from '@/lib/prisma';
-import { readAgeConfirmed } from '@/lib/auth/age-confirmation';
+import { isCnEdition, readAgeConfirmed } from '@/lib/auth/age-confirmation';
 
 export async function POST(req: NextRequest) {
     try {
@@ -13,8 +13,9 @@ export async function POST(req: NextRequest) {
         }
 
         const body = await req.json();
-        // 未确认年龄：不写资料、不记积分、不发奖励。
-        if (!readAgeConfirmed(body)) {
+        const cn = isCnEdition();
+        // 国内版未确认年龄：不写资料、不记积分、不发奖励。国际版保持原接口。
+        if (cn && !readAgeConfirmed(body)) {
             return NextResponse.json({ error: '请先确认已年满 16 周岁' }, { status: 400 });
         }
 
@@ -24,10 +25,9 @@ export async function POST(req: NextRequest) {
         try {
             await prisma.user.update({
                 where: { id: userId },
-                data: {
-                    profileCompleted: true,
-                    ageConfirmedAt: new Date(),
-                }
+                data: cn
+                    ? { profileCompleted: true, ageConfirmedAt: new Date() }
+                    : { profileCompleted: true },
             });
 
             // 记录积分发放 (使用usageLog作为替代)

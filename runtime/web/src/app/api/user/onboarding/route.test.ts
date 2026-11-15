@@ -1,6 +1,22 @@
 let session: { user: { id: string } } | null = { user: { id: 'u1' } };
 const update = jest.fn(async (args: unknown) => args);
 const create = jest.fn(async (args: unknown) => args);
+const previousEdition = {
+    app: process.env.APP_EDITION,
+    pub: process.env.NEXT_PUBLIC_APP_EDITION,
+};
+
+function setEdition(value: string) {
+    process.env.APP_EDITION = value;
+    process.env.NEXT_PUBLIC_APP_EDITION = value;
+}
+
+function restoreEdition() {
+    if (previousEdition.app === undefined) delete process.env.APP_EDITION;
+    else process.env.APP_EDITION = previousEdition.app;
+    if (previousEdition.pub === undefined) delete process.env.NEXT_PUBLIC_APP_EDITION;
+    else process.env.NEXT_PUBLIC_APP_EDITION = previousEdition.pub;
+}
 
 jest.mock('next-auth', () => ({ getServerSession: jest.fn(async () => session) }));
 jest.mock('@/lib/auth/auth-options', () => ({ authOptions: {} }));
@@ -26,6 +42,11 @@ describe('/api/user/onboarding age confirmation', () => {
         update.mockClear();
         create.mockClear();
         session = { user: { id: 'u1' } };
+        setEdition('cn');
+    });
+
+    afterEach(() => {
+        restoreEdition();
     });
 
     it('ageConfirmed false returns 400 and awards no points', async () => {
@@ -82,6 +103,24 @@ describe('/api/user/onboarding age confirmation', () => {
         expect(res.status).toBe(503);
         expect(create).not.toHaveBeenCalled();
         expect(update).toHaveBeenCalledTimes(1);
+    });
+
+    it('intl keeps the previous onboarding API when ageConfirmed is false', async () => {
+        setEdition('intl');
+        const res = await post({ ageConfirmed: false, preferences: { ageConfirmed: false } });
+        expect(res.status).toBe(200);
+        expect(await res.json()).toMatchObject({
+            success: true,
+            rewards: { points: 100, aiCalls: 10, calculations: 5 },
+        });
+        expect(update).toHaveBeenCalledTimes(2);
+        const saved = update.mock.calls[0][0] as { data: Record<string, unknown> };
+        expect(saved.data).toEqual({ profileCompleted: true });
+        expect(saved.data).not.toHaveProperty('ageConfirmedAt');
+        const log = create.mock.calls[0][0] as { data: { metadata: { points: number } } };
+        expect(log.data.metadata.points).toBe(100);
+        const points = update.mock.calls[1][0] as { data: { points: { increment: number } } };
+        expect(points.data.points).toEqual({ increment: 100 });
     });
 
     it('未登录 401，不写库', async () => {
