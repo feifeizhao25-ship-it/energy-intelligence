@@ -38,6 +38,23 @@ describe('国内版关键页的对比度与按钮名', () => {
   const dashboard = readFileSync(join(SRC, '(dashboard)/dashboard/page.tsx'), 'utf8');
   const login = readFileSync(join(SRC, 'login/login-form.tsx'), 'utf8');
 
+  it('根视口允许缩放，登录窄屏有标题，引导和助手各有一层 main', () => {
+    const rootLayout = readFileSync(join(SRC, 'layout.tsx'), 'utf8');
+    const localeLayout = readFileSync(join(SRC, '[locale]/layout.tsx'), 'utf8');
+    for (const source of [rootLayout, localeLayout]) {
+      expect(source).not.toMatch(/maximumScale\s*:/);
+      expect(source).not.toMatch(/userScalable\s*:/);
+      expect(source).not.toContain('maximum-scale');
+      expect(source).not.toContain('user-scalable');
+    }
+    expect(login).toContain('<h1 className="sr-only lg:hidden">{copy.title}</h1>');
+    const onboarding = readFileSync(join(SRC, 'onboarding/page.tsx'), 'utf8');
+    expect(onboarding.match(/<main\b/g)).toHaveLength(1);
+    expect(assistant).not.toContain('<main');
+    const chrome = readFileSync(join(SRC, '../components/layout/AppChrome.tsx'), 'utf8');
+    expect(chrome.match(/<main\b/g)).toHaveLength(1);
+  });
+
   it('助手图标按钮有中文名称', () => {
     expect(assistant).toContain('aria-label="复制"');
     expect(assistant).toContain('aria-label="重新生成"');

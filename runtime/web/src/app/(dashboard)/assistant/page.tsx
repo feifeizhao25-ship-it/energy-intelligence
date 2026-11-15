@@ -212,7 +212,7 @@ export default function AssistantPage() {
             </aside>
 
             {/* Main Chat Interface */}
-            <main className="flex-1 flex flex-col bg-background-dark relative min-w-0">
+            <div className="flex-1 flex flex-col bg-background-dark relative min-w-0">
                 {/* Header */}
                 <div className="border-b border-border-dark px-6 py-4 bg-surface-dark/50 backdrop-blur">
                     <div className="flex items-center justify-between">
@@ -424,7 +424,7 @@ export default function AssistantPage() {
                         </div>
                     </div>
                 </div>
-            </main>
+            </div>
 
             {/* Right Sidebar: Knowledge Graph */}
             <aside className="w-80 bg-surface-dark border-l border-border-dark flex-col shrink-0 hidden xl:flex">

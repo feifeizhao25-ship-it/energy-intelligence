@@ -60,8 +60,10 @@ export function shouldRedirectForAge(input: {
     // 国际版（APP_EDITION / NEXT_PUBLIC_APP_EDITION 不是 cn）不走这条年龄门。
     if (!isCnEdition()) return false;
     if (!input.signedIn) return false;
-    if (input.lookupFailed) return false;
+    // 价格与结账仍是公开转化页，查库失败也不在这里改道。
     if (ageConfirmationExempt(input.pathname)) return false;
+    // 国内版查不到年龄确认时不能放行工作台或助手，按未确认拦回引导页。
+    if (input.lookupFailed) return true;
     return !isAgeConfirmed(input.user);
 }
 
