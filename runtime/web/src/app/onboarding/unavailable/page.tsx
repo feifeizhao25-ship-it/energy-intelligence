@@ -17,7 +17,7 @@ export default async function AgeLookupUnavailablePage({ searchParams }: { searc
                 <h1 className="text-2xl font-black text-white md:text-3xl">{AGE_LOOKUP_UNAVAILABLE_MESSAGE}</h1>
                 <a
                     href={retryHref}
-                    className="mt-8 inline-flex items-center justify-center rounded-xl bg-green-500 px-6 py-4 font-bold text-white"
+                    className="mt-8 inline-flex items-center justify-center rounded-xl bg-green-700 px-6 py-4 font-bold text-white"
                 >
                     重试
                 </a>
