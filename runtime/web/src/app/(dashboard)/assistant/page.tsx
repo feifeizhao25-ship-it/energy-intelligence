@@ -347,12 +347,16 @@ export default function AssistantPage() {
                                     <div className="flex gap-2">
                                         <BubbleSpeaker id={msg.id} text={citationText(msg.content, msg.sources || [])} />
                                         <button
+                                            type="button"
+                                            aria-label="复制"
                                             onClick={() => handleCopy(msg)}
                                             className="p-2 rounded-lg bg-surface-dark border border-border-dark hover:border-primary/50 transition-colors"
                                         >
                                             <Copy className="w-4 h-4 text-text-secondary" />
                                         </button>
                                         <button
+                                            type="button"
+                                            aria-label="重新生成"
                                             onClick={handleRegenerate}
                                             className="p-2 rounded-lg bg-surface-dark border border-border-dark hover:border-primary/50 transition-colors"
                                         >
@@ -394,7 +398,7 @@ export default function AssistantPage() {
                             />
                             <div className="flex items-center justify-between px-2 pb-1">
                                 <div className="flex items-center gap-1">
-                                    <button className="p-2 rounded-lg text-text-secondary hover:bg-background-dark hover:text-primary transition-colors">
+                                    <button type="button" aria-label="添加附件" className="p-2 rounded-lg text-text-secondary hover:bg-background-dark hover:text-primary transition-colors">
                                         <Paperclip className="w-5 h-5" />
                                     </button>
                                     <VoiceInput

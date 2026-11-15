@@ -98,7 +98,7 @@ export default function LoginForm({ authConfigured, callbackUrl = '/dashboard' }
   return <main className="grid min-h-screen bg-slate-50 lg:grid-cols-2">
     <section className="hidden bg-slate-950 p-12 text-white lg:flex lg:flex-col lg:justify-between">
       <Link href="/" className="flex items-center gap-3 text-xl font-black"><span className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500"><Zap className="h-6 w-6" /></span>{copy.brand}</Link>
-      <div><p className="text-sm font-bold tracking-[.2em] text-emerald-400">登录</p><h1 className="mt-4 max-w-xl text-5xl font-black leading-tight">{copy.intro}</h1><div className="mt-9 space-y-4">{copy.safeguards.map(item => <div key={item} className="flex items-center gap-3 text-slate-300"><Check className="h-5 w-5 text-emerald-400" />{item}</div>)}</div><p className="mt-9 max-w-xl text-sm leading-6 text-slate-400">{copy.disclaimer}</p></div>
+      <div><p className="text-sm font-bold tracking-[.2em] text-emerald-400">登录</p><h1 className="mt-4 max-w-xl text-5xl font-black leading-tight">{copy.intro}</h1><div className="mt-9 space-y-4">{copy.safeguards.map(item => <div key={item} className="flex items-center gap-3 text-slate-300"><Check className="h-5 w-5 text-emerald-400" />{item}</div>)}</div><p className="mt-9 max-w-xl text-sm leading-6 text-[var(--text-muted-inverse)]">{copy.disclaimer}</p></div>
       <p className="text-sm text-slate-300">© {new Date().getFullYear()} {copy.brand}</p>
     </section>
 
