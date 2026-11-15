@@ -22,7 +22,7 @@ import {
 import { cn } from '@/lib/utils';
 import { PROVINCES } from '@/lib/dashboard/personalization';
 import { onboardingFreeQuotas } from './free-quotas';
-import { runOnboardingSkip } from './skip';
+import { isCnOnboardingEdition, runOnboardingSkip } from './skip';
 
 // 引导步骤
 interface OnboardingOption {
@@ -167,7 +167,7 @@ export default function OnboardingPage() {
 
     const handleSkip = async () => {
         if (isCompleting) return;
-        if (ageConfirmed !== true) {
+        if (isCnOnboardingEdition() && ageConfirmed !== true) {
             setAgeNotice('请先勾选年龄确认，再跳过引导。');
             return;
         }
