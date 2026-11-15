@@ -180,7 +180,7 @@ export default function AssistantPage() {
     return (
         <div className="flex h-[calc(100dvh-4rem-env(safe-area-inset-bottom))] overflow-hidden bg-background-dark text-white">
             {/* Left Sidebar: History & Attachments */}
-            <aside className="w-80 bg-surface-dark border-r border-border-dark flex-col shrink-0 overflow-hidden hidden md:flex">
+            <aside aria-label="最近对话" className="w-80 bg-surface-dark border-r border-border-dark flex-col shrink-0 overflow-hidden hidden md:flex">
                 {/* Upload Area */}
                 <div className="p-4 border-b border-border-dark">
                     <div className="rounded-xl bg-background-dark border border-dashed border-border-dark p-4 group hover:border-primary/50 transition-colors cursor-pointer">
@@ -427,12 +427,12 @@ export default function AssistantPage() {
             </div>
 
             {/* Right Sidebar: Knowledge Graph */}
-            <aside className="w-80 bg-surface-dark border-l border-border-dark flex-col shrink-0 hidden xl:flex">
+            <aside aria-label="知识图谱" className="w-80 bg-surface-dark border-l border-border-dark flex-col shrink-0 hidden xl:flex">
                 <div className="p-4 border-b border-border-dark">
-                    <h3 className="text-white text-base font-bold flex items-center gap-2">
+                    <h2 className="text-white text-base font-bold flex items-center gap-2">
                         <Sparkles className="w-5 h-5 text-primary" />
                         知识图谱
-                    </h3>
+                    </h2>
                     <p className="text-xs text-text-secondary mt-1">实时关联技术概念</p>
                 </div>
                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -445,7 +445,7 @@ export default function AssistantPage() {
                                         card.color === 'primary' ? 'bg-primary' :
                                             card.color === 'purple' ? 'bg-purple-500' : 'bg-orange-500'
                                     )} />
-                                    <h4 className="text-white font-bold text-sm">{card.title}</h4>
+                                    <h3 className="text-white font-bold text-sm">{card.title}</h3>
                                 </div>
                             </div>
                             <p className="text-xs text-text-secondary leading-relaxed mb-3">

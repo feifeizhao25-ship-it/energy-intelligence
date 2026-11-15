@@ -59,7 +59,7 @@ export function PageShell({
                 </header>
                 <div className="ei-split">
                     <div className="min-w-0">{children}</div>
-                    <aside className="min-w-0 space-y-3">{aside}</aside>
+                    <aside aria-label="本页补充" className="min-w-0 space-y-3">{aside}</aside>
                 </div>
             </div>
             <footer data-testid="compliance-bar" className="ei-compliance">
