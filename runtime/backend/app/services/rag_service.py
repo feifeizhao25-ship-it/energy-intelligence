@@ -17,7 +17,7 @@ from app.services.policy_term import valid_until
 from typing import Dict, List, Optional
 
 from app.services.citation_record import is_blocked_from_retrieval
-from app.services.policy_aliases import STOPWORDS, alias_score
+from app.services.policy_aliases import ALIAS_GROUPS, STOPWORDS, alias_score
 from app.services.rag_sources import SourceRegistry, verification_status
 
 
@@ -103,6 +103,160 @@ def _currently_effective(doc: Dict, today: date) -> bool:
     return not is_expired_policy(doc, today)
 
 
+def _retrieval_gate(doc: Dict, *, lang: str, allow_overseas: bool, countries: set,
+                    today: date, effective_only: bool) -> bool:
+    """Same pre-freshness filters search() uses. A stale-excluded source is one that passes these and is then dropped."""
+    overseas = doc.get("jurisdiction") == "海外"
+    if overseas and not allow_overseas:
+        return False
+    if doc["lang"] != lang and not (overseas and allow_overseas):
+        return False
+    if doc.get("quote_policy") == "withdrawn":
+        return False
+    if doc.get("type") == "price":
+        return False
+    if is_blocked_from_retrieval(doc):
+        return False
+    if effective_only and not _currently_effective(doc, today):
+        return False
+    source_countries = set(doc.get("countries") or [])
+    if countries and source_countries and not (countries & source_countries):
+        return False
+    if countries and not source_countries and doc.get("applicability_status") != "reviewed":
+        return False
+    return True
+
+
+_FOLD = str.maketrans({
+    "[": "〔", "]": "〕", "【": "〔", "】": "〕",
+    "(": "〔", ")": "〕", "（": "〔", "）": "〕",
+    " ": "", "\u3000": "", "\t": "", "\n": "", "\r": "",
+})
+_BRACKET = r"[\[\]〔〕【】（）()]"
+
+
+def _fold_number(text: str) -> str:
+    return (text or "").translate(_FOLD).lower()
+
+
+def _trailing_serial(doc_number: str) -> Optional[str]:
+    match = re.search(r"(\d+)号$", _fold_number(doc_number))
+    return match.group(1) if match else None
+
+
+def _serial_owners(corpus: List[Dict]) -> Dict[str, List[str]]:
+    owners: Dict[str, List[str]] = {}
+    for doc in corpus:
+        serial = _trailing_serial(str(doc.get("doc_number") or ""))
+        if serial:
+            owners.setdefault(serial, []).append(str(doc.get("source_id") or ""))
+    return owners
+
+
+def _doc_number_span(query: str, doc_number: str) -> Optional[tuple]:
+    """Span of this document number in the query, brackets and spacing aside. None when it is not named."""
+    raw = (doc_number or "").strip()
+    if len(_fold_number(raw)) < 8:
+        return None
+    pieces = []
+    for char in raw:
+        if char.isspace():
+            continue
+        pieces.append(_BRACKET if char in "[]〔〕【】（）()" else re.escape(char))
+    if not pieces:
+        return None
+    pattern = r"\s*".join(pieces)
+    if raw[-1].isdigit():
+        pattern += r"(?!\d)"
+    match = re.search(pattern, query or "", re.I)
+    if not match:
+        return None
+    return match.start(), match.group(0)
+
+
+def _doc_number_spans(query: str, doc_number: str) -> List[tuple]:
+    raw = (doc_number or "").strip()
+    words = raw.split()
+    spans = []
+    if not words:
+        return spans
+    for index in range(len(words)):
+        span = _doc_number_span(query, " ".join(words[index:]))
+        if span:
+            spans.append(span)
+    return spans
+
+
+def _serial_span(query: str, serial: str) -> Optional[tuple]:
+    match = re.search(rf"(?<!\d){re.escape(serial)}(?!\d)\s*号(?:文|文件|通知)?", query or "")
+    if not match:
+        return None
+    return match.start(), re.sub(r"\s+", "", match.group(0))
+
+
+def _issuer_prefix(doc_number: str) -> str:
+    folded = _fold_number(doc_number)
+    folded = re.sub(r"〔?\d{4}〕?\d+号$", "", folded)
+    return re.sub(r"\d+号$", "", folded)
+
+
+def _serial_names_doc(query: str, doc: Dict, owners: Dict[str, List[str]]) -> Optional[tuple]:
+    """Short alias such as 136号文. A shared serial also needs the issuer prefix, so 42号 does not name every 42号 file."""
+    serial = _trailing_serial(str(doc.get("doc_number") or ""))
+    if not serial:
+        return None
+    span = _serial_span(query, serial)
+    if not span:
+        return None
+    owner_ids = owners.get(serial) or []
+    source_id = str(doc.get("source_id") or "")
+    if len([item for item in owner_ids if item]) <= 1:
+        return span
+    prefix = _issuer_prefix(str(doc.get("doc_number") or ""))
+    if len(prefix) >= 2 and prefix in _fold_number(query):
+        return span
+    return None
+
+
+def _alias_spans(query: str, doc: Dict) -> List[tuple]:
+    """English alias spellings, matched against the document's own title, number, and version — not a citation inside another file."""
+    identity = " ".join(str(doc.get(key) or "") for key in ("title", "doc_number", "version"))
+    tokens = tokenize(identity)
+    spans = []
+    for _name, (spellings, doc_tokens) in ALIAS_GROUPS.items():
+        if not (doc_tokens & tokens):
+            continue
+        for spelling in spellings:
+            parts = [part for part in spelling.split() if part]
+            if not parts:
+                continue
+            pattern = r"(?<![A-Za-z0-9])" + r"\s+".join(re.escape(part) for part in parts) + r"(?![A-Za-z0-9])"
+            match = re.search(pattern, query or "", re.I)
+            if match:
+                spans.append((match.start(), match.group(0)))
+    return spans
+
+
+def name_in_query(query: str, doc: Dict, owners: Dict[str, List[str]]) -> Optional[str]:
+    """The phrase the query uses for this source, or None. The phrase is taken from the query, not from source_id.
+
+    A document number or short 号文 alias wins over a broader concept alias (OBBBA, beginning of construction)
+    when the query contains both, so another file is not addressed by the concept name.
+    """
+    spans: List[tuple] = []
+    for field in ("doc_number", "version"):
+        spans.extend(_doc_number_spans(query, str(doc.get(field) or "")))
+    serial = _serial_names_doc(query, doc, owners)
+    if serial:
+        spans.append(serial)
+    if not spans:
+        spans = _alias_spans(query, doc)
+    if not spans:
+        return None
+    spans.sort(key=lambda item: (-len(item[1]), item[0]))
+    return spans[0][1].strip()
+
+
 _LATIN_RE = re.compile(r"[a-z0-9]+(?:[.\-][a-z0-9]+)*")
 _CJK_RUN_RE = re.compile(r"[\u4e00-\u9fff]+")
 
@@ -157,27 +311,13 @@ class RAGService:
 
         scored: List[RAGHit] = []
         for doc in self._corpus:
-            overseas = doc.get("jurisdiction") == "海外"
-            if overseas and not allow_overseas:
-                continue
-            if doc["lang"] != lang and not (overseas and allow_overseas):
-                continue
-            if doc.get("quote_policy") == "withdrawn":
-                continue
-            if doc.get("type") == "price":
-                continue  # 电价走结构化查询，不进向量/词面检索
-            # 待核实 / 待审核 / pending 候选不得进入检索，避免被回答或导出当成已发布来源。
-            if is_blocked_from_retrieval(doc):
+            if not _retrieval_gate(
+                doc, lang=lang, allow_overseas=allow_overseas, countries=countries,
+                today=today, effective_only=effective_only,
+            ):
                 continue
             review = doc.get("evidence_status")
-            if effective_only and not _currently_effective(doc, today):
-                continue
-            source_countries = set(doc.get("countries") or [])
-            if countries and source_countries and not (countries & source_countries):
-                continue
-            if countries and not source_countries and doc.get("applicability_status") != "reviewed":
-                continue
-            freshness = self._freshness_of(doc)
+            freshness = self._freshness_of(doc, today)
             if exclude_stale and freshness == "stale":
                 continue
             doc_tokens = tokenize(
@@ -239,6 +379,41 @@ class RAGService:
         scored.sort(key=lambda h: h.score, reverse=True)
         return RAGResult(hits=scored[: max(top_k, 0)])
 
+    def named_stale_labels(self, query: str, market: str = "cn") -> List[str]:
+        """Phrases in the query that name a source search() drops because it is past its review window.
+
+        The source itself is not a hit and is not a citation. The label is the wording in the query
+        (a document number or alias), not the registry id. Uses the same wall clock as search().
+        """
+        if not (query or "").strip():
+            return []
+        lang = "cn" if market == "cn" else "en"
+        allow_overseas = market != "cn" or query_allows_overseas(query)
+        countries = _detect_countries(query, market)
+        today = date.today()
+        owners = _serial_owners(self._corpus)
+        found: List[tuple] = []
+        seen = set()
+        for doc in self._corpus:
+            if not _retrieval_gate(
+                doc, lang=lang, allow_overseas=allow_overseas, countries=countries,
+                today=today, effective_only=True,
+            ):
+                continue
+            if self._freshness_of(doc, today) != "stale":
+                continue
+            label = name_in_query(query, doc, owners)
+            if not label:
+                continue
+            key = label.casefold()
+            if key in seen:
+                continue
+            seen.add(key)
+            position = (query or "").lower().find(label.lower())
+            found.append((position if position >= 0 else 10**9, label))
+        found.sort()
+        return [label for _position, label in found]
+
     def hybrid_search(self, query: str, top_k: int = 8, vector_scores: dict | None = None) -> dict:
         """词面结果再与向量分混合。不改变 search 的原有排序。"""
         from app.services.hybrid_retrieval import hybrid_scores, rerank
@@ -259,12 +434,15 @@ class RAGService:
         ranked["rows"] = ranked["rows"][:top_k]
         return ranked
 
-    def _freshness_of(self, doc: Dict) -> str:
+    def _freshness_of(self, doc: Dict, today: Optional[date] = None) -> str:
+        # Same instant search() already took from the wall clock. Callers that
+        # omit it still resolve "now" inside freshness_status.
         if self._registry is not None:
-            return self._registry.freshness_of(doc)
+            return self._registry.freshness_of(doc, today=today)
         # 注入 corpus 且未给注册表时，按条目自带周期（缺省 365 天）计算
         from app.services.rag_sources import freshness_status
         return freshness_status(
             doc.get("last_verified_at", ""),
             int(doc.get("verify_interval_days", 365)),
+            today=today,
         )

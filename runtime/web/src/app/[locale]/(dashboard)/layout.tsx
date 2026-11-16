@@ -5,12 +5,16 @@ import { StationProvider } from '@/contexts/StationContext';
 import { MilestoneModal } from '@/components/ui/MilestoneModal';
 import { AccessibilityPanel } from '@/components/accessibility/AccessibilityPanel';
 import { ShellErrorBoundary } from '@/components/ui/ShellErrorBoundary';
+import { enforceAgeConfirmation } from '@/lib/auth/age-confirmation';
 
-export default function DashboardLayout({
+export const dynamic = 'force-dynamic';
+
+export default async function DashboardLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
+    await enforceAgeConfirmation();
     return (
         <StationProvider>
             <div className="min-h-screen">

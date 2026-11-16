@@ -22,6 +22,7 @@ import {
 import { cn } from '@/lib/utils';
 import { PROVINCES } from '@/lib/dashboard/personalization';
 import { onboardingFreeQuotas } from './free-quotas';
+import { isCnOnboardingEdition, runOnboardingSkip } from './skip';
 
 // 引导步骤
 interface OnboardingOption {
@@ -110,6 +111,7 @@ export default function OnboardingPage() {
     const [selections, setSelections] = useState<Record<string, string>>({});
     const [isCompleting, setIsCompleting] = useState(false);
     const [ageConfirmed, setAgeConfirmed] = useState(false);
+    const [ageNotice, setAgeNotice] = useState<string | null>(null);
 
     const step = ONBOARDING_STEPS[currentStep];
     const isLastStep = currentStep === ONBOARDING_STEPS.length - 1;
@@ -123,21 +125,30 @@ export default function OnboardingPage() {
 
     const handleNext = async () => {
         if (isLastStep) {
+            if (ageConfirmed !== true) {
+                setAgeNotice('请先勾选年龄确认。');
+                return;
+            }
             setIsCompleting(true);
             try {
-                // 保存用户偏好到后端
-                await fetch('/api/user/onboarding', {
+                // 保存用户偏好到后端。未确认年龄时接口会拒绝，不能进入工作台。
+                const response = await fetch('/api/user/onboarding', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
+                        ageConfirmed: true,
                         preferences: {
                             ...selections,
-                            ageConfirmed,
+                            ageConfirmed: true,
                             ...(selections.role === 'researcher' ? { marketingPush: false } : {}),
                         },
                         completedAt: new Date().toISOString()
                     })
                 });
+                if (!response.ok) {
+                    setAgeNotice('年龄确认没有保存，请稍后再试。');
+                    return;
+                }
 
                 // 跳转到用户选择的目标页面
                 const goalOption = ONBOARDING_STEPS.find(s => s.id === 'goal')?.options?.find(o => o.id === selections.goal);
@@ -145,22 +156,46 @@ export default function OnboardingPage() {
                 router.push(targetPath);
             } catch (error) {
                 console.error('Failed to save onboarding:', error);
-                router.push('/dashboard');
+                setAgeNotice('年龄确认没有保存，请稍后再试。');
+            } finally {
+                setIsCompleting(false);
             }
         } else {
             setCurrentStep(prev => prev + 1);
         }
     };
 
-    const handleSkip = () => {
-        router.push('/dashboard');
+    const handleSkip = async () => {
+        if (isCompleting) return;
+        if (isCnOnboardingEdition() && ageConfirmed !== true) {
+            setAgeNotice('请先勾选年龄确认，再跳过引导。');
+            return;
+        }
+        setIsCompleting(true);
+        try {
+            const outcome = await runOnboardingSkip({
+                ageConfirmed,
+                post: async (body) => {
+                    const response = await fetch('/api/user/onboarding', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(body),
+                    });
+                    return { ok: response.ok };
+                },
+                push: (href) => router.push(href),
+            });
+            if (outcome !== 'saved') setAgeNotice('年龄确认没有保存，请稍后再试。');
+        } finally {
+            setIsCompleting(false);
+        }
     };
 
     // 省份可以跳过（之后在设置里填），其余选项步骤需要先选
     const canProceed = ageConfirmed && (step.options && step.id !== 'province' ? !!selections[step.id] : true);
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+        <main className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
             {/* Progress bar */}
             <div className="fixed top-0 left-0 right-0 h-1 bg-slate-800">
                 <div
@@ -269,16 +304,28 @@ export default function OnboardingPage() {
                     )}
 
                     <label className="mb-4 flex items-start gap-2 text-sm text-slate-300">
-                        <input type="checkbox" checked={ageConfirmed} onChange={(event) => setAgeConfirmed(event.target.checked)} />
+                        <input
+                            type="checkbox"
+                            data-testid="age-confirmation"
+                            checked={ageConfirmed}
+                            onChange={(event) => {
+                                setAgeConfirmed(event.target.checked);
+                                if (event.target.checked) setAgeNotice(null);
+                            }}
+                        />
                         <span>我已年满 16 周岁；未满 16 周岁不得注册或使用。本条待法律顾问确认。</span>
                     </label>
+                    {ageNotice && <p role="alert" className="mb-4 text-sm text-amber-300">{ageNotice}</p>}
                     {selections.role === 'researcher' && <p className="mb-4 text-sm text-slate-300">学生角色不接收营销推送。</p>}
                     {/* Buttons */}
                     <div className="flex gap-4">
                         {currentStep > 0 && currentStep < ONBOARDING_STEPS.length - 1 && (
                             <button
+                                type="button"
+                                data-testid="onboarding-skip-step"
                                 onClick={handleSkip}
-                                className="flex-1 py-3 text-slate-400 hover:text-white font-bold transition-colors"
+                                disabled={isCompleting}
+                                className="flex-1 py-3 text-slate-400 hover:text-white font-bold transition-colors disabled:opacity-50"
                             >
                                 跳过
                             </button>
@@ -317,14 +364,17 @@ export default function OnboardingPage() {
                 {currentStep === 0 && (
                     <div className="text-center mt-6">
                         <button
+                            type="button"
+                            data-testid="onboarding-skip"
                             onClick={handleSkip}
-                            className="text-sm text-slate-500 hover:text-slate-300 transition-colors"
+                            disabled={isCompleting}
+                            className="text-sm text-slate-500 hover:text-slate-300 transition-colors disabled:opacity-50"
                         >
                             我是老用户，跳过引导
                         </button>
                     </div>
                 )}
             </div>
-        </div>
+        </main>
     );
 }

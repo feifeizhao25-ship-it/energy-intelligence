@@ -52,7 +52,7 @@ def test_dead_routers_resource_removed():
 
 # ── NASA POWER 单位：kWh/m²/day × 365，不再 ÷1000 ────────────────────────────
 @pytest.mark.asyncio
-async def test_nasa_power_annual_ghi_units(monkeypatch):
+async def test_nasa_power_annual_ghi_units(monkeypatch, global_edition):
     from app.services import nasa_power_service
 
     class Resp:

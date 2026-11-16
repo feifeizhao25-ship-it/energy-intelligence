@@ -25,9 +25,16 @@ const intlMiddleware = createIntlMiddleware({
 });
 
 // 仅旧版语言目录中的页面需要语言重写；根目录页面必须保持原路径。
+function nextWithPath(req: NextRequest): NextResponse {
+  const requestHeaders = new Headers(req.headers);
+  // 覆盖客户端自带的同名头，年龄门只用这里的真实路径。与 age-confirmation.ts 的 AGE_GATE_PATH_HEADER 一致。
+  requestHeaders.set('x-nengjian-pathname', req.nextUrl.pathname);
+  return NextResponse.next({ request: { headers: requestHeaders } });
+}
+
 function domesticRoute(req: NextRequest) {
   const localizedOnly = ['/education/pitfalls'];
-  return localizedOnly.includes(req.nextUrl.pathname) ? intlMiddleware(req) : NextResponse.next();
+  return localizedOnly.includes(req.nextUrl.pathname) ? intlMiddleware(req) : nextWithPath(req);
 }
 
 // 公开路径列表（不需要登录）
@@ -168,7 +175,7 @@ export default async function proxy(req: NextRequest) {
   if (path.startsWith('/api') ||
     path.includes('.') ||
     path.startsWith('/_next')) {
-    return NextResponse.next();
+    return nextWithPath(req);
   }
 
   // 未知路由：放行给路由层——单段垃圾路径会匹配 [locale] 动态段，
@@ -177,13 +184,13 @@ export default async function proxy(req: NextRequest) {
   // （历史上未知路由会被 withAuth 重定向到全英文 /api/auth/error 并 500）。
   // 注意：新增页面路由必须同步加入 knownSegments——宁可 404 也不绕过鉴权。
   if (!isKnownRoute(path)) {
-    return NextResponse.next();
+    return nextWithPath(req);
   }
 
   // 国内版公开转化页无需 locale 重写。next-intl 在 standalone 环境会把
   // `/pricing` 反复改写为 `/zh/pricing`，造成公开页面重定向循环。
   if (isPublicPath(path)) {
-    return NextResponse.next();
+    return nextWithPath(req);
   }
   if (isDemoDashboardPreview(path) || isScreenshotPreview(path) || isLanguageScan(path)) {
     return domesticRoute(req);

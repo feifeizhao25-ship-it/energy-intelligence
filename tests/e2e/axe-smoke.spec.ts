@@ -17,6 +17,8 @@ type RouteCase = {
 const ROUTES: RouteCase[] = [
   { project: 'cn', path: '/', ready: '按角色查看已收录的事实' },
   { project: 'cn', path: '/login', ready: '手机号' },
+  { project: 'cn', path: '/dashboard', ready: '总览' },
+  { project: 'cn', path: '/assistant', ready: 'AI 能源专家' },
   { project: 'cn', path: '/map', ready: '地图服务暂不可用' },
   { project: 'cn', path: '/map/report', ready: '无效的坐标参数' },
   { project: 'cn', path: '/pricing', ready: /免费|年/ },

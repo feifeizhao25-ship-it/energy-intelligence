@@ -48,6 +48,7 @@ def test_real_library_unrelated_question_has_no_sources():
     assert aa._retrieve("North Sea offshore wind LCOE vs onshore", "global") == []
 
 
+@pytest.mark.usefixtures("library_clock_inside_review_window")
 def test_real_library_related_question_keeps_the_right_source():
     hits = aa._retrieve("IEEE 1547 interconnection", "global")
     assert hits and "1547" in hits[0].title

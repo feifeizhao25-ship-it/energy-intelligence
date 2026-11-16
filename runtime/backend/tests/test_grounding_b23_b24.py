@@ -26,6 +26,7 @@ PHRASINGS = [
 ]
 
 
+@pytest.mark.usefixtures("library_clock_inside_review_window")
 @pytest.mark.parametrize("question", PHRASINGS)
 def test_every_phrasing_retrieves_the_irs_source(question):
     hits = RAGService().search(question, top_k=3, market="global", exclude_stale=True).hits
@@ -90,6 +91,7 @@ async def test_policy_question_without_a_source_is_refused_on_line_one_and_model
     assert body["ai_metadata"]["model_called"] is False
 
 
+@pytest.mark.usefixtures("library_clock_inside_review_window")
 @pytest.mark.asyncio
 async def test_same_question_five_ways_reaches_the_source_and_the_model_sees_it(client, db_session, no_model):
     h = await _global_headers(db_session)
@@ -122,6 +124,7 @@ async def test_domestic_policy_question_without_source_is_refused_in_chinese(cli
 TODAY = date(2026, 11, 1)
 
 
+@pytest.mark.usefixtures("library_clock_inside_review_window")
 def test_prompt_carries_today_and_marks_the_july_4_window_as_passed(monkeypatch):
     monkeypatch.setattr(mod, "_today", lambda: TODAY)
     hits = RAGService().search(PHRASINGS[0], top_k=1, market="global").hits
@@ -141,6 +144,7 @@ def test_date_check_flags_only_passed_deadlines(answer, expected):
     assert [e["date"] for e in grounding.date_check(answer, TODAY)] == expected
 
 
+@pytest.mark.usefixtures("library_clock_inside_review_window")
 @pytest.mark.asyncio
 async def test_answer_stating_a_passed_deadline_gets_a_date_check_note(client, db_session, monkeypatch):
     monkeypatch.setattr(mod, "_today", lambda: TODAY)

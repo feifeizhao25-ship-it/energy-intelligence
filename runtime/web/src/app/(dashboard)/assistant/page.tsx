@@ -180,7 +180,7 @@ export default function AssistantPage() {
     return (
         <div className="flex h-[calc(100dvh-4rem-env(safe-area-inset-bottom))] overflow-hidden bg-background-dark text-white">
             {/* Left Sidebar: History & Attachments */}
-            <aside className="w-80 bg-surface-dark border-r border-border-dark flex-col shrink-0 overflow-hidden hidden md:flex">
+            <aside aria-label="最近对话" className="w-80 bg-surface-dark border-r border-border-dark flex-col shrink-0 overflow-hidden hidden md:flex">
                 {/* Upload Area */}
                 <div className="p-4 border-b border-border-dark">
                     <div className="rounded-xl bg-background-dark border border-dashed border-border-dark p-4 group hover:border-primary/50 transition-colors cursor-pointer">
@@ -212,7 +212,7 @@ export default function AssistantPage() {
             </aside>
 
             {/* Main Chat Interface */}
-            <main className="flex-1 flex flex-col bg-background-dark relative min-w-0">
+            <div className="flex-1 flex flex-col bg-background-dark relative min-w-0">
                 {/* Header */}
                 <div className="border-b border-border-dark px-6 py-4 bg-surface-dark/50 backdrop-blur">
                     <div className="flex items-center justify-between">
@@ -347,12 +347,16 @@ export default function AssistantPage() {
                                     <div className="flex gap-2">
                                         <BubbleSpeaker id={msg.id} text={citationText(msg.content, msg.sources || [])} />
                                         <button
+                                            type="button"
+                                            aria-label="复制"
                                             onClick={() => handleCopy(msg)}
                                             className="p-2 rounded-lg bg-surface-dark border border-border-dark hover:border-primary/50 transition-colors"
                                         >
                                             <Copy className="w-4 h-4 text-text-secondary" />
                                         </button>
                                         <button
+                                            type="button"
+                                            aria-label="重新生成"
                                             onClick={handleRegenerate}
                                             className="p-2 rounded-lg bg-surface-dark border border-border-dark hover:border-primary/50 transition-colors"
                                         >
@@ -394,7 +398,7 @@ export default function AssistantPage() {
                             />
                             <div className="flex items-center justify-between px-2 pb-1">
                                 <div className="flex items-center gap-1">
-                                    <button className="p-2 rounded-lg text-text-secondary hover:bg-background-dark hover:text-primary transition-colors">
+                                    <button type="button" aria-label="添加附件" className="p-2 rounded-lg text-text-secondary hover:bg-background-dark hover:text-primary transition-colors">
                                         <Paperclip className="w-5 h-5" />
                                     </button>
                                     <VoiceInput
@@ -420,15 +424,15 @@ export default function AssistantPage() {
                         </div>
                     </div>
                 </div>
-            </main>
+            </div>
 
             {/* Right Sidebar: Knowledge Graph */}
-            <aside className="w-80 bg-surface-dark border-l border-border-dark flex-col shrink-0 hidden xl:flex">
+            <aside aria-label="知识图谱" className="w-80 bg-surface-dark border-l border-border-dark flex-col shrink-0 hidden xl:flex">
                 <div className="p-4 border-b border-border-dark">
-                    <h3 className="text-white text-base font-bold flex items-center gap-2">
+                    <h2 className="text-white text-base font-bold flex items-center gap-2">
                         <Sparkles className="w-5 h-5 text-primary" />
                         知识图谱
-                    </h3>
+                    </h2>
                     <p className="text-xs text-text-secondary mt-1">实时关联技术概念</p>
                 </div>
                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -441,7 +445,7 @@ export default function AssistantPage() {
                                         card.color === 'primary' ? 'bg-primary' :
                                             card.color === 'purple' ? 'bg-purple-500' : 'bg-orange-500'
                                     )} />
-                                    <h4 className="text-white font-bold text-sm">{card.title}</h4>
+                                    <h3 className="text-white font-bold text-sm">{card.title}</h3>
                                 </div>
                             </div>
                             <p className="text-xs text-text-secondary leading-relaxed mb-3">

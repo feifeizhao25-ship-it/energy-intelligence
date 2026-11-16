@@ -23,7 +23,7 @@ function TopBarInner() {
     }
 
     return (
-        <div className="ei-topbar">
+        <section aria-label="页顶工具" className="ei-topbar">
             <form onSubmit={submit} className="flex min-w-0 flex-1 items-center gap-2" role="search">
                 <label className="sr-only" htmlFor="topbar-search">检索政策</label>
                 <Search className="hidden h-4 w-4 shrink-0 text-[var(--ink-soft)] sm:block" aria-hidden="true" />
@@ -55,7 +55,7 @@ function TopBarInner() {
                 </select>
             </label>
             <BuildStamp />
-        </div>
+        </section>
     );
 }
 

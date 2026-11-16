@@ -73,13 +73,13 @@ function TariffCard({ tariff, provinceSource }: { tariff: NonNullable<Personaliz
     return (
         <div id="tariff" data-testid="tariff-card" className="ei-panel">
             <div className="flex items-center gap-2 font-bold text-[var(--ink)] mb-1"><Plug className="w-4 h-4 text-green-600" />{tariff.province}电价</div>
-            <p className="text-[11px] text-slate-400 mb-2">{provinceSource === '项目所在地' ? '省份根据你最近项目的所在地推断，可在设置中修改' : '省份来自你的设置'}</p>
+            <p className="text-[11px] text-[var(--text-muted)] mb-2">{provinceSource === '项目所在地' ? '省份根据你最近项目的所在地推断，可在设置中修改' : '省份来自你的设置'}</p>
             {tariff.status === 'ok' ? (
                 <>
                     <div className="grid grid-cols-3 gap-2 text-center">
                         {[['峰', tariff.peak], ['平', tariff.flat], ['谷', tariff.valley]].map(([label, value]) => (
                             <div key={label as string} className="rounded-xl bg-slate-50 py-2">
-                                <div className="text-[11px] text-slate-400">{label}时</div>
+                                <div className="text-[11px] text-[var(--text-muted)]">{label}时</div>
                                 <div className="font-bold tabular-nums text-slate-800">{typeof value === 'number' ? value : '—'}</div>
                             </div>
                         ))}
@@ -101,14 +101,14 @@ function PolicyCard({ p }: { p: Personalization }) {
     return (
         <div id="policies" data-testid="policy-card" className="ei-panel">
             <div className="flex items-center gap-2 font-bold text-[var(--ink)] mb-1"><Landmark className="w-4 h-4 text-green-600" />{p.province ? `${p.province}政策` : '已审核政策'}</div>
-            <p className="text-[11px] text-slate-400 mb-2">只显示经人工审核通过的政策</p>
+            <p className="text-[11px] text-[var(--text-muted)] mb-2">只显示经人工审核通过的政策</p>
             {p.milestones.length > 0 && (
                 <div className="mb-2">
                     <div className="flex items-center gap-1 text-xs font-bold text-slate-700 mb-1"><Calendar className="w-3.5 h-3.5" />近期政策节点</div>
                     {p.milestones.map(m => (
                         <div key={`${m.policyId}-${m.kind}`} className="flex justify-between gap-2 py-1 text-xs">
                             <span className="text-slate-700">{m.title}{m.docNumber ? `（${m.docNumber}）` : ''}</span>
-                            <span className={cn('whitespace-nowrap font-bold', m.daysFromNow >= 0 ? 'text-green-700' : 'text-slate-400')}>
+                            <span className={cn('whitespace-nowrap font-bold', m.daysFromNow >= 0 ? 'text-green-700' : 'text-[var(--text-muted)]')}>
                                 {m.date} {m.kind}{m.daysFromNow > 0 ? `（${m.daysFromNow} 天后）` : m.daysFromNow === 0 ? '（今天）' : ''}
                             </span>
                         </div>
@@ -213,11 +213,11 @@ function DashboardContent() {
                 {status === 'error' || !data ? (
                     <div className="ei-error flex flex-col items-center p-8 text-center">
                         <div className="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center mb-4">
-                            <CloudOff className="w-7 h-7 text-slate-400" />
+                            <CloudOff className="w-7 h-7 text-[var(--text-muted)]" />
                         </div>
                         <div className="font-bold text-[var(--ink)] mb-1">工作台暂时无法加载</div>
-                        <p className="text-xs text-slate-400 mb-5">请稍后重试；如果刚刚登录，可刷新页面。</p>
-                        <button onClick={load} className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm font-bold rounded-xl hover:bg-green-700 transition-colors">
+                        <p className="text-xs text-[var(--text-muted)] mb-5">请稍后重试；如果刚刚登录，可刷新页面。</p>
+                        <button onClick={load} className="flex items-center gap-2 px-4 py-2 bg-green-800 text-white text-sm font-bold rounded-xl hover:bg-green-900 transition-colors">
                             <RefreshCw className="w-4 h-4" />重试
                         </button>
                     </div>
@@ -231,21 +231,21 @@ function DashboardContent() {
                         {data.nextActions.length > 0 && (
                             <div className="ei-panel">
                                 <div className="font-bold text-[var(--ink)] mb-1">接下来可以做</div>
-                                <p className="text-[11px] text-slate-400 mb-2">根据你自己的项目、测算与额度生成</p>
+                                <p className="text-[11px] text-[var(--text-muted)] mb-2">根据你自己的项目、测算与额度生成</p>
                                 <div className="divide-y divide-slate-100">
                                     {data.nextActions.filter(a => !hidden.includes(a.id)).map(action => (
                                         <div key={action.id} className="flex items-center gap-1 -mx-2">
                                             <Link href={action.href} className="flex flex-1 min-w-0 items-center justify-between py-3 hover:bg-slate-50 px-2 rounded-lg transition-colors">
                                                 <div className="min-w-0">
                                                     <div className="text-sm text-slate-800 font-bold">{action.title}</div>
-                                                    <div className="text-xs text-slate-400">{action.reason}</div>
+                                                    <div className="text-xs text-[var(--text-muted)]">{action.reason}</div>
                                                 </div>
                                                 <ChevronRight className="w-4 h-4 text-slate-300 flex-shrink-0" />
                                             </Link>
                                             {(DISMISSIBLE as readonly string[]).includes(action.id) && (
                                                 <button type="button" aria-label={`不再提示：${action.title}`} title="30 天内不再提示"
                                                     onClick={() => dismissTip(action.id)}
-                                                    className="shrink-0 rounded-lg px-2 py-1 text-[11px] text-slate-400 hover:bg-slate-100 hover:text-slate-600">
+                                                    className="shrink-0 rounded-lg px-2 py-1 text-[11px] text-[var(--text-muted)] hover:bg-slate-100 hover:text-slate-600">
                                                     不再提示
                                                 </button>
                                             )}
@@ -272,14 +272,14 @@ function DashboardContent() {
                         <div className="ei-panel">
                             <div className="flex items-center justify-between mb-2">
                                 <span className="font-bold text-[var(--ink)]">{recentWorkTitle(data.recentProjects)}</span>
-                                <Link href="/projects" className="text-xs text-green-600 font-bold flex items-center gap-0.5">全部<ChevronRight className="w-3 h-3" /></Link>
+                                <Link href="/projects" className="text-xs text-green-800 font-bold flex items-center gap-0.5">全部<ChevronRight className="w-3 h-3" /></Link>
                             </div>
                             {data.recentProjects.length === 0 ? (
-                                <p className="text-xs text-slate-400 py-2">{RECENT_WORK_EMPTY}</p>
+                                <p className="text-xs text-[var(--text-muted)] py-2">{RECENT_WORK_EMPTY}</p>
                             ) : data.recentProjects.map(p => (
                                 <Link key={p.id} href={p.href || `/projects/${p.id}`} className="flex items-center justify-between py-2 text-sm hover:bg-slate-50 -mx-2 px-2 rounded-lg">
                                     <span className="text-slate-800 font-medium">{p.name}</span>
-                                    <span className="text-xs text-slate-400">{recentWorkDetail(p)}</span>
+                                    <span className="text-xs text-[var(--text-muted)]">{recentWorkDetail(p)}</span>
                                 </Link>
                             ))}
                         </div>
