@@ -53,6 +53,8 @@ class SolarFinanceRequest(BaseModel):
     degradation_rate: float = Field(default=0.005, ge=0, le=0.05)
     capacity_factor: float = Field(default=0.22, ge=0.10, le=0.35)
     project_life: int = Field(default=25, ge=10, le=40)
+    # 折现率：此前在接口里写死 8%，现在可以随请求传入；不传仍按 8% 计算，结果与原来一致。
+    discount_rate: float = Field(default=0.08, ge=0, le=0.30)
     currency: str = Field(default="USD")
     electricity_price_unit: Optional[PriceUnit] = Field(
         default=None, description="per_mwh (default for large numbers) or per_kwh; small bare numbers are read as per kWh",
@@ -111,6 +113,8 @@ class WindFinanceRequest(BaseModel):
     interest_rate: float = Field(default=0.06, ge=0, le=0.20)
     tax_rate: float = Field(default=0.21, ge=0, le=0.50)
     project_life: int = Field(default=25, ge=10, le=40)
+    # 折现率：与光伏一致，不传按 8%。
+    discount_rate: float = Field(default=0.08, ge=0, le=0.30)
     currency: str = Field(default="USD")
     electricity_price_unit: Optional[PriceUnit] = Field(
         default=None, description="per_mwh (default for large numbers) or per_kwh; small bare numbers are read as per kWh",

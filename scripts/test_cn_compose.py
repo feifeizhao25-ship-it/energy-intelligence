@@ -83,6 +83,24 @@ class DomesticComposeTests(unittest.TestCase):
         example = (ROOT / 'runtime/.env.production.example').read_text()
         self.assertIn('NENGJIAN_INTERNAL_TOKEN', example)
 
+    def test_self_improvement_is_off_by_default_and_state_is_on_the_shared_volume(self):
+        for name in ('backend', 'celery-worker', 'celery-beat'):
+            env = self.cn['services'][name]['environment']
+            self.assertEqual(env['SIL_ENABLED'], '${SIL_ENABLED:-0}')
+            self.assertEqual(env['SIL_AUTO_PROMOTE_INTERNAL'], '0')
+            self.assertEqual(env['LIBRARY_FRESHNESS_ENABLED'], '${LIBRARY_FRESHNESS_ENABLED:-0}')
+            self.assertEqual(env['POLICY_REVIEWERS'], '${POLICY_REVIEWERS:-}')
+            self.assertTrue(env['SIL_DATA_DIR'].startswith('/var/lib/nengjian/'))
+            self.assertTrue(env['ENERGY_LIBRARY_DIR'].startswith('/var/lib/nengjian/'))
+        example = (ROOT / 'runtime/.env.production.example').read_text()
+        self.assertIn('SIL_ENABLED=0', example)
+        self.assertIn('LIBRARY_FRESHNESS_ENABLED=0', example)
+
+    def test_domestic_web_can_write_exports_on_a_read_only_root(self):
+        web = self.cn['services']['web-cn']
+        self.assertTrue(web['read_only'])
+        self.assertTrue(any(entry.startswith('/app/.exports:') for entry in web['tmpfs']))
+
     def test_actual_compose_config_without_international_variables(self):
         executable = shutil.which('docker-compose')
         if not executable:

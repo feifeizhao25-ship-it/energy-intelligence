@@ -80,6 +80,15 @@ def domestic_config(source):
     environment['NENGJIAN_BOTTOM_LINE_MODEL_REVIEW'] = '${NENGJIAN_BOTTOM_LINE_MODEL_REVIEW:-0}'
     environment['NENGJIAN_MEDIA_ENABLED'] = '${NENGJIAN_MEDIA_ENABLED:-0}'
     environment['NENGJIAN_OPENCLAW_SECRETS_FILE'] = '${NENGJIAN_OPENCLAW_SECRETS_FILE:-/etc/airui-nengjian/openclaw.env}'
+    # 每周自改进与资料库到期巡检：默认全部关闭，写明是为了让「关」成为看得见的配置。
+    # 审批人名单此前只传给了网页端，后端（审批逻辑在这里）读不到，等于永远没有人能批准。
+    # 状态目录放到共享卷：容器根文件系统只读，默认的相对路径 var/... 写不进去。
+    environment['SIL_ENABLED'] = '${SIL_ENABLED:-0}'
+    environment['SIL_AUTO_PROMOTE_INTERNAL'] = '0'
+    environment['POLICY_REVIEWERS'] = '${POLICY_REVIEWERS:-}'
+    environment['SIL_DATA_DIR'] = '/var/lib/nengjian/self_improve/energy'
+    environment['LIBRARY_FRESHNESS_ENABLED'] = '${LIBRARY_FRESHNESS_ENABLED:-0}'
+    environment['ENERGY_LIBRARY_DIR'] = '/var/lib/nengjian/library'
     web = config['services']['web-cn']['environment']
     web.pop('OPENALEX_CONTACT_EMAIL', None)
     web.pop('SILICONFLOW_API_KEY', None)
