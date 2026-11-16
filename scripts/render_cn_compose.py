@@ -8,6 +8,9 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 TARGET = ROOT / 'runtime/docker-compose.cn.production.yml'
 CADDY = ROOT / 'runtime/Caddyfile.cn'
+# 站内调用口令为空时，网页端会直接拒绝生成（runtime/web/src/lib/ai/router.ts），
+# 所以缺失要在 compose 启动前就报错，而不是上线后才发现。
+INTERNAL_TOKEN_REQUIRED = '${NENGJIAN_INTERNAL_TOKEN:?NENGJIAN_INTERNAL_TOKEN is required}'
 
 
 def domestic_config(source):
@@ -50,6 +53,7 @@ def domestic_config(source):
         'NENGJIAN_PUBLIC_ORIGIN',
     ):
         environment[key] = '${%s:-}' % key
+    environment['NENGJIAN_INTERNAL_TOKEN'] = INTERNAL_TOKEN_REQUIRED
     environment['NENGJIAN_FEEDBACK_PATH'] = '${NENGJIAN_FEEDBACK_PATH:-/var/lib/nengjian/feedback.jsonl}'
     environment['NENGJIAN_RESOURCE_CACHE'] = '${NENGJIAN_RESOURCE_CACHE:-/var/lib/nengjian/nasa-cache.json}'
     environment['NENGJIAN_POLICY_ALERT_LOG'] = '${NENGJIAN_POLICY_ALERT_LOG:-/var/lib/nengjian/policy-alerts.jsonl}'
@@ -81,7 +85,7 @@ def domestic_config(source):
     web.pop('SILICONFLOW_API_KEY', None)
     web.pop('OPENWEATHERMAP_API_KEY', None)
     web['APP_EDITION'] = 'cn'
-    web['NENGJIAN_INTERNAL_TOKEN'] = '${NENGJIAN_INTERNAL_TOKEN:-}'
+    web['NENGJIAN_INTERNAL_TOKEN'] = INTERNAL_TOKEN_REQUIRED
     web['NENGJIAN_PUBLIC_ORIGIN'] = '${NENGJIAN_PUBLIC_ORIGIN:-}'
     web['NENGJIAN_ACCOUNT_EMAIL_DOMAIN'] = '${NENGJIAN_ACCOUNT_EMAIL_DOMAIN:-account.internal}'
     web['CRAWLER_CONTACT_EMAIL'] = '${CRAWLER_CONTACT_EMAIL:?CRAWLER_CONTACT_EMAIL is required}'
