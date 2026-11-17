@@ -12,6 +12,11 @@
 #   HEALTH_URL         外部健康检查 URL（如 https://energyiq.example.com/api/v1/health）；
 #                      缺省在 backend 容器内检查 http://127.0.0.1:8000/health
 #
+#   SERVICES           要回滚的 compose 服务（默认 "backend web-cn web-int"）。
+#                      国内版 compose 没有 web-int，且 celery 与 backend 用同一个镜像:
+#                      COMPOSE_FILE=runtime/docker-compose.cn.production.yml \
+#                      SERVICES="backend web-cn celery-worker celery-beat" bash scripts/rollback.sh <tag>
+#
 # 健康检查失败时退出非零。
 set -euo pipefail
 
@@ -19,7 +24,7 @@ VERSION="${1:-${VERSION:-previous}}"
 COMPOSE_FILE="${COMPOSE_FILE:-runtime/docker-compose.production.yml}"
 RUN_DB_DOWNGRADE="${RUN_DB_DOWNGRADE:-0}"
 HEALTH_URL="${HEALTH_URL:-}"
-SERVICES="backend web-cn web-int"
+SERVICES="${SERVICES:-backend web-cn web-int}"
 
 cd "$(dirname "$0")/.."
 
