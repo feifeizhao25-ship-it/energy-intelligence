@@ -89,6 +89,8 @@ def domestic_config(source):
     environment['SIL_DATA_DIR'] = '/var/lib/nengjian/self_improve/energy'
     environment['LIBRARY_FRESHNESS_ENABLED'] = '${LIBRARY_FRESHNESS_ENABLED:-0}'
     environment['ENERGY_LIBRARY_DIR'] = '/var/lib/nengjian/library'
+    # 用户自助原路退款：默认关。关着时退款只走「测算 + 财务人工办理」，与计费规则一致。
+    environment['NENGJIAN_SELF_SERVICE_REFUND'] = '${NENGJIAN_SELF_SERVICE_REFUND:-0}'
     web = config['services']['web-cn']['environment']
     web.pop('OPENALEX_CONTACT_EMAIL', None)
     web.pop('SILICONFLOW_API_KEY', None)

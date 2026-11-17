@@ -165,6 +165,7 @@ services:
       SIL_DATA_DIR: /var/lib/nengjian/self_improve/energy
       LIBRARY_FRESHNESS_ENABLED: ${LIBRARY_FRESHNESS_ENABLED:-0}
       ENERGY_LIBRARY_DIR: /var/lib/nengjian/library
+      NENGJIAN_SELF_SERVICE_REFUND: ${NENGJIAN_SELF_SERVICE_REFUND:-0}
     healthcheck:
       test:
       - CMD-SHELL
@@ -406,6 +407,7 @@ services:
       SIL_DATA_DIR: /var/lib/nengjian/self_improve/energy
       LIBRARY_FRESHNESS_ENABLED: ${LIBRARY_FRESHNESS_ENABLED:-0}
       ENERGY_LIBRARY_DIR: /var/lib/nengjian/library
+      NENGJIAN_SELF_SERVICE_REFUND: ${NENGJIAN_SELF_SERVICE_REFUND:-0}
     healthcheck:
       test:
       - CMD-SHELL
@@ -565,6 +567,7 @@ services:
       SIL_DATA_DIR: /var/lib/nengjian/self_improve/energy
       LIBRARY_FRESHNESS_ENABLED: ${LIBRARY_FRESHNESS_ENABLED:-0}
       ENERGY_LIBRARY_DIR: /var/lib/nengjian/library
+      NENGJIAN_SELF_SERVICE_REFUND: ${NENGJIAN_SELF_SERVICE_REFUND:-0}
     healthcheck:
       disable: true
     volumes:

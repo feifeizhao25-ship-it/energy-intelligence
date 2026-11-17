@@ -542,11 +542,23 @@ class WechatRefundRequest(BaseModel):
     order_no: str
 
 
+def self_service_refund_enabled() -> bool:
+    """用户自助原路全额退款的开关，默认关。
+
+    计费规则（runtime/docs/billing-rules-20261018.md）写的是「实际退款由财务在支付渠道
+    后台人工执行，系统不自动出款」，而这个接口此前只要登录就能把自己已付的微信订单全额
+    退掉，没有任何人审。关着的时候不调用支付渠道、不改订单状态。
+    """
+    return os.environ.get("NENGJIAN_SELF_SERVICE_REFUND", "").strip().lower() in {"1", "true", "on", "yes"}
+
+
 @router.post("/domestic/wechat/refund")
 async def wechat_refund(payload: WechatRefundRequest, user_id: str = Depends(get_current_user_id), db: AsyncSession = Depends(get_db)):
     order = (await db.execute(select(PaymentOrder).where(PaymentOrder.order_no == payload.order_no, PaymentOrder.user_id == user_id))).scalar_one_or_none()
     if not order or order.provider != "wechat" or order.status != "paid":
         raise HTTPException(status_code=404, detail="没有可退款的微信订单")
+    if not self_service_refund_enabled():
+        raise HTTPException(status_code=409, detail="退款由财务人工核对后在支付渠道办理，系统不自动出款。请联系客服并提供订单号。")
     try:
         result = await refund_order(order_no=order.order_no, refund_no=f"R{uuid4().hex[:20]}", amount_yuan=order.amount_cny)
     except WechatPayError as exc:
