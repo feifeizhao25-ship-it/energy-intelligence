@@ -8,6 +8,9 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 TARGET = ROOT / 'runtime/docker-compose.cn.production.yml'
 CADDY = ROOT / 'runtime/Caddyfile.cn'
+# 站内调用口令为空时，网页端会直接拒绝生成（runtime/web/src/lib/ai/router.ts），
+# 所以缺失要在 compose 启动前就报错，而不是上线后才发现。
+INTERNAL_TOKEN_REQUIRED = '${NENGJIAN_INTERNAL_TOKEN:?NENGJIAN_INTERNAL_TOKEN is required}'
 
 
 def domestic_config(source):
@@ -50,6 +53,7 @@ def domestic_config(source):
         'NENGJIAN_PUBLIC_ORIGIN',
     ):
         environment[key] = '${%s:-}' % key
+    environment['NENGJIAN_INTERNAL_TOKEN'] = INTERNAL_TOKEN_REQUIRED
     environment['NENGJIAN_FEEDBACK_PATH'] = '${NENGJIAN_FEEDBACK_PATH:-/var/lib/nengjian/feedback.jsonl}'
     environment['NENGJIAN_RESOURCE_CACHE'] = '${NENGJIAN_RESOURCE_CACHE:-/var/lib/nengjian/nasa-cache.json}'
     environment['NENGJIAN_POLICY_ALERT_LOG'] = '${NENGJIAN_POLICY_ALERT_LOG:-/var/lib/nengjian/policy-alerts.jsonl}'
@@ -76,12 +80,23 @@ def domestic_config(source):
     environment['NENGJIAN_BOTTOM_LINE_MODEL_REVIEW'] = '${NENGJIAN_BOTTOM_LINE_MODEL_REVIEW:-0}'
     environment['NENGJIAN_MEDIA_ENABLED'] = '${NENGJIAN_MEDIA_ENABLED:-0}'
     environment['NENGJIAN_OPENCLAW_SECRETS_FILE'] = '${NENGJIAN_OPENCLAW_SECRETS_FILE:-/etc/airui-nengjian/openclaw.env}'
+    # 每周自改进与资料库到期巡检：默认全部关闭，写明是为了让「关」成为看得见的配置。
+    # 审批人名单此前只传给了网页端，后端（审批逻辑在这里）读不到，等于永远没有人能批准。
+    # 状态目录放到共享卷：容器根文件系统只读，默认的相对路径 var/... 写不进去。
+    environment['SIL_ENABLED'] = '${SIL_ENABLED:-0}'
+    environment['SIL_AUTO_PROMOTE_INTERNAL'] = '0'
+    environment['POLICY_REVIEWERS'] = '${POLICY_REVIEWERS:-}'
+    environment['SIL_DATA_DIR'] = '/var/lib/nengjian/self_improve/energy'
+    environment['LIBRARY_FRESHNESS_ENABLED'] = '${LIBRARY_FRESHNESS_ENABLED:-0}'
+    environment['ENERGY_LIBRARY_DIR'] = '/var/lib/nengjian/library'
+    # 用户自助原路退款：默认关。关着时退款只走「测算 + 财务人工办理」，与计费规则一致。
+    environment['NENGJIAN_SELF_SERVICE_REFUND'] = '${NENGJIAN_SELF_SERVICE_REFUND:-0}'
     web = config['services']['web-cn']['environment']
     web.pop('OPENALEX_CONTACT_EMAIL', None)
     web.pop('SILICONFLOW_API_KEY', None)
     web.pop('OPENWEATHERMAP_API_KEY', None)
     web['APP_EDITION'] = 'cn'
-    web['NENGJIAN_INTERNAL_TOKEN'] = '${NENGJIAN_INTERNAL_TOKEN:-}'
+    web['NENGJIAN_INTERNAL_TOKEN'] = INTERNAL_TOKEN_REQUIRED
     web['NENGJIAN_PUBLIC_ORIGIN'] = '${NENGJIAN_PUBLIC_ORIGIN:-}'
     web['NENGJIAN_ACCOUNT_EMAIL_DOMAIN'] = '${NENGJIAN_ACCOUNT_EMAIL_DOMAIN:-account.internal}'
     web['CRAWLER_CONTACT_EMAIL'] = '${CRAWLER_CONTACT_EMAIL:?CRAWLER_CONTACT_EMAIL is required}'

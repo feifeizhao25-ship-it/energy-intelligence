@@ -34,3 +34,11 @@
 1. 填写 `POLICY_REVIEWERS`（负责人自己填）后才能审核暂存区条目。
 2. 审核金标准题；看月报里的“陈旧项”和“退步题”。
 3. 开启 `SIL_ENABLED=1` 由负责人决定；代码和自动化不会代开。
+
+## 国内生产环境的开关与落盘位置（2026-11-16 补充）
+
+国内生产编排（由 `scripts/render_cn_compose.py` 生成）现在把这几项写明，后端、worker、beat 三个容器一致：
+
+- `SIL_ENABLED` 默认 `0`，`LIBRARY_FRESHNESS_ENABLED` 默认 `0`，`SIL_AUTO_PROMOTE_INTERNAL` 固定 `0`。不改 `.env.production` 就是全关。
+- `POLICY_REVIEWERS` 现在也传给后端。此前只传给了 web-cn，后端的审批判断读不到名单。名单为空时没有人能批准任何候选。
+- 状态写到共享卷：`SIL_DATA_DIR=/var/lib/nengjian/self_improve/energy`，`ENERGY_LIBRARY_DIR=/var/lib/nengjian/library`。容器根文件系统只读，写到别处会失败。

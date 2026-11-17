@@ -238,7 +238,7 @@ class _SolarFinanceScreenState extends State<SolarFinanceScreen> {
             ),
             _buildResultCard(
               '投资回收',
-              '${_result!.paybackStatic.toStringAsFixed(1)}年',
+              _paybackText(_result!.paybackStatic),
               Color(0xFF06B6D4),
             ),
           ],
@@ -322,4 +322,11 @@ class _SolarFinanceScreenState extends State<SolarFinanceScreen> {
       ],
     );
   }
+}
+
+/// 回收期显示。后端用 99 表示「项目期内收不回投资」，本地估算在年收入不抵运维时会得到负数或无穷大；
+/// 这几种情况都不是一个真实的年数，直接写成「99.0 年」会误导人。
+String _paybackText(double years) {
+  if (!years.isFinite || years < 0 || years >= 99) return '项目期内未回本';
+  return '${years.toStringAsFixed(1)} 年';
 }

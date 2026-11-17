@@ -332,7 +332,7 @@ class _WindFinanceScreenState extends State<WindFinanceScreen> {
       },
       {
         'label': '回收期',
-        'value': '${(_result!['payback'] as double).toStringAsFixed(1)} 年',
+        'value': _paybackText(_result!['payback'] as double),
         'color': Color(0xFFEA580C),
       },
       {
@@ -385,4 +385,11 @@ class _WindFinanceScreenState extends State<WindFinanceScreen> {
           .toList(),
     );
   }
+}
+
+/// 回收期显示。后端用 99 表示「项目期内收不回投资」，本地估算在年收入不抵运维时会得到负数或无穷大；
+/// 这几种情况都不是一个真实的年数，直接写成「99.0 年」会误导人。
+String _paybackText(double years) {
+  if (!years.isFinite || years < 0 || years >= 99) return '项目期内未回本';
+  return '${years.toStringAsFixed(1)} 年';
 }

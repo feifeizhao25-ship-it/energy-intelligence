@@ -64,6 +64,9 @@ RUN chmod +x /app/docker-entrypoint.sh
 # Create required directories
 RUN mkdir -p /app/static /app/logs /app/data/reports \
     && chown -R appuser:appuser /app
+# 国内编排把命名卷挂在 /var/lib/nengjian（政策库、反馈样本、资料库状态等）。镜像里没有这个目录时，
+# Docker 会以 root 创建挂载点，非 root 的 appuser 写不进去。先建好并交给 appuser，新卷会继承这个属主。
+RUN mkdir -p /var/lib/nengjian && chown appuser:appuser /var/lib/nengjian
 
 USER appuser
 

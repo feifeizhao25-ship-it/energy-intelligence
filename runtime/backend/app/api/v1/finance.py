@@ -132,7 +132,7 @@ async def solar_finance(
         project_life=body.project_life,
     )
     irr = calc_irr(cashflows)
-    npv = calc_npv(0.08, cashflows)
+    npv = calc_npv(body.discount_rate, cashflows)
     annual_gen = body.capacity_mw * 1000 * 8760 * body.capacity_factor
     capex_total = body.capacity_mw * 1_000_000 * body.capex_per_w
     opex_total = body.capacity_mw * 1000 * body.opex_per_kw_yr
@@ -188,7 +188,7 @@ async def wind_finance(
     )
     cashflows = build_wind_cashflows(**wind_kwargs)
     irr = calc_irr(cashflows)
-    npv = calc_npv(0.08, cashflows)
+    npv = calc_npv(body.discount_rate, cashflows)
     annual_gen = body.capacity_mw * 1000 * 8760 * body.wind_capacity_factor
     capex_total = body.capacity_mw * 1000 * body.capex_per_kw
     opex_total = body.capacity_mw * 1000 * body.opex_per_kw_yr
@@ -246,7 +246,7 @@ async def compare_scenarios(
                 project_life=req.project_life,
             )
             irr = calc_irr(cashflows)
-            npv = calc_npv(0.08, cashflows)
+            npv = calc_npv(req.discount_rate, cashflows)
             annual_gen = req.capacity_mw * 1000 * 8760 * req.capacity_factor
             capex_total = req.capacity_mw * 1_000_000 * req.capex_per_w
             opex_total = req.capacity_mw * 1000 * req.opex_per_kw_yr
@@ -272,7 +272,7 @@ async def compare_scenarios(
                 project_life=req.project_life,
             )
             irr = calc_irr(cashflows)
-            npv = calc_npv(0.08, cashflows)
+            npv = calc_npv(req.discount_rate, cashflows)
             annual_gen = req.capacity_mw * 1000 * 8760 * req.wind_capacity_factor
             capex_total = req.capacity_mw * 1000 * req.capex_per_kw
             opex_total = req.capacity_mw * 1000 * req.opex_per_kw_yr
@@ -363,7 +363,7 @@ async def save_financial_model(
             project_life=body.project_life,
         )
         irr = calc_irr(cashflows)
-        npv = calc_npv(0.08, cashflows)
+        npv = calc_npv(body.discount_rate, cashflows)
         capex_total = body.capacity_mw * 1_000_000 * body.capex_per_w
         opex_total = body.capacity_mw * 1000 * body.opex_per_kw_yr
         annual_gen = body.capacity_mw * 1000 * 8760 * body.capacity_factor
@@ -381,8 +381,9 @@ async def save_financial_model(
         annual_opex = req.capacity_mw * 1000 * req.opex_per_kw_yr
         annual_cashflow = annual_revenue - annual_opex
         payback = capex / annual_cashflow if annual_cashflow > 0 else 99
-        npv = round(sum(annual_cashflow / (1.08 ** yr) for yr in range(1, req.project_life + 1)) - equity, 2)
-        pv_energy = sum(annual_gen / (1.08 ** yr) for yr in range(1, req.project_life + 1))
+        rate = 1 + req.discount_rate
+        npv = round(sum(annual_cashflow / (rate ** yr) for yr in range(1, req.project_life + 1)) - equity, 2)
+        pv_energy = sum(annual_gen / (rate ** yr) for yr in range(1, req.project_life + 1))
         lcoe = round((capex + annual_opex * req.project_life) / pv_energy, 4) if pv_energy > 0 else 0.0
         irr = round((annual_cashflow / equity) * 100, 2) if equity > 0 else 0.0
 
@@ -426,7 +427,7 @@ async def save_financial_model(
             "assumptions": {
                 "initial_investment": float(investment),
                 "project_life_years": life,
-                "discount_rate": 0.08,
+                "discount_rate": float(body.discount_rate),
                 "annual_generation_mwh": float(gen_mwh),
                 "electricity_price": float(body.electricity_price) / 1000,  # per kWh in the report maths
                 "opex_annual": float(opex_year),
