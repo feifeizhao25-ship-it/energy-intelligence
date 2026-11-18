@@ -10,7 +10,7 @@ import uuid
 import time
 import logging
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
 import httpx
@@ -68,6 +68,7 @@ from app.schemas.auth import RegisterRequest, LoginRequest, TokenResponse, Magic
 from app.schemas.common import SuccessResponse
 from app.utils.response import success
 from app.utils.error_codes import ErrorCode
+from app.services.signup_source import public_options as signup_source_options, record_signup_source
 
 router = APIRouter(prefix="/auth")
 
@@ -102,6 +103,8 @@ async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
     db.add(user)
     await db.flush()
     await db.refresh(user)
+    # 注册来源题：只对国内新账号、开关打开时记一次枚举代码；失败不影响注册
+    await record_signup_source(db, user_id, body.signup_source, body.market)
 
     access_token = create_access_token(subject=user_id)
     refresh_token = create_refresh_token(subject=user_id)
@@ -357,6 +360,14 @@ class SmsLoginBody(BaseModel):
     phone: str
     consent: bool
     code: str | None = None
+    # 国内版注册来源题（可跳过）：只在这次登录新建账号时记录；只认枚举代码
+    signup_source: str | None = Field(None, max_length=32)
+
+
+@router.get("/signup-source")
+async def signup_source():
+    """注册来源题「从哪知道我们」的选项。开关关闭时 enabled=false、options 为空。不读任何用户信息。"""
+    return signup_source_options()
 
 
 _sms_codes: dict[str, str] = {}
@@ -454,6 +465,7 @@ async def sms_login(body: SmsLoginBody, db: AsyncSession = Depends(get_db)):
         )
         db.add(user)
         await db.flush()
+        await record_signup_source(db, user.id, body.signup_source, user.market)
     await _drop_sms_code(phone)
     access_token = create_access_token(subject=user.id, token_version=user.token_version or 0)
     refresh_token = create_refresh_token(subject=user.id, token_version=user.token_version or 0)

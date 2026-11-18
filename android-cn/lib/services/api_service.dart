@@ -106,16 +106,27 @@ class ApiService {
     required String phone,
     required String code,
     required bool consent,
+    String? signupSource,
   }) async {
     final resp = await _post('/api/v1/auth/sms/login', body: {
       'phone': phone,
       'code': code,
       'consent': consent,
+      // 注册来源题（可跳过）：只有这次登录新建账号时服务端才记录，只认枚举代码
+      'signup_source': ?signupSource,
     });
     final token = _accessToken(resp);
     _token = token;
     await _secureStorage.write(key: 'energy_token', value: token);
     return token;
+  }
+
+  /// 是否配了服务器地址（测试和未配置的构建里没有，就不去请求注册来源题的选项）。
+  static bool get hasBaseUrl => _baseUrl.isNotEmpty;
+
+  /// 注册来源题「从哪知道我们」的选项；开关关闭时 enabled=false、options 为空。
+  static Future<Map<String, dynamic>> getSignupSourceOptions() async {
+    return await _get('/api/v1/auth/signup-source');
   }
 
   static String _accessToken(Map<String, dynamic> resp) {

@@ -31,6 +31,7 @@ from app.models.cashflow import CashflowProjection
 from app.models.database import ConsentRecord, FinancialModel, Project, ResourceAssessment
 from app.models.payment_order import PaymentOrder
 from app.models.report import Report
+from app.models.signup_source import SignupSourceEvent
 from app.models.user import User
 
 router = APIRouter(prefix="/privacy")
@@ -88,6 +89,9 @@ async def export_my_data(request: Request, user_id: str = Depends(get_current_us
         "payment_orders": [_row(o, ["order_no", "provider", "plan", "billing_period", "amount_cny", "status", "created_at", "paid_at"])
                            for o in (await db.execute(select(PaymentOrder).where(PaymentOrder.user_id == user_id))).scalars().all()],
         "consent": _row(consent, ["marketing", "analytics", "third_party", "updated_at"]) if consent else None,
+        # 本人注册时答的「从哪知道我们」（只有枚举代码）；只在本人导出里出现
+        "signup_source": [_row(e, ["source", "created_at"])
+                          for e in (await db.execute(select(SignupSourceEvent).where(SignupSourceEvent.user_id == user_id))).scalars().all()],
     }
     if request.query_params.get("format") == "zip":
         buffer = io.BytesIO()
@@ -140,6 +144,7 @@ async def delete_my_account(
     await db.execute(delete(Project).where(Project.user_id == user_id))
     await db.execute(delete(AlertRule).where(AlertRule.user_id == user_id))
     await db.execute(delete(ConsentRecord).where(ConsentRecord.user_id == user_id))
+    await db.execute(delete(SignupSourceEvent).where(SignupSourceEvent.user_id == user_id))
 
     # 匿名化账号行：保留主键仅用于支付订单的法定留存关联
     user.name = ANONYMIZED_NAME
