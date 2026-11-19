@@ -31,9 +31,18 @@ def require(path: str, text: str) -> None:
         errors.append(f"{path}: missing production guard {text!r}")
 
 
+def _is_test_source(file: Path) -> bool:
+    # 测试文件不进生产包；它们为了断言「某个词被禁止」必须写出这个词
+    # （例如 lib/ops/banned-overseas.test.ts 断言 OPENROUTER_API_KEY 在海外变量名单里）。
+    name = file.name
+    return ".test." in name or ".spec." in name or "__tests__" in file.parts
+
+
 def forbid_tree(path: str, patterns: tuple[str, ...]) -> None:
     for file in (ROOT / path).rglob("*"):
         if file.suffix not in {".ts", ".tsx", ".js", ".jsx"} or not file.is_file():
+            continue
+        if _is_test_source(file):
             continue
         content = file.read_text(encoding="utf-8")
         for pattern in patterns:
@@ -168,13 +177,19 @@ require(
     "runtime/web/src/app/api/projects/diagnosis/route.ts",
     "NO_VERIFIED_TELEMETRY",
 )
+# 项目级监控/分析/报告接口自 5311dff 起共用 lib/maintenance/project-telemetry.ts：
+# 没有已入库的经验证遥测就返回 503 TELEMETRY_NOT_CONNECTED，不生成模拟曲线。
+PROJECT_TELEMETRY = "runtime/web/src/lib/maintenance/project-telemetry.ts"
+require(PROJECT_TELEMETRY, "if (!rows.length) return { error: NextResponse.json(UNAVAILABLE, { status: 503 }) };")
+require(PROJECT_TELEMETRY, "error: 'TELEMETRY_NOT_CONNECTED'")
 for telemetry_route in (
     "runtime/web/src/app/api/projects/[id]/monitoring/route.ts",
     "runtime/web/src/app/api/projects/[id]/analytics/route.ts",
     "runtime/web/src/app/api/projects/[id]/reports/route.ts",
-    "runtime/web/src/app/api/v1/projects/[id]/monitoring/route.ts",
 ):
-    require(telemetry_route, "503")
+    require(telemetry_route, "const loaded = await loadOwnedSamples(id);")
+    require(telemetry_route, "if ('error' in loaded) return loaded.error;")
+require("runtime/web/src/app/api/v1/projects/[id]/monitoring/route.ts", "503")
 require(
     "runtime/web/src/lib/api/nasa-power.ts",
     "历史气象数据暂时不可用，请稍后重试",
@@ -338,10 +353,23 @@ require(
     "runtime/backend/app/api/v1/resource.py",
     "if project_id:",
 )
-require(
+# 运维页自 5311dff 起是真实的诊断工作台：只用用户在本页填写的数字，
+# 由登录后的 /api/maintenance/diagnostics 本地计算，不再跳走，也不展示演示数据。
+for maintenance_page in (
     "runtime/web/src/app/(dashboard)/maintenance/page.tsx",
-    "redirect('/projects')",
+    "runtime/web/src/app/[locale]/(dashboard)/maintenance/page.tsx",
+):
+    require(maintenance_page, "<DiagnosticsWorkbench />")
+WORKBENCH = "runtime/web/src/components/maintenance/DiagnosticsWorkbench.tsx"
+require(WORKBENCH, "fetch('/api/maintenance/diagnostics'")
+require(WORKBENCH, "只使用本页填写的数字")
+require(
+    "runtime/web/src/app/api/maintenance/diagnostics/route.ts",
+    "if (!session?.user?.id) return NextResponse.json({ error: '请先登录' }, { status: 401 });",
 )
+for pattern in ("Math.random", "MockData", "mockData", "demoData"):
+    if pattern in (ROOT / WORKBENCH).read_text(encoding="utf-8"):
+        errors.append(f"{WORKBENCH}: forbidden production UI text {pattern!r}")
 require("runtime/web/src/app/api/dashboard/route.ts", "buildPersonalDashboard")
 require("runtime/web/src/app/api/papers/graph/route.ts", "VERIFIED_CITATION_GRAPH_UNAVAILABLE")
 require("runtime/web/src/app/api/projects/unlock/route.ts", "VERIFIED_ENTITLEMENT_REQUIRED")
@@ -352,7 +380,6 @@ require("runtime/web/src/app/api/projects/report/route.ts", "SERVER_REPORT_EXPOR
 for route, destination in (
     ("runtime/web/src/app/my/achievements/page.tsx", "/achievements"),
     ("runtime/web/src/app/[locale]/(dashboard)/projects/page.tsx", "/projects"),
-    ("runtime/web/src/app/[locale]/(dashboard)/maintenance/page.tsx", "/projects"),
     ("runtime/web/src/app/[locale]/(dashboard)/calculator/result/page.tsx", "/calculator"),
 ):
     require(route, f"redirect('{destination}')")
@@ -406,17 +433,40 @@ for mobile_root in ("android-cn/lib", "ios-cn/lib"):
             "综合健康评分: 82分",
         ),
     )
+    # b8f26fa 起缺地址时不再抛异常白屏，改为显示配置错误页；仍然只接受 https:// 地址。
     require(
         f"{mobile_root}/services/api_service.dart",
-        "API_BASE_URL 必须配置为 HTTPS 地址",
+        "if (!_baseUrl.startsWith('https://')) {",
+    )
+    require(
+        f"{mobile_root}/services/api_service.dart",
+        "正式版未配置接口地址，应用无法连接服务器。",
     )
     require(
         f"{mobile_root}/screens/resource/compare_screen.dart",
         "真实资源数据暂时不可用，请稍后重试",
     )
+    # 国内版「立即注册」：和网页版一样走手机号验证码（首次验证即创建账号），
+    # 不允许再出现不调接口就提示「注册成功」的假页面。
+    require(
+        f"{mobile_root}/screens/auth/register_screen.dart",
+        "await (widget.sendCode ?? ApiService.sendSms)(",
+    )
+    require(
+        f"{mobile_root}/screens/auth/register_screen.dart",
+        "await (widget.verify ?? ApiService.loginWithSms)(",
+    )
+    for dart_file in (ROOT / mobile_root).rglob("*.dart"):
+        if "注册成功" in dart_file.read_text(encoding="utf-8"):
+            errors.append(f"{dart_file.relative_to(ROOT)}: forbidden production UI text '注册成功'")
+    # fb92738 起 AI 助手走 ApiService.askAssistant（POST /api/v1/ai/chat-json），测试可注入替身。
     require(
         f"{mobile_root}/screens/ai_assistant/ai_assistant_screen.dart",
-        "await ApiService.chat",
+        "await (widget.chat ?? ApiService.askAssistant)(q, _style)",
+    )
+    require(
+        f"{mobile_root}/services/api_service.dart",
+        ".post(_uri('/api/v1/ai/chat-json')",
     )
     require(
         f"{mobile_root}/screens/finance/storage_finance_screen.dart",
