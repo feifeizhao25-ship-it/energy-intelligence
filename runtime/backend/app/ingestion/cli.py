@@ -10,6 +10,7 @@ from pathlib import Path
 from app.ingestion.registry import load_registry
 from app.ingestion.runner import run_registry
 from app.ingestion.store import IngestStore
+from app.core.safe_io import fallback_dir
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -23,10 +24,10 @@ def main(argv: list[str] | None = None) -> int:
     contact = os.environ.get("CRAWLER_CONTACT_EMAIL", "").strip()
     registry = load_registry()
     dry_run = not args.apply
-    snapshot_dir = Path(os.environ.get("NENGJIAN_PUBLIC_SNAPSHOT_DIR", "/tmp/nengjian-public-snapshots"))
+    snapshot_dir = Path(os.environ.get("NENGJIAN_PUBLIC_SNAPSHOT_DIR", str(fallback_dir() / "nengjian-public-snapshots")))
     store = None
     if args.apply:
-        store = IngestStore(Path(os.environ.get("NENGJIAN_PUBLIC_INGEST_DB", "/tmp/nengjian-public-ingest.sqlite")))
+        store = IngestStore(Path(os.environ.get("NENGJIAN_PUBLIC_INGEST_DB", str(fallback_dir() / "nengjian-public-ingest.sqlite"))))
     try:
         result = run_registry(
             registry,

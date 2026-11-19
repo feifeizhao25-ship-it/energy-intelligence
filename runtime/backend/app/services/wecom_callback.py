@@ -12,6 +12,7 @@ from xml.etree import ElementTree as ET
 from ops.wecom import decrypt_message, fetch_approval_detail, verify_callback
 
 from app.services.policy_pipeline import connect, publish_matching_approval
+from app.core.safe_io import parse_xml
 
 
 def fetch_detail(sp_no: str) -> dict:
@@ -34,13 +35,13 @@ def _reject_dangerous_xml(raw: bytes) -> bool:
 def _xml_root(raw: bytes) -> ET.Element:
     if _reject_dangerous_xml(raw):
         raise ValueError("回调报文无效")
-    return ET.fromstring(raw)
+    return parse_xml(raw)
 
 
 def _sp_no(plain: str) -> str:
     if _reject_dangerous_xml(plain.encode("utf-8", errors="ignore")):
         raise ValueError("回调报文无效")
-    root = ET.fromstring(plain)
+    root = parse_xml(plain)
     for tag in ("SpNo", "sp_no"):
         node = root.find(f".//{tag}")
         if node is not None and (node.text or "").strip():

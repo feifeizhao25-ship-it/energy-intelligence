@@ -6,6 +6,7 @@ import time
 from urllib.parse import urlparse
 
 from app.services.policy_crawl import parse_robots, path_allowed
+from app.core.safe_io import urlopen_http
 
 PRODUCT = "XinNengYuanZhiKu-PublicData"
 HOST_INTERVALS = {
@@ -42,7 +43,7 @@ def urllib_fetcher(url: str, headers: dict, timeout: int, max_bytes: int) -> tup
 
     request = urllib.request.Request(url, headers=latin1_headers(headers), method="GET")
     try:
-        with urllib.request.urlopen(request, timeout=timeout) as response:
+        with urlopen_http(request, timeout=timeout) as response:
             return int(response.status), response.read(max_bytes)
     except urllib.error.HTTPError as exc:
         payload = b""

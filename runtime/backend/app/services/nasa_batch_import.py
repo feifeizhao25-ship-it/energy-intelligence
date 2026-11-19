@@ -15,6 +15,7 @@ import os
 from pathlib import Path
 
 from app.config import settings
+from app.core.safe_io import urlopen_http
 
 _SEED = Path(__file__).resolve().parents[2] / "data" / "domestic_resources.json"
 _CHINA = (18.0, 54.0, 73.0, 135.0)
@@ -103,7 +104,7 @@ def _fetch(url: str) -> str:
     """The only function in this module that opens a socket. Request handlers must not call it."""
     import urllib.request
     req = urllib.request.Request(url, headers={"User-Agent": "nengjian-nasa-batch/1.0"})
-    with urllib.request.urlopen(req, timeout=60) as resp:
+    with urlopen_http(req, timeout=60) as resp:
         return resp.read().decode("utf-8", errors="replace")
 
 

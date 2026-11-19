@@ -11,6 +11,7 @@ import json
 import os
 import pathlib
 import re
+from app.core.safe_io import urlopen_http
 
 _TERMS_PATH = pathlib.Path(__file__).resolve().parents[2] / "data" / "bottom_line_terms.json"
 
@@ -301,7 +302,7 @@ def review_bottom_line_with_model(text: str, poster=None) -> str | None:
             headers={"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"},
             method="POST",
         )
-        with urllib.request.urlopen(req, timeout=20) as resp:
+        with urlopen_http(req, timeout=20) as resp:
             data = json.loads(resp.read().decode() or "{}")
         return ((data.get("choices") or [{}])[0].get("message") or {}).get("content") or ""
 

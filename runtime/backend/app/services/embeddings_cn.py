@@ -12,6 +12,7 @@ import os
 
 from app.config import settings
 from app.services.local_embeddings import embed_local
+from app.core.safe_io import urlopen_http
 
 
 def _provider() -> str:
@@ -83,7 +84,7 @@ def _post(url: str, payload: dict, key: str) -> dict:
         headers={"Content-Type": "application/json", "Authorization": f"Bearer {key}"},
         method="POST",
     )
-    with urllib.request.urlopen(req, timeout=20) as resp:
+    with urlopen_http(req, timeout=20) as resp:
         return json.loads(resp.read().decode() or "{}")
 
 

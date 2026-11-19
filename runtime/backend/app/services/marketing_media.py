@@ -15,6 +15,7 @@ import json
 import os
 
 from app.config import settings
+from app.core.safe_io import urlopen_http
 
 
 def media_enabled() -> bool:
@@ -41,7 +42,7 @@ def _post(url: str, payload: dict, key: str) -> dict:
         headers={"Content-Type": "application/json", "Authorization": f"Bearer {key}"},
         method="POST",
     )
-    with urllib.request.urlopen(req, timeout=30) as resp:
+    with urlopen_http(req, timeout=30) as resp:
         return json.loads(resp.read().decode() or "{}")
 
 

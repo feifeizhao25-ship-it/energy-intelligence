@@ -10,6 +10,7 @@ import re
 import time
 from pathlib import Path
 from urllib.parse import urlparse
+from app.core.safe_io import urlopen_http
 
 PRODUCT = "XinNengYuanZhiKu-PolicyBot"
 DEFAULT_INTERVAL = 2.0
@@ -115,7 +116,7 @@ def http_fetcher(url: str, headers: dict) -> tuple[int, str]:
     import urllib.request
     request = urllib.request.Request(url, headers=headers, method="GET")
     try:
-        with urllib.request.urlopen(request, timeout=20) as response:
+        with urlopen_http(request, timeout=20) as response:
             raw = response.read(1_000_000)
             charset = response.headers.get_content_charset() or "utf-8"
             return int(response.status), raw.decode(charset, errors="replace")

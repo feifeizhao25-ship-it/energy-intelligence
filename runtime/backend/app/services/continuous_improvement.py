@@ -13,6 +13,8 @@ from pathlib import Path
 from urllib.parse import quote
 
 from app.ingestion.schedule import BUCKETS
+from app.core.safe_io import urlopen_http
+from app.core.safe_io import parse_xml
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_DIR = Path("/var/lib/nengjian/improvement")
@@ -233,7 +235,7 @@ def _parse_github_repo(payload: str, query: str) -> list[dict]:
 
 
 def _parse_feed(payload: str, query: str) -> list[dict]:
-    root = ET.fromstring(payload)
+    root = parse_xml(payload)
     keywords = [part.lower() for part in query.split() if part]
     rows = []
     for node in list(root.iter()):
@@ -260,7 +262,7 @@ def _parse_feed(payload: str, query: str) -> list[dict]:
 
 
 def _parse_arxiv(payload: str, query: str) -> list[dict]:
-    root = ET.fromstring(payload)
+    root = parse_xml(payload)
     rows = []
     for entry in root.findall(f"{ATOM}entry")[:5]:
         title = "".join(entry.findtext(f"{ATOM}title") or "").strip()
@@ -276,7 +278,7 @@ def _http_get(url: str) -> str:
     if token and "api.github.com" in url:
         headers["Authorization"] = "Bearer " + token
     req = urllib.request.Request(url, headers=headers)
-    with urllib.request.urlopen(req, timeout=20) as resp:
+    with urlopen_http(req, timeout=20) as resp:
         return resp.read(200_000).decode("utf-8", errors="replace")
 
 
@@ -392,7 +394,7 @@ def open_pull_request(proposal: dict, transport=None) -> dict:
                 headers={"Authorization": "Bearer " + token, "Accept": "application/vnd.github+json", "User-Agent": "nengjian-improvement/1.0"},
                 method="POST",
             )
-            with urllib.request.urlopen(req, timeout=20) as resp:
+            with urlopen_http(req, timeout=20) as resp:
                 data = _json.loads(resp.read().decode() or "{}")
         else:
             data = transport(payload)
