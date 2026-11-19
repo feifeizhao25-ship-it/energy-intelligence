@@ -1,48 +1,140 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import '../../theme/app_theme.dart';
+import '../../services/api_service.dart';
 import '../../widgets/reading_column.dart';
 
+/// 发送短信验证码。默认调用 [ApiService.sendSms]（POST /api/v1/auth/sms/send）。
+typedef SendSignupCodeFn = Future<void> Function({required String phone, required bool consent});
+
+/// 校验验证码并登录；手机号第一次验证时服务端会创建账号。
+/// 默认调用 [ApiService.loginWithSms]（POST /api/v1/auth/sms/login）。
+typedef VerifySignupCodeFn = Future<String> Function({
+  required String phone,
+  required String code,
+  required bool consent,
+});
+
+/// 国内版注册：和网页版「手机号登录 / 注册」走同一套真实接口。
+/// 只有服务端返回登录凭证后才进入工作台；接口失败就显示原因，不会假装已经注册。
+/// 测试通过 [sendCode] / [verify] 注入替身，不发真实短信。
 class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key});
+  const RegisterScreen({super.key, this.sendCode, this.verify});
+
+  final SendSignupCodeFn? sendCode;
+  final VerifySignupCodeFn? verify;
 
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  int _currentStep = 0;
-  final _nameController = TextEditingController();
-  final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
-  final _companyController = TextEditingController();
-  String _selectedRole = '';
-  bool _agreedToTerms = false;
-
-  final List<Map<String, dynamic>> roles = [
-    {'title': '项目经理', 'emoji': '👔'},
-    {'title': '技术总监', 'emoji': '🔧'},
-    {'title': '财务分析', 'emoji': '💰'},
-    {'title': '运维主管', 'emoji': '⚙️'},
-    {'title': '其他', 'emoji': '📝'},
-  ];
+  final _codeController = TextEditingController();
+  bool _consent = false;
+  bool _sending = false;
+  bool _submitting = false;
+  int _countdownSeconds = 0;
+  Timer? _countdown;
+  String? _notice;
+  String? _error;
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _emailController.dispose();
+    _countdown?.cancel();
     _phoneController.dispose();
-    _passwordController.dispose();
-    _confirmPasswordController.dispose();
-    _companyController.dispose();
+    _codeController.dispose();
     super.dispose();
+  }
+
+  /// 11 位大陆手机号；允许用户带 +86 或空格。不合法时返回 null。
+  String? _normalizedPhone() {
+    var digits = _phoneController.text.replaceAll(RegExp(r'\D'), '');
+    if (digits.length == 13 && digits.startsWith('86')) digits = digits.substring(2);
+    if (digits.length != 11 || !digits.startsWith('1')) return null;
+    return digits;
+  }
+
+  bool _checkConsentAndPhone() {
+    if (!_consent) {
+      setState(() {
+        _error = '请先勾选同意协议并接收验证码';
+        _notice = null;
+      });
+      return false;
+    }
+    if (_normalizedPhone() == null) {
+      setState(() {
+        _error = '请输入有效的手机号';
+        _notice = null;
+      });
+      return false;
+    }
+    return true;
+  }
+
+  Future<void> _sendCode() async {
+    if (_sending || _countdownSeconds > 0 || !_checkConsentAndPhone()) return;
+    setState(() {
+      _sending = true;
+      _error = null;
+      _notice = null;
+    });
+    try {
+      await (widget.sendCode ?? ApiService.sendSms)(phone: _normalizedPhone()!, consent: true);
+      if (!mounted) return;
+      setState(() {
+        _notice = '验证码已发送，请注意查收短信';
+        _countdownSeconds = 60;
+      });
+      _countdown?.cancel();
+      _countdown = Timer.periodic(const Duration(seconds: 1), (timer) {
+        if (!mounted || _countdownSeconds <= 1) {
+          timer.cancel();
+          if (mounted) setState(() => _countdownSeconds = 0);
+          return;
+        }
+        setState(() => _countdownSeconds--);
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _error = '验证码发送失败：$e');
+    } finally {
+      if (mounted) setState(() => _sending = false);
+    }
+  }
+
+  Future<void> _submit() async {
+    if (_submitting || !_checkConsentAndPhone()) return;
+    final code = _codeController.text.trim();
+    if (!RegExp(r'^\d{6}$').hasMatch(code)) {
+      setState(() {
+        _error = '请输入 6 位数字验证码';
+        _notice = null;
+      });
+      return;
+    }
+    setState(() {
+      _submitting = true;
+      _error = null;
+    });
+    try {
+      await (widget.verify ?? ApiService.loginWithSms)(phone: _normalizedPhone()!, code: code, consent: true);
+      if (!mounted) return;
+      Navigator.of(context).pushNamedAndRemoveUntil('/dashboard', (route) => false);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _error = '注册没有完成：$e');
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text('创建账号'), elevation: 0),
+      appBar: AppBar(title: const Text('手机号注册'), elevation: 0),
       body: ReadingColumn(child: SingleChildScrollView(
         padding: EdgeInsets.symmetric(
           horizontal: MediaQuery.sizeOf(context).width >= 700 ? 48 : 20,
@@ -53,33 +145,79 @@ class _RegisterScreenState extends State<RegisterScreen> {
             // iPad / 宽屏：注册表单收成一列居中，不随屏幕拉宽。
             constraints: const BoxConstraints(maxWidth: 480),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _buildStepIndicator(),
-                SizedBox(height: 32),
-                _currentStep == 0 ? _buildStep1() : _buildStep2(),
-                SizedBox(height: 24),
+                TextField(
+                  key: const Key('registerPhone'),
+                  controller: _phoneController,
+                  decoration: const InputDecoration(
+                    labelText: '手机号',
+                    prefixText: '+86 ',
+                    prefixIcon: Icon(Icons.phone_outlined),
+                  ),
+                  keyboardType: TextInputType.phone,
+                ),
+                const SizedBox(height: 12),
                 Row(
                   children: [
-                    if (_currentStep > 0)
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () => setState(() => _currentStep = 0),
-                          child: Text('上一步'),
-                        ),
-                      ),
-                    if (_currentStep > 0) SizedBox(width: 12),
                     Expanded(
-                      child: ElevatedButton(
-                        onPressed: _handleNextStep,
-                        child: Text(_currentStep == 0 ? '下一步' : '注册'),
+                      child: TextField(
+                        key: const Key('registerCode'),
+                        controller: _codeController,
+                        decoration: const InputDecoration(labelText: '验证码'),
+                        keyboardType: TextInputType.number,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    OutlinedButton(
+                      key: const Key('registerSendCode'),
+                      onPressed: _sending || _countdownSeconds > 0 ? null : _sendCode,
+                      child: Text(_countdownSeconds > 0 ? '$_countdownSeconds 秒后重发' : '获取验证码'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Checkbox(
+                      key: const Key('registerConsent'),
+                      value: _consent,
+                      onChanged: (value) => setState(() => _consent = value ?? false),
+                    ),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 12),
+                        child: Text('我已阅读并同意《用户协议》和《隐私政策》，并同意接收验证码', style: theme.textTheme.bodySmall),
                       ),
                     ),
                   ],
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 8),
+                Text(
+                  '验证通过后，第一次使用的手机号会创建账号，已注册的手机号直接登录。',
+                  style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                ),
+                if (_notice != null) ...[
+                  const SizedBox(height: 12),
+                  Text(_notice!, key: const Key('registerNotice'), style: theme.textTheme.bodyMedium),
+                ],
+                if (_error != null) ...[
+                  const SizedBox(height: 12),
+                  Text(_error!, key: const Key('registerError'), style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.error)),
+                ],
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  key: const Key('registerSubmit'),
+                  onPressed: _submitting ? null : _submit,
+                  child: _submitting
+                      ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Text('验证并注册'),
+                ),
+                const SizedBox(height: 16),
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: Text('返回登录'),
+                  child: const Text('返回登录'),
                 ),
               ],
             ),
@@ -87,250 +225,5 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
       )),
     );
-  }
-
-  Widget _buildStepIndicator() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        _buildStepCircle(0, '基本信息'),
-        SizedBox(width: 24),
-        Container(
-          width: 40,
-          height: 2,
-          color: _currentStep > 0
-              ? AppTheme.primaryColor
-              : Theme.of(context).colorScheme.outlineVariant,
-        ),
-        SizedBox(width: 24),
-        _buildStepCircle(1, '公司信息'),
-      ],
-    );
-  }
-
-  Widget _buildStepCircle(int step, String label) {
-    bool isActive = _currentStep >= step;
-    return Column(
-      children: [
-        Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: isActive
-                ? AppTheme.primaryColor
-                : Theme.of(context).colorScheme.outlineVariant,
-            shape: BoxShape.circle,
-          ),
-          child: Center(
-            child: Text(
-              '${step + 1}',
-              style: TextStyle(
-                color: isActive ? Colors.white : Color(0xFF94A3B8),
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-              ),
-            ),
-          ),
-        ),
-        SizedBox(height: 8),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: isActive ? AppTheme.primaryColor : Color(0xFF94A3B8),
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStep1() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('基本信息', style: Theme.of(context).textTheme.headlineSmall),
-        SizedBox(height: 16),
-        TextField(
-          controller: _nameController,
-          decoration: InputDecoration(
-            labelText: '姓名',
-            prefixIcon: Icon(Icons.person_outline),
-          ),
-        ),
-        SizedBox(height: 12),
-        TextField(
-          controller: _emailController,
-          decoration: InputDecoration(
-            labelText: '邮箱',
-            prefixIcon: Icon(Icons.email_outlined),
-          ),
-          keyboardType: TextInputType.emailAddress,
-        ),
-        SizedBox(height: 12),
-        TextField(
-          controller: _phoneController,
-          decoration: InputDecoration(
-            labelText: '手机号',
-            prefixText: '+86 ',
-            prefixIcon: Icon(Icons.phone_outlined),
-          ),
-          keyboardType: TextInputType.phone,
-        ),
-        SizedBox(height: 12),
-        TextField(
-          controller: _passwordController,
-          decoration: InputDecoration(
-            labelText: '密码',
-            prefixIcon: Icon(Icons.lock_outline),
-          ),
-          obscureText: true,
-        ),
-        SizedBox(height: 12),
-        TextField(
-          controller: _confirmPasswordController,
-          decoration: InputDecoration(
-            labelText: '确认密码',
-            prefixIcon: Icon(Icons.lock_outline),
-          ),
-          obscureText: true,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStep2() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('公司信息', style: Theme.of(context).textTheme.headlineSmall),
-        SizedBox(height: 16),
-        TextField(
-          controller: _companyController,
-          decoration: InputDecoration(
-            labelText: '公司名称',
-            prefixIcon: Icon(Icons.business_outlined),
-          ),
-        ),
-        SizedBox(height: 20),
-        Text('选择职位', style: Theme.of(context).textTheme.titleMedium),
-        SizedBox(height: 12),
-        GridView.count(
-          crossAxisCount: 2,
-          shrinkWrap: true,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-          children: roles.map((role) {
-            bool isSelected = _selectedRole == role['title'];
-            return GestureDetector(
-              onTap: () => setState(() => _selectedRole = role['title']),
-              child: Container(
-                decoration: BoxDecoration(
-                  border: Border.all(
-                    color: isSelected
-                        ? AppTheme.primaryColor
-                        : Theme.of(context).colorScheme.outlineVariant,
-                    width: isSelected ? 2 : 1,
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                  color: isSelected
-                      ? AppTheme.primaryColor.withValues(alpha: 0.1)
-                      : Colors.white,
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(role['emoji'], style: TextStyle(fontSize: 32)),
-                    SizedBox(height: 8),
-                    Text(
-                      role['title'],
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: isSelected
-                            ? AppTheme.primaryColor
-                            : Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }).toList(),
-        ),
-        SizedBox(height: 20),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Checkbox(
-              value: _agreedToTerms,
-              onChanged: (value) =>
-                  setState(() => _agreedToTerms = value ?? false),
-            ),
-            Expanded(
-              child: Text.rich(
-                TextSpan(
-                  text: '我已阅读并同意',
-                  style: TextStyle(fontSize: 12),
-                  children: [
-                    TextSpan(
-                      text: '《用户协议》',
-                      style: TextStyle(
-                        color: AppTheme.primaryColor,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    TextSpan(text: '和'),
-                    TextSpan(
-                      text: '《隐私政策》',
-                      style: TextStyle(
-                        color: AppTheme.primaryColor,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  void _handleNextStep() {
-    if (_currentStep == 0) {
-      if (_nameController.text.isEmpty ||
-          _emailController.text.isEmpty ||
-          _phoneController.text.isEmpty ||
-          _passwordController.text.isEmpty ||
-          _confirmPasswordController.text.isEmpty) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('请填写所有字段')));
-        return;
-      }
-      if (_passwordController.text != _confirmPasswordController.text) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('两次输入的密码不一致')));
-        return;
-      }
-      setState(() => _currentStep = 1);
-    } else {
-      if (_companyController.text.isEmpty ||
-          _selectedRole.isEmpty ||
-          !_agreedToTerms) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('请填写所有信息并同意协议')));
-        return;
-      }
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('注册成功！')));
-      Navigator.of(context).pop();
-    }
   }
 }

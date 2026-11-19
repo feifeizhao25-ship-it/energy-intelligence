@@ -29,3 +29,6 @@ uvicorn[standard]==0.30.6
 aiosqlite
 python-docx
 reportlab==4.4.4
+# app/services/pv_crosscheck.py imports numpy at module level (EN-3 offline pvlib/PySAM cross-check).
+# 2.3.x still supports Python 3.11 (test.yml) and 3.12 (Docker image, other CI jobs).
+numpy==2.3.5
