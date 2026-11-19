@@ -22,7 +22,8 @@ const ROUTES: RouteCase[] = [
   { project: 'cn', path: '/dashboard', ready: '总览' },
   { project: 'cn', path: '/assistant', ready: 'AI 能源专家' },
   { project: 'cn', path: '/map', ready: '地图服务暂不可用' },
-  { project: 'cn', path: '/map/report', ready: '无效的坐标参数' },
+  // 不带坐标打开报告页时，页面现在提示“还没有地图选点”并给出“去地图选点”（见 ReportPage.test.tsx），不再显示“无效的坐标参数”。
+  { project: 'cn', path: '/map/report', ready: '还没有地图选点' },
   { project: 'cn', path: '/pricing', ready: /免费|年/ },
   { project: 'global', path: '/', ready: /EnergyIQ|Dashboard|Projects/ },
   { project: 'global', path: '/incentives', ready: 'Eligible capital expenditure' },
