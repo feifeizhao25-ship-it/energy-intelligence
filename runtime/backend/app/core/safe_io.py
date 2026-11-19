@@ -3,10 +3,9 @@
 - ``urlopen_http``：只允许 http/https。``urllib`` 默认还能打开 ``file://`` 等协议；
   调用方的地址有的来自配置或清单文件，这里统一拒绝其它协议，失败方式和 urllib
   遇到未知协议时一样（抛 ``urllib.error.URLError``），现有的异常处理不用改。
-- ``parse_xml``：带 ``<!DOCTYPE`` / ``<!ENTITY`` 声明的 XML 一律不解析（没有实体声明，
-  就没有实体膨胀和外部实体）；含空字节的输入（UTF-16/32 等宽字节编码，上面的
-  字节检查看不见）也拒绝。拒绝时抛 ``ElementTree.ParseError`` 的子类，现有
-  ``except ET.ParseError`` 照常接住。
+- ``parse_xml``：用 defusedxml 解析，带 DTD（``<!DOCTYPE``）、实体声明或外部引用的 XML
+  一律不解析（由解析器本身拦截，与编码无关），没有实体就没有实体膨胀和外部实体。
+  拒绝时抛 ``ElementTree.ParseError`` 的子类，现有 ``except ET.ParseError`` 照常接住。
 - ``fallback_dir``：主目录不可写时的回退目录，用 ``tempfile.gettempdir()``，
   部署方可以用 ``TMPDIR`` 指到私有目录，不再写死 ``/tmp``。
 """
@@ -19,11 +18,14 @@ from pathlib import Path
 from urllib.parse import urlsplit
 from xml.etree import ElementTree as ET
 
+import defusedxml
+from defusedxml import ElementTree as DefusedET
+
 ALLOWED_SCHEMES = frozenset({"http", "https"})
 
 
 class UnsafeXMLError(ET.ParseError):
-    """XML 带实体/文档类型声明，或是宽字节编码，按约定不解析。"""
+    """XML 带 DTD/实体声明或外部引用，按约定不解析。"""
 
 
 def urlopen_http(request: urllib.request.Request | str, *, timeout: float):
@@ -36,14 +38,10 @@ def urlopen_http(request: urllib.request.Request | str, *, timeout: float):
 
 
 def parse_xml(data: str | bytes) -> ET.Element:
-    raw = data.encode("utf-8", errors="ignore") if isinstance(data, str) else bytes(data)
-    if b"\x00" in raw:
-        raise UnsafeXMLError("xml_wide_encoding_refused")
-    upper = raw.upper()
-    if b"<!DOCTYPE" in upper or b"<!ENTITY" in upper:
-        raise UnsafeXMLError("xml_entities_refused")
-    # 上面已拒绝 DOCTYPE/ENTITY 声明和宽字节编码，剩下的输入不含实体定义。
-    return ET.fromstring(data)  # nosec B314
+    try:
+        return DefusedET.fromstring(data, forbid_dtd=True, forbid_entities=True, forbid_external=True)
+    except defusedxml.DefusedXmlException as exc:
+        raise UnsafeXMLError("xml_entities_refused") from exc
 
 
 def fallback_dir() -> Path:

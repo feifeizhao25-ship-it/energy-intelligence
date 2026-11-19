@@ -40,9 +40,9 @@ def test_parse_xml_parses_plain_documents():
     b'<?xml version="1.0"?><!DOCTYPE lolz [<!ENTITY lol "lol">]><lolz>&lol;</lolz>',
     b'<!doctype a><a/>',
     '<!ENTITY x "y"><a/>',
-    "<a/>".encode("utf-16"),
+    '<!DOCTYPE a [<!ENTITY x "y">]><a>&x;</a>'.encode("utf-16"),
 ])
-def test_parse_xml_refuses_entities_and_wide_encodings(doc):
+def test_parse_xml_refuses_dtd_and_entities_in_any_encoding(doc):
     with pytest.raises(ET.ParseError):
         safe_io.parse_xml(doc)
 
