@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/auth-options';
 import { prisma } from '@/lib/prisma';
 import { isCnEdition, readAgeConfirmed } from '@/lib/auth/age-confirmation';
+import { recordSignupSource } from '@/lib/growth/signup-source';
 
 export async function POST(req: NextRequest) {
     try {
@@ -65,12 +66,16 @@ export async function POST(req: NextRequest) {
                 });
 
                 if (!granted) {
+                    // 已完成过引导：不再记来源（每个账号只在首次完成时记一次）
                     return NextResponse.json({
                         success: true,
                         message: '引导已完成',
                         rewards: { points: 0, aiCalls: 10, calculations: 5 },
                     });
                 }
+                // 注册来源题：只在首次完成引导时记一次，只收枚举代码；开关默认关闭。
+                // 单独写、不放进 preferences（偏好会存进 usage_logs 的 metadata），失败不影响引导。
+                await recordSignupSource(prisma, userId, body?.signupSource);
             } else {
                 await prisma.user.update({
                     where: { id: userId },

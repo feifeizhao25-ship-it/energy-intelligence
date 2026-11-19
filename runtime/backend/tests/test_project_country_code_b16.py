@@ -111,4 +111,4 @@ def test_migration_chain_has_a_single_head():
 
     cfg = Config()
     cfg.set_main_option("script_location", str(BACKEND / "alembic"))
-    assert ScriptDirectory.from_config(cfg).get_heads() == ["0010_project_country_code"]
+    assert ScriptDirectory.from_config(cfg).get_heads() == ["0011_signup_source_events"]

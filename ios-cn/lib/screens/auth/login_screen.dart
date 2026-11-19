@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../../services/api_service.dart';
 import '../../widgets/reading_column.dart';
+import '../../widgets/signup_source_picker.dart';
 
 class ConfigErrorScreen extends StatelessWidget {
   const ConfigErrorScreen({super.key, required this.message});
@@ -37,7 +38,10 @@ class ConfigErrorScreen extends StatelessWidget {
 }
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  const LoginScreen({super.key, this.signupSourceLoader});
+
+  /// 取注册来源题选项的函数；默认在配了服务器地址时请求 /api/v1/auth/signup-source。测试可注入。
+  final Future<Object?> Function()? signupSourceLoader;
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -53,10 +57,14 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   bool _isLoading = false;
   bool _consent = false;
   int _countdownSeconds = 0;
+  // 注册来源题：开关由服务端决定，关闭或请求失败时没有选项、整块不显示；不选就是跳过。
+  List<SignupSourceOption> _sourceOptions = const [];
+  String _signupSource = '';
 
   @override
   void initState() {
     super.initState();
+    _loadSignupSourceOptions();
     _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(() {
       if (mounted) setState(() {});
@@ -71,6 +79,17 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     _phoneController.dispose();
     _codeController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadSignupSourceOptions() async {
+    final loader = widget.signupSourceLoader ?? (ApiService.hasBaseUrl ? ApiService.getSignupSourceOptions : null);
+    if (loader == null) return;
+    try {
+      final options = parseSignupSourceOptions(await loader());
+      if (mounted) setState(() => _sourceOptions = options);
+    } catch (_) {
+      // 拿不到选项就不出题，不影响登录
+    }
   }
 
   void _handleLogin() async {
@@ -113,7 +132,12 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     }
     setState(() => _isLoading = true);
     try {
-      await ApiService.loginWithSms(phone: _phoneController.text, code: _codeController.text, consent: true);
+      await ApiService.loginWithSms(
+        phone: _phoneController.text,
+        code: _codeController.text,
+        consent: true,
+        signupSource: selectedSignupSource(_sourceOptions, _signupSource),
+      );
       if (mounted) Navigator.of(context).pushReplacementNamed('/dashboard');
     } catch (e) {
       if (!mounted) return;
@@ -295,6 +319,11 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           ],
         ),
         const SizedBox(height: 8),
+        SignupSourcePicker(
+          options: _sourceOptions,
+          value: _signupSource,
+          onChanged: (code) => setState(() => _signupSource = code),
+        ),
         Row(
           children: [
             Checkbox(value: _consent, onChanged: (value) => setState(() => _consent = value ?? false)),

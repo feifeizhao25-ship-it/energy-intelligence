@@ -117,6 +117,7 @@ model User {
   datasetDownloads         DatasetDownload[]
   literatureRecords        LiteratureRecord[]
   profile                  UserProfile?
+  signupSource             SignupSourceEvent?
 
   @@map("users")
 }
@@ -1540,4 +1541,17 @@ model UserProfile {
   updatedAt        DateTime @updatedAt
 
   @@map("user_profiles")
+}
+
+// 国内版注册来源题「从哪知道我们」（开关 ENERGY_CN_SIGNUP_SOURCE_ENABLED，默认关闭）。
+// 只存九个枚举代码之一，没有自由文本；userId 只用于注销时随账号删除，对外只输出按代码的计数。
+model SignupSourceEvent {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  source    String
+  createdAt DateTime @default(now())
+
+  @@index([source, createdAt])
+  @@map("signup_source_events")
 }
