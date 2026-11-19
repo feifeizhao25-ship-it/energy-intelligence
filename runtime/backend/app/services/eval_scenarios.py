@@ -116,7 +116,7 @@ def scenario_s08() -> dict:
             skills.MultimodalSkill().run("http://example.invalid/a.png", "描述画面"),
             skills.TranscriptSummarySkill().run("http://example.invalid/a.wav"),
         ]
-        async_rows = asyncio.get_event_loop().run_until_complete(_async_skills(skills)) if False else _run_async(skills)
+        async_rows = _run_async(skills)
     finally:
         if previous is None:
             os.environ.pop("ENVIRONMENT", None)
