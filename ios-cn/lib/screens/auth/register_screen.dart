@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
 import '../../widgets/reading_column.dart';
+import '../../widgets/signup_source_picker.dart';
 
 /// 发送短信验证码。默认调用 [ApiService.sendSms]（POST /api/v1/auth/sms/send）。
 typedef SendSignupCodeFn = Future<void> Function({required String phone, required bool consent});
@@ -13,16 +14,20 @@ typedef VerifySignupCodeFn = Future<String> Function({
   required String phone,
   required String code,
   required bool consent,
+  String? signupSource,
 });
 
 /// 国内版注册：和网页版「手机号登录 / 注册」走同一套真实接口。
 /// 只有服务端返回登录凭证后才进入工作台；接口失败就显示原因，不会假装已经注册。
 /// 测试通过 [sendCode] / [verify] 注入替身，不发真实短信。
 class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key, this.sendCode, this.verify});
+  const RegisterScreen({super.key, this.sendCode, this.verify, this.signupSourceLoader});
 
   final SendSignupCodeFn? sendCode;
   final VerifySignupCodeFn? verify;
+
+  /// 取注册来源题选项；默认在配了服务器地址时请求 /api/v1/auth/signup-source（与登录页相同）。测试可注入。
+  final Future<Object?> Function()? signupSourceLoader;
 
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
@@ -38,6 +43,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Timer? _countdown;
   String? _notice;
   String? _error;
+  // 注册来源题：开关由服务端决定，关闭或请求失败时没有选项、整块不显示；不选就是跳过。
+  List<SignupSourceOption> _sourceOptions = const [];
+  String _signupSource = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSignupSourceOptions();
+  }
+
+  Future<void> _loadSignupSourceOptions() async {
+    final loader = widget.signupSourceLoader ?? (ApiService.hasBaseUrl ? ApiService.getSignupSourceOptions : null);
+    if (loader == null) return;
+    try {
+      final options = parseSignupSourceOptions(await loader());
+      if (mounted) setState(() => _sourceOptions = options);
+    } catch (_) {
+      // 拿不到选项就不出题，不影响注册
+    }
+  }
 
   @override
   void dispose() {
@@ -119,7 +144,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _error = null;
     });
     try {
-      await (widget.verify ?? ApiService.loginWithSms)(phone: _normalizedPhone()!, code: code, consent: true);
+      await (widget.verify ?? ApiService.loginWithSms)(
+        phone: _normalizedPhone()!,
+        code: code,
+        consent: true,
+        signupSource: selectedSignupSource(_sourceOptions, _signupSource),
+      );
       if (!mounted) return;
       Navigator.of(context).pushNamedAndRemoveUntil('/dashboard', (route) => false);
     } catch (e) {
@@ -192,6 +222,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                     ),
                   ],
+                ),
+                SignupSourcePicker(
+                  options: _sourceOptions,
+                  value: _signupSource,
+                  onChanged: (code) => setState(() => _signupSource = code),
                 ),
                 const SizedBox(height: 8),
                 Text(
