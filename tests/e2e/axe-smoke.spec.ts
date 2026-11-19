@@ -16,7 +16,9 @@ type RouteCase = {
 
 const ROUTES: RouteCase[] = [
   { project: 'cn', path: '/', ready: '按角色查看已收录的事实' },
-  { project: 'cn', path: '/login', ready: '手机号' },
+  // 登录页的标题“手机号登录 / 注册”有一份 lg:hidden 的 sr-only h1 排在最前，子串匹配 '手机号' 会先命中这个隐藏节点；
+  // 改为精确匹配手机号输入框的可见标签。
+  { project: 'cn', path: '/login', ready: /^手机号$/ },
   { project: 'cn', path: '/dashboard', ready: '总览' },
   { project: 'cn', path: '/assistant', ready: 'AI 能源专家' },
   { project: 'cn', path: '/map', ready: '地图服务暂不可用' },
