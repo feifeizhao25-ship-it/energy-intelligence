@@ -81,6 +81,9 @@ export default function DomesticTileMap({
                 }}
             >
                 {grid?.tiles.map((tile) => (
+                    // 瓦片来自自家 /api/map-tiles 代理，按网格逐块绝对定位，并靠 onError 隐藏坏块；
+                    // next/image 会改走图片优化接口并默认懒加载，改变加载行为，所以这里保留原生 img。
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                         key={`${tile.x}-${tile.y}-${tile.left}-${tile.top}`}
                         alt=""

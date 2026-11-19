@@ -8,6 +8,7 @@ import json
 import re
 import xml.etree.ElementTree as ET
 from hashlib import sha256
+from app.core.safe_io import parse_xml
 
 ATOM = "{http://www.w3.org/2005/Atom}"
 OAI = "{http://www.openarchives.org/OAI/2.0/}"
@@ -306,7 +307,7 @@ def _overpass(body: bytes, page_url: str) -> list[dict]:
 
 def _osm_xml(body: bytes, page_url: str) -> list[dict]:
     try:
-        root = ET.fromstring(body)
+        root = parse_xml(body)
     except ET.ParseError as exc:
         raise SchemaDrift("OSM XML 无法解析") from exc
     nodes = {}
@@ -541,7 +542,7 @@ def _arxiv_rss(root: ET.Element, page_url: str) -> list[dict]:
 
 def parse_arxiv(body: bytes, page_url: str) -> list[dict]:
     try:
-        root = ET.fromstring(body)
+        root = parse_xml(body)
     except ET.ParseError as exc:
         raise SchemaDrift("arXiv 响应不是可解析的元数据") from exc
     if root.tag == "rss" or root.find("channel") is not None:
@@ -629,7 +630,7 @@ def _rights_commercial(text: str) -> bool:
 
 def _zenodo_oai(body: bytes, page_url: str) -> list[dict]:
     try:
-        root = ET.fromstring(body)
+        root = parse_xml(body)
     except ET.ParseError as exc:
         raise SchemaDrift("Zenodo 响应不是 OAI") from exc
     if root.tag != OAI + "OAI-PMH":
@@ -696,7 +697,7 @@ def parse_zenodo(body: bytes, page_url: str) -> list[dict]:
 
 def parse_chinaxiv(body: bytes, page_url: str) -> list[dict]:
     try:
-        root = ET.fromstring(body)
+        root = parse_xml(body)
     except ET.ParseError as exc:
         raise SchemaDrift("ChinaXiv 响应不是 OAI") from exc
     if root.tag != OAI + "OAI-PMH":

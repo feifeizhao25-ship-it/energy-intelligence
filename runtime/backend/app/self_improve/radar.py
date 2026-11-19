@@ -24,6 +24,7 @@ from xml.etree import ElementTree as ET
 from .fetch import FetchRefused, _SameDomainRedirect
 from .scheduler import TZ
 from .sources import scan_injection
+from app.core.safe_io import parse_xml
 
 RADAR_SCHEDULE = "weekly:WED@05:00"  # 与 scheduler.next_run 的格式一致；不放进 SCHEDULE_DEFAULTS，避免改动既有调度
 ALLOWED_HOSTS = frozenset({"export.arxiv.org", "api.github.com", "huggingface.co"})
@@ -81,7 +82,7 @@ def parse_arxiv(xml_text: str) -> list[dict]:
         raise ValueError("xml_entities_refused")
     ns = {"a": "http://www.w3.org/2005/Atom"}
     out = []
-    for e in ET.fromstring(xml_text).findall("a:entry", ns):
+    for e in parse_xml(xml_text).findall("a:entry", ns):
         link = (e.findtext("a:id", "", ns) or "").strip()
         it = {
             "source": "arxiv", "id": link.rsplit("/abs/", 1)[-1], "title": e.findtext("a:title", "", ns),

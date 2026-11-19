@@ -10,6 +10,7 @@ from app.ingestion.registry import load_registry
 from app.ingestion.runner import run_registry
 from app.ingestion.store import IngestStore
 from app.tasks.celery_app import celery_app
+from app.core.safe_io import fallback_dir
 
 
 def _path(env_name: str, default: str) -> Path:
@@ -19,7 +20,7 @@ def _path(env_name: str, default: str) -> Path:
     try:
         parent.mkdir(parents=True, exist_ok=True)
     except OSError:
-        fallback = Path("/tmp") / path.name
+        fallback = fallback_dir() / path.name
         (fallback if path.suffix == "" else fallback.parent).mkdir(parents=True, exist_ok=True)
         return fallback
     return path

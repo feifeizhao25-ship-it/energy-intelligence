@@ -15,6 +15,7 @@ from datetime import datetime, timezone
 from urllib.parse import quote
 
 from app.config import settings
+from app.core.safe_io import urlopen_http
 
 
 def _percent(value: str) -> str:
@@ -54,7 +55,7 @@ def review_text(text: str, poster=None) -> dict:
     def _post(url: str, payload: str) -> dict:
         import urllib.request
         req = urllib.request.Request(url, data=payload.encode("utf-8"), headers={"Content-Type": "application/x-www-form-urlencoded"}, method="POST")
-        with urllib.request.urlopen(req, timeout=10) as resp:
+        with urlopen_http(req, timeout=10) as resp:
             return json.loads(resp.read().decode() or "{}")
 
     try:

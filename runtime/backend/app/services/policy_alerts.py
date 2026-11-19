@@ -10,6 +10,7 @@ import smtplib
 from datetime import datetime, timezone
 from email.message import EmailMessage
 from pathlib import Path
+from app.core.safe_io import fallback_dir
 
 RATE_LIMIT = 5
 WINDOW_SECONDS = 3600
@@ -46,7 +47,7 @@ def note_published(source_id: str, content_sha256: str, body: str = "") -> dict:
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
     except OSError:
-        path = Path("/tmp/nengjian-policy-alerts.jsonl")
+        path = fallback_dir() / "nengjian-policy-alerts.jsonl"
         path.parent.mkdir(parents=True, exist_ok=True)
     row = {
         "source_id": source_id,
@@ -77,7 +78,7 @@ def deliver_alert(user_id: str, title: str, description: str, *, email: bool = F
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
     except OSError:
-        path = Path("/tmp/nengjian-policy-alerts.jsonl")
+        path = fallback_dir() / "nengjian-policy-alerts.jsonl"
     with path.open("a", encoding="utf-8") as handle:
         handle.write(json.dumps({
             "user_id": user_id,

@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from app.services.skill_improvement import strip_pii
+from app.core.safe_io import fallback_dir
 
 KINDS = {"thumbs_down", "low_rating", "failed_citation", "blocked_output"}
 SHARED_SAMPLE_PATH = Path("/var/lib/nengjian/feedback.jsonl")
@@ -27,7 +28,7 @@ def sample_path() -> Path:
         path.parent.mkdir(parents=True, exist_ok=True)
         return path
     except OSError:
-        fallback = Path("/tmp/nengjian-feedback.jsonl")
+        fallback = fallback_dir() / "nengjian-feedback.jsonl"
         fallback.parent.mkdir(parents=True, exist_ok=True)
         return fallback
 

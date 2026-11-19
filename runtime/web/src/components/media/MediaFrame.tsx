@@ -88,6 +88,8 @@ export function MediaFrame({
     return (
         <figure className="relative" data-generated={generated ? '1' : '0'}>
             {mark}
+            {/* src 可以是任意已生成媒体地址（不在 next.config images 白名单里），next/image 遇到未配置的域名会直接报错，所以保留原生 img。 */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={src} alt={label} width={640} height={360} className="h-auto w-full rounded-xl" />
             <figcaption className="mt-1 text-xs text-[var(--ink-soft)]">{label}</figcaption>
         </figure>
