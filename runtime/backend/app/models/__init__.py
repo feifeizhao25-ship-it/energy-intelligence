@@ -12,6 +12,7 @@ from .payment_order import PaymentOrder
 from .product_usage import DatasetDownload, PolicyAlertSubscription
 from .operation_telemetry import OperationAlarmEvent, OperationAlarmRule, OperationSample
 from .invoice_request import InvoiceRequest
+from .signup_source import SignupSourceEvent
 
 __all__ = [
     "Base",
@@ -28,4 +29,5 @@ __all__ = [
     "OperationAlarmRule",
     "OperationAlarmEvent",
     "InvoiceRequest",
+    "SignupSourceEvent",
 ]

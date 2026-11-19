@@ -23,6 +23,7 @@ import { cn } from '@/lib/utils';
 import { PROVINCES } from '@/lib/dashboard/personalization';
 import { onboardingFreeQuotas } from './free-quotas';
 import { isCnOnboardingEdition, runOnboardingSkip } from './skip';
+import SignupSourcePicker, { parseSignupSourceOptions, selectedSignupSource, SignupSourceOption } from './signup-source-picker';
 
 // 引导步骤
 interface OnboardingOption {
@@ -112,6 +113,26 @@ export default function OnboardingPage() {
     const [isCompleting, setIsCompleting] = useState(false);
     const [ageConfirmed, setAgeConfirmed] = useState(false);
     const [ageNotice, setAgeNotice] = useState<string | null>(null);
+    // 注册来源题：开关由服务端决定，关闭或请求失败时没有选项、整块不显示；不选就是跳过。
+    // 单独保存，不放进 selections（selections 会作为偏好存进 usage_logs）。
+    const [sourceOptions, setSourceOptions] = useState<SignupSourceOption[]>([]);
+    const [signupSource, setSignupSource] = useState('');
+
+    useEffect(() => {
+        if (!isCnOnboardingEdition()) return;
+        let alive = true;
+        fetch('/api/user/signup-source')
+            .then((r) => (r.ok ? r.json() : null))
+            .then((data) => {
+                if (alive) setSourceOptions(parseSignupSourceOptions(data));
+            })
+            .catch(() => {
+                /* 拿不到选项就不出题，不影响引导 */
+            });
+        return () => {
+            alive = false;
+        };
+    }, []);
 
     const step = ONBOARDING_STEPS[currentStep];
     const isLastStep = currentStep === ONBOARDING_STEPS.length - 1;
@@ -137,6 +158,7 @@ export default function OnboardingPage() {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         ageConfirmed: true,
+                        signupSource: selectedSignupSource(sourceOptions, signupSource),
                         preferences: {
                             ...selections,
                             ageConfirmed: true,
@@ -286,6 +308,10 @@ export default function OnboardingPage() {
                                 );
                             })}
                         </div>
+                    )}
+
+                    {step.id === 'welcome' && (
+                        <SignupSourcePicker options={sourceOptions} value={signupSource} onChange={setSignupSource} />
                     )}
 
                     {/* Rewards (last step) */}

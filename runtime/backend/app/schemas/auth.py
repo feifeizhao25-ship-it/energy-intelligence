@@ -11,6 +11,8 @@ class RegisterRequest(BaseModel):
     country: Optional[str] = None
     market: Literal["cn", "global"] = "cn"
     data_transfer_consent: bool = False
+    # 国内版注册来源题（可跳过）：只认九个枚举代码，其余在服务端丢掉；不进账号表
+    signup_source: Optional[str] = Field(None, max_length=32)
 
     @model_validator(mode="after")
     def require_global_data_transfer_consent(self):
