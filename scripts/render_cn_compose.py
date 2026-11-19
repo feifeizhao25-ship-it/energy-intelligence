@@ -84,6 +84,8 @@ def domestic_config(source):
     web['NENGJIAN_INTERNAL_TOKEN'] = '${NENGJIAN_INTERNAL_TOKEN:-}'
     web['NENGJIAN_PUBLIC_ORIGIN'] = '${NENGJIAN_PUBLIC_ORIGIN:-}'
     web['NENGJIAN_ACCOUNT_EMAIL_DOMAIN'] = '${NENGJIAN_ACCOUNT_EMAIL_DOMAIN:-account.internal}'
+    # 全站只读周漏斗 GET /api/growth/funnel/weekly 的令牌；默认空 = 入口关闭。单独生成，不复用其他口令。
+    web['ENERGY_FUNNEL_READONLY_TOKEN'] = '${ENERGY_FUNNEL_READONLY_TOKEN:-}'
     web['CRAWLER_CONTACT_EMAIL'] = '${CRAWLER_CONTACT_EMAIL:?CRAWLER_CONTACT_EMAIL is required}'
     for key in ('TIANDITU_KEY', 'GAODE_MAP_KEY', 'MAP_TILE_PROVIDER'):
         web[key] = '${%s:-}' % key

@@ -8,6 +8,10 @@ import subprocess
 import yaml
 from render_cn_compose import ROOT, domestic_config
 
+def backend_env_text(cn):
+    return str({name: svc.get('environment') for name, svc in cn['services'].items() if name != 'web-cn'})
+
+
 class DomesticComposeTests(unittest.TestCase):
     def setUp(self):
         self.source = yaml.safe_load((ROOT / 'runtime/docker-compose.production.yml').read_text())
@@ -53,6 +57,8 @@ class DomesticComposeTests(unittest.TestCase):
         self.assertNotIn('OPENWEATHERMAP_API_KEY', web)
         self.assertEqual(web['APP_EDITION'], 'cn')
         self.assertIn('NENGJIAN_INTERNAL_TOKEN', web)
+        self.assertEqual(web['ENERGY_FUNNEL_READONLY_TOKEN'], '${ENERGY_FUNNEL_READONLY_TOKEN:-}')
+        self.assertNotIn('ENERGY_FUNNEL_READONLY_TOKEN', backend_env_text(self.cn))
         backend = self.cn['services']['backend']['environment']
         for key in ('NENGJIAN_WECOM_CORP_ID', 'NENGJIAN_WECOM_AGENT_ID', 'NENGJIAN_WECOM_SECRET',
                     'NENGJIAN_GEO_QWEN_API_KEY', 'NENGJIAN_BAIDU_PUSH_TOKEN', 'NENGJIAN_RERANK_URL',
@@ -82,6 +88,7 @@ class DomesticComposeTests(unittest.TestCase):
         self.assertEqual(set(self.cn['volumes']), set(self.source['volumes']) | {'nengjian_shared'})
         example = (ROOT / 'runtime/.env.production.example').read_text()
         self.assertIn('NENGJIAN_INTERNAL_TOKEN', example)
+        self.assertIn('ENERGY_FUNNEL_READONLY_TOKEN=\n', example)
 
     def test_actual_compose_config_without_international_variables(self):
         executable = shutil.which('docker-compose')
