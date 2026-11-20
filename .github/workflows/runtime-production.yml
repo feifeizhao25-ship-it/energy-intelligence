@@ -59,6 +59,9 @@ jobs:
       contents: read
       packages: write
     strategy:
+      # 三个镜像互相独立: 关掉 fail-fast, 避免一个镜像 (如国际版 web-int) 构建失败时
+      # 把国内版 energy-web-cn 和 energy-api 的发布一并取消。失败的那一个仍然会让本次运行标红。
+      fail-fast: false
       matrix:
         include:
           - context: runtime/backend
