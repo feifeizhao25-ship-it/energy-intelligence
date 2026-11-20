@@ -43,9 +43,8 @@ def test_in_corpus_questions_keep_their_source(question, needle):
 
 def test_query_naming_a_registered_document_is_not_cut_by_coverage():
     # “136号文”点名了库里的文件；问句里“替代”“换掉”这类语料外措辞不该把相关通知挤掉。
-    svc = aa._RAG_SERVICE
-    with_floor = {h.source_id for h in svc.search("绿电直连通知和136号文是什么关系，是替代吗？", top_k=8, market="cn", exclude_stale=False).hits}
-    assert with_floor
+    hits = aa._retrieve("绿电直连通知和136号文是什么关系，是替代吗？", "cn")
+    assert hits
 
 
 def test_weighted_coverage_counts_rare_words_more():
@@ -77,4 +76,3 @@ async def test_ask_without_a_model_says_not_collected(client, auth_headers, monk
     body = r.json()
     assert body["sources"] == []
     assert any(word in body["answer"] for word in ("未收录", "没有", "暂无", "无法"))
-
