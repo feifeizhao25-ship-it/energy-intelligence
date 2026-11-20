@@ -9,6 +9,7 @@ global 市场只返回英文文档（禁止未翻译中文泄漏到国际版）�
 
 from __future__ import annotations
 
+import math
 import os
 import re
 from dataclasses import dataclass, field
@@ -287,6 +288,50 @@ def min_relevance() -> float:
     return value
 
 
+# 词面重合只数共同的字和双字，“光伏”“电站”“成本”这类人人都有的词也算一分，
+# 于是“2031 年火星光伏电站的度电成本”能和不相干的通知凑到 0.48。这里再按全库文档频率加权：
+# 语料里从没出现过的词（火星、月球、烤鸭）权重最大，问句的主题词一个都对不上时，加权覆盖率就很低。
+# 0.36 用 data/eval 下黄金集、留出集和 out_of_corpus_v1.jsonl 调出：不丢任何原来能命中的来源。
+# 问句点名了库里任何一份文件（标准号、文号或“136号文”这类简称）时不受这条限制：它问的就是库里的东西，
+# 只是常带“替代”“落款”这类语料外的措辞。可用 RAG_MIN_COVERAGE 覆盖（0 到 1）。
+DEFAULT_MIN_COVERAGE = 0.36
+# 文档频率要有一定规模的库才有意义；测试里注入的两三条样本不做这项检查。RAG_MIN_RELEVANCE=0 时也一并关闭。
+MIN_DOCS_FOR_COVERAGE = 50
+
+
+def min_coverage() -> float:
+    raw = os.environ.get("RAG_MIN_COVERAGE", "").strip()
+    if not raw:
+        return DEFAULT_MIN_COVERAGE
+    try:
+        value = float(raw)
+    except ValueError:
+        return DEFAULT_MIN_COVERAGE
+    if value < 0 or value > 1:
+        return DEFAULT_MIN_COVERAGE
+    return value
+
+
+def _doc_text(doc: Dict) -> str:
+    return " ".join(str(doc.get(k) or "") for k in ("title", "content", "version", "locator"))
+
+
+def weighted_coverage(query_tokens: set, doc_tokens: set, df: Dict[str, int], n_docs: int) -> float:
+    """问句词按全库逆文档频率加权后，被这条来源覆盖的比例（0 到 1）。"""
+    if not query_tokens:
+        return 0.0
+    total = 0.0
+    got = 0.0
+    for token in query_tokens:
+        weight = math.log((n_docs + 1) / (df.get(token, 0) + 0.5))
+        if weight <= 0:
+            continue
+        total += weight
+        if token in doc_tokens:
+            got += weight
+    return got / total if total else 1.0
+
+
 def _standard_stems(text: str) -> set:
     """标准号词干：GB 50797-2012 与 GB 50797 都是 GB50797。年份和分部分号不参与比较。"""
     stems = set()
@@ -339,6 +384,18 @@ class RAGService:
             self._registry = registry or SourceRegistry.from_file()
             self._corpus = self._registry.sources
 
+    def _document_frequency(self):
+        """全库（不分市场、不分新旧）每个词出现在几条来源里。只算一次。"""
+        cached = self.__dict__.get("_df_cache")
+        if cached is None or cached[1] != len(self._corpus):
+            df: Dict[str, int] = {}
+            for doc in self._corpus:
+                for token in tokenize(_doc_text(doc)):
+                    df[token] = df.get(token, 0) + 1
+            cached = (df, len(self._corpus))
+            self.__dict__["_df_cache"] = cached
+        return cached
+
     def search(self, query: str, top_k: int = 5, market: str = "cn",
                exclude_stale: bool = True, effective_only: bool = True,
                include_stale: bool = False) -> RAGResult:
@@ -357,6 +414,8 @@ class RAGService:
         today = date.today()
         retrieved_at = today.isoformat()
 
+        coverage_floor = min_coverage() if len(self._corpus) >= MIN_DOCS_FOR_COVERAGE and min_relevance() > 0 else 0.0
+        names_registered = None  # 问句是否点名了库里任何一份文件（文号、标准号或简称）
         scored: List[RAGHit] = []
         for doc in self._corpus:
             if not _retrieval_gate(
@@ -368,9 +427,7 @@ class RAGService:
             freshness = self._freshness_of(doc, today)
             if exclude_stale and freshness == "stale":
                 continue
-            doc_tokens = tokenize(
-                " ".join(str(doc.get(k) or "") for k in ("title", "content", "version", "locator"))
-            )
+            doc_tokens = tokenize(_doc_text(doc))
             overlap = len(query_tokens & doc_tokens)
             score = overlap / max(len(query_tokens), 1)
             alias = alias_score(query, doc_tokens)
@@ -383,6 +440,14 @@ class RAGService:
                 continue  # one stray shared word ("work" in "Physical Work Test" vs "how does IRR work") is not a match
             if score <= 0 or score < min_relevance():
                 continue
+            if numbered < 0.85 and coverage_floor > 0:
+                df, n_docs = self._document_frequency()
+                if weighted_coverage(query_tokens, doc_tokens, df, n_docs) < coverage_floor:
+                    if names_registered is None:
+                        owners = _serial_owners(self._corpus)
+                        names_registered = any(name_in_query(query, other, owners) for other in self._corpus)
+                    if not names_registered:
+                        continue  # 问句的主题词这条来源一个都没有，只是“光伏”“成本”这类通用词撞上
             hit = RAGHit(
                 source_id=doc["source_id"],
                 title=doc["title"],
