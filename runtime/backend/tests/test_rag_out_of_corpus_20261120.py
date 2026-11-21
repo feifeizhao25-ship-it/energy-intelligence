@@ -2,7 +2,7 @@
 
 词面重合只数共同的字和双字，“2031 年火星光伏电站的度电成本是多少？”能和《电力重大事故隐患判定标准》凑到 0.48，
 过了 0.35 的下限。现在再按全库文档频率加权算覆盖率：语料里从没出现过的“火星”权重最大，对不上就不算命中。
-阈值 0.36 用 data/eval 下的黄金集、留出集和 out_of_corpus_v1.jsonl 调出。
+阈值见 rag_service.DEFAULT_MIN_COVERAGE（2026-11-21 起中文问句 0.42、不含中文的问句仍 0.36，问句虚词不参与加权）。
 """
 
 import json
@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 
 from app.api.v1 import ai_assistant as aa
-from app.services.rag_service import min_coverage, weighted_coverage
+from app.services.rag_service import DEFAULT_MIN_COVERAGE, min_coverage, weighted_coverage
 
 ROOT = Path(__file__).resolve().parents[1]
 MARS = "2031 年火星光伏电站的度电成本是多少？"
@@ -49,7 +49,7 @@ def test_query_naming_a_registered_document_is_not_cut_by_coverage():
 
 def test_weighted_coverage_counts_rare_words_more():
     df = {"光伏": 9, "电站": 9, "火星": 0}
-    assert weighted_coverage({"光伏", "电站", "火星"}, {"光伏", "电站"}, df, 10) < 0.36
+    assert weighted_coverage({"光伏", "电站", "火星"}, {"光伏", "电站"}, df, 10) < DEFAULT_MIN_COVERAGE
     assert weighted_coverage({"光伏", "电站"}, {"光伏", "电站"}, df, 10) == 1.0
     assert weighted_coverage(set(), {"光伏"}, df, 10) == 0.0
 
@@ -58,9 +58,9 @@ def test_coverage_floor_env_override(monkeypatch):
     monkeypatch.setenv("RAG_MIN_COVERAGE", "0")
     assert min_coverage() == 0
     monkeypatch.setenv("RAG_MIN_COVERAGE", "2")
-    assert min_coverage() == 0.36
+    assert min_coverage() == DEFAULT_MIN_COVERAGE
     monkeypatch.setenv("RAG_MIN_COVERAGE", "x")
-    assert min_coverage() == 0.36
+    assert min_coverage() == DEFAULT_MIN_COVERAGE
 
 
 def test_floor_off_brings_back_the_old_behaviour(monkeypatch):
@@ -76,3 +76,37 @@ async def test_ask_without_a_model_says_not_collected(client, auth_headers, monk
     body = r.json()
     assert body["sources"] == []
     assert any(word in body["answer"] for word in ("未收录", "没有", "暂无", "无法"))
+
+
+REALISTIC = [
+    json.loads(line)
+    for line in (ROOT / "data" / "eval" / "chat_realistic_v1.jsonl").read_text(encoding="utf-8").splitlines()
+    if line.strip()
+]
+
+
+@pytest.mark.parametrize("row", [r for r in REALISTIC if r["kind"] == "unrelated"], ids=lambda r: r["id"])
+def test_unrelated_everyday_questions_have_no_sources(row):
+    assert aa._retrieve(row["question"], "cn") == []
+
+
+def test_question_words_do_not_count_against_coverage():
+    df = {"容量": 3, "电价": 9, "么定": 0, "是怎": 0, "怎么": 0}
+    query = {"容量", "电价", "么定", "是怎", "怎么"}
+    assert weighted_coverage(query, {"容量", "电价"}, df, 100) == 1.0
+
+
+def test_non_cjk_questions_keep_the_old_floor(monkeypatch):
+    monkeypatch.delenv("RAG_MIN_COVERAGE", raising=False)
+    from app.services.rag_service import DEFAULT_MIN_COVERAGE_NON_CJK
+    assert min_coverage("solar grid interconnection tax incentive United States") == DEFAULT_MIN_COVERAGE_NON_CJK == 0.36
+    assert min_coverage("风电政策") == DEFAULT_MIN_COVERAGE
+    monkeypatch.setenv("RAG_MIN_COVERAGE", "0.5")
+    assert min_coverage("solar tax credit") == 0.5  # 显式设置时中英文一律用它
+
+
+@pytest.mark.parametrize("query", ["风电政策", "储能政策", "光伏补贴政策", "分布式光伏政策"])
+def test_short_topic_questions_still_have_sources(monkeypatch, query):
+    # 0.45 时“风电政策”会被挡掉（跨词双字“电政”文档频率低、权重大）；0.42 保住这类短主题问法。
+    monkeypatch.delenv("RAG_MIN_COVERAGE", raising=False)
+    assert aa._retrieve(query, "cn")
