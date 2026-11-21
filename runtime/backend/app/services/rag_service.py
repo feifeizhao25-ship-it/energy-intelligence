@@ -291,29 +291,43 @@ def min_relevance() -> float:
 # 词面重合只数共同的字和双字，“光伏”“电站”“成本”这类人人都有的词也算一分，
 # 于是“2031 年火星光伏电站的度电成本”能和不相干的通知凑到 0.48。这里再按全库文档频率加权：
 # 语料里从没出现过的词（火星、月球、烤鸭）权重最大，问句的主题词一个都对不上时，加权覆盖率就很低。
-# 0.36 用 data/eval 下黄金集、留出集和 out_of_corpus_v1.jsonl 调出：不丢任何原来能命中的来源。
+# 问法里的虚词（“怎么”“是多少”“现在是怎么定的”拆出来的“么定”“是怎”）在政策原文里几乎不出现，按文档频率算权重最大，
+# 会把真实用户的口语问法挤掉；含这些字的中文词不参与加权（_QUESTION_CHARS）。
+# 0.42 用 data/eval 下黄金集、留出集、out_of_corpus_v1.jsonl 和 2026-11-21 补的 chat_realistic_v1（库内 70 / 近领域库外 30 / 无关 20）调出。
 # 问句点名了库里任何一份文件（标准号、文号或“136号文”这类简称）时不受这条限制：它问的就是库里的东西，
 # 只是常带“替代”“落款”这类语料外的措辞。可用 RAG_MIN_COVERAGE 覆盖（0 到 1）。
-DEFAULT_MIN_COVERAGE = 0.36
+DEFAULT_MIN_COVERAGE = 0.42
+# 不含中文的问句（国际版英文问法）维持原来的 0.36：0.42 会挡掉 "solar grid interconnection tax incentive United States" 这类库内英文问法。
+DEFAULT_MIN_COVERAGE_NON_CJK = 0.36
+_QUESTION_CHARS = frozenset("的吗呢么怎什哪吧啊呀嘛了请问我你是多少几些样")
 # 文档频率要有一定规模的库才有意义；测试里注入的两三条样本不做这项检查。RAG_MIN_RELEVANCE=0 时也一并关闭。
 MIN_DOCS_FOR_COVERAGE = 50
 
 
-def min_coverage() -> float:
+def min_coverage(query: str | None = None) -> float:
+    """加权覆盖率下限。设了 RAG_MIN_COVERAGE 就一律用它；否则中文问句 0.42，不含中文的问句 0.36。"""
+    default = DEFAULT_MIN_COVERAGE
+    if query is not None and not re.search(r"[\u4e00-\u9fff]", query):
+        default = DEFAULT_MIN_COVERAGE_NON_CJK
     raw = os.environ.get("RAG_MIN_COVERAGE", "").strip()
     if not raw:
-        return DEFAULT_MIN_COVERAGE
+        return default
     try:
         value = float(raw)
     except ValueError:
-        return DEFAULT_MIN_COVERAGE
+        return default
     if value < 0 or value > 1:
-        return DEFAULT_MIN_COVERAGE
+        return default
     return value
 
 
 def _doc_text(doc: Dict) -> str:
     return " ".join(str(doc.get(k) or "") for k in ("title", "content", "version", "locator"))
+
+
+def _is_question_word(token: str) -> bool:
+    """含问句虚词的中文字/双字（怎、么、多少、是怎……）。英文、数字不算。"""
+    return bool(token) and all("\u4e00" <= c <= "\u9fff" for c in token) and any(c in _QUESTION_CHARS for c in token)
 
 
 def weighted_coverage(query_tokens: set, doc_tokens: set, df: Dict[str, int], n_docs: int) -> float:
@@ -323,6 +337,8 @@ def weighted_coverage(query_tokens: set, doc_tokens: set, df: Dict[str, int], n_
     total = 0.0
     got = 0.0
     for token in query_tokens:
+        if _is_question_word(token):
+            continue
         weight = math.log((n_docs + 1) / (df.get(token, 0) + 0.5))
         if weight <= 0:
             continue
@@ -414,7 +430,7 @@ class RAGService:
         today = date.today()
         retrieved_at = today.isoformat()
 
-        coverage_floor = min_coverage() if len(self._corpus) >= MIN_DOCS_FOR_COVERAGE and min_relevance() > 0 else 0.0
+        coverage_floor = min_coverage(query) if len(self._corpus) >= MIN_DOCS_FOR_COVERAGE and min_relevance() > 0 else 0.0
         names_registered = None  # 问句是否点名了库里任何一份文件（文号、标准号或简称）
         scored: List[RAGHit] = []
         for doc in self._corpus:
