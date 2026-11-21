@@ -44,12 +44,6 @@ jobs:
             NEXT_PUBLIC_API_URL=/api/backend
           cache-from: type=gha
           cache-to: type=gha,mode=max
-      - name: Scan .next/static (file names only)
-        run: |
-          cid=$(docker create "$IMAGE")
-          docker cp "$cid:/app/.next/static" ./_next_static
-          docker rm "$cid" >/dev/null
-          bash .github/scripts/scan-next-static.sh ./_next_static
       - name: Smoke test the container
         run: |
           # 只用于这次运行的临时数据库：密码每次随机生成，不写进仓库。
@@ -83,6 +77,12 @@ jobs:
               exit 1
             fi
           done
+      - name: Scan .next/static (file names only)
+        run: |
+          cid=$(docker create "$IMAGE")
+          docker cp "$cid:/app/.next/static" ./_next_static
+          docker rm "$cid" >/dev/null
+          bash .github/scripts/scan-next-static.sh ./_next_static
       - name: Clean up
         if: always()
         run: docker rm -f web pg >/dev/null 2>&1 || true
