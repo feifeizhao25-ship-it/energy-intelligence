@@ -46,9 +46,11 @@ jobs:
           cache-to: type=gha,mode=max
       - name: Smoke test the container
         run: |
-          # 只用于这次运行的临时数据库：密码每次随机生成，不写进仓库。
+          # 只用于这次运行的临时数据库和 NextAuth 密钥：每次随机生成，不写进仓库。短信、支付等生产变量不传，冒烟页面用不到。
           pg_pw=$(openssl rand -hex 16)
+          auth_secret=$(openssl rand -hex 32)
           echo "::add-mask::$pg_pw"
+          echo "::add-mask::$auth_secret"
           db_url="postgresql://energy:${pg_pw}@pg:5432/energy_web"
           docker network create webci
           docker run -d --name pg --network webci \
@@ -57,6 +59,7 @@ jobs:
           for i in $(seq 1 30); do docker exec pg pg_isready -U energy -d energy_web && break; sleep 2; done
           docker run -d --name web --network webci -p 3000:3000 \
             -e DATABASE_URL="$db_url" -e DIRECT_URL="$db_url" \
+            -e NEXTAUTH_URL=http://127.0.0.1:3000 -e NEXTAUTH_SECRET="$auth_secret" \
             "$IMAGE"
           ok=0
           for i in $(seq 1 45); do
