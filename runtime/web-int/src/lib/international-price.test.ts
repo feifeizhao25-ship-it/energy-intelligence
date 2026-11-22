@@ -95,8 +95,13 @@ test('the free plan stays free and the domestic checkout stays in yuan', () => {
   assert.equal(checkout.includes('¥${amount}'), true);
 });
 
-test('the bundled web-int registry snapshot is byte-identical to the backend registry', () => {
-  const source = readFileSync(join(ROOT, 'runtime/backend/data/entitlements.json'));
-  const snapshot = readFileSync(join(ROOT, 'runtime/web-int/src/lib/entitlements-registry.json'));
-  assert.deepEqual(snapshot, source);
+test('the bundled web-int registry snapshot keeps only price fields and matches the backend prices', () => {
+  const source = JSON.parse(readFileSync(join(ROOT, 'runtime/backend/data/entitlements.json'), 'utf8'));
+  const snapshot = JSON.parse(readFileSync(join(ROOT, 'runtime/web-int/src/lib/entitlements-registry.json'), 'utf8'));
+  assert.equal(/[\u4e00-\u9fff]/.test(JSON.stringify(snapshot)), false);
+  const expected = { tiers: {} };
+  for (const [id, tier] of Object.entries(source.tiers || {})) {
+    expected.tiers[id] = { price: tier.price };
+  }
+  assert.deepEqual(snapshot, expected);
 });
