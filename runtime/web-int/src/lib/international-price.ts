@@ -3,9 +3,7 @@
  * A number is shown only when it was read from a configured Stripe Price in USD,
  * or from a USD amount on the registry. CNY figures are never displayed.
  */
-import { readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import registrySnapshot from './entitlements-registry.json' with { type: 'json' };
 
 export const PRICE_UNAVAILABLE = 'price unavailable';
 
@@ -29,7 +27,6 @@ const STRIPE_PRICE_ENV: Record<string, string> = {
   enterprise: 'STRIPE_ENTERPRISE_PRICE_ID',
 };
 
-const REGISTRY = join(dirname(fileURLToPath(import.meta.url)), '../../../backend/data/entitlements.json');
 
 export function formatUsdCents(cents: number): string {
   const text = new Intl.NumberFormat('en-US', {
@@ -69,7 +66,7 @@ export function internationalPriceLabel(input: {
 }
 
 export function registryPrice(planId: string): RegistryPrice | null {
-  const registry = JSON.parse(readFileSync(REGISTRY, 'utf8')) as {
+  const registry = registrySnapshot as {
     tiers?: Record<string, { price?: RegistryPrice }>;
   };
   return registry.tiers?.[planId]?.price ?? null;

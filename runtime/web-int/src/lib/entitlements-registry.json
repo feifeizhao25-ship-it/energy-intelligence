@@ -1,0 +1,525 @@
+{
+  "product": "新能源智库",
+  "version": "2.0.0",
+  "updated_at": "2026-10-27",
+  "tier_order": [
+    "free",
+    "pro",
+    "full",
+    "team",
+    "enterprise"
+  ],
+  "tiers": {
+    "free": {
+      "name": "免费",
+      "name_en": "Evaluation",
+      "description": "体验、户用业主、学生",
+      "description_en": "Validate one project workflow before procurement.",
+      "price": {
+        "monthly_cny": 0,
+        "yearly_cny": 0
+      },
+      "quotas": {
+        "ai_queries_per_day": 5,
+        "resource_queries_per_day": 3,
+        "calculations_per_day": 3,
+        "max_projects": 1,
+        "report_exports_per_month": 3,
+        "api_calls_per_month": 0,
+        "dataset_downloads_per_month": 3
+      },
+      "knowledge": {
+        "data_sources": [
+          "basic"
+        ],
+        "paper_search_per_day": 3,
+        "citation_tools": false
+      },
+      "personalization": {
+        "custom_dashboard": false,
+        "saved_preferences": false,
+        "recommendation_reasons": true
+      },
+      "export": {
+        "formats": [
+          "pdf"
+        ],
+        "citation_export": false
+      },
+      "collaboration": {
+        "team_seats": 1,
+        "shared_projects": false
+      },
+      "service": {
+        "support_level": "community",
+        "data_retention_days": 7
+      },
+      "features_zh": [
+        "每日 5 次 AI 对话",
+        "每日 3 次资源查询与测算",
+        "最多 1 个项目",
+        "PDF 导出 3 份/月（带水印）",
+        "数据保留 7 天",
+        "每日一数",
+        "数据集下载 3 次/月"
+      ],
+      "features_en": [
+        "5 AI interactions per day",
+        "3 resource queries and calculations per day",
+        "1 active project",
+        "3 watermarked PDF exports per month",
+        "7-day data retention",
+        "Daily data card",
+        "3 dataset downloads per month"
+      ],
+      "purchasable": false,
+      "billing_periods": [
+        "yearly"
+      ],
+      "capabilities": {
+        "policy_alerts": "none",
+        "daily_number": true,
+        "excel_export": false,
+        "ppt_export": false,
+        "quarterly_brief": false,
+        "tiered_api": false
+      }
+    },
+    "pro": {
+      "name": "标准·数据库订阅",
+      "name_en": "Professional",
+      "description": "个人从业者、业主、分析师",
+      "description_en": "For analysts developing reviewable calculation cases.",
+      "price": {
+        "monthly_cny": 0,
+        "yearly_cny": 1980
+      },
+      "quotas": {
+        "ai_queries_per_day": 100,
+        "resource_queries_per_day": -1,
+        "calculations_per_day": -1,
+        "max_projects": 30,
+        "report_exports_per_month": 30,
+        "diagnoses_per_day": 3,
+        "max_stations": 0,
+        "api_calls_per_month": 0,
+        "dataset_downloads_per_month": -1
+      },
+      "knowledge": {
+        "data_sources": [
+          "basic",
+          "premium_weather",
+          "grid_tariff"
+        ],
+        "paper_search_per_day": -1,
+        "citation_tools": true
+      },
+      "personalization": {
+        "custom_dashboard": true,
+        "saved_preferences": true,
+        "recommendation_reasons": true
+      },
+      "export": {
+        "formats": [
+          "pdf",
+          "docx"
+        ],
+        "citation_export": true
+      },
+      "collaboration": {
+        "team_seats": 1,
+        "shared_projects": false
+      },
+      "service": {
+        "support_level": "email",
+        "data_retention_days": 365
+      },
+      "features_zh": [
+        "每日 100 次 AI 对话",
+        "资源查询与测算不限次（公平使用）",
+        "最多 30 个项目",
+        "PDF 与 Word 报告导出 30 份/月",
+        "文献检索与引用导出",
+        "数据保留 1 年",
+        "数据集下载不限次（公平使用）",
+        "按省份与主题订阅政策提醒",
+        "每日一数",
+        "1 个席位",
+        "政策历史版本与变更记录",
+        "引用一键复制（GB/T 7714）"
+      ],
+      "features_en": [
+        "100 AI interactions per day",
+        "Unlimited resource queries and calculations (fair use)",
+        "Up to 30 projects",
+        "30 PDF and Word exports per month",
+        "Literature search and citation export",
+        "1-year data retention",
+        "Dataset downloads under fair use",
+        "Policy alerts by province and topic",
+        "Daily data card",
+        "1 seat",
+        "Policy version history",
+        "Copy a GB/T 7714 citation"
+      ],
+      "purchasable": true,
+      "billing_periods": [
+        "yearly"
+      ],
+      "capabilities": {
+        "policy_alerts": "province_topic",
+        "daily_number": true,
+        "excel_export": false,
+        "ppt_export": false,
+        "quarterly_brief": false,
+        "tiered_api": false
+      }
+    },
+    "full": {
+      "name": "专业",
+      "name_en": "Expert",
+      "description": "资深分析师、运维经理、咨询顾问，3 个席位",
+      "description_en": "For senior analysts, O&M managers and consultants.",
+      "price": {
+        "monthly_cny": 0,
+        "yearly_cny": 5800
+      },
+      "quotas": {
+        "ai_queries_per_day": 300,
+        "resource_queries_per_day": -1,
+        "calculations_per_day": -1,
+        "max_projects": 200,
+        "report_exports_per_month": -1,
+        "diagnoses_per_day": -1,
+        "max_stations": 50,
+        "api_calls_per_month": 500,
+        "dataset_downloads_per_month": -1
+      },
+      "knowledge": {
+        "data_sources": [
+          "basic",
+          "premium_weather",
+          "grid_tariff"
+        ],
+        "paper_search_per_day": -1,
+        "citation_tools": true
+      },
+      "personalization": {
+        "custom_dashboard": true,
+        "saved_preferences": true,
+        "recommendation_reasons": true
+      },
+      "export": {
+        "formats": [
+          "pdf",
+          "docx",
+          "xlsx",
+          "pptx"
+        ],
+        "citation_export": true
+      },
+      "collaboration": {
+        "team_seats": 3,
+        "shared_projects": false
+      },
+      "service": {
+        "support_level": "priority",
+        "data_retention_days": 730
+      },
+      "features_zh": [
+        "标准档已实现的测算、报告与文献功能",
+        "每日 300 次 AI 对话",
+        "运维诊断、积灰与清洗分析，最多 50 个电站",
+        "最多 200 个项目",
+        "PDF 与 Word 导出不限份数",
+        "数据保留 2 年",
+        "3 个席位",
+        "Excel 与 PPT 报告导出",
+        "分级接口 500 次/月",
+        "按关键词与文号的政策提醒",
+        "口径咨询预约（人工审批，不自动通过）"
+      ],
+      "features_en": [
+        "Everything in Professional",
+        "300 AI interactions per day",
+        "O&M diagnosis and soiling analysis, up to 50 stations",
+        "Up to 200 projects",
+        "Unlimited PDF and Word exports",
+        "2-year data retention",
+        "3 seats",
+        "Excel and PowerPoint export",
+        "500 API calls per month",
+        "Policy alerts by keyword and document number",
+        "Book a method consultation"
+      ],
+      "purchasable": true,
+      "billing_periods": [
+        "yearly"
+      ],
+      "capabilities": {
+        "policy_alerts": "keyword_doc",
+        "daily_number": true,
+        "excel_export": true,
+        "ppt_export": true,
+        "quarterly_brief": false,
+        "tiered_api": true
+      }
+    },
+    "team": {
+      "name": "团队",
+      "name_en": "Team",
+      "description": "10 人项目/咨询团队",
+      "description_en": "For a ten-person project or advisory team.",
+      "price": {
+        "monthly_cny": 0,
+        "yearly_cny": 16800
+      },
+      "quotas": {
+        "ai_queries_per_day": 1500,
+        "resource_queries_per_day": -1,
+        "calculations_per_day": -1,
+        "max_projects": 500,
+        "report_exports_per_month": -1,
+        "diagnoses_per_day": -1,
+        "max_stations": 100,
+        "api_calls_per_month": 5000,
+        "dataset_downloads_per_month": -1
+      },
+      "knowledge": {
+        "data_sources": [
+          "basic",
+          "premium_weather",
+          "grid_tariff"
+        ],
+        "paper_search_per_day": -1,
+        "citation_tools": true
+      },
+      "personalization": {
+        "custom_dashboard": true,
+        "saved_preferences": true,
+        "recommendation_reasons": true
+      },
+      "export": {
+        "formats": [
+          "pdf",
+          "docx",
+          "xlsx",
+          "pptx"
+        ],
+        "citation_export": true
+      },
+      "collaboration": {
+        "team_seats": 10,
+        "shared_projects": true
+      },
+      "service": {
+        "support_level": "priority",
+        "data_retention_days": 1095
+      },
+      "features_zh": [
+        "专业档已实现功能",
+        "10 个团队席位",
+        "团队共享 1,500 次/日 AI 对话",
+        "最多 500 个共享项目",
+        "数据保留 3 年",
+        "分级接口 5,000 次/月",
+        "季度简报",
+        "Excel 与 PPT 报告导出",
+        "勘误优先通道（时限待人工确认）"
+      ],
+      "features_en": [
+        "Everything in Expert",
+        "10 team seats",
+        "1,500 shared AI interactions per day",
+        "Up to 500 shared projects",
+        "3-year data retention",
+        "5,000 API calls per month",
+        "Quarterly brief",
+        "Excel and PowerPoint export",
+        "Priority errata channel"
+      ],
+      "purchasable": true,
+      "billing_periods": [
+        "yearly"
+      ],
+      "capabilities": {
+        "policy_alerts": "keyword_doc",
+        "daily_number": true,
+        "excel_export": true,
+        "ppt_export": true,
+        "quarterly_brief": true,
+        "tiered_api": true
+      }
+    },
+    "enterprise": {
+      "name": "上限档",
+      "name_en": "Enterprise",
+      "description": "集团、机构、设计院；含 10 个席位，合同可增加",
+      "description_en": "For governed integrations and multi-team rollouts.",
+      "price": {
+        "monthly_cny": 0,
+        "yearly_cny": 33000
+      },
+      "quotas": {
+        "ai_queries_per_day": -1,
+        "resource_queries_per_day": -1,
+        "calculations_per_day": -1,
+        "max_projects": -1,
+        "report_exports_per_month": -1,
+        "diagnoses_per_day": -1,
+        "max_stations": -1,
+        "api_calls_per_month": -1,
+        "dataset_downloads_per_month": -1
+      },
+      "knowledge": {
+        "data_sources": [
+          "all"
+        ],
+        "paper_search_per_day": -1,
+        "citation_tools": true
+      },
+      "personalization": {
+        "custom_dashboard": true,
+        "saved_preferences": true,
+        "recommendation_reasons": true
+      },
+      "export": {
+        "formats": [
+          "pdf",
+          "docx",
+          "api",
+          "xlsx",
+          "pptx"
+        ],
+        "citation_export": true
+      },
+      "collaboration": {
+        "team_seats": 10,
+        "shared_projects": true,
+        "sso": false,
+        "white_label": false
+      },
+      "service": {
+        "support_level": "dedicated",
+        "data_retention_days": -1,
+        "private_deployment": true
+      },
+      "features_zh": [
+        "10 个席位，合同可增加",
+        "用量和项目数量按合同配置",
+        "分级接口按合同计量",
+        "Excel 与 PPT 报告导出",
+        "季度简报",
+        "私有化与定制需求评估"
+      ],
+      "features_en": [
+        "10 seats included, more by contract",
+        "Contract-defined scale and retention",
+        "API metering by contract",
+        "Excel and PowerPoint export",
+        "Quarterly brief",
+        "Private deployment assessment"
+      ],
+      "purchasable": true,
+      "billing_periods": [
+        "yearly"
+      ],
+      "capabilities": {
+        "policy_alerts": "keyword_doc",
+        "daily_number": true,
+        "excel_export": true,
+        "ppt_export": true,
+        "quarterly_brief": true,
+        "tiered_api": true
+      }
+    },
+    "maintenance": {
+      "name": "运维版",
+      "name_en": "Operations",
+      "description": "旧版方案（已停售，仅老用户续期内有效）",
+      "description_en": "For teams reviewing real plant and maintenance data.",
+      "price": {
+        "monthly_cny": 0,
+        "yearly_cny": 2980
+      },
+      "quotas": {
+        "ai_queries_per_day": 100,
+        "resource_queries_per_day": -1,
+        "calculations_per_day": 10,
+        "max_projects": 10,
+        "report_exports_per_month": 50,
+        "diagnoses_per_day": -1,
+        "max_stations": 10,
+        "api_calls_per_month": 0,
+        "dataset_downloads_per_month": 3
+      },
+      "knowledge": {
+        "data_sources": [
+          "basic",
+          "premium_weather",
+          "grid_tariff"
+        ],
+        "paper_search_per_day": 10,
+        "citation_tools": true
+      },
+      "personalization": {
+        "custom_dashboard": true,
+        "saved_preferences": true,
+        "recommendation_reasons": true
+      },
+      "export": {
+        "formats": [
+          "pdf"
+        ],
+        "citation_export": true
+      },
+      "collaboration": {
+        "team_seats": 3,
+        "shared_projects": false
+      },
+      "service": {
+        "support_level": "email",
+        "data_retention_days": 365
+      },
+      "features_zh": [
+        "运维诊断与检修管理",
+        "最多 10 个电站",
+        "每日 100 次 AI 对话",
+        "PDF 报告导出"
+      ],
+      "features_en": [
+        "Maintenance diagnosis workflow",
+        "Up to 10 stations",
+        "100 AI interactions per day",
+        "PDF export"
+      ],
+      "legacy": true,
+      "purchasable": false,
+      "billing_periods": [
+        "yearly"
+      ],
+      "capabilities": {
+        "policy_alerts": "none",
+        "daily_number": true,
+        "excel_export": false,
+        "ppt_export": false,
+        "quarterly_brief": false,
+        "tiered_api": false
+      }
+    }
+  },
+  "legacy_tiers": [
+    "maintenance"
+  ],
+  "pricing_note": "五档年付(唯一在售计费周期): 免费 / ¥1,980 / ¥5,800 / ¥16,800 / ¥33,000（年付）。月付已停用, monthly_cny 一律 0, 不得据此下单。运维版(maintenance)已停售, 仅存量用户保留。席位按 0S2：标准 1、专业 3、团队 10、上限档 10（合同可增加）。专业及以上含 Excel 与 PPT 导出。白标与单点登录未提供。",
+  "sales_billing_period": "yearly",
+  "feature_flags": {
+    "daily_number": true,
+    "datasets": true,
+    "policy_alerts": true,
+    "tiered_api": true,
+    "excel_export": true,
+    "ppt_export": true,
+    "quarterly_brief": true
+  }
+}

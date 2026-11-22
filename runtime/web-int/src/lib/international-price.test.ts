@@ -94,3 +94,9 @@ test('the free plan stays free and the domestic checkout stays in yuan', () => {
   const checkout = readFileSync(join(ROOT, 'runtime/web/src/app/(dashboard)/checkout/checkout-client.tsx'), 'utf8');
   assert.equal(checkout.includes('¥${amount}'), true);
 });
+
+test('the bundled web-int registry snapshot is byte-identical to the backend registry', () => {
+  const source = readFileSync(join(ROOT, 'runtime/backend/data/entitlements.json'));
+  const snapshot = readFileSync(join(ROOT, 'runtime/web-int/src/lib/entitlements-registry.json'));
+  assert.deepEqual(snapshot, source);
+});

@@ -6,6 +6,8 @@ COPY packages ./packages
 COPY web-global/package.json ./web-global/package.json
 RUN pnpm install --frozen-lockfile --filter energy-intelligence-global...
 COPY web-global ./web-global
+# Billing prerender reads the shared registry; this file was absent from the builder.
+COPY runtime/backend/data/entitlements.json ./runtime/backend/data/entitlements.json
 ARG NEXT_PUBLIC_API_URL=/api
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
     NEXT_TELEMETRY_DISABLED=1
