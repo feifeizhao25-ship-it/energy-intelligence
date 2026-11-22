@@ -575,7 +575,17 @@ export async function executeTool(toolName: string, toolInput: Record<string, un
                 if (!context || context.length === 0) {
                     return '知识库中未找到相关内容。请确保已索引该文档。';
                 }
-                return context.map((c: any) => `[来自文档 ${c.metadata.documentId || '未知'}] ${c.content}`).join('\n\n');
+                // 编号 [S1]… 与来源列表一一对应：模型按编号引用，网页端从 sources 收集出处（证据卡片/导出）。
+                return {
+                    success: true,
+                    context: context.map((c: any, i: number) => `[S${i + 1}] ${c.metadata?.title || '未命名文档'}\n${c.content}`).join('\n\n'),
+                    sources: context.map((c: any, i: number) => ({
+                        ref: `S${i + 1}`,
+                        title: typeof c.metadata?.title === 'string' ? c.metadata.title : undefined,
+                        url: typeof c.metadata?.sourceUrl === 'string' ? c.metadata.sourceUrl : undefined,
+                        documentId: c.metadata?.documentId,
+                    })),
+                };
             }
 
             // ========== 编排器工具 ==========

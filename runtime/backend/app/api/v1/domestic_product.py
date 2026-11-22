@@ -7,7 +7,7 @@ from fastapi import APIRouter, Header, HTTPException
 from pydantic import BaseModel, Field
 
 from app.services.bottom_line import enforce_bottom_line, find_violations
-from app.services.domestic_router import complete_domestic
+from app.services.domestic_router import complete_domestic, complete_domestic_with_tools
 from app.services.embeddings_cn import embed_texts
 from app.services.feedback_samples import KINDS, record_sample
 
@@ -17,6 +17,9 @@ router = APIRouter()
 class DomesticChatIn(BaseModel):
     messages: list[dict] = Field(default_factory=list)
     model: str | None = None
+    # 网页端专业助手的工具定义（OpenAI function 格式）。有就原样交给模型，返回 tool_calls。
+    tools: list[dict] | None = None
+    tool_choice: str | dict | None = None
 
 
 class FeedbackIn(BaseModel):
@@ -73,11 +76,16 @@ async def domestic_chat(body: DomesticChatIn, x_internal_token: str | None = Hea
             "model": "blocked",
         }
     try:
-        result = await complete_domestic(body.messages, body.model)
+        if body.tools:
+            result = await complete_domestic_with_tools(body.messages, body.tools, body.tool_choice, body.model)
+        else:
+            result = await complete_domestic(body.messages, body.model)
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail="国内模型暂不可用") from exc
     if isinstance(result, dict):
-        result["content"] = enforce_bottom_line(str(result.get("content") or ""), market="cn")
+        content = str(result.get("content") or "")
+        # 只调工具、正文为空的一轮不过底线（空文本本来也不会命中）。
+        result["content"] = enforce_bottom_line(content, market="cn") if content else ""
     return result
 
 
