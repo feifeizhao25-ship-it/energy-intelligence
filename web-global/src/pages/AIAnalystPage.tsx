@@ -16,6 +16,7 @@ import { AnalystMic, AnalystSpeaker } from '../components/voice/AnalystVoice';
 import { Button, Card, cn } from '@energy-intelligence/ui-web';
 import GlobalShell from '../components/GlobalShell';
 import EmptyState from '../components/EmptyState';
+import { MarkdownRenderer } from '../components/ui/MarkdownRenderer';
 import {
   AnalystReply,
   AnalystSource,
@@ -200,7 +201,16 @@ const AIAnalystPage: React.FC = () => {
                       'bg-[var(--color-danger-bg)] text-[var(--color-danger)]',
                   )}
                 >
-                  <p className="whitespace-pre-wrap break-words">{message.text}</p>
+                  {message.role === 'assistant' ? (
+                    // The analyst answers in Markdown (**headings**, - lists); render it (sanitized) instead of
+                    // showing the marks. User and system lines stay plain text.
+                    <MarkdownRenderer
+                      content={message.text}
+                      className="analyst-answer break-words [&_p]:my-1.5 [&_ul]:my-1.5 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:my-1.5 [&_ol]:list-decimal [&_ol]:pl-5 [&_strong]:font-semibold"
+                    />
+                  ) : (
+                    <p className="whitespace-pre-wrap break-words">{message.text}</p>
+                  )}
                   {message.reply && <AnswerSources reply={message.reply} />}
                   {message.role !== 'user' && <AnalystSpeaker id={`bubble-${i}`} text={message.text} />}
                 </div>
