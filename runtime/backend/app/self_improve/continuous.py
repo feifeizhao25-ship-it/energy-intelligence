@@ -75,10 +75,14 @@ def _grams(s: str) -> set:
     return {s[i:i + 2] for i in range(len(s) - 1)}
 
 
+LIBRARY_ANSWER_MIN_COVERAGE = float(os.environ.get("LIBRARY_ANSWER_MIN_COVERAGE", "0.35"))
+
+
 def library_answer(question: str, entries: list[dict]) -> dict:
     """金标准的“资料库答案”：字二元组重合数的名次 + BM25（标题+标签加权 3 倍）的名次，用 RRF 融合后取第一名。
     原来只数字二元组重合，新增条目只要字面上多沾一点就会抢走别的题（2026-11-01 加入 IEA/CBAM 候选时被金标准发现）；
-    只用 BM25 又会在个别题上输给原来的办法（en-g-002），所以两路融合。"""
+    只用 BM25 又会在个别题上输给原来的办法（en-g-002），所以两路融合。
+    第一名和问题的字面重合比例低于 LIBRARY_ANSWER_MIN_COVERAGE 时返回空答案（不挂出处）。"""
     from .bm25 import BM25Index, POOL
 
     if not entries:
@@ -95,6 +99,12 @@ def library_answer(question: str, entries: list[dict]) -> dict:
     if not fused:
         return {"text": ""}
     best = entries[max(fused.items(), key=lambda kv: (kv[1], -kv[0]))[0]]
+    # 分数下限：第一名条目和问题的字二元组重合比例太低时不作答、不挂出处（库外题不该带来源）。
+    # 0.35 是 2026-11-23 用国内金标准 25 题、步骤6 补充题 13 道（作答题最低 0.40）和库外/拒答 36 题（最高 0.375）定的，见 PR 说明。
+    best_grams = _grams(best["title"] + " ".join(best.get("tags", []))) | _grams(best["summary"] + "".join(best["points"]))
+    coverage = len(qg & best_grams) / max(1, len(qg))
+    if coverage < LIBRARY_ANSWER_MIN_COVERAGE:
+        return {"text": "", "below_floor": True, "coverage": round(coverage, 4)}
     return {"text": "\n".join([best["title"], best["summary"], *best["points"], best.get("plain_tip", ""), best.get("caution", "")]), "citations": [best["source"]["url"]]}
 
 
