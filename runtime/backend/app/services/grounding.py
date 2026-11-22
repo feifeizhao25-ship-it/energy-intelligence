@@ -59,8 +59,51 @@ def is_policy_question(query: str) -> bool:
     return bool(_POLICY_EN.search(query or "") or _POLICY_ZH.search(query or ""))
 
 
-def no_source_reply(market: str) -> str:
-    return NO_SOURCE["global" if market == "global" else "cn"]
+# 2026-11-21 test: a German user asking about the EEG feed-in tariff was told to try "IRS Notice 2025-42".
+# The example in the global no-source reply now follows the jurisdiction the question names, else the
+# user's profile country, else none. Examples are names of real instruments and official publishers only;
+# they are a hint for rephrasing, not a claim that the library holds them.
+_JURISDICTION_PATTERNS = [
+    ("DE", re.compile(r"\b(eeg|germany|german|deutschland|bundesnetzagentur|bnetza|einspeiseverg\w*|marktstammdatenregister|kfw)\b", re.I)),
+    ("GB", re.compile(r"\b(uk|united kingdom|britain|british|england|scotland|wales|ofgem|smart export guarantee|seg|desnz)\b", re.I)),
+    ("AU", re.compile(r"\b(australia|australian|clean energy regulator|stcs?|aemo|nsw|victoria|queensland)\b", re.I)),
+    ("EU", re.compile(r"\b(eu|european union|european commission|red iii|renewable energy directive)\b", re.I)),
+    ("US", re.compile(r"\b(irs|treasury|ira|inflation reduction act|obbba?|48e|45y|itc|ptc|ferc|united states|u\.s\.|usa|federal)\b", re.I)),
+]
+_COUNTRY_ALIASES = {
+    "us": "US", "usa": "US", "united states": "US", "united states of america": "US",
+    "de": "DE", "germany": "DE", "deutschland": "DE",
+    "gb": "GB", "uk": "GB", "united kingdom": "GB", "great britain": "GB", "england": "GB",
+    "au": "AU", "australia": "AU",
+}
+_EXAMPLE_HINT = {
+    "US": 'Try naming the law, section or notice (for example "IRS Notice 2025-42" or "Section 48E"), or check the IRS or Treasury directly.',
+    "DE": 'Try naming the law and section (for example "EEG 2023, § 48" for the solar feed-in tariff), or check the Bundesnetzagentur or gesetze-im-internet.de directly.',
+    "GB": 'Try naming the scheme (for example "Smart Export Guarantee"), or check Ofgem or GOV.UK directly.',
+    "AU": 'Try naming the scheme (for example "Small-scale Renewable Energy Scheme"), or check the Clean Energy Regulator directly.',
+    "EU": 'Try naming the act (for example "Directive (EU) 2023/2413"), or check EUR-Lex directly.',
+    None: "Try naming the law or notice and the country it applies to, or check the official publisher directly.",
+}
+
+
+def jurisdiction_of(query: str, user_country: Optional[str] = None) -> Optional[str]:
+    """The jurisdiction a question is about: what the question names first, then the user's country."""
+    q = query or ""
+    for code, pattern in _JURISDICTION_PATTERNS:
+        if pattern.search(q):
+            return code
+    return _COUNTRY_ALIASES.get((user_country or "").strip().lower())
+
+
+def no_source_reply(market: str, query: str = "", user_country: Optional[str] = None) -> str:
+    if market != "global":
+        return NO_SOURCE["cn"]
+    hint = _EXAMPLE_HINT[jurisdiction_of(query, user_country)]
+    return (
+        "Status: No source in our library matches this question, so I can't give a factual answer on it.\n\n"
+        "Policy, tax and legal questions are answered only from documents in the source library, with a link and a date. "
+        f"{hint} I won't guess at what a law or credit says."
+    )
 
 
 def background_status(market: str) -> str:
