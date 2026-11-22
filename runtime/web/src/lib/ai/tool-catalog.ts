@@ -8,8 +8,9 @@
  * checks that subset against the executor switch in both directions.
  */
 
-/** Domestic edition never attaches tools. The backend chat call sends messages only. */
+/** 普通国内聊天不附带工具。专业助手单独允许查询站内、按用户隔离的知识库。 */
 export const CN_MODEL_TOOLS = [] as const;
+export const CN_ASSISTANT_TOOLS = ['query_knowledge_base'] as const;
 
 /** Non-CN SiliconFlow chat (qianwen.ts) offers the six handlers in tools.ts. */
 export const SILICONFLOW_CHAT_TOOLS = [
@@ -90,6 +91,6 @@ export type ToolSurface = 'chat' | 'assistant';
 
 /** Names actually placed on a model request for this market and caller. */
 export function modelToolNames(market: ToolMarket, surface: ToolSurface): readonly string[] {
-    if (market === 'cn') return CN_MODEL_TOOLS;
+    if (market === 'cn') return surface === 'assistant' ? CN_ASSISTANT_TOOLS : CN_MODEL_TOOLS;
     return surface === 'assistant' ? ASSISTANT_AGENT_TOOLS : SILICONFLOW_CHAT_TOOLS;
 }

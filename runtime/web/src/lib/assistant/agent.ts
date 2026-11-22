@@ -1,5 +1,6 @@
 import { Message } from "@/types";
 import { callAI, isCnEdition } from "@/lib/ai/router";
+import { stripLeakedModelTags } from "@/lib/ai/leaked-tags";
 import { modelToolNames } from "@/lib/ai/tool-catalog";
 import { assistantToolDefinitions, handleToolCall } from "./tools";
 
@@ -56,7 +57,7 @@ export async function* assistantChatStream(
 
         // 如果没有工具调用，说明是最终回答（或中间状态），直接返回并退出
         if (!message.tool_calls || message.tool_calls.length === 0) {
-            yield { type: 'text', data: message.content };
+            yield { type: 'text', data: stripLeakedModelTags(message.content || '') };
             return;
         }
 
@@ -72,6 +73,9 @@ export async function* assistantChatStream(
             yield { type: 'tool_call', data: { name: toolName, args: toolArgs } };
 
             try {
+                if (!modelToolNames(isCnEdition() ? 'cn' : 'global', 'assistant').includes(toolName)) {
+                    throw new Error('这个工具不在当前市场的助手目录里');
+                }
                 const result = await handleToolCall(toolName, toolArgs, userId);
 
                 // 发送结果给前端（可选，用于展示中间过程）

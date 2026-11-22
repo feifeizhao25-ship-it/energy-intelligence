@@ -264,3 +264,86 @@ async def complete_domestic(messages: list[dict], model: str | None = None, tran
             continue
     record_completion("unavailable", empty=True)
     return {"content": EMPTY_ANSWER, "provider": "domestic", "model": "unavailable"}
+
+
+# ── 带工具的对话（网页端专业助手）──────────────────────────────────────
+# 网页端 agent 会带 tools / tool_choice。原来这里只收 messages，工具定义被丢掉，模型只能在正文里
+# 「假装」调用工具（<ds_tool>…</ds_tool>），工具从不执行，回答也没有引用。
+# 有 tools 时：原样转给兼容接口，返回 tool_calls 让网页端执行工具，再带着工具结果来下一轮。
+
+TOOLS_MAX_TOKENS = 4096
+
+
+def _tool_calls_from(message) -> list[dict]:
+    raw = message.get("tool_calls") if isinstance(message, dict) else getattr(message, "tool_calls", None)
+    calls: list[dict] = []
+    for item in raw or []:
+        if not isinstance(item, dict):
+            item = item.model_dump() if hasattr(item, "model_dump") else dict(item)
+        function = item.get("function") or {}
+        name = function.get("name") if isinstance(function, dict) else None
+        if not name:
+            continue
+        arguments = function.get("arguments")
+        if not isinstance(arguments, str):
+            import json
+
+            arguments = json.dumps(arguments or {}, ensure_ascii=False)
+        calls.append({
+            "id": str(item.get("id") or f"call_{len(calls)}"),
+            "type": "function",
+            "function": {"name": str(name), "arguments": arguments},
+        })
+    return calls
+
+
+async def complete_domestic_with_tools(
+    messages: list[dict], tools: list[dict], tool_choice=None, model: str | None = None, transport=None,
+) -> dict:
+    """一轮带工具的国内模型调用：返回正文或 tool_calls（二者至少其一），失败则换下一家。"""
+    chain = provider_chain()
+    if not chain:
+        raise RuntimeError("CN AI provider is not configured")
+    if transport is None:
+        from openai import AsyncOpenAI
+
+        async def transport(base, key, use_model, payload, max_tokens, extra_body=None, tools=None, tool_choice=None):
+            client = AsyncOpenAI(api_key=key, base_url=base)
+            kwargs = {"model": use_model, "messages": payload, "temperature": 0.4, "max_tokens": max_tokens, "tools": tools}
+            if tool_choice is not None:
+                kwargs["tool_choice"] = tool_choice
+            if extra_body:
+                kwargs["extra_body"] = extra_body
+            response = await client.chat.completions.create(**kwargs)
+            choice = response.choices[0]
+            content, _reasoning = completion_text(getattr(choice, "message", None))
+            return {
+                "content": content,
+                "tool_calls": _tool_calls_from(getattr(choice, "message", None)),
+                "model": getattr(response, "model", None) or use_model,
+                "finish_reason": getattr(choice, "finish_reason", None) or "",
+            }
+
+    for name, base, key, default_model in chain:
+        use_model = model_for(name, model, default_model)
+        extra_body = dict(DEEPSEEK_EXTRA_BODY) if name == "deepseek" else None
+        try:
+            out = await transport(
+                base, key, use_model, messages, TOOLS_MAX_TOKENS,
+                extra_body=extra_body, tools=tools, tool_choice=tool_choice,
+            )
+        except Exception as exc:
+            logger.warning("domestic_provider_error provider=%s error=%s", name, exc.__class__.__name__)
+            continue
+        content = str((out or {}).get("content") or "").strip()
+        calls = _tool_calls_from({"tool_calls": (out or {}).get("tool_calls")})
+        reported = str((out or {}).get("model") or use_model)
+        if calls or content:
+            record_completion(reported, empty=False)
+            result = {"content": content, "provider": name, "model": reported, "finish_reason": (out or {}).get("finish_reason") or ""}
+            if calls:
+                result["tool_calls"] = calls
+            return result
+        log_empty_completion(name, reported, str((out or {}).get("finish_reason") or ""), 1, TOOLS_MAX_TOKENS)
+    record_completion("unavailable", empty=True)
+    return {"content": EMPTY_ANSWER, "provider": "domestic", "model": "unavailable"}

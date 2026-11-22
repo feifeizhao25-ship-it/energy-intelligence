@@ -5,6 +5,7 @@ import { assistantToolDefinitions } from '@/lib/assistant/tools';
 import {
     ASSISTANT_AGENT_TOOLS,
     CN_MODEL_TOOLS,
+    CN_ASSISTANT_TOOLS,
     INTERNAL_EXECUTOR_TOOLS,
     SILICONFLOW_CHAT_TOOLS,
     modelToolNames,
@@ -33,17 +34,18 @@ describe('工具名只有一份目录', () => {
         expect(declared.size).toBe(cases.length);
     });
 
-    it('tools.ts 与助手定义和目录一致，国内模型调用不附带工具', () => {
+    it('tools.ts 与助手定义和目录一致，国内普通聊天无工具、专业助手只查站内库', () => {
         expect(Object.values(AI_TOOLS).map((tool) => tool.name).sort()).toEqual([...SILICONFLOW_CHAT_TOOLS].sort());
         expect(assistantToolDefinitions.map((tool) => tool.function.name).sort()).toEqual([...ASSISTANT_AGENT_TOOLS].sort());
         expect(modelToolNames('cn', 'chat')).toEqual(CN_MODEL_TOOLS);
-        expect(modelToolNames('cn', 'assistant')).toEqual([]);
+        expect(modelToolNames('cn', 'assistant')).toEqual(CN_ASSISTANT_TOOLS);
+        expect(CN_ASSISTANT_TOOLS).toEqual(['query_knowledge_base']);
         expect(modelToolNames('global', 'chat')).toEqual(SILICONFLOW_CHAT_TOOLS);
         expect(modelToolNames('global', 'assistant')).toEqual(ASSISTANT_AGENT_TOOLS);
         expect(CN_MODEL_TOOLS).toHaveLength(0);
     });
 
-    it('国内聊天不把工具目录传给模型，国际聊天和助手按目录传递', () => {
+    it('国内普通聊天不带工具，专业助手和国际聊天按目录传递', () => {
         const qianwen = readFileSync(join(__dirname, 'qianwen.ts'), 'utf8');
         const agent = readFileSync(join(__dirname, '../assistant/agent.ts'), 'utf8');
         const router = readFileSync(join(__dirname, 'router.ts'), 'utf8');
@@ -52,6 +54,7 @@ describe('工具名只有一份目录', () => {
         expect(agent).toContain("modelToolNames(isCnEdition() ? 'cn' : 'global', 'assistant')");
         const domestic = router.slice(router.indexOf('async function callDomesticBackend'), router.indexOf('export async function callAI'));
         expect(domestic).toContain('messages: req.messages');
-        expect(domestic).not.toContain('tools');
+        expect(domestic).toContain('tools: req.tools');
+        expect(domestic).toContain('tool_choice: req.tool_choice');
     });
 });

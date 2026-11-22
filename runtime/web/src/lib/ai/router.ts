@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { stripLeakedModelTags } from "./leaked-tags";
 
 export type AIModel =
     | 'glm-4-plus'
@@ -36,7 +37,30 @@ export function cnRequestModel(model?: string): string {
     return model;
 }
 
-async function callDomesticBackend(req: AIRequest) {
+export interface DomesticToolCall {
+    id: string;
+    type: 'function';
+    function: { name: string; arguments: string };
+}
+
+/** 后端返回的 tool_calls 整理成 OpenAI 形状；缺名字的丢掉，参数统一成字符串。 */
+export function normalizeToolCalls(raw: unknown): DomesticToolCall[] {
+    if (!Array.isArray(raw)) return [];
+    const out: DomesticToolCall[] = [];
+    raw.forEach((item: any, index: number) => {
+        const name = item?.function?.name;
+        if (typeof name !== 'string' || !name) return;
+        const args = item.function.arguments;
+        out.push({
+            id: typeof item.id === 'string' && item.id ? item.id : `call_${index}`,
+            type: 'function',
+            function: { name, arguments: typeof args === 'string' ? args : JSON.stringify(args ?? {}) },
+        });
+    });
+    return out;
+}
+
+export async function callDomesticBackend(req: AIRequest) {
     const base = (process.env.BACKEND_INTERNAL_URL || '').replace(/\/$/, '');
     const token = process.env.NENGJIAN_INTERNAL_TOKEN || '';
     const development = process.env.NODE_ENV === 'development';
@@ -52,6 +76,9 @@ async function callDomesticBackend(req: AIRequest) {
         body: JSON.stringify({
             model: cnRequestModel(req.model),
             messages: req.messages,
+            // 专业助手的工具定义：以前在这里被丢掉，模型拿不到工具，只能在正文里假装调用。
+            ...(Array.isArray(req.tools) && req.tools.length ? { tools: req.tools } : {}),
+            ...(req.tool_choice !== undefined && Array.isArray(req.tools) && req.tools.length ? { tool_choice: req.tool_choice } : {}),
         }),
         signal: req.signal,
     });
@@ -59,8 +86,14 @@ async function callDomesticBackend(req: AIRequest) {
         throw new Error('国内 AI 服务已拒绝生成替代内容');
     }
     const data = await response.json();
+    const toolCalls = normalizeToolCalls(data.tool_calls);
+    const message: { role: 'assistant'; content: string; tool_calls?: DomesticToolCall[] } = {
+        role: 'assistant',
+        content: stripLeakedModelTags(typeof data.content === 'string' ? data.content : ''),
+    };
+    if (toolCalls.length) message.tool_calls = toolCalls;
     return {
-        choices: [{ message: { role: 'assistant', content: data.content || '' } }],
+        choices: [{ message, finish_reason: toolCalls.length ? 'tool_calls' : (data.finish_reason || 'stop') }],
         model: data.model,
         provider: data.provider,
     };
