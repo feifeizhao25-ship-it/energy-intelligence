@@ -16,6 +16,7 @@ from typing import Any, Awaitable, Callable, Dict, List, Optional
 
 try:
     from app.services.resource_service import _classify_solar
+    from app.services.solar_grade_gb31155 import grade as _gb31155_grade
     from app.utils.solar_calculations import sunbelt_factor
 except ImportError:  # 注册表从其他工作目录加载本文件时，补后端路径
     import sys
@@ -25,6 +26,7 @@ except ImportError:  # 注册表从其他工作目录加载本文件时，补后
     if str(_BACKEND_DIR) not in sys.path:
         sys.path.insert(0, str(_BACKEND_DIR))
     from app.services.resource_service import _classify_solar
+    from app.services.solar_grade_gb31155 import grade as _gb31155_grade
     from app.utils.solar_calculations import sunbelt_factor
 
 NASA_POWER_URL = "https://power.larc.nasa.gov/api/temporal/climatology/point"
@@ -72,18 +74,26 @@ def _estimate_ghi_from_latitude(latitude: float) -> float:
     return 1200.0 + 1000.0 * sunbelt_factor(latitude)
 
 
-def assess_solar_resource(ghi_annual: float, capacity_mw: float = 1.0) -> Dict[str, Any]:
+def assess_solar_resource(ghi_annual: float, capacity_mw: float = 1.0, grading: str = "legacy") -> Dict[str, Any]:
     """纯函数：GHI → 分级 / 年等效利用小时 / 产能系数区间。
 
-    - 分级复用 _classify_solar（I≥2000, II≥1600, III≥1200, IV<1200）
+    - grading="gb31155"（国内版）：按 GB/T 31155-2014 四档 A≥1750 / B≥1400 / C≥1050 / D，resource_class 对应 I–IV
+    - grading="legacy"（国际版沿用）：_classify_solar（I≥2000, II≥1600, III≥1200, IV<1200）
     - 年等效利用小时近似为水平面年辐照（kWh/m²）× 性能比。参照辐照度按 1 kW/m² 时数值才等于小时，且用水平面代替组件平面，结果是近似。0.78–0.86 不是标准条款。
     - 产能系数 = 等效利用小时 / 8760
     """
-    resource_class, score = _classify_solar(ghi_annual)
+    gb = None
+    if grading == "gb31155":
+        gb = _gb31155_grade(ghi_annual)
+        resource_class, score = gb["resource_class"], gb["score"]
+    else:
+        resource_class, score = _classify_solar(ghi_annual)
     hours_mid = ghi_annual * PR_MID
     hours_low = ghi_annual * PR_LOW
     hours_high = ghi_annual * PR_HIGH
+    extra = {k: gb[k] for k in ("gb_grade", "gb_grade_label", "grading_standard")} if gb else {}
     return {
+        **extra,
         "ghi_annual_kwh_m2": round(ghi_annual, 1),
         "resource_class": resource_class,
         "score": round(score, 1),
@@ -153,7 +163,7 @@ class SolarResourceSkill:
                 data_source = "estimate"
                 estimated = True
 
-        result = assess_solar_resource(ghi_annual, capacity_mw)
+        result = assess_solar_resource(ghi_annual, capacity_mw, grading="legacy" if market == "global" else "gb31155")
         result.update(
             {
                 "skill_id": self.skill_id,
@@ -199,4 +209,4 @@ def _install_contract(cls, formula_ref, valid_range):
     cls.execute = execute
 
 
-_install_contract(SolarResourceSkill, "RA-001 年辐照分级", "GHI 为正")
+_install_contract(SolarResourceSkill, "RA-001 年辐照分级（国内版 GB/T 31155-2014 四档）", "GHI 为正")

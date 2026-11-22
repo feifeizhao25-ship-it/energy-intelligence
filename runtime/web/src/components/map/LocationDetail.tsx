@@ -5,6 +5,7 @@ import { X, Sun, Wind, CloudRain, TrendingUp, Info } from 'lucide-react';
 import { getSolarResource, getWindResource } from '@/lib/api/nasa-power';
 import { domesticClimate } from '@/lib/api/domestic-station';
 import { formatPeakSunHours } from '@/lib/resource/peak-sun-hours';
+import { solarResourceLabel } from '@/lib/resource/solar-grade';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
 import SunPathChart from './SunPathChart';
 import { ClimateEnvironment } from './ClimateEnvironment';
@@ -117,7 +118,7 @@ export default function LocationDetail({ location, onClose }: LocationDetailProp
                                     <Sun className="w-4 h-4" /> 太阳能资源
                                 </h3>
                                 <span className={`text-xs px-2 py-0.5 rounded ${getScoreColor(solar.annual.resourceClass)}`}>
-                                    {solar.annual.resourceClass}类资源区
+                                    {solarResourceLabel(solar.annual.resourceClass)}
                                 </span>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
