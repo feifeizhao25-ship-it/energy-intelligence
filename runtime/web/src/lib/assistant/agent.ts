@@ -34,7 +34,6 @@ export async function* assistantChatStream(
       特别注意：当用户询问关于"我上传的论文"、"我的知识库"或具体的论文细节时，**必须**优先调用 query_knowledge_base 工具进行检索，而不是仅凭训练数据回答。
       当用户询问具体地点的资源、项目收益或技术问题时，请优先考虑调用工具获取准确数据，而非模糊回答。
       当前时间：${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}
-      使用模型：GLM-4.7 Pro (硅基流动)
       `
         });
     }
@@ -52,6 +51,11 @@ export async function* assistantChatStream(
             signal,
         }) as any;
         if (signal?.aborted) throw abortError();
+
+        // 实际出答的模型以服务端返回为准（国内版由后端按 DeepSeek → 百炼 → 智谱 选择），界面和导出据此标注。
+        if (typeof response?.model === 'string' && response.model.trim()) {
+            yield { type: 'model', data: { model: response.model.trim(), provider: response.provider ?? null } };
+        }
 
         const message = response.choices[0].message;
 

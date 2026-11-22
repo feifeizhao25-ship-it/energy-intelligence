@@ -31,6 +31,8 @@ export interface StoredAnswer {
   sources: StoredSource[];
   standIn: boolean;
   synthetic: boolean;
+  /** 实际出答的模型（服务端返回）。未调用模型时为空。 */
+  model?: string | null;
   createdAt: number;
 }
 

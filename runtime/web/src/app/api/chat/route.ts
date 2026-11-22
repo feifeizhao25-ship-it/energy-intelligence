@@ -145,10 +145,17 @@ export async function POST(request: NextRequest) {
 
                     const evidenceSources: EvidenceSource[] = [];
                     const textParts: string[] = [];
+                    // 开流时只知道套餐里请求的模型；实际出答的模型在模型返回后才知道（2026-11-21 测试：标注 glm-4-flash，实际是 deepseek-flash）。
+                    let servedModel: string | null = null;
                     for await (const event of chatSource) {
                         if (cancelled()) break;
                         // 转换事件类型以匹配前端期望
                         let transformedEvent = event;
+                        if (event.type === 'model') {
+                            const served = typeof event.data?.model === 'string' ? event.data.model : '';
+                            if (served) servedModel = served;
+                            continue;
+                        }
                         if (event.type === 'text') {
                             textParts.push(String(event.data || ''));
                             continue;
@@ -187,6 +194,12 @@ export async function POST(request: NextRequest) {
                     if (answer === BOTTOM_LINE_NOTICE_ZH && rawAnswer && rawAnswer !== answer) {
                         void recordFeedback('blocked_output', rawAnswer);
                     }
+                    if (servedModel && servedModel !== actualModel) {
+                        controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                            type: 'provider',
+                            data: { provider: isAssistant ? 'agent' : currentProvider, model: servedModel, plan: userPlan, aigc: aigcMeta(servedModel) },
+                        })}\n\n`));
+                    }
                     if (answer) {
                         controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'content', data: answer })}\n\n`));
                     }
@@ -197,7 +210,7 @@ export async function POST(request: NextRequest) {
                     const sources = evidenceSources.slice(0, 20).map(storedSource);
                     const synthetic = sources.some((source) => isSyntheticUrl(source.url));
                     const saved = answer
-                        ? saveAnswer({ userId: guard.userId, text: answer, sources, standIn: false, synthetic })
+                        ? saveAnswer({ userId: guard.userId, text: answer, sources, standIn: false, synthetic, model: servedModel ?? actualModel })
                         : null;
                     controller.enqueue(encoder.encode(`data: ${JSON.stringify({
                         type: 'evidence',
