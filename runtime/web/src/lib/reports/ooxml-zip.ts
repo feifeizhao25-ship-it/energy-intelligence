@@ -153,7 +153,7 @@ function lineParagraphs(text: string, links: { id: string; url: string }[], glue
 }
 
 /** 公文版资料汇编。封面写非正式文件，标题黑体、正文仿宋，不用红头。整行 URL 写成可点击超链接。来源标题用 keepNext 只跟下一段留在同页，后面的段落可以换页。 */
-export function gazetteBuffer(title: string, rows: string[][]): Buffer {
+export function gazetteBuffer(title: string, rows: string[][], opts: { header?: string; footer?: string } = {}): Buffer {
     const links: { id: string; url: string }[] = [];
     const lines = rows.map((row) => row.join(' '));
     const blocks = lines.map((line, index) => {
@@ -163,10 +163,10 @@ export function gazetteBuffer(title: string, rows: string[][]): Buffer {
     const document = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
   <w:body>
-    ${paragraphXml('资料汇编 · 非正式文件', 'SimHei', '黑体', '32')}
+    ${paragraphXml(opts.header ?? '资料汇编 · 非正式文件', 'SimHei', '黑体', '32')}
     ${paragraphXml(title, 'SimHei', '黑体')}
     ${blocks.join('')}
-    ${paragraphXml('本文件不是行政机关公文，测算值不是承诺。公文模板待企业微信审批，未签字。', 'FangSong', '仿宋')}
+    ${paragraphXml(opts.footer ?? '本文件不是行政机关公文，测算值不是承诺。公文模板待企业微信审批，未签字。', 'FangSong', '仿宋')}
     <w:sectPr>
       <w:pgSz w:w="11906" w:h="16838"/>
       <w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="720" w:footer="720" w:gutter="0"/>

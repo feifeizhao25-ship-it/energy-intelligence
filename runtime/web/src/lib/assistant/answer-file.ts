@@ -6,6 +6,7 @@ import { gazetteBuffer } from '@/lib/reports/ooxml-zip';
 
 import type { StoredAnswer } from './answer-store';
 import { dateLines } from './citation-text';
+import { markdownToExportLines, stripEmoji } from './export-text';
 
 const FONT = '/usr/share/fonts/truetype/droid/DroidSansFallbackFull.ttf';
 const RENDER_SCRIPT = path.resolve(process.cwd(), 'src/lib/assistant/render-pdf.mjs');
@@ -15,7 +16,8 @@ export function answerLines(record: StoredAnswer, watermark: boolean): string[] 
   if (record.synthetic) lines.push('合成测试数据。不是国家能源局、税务机关或其他机构的出版物。');
   if (record.standIn) lines.push('未调用模型。下面只列资料库命中，不是模型结论。');
   if (watermark) lines.push('当前方案的导出文件含水印。');
-  lines.push(record.text);
+  if (record.model && !record.standIn) lines.push(`生成模型：${record.model}`);
+  lines.push(...markdownToExportLines(record.text));
   record.sources.forEach((source, index) => {
     lines.push(`[${index + 1}] ${source.title}`);
     if (source.publisher) lines.push(`发布机构：${source.publisher}`);
@@ -23,7 +25,7 @@ export function answerLines(record: StoredAnswer, watermark: boolean): string[] 
     lines.push(...dateLines(source));
     if (source.url) lines.push(source.url);
     if (source.locator) lines.push(`定位：${source.locator}`);
-    if (source.excerpt) lines.push(`摘录：${source.excerpt}`);
+    if (source.excerpt) lines.push(`摘录：${stripEmoji(source.excerpt)}`);
     if (source.note) lines.push(source.note);
   });
   lines.push('本文件由软件根据所列来源生成，不是经人工签字的审核结论，也不填写审核人。');
@@ -31,7 +33,11 @@ export function answerLines(record: StoredAnswer, watermark: boolean): string[] 
 }
 
 export function renderAnswerDocx(record: StoredAnswer, watermark: boolean): Buffer {
-  return gazetteBuffer('回答来源', answerLines(record, watermark).map((line) => [line]));
+  return gazetteBuffer('AI 回答与来源', answerLines(record, watermark).map((line) => [line]), {
+    // 回答导出不是公文模板：不写"公文模板待企业微信审批"这类内部流程状态。免责声明原文保留。
+    header: '新能源智库 · AI 回答 · 非正式文件',
+    footer: '本文件不是行政机关公文，测算值不是承诺。',
+  });
 }
 
 export function renderAnswerPdf(record: StoredAnswer, watermark: boolean): Promise<Buffer> {
