@@ -189,9 +189,9 @@ def _grounding(hits: list, status: Optional[str] = None) -> dict:
     return {"status": status or ("sourced" if hits else "no_source"), "source_count": len(hits)}
 
 
-def _no_source_payload(market: str, style: Optional[str], query: str = "") -> dict:
+def _no_source_payload(market: str, style: Optional[str], query: str = "", user_country: Optional[str] = None) -> dict:
     """Fixed reply for a policy/tax/legal question with no retrieved source. The model is not called."""
-    message = _lead_with_reverification(grounding.no_source_reply(market), query, market, has_other=False)
+    message = _lead_with_reverification(grounding.no_source_reply(market, query, user_country), query, market, has_other=False)
     return {
         "message": message,
         "ai_metadata": {"grounding": "no_source", "model_called": False},
@@ -387,7 +387,7 @@ async def chat(
         raise HTTPException(status_code=429, detail={"error": "PRODUCT_BUDGET_EXCEEDED", "message": str(error)}) from error
     hits = _retrieve(message, market)
     if not hits and grounding.is_policy_question(message):
-        refusal = _no_source_payload(market, style, message)
+        refusal = _no_source_payload(market, style, message, getattr(user, "country", None))
 
         async def refusal_stream():
             yield f"data: {json.dumps({'sources': []}, ensure_ascii=False)}\n\n"
@@ -538,7 +538,7 @@ async def chat_json(
         assert_product_budget(user_id, market)
         hits = _retrieve(body.message, market)
         if not hits and grounding.is_policy_question(body.message):
-            payload = _no_source_payload(market, body.style, body.message)
+            payload = _no_source_payload(market, body.style, body.message, getattr(user, "country", None))
             stored = _remember_answer(user, market, payload["message"], [], {"stand_in": "no_source", "model_called": False})
             return {**payload, "sources": [], **stored}
         prompt = _grounded_prompt(SYSTEM_PROMPT if market == "global" else CN_SYSTEM_PROMPT, hits, market, body.style, query=body.message)
@@ -603,7 +603,7 @@ async def analyze(
         assert_product_budget(user_id, market)
         hits = _retrieve(query, market)
         if not hits and grounding.is_policy_question(query):
-            reply = _lead_with_reverification(grounding.no_source_reply(market), query, market, has_other=False)
+            reply = _lead_with_reverification(grounding.no_source_reply(market, query, getattr(user, "country", None)), query, market, has_other=False)
             return {"analysis": reply, "ai_metadata": {"grounding": "no_source", "model_called": False},
                     "evidence": _evidence_for("", [], market), "grounding": _grounding([], "no_source_refused")}
         prompt = _grounded_prompt(SYSTEM_PROMPT if market == "global" else CN_SYSTEM_PROMPT, hits, market, query=query)
