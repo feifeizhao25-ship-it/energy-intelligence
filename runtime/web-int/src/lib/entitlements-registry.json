@@ -1,0 +1,40 @@
+{
+  "tiers": {
+    "free": {
+      "price": {
+        "monthly_cny": 0,
+        "yearly_cny": 0
+      }
+    },
+    "pro": {
+      "price": {
+        "monthly_cny": 0,
+        "yearly_cny": 1980
+      }
+    },
+    "full": {
+      "price": {
+        "monthly_cny": 0,
+        "yearly_cny": 5800
+      }
+    },
+    "team": {
+      "price": {
+        "monthly_cny": 0,
+        "yearly_cny": 16800
+      }
+    },
+    "enterprise": {
+      "price": {
+        "monthly_cny": 0,
+        "yearly_cny": 33000
+      }
+    },
+    "maintenance": {
+      "price": {
+        "monthly_cny": 0,
+        "yearly_cny": 2980
+      }
+    }
+  }
+}
