@@ -398,7 +398,9 @@ class RAGService:
 
     def search(self, query: str, top_k: int = 5, market: str = "cn",
                exclude_stale: bool = True, effective_only: bool = True,
-               include_stale: bool = False) -> RAGResult:
+               include_stale: bool = False,
+               coverage_floor_override: Optional[float] = None) -> RAGResult:
+        """coverage_floor_override：只给向量补召回取「不设覆盖率下限」的词面候选用（见 vector_rescue），默认 None 保持原行为。"""
         if include_stale:
             exclude_stale = False
         if top_k <= 0:
@@ -415,6 +417,8 @@ class RAGService:
         retrieved_at = today.isoformat()
 
         coverage_floor = min_coverage() if len(self._corpus) >= MIN_DOCS_FOR_COVERAGE and min_relevance() > 0 else 0.0
+        if coverage_floor_override is not None:
+            coverage_floor = max(0.0, float(coverage_floor_override))
         names_registered = None  # 问句是否点名了库里任何一份文件（文号、标准号或简称）
         scored: List[RAGHit] = []
         for doc in self._corpus:
