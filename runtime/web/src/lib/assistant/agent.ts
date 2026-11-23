@@ -2,7 +2,7 @@ import { Message } from "@/types";
 import { callAI, isCnEdition } from "@/lib/ai/router";
 import { stripLeakedModelTags } from "@/lib/ai/leaked-tags";
 import { modelToolNames } from "@/lib/ai/tool-catalog";
-import { assistantToolDefinitions, handleToolCall } from "./tools";
+import { assistantToolDefinitions, cnOnlyAssistantToolDefinitions, handleToolCall } from "./tools";
 
 /**
  * 能源智库 Agent 核心逻辑
@@ -32,6 +32,7 @@ export async function* assistantChatStream(
             content: `你是一个专业的新能源智库专家助手。
       你可以调用专业工具来获取实时日照数据、执行复杂的经济测算、检索学术论文。
       特别注意：当用户询问关于"我上传的论文"、"我的知识库"或具体的论文细节时，**必须**优先调用 query_knowledge_base 工具进行检索，而不是仅凭训练数据回答。
+      当用户询问政策、文号、电价机制、标准条款或有效期时（国内版），**必须**先调用 search_policy_library 检索站内资料库，只使用返回的资料并按 [S1]、[S2] 标注；资料库没有收录就如实说明，不得凭记忆给出数字或文号。
       当用户询问具体地点的资源、项目收益或技术问题时，请优先考虑调用工具获取准确数据，而非模糊回答。
       当前时间：${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}
       `
@@ -46,7 +47,7 @@ export async function* assistantChatStream(
         const response = await callAI({
             model: model as any, // 推荐使用 GLM-4 或 DeepSeek V3 进行工具调用
             messages: currentMessages,
-            tools: assistantToolDefinitions.filter((tool) => new Set<string>(modelToolNames(isCnEdition() ? 'cn' : 'global', 'assistant')).has(tool.function.name)),
+            tools: [...assistantToolDefinitions, ...(cnOnlyAssistantToolDefinitions ?? [])].filter((tool) => new Set<string>(modelToolNames(isCnEdition() ? 'cn' : 'global', 'assistant')).has(tool.function.name)),
             tool_choice: 'auto',
             signal,
         }) as any;

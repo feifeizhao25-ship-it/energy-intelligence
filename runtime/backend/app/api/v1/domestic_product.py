@@ -27,6 +27,10 @@ class FeedbackIn(BaseModel):
     text: str = ""
 
 
+class LibrarySearchIn(BaseModel):
+    query: str = Field(min_length=1, max_length=500)
+
+
 class EmbedIn(BaseModel):
     input: list[str] = Field(default_factory=list)
 
@@ -87,6 +91,31 @@ async def domestic_chat(body: DomesticChatIn, x_internal_token: str | None = Hea
         # 只调工具、正文为空的一轮不过底线（空文本本来也不会命中）。
         result["content"] = enforce_bottom_line(content, market="cn") if content else ""
     return result
+
+
+@router.post("/ai/library-search")
+async def domestic_library_search(body: LibrarySearchIn, x_internal_token: str | None = Header(default=None)):
+    """网页端专业助手的资料库检索工具：和 App 问答（/api/v1/ai/ask）用同一个 _retrieve（词面闸门，
+    启用 RAG_VECTOR_RESCUE 时含本地向量补召回），只返回未过期、过了相关度下限的来源。不调模型。"""
+    _authorize(x_internal_token)
+    from app.api.v1.ai_assistant import _retrieve
+    from app.services.citation_record import date_lines
+
+    hits = _retrieve(body.query, "cn")
+    sources = []
+    for index, hit in enumerate(hits, 1):
+        md = hit.metadata or {}
+        sources.append({
+            "ref": f"S{index}",
+            "id": hit.source_id,
+            "title": hit.title,
+            "source_org": md.get("source_org") or md.get("issuer") or None,
+            "doc_number": md.get("doc_number") or None,
+            "dates": " ".join(date_lines(md, "zh")) or (str(md.get("year")) if md.get("year") else ""),
+            "url": md.get("source_url") or None,
+            "content": (hit.content or "")[:1200],
+        })
+    return {"query": body.query, "count": len(sources), "sources": sources}
 
 
 @router.post("/ai/embeddings")

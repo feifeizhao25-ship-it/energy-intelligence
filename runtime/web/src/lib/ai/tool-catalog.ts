@@ -8,9 +8,11 @@
  * checks that subset against the executor switch in both directions.
  */
 
-/** 普通国内聊天不附带工具。专业助手单独允许查询站内、按用户隔离的知识库。 */
+/** 普通国内聊天不附带工具。专业助手允许查询站内、按用户隔离的知识库，以及站内政策/标准资料库。 */
 export const CN_MODEL_TOOLS = [] as const;
-export const CN_ASSISTANT_TOOLS = ['query_knowledge_base'] as const;
+/** 只给国内专业助手的工具（国际版不提供）：经后端 /api/v1/ai/library-search 检索站内资料库。 */
+export const CN_ONLY_ASSISTANT_TOOLS = ['search_policy_library'] as const;
+export const CN_ASSISTANT_TOOLS = ['query_knowledge_base', ...CN_ONLY_ASSISTANT_TOOLS] as const;
 
 /** Non-CN SiliconFlow chat (qianwen.ts) offers the six handlers in tools.ts. */
 export const SILICONFLOW_CHAT_TOOLS = [
