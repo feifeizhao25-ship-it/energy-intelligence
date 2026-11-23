@@ -36,6 +36,8 @@ export interface EvidenceSource {
   publisher?: string;
   type?: string;
   tool?: string;
+  /** 来源自带的发布日期（工具结果里的 published_at / publish_date）；回答底部「引用来源最新日期」用它 */
+  published_at?: string;
 }
 
 const OFFICIAL_TYPES = new Set(['official', 'policy_original', 'government', 'regulator', 'standard']);
@@ -114,6 +116,8 @@ export function collectSourcesFromToolResult(toolName: string, result: unknown):
     const publisher = typeof o.publisher === 'string' ? o.publisher : typeof o.source_org === 'string' ? o.source_org : typeof o.source === 'string' ? o.source : undefined;
     if ((url && /^https?:\/\//.test(url)) || publisher) {
       const s: EvidenceSource = { url, publisher, title: typeof o.title === 'string' ? o.title : undefined, type: typeof o.type === 'string' ? o.type : undefined, tool: toolName };
+      const published = [o.published_at, o.publish_date, o.publishedAt, o.issue_date].find((x) => typeof x === 'string' && x.trim());
+      if (typeof published === 'string') s.published_at = published.trim();
       const key = `${s.url}|${s.publisher}`;
       if (!seen.has(key)) { seen.add(key); out.push(s); }
     }

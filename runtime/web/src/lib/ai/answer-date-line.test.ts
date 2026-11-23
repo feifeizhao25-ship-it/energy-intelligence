@@ -1,4 +1,4 @@
-import { buildAnswerDateLine, latestCitedDate } from './answer-date-line';
+import { buildAnswerDateLine, citedSourceDates, latestCitedDate } from './answer-date-line';
 
 const now = new Date(2026, 9, 15);
 
@@ -17,5 +17,20 @@ describe('审计 8-3 AI 回答日期行', () => {
     expect(l.sourceDate).toBe('未引用带日期的来源');
     expect(l.model).toBe('未知模型');
     expect(l.text).toContain('请以最新官方文件为准');
+  });
+  it('正文有 [S1] 引用或带来源但来源没日期时，不说「未引用」', () => {
+    expect(buildAnswerDateLine({ content: '容量电价按机制执行[S2][S3]', model: 'm', answeredAt: now }).sourceDate).toBe('所引来源未标注日期');
+    expect(buildAnswerDateLine({ content: '容量电价按机制执行', model: 'm', answeredAt: now, sourceDates: [undefined, undefined], sourceCount: 2 }).sourceDate).toBe('所引来源未标注日期');
+    expect(buildAnswerDateLine({ content: '没有引用', model: 'm', answeredAt: now, sourceDates: [], sourceCount: 0 }).sourceDate).toBe('未引用带日期的来源');
+  });
+  it('来源自带日期时取来源日期', () => {
+    const l = buildAnswerDateLine({ content: '依据 114 号文[S1]', model: 'm', answeredAt: now, sourceDates: ['2025-09-28', undefined], sourceCount: 2 });
+    expect(l.sourceDate).toBe('2025-09-28');
+  });
+  it('正文有引用标记时只取被引用来源的日期', () => {
+    const l = buildAnswerDateLine({ content: '688号文要求[S1]，绿证按60号文[S2]', model: 'm', answeredAt: now, sourceDates: ['2026-05-20', '2026-06-05', '2026-06-22'].map((x) => x.replace('2026', '2025')), sourceCount: 3 });
+    expect(l.sourceDate).toBe('2025-06-05');
+    expect(citedSourceDates('没有标记', ['2025-01-01', '2025-02-01'])).toEqual(['2025-01-01', '2025-02-01']);
+    expect(citedSourceDates('越界[S9]', ['2025-01-01'])).toEqual(['2025-01-01']);
   });
 });
