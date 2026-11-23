@@ -147,7 +147,7 @@ export default function LocationDetail({ location, onClose }: LocationDetailProp
                                     <Wind className="w-4 h-4" /> 风能资源 (100m)
                                 </h3>
                                 <span className="text-xs bg-blue-900/50 text-blue-300 px-2 py-0.5 rounded border border-blue-800">
-                                    {wind.annual.resourceClass}类风区
+                                    {wind.annual.gbGradeLabel ? `风功率密度 ${wind.annual.gbGradeLabel}` : `${wind.annual.resourceClass}类风区`}
                                 </span>
                             </div>
                             <div className="grid grid-cols-2 gap-4">

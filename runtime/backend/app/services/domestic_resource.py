@@ -180,19 +180,13 @@ def wind_response_fields(lat: float, lng: float) -> dict:
     mean_speed = sum(monthly) / 12
     if mean_speed <= 0:
         raise DomesticResourceNotLoaded(DomesticResourceNotLoaded.message)
+    from app.services.wind_grade_gbt18710 import assess as gbt18710_assess
+
     k = 2.0
     c_weibull = mean_speed / 0.886
-    rho = 1.225
-    mean_cubed = sum(v ** 3 for v in monthly) / 12
-    wpd = 0.5 * rho * mean_cubed
-    if wpd >= 400:
-        klass, score = "I", 80.0
-    elif wpd >= 300:
-        klass, score = "II", 60.0
-    elif wpd >= 200:
-        klass, score = "III", 40.0
-    else:
-        klass, score = "IV", 20.0
+    g = gbt18710_assess(monthly, height_m=100.0)
+    wpd = g["wind_power_density"]
+    klass, score = g["resource_class"], g["score"]
     return {
         "lat": lat,
         "lng": lng,
@@ -205,4 +199,9 @@ def wind_response_fields(lat: float, lng: float) -> dict:
         "score": round(score, 1),
         "monthly_speed": [round(v, 1) for v in monthly],
         "data_source": row["data_source"],
+        "wind_power_density_50m": g["wind_power_density_50m"],
+        "gb_grade": g["gb_grade"],
+        "gb_grade_label": g["gb_grade_label"],
+        "grading_standard": g["grading_standard"],
+        "wpd_method": g["wpd_method"],
     }

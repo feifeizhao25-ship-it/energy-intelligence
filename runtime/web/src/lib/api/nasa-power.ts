@@ -3,6 +3,7 @@ import { SolarResource, WindResource } from '@/types';
 
 import { withCache } from '@/lib/cache';
 import { extrapolateWindSpeed } from '@/lib/calculator/wind-shear';
+import { gbt18710Grade, windPowerDensityFromMonthlyMeans } from '@/lib/resource/wind-grade';
 import { WindResourceUnavailableError } from '@/lib/api/wind-resource-error';
 
 /** NASA POWER 用 -999 表示缺测；缺测或非数值一律按 0 处理，不能当真实风速。 */
@@ -63,30 +64,28 @@ export function parseWindPowerPayload(data: { properties: { parameter: { WS10M: 
     const avgSpeed10m = monthly.reduce((sum, m) => sum + m.speed10m, 0) / 12;
     const avgSpeed100m = monthly.reduce((sum, m) => sum + m.speed100m, 0) / 12;
 
-    // 简化计算风功率密度 (W/m²)
-    // P = 0.5 × ρ × v³，其中ρ为空气密度(1.225 kg/m³)
+    // 风功率密度 (W/m²)：GB/T 18710-2002 附录 B 不允许用年平均风速直接立方。只有月平均风速时，
+    // 按每月瑞利分布（威布尔 k=2）求 v³ 的期望（6/π ≈ 1.91 × v̄³）再取 12 个月平均；分级用 50 m 值查表 4。
     const airDensity = 1.225;
-    const powerDensity = 0.5 * airDensity * Math.pow(avgSpeed100m, 3);
+    const powerDensity = windPowerDensityFromMonthlyMeans(monthly.map(m => m.speed100m), airDensity);
+    const powerDensity50m = windPowerDensityFromMonthlyMeans(monthly.map(m => m.speed50m), airDensity);
+    const gb = gbt18710Grade(powerDensity50m);
 
     // 估算等效满发小时数（简化模型）
     // 假设容量因子与风速的立方成正比
     const equivalentHours = Math.min(8760, Math.max(0, (avgSpeed100m / 10) * 2000));
 
-    // 判断风资源等级
-    let resourceClass: 'I' | 'II' | 'III' | 'IV' | 'V' | 'VI' | 'VII' = 'III';
-    if (avgSpeed100m >= 9) resourceClass = 'I';
-    else if (avgSpeed100m >= 8) resourceClass = 'II';
-    else if (avgSpeed100m >= 7) resourceClass = 'III';
-    else if (avgSpeed100m >= 6) resourceClass = 'IV';
-    else if (avgSpeed100m >= 5) resourceClass = 'V';
-    else if (avgSpeed100m >= 4) resourceClass = 'VI';
-    else resourceClass = 'VII';
+    // 等级：GB/T 18710-2002 表 4（50 m）七级，7 级最好。resourceClass 保留老的罗马数字写法（I 最好），I = 7 级。
+    const resourceClass = (['VII', 'VI', 'V', 'IV', 'III', 'II', 'I'] as const)[gb.grade - 1];
 
     return {
       monthly,
       annual: {
         avgSpeed: avgSpeed100m,
         powerDensity,
+        powerDensity50m,
+        gbGrade: gb.grade,
+        gbGradeLabel: gb.label,
         equivalentHours,
         resourceClass
       }
@@ -107,8 +106,10 @@ export const getWindResource = withCache('nasa:wind', async (lat: number, lng: n
     const key = `2022${String(index + 1).padStart(2, '0')}`;
     return [key, speed];
   }));
-  const ws50 = Object.fromEntries(Object.entries(months).map(([key, speed]) => [key, Number(speed) * 0.9]));
-  return parseWindPowerPayload({ properties: { parameter: { WS10M: ws50, WS50M: months } } });
+  // 样本给的是 100 m 风速。以前把它当 50 m 再外推到 100 m，100 m 风速被重复放大；现在先按同一对数律换回 50 m。
+  const ws50 = Object.fromEntries(Object.entries(months).map(([key, speed]) => [key, extrapolateWindSpeed(Number(speed), 100, 50)]));
+  const ws10 = Object.fromEntries(Object.entries(months).map(([key, speed]) => [key, extrapolateWindSpeed(Number(speed), 100, 10)]));
+  return parseWindPowerPayload({ properties: { parameter: { WS10M: ws10, WS50M: ws50 } } });
 });
 
 /**

@@ -45,3 +45,9 @@ class WindResourceResponse(BaseModel):
     resource_class: str
     score: float
     monthly_speed: List[float]
+    # 国内版按 GB/T 18710-2002 附录 B（瑞利分布求 v³ 期望）和表 4（50 m 七级）给出；国际版为空
+    wind_power_density_50m: Optional[float] = None
+    gb_grade: Optional[int] = None
+    gb_grade_label: Optional[str] = None
+    grading_standard: Optional[str] = None
+    wpd_method: Optional[str] = None
