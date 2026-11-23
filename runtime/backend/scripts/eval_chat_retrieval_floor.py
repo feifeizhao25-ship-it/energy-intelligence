@@ -1,7 +1,7 @@
 """问答接口检索（ai_assistant._retrieve，前 3 条、过下限）的离线对照：库内题有没有丢来源，库外题有没有挂来源。
 
 用法（不调用任何模型或外部服务）：
-    python scripts/eval_chat_retrieval_floor.py [阈值，默认 0.36]
+    python scripts/eval_chat_retrieval_floor.py [阈值，默认取 DEFAULT_MIN_COVERAGE]
 
 库内题：data/eval 下 golden*/heldout*（不含国际版和拒答题）里 required_sources 在库中的题，看前 3 条是否含要求来源。
 库外题：data/eval/out_of_corpus_v1.jsonl，看是否一条来源都不挂。
@@ -32,7 +32,8 @@ def _rows(path):
 
 
 def main() -> None:
-    floor = sys.argv[1] if len(sys.argv) > 1 else "0.36"
+    from app.services.rag_service import DEFAULT_MIN_COVERAGE
+    floor = sys.argv[1] if len(sys.argv) > 1 else str(DEFAULT_MIN_COVERAGE)
     ids = {doc["source_id"] for doc in aa._RAG_SERVICE._corpus}
     positives = []
     for path in sorted(glob.glob(str(ROOT / "data/eval/golden*.jsonl")) + glob.glob(str(ROOT / "data/eval/heldout*.jsonl"))):
@@ -45,6 +46,7 @@ def main() -> None:
             if required:
                 positives.append((row["question"], required))
     negatives = [row["question"] for row in _rows(ROOT / "data/eval/out_of_corpus_v1.jsonl")]
+    realistic = list(_rows(ROOT / "data/eval/chat_realistic_v1.jsonl"))
 
     def run(value):
         os.environ["RAG_MIN_COVERAGE"] = value
@@ -52,8 +54,29 @@ def main() -> None:
         leaks = [q for q in negatives if aa._retrieve(q, "cn")]
         return hit, leaks
 
+    def run_realistic(value):
+        os.environ["RAG_MIN_COVERAGE"] = value
+        out = {"in_corpus_hit_at_3": 0, "in_corpus": 0, "near_out_of_corpus_with_sources": 0, "near_out_of_corpus": 0,
+               "unrelated_with_sources": 0, "unrelated": 0, "near_leaks": []}
+        for row in realistic:
+            got = [h.source_id for h in aa._retrieve(row["question"], "cn")]
+            if row["kind"] == "in_corpus":
+                out["in_corpus"] += 1
+                out["in_corpus_hit_at_3"] += int(row["expected_source"] in got)
+            elif row["kind"] == "near_out_of_corpus":
+                out["near_out_of_corpus"] += 1
+                if got:
+                    out["near_out_of_corpus_with_sources"] += 1
+                    out["near_leaks"].append(row["question"])
+            else:
+                out["unrelated"] += 1
+                out["unrelated_with_sources"] += int(bool(got))
+        return out
+
     base_hit, base_leaks = run("0")
     new_hit, new_leaks = run(floor)
+    realistic_before = run_realistic("0")
+    realistic_after = run_realistic(floor)
     print(json.dumps({
         "floor": float(floor),
         "in_corpus_questions": len(positives),
@@ -64,6 +87,8 @@ def main() -> None:
         "with_sources_before": len(base_leaks),
         "with_sources_after": len(new_leaks),
         "still_leaking": new_leaks,
+        "chat_realistic_v1_before": realistic_before,
+        "chat_realistic_v1_after": realistic_after,
     }, ensure_ascii=False, indent=2))
 
 

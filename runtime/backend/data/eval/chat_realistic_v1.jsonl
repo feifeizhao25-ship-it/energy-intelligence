@@ -1,0 +1,120 @@
+{"id": "CR-IN-01", "kind": "in_corpus", "question": "光伏电站设计的时候阵列之间要留多宽的间距？", "expected_source": "std-gb50797"}
+{"id": "CR-IN-02", "kind": "in_corpus", "question": "地面光伏电站设计有没有国家标准可以参考？", "expected_source": "std-gb50797"}
+{"id": "CR-IN-03", "kind": "in_corpus", "question": "多个用户能不能一起搞绿电直连？", "expected_source": "policy-cn-688"}
+{"id": "CR-IN-04", "kind": "in_corpus", "question": "发电侧容量电价现在是怎么定的？", "expected_source": "policy-cn-114"}
+{"id": "CR-IN-05", "kind": "in_corpus", "question": "新出的容量电价政策对储能有什么影响？", "expected_source": "policy-cn-114"}
+{"id": "CR-IN-06", "kind": "in_corpus", "question": "能源保供的中长期合同有什么管理要求？", "expected_source": "policy-cn-ling-2026-50"}
+{"id": "CR-IN-07", "kind": "in_corpus", "question": "新型电力系统十五五规划主要讲了什么？", "expected_source": "policy-cn-fgny-2026-942"}
+{"id": "CR-IN-08", "kind": "in_corpus", "question": "可再生能源十五五规划里的目标是多少？", "expected_source": "policy-cn-fgny-2026-1067"}
+{"id": "CR-IN-09", "kind": "in_corpus", "question": "第四监管周期输配电价什么时候开始执行？", "expected_source": "policy-cn-fgjg-2026-1077"}
+{"id": "CR-IN-10", "kind": "in_corpus", "question": "新型能源体系十五五规划有哪些重点任务？", "expected_source": "policy-cn-fgny-2026-884"}
+{"id": "CR-IN-11", "kind": "in_corpus", "question": "可再生能源消纳责任权重是怎么考核的？", "expected_source": "policy-cn-ling-2026-42"}
+{"id": "CR-IN-12", "kind": "in_corpus", "question": "非化石能源电力消费怎么核算？", "expected_source": "policy-cn-fgny-2026-622"}
+{"id": "CR-IN-13", "kind": "in_corpus", "question": "哪些情况算电力重大事故隐患？", "expected_source": "policy-cn-ling-2026-41"}
+{"id": "CR-IN-14", "kind": "in_corpus", "question": "绿证是怎么核发和交易的？", "expected_source": "policy-cn-gnfzzg-2025-107"}
+{"id": "CR-IN-15", "kind": "in_corpus", "question": "国家对电网高质量发展有什么指导意见？", "expected_source": "policy-cn-fgny-2025-1710"}
+{"id": "CR-IN-16", "kind": "in_corpus", "question": "电力中长期交易的基本规则有哪些？", "expected_source": "policy-cn-fgnyg-2025-1656"}
+{"id": "CR-IN-17", "kind": "in_corpus", "question": "光热发电有没有支持政策？", "expected_source": "policy-cn-fgny-2025-1645"}
+{"id": "CR-IN-18", "kind": "in_corpus", "question": "全国统一电力市场怎么评价？", "expected_source": "policy-cn-fgbtg-2025-1032"}
+{"id": "CR-IN-19", "kind": "in_corpus", "question": "集中式新能源电站参与市场报价有什么要求？", "expected_source": "policy-cn-fgny-2025-1476"}
+{"id": "CR-IN-20", "kind": "in_corpus", "question": "新能源消纳和调控方面最新的指导意见是什么？", "expected_source": "policy-cn-fgny-2025-1360"}
+{"id": "CR-IN-21", "kind": "in_corpus", "question": "充电设施服务能力三年倍增是什么目标？", "expected_source": "policy-cn-fgny-2025-1250"}
+{"id": "CR-IN-22", "kind": "in_corpus", "question": "跨省跨区电力应急调度怎么管理？", "expected_source": "policy-cn-fgyxg-2025-1193"}
+{"id": "CR-IN-23", "kind": "in_corpus", "question": "能源规划管理办法对规划编制有什么规定？", "expected_source": "policy-cn-fgnyg-2025-1216"}
+{"id": "CR-IN-24", "kind": "in_corpus", "question": "电力现货市场连续运行的地区要怎么建设？", "expected_source": "policy-cn-fgny-2025-1171"}
+{"id": "CR-IN-25", "kind": "in_corpus", "question": "新能源就近消纳的价格机制是什么？", "expected_source": "policy-cn-fgjg-2025-1192"}
+{"id": "CR-IN-26", "kind": "in_corpus", "question": "新型储能规模化建设专项行动的目标装机是多少？", "expected_source": "policy-cn-fgny-2025-1144"}
+{"id": "CR-IN-27", "kind": "in_corpus", "question": "电力市场计量结算有什么基本规则？", "expected_source": "policy-cn-fgnyg-2025-976"}
+{"id": "CR-IN-28", "kind": "in_corpus", "question": "2025 年各省可再生能源消纳责任权重是多少？", "expected_source": "policy-cn-fgbny-2025-669"}
+{"id": "CR-IN-29", "kind": "in_corpus", "question": "大功率充电设施怎么规划建设？", "expected_source": "policy-cn-fgbny-2025-632"}
+{"id": "CR-IN-30", "kind": "in_corpus", "question": "绿电直连项目怎么申报？", "expected_source": "policy-cn-fgny-2025-650"}
+{"id": "CR-IN-31", "kind": "in_corpus", "question": "承装修试电力设施许可证怎么办？", "expected_source": "policy-cn-ling-2025-30"}
+{"id": "CR-IN-32", "kind": "in_corpus", "question": "电力现货市场建设要在什么时候前全面铺开？", "expected_source": "policy-cn-fgbtg-2025-394"}
+{"id": "CR-IN-33", "kind": "in_corpus", "question": "电力辅助服务市场的基本规则是什么？", "expected_source": "policy-cn-fgnyg-2025-411"}
+{"id": "CR-IN-34", "kind": "in_corpus", "question": "虚拟电厂发展有什么支持政策？", "expected_source": "policy-cn-fgny-2025-357"}
+{"id": "CR-IN-35", "kind": "in_corpus", "question": "首批车网互动规模化应用试点有哪些城市？", "expected_source": "policy-cn-fgbny-2025-241"}
+{"id": "CR-IN-36", "kind": "in_corpus", "question": "绿证市场高质量发展的意见说了什么？", "expected_source": "policy-cn-fgny-2025-262"}
+{"id": "CR-IN-37", "kind": "in_corpus", "question": "抽水蓄能电站开发建设怎么管理？", "expected_source": "policy-cn-fgnyg-2025-93"}
+{"id": "CR-IN-38", "kind": "in_corpus", "question": "电力系统调节能力优化专项行动有什么目标？", "expected_source": "policy-cn-fgny-2024-1803"}
+{"id": "CR-IN-39", "kind": "in_corpus", "question": "电力监控系统安全防护有什么规定？", "expected_source": "policy-cn-ling-2024-27"}
+{"id": "CR-IN-40", "kind": "in_corpus", "question": "可再生能源替代行动的指导意见有哪些措施？", "expected_source": "policy-cn-fgny-2024-1537"}
+{"id": "CR-IN-41", "kind": "in_corpus", "question": "加快构建新型电力系统行动方案包括哪些专项行动？", "expected_source": "policy-cn-fgny-2024-1128"}
+{"id": "CR-IN-42", "kind": "in_corpus", "question": "电力市场运行基本规则对市场成员有什么要求？", "expected_source": "policy-cn-ling-2024-20"}
+{"id": "CR-IN-43", "kind": "in_corpus", "question": "电力市场监管办法管哪些行为？", "expected_source": "policy-cn-ling-2024-18"}
+{"id": "CR-IN-44", "kind": "in_corpus", "question": "增量配电区域怎么划分？", "expected_source": "policy-cn-fgnyg-2024-317"}
+{"id": "CR-IN-45", "kind": "in_corpus", "question": "煤电容量电价是怎么回事？", "expected_source": "policy-cn-fgjg-2023-1501"}
+{"id": "CR-IN-46", "kind": "in_corpus", "question": "退役的风机和光伏板怎么回收利用？", "expected_source": "policy-cn-fghz-2023-1030"}
+{"id": "CR-IN-47", "kind": "in_corpus", "question": "农村电网巩固提升工程有哪些任务？", "expected_source": "policy-cn-fgnyg-2023-920"}
+{"id": "CR-IN-48", "kind": "in_corpus", "question": "老旧风电场改造升级有什么政策？", "expected_source": "policy-cn-gnfxng-2023-45"}
+{"id": "CR-IN-49", "kind": "in_corpus", "question": "分布式光伏开发建设管理办法对工商业项目有什么规定？", "expected_source": "policy-cn-nonum-152179d7"}
+{"id": "CR-IN-50", "kind": "in_corpus", "question": "新型储能并网和调度运用有什么要求？", "expected_source": "policy-cn-gnfkjg-2024-26"}
+{"id": "CR-IN-51", "kind": "in_corpus", "question": "户用光伏项目信息要按月报送吗？", "expected_source": "policy-cn-gnztxn-2023-17"}
+{"id": "CR-IN-52", "kind": "in_corpus", "question": "电力并网运行管理规定有哪些内容？", "expected_source": "policy-cn-gnfjgg-2021-60"}
+{"id": "CR-IN-53", "kind": "in_corpus", "question": "电力辅助服务管理办法怎么分摊费用？", "expected_source": "policy-cn-gnfjgg-2021-61"}
+{"id": "CR-IN-54", "kind": "in_corpus", "question": "新型储能项目备案有什么管理规范？", "expected_source": "policy-cn-gnfkjg-2021-47"}
+{"id": "CR-IN-55", "kind": "in_corpus", "question": "发电企业和电网企业的电费怎么结算？", "expected_source": "policy-cn-gnfjg-2020-79"}
+{"id": "CR-IN-56", "kind": "in_corpus", "question": "广东新能源上网电价市场化改革实施方案是怎样的？", "expected_source": "policy-cn-gd-yfgjg-2025-263"}
+{"id": "CR-IN-57", "kind": "in_corpus", "question": "广东 2025 年新能源机制电价竞价结果是多少？", "expected_source": "policy-cn-gd-yfgjgh-2025-2137"}
+{"id": "CR-IN-58", "kind": "in_corpus", "question": "上海怎么落实新能源上网电价市场化改革？", "expected_source": "policy-cn-sh-hfgjg-2026-42"}
+{"id": "CR-IN-59", "kind": "in_corpus", "question": "北京分时电价的峰谷时段怎么划分？", "expected_source": "policy-cn-bj-jfgg-2023-11"}
+{"id": "CR-IN-60", "kind": "in_corpus", "question": "山东新能源上网电价改革方案主要内容？", "expected_source": "policy-cn-sd-lfgjg-2025-576"}
+{"id": "CR-IN-61", "kind": "in_corpus", "question": "山东差价结算细则怎么算？", "expected_source": "policy-cn-sd-lfgjg-2025-871"}
+{"id": "CR-IN-62", "kind": "in_corpus", "question": "9 月份全国发电量是多少？", "expected_source": "stat-cn-nbs-energy-202610"}
+{"id": "CR-IN-63", "kind": "in_corpus", "question": "今年 1 到 8 月可再生能源新增装机多少？", "expected_source": "stat-cn-nea-renewable-202608"}
+{"id": "CR-IN-64", "kind": "in_corpus", "question": "山东电力市场规则试行版有哪些内容？", "expected_source": "policy-cn-sd-nea-2025-57"}
+{"id": "CR-IN-65", "kind": "in_corpus", "question": "抽水蓄能规划建设有什么新要求？", "expected_source": "policy-cn-gnztxn-2023-47"}
+{"id": "CR-IN-66", "kind": "in_corpus", "question": "十四五可再生能源发展规划的目标是什么？", "expected_source": "policy-cn-fgny-2021-1445"}
+{"id": "CR-IN-67", "kind": "in_corpus", "question": "十四五现代能源体系规划有哪些主要目标？", "expected_source": "policy-cn-fgny-2022-210"}
+{"id": "CR-IN-68", "kind": "in_corpus", "question": "北京 2026 年绿色电力交易怎么参与？", "expected_source": "policy-cn-bj-jgf-2025-4"}
+{"id": "CR-IN-69", "kind": "in_corpus", "question": "广东 2026 年机制电价竞价什么时候开始？", "expected_source": "policy-cn-gd-yfgjgh-2026-1805"}
+{"id": "CR-IN-70", "kind": "in_corpus", "question": "上海 2025 年增量项目机制电价竞价结果是多少？", "expected_source": "policy-cn-sh-hfgjg-2025-45"}
+{"id": "CR-NEAR-01", "kind": "near_out_of_corpus", "question": "江苏 2026 年新能源机制电价竞价结果是多少？"}
+{"id": "CR-NEAR-02", "kind": "near_out_of_corpus", "question": "浙江海上风电省级补贴标准是多少？"}
+{"id": "CR-NEAR-03", "kind": "near_out_of_corpus", "question": "内蒙古风光制氢一体化项目怎么申报？"}
+{"id": "CR-NEAR-04", "kind": "near_out_of_corpus", "question": "核电项目核准需要哪些材料？"}
+{"id": "CR-NEAR-05", "kind": "near_out_of_corpus", "question": "全国碳市场 CCER 的价格是多少？"}
+{"id": "CR-NEAR-06", "kind": "near_out_of_corpus", "question": "氢能产业发展中长期规划的目标是什么？"}
+{"id": "CR-NEAR-07", "kind": "near_out_of_corpus", "question": "新疆 2026 年光伏项目竞争性配置结果？"}
+{"id": "CR-NEAR-08", "kind": "near_out_of_corpus", "question": "四川水电汛期弃水电量有多少？"}
+{"id": "CR-NEAR-09", "kind": "near_out_of_corpus", "question": "甘肃储能电站的容量租赁价格是多少钱一年？"}
+{"id": "CR-NEAR-10", "kind": "near_out_of_corpus", "question": "生物质发电补贴什么时候退坡？"}
+{"id": "CR-NEAR-11", "kind": "near_out_of_corpus", "question": "光伏扶贫电站的收益怎么分配？"}
+{"id": "CR-NEAR-12", "kind": "near_out_of_corpus", "question": "整县屋顶分布式光伏试点现在还在推吗？"}
+{"id": "CR-NEAR-13", "kind": "near_out_of_corpus", "question": "换电站建设有没有国家补贴？"}
+{"id": "CR-NEAR-14", "kind": "near_out_of_corpus", "question": "云南绿色铝产业用电价格是多少？"}
+{"id": "CR-NEAR-15", "kind": "near_out_of_corpus", "question": "海上光伏用海审批要走哪些流程？"}
+{"id": "CR-NEAR-16", "kind": "near_out_of_corpus", "question": "地热能供暖项目有什么税收优惠？"}
+{"id": "CR-NEAR-17", "kind": "near_out_of_corpus", "question": "欧盟碳边境调节机制对光伏出口有什么影响？"}
+{"id": "CR-NEAR-18", "kind": "near_out_of_corpus", "question": "美国对中国光伏组件加征的关税是多少？"}
+{"id": "CR-NEAR-19", "kind": "near_out_of_corpus", "question": "钠离子电池储能的循环寿命是多少次？"}
+{"id": "CR-NEAR-20", "kind": "near_out_of_corpus", "question": "钙钛矿组件的转换效率最新纪录是多少？"}
+{"id": "CR-NEAR-21", "kind": "near_out_of_corpus", "question": "宁德时代储能电芯报价多少？"}
+{"id": "CR-NEAR-22", "kind": "near_out_of_corpus", "question": "国家电网 2026 年招标的光伏逆变器中标价是多少？"}
+{"id": "CR-NEAR-23", "kind": "near_out_of_corpus", "question": "农光互补项目占用基本农田怎么处理？"}
+{"id": "CR-NEAR-24", "kind": "near_out_of_corpus", "question": "江苏分时电价 2026 年峰谷价差多少？"}
+{"id": "CR-NEAR-25", "kind": "near_out_of_corpus", "question": "河北南网工商业储能峰谷套利收益多少？"}
+{"id": "CR-NEAR-26", "kind": "near_out_of_corpus", "question": "光伏电站的城镇土地使用税怎么交？"}
+{"id": "CR-NEAR-27", "kind": "near_out_of_corpus", "question": "小水电站清理整改有什么要求？"}
+{"id": "CR-NEAR-28", "kind": "near_out_of_corpus", "question": "CCUS 示范项目有哪些支持政策？"}
+{"id": "CR-NEAR-29", "kind": "near_out_of_corpus", "question": "湖南 2026 年风电项目开发建设方案有哪些项目？"}
+{"id": "CR-NEAR-30", "kind": "near_out_of_corpus", "question": "陕西分布式光伏接网承载力评估结果怎么查？"}
+{"id": "CR-FAR-01", "kind": "unrelated", "question": "今天上证指数收多少点？"}
+{"id": "CR-FAR-02", "kind": "unrelated", "question": "iPhone 17 多少钱？"}
+{"id": "CR-FAR-03", "kind": "unrelated", "question": "怎么考驾照科目三？"}
+{"id": "CR-FAR-04", "kind": "unrelated", "question": "北京明天会下雨吗？"}
+{"id": "CR-FAR-05", "kind": "unrelated", "question": "红烧排骨怎么做？"}
+{"id": "CR-FAR-06", "kind": "unrelated", "question": "狗狗打疫苗要多少钱？"}
+{"id": "CR-FAR-07", "kind": "unrelated", "question": "孩子发烧 39 度怎么办？"}
+{"id": "CR-FAR-08", "kind": "unrelated", "question": "2026 年考研国家线是多少？"}
+{"id": "CR-FAR-09", "kind": "unrelated", "question": "怎么给 Excel 加下拉菜单？"}
+{"id": "CR-FAR-10", "kind": "unrelated", "question": "上海迪士尼门票多少钱？"}
+{"id": "CR-FAR-11", "kind": "unrelated", "question": "马拉松怎么配速？"}
+{"id": "CR-FAR-12", "kind": "unrelated", "question": "个人所得税专项附加扣除怎么填？"}
+{"id": "CR-FAR-13", "kind": "unrelated", "question": "日本旅游签证要什么材料？"}
+{"id": "CR-FAR-14", "kind": "unrelated", "question": "三国演义是谁写的？"}
+{"id": "CR-FAR-15", "kind": "unrelated", "question": "怎么挑西瓜？"}
+{"id": "CR-FAR-16", "kind": "unrelated", "question": "现在房贷利率是多少？"}
+{"id": "CR-FAR-17", "kind": "unrelated", "question": "上届世界杯冠军是谁？"}
+{"id": "CR-FAR-18", "kind": "unrelated", "question": "Python 怎么读取 CSV 文件？"}
+{"id": "CR-FAR-19", "kind": "unrelated", "question": "减肥每天吃多少热量合适？"}
+{"id": "CR-FAR-20", "kind": "unrelated", "question": "婚假有几天？"}
