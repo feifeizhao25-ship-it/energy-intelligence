@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { safeErrorMessage } from '@/lib/api/safe-error';
 export const dynamic = 'force-dynamic';
-import { getLocationSuggestions } from '@/lib/api/amap';
+import { getLocationSuggestions } from '@/lib/api/location-provider';
 import { enforceRateLimit, PUBLIC_RULES } from '@/lib/security/rate-limit';
 
 /**

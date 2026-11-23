@@ -4,8 +4,9 @@ import {
     geocodeAddress,
     reverseGeocode,
     searchNearbyPOIs,
-    getLocationSuggestions
-} from '@/lib/api/amap';
+    getLocationSuggestions,
+    isLocationProviderError,
+} from '@/lib/api/location-provider';
 import { enforceRateLimit, PUBLIC_RULES } from '@/lib/security/rate-limit';
 import { safeErrorMessage } from '@/lib/api/safe-error';
 
@@ -71,14 +72,13 @@ export async function GET(request: NextRequest) {
 
     } catch (error) {
         console.error('Location API Error:', error);
-        if (error instanceof Error && error.name === 'AmapError') {
-            const failure = error as Error & { code?: string; httpStatus?: number };
-            if (failure.code && typeof failure.httpStatus === 'number') {
-                return NextResponse.json(
-                    { success: false, error: failure.message, code: failure.code },
-                    { status: failure.httpStatus },
-                );
-            }
+        if (isLocationProviderError(error) && error.code) {
+            // 两家位置服务的错误类只带我们自己写的中文提示（上游 message 不透出）。
+            const failure = error;
+            return NextResponse.json(
+                { success: false, error: failure.message, code: failure.code },
+                { status: failure.httpStatus },
+            );
         }
         return NextResponse.json(
             { success: false, error: safeErrorMessage(error, '位置服务出错'), code: 'upstream' },

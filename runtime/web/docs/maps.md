@@ -6,6 +6,8 @@
 
 1. **瓦片代理。** 上面这条。配好密钥后，`/map`、`/resource/map` 和风电测算里的选点会画瓦片。`/map/compare` 和 `/map/report` 不画地图，只做对比和报告。
 2. **Web 服务。** `AMAP_WEB_SERVICE_KEY` 只在服务端做地理编码、逆地理、周边和输入提示。高德用 GCJ-02，库存和对外坐标用 WGS84，进出时转换。没有密钥就不请求。
+   - 可切换到腾讯位置服务：`LOCATION_PROVIDER=tencent`，配 `TENCENT_MAP_KEY`；控制台开了签名校验时再配 `TENCENT_MAP_SK`（服务端按 md5(路径?升序原始参数+SK) 算 `sig`，出口 IP 变化也能用）。返回字段与高德一致，同样 GCJ-02↔WGS84 转换。实现见 `src/lib/api/tencent-map.ts` 和 `location-provider.ts`。
+   - 腾讯只接了 Web 服务；瓦片仍是 `MAP_TILE_PROVIDER`（天地图或高德），没有接腾讯瓦片。
 3. **JS SDK。** 现网页面不加载。安全密钥不能放进 `NEXT_PUBLIC`。以后若要加载，只能把 `_AMapSecurityConfig.serviceHost` 指到服务端代理，不能把 jscode 发给浏览器。
 
 还要使用方提供，代码里不会编造：
