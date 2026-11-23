@@ -81,6 +81,31 @@ const PARAPHRASE: Array<[RegExp, string]> = [
     [/guaranteed\s+returns?/i, 'guaranteed return'],
 ];
 
+// 政策电价机制的事实说明不是价格预测（与后端 bottom_line._POLICY_CONTEXT 等同一口径，2026-11-23 真模型复测发现误拦）。
+// 同一句有文件/机制依据、又没有个人判断、未来时点、点位或涨跌幅时，只抹「预计……电价」「电价……会/将涨跌」两小段。
+const POLICY_CONTEXT = /〔\d{4}〕\d+号|\d+号文|通知|文件|规定|明确|要求|按照|根据|依据|政策|办法|方案|核定|定价法|原文|条款|纳入|分摊|回收|执行后|实施后|机制/;
+const PRICE_OPINION = /我|建议|推荐|锁定|抓紧|尽快|明年|后年|未来|下半年|年底|下个?月|下周|市场情况|走势|行情|判断|看好|看涨|看跌|大幅|暴涨|暴跌|飙升|腰斩|翻倍|预测|预判|必将|必然|肯定|一定会|注定|涨到|跌到|突破|跌破|(?:上涨|下跌|涨|跌|上升|下降|上调|下调)(?:幅度)?\s*(?:约|超过|近|了|为)?\s*\d/;
+const POLICY_PRICE_SPANS = [/预计.{0,16}?(?:电价|价格)/g, /(?:电价|价格).{0,8}?(?:将|会)(?:上涨|下跌|涨|跌)/g];
+const NOT_NECESSARILY = /(?:不一定|未必|不必然|并不一定)(?:会)?(?:上涨|下跌|涨|跌)/g;
+const SENTENCE = /[^。！？!?\n；;]+/g;
+
+function policyPriceSpans(raw: string): Array<[number, number]> {
+    const spans: Array<[number, number]> = [];
+    for (const sentence of raw.matchAll(SENTENCE)) {
+        const body = sentence[0];
+        const base = sentence.index ?? 0;
+        const patterns = [NOT_NECESSARILY];
+        if (POLICY_CONTEXT.test(body) && !PRICE_OPINION.test(body)) patterns.push(...POLICY_PRICE_SPANS);
+        for (const pattern of patterns) {
+            for (const match of body.matchAll(pattern)) {
+                const start = base + (match.index ?? 0);
+                spans.push([start, start + match[0].length]);
+            }
+        }
+    }
+    return spans;
+}
+
 function maskNegations(text: string): string {
     const raw = text || '';
     const spans: Array<[number, number]> = [];
@@ -95,6 +120,7 @@ function maskNegations(text: string): string {
             spans.push([match.index, match.index + match[0].length]);
         }
     }
+    spans.push(...policyPriceSpans(raw));
     for (const phrase of [BOTTOM_LINE_NOTICE_ZH, BOTTOM_LINE_NOTICE_EN]) {
         let start = 0;
         while (start <= raw.length) {

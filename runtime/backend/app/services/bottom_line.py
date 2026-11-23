@@ -128,6 +128,23 @@ _HYPOTHETICAL_NUMBERS = re.compile(
     r"|(?:IRR|内部收益率|收益率|回报率)(?:是|为|约为|达到|超过)\s*\d+(?:\.\d+)?\s*%?", re.I)
 _SENTENCE = re.compile(r"[^。！？!?\n；;]+")
 
+# 政策电价机制的事实说明不是价格预测（2026-11-23 真模型复测：「发电侧容量电价现在是怎么定的？」的正常回答
+# 被整段换成免责句）。同一句里有文件/机制依据、又没有个人判断、未来时点、点位或涨跌幅时，
+# 只抹「预计……电价」「电价……会/将涨跌」这两小段。「预测」不豁免；「明年电价会上涨5%」「我判断会涨到200元」照常拦。
+_POLICY_CONTEXT = re.compile(
+    r"〔\d{4}〕\d+号|\d+号文|通知|文件|规定|明确|要求|按照|根据|依据|政策|办法|方案|核定|定价法|原文|条款|纳入|分摊|回收|执行后|实施后|机制"
+)
+_PRICE_OPINION = re.compile(
+    r"我|建议|推荐|锁定|抓紧|尽快|明年|后年|未来|下半年|年底|下个?月|下周|市场情况|走势|行情|判断|看好|看涨|看跌|大幅|暴涨|暴跌|飙升|腰斩|翻倍|预测|预判|必将|必然|肯定|一定会|注定"
+    r"|涨到|跌到|突破|跌破|(?:上涨|下跌|涨|跌|上升|下降|上调|下调)(?:幅度)?\s*(?:约|超过|近|了|为)?\s*\d"
+)
+_POLICY_PRICE_SPANS = (
+    re.compile(r"预计.{0,16}?(?:电价|价格)"),
+    re.compile(r"(?:电价|价格).{0,8}?(?:将|会)(?:上涨|下跌|涨|跌)"),
+)
+# 不置可否不是预测：「用户总电价不一定上涨」「电价未必下跌」。
+_NOT_NECESSARILY = re.compile(r"(?:不一定|未必|不必然|并不一定)(?:会)?(?:上涨|下跌|涨|跌)")
+
 # 不调用模型的改写层。只在国内市场启用，避免改变国际版既有精确匹配行为。
 _PATTERNS = (
     (re.compile(r"推荐\s*投资"), "推荐投资"),
@@ -177,7 +194,12 @@ def _mask(text: str) -> str:
     has_example = bool(_EXAMPLE_MARKER.search(text))
     specific = _SPECIFIC_IN_EXAMPLE if has_example else _SPECIFIC_PROJECT
     for sentence in _SENTENCE.finditer(text):
-        if specific.search(sentence.group()):
+        body = sentence.group()
+        spans.extend((sentence.start() + m.start(), sentence.start() + m.end()) for m in _NOT_NECESSARILY.finditer(body))
+        if _POLICY_CONTEXT.search(body) and not _PRICE_OPINION.search(body):
+            for pattern in _POLICY_PRICE_SPANS:
+                spans.extend((sentence.start() + m.start(), sentence.start() + m.end()) for m in pattern.finditer(body))
+        if specific.search(body):
             continue
         if _HYPOTHETICAL_SENTENCE.search(sentence.group()) or (has_example and _LIST_ITEM.match(sentence.group())):
             spans.extend((sentence.start() + m.start(), sentence.start() + m.end()) for m in _HYPOTHETICAL_NUMBERS.finditer(sentence.group()))
