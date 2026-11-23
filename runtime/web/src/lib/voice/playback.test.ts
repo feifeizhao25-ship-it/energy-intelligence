@@ -1,4 +1,4 @@
-import { UtterancePlayback, speakableText, type Synth } from './playback';
+import { UtterancePlayback, speakableText, spokenAnswerText, classifySpeechError, speakFailureMessage, type Synth, type SpeakFailure } from './playback';
 
 // Test note: tap starts readout of an answer bubble; a second tap on the same
 // bubble stops it. Markdown is stripped before speech. No network speech API.
@@ -46,5 +46,40 @@ describe('on-device answer readout', () => {
     expect(playback.speakingId).toBe('a2');
     expect(synth.cancelled).toBe(1);
     expect(synth.spoken[1]).toBe('zh-CN:第二段');
+  });
+});
+
+describe('朗读只读正文、失败可见（音1、音2，2026-11-23）', () => {
+  it('来源块不进朗读，只提一句条数；网址和角标不读', () => {
+    const body = '136 号文之后新建项目按市场化方式形成上网电价 [1]。详见 https://www.ndrc.gov.cn/x.html';
+    const text = spokenAnswerText(body, 4);
+    expect(text).toBe('136 号文之后新建项目按市场化方式形成上网电价。详见 （网址见屏幕） 本回答附 4 条来源，请看屏幕。');
+    expect(text).not.toMatch(/许可|发布机构|https?:/);
+    expect(spokenAnswerText('只有正文')).toBe('只有正文');
+    expect(spokenAnswerText('', 3)).toBe('');
+  });
+
+  it('引擎失败时记下原因，按钮旁有文字；用户停止不算失败', () => {
+    let end: ((f?: SpeakFailure) => void) | null = null;
+    const synth: Synth = { speak: (_t, _l, onend) => { end = onend; }, cancel: () => { end = null; } };
+    const playback = new UtterancePlayback(synth);
+    playback.toggle('a1', '正文', 'zh-CN');
+    end!('no-voice');
+    expect(playback.speakingId).toBeNull();
+    expect(playback.lastError).toEqual({ id: 'a1', message: '本机没有可用的中文语音，无法朗读' });
+    playback.toggle('a1', '正文', 'zh-CN');
+    expect(playback.lastError).toBeNull(); // 重试时清掉
+    end!();
+    expect(playback.lastError).toBeNull();
+  });
+
+  it('浏览器错误码分类', () => {
+    expect(classifySpeechError('interrupted')).toBeUndefined();
+    expect(classifySpeechError('canceled')).toBeUndefined();
+    expect(classifySpeechError('language-unavailable')).toBe('no-voice');
+    expect(classifySpeechError('voice-unavailable')).toBe('no-voice');
+    expect(classifySpeechError('not-allowed')).toBe('not-allowed');
+    expect(classifySpeechError('synthesis-failed')).toBe('error');
+    expect(speakFailureMessage('unsupported')).toBe('这个浏览器不支持朗读');
   });
 });

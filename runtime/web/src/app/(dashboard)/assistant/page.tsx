@@ -7,6 +7,7 @@ import { useSession } from 'next-auth/react';
 import { Sparkles, Paperclip, Copy, RefreshCw, AlertCircle } from 'lucide-react';
 import { VoiceInput } from '@/components/input/VoiceInput';
 import { BubbleSpeaker } from '@/components/ai/BubbleSpeaker';
+import { spokenAnswerText } from '@/lib/voice/playback';
 import { AssistantComposerButton } from '@/components/assistant/AssistantComposerButton';
 import { AigcLabel } from '@/components/ui/AigcLabel';
 import { buildAnswerDateLine } from '@/lib/ai/answer-date-line';
@@ -345,7 +346,7 @@ export default function AssistantPage() {
                                 {/* Action Buttons */}
                                 {msg.role === 'assistant' && !msg.isStreaming && (
                                     <div className="flex gap-2">
-                                        <BubbleSpeaker id={msg.id} text={citationText(msg.content, msg.sources || [])} />
+                                        <BubbleSpeaker id={msg.id} text={spokenAnswerText(msg.content, msg.sources?.length || 0)} />
                                         <button
                                             type="button"
                                             aria-label="复制"
