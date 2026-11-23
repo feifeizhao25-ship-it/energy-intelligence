@@ -1,7 +1,8 @@
 """国内用户请求只读本地辐照/风速样本或批量导入缓存。
 
 本模块不发起 HTTP，也不导入 nasa_batch_import（那个模块才允许在开关打开时
-访问 power.larc.nasa.gov）。种子数据是省级城市的气候量级示例，不是 NASA 实测。
+访问 power.larc.nasa.gov）。种子数据是 31 个省会坐标点的 NASA POWER 气候态月均值离线缓存（2001–2025，
+卫星与再分析产品，不是地面气象站实测），来源与偏差说明见 domestic_resources.json 的 license_note / source。
 """
 from __future__ import annotations
 
@@ -84,7 +85,7 @@ def _interpolate(lat: float, lng: float) -> dict | None:
     for index in range(12):
         monthly.append(sum(weights[i] * float(pair[i][1]["monthly_ghi"][index]) for i in range(2)) / total)
     names = "、".join(f"{row.get('province') or ''}{row.get('city') or ''}" for _d, row in pair)
-    note = (_seed().get("license_note") or "") + " 数值由邻近省级城市样本按距离加权，不是该点实测，也不是 NASA POWER 实测。"
+    note = (_seed().get("license_note") or "") + " 数值由邻近两个省会的 NASA POWER 气候态按距离加权，不是该点实测，也不是该点的 NASA POWER 网格值。"
     return {
         "lat": lat,
         "lng": lng,
@@ -121,7 +122,7 @@ def lookup(lat: float, lng: float) -> dict:
         "monthly_temp": list(row.get("monthly_temp") or [float(row.get("avg_temp") or 15)] * 12),
         "mean_wind_100m": float(row.get("mean_wind_100m") or 0),
         "monthly_wind_100m": [float(v) for v in (row.get("monthly_wind_100m") or [float(row.get("mean_wind_100m") or 0)] * 12)],
-        "data_source": row.get("provenance") or "国内离线辐照与风速样本（省级城市）",
+        "data_source": row.get("provenance") or "离线样本：NASA POWER 气候态月均值（省会坐标点）",
         "license_note": row.get("license_note") or _seed().get("license_note"),
         "station_note": row.get("station_note") or f"匹配 {row.get('province') or ''}{row.get('city') or ''}，返回坐标为请求坐标",
     }

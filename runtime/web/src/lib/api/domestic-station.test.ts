@@ -12,7 +12,7 @@ describe('国内辐照样本', () => {
         const station = resolveDomesticStation(38.97, 115.46);
         expect(station?.city).toBe('插值');
         expect(station?.provenance).toContain('不是该坐标实测');
-        expect(station?.license_note).toContain('不是 NASA POWER 实测');
+        expect(station?.license_note).toContain('不是该点的 NASA POWER 网格值'); // 43：样本改用 NASA POWER 气候态
         expect(station?.monthly_daily_ghi).toHaveLength(12);
     });
 });

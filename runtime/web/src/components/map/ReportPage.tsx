@@ -101,7 +101,7 @@ export default function ReportPage() {
                         <div className="flex flex-col items-center justify-center h-[400px]">
                             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
                             <p className="text-gray-500">正在生成专业评估报告...</p>
-                            <p className="text-xs text-gray-400 mt-2">数据来自国内省级离线样本，不是实时境外气象。</p>
+                            <p className="text-xs text-gray-400 mt-2">数据来自离线缓存的 NASA 卫星与再分析气候态（省会坐标点，2001–2025），不是实时境外气象，也不是地面气象站实测。</p>
                         </div>
                     ) : (
                         <div className="prose prose-lg max-w-none whitespace-pre-wrap font-sans">

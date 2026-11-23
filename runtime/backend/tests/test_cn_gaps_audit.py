@@ -75,8 +75,8 @@ def test_disabled_batch_does_not_fetch(tmp_path, monkeypatch):
 def test_non_capital_lookup_is_labelled_interpolation():
     shanghai = lookup(31.2, 121.5)
     assert shanghai["station_city"] == "上海"
-    assert shanghai["data_source"].startswith("国内离线")
-    assert "不是 NASA POWER 实测" in shanghai["license_note"]
+    assert shanghai["data_source"].startswith("离线样本")  # 43：NASA POWER 气候态离线缓存
+    assert "NASA POWER" in shanghai["license_note"] and "不是地面气象站实测" in shanghai["license_note"]  # 43
     with pytest.raises(DomesticResourceNotLoaded):
         lookup(0, 0)
     seed = json.loads((ROOT / "data" / "domestic_resources.json").read_text())
@@ -100,7 +100,7 @@ def test_non_capital_lookup_is_labelled_interpolation():
     assert row["station_city"] == "插值"
     assert "邻近样本插值" in row["data_source"]
     assert "不是该坐标实测" in row["data_source"]
-    assert "不是 NASA POWER 实测" in row["license_note"]
+    assert "不是该点的 NASA POWER 网格值" in row["license_note"]  # 43：样本改用 NASA POWER 气候态
 
 
 def test_policy_fixture_cycle_stages_diff_without_publishing(tmp_path, monkeypatch):

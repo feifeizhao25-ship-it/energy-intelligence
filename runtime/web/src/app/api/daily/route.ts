@@ -10,8 +10,8 @@ export async function GET() {
             title: '样本覆盖',
             value: String((resources.stations || []).length),
             unit: '个省级城市气候样本',
-            note: '来自国内离线样本，不是 NASA POWER 实测，也不是官方辐照公报。',
-            source: '国内离线样本',
+            note: '离线缓存的 NASA POWER 气候态月均值（2001–2025，省会坐标点），卫星与再分析产品，不是地面气象站实测，也不是官方辐照公报。',
+            source: 'NASA POWER（https://power.larc.nasa.gov）',
             loaded: true,
         },
         {

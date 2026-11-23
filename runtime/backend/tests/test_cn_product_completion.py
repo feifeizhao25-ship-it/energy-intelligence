@@ -59,8 +59,8 @@ def test_domestic_seed_covers_shanghai_and_refuses_origin():
     row = lookup(31.2, 121.5)
     assert row["station_city"] == "上海"
     assert row["lat"] == 31.2
-    assert "不是 NASA POWER 实测" in row["license_note"]
-    assert row["data_source"].startswith("国内离线")
+    assert "NASA POWER" in row["license_note"] and "不是地面气象站实测" in row["license_note"]  # 43：样本改用 NASA POWER 气候态
+    assert row["data_source"].startswith("离线样本")
     try:
         lookup(0, 0)
     except DomesticResourceNotLoaded:
