@@ -26,14 +26,14 @@ export async function analyzeSOH(input: SohInput): Promise<SohResult> {
 }
 
 export async function analyzeThermal(input: ThermalInput): Promise<ThermalResult> {
-    await new Promise(resolve => setTimeout(resolve, 800));
 
     const maxTemp = Math.max(...input.temperatures);
     const minTemp = Math.min(...input.temperatures);
     const avgTemp = input.temperatures.reduce((a, b) => a + b, 0) / input.temperatures.length;
 
+    // 核9：45 / 60 °C 是示例阈值，没有标准出处；处置以电池厂家规格书、BMS 设定和电站储能运维规程为准。
+    // 不再给「热失控风险 90%」这类没有依据的百分比，也不替用户下「停止充放电」的操作指令。
     const status = maxTemp > 60 ? 'critical' : maxTemp > 45 ? 'warning' : 'normal';
-    const runawayRisk = maxTemp > 70 ? 90 : maxTemp > 60 ? 50 : 5;
 
     return {
         maxTemp,
@@ -41,12 +41,13 @@ export async function analyzeThermal(input: ThermalInput): Promise<ThermalResult
         avgTemp: Number(avgTemp.toFixed(1)),
         tempDiff: Number((maxTemp - minTemp).toFixed(1)),
         status,
-        runawayRisk,
+        runawayRisk: null,
         coolingAction: status === 'critical'
-            ? '立即启动强冷模式，停止充放电'
+            ? '温度高于示例阈值 60 °C：请按电站储能运维规程和电池厂家手册处置，并立即通知运维负责人'
             : status === 'warning'
-                ? '增加风扇转速，降低充放电功率'
-                : '维持当前冷却策略'
+                ? '温度高于示例阈值 45 °C：请对照厂家规格书检查冷却系统和充放电功率'
+                : '未超过示例阈值',
+        thresholdNote: '45 °C / 60 °C 为示例阈值，没有标准出处；请以电池厂家规格书和 BMS 设定的告警值为准。',
     };
 }
 

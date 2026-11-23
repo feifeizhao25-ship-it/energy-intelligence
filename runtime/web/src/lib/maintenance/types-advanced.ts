@@ -95,8 +95,9 @@ export interface ThermalResult {
     avgTemp: number;
     tempDiff: number;
     status: 'normal' | 'warning' | 'critical';
-    runawayRisk: number; // 0-100%
+    runawayRisk: number | null; // 没有标准或模型出处，不给百分比（核9）
     coolingAction: string;
+    thresholdNote: string;
 }
 
 // Storage Consistency
@@ -121,12 +122,16 @@ export interface SafetySearchInput {
 
 export interface SafetySearchResult {
     query: string;
+    /** false = 没有真正检索，只是常用标准清单（核9） */
+    searched: boolean;
+    note: string;
     regulations: Array<{
         title: string;
         code: string; // e.g., GB/T 12345
         summary: string;
-        relevance: number;
+        relevance: number | null; // 没有检索时为 null，不编相关度
         link?: string;
+        versionNote?: string;
     }>;
     procedures: Array<{
         name: string;
