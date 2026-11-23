@@ -133,17 +133,16 @@ def solar_response_fields(lat: float, lng: float) -> dict:
     monthly = row["monthly_ghi"]
     dni = [round(v * 0.55, 1) for v in monthly]
     dhi = [round(v * 0.45, 1) for v in monthly]
-    if annual >= 2000:
-        klass, score = "I", 80.0
-    elif annual >= 1600:
-        klass, score = "II", 60.0
-    elif annual >= 1200:
-        klass, score = "III", 40.0
-    else:
-        klass, score = "IV", 20.0
+    from app.services.solar_grade_gb31155 import grade as gb31155_grade
+
+    g = gb31155_grade(annual)
+    klass, score = g["resource_class"], g["score"]
     return {
         "lat": lat,
         "lng": lng,
+        "gb_grade": g["gb_grade"],
+        "gb_grade_label": g["gb_grade_label"],
+        "grading_standard": g["grading_standard"],
         "ghi": round(annual, 1),
         "dni": round(sum(dni), 1),
         "dhi": round(sum(dhi), 1),

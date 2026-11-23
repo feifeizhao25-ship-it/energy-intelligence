@@ -67,12 +67,15 @@ export function estimateOptimalTilt(lat: number): number {
     return empiricalOptimalTilt(lat);
 }
 
+/**
+ * 国内版按 GB/T 31155-2014《太阳能资源等级 总辐射》四档：I 最丰富 ≥1750、II 很丰富 1400–1750、
+ * III 丰富 1050–1400、IV 一般 <1050（kWh/m²·年）。与后端 solar_grade_gb31155 同一口径。原来的 1800/1600/1400/1200 五档没有出处。
+ */
 export function solarResourceClass(annualGhi: number): SolarResource['annual']['resourceClass'] {
-    if (annualGhi >= 1800) return 'I';
-    if (annualGhi >= 1600) return 'II';
-    if (annualGhi >= 1400) return 'III';
-    if (annualGhi >= 1200) return 'IV';
-    return 'V';
+    if (annualGhi >= 1750) return 'I';
+    if (annualGhi >= 1400) return 'II';
+    if (annualGhi >= 1050) return 'III';
+    return 'IV';
 }
 
 /**
