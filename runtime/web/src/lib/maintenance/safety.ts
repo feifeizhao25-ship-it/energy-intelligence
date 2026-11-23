@@ -4,7 +4,7 @@ import { SafetySearchInput, SafetySearchResult } from './types-advanced';
  * 安全规程查询（核9，2026-11-23）。
  * 本工具还没有接入标准库或全文检索，所以不假装「检索」：不再有 1.2 秒假延迟和 0.95 这类假相关度，
  * 只列常用标准编号和到全国标准信息公共服务平台核对现行版本的链接，并明确写出 searched: false。
- * GB/T 35694-2017 已被 GB/T 35694-2025 代替（2026-04-01 实施）；其余编号的现行状态没有逐条核实，标「版本待核实」。
+ * GB/T 35694-2017 已被 GB/T 35694-2025 代替（2026-04-01 实施）；GB 26860-2011 现行；DL/T 796-2012 没有核实，标「版本待核实」。
  */
 const STD_SEARCH = 'https://std.samr.gov.cn/search/std?q=';
 
@@ -14,7 +14,7 @@ const COMMON: Array<{ title: string; code: string; summary: string; category: 'g
         code: 'GB 26860-2011',
         summary: '发电厂和变电站电气工作人员作业中的安全要求。',
         category: 'general',
-        versionNote: '版本待核实，请在标准平台确认是否现行',
+        versionNote: '已核对：现行（全国标准信息公共服务平台，2026-11-23）',
     },
     {
         title: '光伏发电站安全规程',
