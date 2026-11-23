@@ -18,4 +18,13 @@ describe('审计 8-3 AI 回答日期行', () => {
     expect(l.model).toBe('未知模型');
     expect(l.text).toContain('请以最新官方文件为准');
   });
+  it('正文有 [S1] 引用或带来源但来源没日期时，不说「未引用」', () => {
+    expect(buildAnswerDateLine({ content: '容量电价按机制执行[S2][S3]', model: 'm', answeredAt: now }).sourceDate).toBe('所引来源未标注日期');
+    expect(buildAnswerDateLine({ content: '容量电价按机制执行', model: 'm', answeredAt: now, sourceDates: [undefined, undefined], sourceCount: 2 }).sourceDate).toBe('所引来源未标注日期');
+    expect(buildAnswerDateLine({ content: '没有引用', model: 'm', answeredAt: now, sourceDates: [], sourceCount: 0 }).sourceDate).toBe('未引用带日期的来源');
+  });
+  it('来源自带日期时取来源日期', () => {
+    const l = buildAnswerDateLine({ content: '依据 114 号文[S1]', model: 'm', answeredAt: now, sourceDates: ['2025-09-28', undefined], sourceCount: 2 });
+    expect(l.sourceDate).toBe('2025-09-28');
+  });
 });

@@ -295,7 +295,7 @@ export default function AssistantPage() {
                                 )}
                                 {msg.role === 'assistant' && !msg.isStreaming && msg.id !== '1' && (
                                     <p className="text-[11px] text-slate-400" data-testid="answer-date-line">
-                                        {buildAnswerDateLine({ content: msg.content, question: msg.question, model: msg.standIn ? '未调用模型' : msg.model, answeredAt: msg.timestamp, sourceDates: (msg.sources || []).map((source) => source.published_at) }).text}
+                                        {buildAnswerDateLine({ content: msg.content, question: msg.question, model: msg.standIn ? '未调用模型' : msg.model, answeredAt: msg.timestamp, sourceDates: (msg.sources || []).map((source) => source.published_at), sourceCount: msg.sources?.length ?? 0 }).text}
                                     </p>
                                 )}
 

@@ -31,11 +31,20 @@ export interface AnswerDateLine {
   text: string;
 }
 
-export function buildAnswerDateLine(opts: { content: string; question?: string; model?: string | null; answeredAt: Date; sourceDates?: Array<string | null | undefined> }): AnswerDateLine {
+/** 回答正文里的 [S1] / [1] 这类引用标记 */
+const CITATION_MARK_RE = /\[(?:S|s)?\d{1,2}\]/;
+
+export const NO_DATED_SOURCE = '未引用带日期的来源';
+export const SOURCES_WITHOUT_DATE = '所引来源未标注日期';
+
+export function buildAnswerDateLine(opts: { content: string; question?: string; model?: string | null; answeredAt: Date; sourceDates?: Array<string | null | undefined>; sourceCount?: number }): AnswerDateLine {
   const d = opts.answeredAt;
   const verifiedDate = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   const dated = [opts.content, ...(opts.sourceDates || [])].filter(Boolean).join('\n');
-  const sourceDate = latestCitedDate(dated, d) ?? '未引用带日期的来源';
+  // 有来源（或正文带 [S1] 引用标记）但来源都没带日期时，不再写「未引用带日期的来源」，
+  // 免得和正文里的引用对不上（2026-11-23 真模型截图：正文 [S2][S3]，底部却说未引用）。
+  const cited = (opts.sourceCount ?? (opts.sourceDates || []).length) > 0 || CITATION_MARK_RE.test(opts.content);
+  const sourceDate = latestCitedDate(dated, d) ?? (cited ? SOURCES_WITHOUT_DATE : NO_DATED_SOURCE);
   const model = opts.model?.trim() || '未知模型';
   const policyNotice = POLICY_RE.test(`${opts.question ?? ''}${opts.content}`) ? '涉及政策内容，请以最新官方文件为准' : null;
   const text = [`引用来源最新日期：${sourceDate}`, `核验日期：${verifiedDate}`, `模型：${model}`, policyNotice].filter(Boolean).join(' · ');
