@@ -23,7 +23,7 @@ describe('search_policy_library', () => {
         process.env.BACKEND_INTERNAL_URL = 'http://backend.test/';
         process.env.NENGJIAN_INTERNAL_TOKEN = 'tok';
         const fetchMock = jest.fn(async () => ({ ok: true, json: async () => ({ sources: [
-            { ref: 'S1', title: '关于完善发电侧容量电价机制的通知（发改价格〔2026〕114号）', source_org: '国家发展改革委', dates: '发文日期：2026-01-30', url: 'https://www.ndrc.gov.cn/x', content: '煤电容量电价回收固定成本比例……' },
+            { ref: 'S1', title: '关于完善发电侧容量电价机制的通知（发改价格〔2026〕114号）', source_org: '国家发展改革委', dates: '发文日期：2026-01-30', published_at: '2026-01-30', url: 'https://www.ndrc.gov.cn/x', content: '煤电容量电价回收固定成本比例……' },
         ] }) }));
         global.fetch = fetchMock as unknown as typeof fetch;
         const out = await searchPolicyLibrary('发电侧容量电价现在是怎么定的？') as any;
@@ -32,7 +32,7 @@ describe('search_policy_library', () => {
         expect((init.headers as Record<string, string>)['X-Internal-Token']).toBe('tok');
         expect(out.count).toBe(1);
         expect(out.context).toMatch(/^\[S1\] 关于完善发电侧容量电价机制的通知/);
-        expect(out.sources[0]).toMatchObject({ ref: 'S1', url: 'https://www.ndrc.gov.cn/x', source_org: '国家发展改革委' });
+        expect(out.sources[0]).toMatchObject({ ref: 'S1', url: 'https://www.ndrc.gov.cn/x', source_org: '国家发展改革委', published_at: '2026-01-30' });
     });
 
     it('没命中时明确要求说未收录；后端不可用时不让模型凭记忆答', async () => {

@@ -14,7 +14,8 @@ async def test_returns_numbered_sources_from_retrieve(monkeypatch):
     def fake_retrieve(query, market):
         seen["args"] = (query, market)
         return [RAGHit("policy-cn-114", "关于完善发电侧容量电价机制的通知", "煤电容量电价……" * 200, 0.9,
-                       {"source_org": "国家发展改革委", "source_url": "https://www.ndrc.gov.cn/x", "doc_number": "发改价格〔2026〕114号"})]
+                       {"source_org": "国家发展改革委", "source_url": "https://www.ndrc.gov.cn/x", "doc_number": "发改价格〔2026〕114号",
+                        "publish_date": "2026-01-30"})]
 
     monkeypatch.setattr("app.api.v1.ai_assistant._retrieve", fake_retrieve)
     out = await domestic_library_search(LibrarySearchIn(query="发电侧容量电价现在是怎么定的？"), x_internal_token="tok")
@@ -24,6 +25,16 @@ async def test_returns_numbered_sources_from_retrieve(monkeypatch):
     assert src["ref"] == "S1" and src["id"] == "policy-cn-114"
     assert src["url"] == "https://www.ndrc.gov.cn/x" and src["source_org"] == "国家发展改革委"
     assert len(src["content"]) <= 1200
+    assert src["published_at"] == "2026-01-30"
+
+
+def test_source_date_prefers_issue_date_and_skips_pdf_metadata():
+    from app.api.v1.domestic_product import _source_date
+
+    assert _source_date({"issue_date": "2025-09-28", "published_at": "2025-10-01"}) == "2025-09-28"
+    assert _source_date({"published_at": "2025-10-01", "date_kind": "page_release"}) == "2025-10-01"
+    assert _source_date({"published_at": "2025-10-01", "date_kind": "pdf_creation"}) is None
+    assert _source_date({}) is None
 
 
 @pytest.mark.asyncio

@@ -688,6 +688,7 @@ export async function searchPolicyLibrary(query: string) {
             source_org: typeof s.source_org === 'string' ? s.source_org : undefined,
             doc_number: typeof s.doc_number === 'string' ? s.doc_number : undefined,
             dates: typeof s.dates === 'string' ? s.dates : undefined,
+            published_at: typeof s.published_at === 'string' ? s.published_at : undefined,
         })),
     };
 }

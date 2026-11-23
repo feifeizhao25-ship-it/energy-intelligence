@@ -112,10 +112,21 @@ async def domestic_library_search(body: LibrarySearchIn, x_internal_token: str |
             "source_org": md.get("source_org") or md.get("issuer") or None,
             "doc_number": md.get("doc_number") or None,
             "dates": " ".join(date_lines(md, "zh")) or (str(md.get("year")) if md.get("year") else ""),
+            # 回答底部「引用来源最新日期」用：优先发文日期；PDF 元数据日期不算发布日期（同 date_lines 的口径）。
+            "published_at": _source_date(md),
             "url": md.get("source_url") or None,
             "content": (hit.content or "")[:1200],
         })
     return {"query": body.query, "count": len(sources), "sources": sources}
+
+
+def _source_date(md: dict) -> str | None:
+    for key in ("publish_date", "issue_date"):
+        if md.get(key):
+            return str(md[key])
+    if md.get("published_at") and str(md.get("date_kind") or "") != "pdf_creation":
+        return str(md["published_at"])
+    return None
 
 
 @router.post("/ai/embeddings")
