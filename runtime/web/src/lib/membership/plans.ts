@@ -252,17 +252,20 @@ export const AI_MODEL_TIERS = {
         maxTokens: 4096,
     },
     FULL: {
-        defaultModel: 'deepseek-v3',
+        // 国内版经后端 /ai/domestic 调 DeepSeek 官方接口，只认 deepseek-flash / deepseek-v4-pro；deepseek-v3 会 400。
+        defaultModel: 'deepseek-flash',
         allowedModels: ['glm-4-flash', 'glm-4-plus', 'deepseek-chat', 'deepseek-v3', 'deepseek-flash'],
         maxTokens: 8192,
     },
     TEAM: {
-        defaultModel: 'deepseek-v3',
+        // 国内版经后端 /ai/domestic 调 DeepSeek 官方接口，只认 deepseek-flash / deepseek-v4-pro；deepseek-v3 会 400。
+        defaultModel: 'deepseek-flash',
         allowedModels: ['glm-4-flash', 'glm-4-plus', 'deepseek-chat', 'deepseek-v3', 'deepseek-flash'],
         maxTokens: 8192,
     },
     ENTERPRISE: {
-        defaultModel: 'deepseek-v3',
+        // 国内版经后端 /ai/domestic 调 DeepSeek 官方接口，只认 deepseek-flash / deepseek-v4-pro；deepseek-v3 会 400。
+        defaultModel: 'deepseek-flash',
         allowedModels: ['glm-4-flash', 'glm-4-plus', 'deepseek-chat', 'deepseek-v3', 'deepseek-flash'],
         maxTokens: 16384,
     },
