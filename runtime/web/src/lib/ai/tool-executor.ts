@@ -9,7 +9,7 @@ import { searchArxiv } from '@/lib/api/arxiv';
 import { findBestPdf } from '@/lib/papers/pdf';
 import { generateSummary, extractKeyData } from '@/lib/papers/ai';
 import { getCitation } from '@/lib/api/crossref';
-import { geocodeAddress, reverseGeocode, searchNearbyPOIs } from '@/lib/api/amap';
+import { geocodeAddress, reverseGeocode, searchNearbyPOIs } from '@/lib/api/location-provider';
 import { getAirQualityIndex } from '@/lib/api/open-meteo';
 import { getPVWattsData, calculateSolarOutput } from '@/lib/api/nrel';
 import { calculateSolar, normalizeSelfUseRatio } from '@/lib/calculator/solar';
