@@ -785,6 +785,13 @@ async def ask(
         payload = _no_source_payload(market, body.style, body.query)
         return {"answer": payload["message"], "sources": [], "model": None, "structured": payload["structured"],
                 "grounding": payload["grounding"]}
+    if not blocked and not _llm_configured() and market != "global":
+        # 核19（2026-11-23）：国内版 /ask 与 /chat-json 用同一份无模型回答（_library_stand_in），
+        # 都带「核验状态」尾注、grounding 和 time_check。国际版保持原样（TODO：另行统一）。
+        shown, evidence, expired = _library_stand_in(body.query, hits, market, body.style)
+        return {"answer": shown, "sources": evidence.get("sources", []), "model": None,
+                "structured": _structured(shown, hits, market, body.style), "grounding": _grounding(hits),
+                "time_check": {"today": _today().isoformat(), "expired_dates": expired}}
     if blocked or not _llm_configured():
         if blocked:
             answer = blocked
