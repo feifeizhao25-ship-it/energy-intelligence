@@ -110,7 +110,7 @@ def test_coverage_floor_override_gives_superset():
     svc = aa._RAG_SERVICE
     query = "光伏电站设计的时候阵列之间要留多宽的间距？"
     live = {h.source_id for h in svc.search(query, top_k=10, market="cn").hits}
-    loose = {h.source_id for h in svc.search(query, top_k=10, market="cn", coverage_floor_override=0.0).hits}
+    loose = {h.source_id for h in svc.search(query, top_k=10, market="cn", apply_coverage_floor=False).hits}
     assert len(loose) > len(live)
     assert live <= loose
 

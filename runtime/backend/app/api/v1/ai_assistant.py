@@ -71,7 +71,7 @@ def _retrieve(query: str, market: str) -> list:
 
             def _pool() -> list:
                 found = _RAG_SERVICE.search(query, top_k=10, market=market, exclude_stale=True,
-                                            coverage_floor_override=0.0).hits
+                                            apply_coverage_floor=False).hits
                 return [h for h in found if h.score >= MIN_SOURCE_RELEVANCE]
 
             hits = vector_rescue.rescue(query, hits, _pool, _RAG_SERVICE._corpus, _doc_text)

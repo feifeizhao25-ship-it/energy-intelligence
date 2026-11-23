@@ -399,8 +399,8 @@ class RAGService:
     def search(self, query: str, top_k: int = 5, market: str = "cn",
                exclude_stale: bool = True, effective_only: bool = True,
                include_stale: bool = False,
-               coverage_floor_override: Optional[float] = None) -> RAGResult:
-        """coverage_floor_override：只给向量补召回取「不设覆盖率下限」的词面候选用（见 vector_rescue），默认 None 保持原行为。"""
+               apply_coverage_floor: bool = True) -> RAGResult:
+        """apply_coverage_floor=False 只给向量补召回取「不设加权覆盖率下限」的词面候选用（见 vector_rescue）；默认保持原行为。"""
         if include_stale:
             exclude_stale = False
         if top_k <= 0:
@@ -417,8 +417,6 @@ class RAGService:
         retrieved_at = today.isoformat()
 
         coverage_floor = min_coverage() if len(self._corpus) >= MIN_DOCS_FOR_COVERAGE and min_relevance() > 0 else 0.0
-        if coverage_floor_override is not None:
-            coverage_floor = max(0.0, float(coverage_floor_override))
         names_registered = None  # 问句是否点名了库里任何一份文件（文号、标准号或简称）
         scored: List[RAGHit] = []
         for doc in self._corpus:
@@ -444,7 +442,7 @@ class RAGService:
                 continue  # one stray shared word ("work" in "Physical Work Test" vs "how does IRR work") is not a match
             if score <= 0 or score < min_relevance():
                 continue
-            if numbered < 0.85 and coverage_floor > 0:
+            if numbered < 0.85 and coverage_floor > 0 and apply_coverage_floor:
                 df, n_docs = self._document_frequency()
                 if weighted_coverage(query_tokens, doc_tokens, df, n_docs) < coverage_floor:
                     if names_registered is None:
