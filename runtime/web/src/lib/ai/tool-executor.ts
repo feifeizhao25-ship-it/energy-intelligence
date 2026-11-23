@@ -315,7 +315,7 @@ export async function executeTool(toolName: string, toolInput: Record<string, un
                         financing: 'cash'
                     },
                     technical: {
-                        efficiency: 85,
+                        efficiency: 88, // 核12：与储能测算页和后端 ST-001 默认往返效率 88% 一致
                         dod: 90,
                         cycleLife: (toolInput.cycleLife as number) || 6000,
                         degradationRate: 2,

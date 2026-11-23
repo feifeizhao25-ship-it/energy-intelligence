@@ -2,8 +2,8 @@
 
 纯财务计算，无外部依赖，任何环境都返回真实计算结果。
 核心公式复用 后端/app/utils/financial_utils.py 的 calc_lcoe：
-    LCOE = (CAPEX + Σ OPEX_t/(1+r)^t) / Σ E_t/(1+r)^t
-    E_t = E_0 × (1 - degradation)^t
+    LCOE = (CAPEX + Σ OPEX_t/(1+r)^t) / Σ E_t/(1+r)^t，t = 1..N，年末折现
+    E_t = E_1 × (1 - degradation)^(t-1)（第 1 年不衰减，与 calc_lcoe 和 build_solar_cashflows 一致；核21 2026-11-23 改正文档）
 """
 
 from __future__ import annotations

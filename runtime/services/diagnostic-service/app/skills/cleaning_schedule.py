@@ -233,9 +233,16 @@ class CleaningScheduleSkill:
                     "近期自然清洗": schedule_block["rain_natural_cleaning"],
                     "预计挽回发电收益": schedule_block["recovered_revenue_gross"],
                     "扣除成本净收益": schedule_block["net_benefit_after_cost"],
+                    "清洗是否划算": schedule_block["net_benefit_after_cost"] >= 0,
                     "置信度": schedule_block["confidence"],
                 },
             }
+            # 核21（2026-11-23）：净收益为负时明确说不划算，不只给一个下次清洗日期
+            if schedule_block["net_benefit_after_cost"] < 0:
+                result["不划算提示"] = (
+                    "按当前清洗成本和日发电收益，清洗一次挽回的收益不够覆盖清洗成本（扣除成本净收益为负），现在清洗不划算；"
+                    "上面的日期只是按积灰速率推出的间隔，可等积灰更重、电价更高或清洗成本更低时再评估。"
+                )
             if estimated:
                 result["warning"] = (
                     "成本/收益为内置假设——生产环境请显式提供 "

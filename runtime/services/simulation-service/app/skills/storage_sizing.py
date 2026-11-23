@@ -134,7 +134,7 @@ class StorageSizingSkill:
     )
     category = "ST"
     references = [
-        "GB/T 36276-2018 电力储能用锂离子电池（磷酸铁锂效率/DoD 典型值）",
+        "GB/T 36276-2023 电力储能用锂离子电池（2024-07-01 实施，代替 2018 版；本技能的效率/DoD 为典型值，不是该标准的限值）",
         "CNESA《储能产业研究白皮书》：锂电储能往返效率 85%–90%、DoD 90%",
         "NREL Storage Futures Study: diurnal storage sizing（日间移峰定容方法）",
         "IEC 61724-1:2021 光伏日发电曲线（晴天钟形/多云折减模型）",
