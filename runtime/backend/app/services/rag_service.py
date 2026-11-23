@@ -370,6 +370,31 @@ def standard_number_score(query: str, doc: Dict) -> float:
     return 0.0
 
 
+_BOOK_RE = re.compile(r"《([^》]{4,60})》")
+_TRAILING_PAREN_RE = re.compile(r"[（(][^（）()]{1,12}[）)]$")
+EXACT_NAME_SCORE = 0.95
+
+
+def title_names(doc: Dict) -> List[str]:
+    """条目标题里书名号中的文件名，去掉末尾的（试行）（征求意见稿）这类括注。"""
+    names = []
+    for raw in _BOOK_RE.findall(str(doc.get("title") or "")):
+        core = _TRAILING_PAREN_RE.sub("", raw.strip())
+        if len(core) >= 6:
+            names.append(core)
+    return names
+
+
+def exact_name_match(query: str, doc: Dict, owners: Dict[str, List[str]]) -> bool:
+    """核10：问句点名了这份文件——文号（含「688号文」这类简称）或标题书名号里的文件名原样出现在问句里。"""
+    if name_in_query(query, doc, owners) and (
+        _doc_number_spans(query, str(doc.get("doc_number") or "")) or _serial_names_doc(query, doc, owners)
+    ):
+        return True
+    q = re.sub(r"\s+", "", query or "")
+    return any(name in q for name in title_names(doc))
+
+
 def tokenize(text: str) -> set:
     """中英混合分词：英文/数字按词，中文按字 unigram + bigram。
 
@@ -432,6 +457,8 @@ class RAGService:
 
         coverage_floor = min_coverage(query) if len(self._corpus) >= MIN_DOCS_FOR_COVERAGE and min_relevance() > 0 else 0.0
         names_registered = None  # 问句是否点名了库里任何一份文件（文号、标准号或简称）
+        owners_all = _serial_owners(self._corpus)
+        exact_ids: set = set()
         scored: List[RAGHit] = []
         for doc in self._corpus:
             if not _retrieval_gate(
@@ -450,6 +477,10 @@ class RAGService:
             if alias is not None and alias > score:
                 score = alias
             numbered = standard_number_score(query, doc)
+            # 核10：文号或书名号文件名精确出现在问句里，至少给 0.95，同分时排在前面
+            if exact_name_match(query, doc, owners_all):
+                exact_ids.add(doc["source_id"])
+                numbered = max(numbered, EXACT_NAME_SCORE)
             if numbered > score:
                 score = numbered
             elif overlap < 2 and len(query_tokens) > 1:
@@ -508,7 +539,7 @@ class RAGService:
             )
             scored.append(hit)
 
-        scored.sort(key=lambda h: h.score, reverse=True)
+        scored.sort(key=lambda h: (h.score, h.source_id in exact_ids), reverse=True)
         return RAGResult(hits=scored[: max(top_k, 0)])
 
     def named_stale_labels(self, query: str, market: str = "cn") -> List[str]:
