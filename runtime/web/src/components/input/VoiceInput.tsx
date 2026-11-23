@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Mic, Square } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { MIC_UNSUPPORTED, micFailureMessage, micView } from '@/lib/voice/micStatus';
 import { attachLocalFirstRecognition, type LocalFirstSession, type SpeechRecognitionLike } from '@/lib/voice/localFirstSpeech';
 
 interface VoiceInputProps {
@@ -33,7 +34,7 @@ export function VoiceInput({ onTranscript, appearance = 'fab', disabled = false,
     };
     const Ctor = w.SpeechRecognition || w.webkitSpeechRecognition;
     if (!Ctor) {
-      setError('当前浏览器不支持语音输入');
+      setError(MIC_UNSUPPORTED);
       return;
     }
     const recognition = new Ctor();
@@ -46,11 +47,8 @@ export function VoiceInput({ onTranscript, appearance = 'fab', disabled = false,
         setIsListening(false);
       },
       onFailure: (code) => {
-        if (code === 'not-allowed') {
-          setError('需要麦克风权限才能把您说的话填进输入框');
-        } else if (code !== 'aborted' && code !== 'no-speech') {
-          setError('无法识别语音');
-        }
+        const message = micFailureMessage(code);
+        if (message) setError(message);
         setIsListening(false);
       },
       onIdle: () => setIsListening(false),
@@ -62,7 +60,7 @@ export function VoiceInput({ onTranscript, appearance = 'fab', disabled = false,
   }, []);
 
   const toggleListening = () => {
-    if (disabled || error === '当前浏览器不支持语音输入') return;
+    if (disabled || error === MIC_UNSUPPORTED) return;
     const recognition = recognitionRef.current;
     if (!recognition) return;
     if (isListening) {
@@ -74,16 +72,25 @@ export function VoiceInput({ onTranscript, appearance = 'fab', disabled = false,
     try {
       setIsListening(recognition.start());
     } catch {
-      setError('无法开始语音输入');
+      setError('无法开始语音输入，请改用键盘输入');
       setIsListening(false);
     }
   };
 
+  const view = micView(error);
+  // 浏览器不支持语音识别：不显示话筒（音3），避免点了没反应
+  if (view.hidden) return null;
   const label = error ? error : isListening ? '停止语音' : '语音输入';
-  const blocked = disabled || error === '当前浏览器不支持语音输入';
+  const blocked = disabled;
+  const hint = view.visibleHint && (
+    <span role="status" data-testid="voice-mic-hint" className="text-xs text-amber-500 max-w-[14rem] leading-tight">
+      {view.visibleHint}
+    </span>
+  );
 
   if (appearance === 'toolbar') {
     return (
+      <span className="inline-flex items-center gap-1">
       <button
         type="button"
         data-testid="voice-mic"
@@ -98,6 +105,8 @@ export function VoiceInput({ onTranscript, appearance = 'fab', disabled = false,
       >
         {isListening ? <Square className="w-4 h-4" aria-hidden /> : <Mic className="w-5 h-5" aria-hidden />}
       </button>
+      {hint}
+      </span>
     );
   }
 
@@ -123,6 +132,7 @@ export function VoiceInput({ onTranscript, appearance = 'fab', disabled = false,
           正在听
         </span>
       )}
+      {hint && <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 whitespace-nowrap">{hint}</div>}
     </div>
   );
 }
