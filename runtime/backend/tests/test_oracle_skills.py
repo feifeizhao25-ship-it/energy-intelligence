@@ -160,7 +160,10 @@ class TestWindResourceOracle:
                 "mean_speed_ms": 8.0,
             }
         )
-        assert result["resource_class"] == "II"
+        # 核1（2026-11-23）：国内版按 GB/T 18710-2002 附录 B，8.0 m/s → 0.5×1.225×(6/π)×8³ ≈ 599 W/m²（表 4 第 5 级）→ I 类；
+        # 原口径（均值立方 313.6 W/m²）是 II 类。等级整体上调，合并前需主人/专家确认（待定 42）。
+        assert result["resource_class"] == "I"
+        assert result["gb_grade"] == 5
         assert result["engine"] == "measured_input"
         assert result["estimated"] is False
 
@@ -345,7 +348,7 @@ class TestRegistryDiscovery:
             },
         )
         assert result["status"] == "completed"
-        assert result["data"]["resource_class"] == "II"
+        assert result["data"]["resource_class"] == "I"  # 核1：国内版 GB/T 18710 附录 B，≈599 W/m²，见上
 
     async def test_execute_fm001_via_registry(self, registry):
         result = await registry.execute(

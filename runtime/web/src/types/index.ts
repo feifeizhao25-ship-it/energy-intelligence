@@ -41,9 +41,12 @@ export interface WindResource {
   }[];
   annual: {
     avgSpeed: number; // 100 米高度年平均风速 (m/s)，由 NASA POWER WS50M 按对数律外推
-    powerDensity: number; // 风功率密度 (W/m²)
+    powerDensity: number; // 100 m 风功率密度 (W/m²)，GB/T 18710-2002 附录 B：按月瑞利分布求 v³ 期望，不用年均风速直接立方
+    powerDensity50m?: number; // 50 m 风功率密度 (W/m²)，用于查表 4
+    gbGrade?: number; // GB/T 18710-2002 表 4 风功率密度等级 1–7（7 最好）
+    gbGradeLabel?: string; // 例如「3 级（较好）」
     equivalentHours: number; // 等效满发小时数 (h)
-    resourceClass: 'I' | 'II' | 'III' | 'IV' | 'V' | 'VI' | 'VII'; // 资源等级
+    resourceClass: 'I' | 'II' | 'III' | 'IV' | 'V' | 'VI' | 'VII'; // 资源等级（I 最好；国内版 I = 表 4 的 7 级）
   };
 }
 

@@ -17,6 +17,7 @@ from typing import Any, Awaitable, Callable, Dict, Optional
 
 try:
     from app.services.resource_service import _classify_wind
+    from app.services.wind_grade_gbt18710 import assess as _gbt18710_assess
     from app.utils.wind_calculations import capacity_factor_estimate
 except ImportError:  # 注册表从其他工作目录加载本文件时，补后端路径
     import sys
@@ -26,6 +27,7 @@ except ImportError:  # 注册表从其他工作目录加载本文件时，补后
     if str(_BACKEND_DIR) not in sys.path:
         sys.path.insert(0, str(_BACKEND_DIR))
     from app.services.resource_service import _classify_wind
+    from app.services.wind_grade_gbt18710 import assess as _gbt18710_assess
     from app.utils.wind_calculations import capacity_factor_estimate
 
 NASA_POWER_URL = "https://power.larc.nasa.gov/api/temporal/climatology/point"
@@ -70,20 +72,28 @@ def _estimate_mean_speed_heuristic(latitude: float) -> float:
     return 6.5
 
 
-def assess_wind_resource(mean_speed: float, capacity_mw: float = 1.0) -> Dict[str, Any]:
+def assess_wind_resource(mean_speed: float, capacity_mw: float = 1.0, grading: str = "legacy") -> Dict[str, Any]:
     """纯函数：年均风速 → 风功率密度 / 分级 / 年等效利用小时 / 产能系数区间。
 
-    - 风功率密度 WPD = 0.5 × ρ × v³（ρ = 1.225 kg/m³）
-    - 分级复用 _classify_wind（I≥400, II≥300, III≥200, IV<200 W/m²）
+    - grading="gbt18710"（国内版）：GB/T 18710-2002 附录 B 不允许用年平均风速直接立方；按瑞利分布（k=2）
+      求 v³ 期望（≈1.91×v̄³），分级按表 4 的 50 m 七级，resource_class 仍是 I/II/III/IV，分数封顶 100
+    - grading="legacy"（国际版沿用）：WPD = 0.5 × ρ × v³（ρ = 1.225 kg/m³），分级复用 _classify_wind（I≥400, II≥300, III≥200, IV<200 W/m²）
     - 产能系数复用 capacity_factor_estimate，区间取风速 ±5% 的估算值
     """
-    wpd = 0.5 * AIR_DENSITY * mean_speed ** 3
-    resource_class, score = _classify_wind(wpd)
+    gb = None
+    if grading == "gbt18710":
+        gb = _gbt18710_assess([mean_speed], height_m=50.0, rho=AIR_DENSITY)
+        wpd, resource_class, score = gb["wind_power_density"], gb["resource_class"], gb["score"]
+    else:
+        wpd = 0.5 * AIR_DENSITY * mean_speed ** 3
+        resource_class, score = _classify_wind(wpd)
     cf_mid = capacity_factor_estimate(mean_speed)
     cf_low = capacity_factor_estimate(mean_speed * 0.95)
     cf_high = capacity_factor_estimate(mean_speed * 1.05)
     hours_mid = cf_mid * HOURS_PER_YEAR
+    extra = {k: gb[k] for k in ("gb_grade", "gb_grade_label", "grading_standard", "wpd_method")} if gb else {}
     return {
+        **extra,
         "mean_speed_ms": round(mean_speed, 2),
         "wind_power_density": round(wpd, 1),
         "resource_class": resource_class,
@@ -149,7 +159,7 @@ class WindResourceSkill:
                 data_source = "estimate"
                 estimated = True
 
-        result = assess_wind_resource(mean_speed, capacity_mw)
+        result = assess_wind_resource(mean_speed, capacity_mw, grading="legacy" if market == "global" else "gbt18710")
         result.update(
             {
                 "skill_id": self.skill_id,
@@ -195,4 +205,4 @@ def _install_contract(cls, formula_ref, valid_range):
     cls.execute = execute
 
 
-_install_contract(WindResourceSkill, "RA-002 风速分级", "风速为正")
+_install_contract(WindResourceSkill, "RA-002 风功率密度分级（国内版 GB/T 18710-2002 附录 B、表 4）", "风速为正")
