@@ -588,6 +588,10 @@ export async function executeTool(toolName: string, toolInput: Record<string, un
                 };
             }
 
+            case 'search_policy_library': {
+                return await searchPolicyLibrary(String(toolInput.query || ''));
+            }
+
             // ========== 编排器工具 ==========
             case 'get_project_next_steps': {
                 const { buildOrchestratorResponse } = await import('@/lib/orchestrator');
@@ -650,6 +654,44 @@ export async function executeTool(toolName: string, toolInput: Record<string, un
 }
 
 // ========== 辅助函数 ==========
+
+/** 国内专业助手的资料库检索：走后端 /api/v1/ai/library-search（与 App 问答同一检索），只把编号来源交给模型。 */
+export async function searchPolicyLibrary(query: string) {
+    const base = (process.env.BACKEND_INTERNAL_URL || '').replace(/\/$/, '');
+    const token = process.env.NENGJIAN_INTERNAL_TOKEN || '';
+    if (!query.trim()) return { success: false, error: '需要检索词' };
+    if (!base || (!token && process.env.NODE_ENV !== 'development')) {
+        return { success: false, error: '资料库检索暂不可用。请告诉用户暂时无法检索资料库，不要凭记忆回答政策数字或文号。' };
+    }
+    const response = await fetch(`${base}/api/v1/ai/library-search`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { 'X-Internal-Token': token } : {}) },
+        body: JSON.stringify({ query: query.slice(0, 500) }),
+        signal: AbortSignal.timeout(15000),
+    });
+    if (!response.ok) {
+        return { success: false, error: '资料库检索暂不可用。请告诉用户暂时无法检索资料库，不要凭记忆回答政策数字或文号。' };
+    }
+    const data = await response.json() as { sources?: Array<Record<string, unknown>> };
+    const sources = Array.isArray(data.sources) ? data.sources.slice(0, 5) : [];
+    if (!sources.length) {
+        return { success: true, count: 0, context: '本库尚未收录与该问题相关的资料。请如实告诉用户本库尚未收录，不得编造引用、文号或数字。', sources: [] };
+    }
+    return {
+        success: true,
+        count: sources.length,
+        context: sources.map((s, i) => `[S${i + 1}] ${String(s.title || '未命名资料')} | ${String(s.source_org || '')} | ${String(s.dates || '')} | ${String(s.url || '')}\n${String(s.content || '')}`).join('\n\n'),
+        sources: sources.map((s, i) => ({
+            ref: `S${i + 1}`,
+            title: typeof s.title === 'string' ? s.title : undefined,
+            url: typeof s.url === 'string' ? s.url : undefined,
+            source_org: typeof s.source_org === 'string' ? s.source_org : undefined,
+            doc_number: typeof s.doc_number === 'string' ? s.doc_number : undefined,
+            dates: typeof s.dates === 'string' ? s.dates : undefined,
+            published_at: typeof s.published_at === 'string' ? s.published_at : undefined,
+        })),
+    };
+}
 
 // PV发电预测（简化版）
 async function getPVForecast(lat: number, lng: number, capacity: number, tilt: number, azimuth: number) {

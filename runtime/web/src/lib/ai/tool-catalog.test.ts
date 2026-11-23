@@ -25,6 +25,7 @@ describe('工具名只有一份目录', () => {
             ...SILICONFLOW_CHAT_TOOLS,
             ...ASSISTANT_AGENT_TOOLS,
             ...INTERNAL_EXECUTOR_TOOLS,
+            ...CN_ASSISTANT_TOOLS,
         ]);
         const cases = executorCases();
         const caseSet = new Set(cases);
@@ -39,7 +40,8 @@ describe('工具名只有一份目录', () => {
         expect(assistantToolDefinitions.map((tool) => tool.function.name).sort()).toEqual([...ASSISTANT_AGENT_TOOLS].sort());
         expect(modelToolNames('cn', 'chat')).toEqual(CN_MODEL_TOOLS);
         expect(modelToolNames('cn', 'assistant')).toEqual(CN_ASSISTANT_TOOLS);
-        expect(CN_ASSISTANT_TOOLS).toEqual(['query_knowledge_base']);
+        expect(CN_ASSISTANT_TOOLS).toEqual(['query_knowledge_base', 'search_policy_library']);
+        expect(ASSISTANT_AGENT_TOOLS as readonly string[]).not.toContain('search_policy_library');
         expect(modelToolNames('global', 'chat')).toEqual(SILICONFLOW_CHAT_TOOLS);
         expect(modelToolNames('global', 'assistant')).toEqual(ASSISTANT_AGENT_TOOLS);
         expect(CN_MODEL_TOOLS).toHaveLength(0);

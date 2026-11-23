@@ -163,6 +163,24 @@ export const assistantToolDefinitions = [
     }
 ];
 
+/** 只给国内专业助手（见 tool-catalog CN_ONLY_ASSISTANT_TOOLS）。 */
+export const cnOnlyAssistantToolDefinitions = [
+    {
+        type: "function",
+        function: {
+            name: "search_policy_library",
+            description: "检索站内政策与标准资料库（国家和地方能源政策、电价文件、标准规范、统计数据）。用户问政策、文号、电价机制、标准条款、有效期等问题时，**必须先调用**；回答只能使用返回的资料，并在句末按返回的编号标注 [S1]、[S2]。返回为空时如实说明本库尚未收录，不得凭记忆给出数字或文号。",
+            parameters: {
+                type: "object",
+                properties: {
+                    query: { type: "string", description: "检索用的问题或关键词（中文，保留文号、地名、年份）" }
+                },
+                required: ["query"]
+            }
+        }
+    }
+];
+
 /**
  * 工具执行适配器
  */
