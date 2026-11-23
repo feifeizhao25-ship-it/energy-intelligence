@@ -34,13 +34,24 @@ export interface AnswerDateLine {
 /** 回答正文里的 [S1] / [1] 这类引用标记 */
 const CITATION_MARK_RE = /\[(?:S|s)?\d{1,2}\]/;
 
+/**
+ * 正文带 [S1] / [2] 引用标记时，只取被引用那几条来源的日期（来源卡片按 [1][2]… 的顺序列出，和正文编号一致）。
+ * 2026-11-23 真模型截图：正文只引了 [S1][S2]，底部却取了未被引用的 [3] 的日期。
+ * 没有标记，或标记都对不上来源时，退回用全部来源。
+ */
+export function citedSourceDates(content: string, sourceDates: Array<string | null | undefined>): Array<string | null | undefined> {
+  const marks = Array.from(content.matchAll(/\[(?:S|s)?(\d{1,2})\]/g), (m) => Number(m[1]));
+  const picked = Array.from(new Set(marks)).filter((n) => n >= 1 && n <= sourceDates.length).map((n) => sourceDates[n - 1]);
+  return picked.length ? picked : sourceDates;
+}
+
 export const NO_DATED_SOURCE = '未引用带日期的来源';
 export const SOURCES_WITHOUT_DATE = '所引来源未标注日期';
 
 export function buildAnswerDateLine(opts: { content: string; question?: string; model?: string | null; answeredAt: Date; sourceDates?: Array<string | null | undefined>; sourceCount?: number }): AnswerDateLine {
   const d = opts.answeredAt;
   const verifiedDate = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-  const dated = [opts.content, ...(opts.sourceDates || [])].filter(Boolean).join('\n');
+  const dated = [opts.content, ...citedSourceDates(opts.content, opts.sourceDates || [])].filter(Boolean).join('\n');
   // 有来源（或正文带 [S1] 引用标记）但来源都没带日期时，不再写「未引用带日期的来源」，
   // 免得和正文里的引用对不上（2026-11-23 真模型截图：正文 [S2][S3]，底部却说未引用）。
   const cited = (opts.sourceCount ?? (opts.sourceDates || []).length) > 0 || CITATION_MARK_RE.test(opts.content);

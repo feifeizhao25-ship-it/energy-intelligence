@@ -1,4 +1,4 @@
-import { buildAnswerDateLine, latestCitedDate } from './answer-date-line';
+import { buildAnswerDateLine, citedSourceDates, latestCitedDate } from './answer-date-line';
 
 const now = new Date(2026, 9, 15);
 
@@ -26,5 +26,11 @@ describe('审计 8-3 AI 回答日期行', () => {
   it('来源自带日期时取来源日期', () => {
     const l = buildAnswerDateLine({ content: '依据 114 号文[S1]', model: 'm', answeredAt: now, sourceDates: ['2025-09-28', undefined], sourceCount: 2 });
     expect(l.sourceDate).toBe('2025-09-28');
+  });
+  it('正文有引用标记时只取被引用来源的日期', () => {
+    const l = buildAnswerDateLine({ content: '688号文要求[S1]，绿证按60号文[S2]', model: 'm', answeredAt: now, sourceDates: ['2026-05-20', '2026-06-05', '2026-06-22'].map((x) => x.replace('2026', '2025')), sourceCount: 3 });
+    expect(l.sourceDate).toBe('2025-06-05');
+    expect(citedSourceDates('没有标记', ['2025-01-01', '2025-02-01'])).toEqual(['2025-01-01', '2025-02-01']);
+    expect(citedSourceDates('越界[S9]', ['2025-01-01'])).toEqual(['2025-01-01']);
   });
 });
