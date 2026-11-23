@@ -181,6 +181,7 @@ class _WindResourceScreenState extends State<WindResourceScreen> {
                 gradientStartColor: Color(0xFF06B6D4),
                 gradientEndColor: Color(0xFF3B82F6),
               ),
+              if (_result!.temperatureMonthly.isNotEmpty) ...[
               SizedBox(height: 24),
               BarChart(
                 title: '月均温度',
@@ -201,6 +202,7 @@ class _WindResourceScreenState extends State<WindResourceScreen> {
                 ],
                 barColor: Color(0xFFF59E0B),
               ),
+              ],
             ],
           ],
         ),
@@ -242,16 +244,23 @@ class _WindResourceScreenState extends State<WindResourceScreen> {
     );
   }
 
+  // 后端给的是 I/II/III/IV 类（I 最好），旧版 A/B/C/D 也认；没有级别（「—」）用灰色，不当成差或好。
   Color _convertGradeColor(String grade) {
     switch (grade) {
       case 'A':
+      case 'I':
         return Color(0xFF10B981);
       case 'B':
+      case 'II':
         return Color(0xFF3B82F6);
       case 'C':
+      case 'III':
         return Color(0xFFF59E0B);
-      default:
+      case 'D':
+      case 'IV':
         return Color(0xFFEF4444);
+      default:
+        return Color(0xFF6B7280);
     }
   }
 }

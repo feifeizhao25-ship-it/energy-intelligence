@@ -109,15 +109,15 @@ class _SolarFinanceScreenState extends State<SolarFinanceScreen> {
                   ),
                 ),
               ),
+              // 以前这里是 Expanded：放在高度无界的 Column（外层 SingleChildScrollView）里会触发布局断言，
+              // 被 installCalmErrorWidget 吞掉后整页空白（步骤3 批14 第 3 条）。改成固定高度的连线。
               if (i < 3)
-                Expanded(
-                  child: Container(
-                    height: 2,
-                    color: _currentStep > i
-                        ? AppTheme.primaryColor
-                        : Color(0xFFE2E8F0),
-                    margin: EdgeInsets.only(top: 8),
-                  ),
+                Container(
+                  height: 2,
+                  color: _currentStep > i
+                      ? AppTheme.primaryColor
+                      : Color(0xFFE2E8F0),
+                  margin: EdgeInsets.only(top: 8),
                 ),
             ],
           ),
