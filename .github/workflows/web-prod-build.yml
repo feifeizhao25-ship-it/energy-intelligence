@@ -1,0 +1,91 @@
+name: Web Prod Build (PR)
+
+# PR 阶段按发布用的 Dockerfile 构建国内版前端镜像（只构建，不推送、不登录镜像仓库），
+# 然后：起容器做冒烟请求；扫描 .next/static 里有没有 .invalid 占位地址或疑似密钥（只报文件名）。
+# 构建参数与 runtime-production.yml 的 energy-web-cn 发布完全一致。
+# 国际版 runtime/web-int 不在这里构建。
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: web-prod-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  web-prod-build:
+    name: web-prod-build (energy-web-cn)
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      IMAGE: energy-web-cn:pr-check
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate domestic public build configuration
+        env:
+          NEXT_PUBLIC_APP_EDITION: cn
+          NEXT_PUBLIC_API_URL: /api/backend
+        run: node runtime/web/scripts/validate-public-build-config.mjs
+      - uses: docker/setup-buildx-action@v3
+      - name: Build release image (push disabled)
+        uses: docker/build-push-action@v6
+        with:
+          context: runtime/web
+          push: false
+          load: true
+          tags: ${{ env.IMAGE }}
+          build-args: |
+            NEXT_PUBLIC_APP_EDITION=cn
+            NEXT_PUBLIC_API_URL=/api/backend
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Smoke test the container
+        run: |
+          # 只用于这次运行的临时数据库和 NextAuth 密钥：每次随机生成，不写进仓库。短信、支付等生产变量不传，冒烟页面用不到。
+          pg_pw=$(openssl rand -hex 16)
+          auth_secret=$(openssl rand -hex 32)
+          echo "::add-mask::$pg_pw"
+          echo "::add-mask::$auth_secret"
+          db_url="postgresql://energy:${pg_pw}@pg:5432/energy_web"
+          docker network create webci
+          docker run -d --name pg --network webci \
+            -e POSTGRES_USER=energy -e POSTGRES_PASSWORD="$pg_pw" -e POSTGRES_DB=energy_web \
+            postgres:16-alpine
+          for i in $(seq 1 30); do docker exec pg pg_isready -U energy -d energy_web && break; sleep 2; done
+          docker run -d --name web --network webci -p 3000:3000 \
+            -e DATABASE_URL="$db_url" -e DIRECT_URL="$db_url" \
+            -e NEXTAUTH_URL=http://127.0.0.1:3000 -e NEXTAUTH_SECRET="$auth_secret" \
+            "$IMAGE"
+          ok=0
+          for i in $(seq 1 45); do
+            if curl -fsS -o /dev/null http://127.0.0.1:3000/pricing; then ok=1; break; fi
+            sleep 2
+          done
+          if [ "$ok" -ne 1 ]; then
+            echo "::error::容器 90 秒内没有就绪"
+            docker logs --tail 80 web || true
+            exit 1
+          fi
+          for path in / /pricing /login /privacy; do
+            code=$(curl -sS -L -o /dev/null -w '%{http_code}' "http://127.0.0.1:3000$path")
+            echo "$path -> $code"
+            if [ "$code" != "200" ]; then
+              echo "::error::冒烟请求 $path 返回 $code"
+              docker logs --tail 80 web || true
+              exit 1
+            fi
+          done
+      - name: Scan .next/static (file names only)
+        run: |
+          cid=$(docker create "$IMAGE")
+          docker cp "$cid:/app/.next/static" ./_next_static
+          docker rm "$cid" >/dev/null
+          bash .github/scripts/scan-next-static.sh ./_next_static
+      - name: Clean up
+        if: always()
+        run: docker rm -f web pg >/dev/null 2>&1 || true
