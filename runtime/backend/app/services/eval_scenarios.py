@@ -51,8 +51,8 @@ def _gb_energy(h_a: float, p_az: float, k: float) -> float:
 def scenario_s01() -> dict:
     row = _station("杭州")
     text = f"年水平面辐照 {row['ghi_annual']} kWh/m²。{row['license_note']}"
-    ok = "离线样本" in text and "不是 NASA POWER 实测" in text and "实测公报" not in text
-    return {"ok": ok, "text": text, "nasa_compare": "无已核验 NASA 缓存，不做数值对照"}
+    ok = "离线样本" in text and "NASA POWER" in text and "不是地面气象站实测" in text and "实测公报" not in text
+    return {"ok": ok, "text": text, "nasa_compare": "样本即 NASA POWER 气候态缓存（2001–2025），对地面站偏差见 license_note"}
 
 
 def scenario_s02() -> dict:

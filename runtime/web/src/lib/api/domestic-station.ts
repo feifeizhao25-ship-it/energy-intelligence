@@ -9,6 +9,7 @@ export interface DomesticStation {
     monthly_daily_ghi: number[];
     monthly_temp: number[];
     monthly_wind_100m: number[];
+    monthly_wind_50m?: number[];
     provenance: string;
     license_note: string;
 }
@@ -35,6 +36,7 @@ export interface ResolvedStation extends DomesticStation {
 }
 
 const INTERP_DEGREES = 3.5;
+const DAYS_IN_MONTH = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
 /** 0.85° 内用样本点；更远但落在两个省级城市之间时按距离加权，并标明不是实测。 */
 export function resolveDomesticStation(lat: number, lng: number): ResolvedStation | null {
@@ -58,12 +60,13 @@ export function resolveDomesticStation(lat: number, lng: number): ResolvedStatio
         city: '插值',
         lat,
         lng,
-        ghi_annual: daily.reduce((sum, value) => sum + value, 0),
+        // 核20：年总量 = Σ 日均 × 当月天数（原来直接把 12 个日均值相加，只有真实值的 1/30）
+        ghi_annual: daily.reduce((sum, value, index) => sum + value * DAYS_IN_MONTH[index], 0),
         monthly_daily_ghi: daily,
         monthly_temp: mix((station) => station.monthly_temp),
         monthly_wind_100m: mix((station) => station.monthly_wind_100m),
         provenance: '邻近样本插值（不是该坐标实测）',
-        license_note: `${seed.license_note} 数值由邻近省级城市样本按距离加权，不是该点实测，也不是 NASA POWER 实测。`,
+        license_note: `${seed.license_note} 数值由邻近两个省会的 NASA POWER 气候态按距离加权，不是该点实测，也不是该点的 NASA POWER 网格值。`,
         interpolated: true,
         station_note: `由 ${names} 插值，请求坐标为 ${lat},${lng}`,
     };

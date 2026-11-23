@@ -79,9 +79,10 @@ async def test_cn_edition_blocks_overseas_resource_http(monkeypatch):
     solar = await fetch_solar_resource(SolarResourceRequest(lat=31.2, lng=121.5))
     wind = await fetch_wind_resource(WindResourceRequest(lat=31.2, lng=121.5))
     nasa = await NASAPowerService().get_solar_resource(31.2, 121.5)
-    assert solar.ghi > 0 and "NASA" not in solar.data_source
+    # 43：样本本身是 NASA POWER 气候态的离线缓存，所以来源里会出现 NASA；要求的是标明「离线样本」、不发境外请求
+    assert solar.ghi > 0 and solar.data_source.startswith("离线样本")
     assert wind.mean_speed > 0
-    assert nasa["ghi_annual"] > 0 and "NASA" not in nasa["data_source"]
+    assert nasa["ghi_annual"] > 0 and nasa["data_source"].startswith("离线样本")  # 43：同上
     with pytest.raises(DomesticResourceNotLoaded):
         await fetch_solar_resource(SolarResourceRequest(lat=0, lng=0))
     assert await search_arxiv("solar") == []
