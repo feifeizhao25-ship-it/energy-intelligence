@@ -23,6 +23,17 @@ from app.services.empty_answer_stats import record_completion
 logger = logging.getLogger(__name__)
 
 GLM_OFFICIAL_ID = "glm-4.7-flash"
+# DeepSeek 官方接口当前接受的模型号（https://api-docs.deepseek.com/quick_start/pricing ，2026-11-23 核对）：
+# deepseek-flash、deepseek-v4-pro；旧名 deepseek-v4-flash 仍被接受并按 Flash 计费。
+# 网页套餐里的 deepseek-v3 / deepseek-chat 等旧名原样发过去会 400（2026-11-23 真模型复测 7 次全 400），
+# 所以只放行这几个，其余一律用 DEEPSEEK_MODEL。走第三方兼容网关时可用 DEEPSEEK_ALLOWED_MODELS（逗号分隔）覆盖。
+DEEPSEEK_OFFICIAL_MODELS = ("deepseek-flash", "deepseek-v4-pro", "deepseek-v4-flash")
+
+
+def deepseek_allowed_models() -> set[str]:
+    raw = os.environ.get("DEEPSEEK_ALLOWED_MODELS", "")
+    custom = {item.strip().lower() for item in raw.split(",") if item.strip()}
+    return custom or set(DEEPSEEK_OFFICIAL_MODELS)
 
 
 def provider_chain() -> list[tuple[str, str, str, str]]:
@@ -55,7 +66,7 @@ def model_for(provider: str, requested: str | None, default_model: str) -> str:
     if provider == "glm":
         return GLM_OFFICIAL_ID
     if provider == "deepseek":
-        return requested or default_model
+        return requested if requested.lower() in deepseek_allowed_models() else default_model
     return default_model
 
 
@@ -66,6 +77,8 @@ RETRY_MAX_TOKENS = 4096
 LENGTH_RETRY_MAX_TOKENS = 8192
 SECOND_RETRY_BACKOFF_SECONDS = 1.0
 EMPTY_ANSWER = "这次没有生成可用回答。请缩短问题后再试一次。"
+# 全部供应商都是报错（鉴权、模型号、网络、限流），不是正文为空：缩短问题没用，不能这样提示。
+UNAVAILABLE_ANSWER = "AI 模型暂时不可用，这次没有生成回答。请稍后再试；如果一直这样，请联系管理员检查模型服务配置。"
 SHORT_SYSTEM = "用中文回答事实。不确定就说明未收录。"
 REWRITE_ZH = "请用中文重写上一则回答。专有名词保留，并在括号里写出中文。"
 _SENTENCE_SPLIT = re.compile(r"[^。！？.!?\n]+[。！？.!?]?")
@@ -220,6 +233,7 @@ async def complete_domestic(messages: list[dict], model: str | None = None, tran
             response = await client.chat.completions.create(**kwargs)
             return outcome_from_response(response, use_model)
 
+    failures = 0
     for name, base, key, default_model in chain:
         use_model = model_for(name, model, default_model)
         extra_body = dict(DEEPSEEK_EXTRA_BODY) if name == "deepseek" else None
@@ -242,7 +256,12 @@ async def complete_domestic(messages: list[dict], model: str | None = None, tran
             record_completion(use_model, empty=True)
         except Exception as exc:
             logger.warning("domestic_provider_error provider=%s error=%s", name, exc.__class__.__name__)
+            failures += 1
             continue
+    if failures == len(chain):
+        # 每一家都是报错，不是空正文：缩短提示再试也会同样报错，直接给准确提示。
+        record_completion("unavailable", empty=True)
+        return {"content": UNAVAILABLE_ANSWER, "provider": "domestic", "model": "unavailable", "error": "provider_error"}
     # 整链都是空正文：缩短系统提示，再按指数退避重试一轮。
     await wait(SECOND_RETRY_BACKOFF_SECONDS)
     short = shorten_messages(messages)
@@ -324,6 +343,7 @@ async def complete_domestic_with_tools(
                 "finish_reason": getattr(choice, "finish_reason", None) or "",
             }
 
+    failures = 0
     for name, base, key, default_model in chain:
         use_model = model_for(name, model, default_model)
         extra_body = dict(DEEPSEEK_EXTRA_BODY) if name == "deepseek" else None
@@ -334,6 +354,7 @@ async def complete_domestic_with_tools(
             )
         except Exception as exc:
             logger.warning("domestic_provider_error provider=%s error=%s", name, exc.__class__.__name__)
+            failures += 1
             continue
         content = str((out or {}).get("content") or "").strip()
         calls = _tool_calls_from({"tool_calls": (out or {}).get("tool_calls")})
@@ -346,4 +367,6 @@ async def complete_domestic_with_tools(
             return result
         log_empty_completion(name, reported, str((out or {}).get("finish_reason") or ""), 1, TOOLS_MAX_TOKENS)
     record_completion("unavailable", empty=True)
+    if failures == len(chain):
+        return {"content": UNAVAILABLE_ANSWER, "provider": "domestic", "model": "unavailable", "error": "provider_error"}
     return {"content": EMPTY_ANSWER, "provider": "domestic", "model": "unavailable"}
