@@ -14,10 +14,10 @@ import { gcj02ToWgs84, wgs84ToGcj02, formatLngLat } from '@/lib/map/gcj02';
 const TENCENT_HOST = 'https://apis.map.qq.com';
 
 export class TencentMapError extends Error {
-  readonly code: 'not_found' | 'upstream' | 'key_missing';
+  readonly code: 'not_found' | 'upstream' | 'key_missing' | 'quota';
   readonly httpStatus: number;
   readonly upstreamStatus?: number;
-  constructor(message: string, code: 'not_found' | 'upstream' | 'key_missing', httpStatus: number, upstreamStatus?: number) {
+  constructor(message: string, code: 'not_found' | 'upstream' | 'key_missing' | 'quota', httpStatus: number, upstreamStatus?: number) {
     super(message);
     this.name = 'TencentMapError';
     this.code = code;
@@ -47,7 +47,10 @@ export function tencentUrl(path: string, params: Record<string, string>, key: st
 }
 
 // 347：查询无结果；110/111/112：来源、签名或 IP 未授权；120/121：频率或配额超限。
-const NO_RESULT = new Set([347]);
+// 347 查询无结果；348 地理编码时地址解析不出（2026-11-23 真调「火星乌托邦平原基地xyz」返回 348）。
+const NO_RESULT = new Set([347, 348]);
+// 120 每秒请求量超限；121 当日调用量超限或该接口没分配额度（真调周边搜索返回 121）。
+const QUOTA = new Set([120, 121]);
 
 async function request(path: string, params: Record<string, string>) {
   const { key, sk } = credentials();
@@ -61,6 +64,7 @@ async function request(path: string, params: Record<string, string>) {
   const status = Number(payload?.status);
   if (status !== 0) {
     if (NO_RESULT.has(status)) throw new TencentMapError('未找到该地点', 'not_found', 404, status);
+    if (QUOTA.has(status)) throw new TencentMapError('位置服务调用太频繁或今日额度已用完，请稍后再试', 'quota', 503, status);
     // 上游 message 里可能带来源 IP，不原样透出。
     throw new TencentMapError('位置服务返回错误', 'upstream', 503, status);
   }

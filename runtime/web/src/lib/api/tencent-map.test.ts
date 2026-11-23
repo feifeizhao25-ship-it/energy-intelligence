@@ -109,6 +109,10 @@ describe('腾讯位置服务 WebService', () => {
         });
         global.fetch = jest.fn(async () => jsonResponse({ status: 347, message: '查询无结果' })) as unknown as typeof fetch;
         await expect(geocodeAddress('火星基地')).rejects.toMatchObject({ code: 'not_found', httpStatus: 404 });
+        global.fetch = jest.fn(async () => jsonResponse({ status: 348, message: '参数错误' })) as unknown as typeof fetch;
+        await expect(geocodeAddress('火星乌托邦平原基地xyz')).rejects.toMatchObject({ code: 'not_found', httpStatus: 404, upstreamStatus: 348 });
+        global.fetch = jest.fn(async () => jsonResponse({ status: 121, message: '此key每日调用量已达到上限' })) as unknown as typeof fetch;
+        await expect(searchNearbyPOIs(39.7, 98.5, ['变电站'])).rejects.toMatchObject({ code: 'quota', httpStatus: 503, upstreamStatus: 121 });
     });
 
     it('没配 Key 就不请求', async () => {
