@@ -13,12 +13,19 @@ class _Boom extends StatelessWidget {
 
 void main() {
   testWidgets('a build failure shows a calm card instead of a red screen', (tester) async {
+    final previousOnError = FlutterError.onError;
+    final previousBuilder = ErrorWidget.builder;
     installCalmErrorWidget(english: true);
-    await tester.pumpWidget(const MaterialApp(home: _Boom()));
-    expect(find.byKey(const Key('calm-error-card')), findsOneWidget);
-    expect(find.text('This section could not be shown'), findsOneWidget);
-    expect(find.textContaining('Go back and open it again'), findsOneWidget);
-    expect(find.textContaining('Exception'), findsNothing);
-    expect(tester.takeException(), isNotNull);
+    try {
+      await tester.pumpWidget(const MaterialApp(home: _Boom()));
+      expect(find.byKey(const Key('calm-error-card')), findsOneWidget);
+      expect(find.text('This section could not be shown'), findsOneWidget);
+      expect(find.textContaining('Go back and open it again'), findsOneWidget);
+      expect(find.textContaining('Exception'), findsNothing);
+      expect(tester.takeException(), isNotNull);
+    } finally {
+      FlutterError.onError = previousOnError;
+      ErrorWidget.builder = previousBuilder;
+    }
   });
 }

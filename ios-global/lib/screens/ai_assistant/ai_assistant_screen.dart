@@ -261,10 +261,10 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
         child: Padding(
           padding: const EdgeInsets.all(14),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        _speaker(m, index),
         // The grounding status comes first, not as a footnote: the reader must know whether anything backs the answer.
         if (m.grounding != null) _groundingBanner(context, m.grounding!),
         if (_expiredDates(m).isNotEmpty) _dateCheckBanner(context, _expiredDates(m), m.timeCheck?['today']),
+        _speaker(m, index),
         m.structured == null ? SelectableText(cleanAnswerText(m.text), style: const TextStyle(fontSize: 14, height: 1.5)) : _answer(context, m),
           ]),
         ),
