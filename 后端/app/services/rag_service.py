@@ -77,7 +77,11 @@ class RAGService:
         top_k: int = 5,
         market: str = "cn",
         include_stale: bool = False,
+        apply_coverage_floor: bool = True,
     ) -> RAGResult:
+        # 与 runtime/backend 的 RAGService.search 接受同一关键字。这个副本没有加权覆盖率下限，
+        # 所以 apply_coverage_floor 为 True 或 False 时命中集合相同。
+        del apply_coverage_floor
         lang = "cn" if market == "cn" else "en"
         countries = _detect_countries(query, market)
         query_tokens = set(re.findall(r"[a-z0-9\u4e00-\u9fff]+", query.lower()))
