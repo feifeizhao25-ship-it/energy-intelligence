@@ -672,15 +672,20 @@ export async function searchPolicyLibrary(query: string) {
     if (!response.ok) {
         return { success: false, error: '资料库检索暂不可用。请告诉用户暂时无法检索资料库，不要凭记忆回答政策数字或文号。' };
     }
-    const data = await response.json() as { sources?: Array<Record<string, unknown>> };
+    const data = await response.json() as { sources?: Array<Record<string, unknown>>; expired?: Array<Record<string, unknown>> };
     const sources = Array.isArray(data.sources) ? data.sources.slice(0, 5) : [];
-    if (!sources.length) {
-        return { success: true, count: 0, context: '本库尚未收录与该问题相关的资料。请如实告诉用户本库尚未收录，不得编造引用、文号或数字。', sources: [] };
+    const expired = Array.isArray(data.expired) ? data.expired : [];
+    const expiredText = expired.map((item) => String(item.notice || '')).filter(Boolean).join('\n');
+    if (!sources.length && !expiredText) {
+        return { success: true, count: 0, context: '本库尚未收录与该问题相关的资料。请如实告诉用户本库尚未收录，不得编造引用、文号或数字。', sources: [], expired: [] };
     }
+    const current = sources.map((s, i) => `[S${i + 1}] ${String(s.title || '未命名资料')} | ${String(s.source_org || '')} | ${String(s.dates || '')} | ${String(s.url || '')}\n${String(s.content || '')}`).join('\n\n');
+    const context = [expiredText, current].filter(Boolean).join('\n\n');
     return {
         success: true,
         count: sources.length,
-        context: sources.map((s, i) => `[S${i + 1}] ${String(s.title || '未命名资料')} | ${String(s.source_org || '')} | ${String(s.dates || '')} | ${String(s.url || '')}\n${String(s.content || '')}`).join('\n\n'),
+        expired,
+        context,
         sources: sources.map((s, i) => ({
             ref: `S${i + 1}`,
             title: typeof s.title === 'string' ? s.title : undefined,

@@ -204,4 +204,6 @@ def wind_response_fields(lat: float, lng: float) -> dict:
         "gb_grade_label": g["gb_grade_label"],
         "grading_standard": g["grading_standard"],
         "wpd_method": g["wpd_method"],
+        "verification_status": "unverified",
+        "verification_note": "未核验：风速来自省级离线样本或再分析，不是测风塔实测，也未接入厂商功率曲线。国内测算使用人民币，不套用美国 ITC。",
     }

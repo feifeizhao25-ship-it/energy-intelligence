@@ -15,8 +15,6 @@ import Link from 'next/link';
 import { Button, Card, Badge, KPIRibbon, SegmentedControl, Progress } from '@energy-intelligence/ui-web';
 import { cn } from '@energy-intelligence/ui-web';
 import GlobalShell from '../GlobalShell';
-import DemoBadge from '../DemoBadge';
-import PersonalizedSection from '../dashboard/PersonalizedSection';
 import conflict from '../../lib/policy/us-48e-45y-conflict.json';
 
 // ── Types ──────────────────────────────────────────────
@@ -42,18 +40,13 @@ interface MarketPrice {
 // ── Mock Data ──────────────────────────────────────────
 
 const KPI_ITEMS = [
-  { label: 'Total Capacity', value: '2,847', unit: 'MW', trend: { value: 4.2, positive: true }, color: 'var(--color-brand-500)' },
-  { label: 'Avg IRR', value: '14.6', unit: '%', trend: { value: 1.8, positive: true }, color: 'var(--color-success)' },
-  { label: 'Projects', value: '38', unit: '', trend: { value: 2.7, positive: true }, color: 'var(--color-info)' },
-  { label: 'CO₂ Avoided', value: '1.24', unit: 'M tons', trend: { value: 5.1, positive: true }, color: '#146c3e' },
+  { label: 'Total Capacity', value: '—', unit: 'MW', trend: { value: 4.2, positive: true }, color: 'var(--color-brand-500)' },
+  { label: 'Avg IRR', value: '—', unit: '%', trend: { value: 1.8, positive: true }, color: 'var(--color-success)' },
+  { label: 'Projects', value: '0', unit: '', trend: { value: 2.7, positive: true }, color: 'var(--color-info)' },
+  { label: 'CO₂ Avoided', value: '—', unit: 'M tons', trend: { value: 5.1, positive: true }, color: '#146c3e' },
 ];
 
-const RECENT_PROJECTS: ProjectItem[] = [
-  { id: 'p01', name: 'Mojave Sun Farm',     type: 'PV',      capacityMW: 250, irr: 16.2, status: 'Operating',   location: 'California, USA',   updated: '2h ago' },
-  { id: 'p02', name: 'Brazos Wind Phase II', type: 'Wind',   capacityMW: 180, irr: 12.8, status: 'Construction', location: 'Texas, USA',        updated: '5h ago' },
-  { id: 'p03', name: 'ERCOT BESS Hub',       type: 'Storage', capacityMW: 100, irr: 18.4, status: 'Operating',   location: 'Texas, USA',        updated: '1d ago' },
-  { id: 'p04', name: 'Sonora Hybrid Park',   type: 'Hybrid',  capacityMW: 320, irr: 15.1, status: 'Development',  location: 'Sonora, Mexico',    updated: '3d ago' },
-];
+const RECENT_PROJECTS: ProjectItem[] = [];
 
 const MARKET_DATA: Record<string, MarketPrice> = {
   ERCOT: { iso: 'ERCOT', lmp: 38.50, change: 3.2,  ppa: 45.00 },
@@ -137,17 +130,14 @@ const DashboardPage: React.FC = () => {
       <div className="max-w-[1400px] mx-auto space-y-6">
 
         {/* ── Personalized layout (from /api/v1/personalization/daily-layout) ── */}
-        <PersonalizedSection />
-
         {/* ── Header ── */}
         <header className="flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-[24px] font-bold text-[var(--text-primary)]">Portfolio Overview</h1>
-              <DemoBadge />
             </div>
             <p className="text-[13px] text-[var(--text-secondary)] mt-0.5">
-              Sample portfolio figures · {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+              No sample portfolio is shown. {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
             </p>
           </div>
         </header>
@@ -215,15 +205,15 @@ const DashboardPage: React.FC = () => {
                     <span className="text-[13px] font-medium text-[var(--text-primary)]">Monthly Generation</span>
                     <Badge color="brand">GWh</Badge>
                   </div>
-                  <MiniBarChart />
+                  <p className="text-[13px] text-[var(--text-secondary)]">Monthly generation appears after a project is connected.</p>
                 </div>
                 {/* Key Metrics */}
                 <div className="space-y-1">
-                  <MiniLinePlaceholder label="Capacity Factor" value="28.4%" trend="↑ 2.1%" />
-                  <MiniLinePlaceholder label="Availability" value="98.7%" trend="↑ 0.3%" />
-                  <MiniLinePlaceholder label="Revenue (YTD)" value="$48.2M" trend="↑ 8.5%" />
-                  <MiniLinePlaceholder label="DSCR" value="1.42x" trend="↑ 0.04" />
-                  <MiniLinePlaceholder label="LCOE" value="$32.5/MWh" trend="↓ 1.2%" />
+                  <MiniLinePlaceholder label="Capacity Factor" value="—" trend="Not connected" />
+                  <MiniLinePlaceholder label="Availability" value="—" trend="Not connected" />
+                  <MiniLinePlaceholder label="Revenue (YTD)" value="—" trend="Not connected" />
+                  <MiniLinePlaceholder label="DSCR" value="—" trend="Not connected" />
+                  <MiniLinePlaceholder label="LCOE" value="—" trend="Not connected" />
                 </div>
               </div>
             </Card>
@@ -255,7 +245,7 @@ const DashboardPage: React.FC = () => {
                     <div className="text-[12px] text-[var(--text-secondary)] mb-1">LMP (Real-Time)</div>
                     <div className="flex items-baseline gap-2">
                       <span className="text-[28px] font-bold font-mono text-[var(--text-primary)]">
-                        ${market.lmp.toFixed(2)}
+                        —
                       </span>
                       <span className="text-[13px] text-[var(--text-tertiary)]">/MWh</span>
                     </div>
@@ -277,7 +267,7 @@ const DashboardPage: React.FC = () => {
                       <div className="text-[12px] text-[var(--text-secondary)] mb-1">PPA Price</div>
                       <div className="flex items-baseline gap-2">
                         <span className="text-[22px] font-semibold font-mono text-[var(--text-primary)]">
-                          ${market.ppa.toFixed(2)}
+                          —
                         </span>
                         <span className="text-[12px] text-[var(--text-tertiary)]">/MWh</span>
                       </div>
@@ -348,12 +338,12 @@ const DashboardPage: React.FC = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="p-3 rounded-[var(--radius-md)] bg-[var(--bg-secondary)]">
                     <div className="text-[11px] text-[var(--text-tertiary)] mb-1">CO₂ Avoided</div>
-                    <div className="text-[20px] font-bold font-mono" style={{ color: '#146c3e' }}>1.24M</div>
+                    <div className="text-[20px] font-bold font-mono" style={{ color: '#146c3e' }}>—</div>
                     <div className="text-[11px] text-[var(--text-secondary)]">tons / year</div>
                   </div>
                   <div className="p-3 rounded-[var(--radius-md)] bg-[var(--bg-secondary)]">
                     <div className="text-[11px] text-[var(--text-tertiary)] mb-1">MWh Generated</div>
-                    <div className="text-[20px] font-bold font-mono" style={{ color: '#18658f' }}>5,840</div>
+                    <div className="text-[20px] font-bold font-mono" style={{ color: '#18658f' }}>—</div>
                     <div className="text-[11px] text-[var(--text-secondary)]">GWh YTD</div>
                   </div>
                 </div>
@@ -383,9 +373,9 @@ const DashboardPage: React.FC = () => {
                 <div className="pt-3 border-t border-[var(--border-default)]">
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-[12px] font-medium text-[var(--text-primary)]">ESG Score</span>
-                    <span className="text-[16px] font-bold font-mono" style={{ color: '#146c3e' }}>A+</span>
+                    <span className="text-[16px] font-bold font-mono" style={{ color: '#146c3e' }}>—</span>
                   </div>
-                  <Progress value={92} label="ESG Score" className="w-full" />
+                  <Progress value={0} label="ESG Score" className="w-full" />
                 </div>
               </div>
             </Card>

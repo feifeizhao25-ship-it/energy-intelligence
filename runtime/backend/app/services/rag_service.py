@@ -99,6 +99,46 @@ def _detect_countries(query: str, market: str = "") -> set:
     return countries
 
 
+def _explicitly_expired(doc: Dict, today: date) -> bool:
+    """只认登记为失效或有效期已过的文件。复核窗口过期但状态仍是现行的，不在这里。"""
+    if str(doc.get("status") or "") == "失效":
+        return True
+    expiry = str(doc.get("expiry_date") or doc.get("expiry") or "").strip()
+    return bool(expiry) and expiry < today.isoformat()
+
+
+def _successor_refs(doc: Dict, by_id: Dict[str, Dict], today: date) -> List[dict]:
+    found: List[dict] = []
+    successor_id = doc.get("superseded_by")
+    successor = by_id.get(successor_id) if successor_id else None
+    if successor and not _explicitly_expired(successor, today):
+        found.append({
+            "source_id": successor.get("source_id"),
+            "title": successor.get("title"),
+            "doc_number": successor.get("doc_number"),
+            "url": successor.get("source_url"),
+            "relation": "registered_successor",
+        })
+    number = str(doc.get("doc_number") or "").strip()
+    if number:
+        for other in by_id.values():
+            if other.get("source_id") == doc.get("source_id") or _explicitly_expired(other, today):
+                continue
+            blob = f"{other.get('title') or ''} {other.get('content') or ''}"
+            if number not in blob:
+                continue
+            found.append({
+                "source_id": other.get("source_id"),
+                "title": other.get("title"),
+                "doc_number": other.get("doc_number"),
+                "url": other.get("source_url"),
+                "relation": "cites_expired_number_unconfirmed",
+            })
+            if len(found) >= 3:
+                break
+    return found[:3]
+
+
 def _currently_effective(doc: Dict, today: date) -> bool:
     from app.services.policy_term import is_expired_policy
 
@@ -543,6 +583,54 @@ class RAGService:
 
         scored.sort(key=lambda h: (h.score, h.source_id in exact_ids), reverse=True)
         return RAGResult(hits=scored[: max(top_k, 0)])
+
+    def named_expired_notices(self, query: str, market: str = "cn") -> List[dict]:
+        """点名已失效文号时返回醒目说明和衔接文件。普通检索仍不把失效文当作现行依据。"""
+        if market != "cn" or not (query or "").strip():
+            return []
+        today = date.today()
+        owners = _serial_owners(self._corpus)
+        by_id = {doc["source_id"]: doc for doc in self._corpus}
+        notices: List[dict] = []
+        seen = set()
+        for doc in self._corpus:
+            if doc.get("lang") != "cn" or not _explicitly_expired(doc, today):
+                continue
+            label = name_in_query(query, doc, owners)
+            if not label:
+                continue
+            key = label.casefold()
+            if key in seen:
+                continue
+            seen.add(key)
+            successors = _successor_refs(doc, by_id, today)
+            expiry = doc.get("expiry_date") or doc.get("expiry") or ""
+            notice = f"「{label}」已失效"
+            if expiry:
+                notice += f"（有效期至 {expiry}）"
+            notice += "。不得作为现行依据。"
+            confirmed = [item for item in successors if item["relation"] == "registered_successor"]
+            cited = [item for item in successors if item["relation"] != "registered_successor"]
+            if confirmed:
+                named = confirmed[0].get("doc_number") or confirmed[0].get("title")
+                notice += f"资料库登记的衔接文件：{named}。"
+            else:
+                notice += "资料库尚未登记经人工确认的替代文件。"
+                if cited:
+                    bits = "、".join(item.get("doc_number") or item.get("title") or "" for item in cited)
+                    notice += f"库内引用了该文号、且未标记失效的文件（衔接关系未经人工确认）：{bits}。"
+            notices.append({
+                "label": label,
+                "source_id": doc["source_id"],
+                "title": doc.get("title"),
+                "doc_number": doc.get("doc_number"),
+                "status": "已失效",
+                "expiry_date": expiry or None,
+                "url": doc.get("source_url"),
+                "notice": notice,
+                "successors": successors,
+            })
+        return notices
 
     def named_stale_labels(self, query: str, market: str = "cn") -> List[str]:
         """Phrases in the query that name a source search() drops because it is past its review window.

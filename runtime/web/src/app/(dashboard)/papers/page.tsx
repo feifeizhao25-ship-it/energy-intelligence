@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import { LiteratureWorkbench } from '@/components/papers/LiteratureWorkbench';
 
 const searchFilters = [
     { id: 'all', name: '全部' },
@@ -141,6 +142,7 @@ export default function PapersPage() {
                         </Link>
                     </div>
                     <p className="mb-6 text-sm">公开学术资源检索。摘要只复述已返回的文献信息。</p>
+                    <LiteratureWorkbench />
 
                     {/* Search */}
                     <form

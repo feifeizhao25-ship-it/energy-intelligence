@@ -70,21 +70,31 @@ async def calculate_cleaning_schedule(
     }
 
 
-def _operations_source_unavailable() -> None:
+def _operations_source_unavailable(market: str = "cn") -> None:
     """Fail closed until an authorised SCADA/IoT ingestion source is configured."""
-    raise HTTPException(
-        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-        detail=(
+    if market == "global":
+        detail = (
+            "No authorised SCADA or IoT source is configured. "
+            "Simulated health scores, alarms, generation and device status are not returned."
+        )
+    else:
+        detail = (
             "实时运维数据源尚未配置。请接入经过授权的 SCADA/IoT 数据源后重试；"
             "系统不会返回模拟健康分、告警、发电量或设备状态。"
-        ),
-    )
+        )
+    raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=detail)
+
+
+def _missing_project(market: str) -> HTTPException:
+    detail = "Project not found." if market == "global" else "项目不存在"
+    return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=detail)
 
 
 # ── GET /operations/health/{project_id} ───────────────────────────────────────
 @router.get("/health/{project_id}")
 async def get_project_health(
     project_id: str,
+    request: Request,
     user_id: str = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db),
 ):
@@ -92,39 +102,80 @@ async def get_project_health(
     result = await db.execute(
         select(Project).where(Project.id == project_id, Project.user_id == user_id)
     )
+    from app.core.market import request_market
+    market = request_market(request)
     project = result.scalar_one_or_none()
     if not project:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="项目不存在")
+        raise _missing_project(market)
     rows = await _project_samples(db, project_id)
     if not rows:
-        _operations_source_unavailable()
+        _operations_source_unavailable(market)
     latest = rows[-1]
+    note = (
+        "Stored telemetry only. No health score is returned because no health-score formula is defined."
+        if market == "global"
+        else "已入库遥测。没有单独定义的健康分公式，因此不返回分数。"
+    )
     return {
         "project_id": project_id,
         "health_score": None,
         "sample_count": len(rows),
         "latest_power_kw": latest.power_kw,
-        "note": "已入库遥测。没有单独定义的健康分公式，因此不返回分数。",
+        "note": note,
+    }
+
+
+@router.get("/ledger")
+async def operations_ledger(
+    request: Request,
+    user_id: str = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+):
+    """Station ledger. Empty until the account has projects. No demonstration plants."""
+    from app.core.market import request_market
+    market = request_market(request)
+    rows = (await db.execute(select(Project).where(Project.user_id == user_id))).scalars().all()
+    stations = [{
+        "id": project.id,
+        "name": project.name,
+        "technology": getattr(project, "technology", None),
+        "telemetry": "not_connected",
+    } for project in rows]
+    note = (
+        "No demonstration plants are shown. Performance, alarms, inspections and work orders stay empty until authorised telemetry is connected."
+        if market == "global"
+        else "这里不填演示电站。效能、告警、巡检和工单在接入授权遥测之前保持为空。"
+    )
+    return {
+        "stations": stations,
+        "alarms": [],
+        "inspections": [],
+        "work_orders": [],
+        "empty": not stations,
+        "note": note,
     }
 
 
 # ── GET /operations/alerts ─────────────────────────────────────────────────────
 @router.get("/alerts")
 async def list_alerts(
+    request: Request,
     unread_only: bool = Query(False),
     severity: Optional[str] = Query(None, pattern="^(info|warning|critical)$"),
     user_id: str = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db),
 ):
     """Return operational alerts for the current user."""
+    from app.core.market import request_market
+    market = request_market(request)
     project_ids = (await db.execute(select(Project.id).where(Project.user_id == user_id))).scalars().all()
     if not project_ids:
-        _operations_source_unavailable()
+        _operations_source_unavailable(market)
     sample_count = (await db.execute(
         select(func.count()).select_from(OperationSample).where(OperationSample.project_id.in_(project_ids))
     )).scalar_one()
     if not sample_count:
-        _operations_source_unavailable()
+        _operations_source_unavailable(market)
     events = (await db.execute(
         select(OperationAlarmEvent).where(OperationAlarmEvent.project_id.in_(project_ids))
     )).scalars().all()
@@ -140,7 +191,11 @@ async def list_alerts(
             "message": event.message,
             "acknowledged_at": event.acknowledged_at.isoformat() if event.acknowledged_at else None,
         } for event in events],
-        "note": "告警只来自已入库遥测越过阈值的记录。",
+        "note": (
+            "Alerts come only from stored telemetry that crossed a threshold."
+            if market == "global"
+            else "告警只来自已入库遥测越过阈值的记录。"
+        ),
     }
 
 

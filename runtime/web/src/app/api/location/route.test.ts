@@ -21,11 +21,18 @@ function amapFetch(body: unknown, status = 200) {
 describe('GET /api/location', () => {
     const originalFetch = global.fetch;
     const originalKey = process.env.AMAP_WEB_SERVICE_KEY;
+    const originalProvider = process.env.LOCATION_PROVIDER;
+
+    beforeEach(() => {
+        process.env.LOCATION_PROVIDER = 'amap';
+    });
 
     afterEach(() => {
         global.fetch = originalFetch;
         if (originalKey === undefined) delete process.env.AMAP_WEB_SERVICE_KEY;
         else process.env.AMAP_WEB_SERVICE_KEY = originalKey;
+        if (originalProvider === undefined) delete process.env.LOCATION_PROVIDER;
+        else process.env.LOCATION_PROVIDER = originalProvider;
     });
 
     function geocode(address = '查无此地') {

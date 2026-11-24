@@ -186,7 +186,7 @@ async function optimizeQuery(query: string): Promise<{ english: string, chinese:
     `;
 
     try {
-        const raw = await simpleChat(prompt, 'deepseek-v3'); // 使用更擅长逻辑的 v3
+        const raw = await simpleChat(prompt, 'deepseek-flash');
         const jsonStr = raw.replace(/```json|```/g, '').trim();
         return JSON.parse(jsonStr);
     } catch (e) {

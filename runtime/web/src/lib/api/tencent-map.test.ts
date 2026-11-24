@@ -123,10 +123,11 @@ describe('腾讯位置服务 WebService', () => {
         expect(fetchMock).not.toHaveBeenCalled();
     });
 
-    it('开关：默认高德；LOCATION_PROVIDER=tencent / 腾讯 时走腾讯', async () => {
-        expect(locationProvider({} as NodeJS.ProcessEnv)).toBe('amap');
+    it('开关：默认腾讯；LOCATION_PROVIDER=amap / 高德 时切回高德', async () => {
+        expect(locationProvider({} as NodeJS.ProcessEnv)).toBe('tencent');
+        expect(locationProvider({ LOCATION_PROVIDER: 'amap' } as unknown as NodeJS.ProcessEnv)).toBe('amap');
+        expect(locationProvider({ LOCATION_PROVIDER: '高德' } as unknown as NodeJS.ProcessEnv)).toBe('amap');
         expect(locationProvider({ LOCATION_PROVIDER: 'tencent' } as unknown as NodeJS.ProcessEnv)).toBe('tencent');
-        expect(locationProvider({ LOCATION_PROVIDER: '腾讯' } as unknown as NodeJS.ProcessEnv)).toBe('tencent');
         process.env.LOCATION_PROVIDER = 'tencent';
         const fetchMock = jest.fn(async () => jsonResponse({ status: 0, result: { location: { lat: 39.9, lng: 116.4 }, address_components: { province: '北京市' } } }));
         global.fetch = fetchMock as unknown as typeof fetch;

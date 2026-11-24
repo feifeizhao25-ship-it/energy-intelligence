@@ -175,15 +175,11 @@ export default function ResourceMapPage() {
                                     <h5 className="font-black text-slate-900 text-sm truncate">{loc.name || '选定位置'}</h5>
                                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">{loc.coordinates || '39.9°N, 116.4°E'}</p>
                                 </div>
-                                <div className="grid grid-cols-2 gap-2 pt-2">
-                                    <div className="bg-slate-50 p-3 rounded-2xl">
-                                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block">年均</span>
-                                        <span className="text-sm font-black text-slate-900">{idx === 0 ? '1650' : idx === 1 ? '1420' : '1580'}</span>
-                                    </div>
-                                    <div className="bg-slate-50 p-3 rounded-2xl">
-                                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block">内部收益率（IRR）·示例</span>
-                                        <span className="text-sm font-black text-green-600">14.2%</span>
-                                    </div>
+                                <div className="grid grid-cols-2 gap-2 pt-2 text-[11px] font-bold text-slate-700">
+                                    <a className="rounded-2xl bg-slate-50 p-3" href={`/calculator/solar?lat=${loc.lat}&lng=${loc.lng}`}>光伏测算</a>
+                                    <a className="rounded-2xl bg-slate-50 p-3" href={`/calculator/wind?lat=${loc.lat}&lng=${loc.lng}`}>风电测算</a>
+                                    <a className="rounded-2xl bg-slate-50 p-3" href={`/calculator/storage?lat=${loc.lat}&lng=${loc.lng}`}>储能测算</a>
+                                    <span className="rounded-2xl bg-slate-50 p-3">资源待本地点测算</span>
                                 </div>
                             </div>
                         ))}

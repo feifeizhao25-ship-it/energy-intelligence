@@ -6,6 +6,7 @@ describe('套餐默认模型', () => {
         for (const tier of Object.values(AI_MODEL_TIERS)) {
             expect(['deepseek-v3', 'deepseek-chat']).not.toContain(tier.defaultModel);
             expect(tier.allowedModels as readonly string[]).toContain(tier.defaultModel);
+            expect(tier.allowedModels as readonly string[]).not.toContain('deepseek-v3');
         }
     });
     it('高级套餐默认 deepseek-flash', () => {

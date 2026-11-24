@@ -15,6 +15,7 @@ export function mapTileStatus(env: NodeJS.ProcessEnv = process.env): MapTileStat
     const provider = (env.MAP_TILE_PROVIDER || '').trim().toLowerCase();
     const tianditu = (env.TIANDITU_KEY || '').trim();
     const gaode = (env.GAODE_MAP_KEY || '').trim();
+    const tencent = (env.TENCENT_MAP_KEY || '').trim();
     const url = (env.MAP_TILE_URL || '').toLowerCase();
     if (url.includes('openstreetmap.org') || url.includes('tile.openstreetmap')) {
         return { enabled: false, reason: 'osm-blocked', provider: 'disabled' };
@@ -27,12 +28,16 @@ export function mapTileStatus(env: NodeJS.ProcessEnv = process.env): MapTileStat
         if (!gaode) return { enabled: false, reason: 'key-unset', provider: 'amap' };
         return { enabled: true, provider: 'amap', reason: '' };
     }
-    return { enabled: false, reason: 'unset', provider };
+    // 未写提供商时国内版默认腾讯。密钥只决定是否开启代理，不出现在返回值里。
+    if (!tencent) return { enabled: false, reason: 'key-unset', provider: 'tencent' };
+    return { enabled: true, provider: 'tencent', reason: '' };
 }
 
 const TIANDITU = 'https://t{s}.tianditu.gov.cn/vec_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=vec&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk={key}';
 // 高德瓦片地址不带 key。GAODE_MAP_KEY 只决定是否开启这条代理，不出现在浏览器或上游 URL 里。
 const GAODE = 'https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}';
+// 腾讯栅格瓦片同样不把 TENCENT_MAP_KEY 写进地址。密钥只决定是否开启代理。
+const TENCENT = 'https://rt{s}.map.gtimg.com/tile?z={z}&x={x}&y={y}&styleid=1&scene=0&version=247';
 
 export function tileUpstream(env: NodeJS.ProcessEnv, z: number, x: number, y: number): string | null {
     const status = mapTileStatus(env);
@@ -40,8 +45,9 @@ export function tileUpstream(env: NodeJS.ProcessEnv, z: number, x: number, y: nu
     if (!Number.isInteger(z) || !Number.isInteger(x) || !Number.isInteger(y) || z < 0 || z > 18 || x < 0 || y < 0) return null;
     const span = 2 ** z;
     if (x >= span || y >= span) return null;
-    const sub = String((x + y) % (status.provider === 'amap' ? 4 : 8) + (status.provider === 'amap' ? 1 : 0));
-    const template = status.provider === 'amap' ? GAODE : TIANDITU;
+    const quad = status.provider === 'amap' || status.provider === 'tencent';
+    const sub = String((x + y) % (quad ? 4 : 8) + (status.provider === 'amap' ? 1 : 0));
+    const template = status.provider === 'amap' ? GAODE : status.provider === 'tencent' ? TENCENT : TIANDITU;
     return template
         .replace('{s}', sub)
         .replace('{z}', String(z))
@@ -56,6 +62,8 @@ export function siblingTileUpstream(url: string): string | null {
     if (gaode) return `${gaode[1]}${(Number(gaode[2]) % 4) + 1}${gaode[3]}`;
     const tianditu = url.match(/^(https:\/\/t)([0-7])(\.tianditu\.gov\.cn\/.*)$/);
     if (tianditu) return `${tianditu[1]}${(Number(tianditu[2]) + 1) % 8}${tianditu[3]}`;
+    const tencent = url.match(/^(https:\/\/rt)([0-3])(\.map\.gtimg\.com\/.*)$/);
+    if (tencent) return `${tencent[1]}${(Number(tencent[2]) + 1) % 4}${tencent[3]}`;
     return null;
 }
 

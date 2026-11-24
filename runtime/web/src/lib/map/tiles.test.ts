@@ -17,6 +17,21 @@ describe('国内地图瓦片', () => {
         expect(tileUpstream(env, 99, 1, 1)).toBeNull();
     });
 
+    it('未指定提供商时默认腾讯，密钥不出现在状态或瓦片地址里', () => {
+        const missing = mapTileStatus({ APP_EDITION: 'cn', TENCENT_MAP_KEY: '' });
+        expect(missing).toEqual({ enabled: false, reason: 'key-unset', provider: 'tencent' });
+        const env = { APP_EDITION: 'cn', MAP_TILE_PROVIDER: 'tencent', TENCENT_MAP_KEY: 'tencent-secret' };
+        expect(mapTileStatus(env)).toEqual({ enabled: true, provider: 'tencent', reason: '' });
+        expect(JSON.stringify(mapTileStatus(env))).not.toContain('tencent-secret');
+        const url = tileUpstream(env, 5, 26, 12);
+        expect(url).toContain('map.gtimg.com');
+        expect(url).not.toContain('tencent-secret');
+        expect(url).not.toContain('key=');
+        const next = siblingTileUpstream(url || '');
+        expect(next).toContain('map.gtimg.com');
+        expect(next).not.toBe(url);
+    });
+
     it('高德瓦片只在配了密钥时开启，地址里不带密钥', () => {
         const missing = mapTileStatus({ APP_EDITION: 'cn', MAP_TILE_PROVIDER: 'amap', GAODE_MAP_KEY: '' });
         expect(missing).toEqual({ enabled: false, reason: 'key-unset', provider: 'amap' });

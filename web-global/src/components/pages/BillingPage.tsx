@@ -37,11 +37,11 @@ const TIERS: PlanTier[] = [
     name: 'Free',
     tagline: 'Get started with essential tools',
     features: [
-      '3 projects',
-      '5 assessments / month',
-      '200 AI queries / month',
-      'Basic market data',
-      'Community support',
+      '5 AI interactions per day',
+      '3 resource queries and calculations per day',
+      '1 active project',
+      '3 watermarked PDF exports per month',
+      '7-day data retention',
     ],
     cta: 'Current Plan',
   },
@@ -101,11 +101,11 @@ const StripeCardForm: React.FC = () => (
         <span className="text-[11px] opacity-80">Powered by Stripe</span>
       </div>
       <div className="text-[18px] font-mono tracking-widest mb-4 opacity-90">
-        •••• •••• •••• 4242
+        Card details are entered on the secure checkout page
       </div>
       <div className="flex items-center justify-between text-[12px] opacity-80">
-        <span>John Doe</span>
-        <span>12 / 28</span>
+        <span>No card on file</span>
+        <span>USD</span>
       </div>
     </div>
 
@@ -203,28 +203,28 @@ const BillingPage: React.FC<{ prices?: Record<string, string> }> = ({ prices }) 
             <div>
               <div className="flex items-baseline justify-between mb-1">
                 <span className="text-[12px] text-[var(--text-secondary)]">Projects</span>
-                <span className="text-[13px] font-mono text-[var(--text-primary)]">2 / 3</span>
+                <span className="text-[13px] font-mono text-[var(--text-primary)]">0 / 1</span>
               </div>
               <div className="h-1.5 rounded-full bg-[var(--bg-secondary)] overflow-hidden">
-                <div className="h-full rounded-full bg-[var(--color-brand-500)]" style={{ width: '67%' }} />
+                <div className="h-full rounded-full bg-[var(--color-brand-500)]" style={{ width: '0%' }} />
               </div>
             </div>
             <div>
               <div className="flex items-baseline justify-between mb-1">
-                <span className="text-[12px] text-[var(--text-secondary)]">Assessments</span>
-                <span className="text-[13px] font-mono text-[var(--text-primary)]">3 / 5</span>
+                <span className="text-[12px] text-[var(--text-secondary)]">Calculations today</span>
+                <span className="text-[13px] font-mono text-[var(--text-primary)]">0 / 3</span>
               </div>
               <div className="h-1.5 rounded-full bg-[var(--bg-secondary)] overflow-hidden">
-                <div className="h-full rounded-full bg-[var(--color-warning)]" style={{ width: '60%' }} />
+                <div className="h-full rounded-full bg-[var(--color-warning)]" style={{ width: '0%' }} />
               </div>
             </div>
             <div>
               <div className="flex items-baseline justify-between mb-1">
-                <span className="text-[12px] text-[var(--text-secondary)]">AI Queries</span>
-                <span className="text-[13px] font-mono text-[var(--text-primary)]">87 / 200</span>
+                <span className="text-[12px] text-[var(--text-secondary)]">AI interactions today</span>
+                <span className="text-[13px] font-mono text-[var(--text-primary)]">0 / 5</span>
               </div>
               <div className="h-1.5 rounded-full bg-[var(--bg-secondary)] overflow-hidden">
-                <div className="h-full rounded-full bg-[var(--color-success)]" style={{ width: '43%' }} />
+                <div className="h-full rounded-full bg-[var(--color-success)]" style={{ width: '0%' }} />
               </div>
             </div>
           </div>

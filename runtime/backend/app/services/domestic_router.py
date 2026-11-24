@@ -23,17 +23,32 @@ from app.services.empty_answer_stats import record_completion
 logger = logging.getLogger(__name__)
 
 GLM_OFFICIAL_ID = "glm-4.7-flash"
-# DeepSeek 官方接口当前接受的模型号（https://api-docs.deepseek.com/quick_start/pricing ，2026-11-23 核对）：
-# deepseek-flash、deepseek-v4-pro；旧名 deepseek-v4-flash 仍被接受并按 Flash 计费。
-# 网页套餐里的 deepseek-v3 / deepseek-chat 等旧名原样发过去会 400（2026-11-23 真模型复测 7 次全 400），
-# 所以只放行这几个，其余一律用 DEEPSEEK_MODEL。走第三方兼容网关时可用 DEEPSEEK_ALLOWED_MODELS（逗号分隔）覆盖。
-DEEPSEEK_OFFICIAL_MODELS = ("deepseek-flash", "deepseek-v4-pro", "deepseek-v4-flash")
+# 发给 DeepSeek 官方接口的模型号只允许文档中的有效名。
+# deepseek-chat、deepseek-reasoner 是官方对话/推理名；deepseek-flash、deepseek-v4-pro、
+# deepseek-v4-flash 是 2026-11-23 定价页核对过、真请求能通过的型号。
+# deepseek-v3 及其变体会导致官方接口 400，任何配置都不能把它重新放行。
+DEEPSEEK_OFFICIAL_MODELS = (
+    "deepseek-chat",
+    "deepseek-reasoner",
+    "deepseek-flash",
+    "deepseek-v4-pro",
+    "deepseek-v4-flash",
+)
+
+
+def _blocked_deepseek_name(name: str) -> bool:
+    folded = (name or "").strip().lower()
+    return folded.startswith("deepseek-v3")
 
 
 def deepseek_allowed_models() -> set[str]:
     raw = os.environ.get("DEEPSEEK_ALLOWED_MODELS", "")
-    custom = {item.strip().lower() for item in raw.split(",") if item.strip()}
-    return custom or set(DEEPSEEK_OFFICIAL_MODELS)
+    custom = {
+        item.strip().lower()
+        for item in raw.split(",")
+        if item.strip() and not _blocked_deepseek_name(item)
+    }
+    return set(DEEPSEEK_OFFICIAL_MODELS) | custom
 
 
 def provider_chain() -> list[tuple[str, str, str, str]]:
@@ -66,7 +81,13 @@ def model_for(provider: str, requested: str | None, default_model: str) -> str:
     if provider == "glm":
         return GLM_OFFICIAL_ID
     if provider == "deepseek":
-        return requested if requested.lower() in deepseek_allowed_models() else default_model
+        folded = requested.lower()
+        if _blocked_deepseek_name(folded):
+            return default_model
+        if folded in deepseek_allowed_models():
+            official = next((name for name in DEEPSEEK_OFFICIAL_MODELS if name == folded), folded)
+            return official
+        return default_model
     return default_model
 
 
@@ -79,6 +100,31 @@ SECOND_RETRY_BACKOFF_SECONDS = 1.0
 EMPTY_ANSWER = "这次没有生成可用回答。请缩短问题后再试一次。"
 # 全部供应商都是报错（鉴权、模型号、网络、限流），不是正文为空：缩短问题没用，不能这样提示。
 UNAVAILABLE_ANSWER = "AI 模型暂时不可用，这次没有生成回答。请稍后再试；如果一直这样，请联系管理员检查模型服务配置。"
+BALANCE_ANSWER = "DeepSeek 账户余额不足（HTTP 402），已停止继续调用。请充值后再试。这不是因为问题太长。"
+
+
+def http_status_of(exc: BaseException) -> int | None:
+    """读兼容客户端抛出的 HTTP 状态。不解析密钥，也不把正文当状态。"""
+    for attr in ("status_code", "status"):
+        value = getattr(exc, attr, None)
+        if isinstance(value, int):
+            return value
+    response = getattr(exc, "response", None)
+    code = getattr(response, "status_code", None)
+    if isinstance(code, int):
+        return code
+    return None
+
+
+def _balance_result(model: str) -> dict:
+    record_completion(model or "deepseek", empty=True)
+    return {
+        "content": BALANCE_ANSWER,
+        "provider": "deepseek",
+        "model": model or "deepseek",
+        "error": "insufficient_balance",
+        "http_status": 402,
+    }
 SHORT_SYSTEM = "用中文回答事实。不确定就说明未收录。"
 REWRITE_ZH = "请用中文重写上一则回答。专有名词保留，并在括号里写出中文。"
 _SENTENCE_SPLIT = re.compile(r"[^。！？.!?\n]+[。！？.!?]?")
@@ -255,6 +301,9 @@ async def complete_domestic(messages: list[dict], model: str | None = None, tran
                 log_empty_completion(name, reported or use_model, last_reason, attempt, budget)
             record_completion(use_model, empty=True)
         except Exception as exc:
+            if http_status_of(exc) == 402:
+                logger.warning("domestic_provider_balance provider=%s", name)
+                return _balance_result(use_model)
             logger.warning("domestic_provider_error provider=%s error=%s", name, exc.__class__.__name__)
             failures += 1
             continue
@@ -279,6 +328,9 @@ async def complete_domestic(messages: list[dict], model: str | None = None, tran
                 )
             log_empty_completion(name, reported or use_model, last_reason, 4, RETRY_MAX_TOKENS)
         except Exception as exc:
+            if http_status_of(exc) == 402:
+                logger.warning("domestic_provider_balance provider=%s", name)
+                return _balance_result(use_model)
             logger.warning("domestic_provider_error provider=%s error=%s", name, exc.__class__.__name__)
             continue
     record_completion("unavailable", empty=True)
@@ -353,6 +405,9 @@ async def complete_domestic_with_tools(
                 extra_body=extra_body, tools=tools, tool_choice=tool_choice,
             )
         except Exception as exc:
+            if http_status_of(exc) == 402:
+                logger.warning("domestic_provider_balance provider=%s", name)
+                return _balance_result(use_model)
             logger.warning("domestic_provider_error provider=%s error=%s", name, exc.__class__.__name__)
             failures += 1
             continue

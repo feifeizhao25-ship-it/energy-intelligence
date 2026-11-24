@@ -38,7 +38,29 @@ def _add_year(start: datetime) -> datetime:
     month = month_zero + 1
     return start.replace(year=year, month=month, day=min(start.day, monthrange(year, month)[1]))
 
-def renewal_quote(*, current_plan: str, current_expires_at, now: datetime, yearly_price_cny) -> dict:
+_EN_RULE = {
+    "未到期从现到期日顺延1年, 已过期从付款日起算1年": (
+        "Renewing before expiry extends one year from the current expiry date. "
+        "Renewing after expiry starts a new year on the payment date."
+    ),
+    "到期切换续费档位，当前权益不变、不退差价；付费档位须续费后开通": (
+        "A downgrade takes effect at the end of the current term. Benefits stay the same until then "
+        "and the price difference is not refunded. A paid plan starts only after renewal."
+    ),
+    "未使用天数按比例退, 向下取整到分; 实际退款由财务在支付渠道人工执行": (
+        "Unused days are refunded in proportion, rounded down to the cent. "
+        "This is a quote. Finance issues the refund in the payment provider."
+    ),
+}
+
+
+def localize_rule(rule: str, market: str) -> str:
+    if market != "global":
+        return rule
+    return _EN_RULE.get(rule, "The billing rule is available in English at checkout.")
+
+
+def renewal_quote(*, current_plan: str, current_expires_at, now: datetime, yearly_price_cny, market: str = "cn") -> dict:
     """续费测算: 返回应付年付价与新到期日 (不扣款)。"""
     if current_plan not in TIER_ORDER or current_plan == "free":
         raise ValueError("免费版无需续费")
@@ -46,9 +68,10 @@ def renewal_quote(*, current_plan: str, current_expires_at, now: datetime, yearl
     current_expires_at = _utc(current_expires_at) if current_expires_at else None
     base = current_expires_at if (current_expires_at and current_expires_at > now) else now
     return {"plan": current_plan, "billing_period": "yearly", "amount_cny": str(_money(yearly_price_cny)),
-            "new_expires_at": _add_year(base).isoformat(), "rule": "未到期从现到期日顺延1年, 已过期从付款日起算1年"}
+            "new_expires_at": _add_year(base).isoformat(),
+            "rule": localize_rule("未到期从现到期日顺延1年, 已过期从付款日起算1年", market)}
 
-def schedule_downgrade(*, current_plan: str, target_plan: str, current_expires_at, now: datetime) -> dict:
+def schedule_downgrade(*, current_plan: str, target_plan: str, current_expires_at, now: datetime, market: str = "cn") -> dict:
     """降级登记: 返回待生效信息 (不立即改档, 不退差价)。"""
     if current_plan not in TIER_ORDER or target_plan not in TIER_ORDER:
         raise ValueError("档位无效")
@@ -58,7 +81,7 @@ def schedule_downgrade(*, current_plan: str, target_plan: str, current_expires_a
     current_expires_at = _utc(current_expires_at) if current_expires_at else None
     effective = current_expires_at if (current_expires_at and current_expires_at > now) else now
     return {"from_plan": current_plan, "to_plan": target_plan, "effective_at": effective.isoformat(),
-            "status": "scheduled", "rule": "到期切换续费档位，当前权益不变、不退差价；付费档位须续费后开通"}
+            "status": "scheduled", "rule": localize_rule("到期切换续费档位，当前权益不变、不退差价；付费档位须续费后开通", market)}
 
 def apply_scheduled_downgrade(scheduled: dict, *, now: datetime):
     """周期到达时返回应切换到的档位; 未到返回 None。供到期扫描任务调用。"""
@@ -68,7 +91,7 @@ def apply_scheduled_downgrade(scheduled: dict, *, now: datetime):
     if effective.tzinfo is None: effective = effective.replace(tzinfo=timezone.utc)
     return scheduled["to_plan"] if _utc(now) >= _utc(effective) else None
 
-def refund_quote(*, paid_amount_cny, period_start: datetime, period_end: datetime, now: datetime) -> dict:
+def refund_quote(*, paid_amount_cny, period_start: datetime, period_end: datetime, now: datetime, market: str = "cn") -> dict:
     """退款测算: 未使用按比例退, 只出测算不出款。"""
     paid = _money(paid_amount_cny)
     period_start, period_end, now = _utc(period_start), _utc(period_end), _utc(now)
@@ -82,4 +105,5 @@ def refund_quote(*, paid_amount_cny, period_start: datetime, period_end: datetim
         remaining = (period_end - now).days
         refund = (paid * Decimal(remaining) / Decimal(total_days)).quantize(Decimal("0.01"), rounding=ROUND_FLOOR)
     return {"paid_cny": str(paid.quantize(Decimal("0.01"))), "refund_cny": str(refund), "remaining_days": remaining,
-            "total_days": total_days, "status": "quote_only", "rule": "未使用天数按比例退, 向下取整到分; 实际退款由财务在支付渠道人工执行"}
+            "total_days": total_days, "status": "quote_only",
+            "rule": localize_rule("未使用天数按比例退, 向下取整到分; 实际退款由财务在支付渠道人工执行", market)}

@@ -29,7 +29,14 @@ export async function POST(req: NextRequest) {
                     throw e;
                 }
                 input.businessModel = { ...businessModel, mode, feedInTariff: prices.feedInTariff, electricityPrice: prices.electricityPrice };
-                const result = { ...(await calculateWind(input)), pricing: prices.pricing };
+                const result = {
+                    ...(await calculateWind(input)),
+                    pricing: prices.pricing,
+                    currency: 'CNY',
+                    us_itc_applied: false,
+                    verification_status: 'unverified',
+                    verification_note: '未核验：未接入测风塔实测或厂商功率曲线。金额为人民币，不套用美国 ITC。结果是给定假设下的计算，不是收益承诺。',
+                };
 
                 let calculationId: string | undefined;
                 try {

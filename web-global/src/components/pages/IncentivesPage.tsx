@@ -14,7 +14,6 @@ import React, { useMemo, useState } from 'react';
 import { Landmark } from 'lucide-react';
 import { Badge, Card, Input, Switch } from '@energy-intelligence/ui-web';
 import GlobalShell from '../GlobalShell';
-import DemoBadge from '../DemoBadge';
 import conflict from '../../lib/policy/us-48e-45y-conflict.json';
 
 const BASE_ITC_RATE = 0.3;
@@ -79,7 +78,7 @@ const IncentivesPage: React.FC = () => {
     <GlobalShell
       title="Incentives (ITC)"
       breadcrumb={['EnergyIQ', 'Incentives']}
-      headerExtra={<DemoBadge />}
+      headerExtra={null}
     >
       <div className="max-w-[1100px] mx-auto space-y-6">
         <div>

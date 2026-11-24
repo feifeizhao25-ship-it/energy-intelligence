@@ -110,8 +110,17 @@ def _reverification_sentence(labels: list, market: str, has_other: bool) -> str:
 def _reverification_note(query: str, market: str, has_other: bool) -> str:
     if not query:
         return ""
-    labels = _RAG_SERVICE.named_stale_labels(query, market)
-    return _reverification_sentence(labels, market, has_other)
+    expired = _RAG_SERVICE.named_expired_notices(query, market) if market == "cn" else []
+    expired_labels = {str(item.get("label") or "").casefold() for item in expired}
+    labels = [
+        label for label in _RAG_SERVICE.named_stale_labels(query, market)
+        if label.casefold() not in expired_labels
+    ]
+    parts = [str(item.get("notice") or "") for item in expired if item.get("notice")]
+    stale = _reverification_sentence(labels, market, has_other)
+    if stale:
+        parts.append(stale)
+    return "\n\n".join(parts)
 
 
 def _lead_with_reverification(text: str, query: str, market: str, has_other: bool) -> str:

@@ -6,6 +6,7 @@ import { AlertCircle, Award, Calendar, Database, Loader2, TrendingUp, Zap } from
 import { Plan, PLAN_DETAILS, USAGE_LIMITS } from '@/lib/membership/plans';
 
 import { loadMember, type Member, type Payment } from '@/lib/membership/load-member';
+import { ConsultationPanel } from '@/components/membership/ConsultationPanel';
 
 export default function MembershipCenterPage() {
     const [member, setMember] = useState<Member | null>(null);
@@ -43,8 +44,8 @@ export default function MembershipCenterPage() {
         return () => controller.abort();
     }, [attempt]);
 
-    if (error) return <State message={error} error onRetry={() => { setError(''); setAttempt(value => value + 1); }} />;
-    if (!member) return <State message="正在读取您的会员权益…" />;
+    if (error) return <><State message={error} error onRetry={() => { setError(''); setAttempt(value => value + 1); }} /><ConsultationPanel /></>;
+    if (!member) return <><State message="正在读取您的会员权益…" /><ConsultationPanel /></>;
 
     const details = PLAN_DETAILS[member.plan] || PLAN_DETAILS.FREE;
     const expiry = member.planExpireAt;

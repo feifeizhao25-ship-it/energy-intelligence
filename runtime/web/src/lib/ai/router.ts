@@ -30,11 +30,22 @@ export function isCnEdition(): boolean {
     return (process.env.NEXT_PUBLIC_APP_EDITION || process.env.APP_EDITION || '').toLowerCase() === 'cn';
 }
 
-/** glm-4-flash 对应智谱文档中的 glm-4.7-flash。deepseek-flash 保持原模型号。 */
+const DEEPSEEK_OFFICIAL = new Set([
+    'deepseek-chat',
+    'deepseek-reasoner',
+    'deepseek-flash',
+    'deepseek-v4-pro',
+    'deepseek-v4-flash',
+]);
+
+/** glm-4-flash 对应智谱文档中的 glm-4.7-flash。deepseek-v3 绝不原样发给官方接口。 */
 export function cnRequestModel(model?: string): string {
-    if (!model || model === 'deepseek-flash') return 'deepseek-flash';
-    if (model === 'glm-4-flash' || model === 'glm-4.7-flash') return 'glm-4.7-flash';
-    return model;
+    const name = (model || '').trim();
+    const folded = name.toLowerCase();
+    if (!name || folded.startsWith('deepseek-v3')) return 'deepseek-flash';
+    if (folded.startsWith('deepseek') && !DEEPSEEK_OFFICIAL.has(folded)) return 'deepseek-flash';
+    if (folded === 'glm-4-flash' || folded === 'glm-4.7-flash') return 'glm-4.7-flash';
+    return DEEPSEEK_OFFICIAL.has(folded) ? folded : name;
 }
 
 export interface DomesticToolCall {
@@ -82,6 +93,17 @@ export async function callDomesticBackend(req: AIRequest) {
         }),
         signal: req.signal,
     });
+    if (response.status === 402) {
+        const data = await response.json().catch(() => ({} as { content?: string }));
+        const content = typeof data.content === 'string' && data.content
+            ? data.content
+            : 'DeepSeek 账户余额不足（HTTP 402），已停止继续调用。请充值后再试。这不是因为问题太长。';
+        return {
+            choices: [{ message: { role: 'assistant' as const, content }, finish_reason: 'stop' }],
+            model: 'unavailable',
+            provider: 'deepseek',
+        };
+    }
     if (!response.ok) {
         throw new Error('国内 AI 服务已拒绝生成替代内容');
     }

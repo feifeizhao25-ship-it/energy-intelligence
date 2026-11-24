@@ -317,11 +317,13 @@ class Settings(BaseSettings):
     MILVUS_HOST: str = "localhost"
     MILVUS_PORT: int = 19530
     
-    # 地图瓦片。国内路径只用天地图或高德，密钥为空则关闭，不回退到 OSM。
+    # 地图瓦片。国内路径默认腾讯，可切高德或天地图。密钥为空则关闭，不回退到 OSM。
     MAP_TILE_PROVIDER: str = ""
     MAP_TILE_URL: str = ""
     TIANDITU_KEY: Optional[str] = None
     GAODE_MAP_KEY: Optional[str] = None
+    TENCENT_MAP_KEY: Optional[str] = None
+    TENCENT_MAP_SK: Optional[str] = None
     # OpenWeatherMap 仅国际路径。国内版在校验里清空。
     OPENWEATHER_API_KEY: Optional[str] = None
     CRAWLER_CONTACT_EMAIL: Optional[str] = None

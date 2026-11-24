@@ -5,11 +5,16 @@ import { provinceFromGeocodeRecord } from './picked-province';
 export const MAP_SEARCH_MISS = '未找到该地点，请输入「纬度,经度」或更详细的地址';
 
 export type MapSearchHit = { lat: number; lng: number; name: string; province?: string };
-export type MapSearchFailure = { error: string; code?: 'not_found' | 'key_missing' | 'upstream' };
+export type MapSearchFailure = { error: string; code?: 'not_found' | 'key_missing' | 'quota' | 'upstream' };
+
+export const MAP_QUOTA_MISS = '地图接口额度已达上限，请稍后再试';
+export const MAP_KEY_MISS = '未配置地图密钥';
 export type MapSearchResult = MapSearchHit | MapSearchFailure;
 
 export function windPickerSearchNote(result: MapSearchFailure): string {
-    if (result.code === 'key_missing') return '地图服务暂不可用，地图未配置密钥，请直接填写经纬度';
+    if (result.code === 'key_missing') return '地图服务暂不可用，未配置地图密钥，请直接填写经纬度';
+    if (result.code === 'quota') return MAP_QUOTA_MISS;
+    if (result.code === 'not_found') return MAP_SEARCH_MISS;
     return result.error;
 }
 
@@ -32,12 +37,14 @@ export async function resolveMapSearch(text: string, fetchImpl: typeof fetch = f
         const response = await fetchImpl(`/api/location?action=geocode&address=${encodeURIComponent(trimmed)}`);
         const body = await response.json().catch(() => null);
         const code = typeof body?.code === 'string' ? body.code : undefined;
-        if (code === 'key_missing') return { error: '地图未配置密钥，请直接填写经纬度', code: 'key_missing' };
+        if (code === 'key_missing') return { error: MAP_KEY_MISS, code: 'key_missing' };
+        if (code === 'quota') return { error: MAP_QUOTA_MISS, code: 'quota' };
         const hit = body?.data?.[0];
         const [lng, lat] = String(hit?.location ?? '').split(',').map(Number);
         if (!response.ok || !Number.isFinite(lat) || !Number.isFinite(lng)) {
             const failure = code === 'not_found' || response.status === 404 || response.ok ? 'not_found' : 'upstream';
-            return { error: MAP_SEARCH_MISS, code: failure };
+            const error = failure === 'not_found' ? MAP_SEARCH_MISS : (typeof body?.error === 'string' && body.error ? body.error : MAP_SEARCH_MISS);
+            return { error, code: failure };
         }
         const name = typeof hit?.formatted_address === 'string' && hit.formatted_address ? hit.formatted_address : trimmed;
         const province = provinceFromGeocodeRecord(hit);
