@@ -80,25 +80,6 @@ const StatusBadge: React.FC<{ status: ProjectItem['status'] }> = ({ status }) =>
   return <Badge color={cfg.color} dot>{status}</Badge>;
 };
 
-const MiniBarChart: React.FC = () => {
-  const bars = [42, 55, 38, 67, 49, 72, 58, 63, 51, 78, 45, 69];
-  const months = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
-  const max = Math.max(...bars);
-  return (
-    <div className="flex items-end justify-between gap-1 h-24">
-      {bars.map((v, i) => (
-        <div key={i} className="flex flex-col items-center gap-1 flex-1">
-          <div
-            className="w-full rounded-t-[2px] bg-[var(--color-brand-500)] opacity-80 hover:opacity-100 transition-opacity"
-            style={{ height: `${(v / max) * 100}%` }}
-          />
-          <span className="text-[9px] text-[var(--text-tertiary)]">{months[i]}</span>
-        </div>
-      ))}
-    </div>
-  );
-};
-
 const MiniLinePlaceholder: React.FC<{ label: string; value: string; trend: string }> = ({ label, value, trend }) => (
   <div className="flex items-center justify-between py-2">
     <div>

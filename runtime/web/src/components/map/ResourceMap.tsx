@@ -42,7 +42,8 @@ const MapUnavailable = ({ reason, onSelect }: { reason: string; onSelect: (locat
     return (
         <div role="status" className="flex h-full w-full items-center justify-center bg-slate-100 p-6">
             <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-lg">
-                <p className="text-base font-bold text-slate-800" data-testid="map-status-title">{copy.title}</p>
+                <p className="text-sm font-medium text-slate-500">{MAP_UNAVAILABLE_TEXT}</p>
+                <p className="mt-1 text-base font-bold text-slate-800" data-testid="map-status-title">{copy.title}</p>
                 <p className="mt-2 text-sm leading-6 text-slate-600">{copy.detail}</p>
                 <p className="mt-2 text-xs text-slate-500">默认地图：腾讯地图。高德仅作可切换回退。</p>
                 <div className="mt-4 grid grid-cols-2 gap-2 text-left text-xs text-slate-600">
