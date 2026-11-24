@@ -128,6 +128,22 @@ class _WindFinanceScreenState extends State<WindFinanceScreen> {
                 );
               }).toList(),
             ),
+            SizedBox(height: 16),
+            // TODO(待定39)：本页公式和默认参数属于测算口径，修之前由主人/专家确认；本次只加标注和测试，不改公式。
+            Container(
+              key: const Key('wind-finance-unverified-note'),
+              width: double.infinity,
+              padding: EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Color(0xFFFEF3C7),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                '本页是 App 本地粗算，公式和默认参数还没核对（默认单位投资、收入单位换算、利用小时与容量系数混用），'
+                '算出的收益率、度电成本、回收期不能作为决策依据，请以网页端风电测算为准。',
+                style: TextStyle(fontSize: 13, color: Color(0xFF92400E)),
+              ),
+            ),
             SizedBox(height: 24),
 
             // Input parameters
