@@ -86,10 +86,29 @@ def cosine_sparse(left: dict[str, float], right: dict[str, float]) -> float:
     return float(sum(value * right.get(key, 0.0) for key, value in left.items()))
 
 
-@lru_cache(maxsize=1)
-def _load_fastembed(model_name: str):
+def fastembed_options() -> dict:
+    """本地模型加载参数，都来自环境变量，未设置时与原来一样。
+
+    LOCAL_EMBEDDING_CACHE_DIR：模型文件目录（建议在构建镜像时用 scripts/fetch_local_embedding_model.py 预先放好）。
+    LOCAL_EMBEDDING_OFFLINE=1：只读本地文件，不去 Hugging Face 下载（生产建议打开，境内访问不稳定）。
+    LOCAL_EMBEDDING_THREADS：ONNX 推理线程数；8 核机器上 base 级模型用默认线程反而更慢，建议 2。
+    """
+    opts: dict = {}
+    cache_dir = (os.environ.get("LOCAL_EMBEDDING_CACHE_DIR") or "").strip()
+    if cache_dir:
+        opts["cache_dir"] = cache_dir
+    threads = (os.environ.get("LOCAL_EMBEDDING_THREADS") or "").strip()
+    if threads.isdigit() and int(threads) > 0:
+        opts["threads"] = int(threads)
+    if (os.environ.get("LOCAL_EMBEDDING_OFFLINE") or "").strip() == "1":
+        opts["local_files_only"] = True
+    return opts
+
+
+@lru_cache(maxsize=2)
+def _load_fastembed(model_name: str, options: tuple = ()):
     from fastembed import TextEmbedding
-    return TextEmbedding(model_name=model_name)
+    return TextEmbedding(model_name=model_name, **dict(options))
 
 
 def embed_local(texts: list[str]) -> dict:
@@ -97,7 +116,7 @@ def embed_local(texts: list[str]) -> dict:
     forced = (os.environ.get("EMBEDDING_LOCAL_ENGINE") or "auto").strip().lower()
     if forced != "ngram":
         try:
-            model = _load_fastembed(model_name)
+            model = _load_fastembed(model_name, tuple(sorted(fastembed_options().items())))
             rows = [ _l2([float(value) for value in vector]) for vector in model.embed(texts) ]
             return {"status": "ok", "model": model_name, "engine": "fastembed", "vectors": rows}
         except Exception as exc:

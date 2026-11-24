@@ -439,7 +439,9 @@ class RAGService:
 
     def search(self, query: str, top_k: int = 5, market: str = "cn",
                exclude_stale: bool = True, effective_only: bool = True,
-               include_stale: bool = False) -> RAGResult:
+               include_stale: bool = False,
+               apply_coverage_floor: bool = True) -> RAGResult:
+        """apply_coverage_floor=False 只给向量补召回取「不设加权覆盖率下限」的词面候选用（见 vector_rescue）；默认保持原行为。"""
         if include_stale:
             exclude_stale = False
         if top_k <= 0:
@@ -487,7 +489,7 @@ class RAGService:
                 continue  # one stray shared word ("work" in "Physical Work Test" vs "how does IRR work") is not a match
             if score <= 0 or score < min_relevance():
                 continue
-            if numbered < 0.85 and coverage_floor > 0:
+            if numbered < 0.85 and coverage_floor > 0 and apply_coverage_floor:
                 df, n_docs = self._document_frequency()
                 if weighted_coverage(query_tokens, doc_tokens, df, n_docs) < coverage_floor:
                     if names_registered is None:

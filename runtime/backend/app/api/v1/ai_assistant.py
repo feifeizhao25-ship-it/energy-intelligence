@@ -62,7 +62,23 @@ def _retrieve(query: str, market: str) -> list:
         hits = _RAG_SERVICE.search(query, top_k=3, market=market, exclude_stale=True).hits
     except Exception:
         return []
-    return [h for h in hits if h.score >= MIN_SOURCE_RELEVANCE]
+    hits = [h for h in hits if h.score >= MIN_SOURCE_RELEVANCE]
+    from app.services import vector_rescue
+    if market == "cn" and vector_rescue.enabled():
+        # 本地向量补召回（默认关闭）：只在词面候选里重排/补召回，失败一律退回词面结果。
+        try:
+            from app.services.rag_service import _doc_text
+
+            def _pool() -> list:
+                found = _RAG_SERVICE.search(query, top_k=10, market=market, exclude_stale=True,
+                                            apply_coverage_floor=False).hits
+                return [h for h in found if h.score >= MIN_SOURCE_RELEVANCE]
+
+            hits = vector_rescue.rescue(query, hits, _pool, _RAG_SERVICE._corpus, _doc_text)
+        except Exception:
+            # 向量模型缺失、维度不对或检索抛错时保持词面结果，不把异常传给问答接口。
+            hits = list(hits)
+    return hits
 
 
 def _reverification_sentence(labels: list, market: str, has_other: bool) -> str:
