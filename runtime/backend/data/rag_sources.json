@@ -18,9 +18,7 @@
       "source_org": "国家市场监督管理总局 国家标准全文公开系统",
       "license_note": "国家标准全文公开系统提供免费在线阅读；引用须标注标准号与年代号。",
       "verify_interval_days": 365,
-      "corroborated_by": [
-        "policy-cn-136"
-      ],
+      "corroborated_by": [],
       "needs_human_verification": "标题、施行日 2025-04-01 与 6.6 节公式须对照国家标准全文公开系统核对后才能当作已核验原文。",
       "countries": [
         "cn"
@@ -54,9 +52,7 @@
       "source_org": "国家发展和改革委员会",
       "license_note": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
       "verify_interval_days": 30,
-      "corroborated_by": [
-        "std-gb50797"
-      ],
+      "corroborated_by": [],
       "countries": [
         "cn"
       ],
@@ -86,7 +82,13 @@
       "effective_date_basis": "页面标注发布时间为2025/02/09，落款为2025年1月27日。存量与增量以2025年6月1日分界。",
       "excerpt": "2025年6月1日以前投产的新能源存量项目：（2）机制电价，按现行价格政策执行，不高于当地煤电基准价。",
       "primary_checked_at": "2026-11-07",
-      "primary_checked_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202502/t20250209_1396066.html"
+      "primary_checked_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202502/t20250209_1396066.html",
+      "mirror_urls": [
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/202502/content_7002959.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改价格〔2025〕136号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
+        }
+      ]
     },
     {
       "source_id": "policy-cn-storage",
@@ -361,9 +363,7 @@
       "source_org": "中国光伏行业协会（CPIA）",
       "license_note": "协会公开发布行情信息，引用须注明来源；数据更新频繁，按周核验。",
       "verify_interval_days": 7,
-      "corroborated_by": [
-        "price-us-eia"
-      ],
+      "corroborated_by": [],
       "countries": [
         "cn"
       ],
@@ -506,7 +506,13 @@
       "license": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
       "snapshot_note": "snapshot_scope=已收录摘要，不是官方全文影像。",
       "snapshot_sha256": "6daebf758e2531903f4660a2f49fcbf68204fec31e40c32a37e0048923e75b8d",
-      "status": "现行"
+      "status": "现行",
+      "mirror_urls": [
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/202601/content_7056676.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改价格〔2026〕114号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
+        }
+      ]
     },
     {
       "source_id": "policy-cn-ling-2026-50",
@@ -596,6 +602,10 @@
         {
           "url": "https://www.nea.gov.cn/20260803/f90e2bdec3744f3c90898ca65e31e597/c.html",
           "org": "国家能源局"
+        },
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/202608/content_7077425.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改能源〔2026〕942号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
         }
       ],
       "content_scope": "页面通知+附件正文（PDF）"
@@ -645,6 +655,10 @@
         {
           "url": "https://www.nea.gov.cn/20260723/cab1eb6727674bcf9a0efea45ed525e0/c.html",
           "org": "国家能源局"
+        },
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/202607/content_7076403.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改能源〔2026〕1067号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
         }
       ],
       "content_scope": "页面通知+附件正文（PDF）"
@@ -733,7 +747,13 @@
       "sign_date": "2026-06-13",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
       "attachment_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202606/P020260625612978907651.pdf",
-      "content_scope": "页面通知+附件正文（PDF）"
+      "content_scope": "页面通知+附件正文（PDF）",
+      "mirror_urls": [
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/202607/content_7074220.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改能源〔2026〕884号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
+        }
+      ]
     },
     {
       "source_id": "policy-cn-ling-2026-42",
@@ -819,7 +839,13 @@
       "sign_date": "2026-05-06",
       "effective_date_basis": "原文：自印发/发布/公布之日起施行，按落款/发布日期记录",
       "attachment_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202606/P020260601561979770878.pdf",
-      "content_scope": "页面通知+附件正文（PDF）"
+      "content_scope": "页面通知+附件正文（PDF）",
+      "mirror_urls": [
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/202606/content_7070873.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改能源〔2026〕622号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
+        }
+      ]
     },
     {
       "source_id": "policy-cn-ling-2026-41",
@@ -947,7 +973,13 @@
       "source_text_sha256": "f709581004608142036c56ee77d61895db420d5525a13c8a8b32abcaa51fad0c",
       "sign_date": "2025-12-26",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
-      "content_scope": "页面正文"
+      "content_scope": "页面正文",
+      "mirror_urls": [
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/202512/content_7053533.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改能源〔2025〕1710号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
+        }
+      ]
     },
     {
       "source_id": "policy-cn-fgnyg-2025-1656",
@@ -991,7 +1023,13 @@
       "effective_date_basis": "原文：自2026年3月1日起施行/执行",
       "expiry_basis": "原文称有效期5年，自施行日起算，到期日按前一日记录",
       "attachment_url": "https://www.ndrc.gov.cn/xxgk/zcfb/ghxwj/202512/P020251226622166557290.pdf",
-      "content_scope": "页面通知+附件正文（PDF）"
+      "content_scope": "页面通知+附件正文（PDF）",
+      "mirror_urls": [
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/202512/content_7053608.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改能源规〔2025〕1656号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
+        }
+      ]
     },
     {
       "source_id": "policy-cn-fgny-2025-1645",
@@ -1037,6 +1075,10 @@
         {
           "url": "https://www.nea.gov.cn/20251223/abfce94bd4384ff1a3b992b661aa2d81/c.html",
           "org": "国家能源局"
+        },
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/202512/content_7052532.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改能源〔2025〕1645号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
         }
       ],
       "content_scope": "页面正文"
@@ -1081,7 +1123,13 @@
       "source_text_sha256": "29a35316a371480cf616ea13de9cb1d759610c54325c07c27a11008f493ea49b",
       "sign_date": "2025-12-02",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
-      "content_scope": "页面正文"
+      "content_scope": "页面正文",
+      "mirror_urls": [
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/202512/content_7052067.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改办体改〔2025〕1032号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
+        }
+      ]
     },
     {
       "source_id": "policy-cn-fgny-2025-1476",
@@ -1124,7 +1172,13 @@
       "sign_date": "2025-11-18",
       "effective_date_basis": "原文：自印发/发布/公布之日起施行，按落款/发布日期记录",
       "expiry_basis": "原文称有效期3年，自施行日起算，到期日按前一日记录",
-      "content_scope": "页面正文"
+      "content_scope": "页面正文",
+      "mirror_urls": [
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/202512/content_7051012.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改能源〔2025〕1476号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
+        }
+      ]
     },
     {
       "source_id": "policy-cn-fgjgg-2025-1490",
@@ -1210,7 +1264,13 @@
       "source_text_sha256": "9be5b8e5cf57e52c203d6deee9807c1299ebc1abb68bccd1c510b98ff5bd645e",
       "sign_date": "2025-10-29",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
-      "content_scope": "页面正文"
+      "content_scope": "页面正文",
+      "mirror_urls": [
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/202511/content_7047707.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改能源〔2025〕1360号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
+        }
+      ]
     },
     {
       "source_id": "policy-cn-fgny-2025-1250",
@@ -1253,7 +1313,13 @@
       "sign_date": "2025-09-24",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
       "attachment_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202510/P020251015595398499456.pdf",
-      "content_scope": "页面通知+附件正文（PDF）"
+      "content_scope": "页面通知+附件正文（PDF）",
+      "mirror_urls": [
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/202510/content_7044559.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改能源〔2025〕1250号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
+        }
+      ]
     },
     {
       "source_id": "policy-cn-fgyxg-2025-1193",
@@ -1297,7 +1363,13 @@
       "effective_date_basis": "原文：自2025年10月1日起施行/执行",
       "expiry_basis": "原文称有效期5年，自施行日起算，到期日按前一日记录",
       "attachment_url": "https://www.ndrc.gov.cn/xxgk/zcfb/ghxwj/202510/P020251013317516446216.pdf",
-      "content_scope": "页面通知+附件正文（PDF）"
+      "content_scope": "页面通知+附件正文（PDF）",
+      "mirror_urls": [
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/202510/content_7044085.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改运行规〔2025〕1193号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
+        }
+      ]
     },
     {
       "source_id": "policy-cn-fgnyg-2025-1216",
@@ -1341,7 +1413,13 @@
       "effective_date_basis": "原文：自印发/发布/公布之日起施行，按落款/发布日期记录",
       "expiry_basis": "原文称有效期5年，自施行日起算，到期日按前一日记录",
       "attachment_url": "https://www.ndrc.gov.cn/xxgk/zcfb/ghxwj/202509/P020250930595100899833.pdf",
-      "content_scope": "页面通知+附件正文（PDF）"
+      "content_scope": "页面通知+附件正文（PDF）",
+      "mirror_urls": [
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/202510/content_7043283.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改能源规〔2025〕1216号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
+        }
+      ]
     },
     {
       "source_id": "policy-cn-fgny-2025-1171",
@@ -1388,6 +1466,10 @@
         {
           "url": "https://www.nea.gov.cn/20250912/ebbfd999a23b440781f4e5a033abaf9e/c.html",
           "org": "国家能源局"
+        },
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/202509/content_7040542.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改能源〔2025〕1171号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
         }
       ],
       "content_scope": "页面通知+附件正文（PDF）"
@@ -1432,7 +1514,13 @@
       "source_text_sha256": "9f961abb977f595faff49e035effdd2778386144432ba456bdab114c4ef59b97",
       "sign_date": "2025-09-09",
       "effective_date_basis": "原文：自2025年10月1日起施行/执行",
-      "content_scope": "页面正文"
+      "content_scope": "页面正文",
+      "mirror_urls": [
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/202509/content_7040458.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改价格〔2025〕1192号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
+        }
+      ]
     },
     {
       "source_id": "policy-cn-fgny-2025-1144",
@@ -1479,6 +1567,10 @@
         {
           "url": "https://www.nea.gov.cn/20250912/73455a1a61b248d4aef65cc124631398/c.html",
           "org": "国家能源局"
+        },
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/202509/content_7040296.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改能源〔2025〕1144号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
         }
       ],
       "content_scope": "页面通知+附件正文（PDF）"
@@ -1529,6 +1621,10 @@
         {
           "url": "https://www.nea.gov.cn/20250808/7f95f94550d64fa7bb428972a5b237e4/c.html",
           "org": "国家能源局"
+        },
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/202508/content_7035710.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改能源规〔2025〕976号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
         }
       ],
       "content_scope": "页面通知+附件正文（PDF）"
@@ -1615,7 +1711,13 @@
       "source_text_sha256": "6ca7c6698e7ea1162131b86d69f0fdf446b1242352537d8faa70d51535eca372",
       "sign_date": "2025-06-13",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
-      "content_scope": "页面正文"
+      "content_scope": "页面正文",
+      "mirror_urls": [
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/202507/content_7030863.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改办能源〔2025〕632号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
+        }
+      ]
     },
     {
       "source_id": "policy-cn-fgnyg-2025-624",
@@ -1658,7 +1760,13 @@
       "sign_date": "2025-05-16",
       "effective_date_basis": "原文：自2025年7月1日起施行/执行",
       "expiry_basis": "原文称有效期5年，自施行日起算，到期日按前一日记录",
-      "content_scope": "页面正文"
+      "content_scope": "页面正文",
+      "mirror_urls": [
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/202506/content_7026428.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改能源规〔2025〕624号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
+        }
+      ]
     },
     {
       "source_id": "policy-cn-fgny-2025-650",
@@ -1704,6 +1812,10 @@
         {
           "url": "https://www.nea.gov.cn/20250530/2d67a6e49c044f2eacabe1fddf48d20f/c.html",
           "org": "国家能源局"
+        },
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/202506/content_7026087.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改能源〔2025〕650号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
         }
       ],
       "content_scope": "页面正文"
@@ -1791,7 +1903,13 @@
       "source_text_sha256": "c08c386d280c6ee20d66d8b1486835548d4c00f226b139bf8ca2460a6ca8448c",
       "sign_date": "2025-04-16",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
-      "content_scope": "页面正文"
+      "content_scope": "页面正文",
+      "mirror_urls": [
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/202505/content_7022299.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改办体改〔2025〕394号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
+        }
+      ]
     },
     {
       "source_id": "policy-cn-fgnyg-2025-411",
@@ -1839,6 +1957,10 @@
         {
           "url": "https://www.nea.gov.cn/20250429/df8e465e859245039b24fbbe21f04c5f/c.html",
           "org": "国家能源局"
+        },
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/202505/content_7022228.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改能源规〔2025〕411号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
         }
       ],
       "content_scope": "页面通知+附件正文（PDF）"
@@ -1887,6 +2009,10 @@
         {
           "url": "https://www.nea.gov.cn/20250411/94a805e55f064493901cab6196e0448d/c.html",
           "org": "国家能源局"
+        },
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/202504/content_7018244.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改能源〔2025〕357号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
         }
       ],
       "content_scope": "页面正文"
@@ -1974,7 +2100,13 @@
       "source_text_sha256": "4bcfbfc292a4ebe38318031cc9207d11ca3414a6de24b92ee1abea7f7c72ae87",
       "sign_date": "2025-03-06",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
-      "content_scope": "页面正文"
+      "content_scope": "页面正文",
+      "mirror_urls": [
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/202503/content_7014341.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改能源〔2025〕262号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
+        }
+      ]
     },
     {
       "source_id": "policy-cn-fgnyg-2025-93",
@@ -2018,7 +2150,13 @@
       "effective_date_basis": "原文：自印发/发布/公布之日起施行，按落款/发布日期记录",
       "expiry_basis": "原文称有效期5年，自施行日起算，到期日按前一日记录",
       "attachment_url": "https://www.ndrc.gov.cn/xxgk/zcfb/ghxwj/202502/P020250207384824287224.pdf",
-      "content_scope": "页面通知+附件正文（PDF）"
+      "content_scope": "页面通知+附件正文（PDF）",
+      "mirror_urls": [
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/202502/content_7002678.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改能源规〔2025〕93号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
+        }
+      ]
     },
     {
       "source_id": "policy-cn-fgny-2024-1803",
@@ -2065,6 +2203,10 @@
         {
           "url": "https://www.nea.gov.cn/20250106/6a9d8a6e621d495db0ca2ba14196f00f/c.html",
           "org": "国家能源局"
+        },
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/202501/content_6996643.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改能源〔2024〕1803号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
         }
       ],
       "content_scope": "页面通知+附件正文（PDF）"
@@ -2152,7 +2294,13 @@
       "source_text_sha256": "ac8be39f8c51b1a22437814e19fcd545b4d51f4813c632d99601ca983b3e7197",
       "sign_date": "2024-10-18",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
-      "content_scope": "页面正文"
+      "content_scope": "页面正文",
+      "mirror_urls": [
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/202410/content_6983959.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改能源〔2024〕1537号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
+        }
+      ]
     },
     {
       "source_id": "policy-cn-fgbny-2024-718",
@@ -2194,7 +2342,13 @@
       "source_text_sha256": "838905b261e13afd3823926cf2f489508e2b6b972a4bc68983a4b3a8a5196c87",
       "sign_date": "2024-08-23",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
-      "content_scope": "页面正文"
+      "content_scope": "页面正文",
+      "mirror_urls": [
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/202409/content_6973459.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改办能源〔2024〕718号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
+        }
+      ]
     },
     {
       "source_id": "policy-cn-fgny-2024-1128",
@@ -2241,6 +2395,10 @@
         {
           "url": "https://zfxxgk.nea.gov.cn/2024-07/25/c_1310783890.htm",
           "org": "国家能源局"
+        },
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/202408/content_6966863.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改能源〔2024〕1128号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
         }
       ],
       "content_scope": "页面通知+附件正文（PDF）"
@@ -2501,7 +2659,13 @@
       "source_text_sha256": "cefc7c0a2d72fefe635bc73efda55929d0688e871e7e8a85b4ed05e9c7c9bff5",
       "sign_date": "2024-02-06",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
-      "content_scope": "页面正文"
+      "content_scope": "页面正文",
+      "mirror_urls": [
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/202403/content_6935790.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改能源〔2024〕187号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
+        }
+      ]
     },
     {
       "source_id": "policy-cn-nonum-663a5dbb",
@@ -2585,7 +2749,13 @@
       "source_text_sha256": "3787cc736481b2614057bfb2f6bc1b70294ff2a72458976750f221a7811161fa",
       "sign_date": "2024-02-07",
       "effective_date_basis": "原文：自2024年3月1日起施行/执行",
-      "content_scope": "页面正文"
+      "content_scope": "页面正文",
+      "mirror_urls": [
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/202402/content_6931026.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改价格〔2024〕196号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
+        }
+      ]
     },
     {
       "source_id": "policy-cn-fgny-2023-1721",
@@ -2631,6 +2801,10 @@
         {
           "url": "https://zfxxgk.nea.gov.cn/2023-12/13/c_1310758710.htm",
           "org": "国家能源局"
+        },
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/202401/content_6924347.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改能源〔2023〕1721号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
         }
       ],
       "content_scope": "页面正文"
@@ -2675,7 +2849,13 @@
       "source_text_sha256": "7da095535da59e26bc51b91b379f80c30196189b8f40cf75720ab4a63fe19a9a",
       "sign_date": "2023-11-08",
       "effective_date_basis": "原文：自2024年1月1日起施行/执行",
-      "content_scope": "页面正文"
+      "content_scope": "页面正文",
+      "mirror_urls": [
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/202311/content_6914744.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改价格〔2023〕1501号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
+        }
+      ]
     },
     {
       "source_id": "policy-cn-fgbtg-2023-813",
@@ -2717,7 +2897,13 @@
       "source_text_sha256": "88365016371c8b541194cfaf1818c287b18511e20243aa1610ae0becc74ab53e",
       "sign_date": "2023-10-12",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
-      "content_scope": "页面正文"
+      "content_scope": "页面正文",
+      "mirror_urls": [
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/202311/content_6913560.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改办体改〔2023〕813号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
+        }
+      ]
     },
     {
       "source_id": "policy-cn-fgny-2023-1294",
@@ -2759,7 +2945,13 @@
       "source_text_sha256": "1b8b9654530551234516f8580d13ef98f6b020ad6d9742248ad5ba151e282572",
       "sign_date": "2023-09-21",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
-      "content_scope": "页面正文"
+      "content_scope": "页面正文",
+      "mirror_urls": [
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/202310/content_6912028.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改能源〔2023〕1294号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
+        }
+      ]
     },
     {
       "source_id": "policy-cn-fgyxg-2023-1261",
@@ -2803,7 +2995,13 @@
       "effective_date_basis": "原文：自2023年10月1日起施行/执行",
       "expiry_basis": "原文称有效期5年，自施行日起算，到期日按前一日记录",
       "attachment_url": "https://www.ndrc.gov.cn/xxgk/zcfb/ghxwj/202309/P020230927322829159702.pdf",
-      "content_scope": "页面通知+附件正文（PDF）"
+      "content_scope": "页面通知+附件正文（PDF）",
+      "mirror_urls": [
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/202310/content_6907504.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改运行规〔2023〕1261号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
+        }
+      ]
     },
     {
       "source_id": "policy-cn-fgyxg-2023-1283",
@@ -2847,7 +3045,13 @@
       "effective_date_basis": "原文：自2023年10月1日起施行/执行",
       "expiry_basis": "原文称有效期5年，自施行日起算，到期日按前一日记录",
       "attachment_url": "https://www.ndrc.gov.cn/xxgk/zcfb/ghxwj/202309/P020230927316131533276.pdf",
-      "content_scope": "页面通知+附件正文（PDF）"
+      "content_scope": "页面通知+附件正文（PDF）",
+      "mirror_urls": [
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/202310/content_6907311.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改运行规〔2023〕1283号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
+        }
+      ]
     },
     {
       "source_id": "policy-cn-fgnyg-2023-1217",
@@ -2894,6 +3098,10 @@
         {
           "url": "https://zfxxgk.nea.gov.cn/2023-09/07/c_1310741791.htm",
           "org": "国家能源局"
+        },
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/202309/content_6904881.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改能源规〔2023〕1217号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
         }
       ],
       "content_scope": "页面通知+附件正文（PDF）"
@@ -2938,7 +3146,13 @@
       "source_text_sha256": "b295bb442e881ff719fec5fe58aac85ae42fe09766e315f87363ec9e6d8bf40c",
       "sign_date": "2023-07-21",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
-      "content_scope": "页面正文"
+      "content_scope": "页面正文",
+      "mirror_urls": [
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/202308/content_6898747.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改环资〔2023〕1030号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
+        }
+      ]
     },
     {
       "source_id": "policy-cn-fgny-2023-1044",
@@ -3029,7 +3243,13 @@
       "sign_date": "2023-07-04",
       "effective_date_basis": "原文：自印发/发布/公布之日起施行，按落款/发布日期记录",
       "expiry_basis": "原文称有效期5年，自施行日起算，到期日按前一日记录",
-      "content_scope": "页面正文"
+      "content_scope": "页面正文",
+      "mirror_urls": [
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/202307/content_6891875.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改能源规〔2023〕920号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
+        }
+      ]
     },
     {
       "source_id": "policy-cn-fgzh-2023-545",
@@ -3071,7 +3291,13 @@
       "source_text_sha256": "e601b0776cf9738cfbc16c176212a7bd89fab4b244f199cdb6be89a8cb26d41a",
       "sign_date": "2023-05-14",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
-      "content_scope": "页面正文"
+      "content_scope": "页面正文",
+      "mirror_urls": [
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/202305/content_6874368.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改综合〔2023〕545号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
+        }
+      ]
     },
     {
       "source_id": "policy-cn-fgjg-2023-526",
@@ -3114,7 +3340,13 @@
       "sign_date": "2023-05-09",
       "effective_date_basis": "原文：自2023年6月1日起施行/执行",
       "attachment_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202305/P020230515609052875117.pdf",
-      "content_scope": "页面通知+附件正文（PDF）"
+      "content_scope": "页面通知+附件正文（PDF）",
+      "mirror_urls": [
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/202307/content_6894778.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改价格〔2023〕526号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
+        }
+      ]
     },
     {
       "source_id": "policy-cn-fgjg-2023-533",
@@ -3157,7 +3389,13 @@
       "sign_date": "2023-05-11",
       "effective_date_basis": "原文：自2023年6月1日起施行/执行",
       "attachment_url": "https://www.ndrc.gov.cn/xxgk/zcfb/tz/202305/P020230515603052952327.pdf",
-      "content_scope": "页面正文"
+      "content_scope": "页面正文",
+      "mirror_urls": [
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/202308/content_6897625.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改价格〔2023〕533号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
+        }
+      ]
     },
     {
       "source_id": "policy-cn-fgjg-2023-532",
@@ -3242,7 +3480,13 @@
       "source_text_sha256": "4fe93a25d2cbeb1b3f4071594362dd4b65284bc3083e2ae47f3b82405502a756",
       "sign_date": "2022-12-23",
       "effective_date_basis": "原文：自2023年1月1日起施行/执行",
-      "content_scope": "页面正文"
+      "content_scope": "页面正文",
+      "mirror_urls": [
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/2023-01/10/content_5736123.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改办价格〔2022〕1047号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
+        }
+      ]
     },
     {
       "source_id": "policy-cn-fgyx-2022-1258",
@@ -3284,7 +3528,13 @@
       "source_text_sha256": "13ce36b0fcb53a1eb497adf785620437bb72508e38926e548873c8096a4a1daa",
       "sign_date": "2022-08-15",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
-      "content_scope": "页面正文"
+      "content_scope": "页面正文",
+      "mirror_urls": [
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/2022-11/16/content_5727196.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改运行〔2022〕1258号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
+        }
+      ]
     },
     {
       "source_id": "policy-cn-fgbyx-2022-788",
@@ -3326,7 +3576,13 @@
       "source_text_sha256": "ff03c807ad404dcd4dc9ab8c0124e398092e81f35e6b95d58d731d55c6b22aaf",
       "sign_date": "2022-09-13",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
-      "content_scope": "页面正文"
+      "content_scope": "页面正文",
+      "mirror_urls": [
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/2022-10/28/content_5722423.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改办运行〔2022〕788号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
+        }
+      ]
     },
     {
       "source_id": "policy-cn-fgbyx-2022-475",
@@ -3368,7 +3624,13 @@
       "source_text_sha256": "297c5fe51fa60bfdfb31a6ae908e6ddc798367a7d06cb6d1b1f3d1d3045dc73f",
       "sign_date": "2022-05-24",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
-      "content_scope": "页面正文"
+      "content_scope": "页面正文",
+      "mirror_urls": [
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/2022-06/07/content_5694423.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改办运行〔2022〕475号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
+        }
+      ]
     },
     {
       "source_id": "policy-cn-ling-2022-50",
@@ -3458,6 +3720,10 @@
         {
           "url": "https://zfxxgk.nea.gov.cn/2022-01/29/c_1310523208.htm",
           "org": "国家能源局"
+        },
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/2022-03/22/content_5680417.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改能源〔2022〕209号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
         }
       ],
       "content_scope": "页面通知+附件正文（PDF）"
@@ -3545,7 +3811,13 @@
       "source_text_sha256": "37f955e1693e612f38e92f55ee86fed0fe7f8ebb330ffc14c90b069c4aa937a8",
       "sign_date": "2022-01-18",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
-      "content_scope": "页面正文"
+      "content_scope": "页面正文",
+      "mirror_urls": [
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/2022-01/30/content_5671296.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改体改〔2022〕118号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
+        }
+      ]
     },
     {
       "source_id": "policy-cn-fgnyg-2022-53",
@@ -3588,7 +3860,13 @@
       "sign_date": "2022-01-10",
       "effective_date_basis": "原文：自印发/发布/公布之日起施行，按落款/发布日期记录",
       "expiry_basis": "原文称有效期5年，自施行日起算，到期日按前一日记录",
-      "content_scope": "页面正文"
+      "content_scope": "页面正文",
+      "mirror_urls": [
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/2022-01/21/content_5669780.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改能源规〔2022〕53号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
+        }
+      ]
     },
     {
       "source_id": "policy-cn-fgbjg-2021-809",
@@ -3614,7 +3892,7 @@
       "expiry": "2022-12-31",
       "superseded_by": null,
       "evidence_status": "auto_extracted",
-      "needs_human_verification": "摘录于2026-10-30自官方页面自动提取（内容范围：页面正文），未经人工逐条复核；生效日期、有效期与条款编号须对照官方原文核对后才能当作已核验原文。 原文有效期已于2022-12-31届满，是否延续或被替代须人工核实；届满后系统不再将其当作现行有效依据检索。",
+      "needs_human_verification": "摘录于2026-10-30自官方页面自动提取（内容范围：页面正文），未经人工逐条复核；生效日期、有效期与条款编号须对照官方原文核对后才能当作已核验原文。 原文有效期已于2022-12-31届满，是否延续或被替代须人工核实；届满后系统不再将其当作现行有效依据检索。 2026-11-23：原文有效期已于 2022-12-31 届满，状态改为「失效」；是否被后续文件延续或替代仍须人工核实。",
       "doc_number": "发改办价格〔2021〕809号",
       "issuer": "国家发展改革委",
       "publish_date": "2021-10-26",
@@ -3624,14 +3902,20 @@
       "license": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
       "snapshot_note": "snapshot_scope=已收录摘要（官方原文节选），不是官方全文影像。",
       "snapshot_sha256": "7eb8668785da735770f02e65cc9a226ab20036f2ee0b59e5b84a6458cc6c3e0d",
-      "status": "待核实",
+      "status": "失效",
       "retrieved_at": "2026-10-30",
       "review_due": "2026-11-29",
       "source_text_sha256": "147d4bd27468055af5e4d77bffdabe48ea0322beb2ba4c0198090a6d72ca6579",
       "sign_date": "2021-10-23",
       "effective_date_basis": "原文：自印发/发布/公布之日起施行，按落款/发布日期记录",
       "expiry_basis": "原文：暂定有效期至2022年12月31日",
-      "content_scope": "页面正文"
+      "content_scope": "页面正文",
+      "mirror_urls": [
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/2021-10/27/content_5645848.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改办价格〔2021〕809号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
+        }
+      ]
     },
     {
       "source_id": "policy-cn-fgjgg-2021-1455",
@@ -3675,7 +3959,13 @@
       "effective_date_basis": "原文：自印发/发布/公布之日起施行，按落款/发布日期记录",
       "expiry_basis": "原文称有效期10年，自施行日起算，到期日按前一日记录",
       "attachment_url": "https://www.ndrc.gov.cn/xxgk/zcfb/ghxwj/202110/P020211015609046743469.pdf",
-      "content_scope": "页面通知+附件正文（PDF）"
+      "content_scope": "页面通知+附件正文（PDF）",
+      "mirror_urls": [
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/2021-10/16/content_5642975.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改价格规〔2021〕1455号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
+        }
+      ]
     },
     {
       "source_id": "policy-cn-fgjg-2021-1439",
@@ -3717,7 +4007,13 @@
       "source_text_sha256": "b9f228b0e14dc8e5453cf5e60045872e6c3035e62fc0efdfd4b12fb1e7e98a34",
       "sign_date": "2021-10-11",
       "effective_date_basis": "原文：自2021年10月15日起施行/执行",
-      "content_scope": "页面正文"
+      "content_scope": "页面正文",
+      "mirror_urls": [
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/2021-10/12/content_5642159.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改价格〔2021〕1439号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
+        }
+      ]
     },
     {
       "source_id": "policy-cn-fgyx-2021-1138",
@@ -3801,7 +4097,13 @@
       "source_text_sha256": "1d8b9a8d9be03d17644518efb086415e07b1c6bb5bbeff8f776fac79ba0988f6",
       "sign_date": "2021-07-26",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
-      "content_scope": "页面正文"
+      "content_scope": "页面正文",
+      "mirror_urls": [
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/2021-07/29/content_5628297.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改价格〔2021〕1093号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
+        }
+      ]
     },
     {
       "source_id": "policy-cn-fgnyg-2021-1051",
@@ -3843,7 +4145,13 @@
       "source_text_sha256": "7e2cd9a9acae703e78387130c6d587df8772469dd9e143355a1d69fccfb33e35",
       "sign_date": "2021-07-15",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
-      "content_scope": "页面正文"
+      "content_scope": "页面正文",
+      "mirror_urls": [
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/2021-07/24/content_5627088.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改能源规〔2021〕1051号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
+        }
+      ]
     },
     {
       "source_id": "policy-cn-fgbyx-2021-445",
@@ -3885,7 +4193,13 @@
       "source_text_sha256": "0b89f6ace1be732b9f7b9cdab708bcdf399707779dbe3681a15ef49d4d764656",
       "sign_date": "2021-05-31",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
-      "content_scope": "页面正文"
+      "content_scope": "页面正文",
+      "mirror_urls": [
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/2021-07/06/content_5622679.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改办运行〔2021〕445号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
+        }
+      ]
     },
     {
       "source_id": "policy-cn-fgjg-2021-633",
@@ -3927,7 +4241,13 @@
       "source_text_sha256": "c2062f1c069ac38270e703e870d9c0d607fa939d7854ea77674c5ddcd8a8d50e",
       "sign_date": "2021-04-30",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
-      "content_scope": "页面正文"
+      "content_scope": "页面正文",
+      "mirror_urls": [
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/2021-05/08/content_5605367.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改价格〔2021〕633号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
+        }
+      ]
     },
     {
       "source_id": "policy-cn-fgyx-2021-266",
@@ -4001,7 +4321,7 @@
       "expiry": "2026-02-24",
       "superseded_by": null,
       "evidence_status": "auto_extracted",
-      "needs_human_verification": "摘录于2026-10-30自官方页面自动提取（内容范围：页面正文），未经人工逐条复核；生效日期、有效期与条款编号须对照官方原文核对后才能当作已核验原文。 原文有效期已于2026-02-24届满，是否延续或被替代须人工核实；届满后系统不再将其当作现行有效依据检索。",
+      "needs_human_verification": "摘录于2026-10-30自官方页面自动提取（内容范围：页面正文），未经人工逐条复核；生效日期、有效期与条款编号须对照官方原文核对后才能当作已核验原文。 原文有效期已于2026-02-24届满，是否延续或被替代须人工核实；届满后系统不再将其当作现行有效依据检索。 2026-11-23：原文有效期已于 2026-02-24 届满，状态改为「失效」；是否被后续文件延续或替代仍须人工核实。",
       "doc_number": "发改能源规〔2021〕280号",
       "issuer": "国家发展改革委、国家能源局",
       "publish_date": "2021-03-05",
@@ -4011,14 +4331,20 @@
       "license": "政府公开发布文件，引用须注明转引自国家发展改革委官网并给出原文链接。",
       "snapshot_note": "snapshot_scope=已收录摘要（官方原文节选），不是官方全文影像。",
       "snapshot_sha256": "8a6423ae7a74db36cd90c4d6f73df0e3695d5fb2fa4686121e80f546018b017f",
-      "status": "待核实",
+      "status": "失效",
       "retrieved_at": "2026-10-30",
       "review_due": "2026-11-29",
       "source_text_sha256": "fab4d65ef6788a1b809ae70b187f0ffa0b09d6b13d49901570849aa7eb8e9ccc",
       "sign_date": "2021-02-25",
       "effective_date_basis": "原文：自印发/发布/公布之日起施行，按落款/发布日期记录",
       "expiry_basis": "原文称有效期5年，自施行日起算，到期日按前一日记录",
-      "content_scope": "页面正文"
+      "content_scope": "页面正文",
+      "mirror_urls": [
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/2021-03/06/content_5590895.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改能源规〔2021〕280号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
+        }
+      ]
     },
     {
       "source_id": "policy-cn-gnztzz-2026-60",
@@ -4102,7 +4428,13 @@
       "source_text_sha256": "56bcef3d60be2c28f6caf69f95c11fd4055ee6ba7faf40ccb6882a2b79a9758f",
       "sign_date": "2025-10-31",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
-      "content_scope": "页面正文"
+      "content_scope": "页面正文",
+      "mirror_urls": [
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/202511/content_7048396.htm",
+          "note": "中国政府网政策文件库载文（发文字号 国能发新能〔2025〕93号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
+        }
+      ]
     },
     {
       "source_id": "policy-cn-gnztzz-2025-106",
@@ -4171,8 +4503,8 @@
       "expiry": "2030-01-16",
       "superseded_by": null,
       "evidence_status": "auto_extracted",
-      "needs_human_verification": "摘录于2026-10-30自官方页面自动提取（内容范围：页面通知+附件正文（Word/WPS）），未经人工逐条复核；生效日期、有效期与条款编号须对照官方原文核对后才能当作已核验原文。 官方页面未标注发文字号，文号待人工核实，未自行补写。",
-      "doc_number": "页面未标注文号",
+      "needs_human_verification": "摘录于2026-10-30自官方页面自动提取（内容范围：页面通知+附件正文（Word/WPS）），未经人工逐条复核；生效日期、有效期与条款编号须对照官方原文核对后才能当作已核验原文。 国家能源局页面未标注发文字号；文号按中国政府网政策文件库同一文件页面的「发文字号：国能发新能规〔2025〕7号」补写（2026-11-23 核对）。",
+      "doc_number": "国能发新能规〔2025〕7号",
       "issuer": "国家能源局",
       "publish_date": "2025-01-17",
       "expiry_date": "2030-01-16",
@@ -4189,7 +4521,13 @@
       "effective_date_basis": "原文：自印发/发布/公布之日起施行，按落款/发布日期记录",
       "expiry_basis": "原文称有效期5年，自施行日起算，到期日按前一日记录",
       "attachment_url": "https://www.nea.gov.cn/20250123/112c5b199c5f45dd8e7ac93c9f5e4eaf/20250123112c5b199c5f45dd8e7ac93c9f5e4eaf_010446cd75b7d649969599bba99df7d0dd.doc",
-      "content_scope": "页面通知+附件正文（Word/WPS）"
+      "content_scope": "页面通知+附件正文（Word/WPS）",
+      "mirror_urls": [
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/202502/content_7004206.htm",
+          "note": "中国政府网政策文件库载文，发文字号 国能发新能规〔2025〕7号，成文日期 2025-01-17（2026-11-23 核对）；同一文件的转载，不算独立佐证"
+        }
+      ]
     },
     {
       "source_id": "policy-cn-gnztjg-2024-148",
@@ -4274,7 +4612,13 @@
       "sign_date": "2024-09-13",
       "effective_date_basis": "原文：自印发/发布/公布之日起施行，按落款/发布日期记录",
       "expiry_basis": "原文称有效期5年，自施行日起算，到期日按前一日记录",
-      "content_scope": "页面正文"
+      "content_scope": "页面正文",
+      "mirror_urls": [
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/202409/content_6976860.htm",
+          "note": "中国政府网政策文件库载文（发文字号 国能发监管规〔2024〕76号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
+        }
+      ]
     },
     {
       "source_id": "policy-cn-gnztxn-2024-124",
@@ -4300,7 +4644,7 @@
       "expiry": "2026-09-30",
       "superseded_by": null,
       "evidence_status": "auto_extracted",
-      "needs_human_verification": "摘录于2026-10-30自官方页面自动提取（内容范围：页面正文），未经人工逐条复核；生效日期、有效期与条款编号须对照官方原文核对后才能当作已核验原文。 原文有效期已于2026-09-30届满，是否延续或被替代须人工核实；届满后系统不再将其当作现行有效依据检索。",
+      "needs_human_verification": "摘录于2026-10-30自官方页面自动提取（内容范围：页面正文），未经人工逐条复核；生效日期、有效期与条款编号须对照官方原文核对后才能当作已核验原文。 原文有效期已于2026-09-30届满，是否延续或被替代须人工核实；届满后系统不再将其当作现行有效依据检索。 2026-11-23：原文有效期已于 2026-09-30 届满，状态改为「失效」；是否被后续文件延续或替代仍须人工核实。",
       "doc_number": "国能综通新能〔2024〕124号",
       "issuer": "国家能源局、生态环境部",
       "publish_date": "2024-08-26",
@@ -4310,14 +4654,20 @@
       "license": "政府公开发布文件，引用须注明转引自国家能源局官网并给出原文链接。",
       "snapshot_note": "snapshot_scope=已收录摘要（官方原文节选），不是官方全文影像。",
       "snapshot_sha256": "19b41c1857702b6321389d7b1e6327461ca87b0d21e94624bb56fc1c27f65fa5",
-      "status": "待核实",
+      "status": "失效",
       "retrieved_at": "2026-10-30",
       "review_due": "2026-11-29",
       "source_text_sha256": "e14a620117b7fd76c0e6b385d163692a4026df9fa267b38f30ae28e720854740",
       "sign_date": "2024-08-26",
       "effective_date_basis": "原文：自2024年10月1日起施行/执行",
       "expiry_basis": "原文称有效期2年，自施行日起算，到期日按前一日记录",
-      "content_scope": "页面正文"
+      "content_scope": "页面正文",
+      "mirror_urls": [
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/202409/content_6973736.htm",
+          "note": "中国政府网政策文件库载文（发文字号 国能综通新能〔2024〕124号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
+        }
+      ]
     },
     {
       "source_id": "policy-cn-gnfxng-2024-67",
@@ -4445,7 +4795,13 @@
       "source_text_sha256": "fe20dba0a7762b6ca24a5539b6cea5b822969d757f4702bff84dc09eceecf62d",
       "sign_date": "2024-05-17",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
-      "content_scope": "页面正文"
+      "content_scope": "页面正文",
+      "mirror_urls": [
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/202405/content_6953904.htm",
+          "note": "中国政府网政策文件库载文（发文字号 国能综通新能〔2024〕82号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
+        }
+      ]
     },
     {
       "source_id": "policy-cn-gnfkjg-2024-26",
@@ -4747,7 +5103,13 @@
       "sign_date": "2022-01-29",
       "effective_date_basis": "原文未写明施行日期，暂按落款/发布日期记录，须人工核对",
       "attachment_url": "https://zfxxgk.nea.gov.cn/1310524241_16479412513081n.pdf",
-      "content_scope": "页面通知+附件正文（PDF）"
+      "content_scope": "页面通知+附件正文（PDF）",
+      "mirror_urls": [
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/2022-03/23/content_5680759.htm",
+          "note": "中国政府网政策文件库载文（发文字号 发改能源〔2022〕210号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
+        }
+      ]
     },
     {
       "source_id": "policy-cn-gnfjgg-2021-60",
@@ -4773,7 +5135,7 @@
       "expiry": "2026-12-20",
       "superseded_by": null,
       "evidence_status": "auto_extracted",
-      "needs_human_verification": "摘录于2026-10-30自官方页面自动提取（内容范围：页面通知+附件正文（Word/WPS）），未经人工逐条复核；生效日期、有效期与条款编号须对照官方原文核对后才能当作已核验原文。",
+      "needs_human_verification": "摘录于2026-10-30自官方页面自动提取（内容范围：页面通知+附件正文（Word/WPS）），未经人工逐条复核；生效日期、有效期与条款编号须对照官方原文核对后才能当作已核验原文。 2026-12-20 有效期届满，届满前（2026-12-01 前）须复核是否有新版或延期文件。",
       "doc_number": "国能发监管规〔2021〕60号",
       "issuer": "国家能源局",
       "publish_date": "2021-12-21",
@@ -4817,7 +5179,7 @@
       "expiry": "2026-12-20",
       "superseded_by": null,
       "evidence_status": "auto_extracted",
-      "needs_human_verification": "摘录于2026-10-30自官方页面自动提取（内容范围：页面通知+附件正文（Word/WPS）），未经人工逐条复核；生效日期、有效期与条款编号须对照官方原文核对后才能当作已核验原文。",
+      "needs_human_verification": "摘录于2026-10-30自官方页面自动提取（内容范围：页面通知+附件正文（Word/WPS）），未经人工逐条复核；生效日期、有效期与条款编号须对照官方原文核对后才能当作已核验原文。 2026-12-20 有效期届满，届满前（2026-12-01 前）须复核是否有新版或延期文件。",
       "doc_number": "国能发监管规〔2021〕61号",
       "issuer": "国家能源局",
       "publish_date": "2021-12-21",
@@ -4904,7 +5266,7 @@
       "expiry": "2023-12-31",
       "superseded_by": null,
       "evidence_status": "auto_extracted",
-      "needs_human_verification": "摘录于2026-10-30自官方页面自动提取（内容范围：页面正文），未经人工逐条复核；生效日期、有效期与条款编号须对照官方原文核对后才能当作已核验原文。 原文有效期已于2023-12-31届满，是否延续或被替代须人工核实；届满后系统不再将其当作现行有效依据检索。",
+      "needs_human_verification": "摘录于2026-10-30自官方页面自动提取（内容范围：页面正文），未经人工逐条复核；生效日期、有效期与条款编号须对照官方原文核对后才能当作已核验原文。 原文有效期已于2023-12-31届满，是否延续或被替代须人工核实；届满后系统不再将其当作现行有效依据检索。 2026-11-23：原文有效期已于 2023-12-31 届满，状态改为「失效」；是否被后续文件延续或替代仍须人工核实。",
       "doc_number": "国能发监管〔2020〕79号",
       "issuer": "国家能源局",
       "publish_date": "2020-12-30",
@@ -4914,14 +5276,20 @@
       "license": "政府公开发布文件，引用须注明转引自国家能源局官网并给出原文链接。",
       "snapshot_note": "snapshot_scope=已收录摘要（官方原文节选），不是官方全文影像。",
       "snapshot_sha256": "ccc03d9f1b0449c4a35aa1046bf8fba84bf8f5ff58b9a3c480fb56843c465e1a",
-      "status": "待核实",
+      "status": "失效",
       "retrieved_at": "2026-10-30",
       "review_due": "2026-11-29",
       "source_text_sha256": "3b01bdf65df690657482bb2198cf5b625b26a0e26fdad02de903870aa8ccaa66",
       "sign_date": "2020-12-30",
       "effective_date_basis": "原文：自2021年1月1日起施行/执行",
       "expiry_basis": "原文称有效期3年，自施行日起算，到期日按前一日记录",
-      "content_scope": "页面正文"
+      "content_scope": "页面正文",
+      "mirror_urls": [
+        {
+          "url": "https://www.gov.cn/zhengce/zhengceku/2021-01/24/content_5582266.htm",
+          "note": "中国政府网政策文件库载文（发文字号 国能发监管〔2020〕79号 一致，2026-11-23 检索命中）；同一文件的转载，不算独立佐证"
+        }
+      ]
     },
     {
       "source_id": "policy-cn-gd-yfgjg-2025-263",

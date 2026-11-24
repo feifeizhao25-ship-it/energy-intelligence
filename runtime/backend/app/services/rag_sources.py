@@ -58,7 +58,7 @@ NULLABLE_FIELDS = ("expiry_date", "superseded_by")
 POLICY_MAX_VERIFY_INTERVAL_DAYS = 30
 
 VALID_TYPES = ("policy", "standard", "price", "statistic")
-VALID_STATUS = ("现行", "征求意见", "废止", "被替代", "待核实")
+VALID_STATUS = ("现行", "征求意见", "废止", "被替代", "待核实", "失效")  # 失效 = 原文有效期届满（核14）
 VALID_JURISDICTION = ("全国", "省", "市", "海外")
 VALID_TIERS = ("一手官方", "协会", "媒体", "学术")
 

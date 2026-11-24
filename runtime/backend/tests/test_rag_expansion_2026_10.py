@@ -11,6 +11,7 @@ OFFICIAL_HOSTS = {
     "www.ndrc.gov.cn", "zfxxgk.nea.gov.cn", "www.nea.gov.cn", "www.stats.gov.cn",
     "drc.gd.gov.cn", "www.shanghai.gov.cn", "fgw.sh.gov.cn", "fgw.beijing.gov.cn",
     "www.beijing.gov.cn", "gb.shandong.gov.cn", "fgw.weihai.gov.cn", "sdb.nea.gov.cn",
+    "www.gov.cn",  # 中国政府网政策文件库（2026-11-23 核13 补的转载链接）
 }
 ADVICE_TERMS = ("建议投资", "建议买入", "买入评级", "投资评级", "保证收益", "稳赚", "收益率承诺", "值得投资", "推荐购买")
 TRACE_FIELDS = ("source_url", "publish_date", "retrieved_at", "review_due", "last_verified_at", "verify_interval_days", "snapshot_sha256")
@@ -75,7 +76,7 @@ def test_expired_new_sources_are_not_current():
     today = date(2026, 10, 30).isoformat()
     for s in new:
         if s.get("expiry") and s["expiry"] < today:
-            assert s["status"] == "待核实", s["source_id"]
+            assert s["status"] in ("待核实", "失效"), s["source_id"]  # 核14（2026-11-23）：有效期届满的标「失效」
             assert s.get("expiry_basis")
 
 

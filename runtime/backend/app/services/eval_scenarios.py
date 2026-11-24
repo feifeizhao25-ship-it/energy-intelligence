@@ -394,7 +394,7 @@ def scenario_s33() -> dict:
         late_status = freshness_status(row["last_verified_at"], int(row["verify_interval_days"]), today=retrieved + timedelta(days=int(row["verify_interval_days"]) + 1))
         if today_status != "current" or late_status != "stale":
             problems.append(f"{sid}: 新鲜度判定异常 {today_status}/{late_status}")
-        if row.get("expiry") and row["expiry"] < row["retrieved_at"] and row.get("status") != "待核实":
+        if row.get("expiry") and row["expiry"] < row["retrieved_at"] and row.get("status") not in ("待核实", "失效"):
             problems.append(f"{sid}: 已到期但仍标现行")
     return {"ok": bool(rows) and not problems, "checked": len(rows), "problems": problems[:5]}
 
