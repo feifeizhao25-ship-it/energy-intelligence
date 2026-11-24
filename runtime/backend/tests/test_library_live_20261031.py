@@ -123,8 +123,10 @@ class FakeClock:
         self.day = MON + timedelta(days=offset)
 
 
-async def make_user(db, market, profile, projects=()):
-    u = User(id=str(uuid.uuid4()), phone=f"139{uuid.uuid4().hex[:8]}" if market == "cn" else None,
+async def make_user(db, market, profile, projects=(), user_id=None):
+    # 推荐顺序含按用户号计算的扰动。随机号会让「每天三人推荐互不相同」偶发撞车，这里允许测试钉住用户号。
+    uid = user_id or str(uuid.uuid4())
+    u = User(id=uid, phone=f"139{uuid.uuid4().hex[:8]}" if market == "cn" else None,
              email=None if market == "cn" else f"{uuid.uuid4().hex[:8]}@example.com", password_hash=hash_password("TestPass123!"), name="u", role="user",
              market=market, subscription_plan="pro", usage_quota={}, country=None if market == "cn" else "US")
     db.add(u)
@@ -148,7 +150,7 @@ VISITORS = ("wang", "anna")
 async def setup_users(client, db):
     users = {}
     for name, (market, prof, projects, follow) in PERSONAS.items():
-        u, h, _ = await make_user(db, market, prof, projects)
+        u, h, _ = await make_user(db, market, prof, projects, user_id=f"lib-live-{name}")
         assert (await client.put("/api/v1/home/workbench/preferences", headers=h, json=prof)).status_code == 200
         if follow:
             assert (await client.put("/api/v1/library/preferences", headers=h, json={"follow": follow})).status_code == 200
