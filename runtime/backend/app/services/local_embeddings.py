@@ -39,18 +39,10 @@ def embedding_ab_candidate() -> dict:
 
 
 def local_model_name() -> str:
-    explicit = (os.environ.get("LOCAL_EMBEDDING_MODEL") or "").strip()
+    """问答默认 BAAI/bge-small-zh-v1.5。只有环境变量显式指定时才换模型。"""
+    explicit = (os.environ.get("LOCAL_EMBEDDING_MODEL") or os.environ.get("EMBEDDING_MODEL") or "").strip()
     if explicit:
         return _normalize_bge(explicit)
-    configured = (os.environ.get("EMBEDDING_MODEL") or "").strip()
-    if not configured:
-        try:
-            from app.config import settings
-            configured = (getattr(settings, "EMBEDDING_MODEL", "") or "").strip()
-        except Exception:
-            configured = ""
-    if configured and "bge" in configured.lower():
-        return _normalize_bge(configured)
     return DEFAULT_LOCAL_MODEL
 
 

@@ -30,4 +30,11 @@ def map_tiles(settings=None) -> dict:
             "provider": "amap",
             "template": "https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}",
         }
-    return {"enabled": False, "reason": "unset", "provider": provider}
+    # 未指定时国内版默认腾讯。密钥不写入 template。
+    if not (getattr(cfg, "TENCENT_MAP_KEY", None) or "").strip():
+        return {"enabled": False, "reason": "key-unset", "provider": "tencent"}
+    return {
+        "enabled": True,
+        "provider": "tencent",
+        "template": "https://rt{s}.map.gtimg.com/tile?z={z}&x={x}&y={y}&styleid=1&scene=0&version=247",
+    }

@@ -39,11 +39,17 @@ describe('地图搜索', () => {
             status: 503,
             json: async () => ({ code: 'key_missing', error: '位置服务未配置' }),
         } as Response)) as unknown as typeof fetch);
-        expect(noKey).toEqual({ error: '地图未配置密钥，请直接填写经纬度', code: 'key_missing' });
-        expect(windPickerSearchNote(noKey as { error: string; code: 'key_missing' })).toBe('地图服务暂不可用，地图未配置密钥，请直接填写经纬度');
+        expect(noKey).toEqual({ error: '未配置地图密钥', code: 'key_missing' });
+        expect(windPickerSearchNote(noKey as { error: string; code: 'key_missing' })).toBe('地图服务暂不可用，未配置地图密钥，请直接填写经纬度');
+        const quota = await resolveMapSearch('上海', jest.fn(async () => ({
+            ok: false,
+            status: 503,
+            json: async () => ({ code: 'quota', error: '位置服务调用太频繁或今日额度已用完，请稍后再试' }),
+        } as Response)) as unknown as typeof fetch);
+        expect(quota).toEqual({ error: '地图接口额度已达上限，请稍后再试', code: 'quota' });
         const picker = readFileSync(join(__dirname, '../../components/map/LocationPicker.tsx'), 'utf8');
         expect(picker).toContain('windPickerSearchNote');
-        expect(picker).toContain('地图未配置密钥，请直接填写经纬度');
+        expect(picker).toContain('地图未配置密钥');
     });
 
     it('/map 的搜索框接到这个解析，并把结果交给地图中心', () => {

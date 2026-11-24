@@ -55,3 +55,5 @@ class WindResourceResponse(BaseModel):
     gb_grade_label: Optional[str] = None
     grading_standard: Optional[str] = None
     wpd_method: Optional[str] = None
+    verification_status: Optional[str] = None
+    verification_note: Optional[str] = None

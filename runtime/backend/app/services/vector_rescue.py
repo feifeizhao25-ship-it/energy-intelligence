@@ -29,7 +29,27 @@ _warned: set = set()
 
 
 def enabled() -> bool:
-    return (os.environ.get("RAG_VECTOR_RESCUE") or "").strip() == "1"
+    """网页助手与 App 问答共用。RAG_VECTOR_RESCUE=0 关闭；=1 强制尝试。
+
+    未设置时：本机已有 fastembed 且 LOCAL_EMBEDDING_CACHE_DIR 里有文件才开启。
+    没有权重就不在请求路径里下载模型，检索退回词面结果。
+    """
+    flag = (os.environ.get("RAG_VECTOR_RESCUE") or "").strip()
+    if flag == "0":
+        return False
+    if flag == "1":
+        return True
+    try:
+        import fastembed  # noqa: F401
+    except Exception:
+        return False
+    cache = (os.environ.get("LOCAL_EMBEDDING_CACHE_DIR") or "").strip()
+    if not cache or not os.path.isdir(cache):
+        return False
+    try:
+        return any(os.scandir(cache))
+    except OSError:
+        return False
 
 
 def min_score() -> float:

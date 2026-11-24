@@ -1,6 +1,7 @@
 'use client';
 
 import { PolicyTools } from '@/components/policy/PolicyTools';
+import { PolicyLookup } from '@/components/policy/PolicyLookup';
 import { PageHeader } from '@/components/ui/design-system';
 
 export default function PoliciesPage() {
@@ -12,6 +13,7 @@ export default function PoliciesPage() {
                 crumbs={[{ href: '/dashboard', label: '总览' }, { href: '/policies', label: '政策' }]}
                 summary="可以按日期回看当时生效的版本，也可以看同省同角色的示例浏览。人数不足的分组不展示。"
             />
+            <PolicyLookup />
             <PolicyTools title="政策原文" docNumber={null} supersededBy={null} />
         </main>
     );

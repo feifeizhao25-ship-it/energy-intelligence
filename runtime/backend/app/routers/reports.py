@@ -2446,7 +2446,7 @@ async def generate_report(
             "message": ("Report is being generated; poll status_url for progress." if en else "报告生成中，请轮询 status_url 获取进度"),
             "market": market,
         },
-        "meta": {"template": template_info.name},
+        "meta": {"template": template_info.name_en if en else template_info.name},
         "evidence": evidence,
     }
 

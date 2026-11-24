@@ -4,6 +4,7 @@ from __future__ import annotations
 import os
 
 from fastapi import APIRouter, Header, HTTPException
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 from app.services.bottom_line import enforce_bottom_line, find_violations
@@ -90,6 +91,8 @@ async def domestic_chat(body: DomesticChatIn, x_internal_token: str | None = Hea
         content = str(result.get("content") or "")
         # 只调工具、正文为空的一轮不过底线（空文本本来也不会命中）。
         result["content"] = enforce_bottom_line(content, market="cn") if content else ""
+        if result.get("error") == "insufficient_balance":
+            return JSONResponse(status_code=402, content=result)
     return result
 
 
@@ -102,6 +105,9 @@ async def domestic_library_search(body: LibrarySearchIn, x_internal_token: str |
     from app.services.citation_record import date_lines
 
     hits = _retrieve(body.query, "cn")
+    from app.services.rag_service import RAGService
+
+    expired = RAGService().named_expired_notices(body.query, "cn")
     sources = []
     for index, hit in enumerate(hits, 1):
         md = hit.metadata or {}
@@ -117,7 +123,7 @@ async def domestic_library_search(body: LibrarySearchIn, x_internal_token: str |
             "url": md.get("source_url") or None,
             "content": (hit.content or "")[:1200],
         })
-    return {"query": body.query, "count": len(sources), "sources": sources}
+    return {"query": body.query, "count": len(sources), "sources": sources, "expired": expired}
 
 
 def _source_date(md: dict) -> str | None:

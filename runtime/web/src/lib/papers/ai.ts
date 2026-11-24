@@ -114,7 +114,7 @@ export async function generateFullTranslation(text: string): Promise<any[]> {
     `;
 
     try {
-        const raw = await simpleChat(prompt, 'deepseek-v3');
+        const raw = await simpleChat(prompt, 'deepseek-flash');
         const parsed = JSON.parse(raw.replace(/```json|```/g, '').trim());
         if (!Array.isArray(parsed)) return parsed;
         return parsed.map((row) => ({

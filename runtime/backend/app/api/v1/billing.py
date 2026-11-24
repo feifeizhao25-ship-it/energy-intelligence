@@ -47,7 +47,7 @@ async def get_billing_rules(request: Request):
             "downgrade": "到期切换续费档位，周期内权益不变、不退差价；付费档位须续费后开通", "refund": "按本人已支付订单的实付金额和服务周期测算未使用天数，向下取整到分；本接口只出测算，实际退款由财务人工执行"}
 
 @router.post("/renewal/quote")
-async def post_renewal_quote(user_id: str = Depends(get_current_user_id), db: AsyncSession = Depends(get_db)):
+async def post_renewal_quote(request: Request, user_id: str = Depends(get_current_user_id), db: AsyncSession = Depends(get_db)):
     user = await db.get(User, user_id)
     if not user: raise HTTPException(status_code=404, detail="用户不存在")
     from app.services.alipay_service import alipay_service
@@ -55,17 +55,19 @@ async def post_renewal_quote(user_id: str = Depends(get_current_user_id), db: As
         # Effective entitlement becomes free after expiry; renewal uses the purchased tier.
         purchased_plan = user.subscription_plan or "free"
         price = alipay_service.price_for(purchased_plan, "yearly")
-        return renewal_quote(current_plan=purchased_plan, current_expires_at=user.subscription_expires_at, now=datetime.now(timezone.utc), yearly_price_cny=price)
+        from app.core.market import request_market
+        return renewal_quote(current_plan=purchased_plan, current_expires_at=user.subscription_expires_at, now=datetime.now(timezone.utc), yearly_price_cny=price, market=request_market(request))
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 @router.post("/downgrade")
-async def post_downgrade(payload: DowngradeRequest, user_id: str = Depends(get_current_user_id), db: AsyncSession = Depends(get_db)):
+async def post_downgrade(payload: DowngradeRequest, request: Request, user_id: str = Depends(get_current_user_id), db: AsyncSession = Depends(get_db)):
     user = (await db.execute(select(User).where(User.id == user_id)
         .with_for_update().execution_options(populate_existing=True))).scalar_one_or_none()
     if not user: raise HTTPException(status_code=404, detail="用户不存在")
     try:
-        scheduled = schedule_downgrade(current_plan=user.plan, target_plan=payload.plan.lower(), current_expires_at=user.subscription_expires_at, now=datetime.now(timezone.utc))
+        from app.core.market import request_market
+        scheduled = schedule_downgrade(current_plan=user.plan, target_plan=payload.plan.lower(), current_expires_at=user.subscription_expires_at, now=datetime.now(timezone.utc), market=request_market(request))
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     usage = dict(user.usage_quota or {}); usage["scheduled_downgrade"] = scheduled; user.usage_quota = usage
@@ -73,7 +75,7 @@ async def post_downgrade(payload: DowngradeRequest, user_id: str = Depends(get_c
     return scheduled
 
 @router.post("/refund/quote")
-async def post_refund_quote(payload: RefundQuoteRequest, user_id: str = Depends(get_current_user_id), db: AsyncSession = Depends(get_db)):
+async def post_refund_quote(payload: RefundQuoteRequest, request: Request, user_id: str = Depends(get_current_user_id), db: AsyncSession = Depends(get_db)):
     order_no = payload.order_no.strip()
     if not order_no:
         raise HTTPException(status_code=400, detail="请提供已支付订单号")
@@ -85,11 +87,13 @@ async def post_refund_quote(payload: RefundQuoteRequest, user_id: str = Depends(
     if order.status != "paid" or order.period_start is None or order.period_end is None:
         raise HTTPException(status_code=409, detail="这笔订单还不能自动测算退款，请财务按支付渠道记录人工核对")
     try:
+        from app.core.market import request_market
         quote = refund_quote(
             paid_amount_cny=order.amount_cny,
             period_start=order.period_start,
             period_end=order.period_end,
             now=datetime.now(timezone.utc),
+            market=request_market(request),
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

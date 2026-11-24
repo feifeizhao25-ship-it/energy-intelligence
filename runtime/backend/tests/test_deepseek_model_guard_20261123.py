@@ -3,6 +3,7 @@
 import pytest
 
 from app.services.domestic_router import (
+    BALANCE_ANSWER,
     EMPTY_ANSWER,
     UNAVAILABLE_ANSWER,
     complete_domestic,
@@ -17,13 +18,13 @@ async def _no_wait(_seconds):
     return None
 
 
-@pytest.mark.parametrize("requested", ["deepseek-v3", "deepseek-chat", "deepseek-reasoner", "deepseek-v3-pro", "DeepSeek-V3"])
-def test_legacy_names_fall_back_to_configured_model(requested, monkeypatch):
+@pytest.mark.parametrize("requested", ["deepseek-v3", "deepseek-v3-pro", "deepseek-v3.2", "DeepSeek-V3"])
+def test_v3_names_never_reach_the_official_api(requested, monkeypatch):
     monkeypatch.delenv("DEEPSEEK_ALLOWED_MODELS", raising=False)
     assert model_for("deepseek", requested, "deepseek-flash") == "deepseek-flash"
 
 
-@pytest.mark.parametrize("requested", ["deepseek-flash", "deepseek-v4-pro", "deepseek-v4-flash"])
+@pytest.mark.parametrize("requested", ["deepseek-chat", "deepseek-reasoner", "deepseek-flash", "deepseek-v4-pro", "deepseek-v4-flash"])
 def test_official_names_pass_through(requested, monkeypatch):
     monkeypatch.delenv("DEEPSEEK_ALLOWED_MODELS", raising=False)
     assert model_for("deepseek", requested, "deepseek-flash") == requested
@@ -37,10 +38,11 @@ def test_other_families_and_empty_unchanged(monkeypatch):
     assert model_for("dashscope", "deepseek-v3", "qwen3.5-plus") == "qwen3.5-plus"
 
 
-def test_gateway_override(monkeypatch):
+def test_gateway_cannot_reenable_v3(monkeypatch):
     monkeypatch.setenv("DEEPSEEK_ALLOWED_MODELS", "deepseek-v3, deepseek-flash")
-    assert model_for("deepseek", "deepseek-v3", "deepseek-flash") == "deepseek-v3"
-    assert model_for("deepseek", "deepseek-v4-pro", "deepseek-flash") == "deepseek-flash"
+    assert model_for("deepseek", "deepseek-v3", "deepseek-flash") == "deepseek-flash"
+    assert model_for("deepseek", "deepseek-flash", "deepseek-chat") == "deepseek-flash"
+    assert model_for("deepseek", "deepseek-chat", "deepseek-flash") == "deepseek-chat"
 
 
 @pytest.mark.asyncio
@@ -96,3 +98,34 @@ async def test_empty_text_still_uses_empty_answer(monkeypatch):
 
     out = await complete_domestic([{"role": "user", "content": "q"}], transport=always_empty, pause=_no_wait)
     assert out["content"] == EMPTY_ANSWER
+
+
+class PaymentRequired(Exception):
+    status_code = 402
+
+
+@pytest.mark.asyncio
+async def test_http_402_stops_immediately_with_balance_message(monkeypatch):
+    monkeypatch.setattr(
+        "app.services.domestic_router.provider_chain",
+        lambda: list(CHAIN) + [("glm", "https://open.bigmodel.cn/api/paas/v4/", "k", "glm-4.7-flash")],
+    )
+    monkeypatch.setattr("app.services.domestic_router._cache_on", lambda: False, raising=False)
+    calls = []
+
+    async def transport(*args, **kwargs):
+        calls.append(args[2] if len(args) > 2 else kwargs.get("use_model"))
+        raise PaymentRequired("insufficient balance")
+
+    out = await complete_domestic([{"role": "user", "content": "容量电价怎么定"}], transport=transport, pause=_no_wait)
+    assert out["content"] == BALANCE_ANSWER
+    assert out["error"] == "insufficient_balance" and out["http_status"] == 402
+    assert "缩短" not in out["content"]
+    assert len(calls) == 1
+
+    async def tools_transport(*args, **kwargs):
+        raise PaymentRequired("402")
+
+    tools = [{"type": "function", "function": {"name": "f", "parameters": {"type": "object", "properties": {}}}}]
+    out = await complete_domestic_with_tools([{"role": "user", "content": "q"}], tools, transport=tools_transport)
+    assert out["http_status"] == 402 and "402" in out["content"]

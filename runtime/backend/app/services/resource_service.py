@@ -242,6 +242,8 @@ async def fetch_wind_resource(req: WindResourceRequest) -> WindResourceResponse:
             turbulence_intensity=0.11,
             resource_class=resource_class, score=round(score, 1),
             monthly_speed=[round(v, 1) for v in monthly_speed_ms],
+            verification_status="unverified",
+            verification_note="Not verified against a measured mast or a manufacturer power curve. Figures are a resource screen, not a revenue forecast.",
         )
     except Exception as exc:
         raise RuntimeError("Open-Meteo wind resource data is currently unavailable") from exc

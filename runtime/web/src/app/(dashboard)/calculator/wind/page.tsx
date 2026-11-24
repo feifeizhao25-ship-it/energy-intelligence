@@ -11,6 +11,8 @@ import TariffPriceFields, { TARIFF_PROVINCES } from '@/components/calculator/Tar
 import { normalizeProvince } from '@/lib/pricing/tariffs';
 import { applyWindPick } from '@/lib/map/wind-place';
 import { windRequestBody } from '@/lib/calculator/wind-request';
+import { formulaHtml } from '@/lib/ai/formula-html';
+import 'katex/dist/katex.min.css';
 
 export default function WindCalculatorPage() {
     const router = useRouter();
@@ -76,6 +78,10 @@ export default function WindCalculatorPage() {
 
     return (
         <div className="min-h-screen bg-slate-950 text-slate-200 pb-20">
+            <p role="status" data-testid="wind-unverified" className="mx-auto mt-4 max-w-5xl rounded-2xl border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-sm leading-6 text-amber-100">
+                未核验：本页风速不是测风塔实测，也没有接入厂商功率曲线。测算使用人民币，不套用美国 ITC，也不给出投资结论。
+            </p>
+            <div className="mx-auto mt-3 max-w-5xl overflow-x-auto rounded-2xl bg-white px-4 py-3 text-slate-900" data-testid="wind-formula" dangerouslySetInnerHTML={{ __html: formulaHtml('P = \\frac{1}{2}\\rho A v^{3} C_p', true) }} />
             {/* 手机上不吸顶：站点顶栏已固定在上方，两条吸顶栏会叠在一起挡住内容 */}
             <div className="sm:sticky sm:top-0 z-30 bg-slate-900/80 backdrop-blur-xl border-b border-slate-800">
                 <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">

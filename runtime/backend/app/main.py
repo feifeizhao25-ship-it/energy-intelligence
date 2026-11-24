@@ -184,7 +184,9 @@ from app.api.v1 import users as v1_users  # noqa: E402
 from app.api.v1 import privacy as v1_privacy  # noqa: E402
 from app.api.v1 import status as v1_status  # noqa: E402
 from app.api.v1 import workbench as v1_workbench  # noqa: E402
-from app.api.v1 import library as v1_library  # noqa: E402
+from app.api.v1 import library as v1_library
+from app.api.v1 import voice as v1_voice  # noqa: E402
+from app.api.v1 import team as v1_team  # noqa: E402  # noqa: E402
 from app.routers import misc, personalization, projects  # noqa: E402
 from app.routers import entitlements as entitlements_router  # noqa: E402
 from app.routers import skills_executor  # noqa: E402
@@ -204,6 +206,8 @@ app.include_router(v1_billing.router, prefix="/api/v1", tags=["billing"])
 app.include_router(v1_finance.router, prefix="/api/v1", tags=["finance"])
 app.include_router(v1_asset_rating.router, prefix="/api/v1", tags=["assets"])
 app.include_router(v1_operations.router, prefix="/api/v1", tags=["operations"])
+app.include_router(v1_voice.router, prefix="/api/v1", tags=["voice"])
+app.include_router(v1_team.router, prefix="/api/v1", tags=["team"])
 app.include_router(v1_alerts.router, prefix="/api/v1", tags=["alerts"])
 app.include_router(projects.router, prefix="/api/v1", tags=["projects"])
 app.include_router(misc.router, prefix="/api/v1", tags=["misc"])

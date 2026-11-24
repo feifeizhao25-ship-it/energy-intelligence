@@ -42,7 +42,7 @@ async def test_empty_and_auth(monkeypatch):
     monkeypatch.setenv("NENGJIAN_INTERNAL_TOKEN", "tok")
     monkeypatch.setattr("app.api.v1.ai_assistant._retrieve", lambda q, m: [])
     out = await domestic_library_search(LibrarySearchIn(query="北京烤鸭的做法"), x_internal_token="tok")
-    assert out == {"query": "北京烤鸭的做法", "count": 0, "sources": []}
+    assert out["query"] == "北京烤鸭的做法" and out["count"] == 0 and out["sources"] == [] and out["expired"] == []
     with pytest.raises(HTTPException) as err:
         await domestic_library_search(LibrarySearchIn(query="x"), x_internal_token="wrong")
     assert err.value.status_code == 401

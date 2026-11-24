@@ -38,20 +38,7 @@ interface IntlProject {
 
 // ── Mock Data ──────────────────────────────────────────
 
-const ALL_PROJECTS: IntlProject[] = [
-  { id: 'p01', name: 'Mojave Sun Farm',        type: 'PV',      capacityMW: 250, irr: 16.2, lcoe: 28.5,  status: 'Operating',    location: 'California, USA',   updated: '2h ago'  },
-  { id: 'p02', name: 'Brazos Wind Phase II',   type: 'Wind',    capacityMW: 180, irr: 12.8, lcoe: 34.0,  status: 'Construction',  location: 'Texas, USA',        updated: '5h ago'  },
-  { id: 'p03', name: 'ERCOT BESS Hub',         type: 'Storage', capacityMW: 100, irr: 18.4, lcoe: 22.0,  status: 'Operating',     location: 'Texas, USA',        updated: '1d ago'  },
-  { id: 'p04', name: 'Sonora Hybrid Park',     type: 'Hybrid',  capacityMW: 320, irr: 15.1, lcoe: 31.2,  status: 'Development',   location: 'Sonora, Mexico',    updated: '3d ago'  },
-  { id: 'p05', name: 'Imperial Valley Solar',   type: 'PV',     capacityMW: 200, irr: 14.8, lcoe: 30.1,  status: 'Operating',     location: 'California, USA',   updated: '1d ago'  },
-  { id: 'p06', name: 'Panhandle Wind III',      type: 'Wind',   capacityMW: 150, irr: 13.5, lcoe: 33.5,  status: 'Permitting',    location: 'Texas, USA',        updated: '4d ago'  },
-  { id: 'p07', name: 'Cascadia Storage Bank',   type: 'Storage',capacityMW: 80,  irr: 17.2, lcoe: 24.5,  status: 'Construction',  location: 'Oregon, USA',       updated: '6h ago'  },
-  { id: 'p08', name: 'High Desert Solar',       type: 'PV',     capacityMW: 300, irr: 15.9, lcoe: 27.8,  status: 'Development',   location: 'Nevada, USA',       updated: '2d ago'  },
-  { id: 'p09', name: 'Great Plains Hybrid',     type: 'Hybrid', capacityMW: 220, irr: 14.3, lcoe: 32.0,  status: 'Operating',     location: 'Kansas, USA',       updated: '12h ago' },
-  { id: 'p10', name: 'Lone Star BESS',          type: 'Storage',capacityMW: 120, irr: 19.1, lcoe: 21.5,  status: 'Construction',  location: 'Texas, USA',        updated: '8h ago'  },
-  { id: 'p11', name: 'Golden West Wind',        type: 'Wind',   capacityMW: 200, irr: 11.9, lcoe: 36.2,  status: 'Development',   location: 'Colorado, USA',     updated: '5d ago'  },
-  { id: 'p12', name: 'Silver State Solar',      type: 'PV',     capacityMW: 175, irr: 16.5, lcoe: 26.9,  status: 'Operating',     location: 'Nevada, USA',       updated: '3h ago'  },
-];
+const ALL_PROJECTS: IntlProject[] = [];
 
 const TYPE_COLORS: Record<ProjectType, string> = {
   PV:      '#F2A93B',
@@ -136,7 +123,7 @@ const ProjectListPage: React.FC = () => {
           <div>
             <h1 className="text-[24px] font-bold text-[var(--text-primary)]">Projects</h1>
             <p className="text-[13px] text-[var(--text-secondary)] mt-0.5">
-              {filtered.length} project{filtered.length !== 1 ? 's' : ''} · Portfolio management
+              {filtered.length} project{filtered.length !== 1 ? 's' : ''}. No sample projects are listed.
             </p>
           </div>
           <div className="flex items-center gap-2">
