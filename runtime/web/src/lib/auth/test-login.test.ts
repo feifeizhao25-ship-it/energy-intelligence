@@ -61,7 +61,7 @@ describe('测试登录开关', () => {
         const files = [
             join(__dirname, '../../app/login/test-login-button.tsx'),
             join(__dirname, '../../../../web-int/src/app/login/login-form.tsx'),
-            join(__dirname, '../../../../../web-global/src/app/login/page.tsx'),
+            join(__dirname, '../../../../../web-global/src/app/login/test-login-button.tsx'),
         ];
         const compile = (source: string, nodeEnv: string) => swc.transformSync(
             source
