@@ -220,6 +220,11 @@ app.include_router(
     tags=["personalization-demo"],
 )
 
+from app.services.dev_login_gate import mount_test_login_from_process  # noqa: E402
+
+# 测试登录只在开发/测试且 TEST_LOGIN_ENABLED=1 时挂载。正式环境这里返回 False。
+mount_test_login_from_process(app, settings.ENVIRONMENT)
+
 try:  # 报告中心路由较大，独立防护：导入失败不影响核心 API
     from app.routers import reports as reports_router
 

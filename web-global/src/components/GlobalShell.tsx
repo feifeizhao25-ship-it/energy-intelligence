@@ -26,6 +26,7 @@ import {
 import { AppShell } from '@energy-intelligence/ui-web';
 import type { SidebarItem } from '@energy-intelligence/ui-web';
 import ShellErrorBoundary from './ShellErrorBoundary';
+import { useAuth } from '@/stores/auth-store';
 
 const ICON_SIZE = 16;
 
@@ -71,7 +72,9 @@ export const GlobalShell: React.FC<GlobalShellProps> = ({
 }) => {
   const pathname = usePathname();
   const router = useRouter();
+  const { user } = useAuth();
   const active = activeNav ?? resolveActiveKey(pathname);
+  const userName = user?.name?.trim() || 'Sign in';
 
   const handleNavigate = (href: string) => {
     // The TopBar logo targets '/dashboard'; the dashboard lives at '/'.
@@ -86,7 +89,7 @@ export const GlobalShell: React.FC<GlobalShellProps> = ({
       pageTitle={title}
       breadcrumb={breadcrumb}
       headerExtra={headerExtra}
-      userName="Analyst"
+      userName={userName}
       onNavigate={handleNavigate}
     >
       <ShellErrorBoundary locale="en">{children}</ShellErrorBoundary>
