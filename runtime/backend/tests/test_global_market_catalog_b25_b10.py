@@ -174,4 +174,9 @@ async def test_market_trends_global_has_no_china_only_enterprises(client, auth_h
     assert "top_companies" not in gl and not any(k.startswith("china_") for k in gl)
     assert "IRA" not in json.dumps(gl) and "GBI" not in json.dumps(gl)
     cn = (await client.get("/api/v1/research/market-trends", headers=auth_headers)).json()
-    assert cn["top_companies"]
+    assert cn["available"] is False
+    assert "尚未入库" in cn["message"]
+    assert "updated_at" not in cn
+    assert cn["figures"] == []
+    dumped = json.dumps(cn["message"], ensure_ascii=False)
+    assert not any("A" <= ch <= "z" for ch in dumped)
