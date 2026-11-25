@@ -159,20 +159,13 @@ async def market_trends(
             'note': 'Policy support differs by country and changes often; check each government source for the current rules.',
             'updated_at': datetime.now(timezone.utc).isoformat(),
         }
+    # 国内版不把写死的美元常数当成当前市场，也不把请求时间填成更新日期。
+    # 国家能源局公报口径的装机数尚未按原文入库，故先不下发数字。
     return {
-        'region': region,
-        'solar_capex_2024_usd_per_mw': 850000,
-        'wind_capex_2024_usd_per_mw': 1350000,
-        'battery_prices_usd_per_kwh': 98,
-        'battery_price_trend': 'declining 12% YoY',
-        'policy_support': 'strong — IRA (US), REPowerEU, GBI (China)',
-        'global_capacity_gw_2024': 2150,
-        'annual_investment_bn_usd_2024': 712,
-        'china_solar_capacity_gw_2024': 780,
-        'china_wind_capacity_gw_2024': 510,
-        'top_companies': ['隆基绿能 (LONGi)', '通威太阳能', '阳光电源', '晶科能源', '天合光能', '金风科技'],
-        'source': 'IEA WEO 2024, BNEF, CIPA',
-        'updated_at': datetime.now(timezone.utc).isoformat(),
+        'available': False,
+        'region': 'cn',
+        'message': '已核验的市场趋势数据尚未入库。这里不提供估算数字，也不把本次请求的时间当作数据更新日期。',
+        'figures': [],
     }
 
 @router.get('/technologies/{tech_type}')
