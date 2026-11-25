@@ -121,6 +121,8 @@ async def domestic_library_search(body: LibrarySearchIn, x_internal_token: str |
             # 回答底部「引用来源最新日期」用：优先发文日期；PDF 元数据日期不算发布日期（同 date_lines 的口径）。
             "published_at": _source_date(md),
             "url": md.get("source_url") or None,
+            "status": "已失效" if str(md.get("status") or "") in {"失效", "已失效"} else md.get("status"),
+            "excerpt_limit": md.get("excerpt_limit"),
             "content": (hit.content or "")[:1200],
         })
     return {"query": body.query, "count": len(sources), "sources": sources, "expired": expired}

@@ -41,7 +41,8 @@ def test_expired_280_is_labeled_and_not_treated_as_current():
     assert "已失效" in notices[0]["notice"]
     assert "现行依据" in notices[0]["notice"]
     hits = RAGService().search(query, top_k=5, market="cn").hits
-    assert "policy-cn-fgnyg-2021-280" not in {hit.source_id for hit in hits}
+    assert [hit.source_id for hit in hits] == ["policy-cn-fgnyg-2021-280"]
+    assert hits[0].metadata.get("status") == "失效"
     from app.api.v1.ai_assistant import _reverification_note
 
     note = _reverification_note(query, "cn", False)
@@ -107,4 +108,5 @@ async def test_library_search_returns_expired_280(monkeypatch):
     out = await domestic_library_search(LibrarySearchIn(query="发改能源规〔2021〕280号"), x_internal_token="tok")
     assert out["expired"]
     assert out["expired"][0]["status"] == "已失效"
-    assert "policy-cn-fgnyg-2021-280" not in {item["id"] for item in out["sources"]}
+    assert [item["id"] for item in out["sources"]] == ["policy-cn-fgnyg-2021-280"]
+    assert out["sources"][0]["status"] == "已失效"

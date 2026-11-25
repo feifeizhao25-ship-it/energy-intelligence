@@ -210,7 +210,14 @@ def _grounded_prompt(base_prompt: str, hits: list, market: str, style: Optional[
     return base_prompt + head + "\n" + "\n".join(lines) + note
 
 
+def _hit_is_expired(hit) -> bool:
+    status = str((getattr(hit, "metadata", None) or {}).get("status") or "")
+    return status in {"失效", "已失效"}
+
+
 def _grounding(hits: list, status: Optional[str] = None) -> dict:
+    if status is None and hits and all(_hit_is_expired(hit) for hit in hits):
+        status = "expired"
     return {"status": status or ("sourced" if hits else "no_source"), "source_count": len(hits)}
 
 
@@ -483,7 +490,14 @@ def _library_stand_in(message: str, hits: list, market: str, style: Optional[str
         for index, hit in enumerate(hits, 1):
             md = hit.metadata or {}
             typed = " ".join(date_lines(md, "en" if market == "global" else "zh"))
-            rows.append(f"[S{index}] {hit.title}" + (f"\n{typed}" if typed else ""))
+            excerpt = " ".join(str(hit.content or "").split())[:240]
+            limit = md.get("excerpt_limit") or ""
+            piece = f"[S{index}] {hit.title}" + (f"\n{typed}" if typed else "")
+            if excerpt:
+                piece += ("\n原文节选：" if market != "global" else "\nExcerpt: ") + excerpt
+            if limit:
+                piece += "\n" + str(limit)
+            rows.append(piece)
         answer = "\n".join(rows)
     shown, expired = _finish_answer(answer, hits, market, query=message)
     evidence = _evidence_for(shown, hits, market)

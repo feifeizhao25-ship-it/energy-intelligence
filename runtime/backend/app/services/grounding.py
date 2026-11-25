@@ -19,7 +19,7 @@ _POLICY_EN = re.compile(
     r"statute|irs|treasury|ferc|compliance|permit\w*|eligib\w*|deadline|rebate|net metering|feed-in)\b",
     re.I,
 )
-_POLICY_ZH = re.compile(r"政策|补贴|税|电价|法规|条例|办法|通知|文件|规定|审批|备案|合规|抵免|资格|截止|并网规定|文号")
+_POLICY_ZH = re.compile(r"政策|补贴|税|电价|法规|条例|办法|通知|文件|规定|审批|备案|合规|抵免|资格|截止|并网规定|文号|〔\s*\d{4}\s*〕")
 
 NO_SOURCE = {
     "global": (

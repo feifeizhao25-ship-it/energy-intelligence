@@ -410,6 +410,20 @@ def standard_number_score(query: str, doc: Dict) -> float:
     return 0.0
 
 
+# 问句里出现完整文号时，只许精确命中那一份文件，不能用别的文件顶上。
+_CN_DOC_QUERY = re.compile(r"[〔\[（(]\s*\d{4}\s*[〕\]）)]\s*\d+\s*号|第\s*\d+\s*号令")
+_PV_MEASURES_ID = "policy-cn-nonum-152179d7"
+
+
+def _names_a_cn_document(query: str) -> bool:
+    return bool(_CN_DOC_QUERY.search(query or ""))
+
+
+def _distributed_pv_topic(query: str) -> bool:
+    text = query or ""
+    return "分布式光伏" in text and any(word in text for word in ("备案", "并网", "上网", "绿证"))
+
+
 _BOOK_RE = re.compile(r"《([^》]{4,60})》")
 _TRAILING_PAREN_RE = re.compile(r"[（(][^（）()]{1,12}[）)]$")
 EXACT_NAME_SCORE = 0.95
@@ -500,17 +514,21 @@ class RAGService:
         coverage_floor = min_coverage(query) if len(self._corpus) >= MIN_DOCS_FOR_COVERAGE and min_relevance() > 0 else 0.0
         names_registered = None  # 问句是否点名了库里任何一份文件（文号、标准号或简称）
         owners_all = _serial_owners(self._corpus)
+        named_document = market == "cn" and _names_a_cn_document(query)
         exact_ids: set = set()
         scored: List[RAGHit] = []
         for doc in self._corpus:
+            named_exact = named_document and exact_name_match(query, doc, owners_all)
+            if named_document and not named_exact:
+                continue
             if not _retrieval_gate(
                 doc, lang=lang, allow_overseas=allow_overseas, countries=countries,
-                today=today, effective_only=effective_only,
+                today=today, effective_only=effective_only and not named_exact,
             ):
                 continue
             review = doc.get("evidence_status")
             freshness = self._freshness_of(doc, today)
-            if exclude_stale and freshness == "stale":
+            if exclude_stale and freshness == "stale" and not named_exact:
                 continue
             doc_tokens = tokenize(_doc_text(doc))
             overlap = len(query_tokens & doc_tokens)
@@ -579,8 +597,16 @@ class RAGService:
                     "key_dates": list(doc.get("key_dates") or []),
                 },
             )
+            if doc.get("source_id") == _PV_MEASURES_ID:
+                hit.metadata["excerpt_limit"] = "资料库正文收录到第六条，第六条之后没有入库。"
             scored.append(hit)
 
+        if market == "cn" and not named_document and _distributed_pv_topic(query):
+            if not any(hit.source_id == _PV_MEASURES_ID for hit in scored):
+                extra = self.search("《分布式光伏发电开发建设管理办法》", top_k=1, market="cn").hits
+                if extra:
+                    extra[0].score = max(extra[0].score, EXACT_NAME_SCORE)
+                    scored = extra + scored
         scored.sort(key=lambda h: (h.score, h.source_id in exact_ids), reverse=True)
         return RAGResult(hits=scored[: max(top_k, 0)])
 
@@ -605,7 +631,7 @@ class RAGService:
             seen.add(key)
             successors = _successor_refs(doc, by_id, today)
             expiry = doc.get("expiry_date") or doc.get("expiry") or ""
-            notice = f"「{label}」已失效"
+            notice = f"该文件已失效：「{label}」"
             if expiry:
                 notice += f"（有效期至 {expiry}）"
             notice += "。不得作为现行依据。"
