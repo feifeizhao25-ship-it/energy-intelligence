@@ -55,7 +55,7 @@ def render_answer_file(record: Dict[str, Any], kind: str) -> bytes:
 
 
 def _pdf(title: str, body: str, lang: str) -> bytes:
-    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.pagesizes import A4, letter
     from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
     from reportlab.lib.units import mm
     from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
@@ -69,8 +69,13 @@ def _pdf(title: str, body: str, lang: str) -> bytes:
             font = _register_cn_font()
         except Exception:
             font = "Helvetica"
+    pagesize = letter if lang == "en" else A4
+    author = "Energy Intelligence" if lang == "en" else "新能源智库"
     buf = io.BytesIO()
-    doc = SimpleDocTemplate(buf, pagesize=A4, leftMargin=18 * mm, rightMargin=18 * mm, topMargin=16 * mm, bottomMargin=16 * mm, title=title)
+    doc = SimpleDocTemplate(
+        buf, pagesize=pagesize, leftMargin=18 * mm, rightMargin=18 * mm,
+        topMargin=16 * mm, bottomMargin=16 * mm, title=title, author=author,
+    )
     style = ParagraphStyle("Body", parent=getSampleStyleSheet()["Normal"], fontName=font, fontSize=10, leading=14, spaceAfter=8)
     story = [Paragraph(pdf_link_markup(title), style), Spacer(1, 8)]
     for block in body.split("\n\n"):
@@ -81,8 +86,8 @@ def _pdf(title: str, body: str, lang: str) -> bytes:
     def footer(canvas, document):
         canvas.saveState()
         canvas.setFont("Helvetica", 8)
-        label = f"Page {document.page}" if lang == "en" else f"Page {document.page}"
-        canvas.drawCentredString(A4[0] / 2, 10 * mm, label)
+        label = f"Page {document.page}" if lang == "en" else f"第 {document.page} 页"
+        canvas.drawCentredString(pagesize[0] / 2, 10 * mm, label)
         canvas.restoreState()
 
     doc.build(story, onFirstPage=footer, onLaterPages=footer)
