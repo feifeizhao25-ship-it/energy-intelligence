@@ -60,7 +60,7 @@ export const TopBar: React.FC<TopBarProps> = ({ market, onSearch, notificationCo
             {(userName ?? 'U').slice(0, 1).toUpperCase()}
           </div>
         )}
-        <span className="text-[13px] text-[var(--text-primary)]">{userName}</span>
+        <span data-testid="signed-in-user" className="text-[13px] text-[var(--text-primary)]">{userName}</span>
       </div>
     </div>
   </header>

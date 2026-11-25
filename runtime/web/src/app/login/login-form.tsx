@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { ArrowRight, Check, Shield, Zap } from 'lucide-react';
 import { digitsOnly, isValidPhone, loginErrorMessage, RESEND_SECONDS, sendCodeErrorMessage } from '@/lib/auth/login-flow';
 import { CONSENT_REQUIRED_MESSAGE } from '@/lib/legal/consent';
+import { TestLoginButton } from './test-login-button';
 
 const copy = {
   brand: '新能源智库',
@@ -114,6 +115,7 @@ export default function LoginForm({ authConfigured, callbackUrl = '/dashboard' }
           {notice && <div role="status" className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">{notice}</div>}
           {error && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div>}
           <button disabled={loading || !authConfigured} className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-700 py-3.5 font-bold text-white hover:bg-emerald-800 disabled:opacity-50">{loading ? copy.waiting : copy.submit}<ArrowRight className="h-4 w-4" /></button>
+          <TestLoginButton callbackUrl={callbackUrl} />
         </form>
         <div className="mt-6 flex items-start gap-2 rounded-xl bg-slate-50 p-3 text-xs leading-5 text-slate-500"><Shield className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />{copy.disclaimer}</div>
       </div>{supportEmail && <a href={`mailto:${supportEmail}`} className="mt-6 block text-center text-sm text-slate-500 hover:text-emerald-700">{copy.support}: {supportEmail}</a>}</div></section>

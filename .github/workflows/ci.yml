@@ -106,7 +106,7 @@ jobs:
       # /api/ai/tool 都曾如此，404 被 catch 吞掉后静默降级）、
       # 新增路由缺白名单校验 / 缺登录 / 用假电价。
       - name: 接口契约
-        run: npx jest src/app/api/api-contract.test.ts --ci
+        run: npx jest src/app/api/api-contract.test.ts src/lib/auth/test-login.test.ts src/lib/client-contract.test.ts --ci
 
       - name: Build Next.js
         run: npm run build
@@ -141,6 +141,10 @@ jobs:
       - name: Install dependencies
         working-directory: .
         run: corepack enable && pnpm install --frozen-lockfile
+
+      - name: Test signed-in shell
+        working-directory: .
+        run: pnpm --dir web-global exec vitest run src/lib/auth/session-user.test.ts
 
       - name: Build Next.js
         working-directory: .

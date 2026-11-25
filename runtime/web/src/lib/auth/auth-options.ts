@@ -6,6 +6,7 @@ import { verifySmsCode } from "./sms-verify";
 import { prismaCodeStore } from "./sms-store";
 import { consentRecord, CONSENT_REQUIRED_MESSAGE } from "@/lib/legal/consent";
 import { refreshToken, type AppToken, type DbUser } from "./token-refresh";
+import { testLoginEnabled } from "./test-login";
 
 /** 手机号登录没有真实邮箱。后缀来自配置，空值用 account.internal，不写产品域名。 */
 export function accountEmailDomain(): string {
@@ -67,8 +68,8 @@ export async function authorizeSms(credentials: Record<string, string> | undefin
     };
 }
 
-export const authOptions: NextAuthOptions = {
-    providers: [
+export function buildAuthProviders() {
+    const providers: NextAuthOptions["providers"] = [
         CredentialsProvider({
             id: "sms",
             name: "SMS Code",
@@ -81,7 +82,24 @@ export const authOptions: NextAuthOptions = {
                 return authorizeSms(credentials);
             },
         }),
-    ],
+    ];
+    // 正式构建 testLoginEnabled 为 false，下面的 provider 不会注册。
+    if (testLoginEnabled()) {
+        providers.push(CredentialsProvider({
+            id: "test",
+            name: "Test",
+            credentials: {},
+            async authorize() {
+                const { authorizeTestLogin } = await import("./test-login-authorize");
+                return authorizeTestLogin();
+            },
+        }));
+    }
+    return providers;
+}
+
+export const authOptions: NextAuthOptions = {
+    providers: buildAuthProviders(),
     callbacks: {
         async jwt({ token, user, trigger }) {
             // 客户端 update() 传来的内容一律不采信，只重新读库（见 token-refresh.ts）。
