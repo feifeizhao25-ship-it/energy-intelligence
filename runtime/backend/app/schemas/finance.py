@@ -54,6 +54,11 @@ class SolarFinanceRequest(BaseModel):
     capacity_factor: float = Field(default=0.22, ge=0.10, le=0.35)
     project_life: int = Field(default=25, ge=10, le=40)
     currency: str = Field(default="USD")
+    discount_rate: float = Field(default=0.08, ge=0, lt=1)
+    depreciation_method: Optional[Literal["straight_line", "macrs_5", "none"]] = None
+    depreciation_years: int = Field(default=20, ge=1, le=40)
+    residual_rate: float = Field(default=0.05, ge=0, le=0.5)
+    itc_basis_reduction: Optional[float] = Field(default=None, ge=0, le=1)
     electricity_price_unit: Optional[PriceUnit] = Field(
         default=None, description="per_mwh (default for large numbers) or per_kwh; small bare numbers are read as per kWh",
     )
@@ -76,7 +81,6 @@ class SolarFinanceRequest(BaseModel):
             and self.currency.upper() == "CNY"
         ):
             self.itc_rate = 0.0
-            self._price_notes.append(ITC_NOTE)
         self.electricity_price_unit = "per_mwh"
         return self
 
@@ -90,15 +94,23 @@ class SolarFinanceRequest(BaseModel):
 
 
 class FinancialModelResponse(BaseModel):
-    irr: Optional[float]  # %；现金流无唯一解时为 None
-    npv: float  # USD
-    lcoe: float  # USD/kWh
-    payback_years: float
-    equity_irr: Optional[float]
+    irr: Optional[float]  # 全投资税后，百分数；无唯一解时为 None
+    npv: float  # 全投资税后净现值
+    lcoe: float  # 折现成本 / 折现发电量
+    payback_years: Optional[float] = None  # 资本金回收期；寿命期内收不回为空
+    equity_irr: Optional[float] = None
+    project_irr_pretax: Optional[float] = None
+    project_irr_aftertax: Optional[float] = None
+    equity_npv: Optional[float] = None
+    project_payback_years: Optional[float] = None
+    payback_basis: str = ""
+    discount_rate: Optional[float] = None
     dscr_min: Optional[float] = None  # 无借款时不编造覆盖倍数
-    cashflows: List[float]  # 25-yr annual net cashflow
-    sensitivity: dict  # capex/price sensitivity matrix
+    cashflows: List[float]  # equity cashflows, excluding year 0
+    sensitivity: dict  # capex/price sensitivity of the unlevered after-tax IRR
     input_notes: List[str] = Field(default_factory=list)  # unit conversions applied to the request
+    assumptions: List[str] = Field(default_factory=list)
+    basis: Dict[str, Any] = Field(default_factory=dict)
 
 
 class WindFinanceRequest(BaseModel):
@@ -112,6 +124,12 @@ class WindFinanceRequest(BaseModel):
     tax_rate: float = Field(default=0.21, ge=0, le=0.50)
     project_life: int = Field(default=25, ge=10, le=40)
     currency: str = Field(default="USD")
+    discount_rate: float = Field(default=0.08, ge=0, lt=1)
+    depreciation_method: Optional[Literal["straight_line", "macrs_5", "none"]] = None
+    depreciation_years: int = Field(default=20, ge=1, le=40)
+    residual_rate: float = Field(default=0.05, ge=0, le=0.5)
+    degradation_rate: float = Field(default=0.0, ge=0, le=0.05)
+    ptc_per_mwh: float = Field(default=0.0, ge=0)
     electricity_price_unit: Optional[PriceUnit] = Field(
         default=None, description="per_mwh (default for large numbers) or per_kwh; small bare numbers are read as per kWh",
     )
@@ -134,7 +152,6 @@ class WindFinanceRequest(BaseModel):
             and self.currency.upper() == "CNY"
         ):
             self.itc_rate = 0.0
-            self._price_notes.append(ITC_NOTE)
         self.electricity_price_unit = "per_mwh"
         return self
 
@@ -178,10 +195,13 @@ class LCOERequest(BaseModel):
 class StorageFinanceResponse(BaseModel):
     irr: Optional[float]  # 无唯一解时为 None
     npv: float
-    lcos: float
-    payback_years: float
+    lcos: float  # 不含充电电费
+    lcos_excluding_charging_cost: Optional[float] = None
+    lcos_including_charging_cost: Optional[float] = None
+    payback_years: Optional[float] = None  # 寿命期内收不回为空
     annual_revenue: float
     annual_discharged_mwh: float
+    annual_charged_mwh: Optional[float] = None
     total_capex: float
     cashflows: List[float]
     assumption_version: str

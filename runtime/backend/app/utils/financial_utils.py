@@ -136,6 +136,43 @@ def calc_optimal_cleaning_interval(
     return max(1, round(days))
 
 
+# IRS Publication 946, 5-year MACRS, half-year convention. Six deduction years.
+_MACRS_5YR = (0.2000, 0.3200, 0.1920, 0.1152, 0.1152, 0.0576)
+
+
+def depreciation_for_year(
+    capex: float,
+    year: int,
+    method: str,
+    years: int,
+    residual_rate: float,
+    itc_rate: float,
+    itc_basis_reduction: float,
+) -> float:
+    """Non-cash depreciation for one operating year. method 'none' returns 0 (legacy cashflows)."""
+    if method in ("none", "", None) or year < 1:
+        return 0.0
+    basis = capex * (1.0 - max(0.0, itc_basis_reduction) * max(0.0, itc_rate))
+    if method == "macrs_5":
+        if year <= len(_MACRS_5YR):
+            return basis * _MACRS_5YR[year - 1]
+        return 0.0
+    life = max(1, int(years))
+    if year > life:
+        return 0.0
+    return basis * (1.0 - residual_rate) / life
+
+
+def first_payback_year(cashflows: List[float]) -> Optional[float]:
+    """First year index whose cumulative cash flow is positive. None if it never recovers."""
+    total = 0.0
+    for index, cashflow in enumerate(cashflows):
+        total += cashflow
+        if index > 0 and total > 0:
+            return float(index)
+    return None
+
+
 def _solar_projection(
     capacity_mw: float,
     capex_per_w: float,
@@ -148,9 +185,18 @@ def _solar_projection(
     interest_rate: float,
     tax_rate: float,
     project_life: int,
+    depreciation_method: str = "none",
+    depreciation_years: int = 20,
+    residual_rate: float = 0.05,
+    itc_basis_reduction: float = 0.0,
+    ptc_per_mwh: float = 0.0,
 ) -> tuple:
-    """Equity cashflows plus each year's debt-service coverage. No debt → coverage is empty."""
-    capex = capacity_mw * 1_000_000 * capex_per_w  # USD
+    """Equity cashflows plus each year's debt-service coverage. No debt → coverage is empty.
+
+    Depreciation is non-cash: it reduces taxable income and is not subtracted again from cash.
+    The default method is 'none', so callers that do not opt in keep the previous cashflows.
+    """
+    capex = capacity_mw * 1_000_000 * capex_per_w  # currency units
     equity = capex * (1 - debt_ratio)
     debt = capex * debt_ratio
     annual_gen = capacity_mw * 1000 * 8760 * capacity_factor  # kWh/yr
@@ -160,18 +206,20 @@ def _solar_projection(
     debt_balance = debt
     for yr in range(1, project_life + 1):
         generation = annual_gen * (1 - degradation_rate) ** (yr - 1)
-        revenue = generation * electricity_price / 1000  # USD
-        opex = capacity_mw * 1000 * opex_per_kw_yr  # USD
+        revenue = generation * electricity_price / 1000
+        opex = capacity_mw * 1000 * opex_per_kw_yr
         interest = debt_balance * interest_rate
-        principal = debt / project_life
+        principal = debt / project_life if project_life else 0.0
+        dep = depreciation_for_year(
+            capex, yr, depreciation_method, depreciation_years, residual_rate, itc_rate, itc_basis_reduction,
+        )
+        ptc_cash = (generation / 1000.0) * ptc_per_mwh
         ebitda = revenue - opex
-        ebt_d = ebitda - interest
+        taxable = ebitda - interest - dep
         itc_benefit = capex * itc_rate if yr == 1 else 0
-        tax = max(0, ebt_d * tax_rate) - itc_benefit
-        net_income = ebt_d - tax
-        # Equity cash flow: principal repayment is a financing outflow, not income.
-        # (No depreciation is modelled here, so there is no non-cash add-back.)
-        cashflow = net_income - principal
+        tax = max(0.0, taxable * tax_rate) - itc_benefit - ptc_cash
+        # Add depreciation back: cash = EBITDA − interest − tax − principal.
+        cashflow = ebitda - interest - tax - principal
         cashflows.append(cashflow)
         service = interest + principal
         if service > 0:
@@ -193,11 +241,18 @@ def build_solar_cashflows(
     interest_rate: float,
     tax_rate: float,
     project_life: int,
+    depreciation_method: str = "none",
+    depreciation_years: int = 20,
+    residual_rate: float = 0.05,
+    itc_basis_reduction: float = 0.0,
+    ptc_per_mwh: float = 0.0,
 ) -> List[float]:
-    """Build annual equity cashflows for a solar project (USD)."""
+    """Build annual equity cashflows for a generation project (currency of the inputs)."""
     cashflows, _coverages = _solar_projection(
         capacity_mw, capex_per_w, opex_per_kw_yr, electricity_price, itc_rate,
         capacity_factor, degradation_rate, debt_ratio, interest_rate, tax_rate, project_life,
+        depreciation_method=depreciation_method, depreciation_years=depreciation_years,
+        residual_rate=residual_rate, itc_basis_reduction=itc_basis_reduction, ptc_per_mwh=ptc_per_mwh,
     )
     return cashflows
 
@@ -220,8 +275,13 @@ def build_wind_cashflows(
     interest_rate: float,
     tax_rate: float,
     project_life: int,
+    degradation_rate: float = 0.0,
+    depreciation_method: str = "none",
+    depreciation_years: int = 20,
+    residual_rate: float = 0.05,
+    ptc_per_mwh: float = 0.0,
 ) -> List[float]:
-    """Wind equity cashflows. Capex is USD/kW; loan principal and interest are outflows."""
+    """Wind equity cashflows. Capex is currency per kW; loan principal and interest are outflows."""
     return build_solar_cashflows(
         capacity_mw=capacity_mw,
         capex_per_w=capex_per_kw / 1000,
@@ -229,9 +289,198 @@ def build_wind_cashflows(
         electricity_price=electricity_price,
         itc_rate=0,
         capacity_factor=wind_capacity_factor,
-        degradation_rate=0,
+        degradation_rate=degradation_rate,
         debt_ratio=debt_ratio,
         interest_rate=interest_rate,
         tax_rate=tax_rate,
         project_life=project_life,
+        depreciation_method=depreciation_method,
+        depreciation_years=depreciation_years,
+        residual_rate=residual_rate,
+        itc_basis_reduction=0.0,
+        ptc_per_mwh=ptc_per_mwh,
     )
+
+
+def resolve_depreciation(
+    currency: str,
+    itc_rate: float,
+    method: Optional[str],
+    years: int,
+    residual_rate: float,
+    itc_basis_reduction: Optional[float],
+) -> dict:
+    """CNY defaults to straight-line. Other currencies default to 5-year MACRS and a 50% ITC basis reduction."""
+    cny = (currency or "").upper() == "CNY"
+    chosen = method or ("straight_line" if cny else "macrs_5")
+    basis_defaulted = itc_basis_reduction is None
+    if itc_basis_reduction is None:
+        itc_basis_reduction = 0.0 if cny or itc_rate <= 0 or chosen == "none" else 0.5
+    return {
+        "depreciation_method": chosen,
+        "depreciation_years": years,
+        "residual_rate": residual_rate,
+        "itc_basis_reduction": itc_basis_reduction,
+        "depreciation_defaulted": method is None,
+        "basis_reduction_defaulted": basis_defaulted,
+    }
+
+
+def evaluate_power_project(
+    *,
+    capacity_mw: float,
+    capex_per_w: float,
+    opex_per_kw_yr: float,
+    electricity_price: float,
+    itc_rate: float,
+    capacity_factor: float,
+    degradation_rate: float,
+    debt_ratio: float,
+    interest_rate: float,
+    tax_rate: float,
+    project_life: int,
+    currency: str,
+    discount_rate: float,
+    depreciation_method: Optional[str],
+    depreciation_years: int,
+    residual_rate: float,
+    itc_basis_reduction: Optional[float],
+    ptc_per_mwh: float,
+    en: bool,
+    kind: str,
+    discount_rate_defaulted: bool = False,
+) -> dict:
+    """One engine for /finance/solar, /finance/wind, saved models and project reports.
+
+    irr is the unlevered after-tax project IRR. equity_irr is the equity IRR.
+    They differ once there is debt. NPV discounts the unlevered after-tax cash flows.
+    """
+    policy = resolve_depreciation(currency, itc_rate, depreciation_method, depreciation_years, residual_rate, itc_basis_reduction)
+    common = dict(
+        capacity_mw=capacity_mw, capex_per_w=capex_per_w, opex_per_kw_yr=opex_per_kw_yr,
+        electricity_price=electricity_price, itc_rate=itc_rate, capacity_factor=capacity_factor,
+        degradation_rate=degradation_rate, interest_rate=interest_rate, tax_rate=tax_rate,
+        project_life=project_life, depreciation_method=policy["depreciation_method"],
+        depreciation_years=policy["depreciation_years"], residual_rate=policy["residual_rate"],
+        itc_basis_reduction=policy["itc_basis_reduction"], ptc_per_mwh=ptc_per_mwh,
+    )
+    equity = build_solar_cashflows(**common, debt_ratio=debt_ratio)
+    pretax = build_solar_cashflows(**{**common, "debt_ratio": 0, "tax_rate": 0, "itc_rate": 0, "ptc_per_mwh": 0})
+    aftertax = build_solar_cashflows(**common, debt_ratio=0)
+    equity_irr = calc_irr(equity)
+    pretax_irr = calc_irr(pretax)
+    aftertax_irr = calc_irr(aftertax)
+    capex_total = capacity_mw * 1_000_000 * capex_per_w
+    opex_total = capacity_mw * 1000 * opex_per_kw_yr
+    annual_gen_kwh = capacity_mw * 1000 * 8760 * capacity_factor
+    lcoe = calc_lcoe(
+        capex_total, opex_total, annual_gen_kwh,
+        discount_rate=discount_rate, degradation_rate=degradation_rate, project_life=project_life,
+    )
+    dscr = min_solar_dscr(**common, debt_ratio=debt_ratio)
+    payback = first_payback_year(equity)
+    project_payback = first_payback_year(pretax)
+    assumptions = _assumption_lines(
+        en=en, kind=kind, currency=currency, discount_rate=discount_rate,
+        discount_defaulted=discount_rate_defaulted, tax_rate=tax_rate, debt_ratio=debt_ratio,
+        interest_rate=interest_rate, itc_rate=itc_rate, ptc_per_mwh=ptc_per_mwh, policy=policy,
+    )
+    return {
+        "irr": aftertax_irr,
+        "project_irr_pretax": pretax_irr,
+        "project_irr_aftertax": aftertax_irr,
+        "equity_irr": equity_irr,
+        "npv": calc_npv(discount_rate, aftertax),
+        "equity_npv": calc_npv(discount_rate, equity),
+        "lcoe": lcoe,
+        "payback_years": payback,
+        "project_payback_years": project_payback,
+        "payback_basis": "equity" if en else "资本金回收期",
+        "dscr_min": dscr,
+        "cashflows": equity[1:],
+        "equity_cashflows_with_investment": equity,
+        "discount_rate": discount_rate,
+        "assumptions": assumptions,
+        "basis": {
+            "discount_rate": discount_rate,
+            "tax_rate": tax_rate,
+            "debt_ratio": debt_ratio,
+            "interest_rate": interest_rate,
+            "depreciation_method": policy["depreciation_method"],
+            "depreciation_years": policy["depreciation_years"],
+            "residual_rate": policy["residual_rate"],
+            "itc_rate": itc_rate,
+            "itc_basis_reduction": policy["itc_basis_reduction"],
+            "ptc_per_mwh": ptc_per_mwh,
+            "irr_definition": "project_aftertax",
+            "equity_irr_definition": "equity_aftertax",
+            "npv_cashflows": "project_aftertax",
+            "lcoe": "discounted_cost_over_discounted_energy",
+            "currency": currency,
+        },
+        "sensitivity": {
+            "capex_+10pct_irr": calc_irr(build_solar_cashflows(
+                **{**common, "capex_per_w": capex_per_w * 1.1}, debt_ratio=0,
+            )),
+            "price_-10pct_irr": calc_irr(build_solar_cashflows(
+                **{**common, "electricity_price": electricity_price * 0.9}, debt_ratio=0,
+            )),
+        },
+    }
+
+
+def _assumption_lines(*, en: bool, kind: str, currency: str, discount_rate: float, discount_defaulted: bool,
+                      tax_rate: float, debt_ratio: float, interest_rate: float, itc_rate: float,
+                      ptc_per_mwh: float, policy: dict) -> List[str]:
+    method = policy["depreciation_method"]
+    if en:
+        dep = (
+            "Depreciation: 5-year MACRS, half-year convention (IRS Publication 946 rates). "
+            f"Depreciable basis is reduced by {policy['itc_basis_reduction']:.0%} of the investment tax credit."
+            if method == "macrs_5" else
+            f"Depreciation: straight line over {policy['depreciation_years']} years, residual {policy['residual_rate']:.0%}."
+            if method == "straight_line" else
+            "Depreciation: not applied."
+        )
+        lines = [
+            f"Discount rate: {discount_rate:.2%}" + (" (default; send discount_rate to override)." if discount_defaulted else "."),
+            f"Income tax rate: {tax_rate:.2%}. Debt ratio: {debt_ratio:.0%}. Interest rate: {interest_rate:.2%}.",
+            dep,
+            "irr is the unlevered after-tax project IRR. equity_irr is the after-tax equity IRR. project_irr_pretax ignores tax and financing.",
+            "NPV discounts unlevered after-tax cash flows at the discount rate above. cashflows are the equity series, excluding year 0.",
+            "payback_years is the equity payback. null means the project does not pay back within its life. project_payback_years is the unlevered pre-tax payback.",
+            "LCOE = present value of capital and operating costs / present value of generation. Both sides are discounted.",
+            "Value-added tax and tax holidays are not included.",
+        ]
+        if itc_rate > 0:
+            lines.append(f"Investment tax credit: {itc_rate:.0%} of capital cost, taken as a year-1 cash credit.")
+        if kind == "wind":
+            lines.append(
+                f"Production tax credit: {ptc_per_mwh:g} per MWh." if ptc_per_mwh > 0
+                else "Production tax credit (PTC): not included. Send ptc_per_mwh to apply one."
+            )
+        lines.append(f"Currency: {currency}.")
+        return lines
+    dep = (
+        f"折旧：直线法 {policy['depreciation_years']} 年，残值率 {policy['residual_rate']:.0%}"
+        + ("（请求未传方法时的默认值，可改）。" if policy["depreciation_defaulted"] else "。")
+        if method == "straight_line" else
+        "折旧：5 年 MACRS（美国 IRS Publication 946 半年惯例）。计税基数按投资税收抵免额的 "
+        f"{policy['itc_basis_reduction']:.0%} 调减。"
+        if method == "macrs_5" else
+        "折旧：未计。"
+    )
+    lines = [
+        f"折现率：{discount_rate:.2%}" + ("（请求未传，按默认值；可在请求里修改）。" if discount_defaulted else "。"),
+        f"所得税税率：{tax_rate:.2%}。贷款比例：{debt_ratio:.0%}。贷款利率：{interest_rate:.2%}。",
+        dep,
+        "irr 是全投资税后内部收益率；equity_irr 是资本金税后内部收益率；project_irr_pretax 是全投资税前内部收益率。",
+        "净现值按全投资税后现金流、上面的折现率计算。cashflows 是资本金现金流，不含第 0 年投入。",
+        "payback_years 是资本金回收期，寿命期内收不回时为空。project_payback_years 是全投资税前回收期。",
+        "度电成本 = 投资与运维的现值 / 发电量现值，分子和分母都折现。",
+        "增值税、三免三减半、设备更换：未计。",
+        f"币种：{currency}。",
+    ]
+    if kind == "wind" and ptc_per_mwh <= 0:
+        lines.append("生产税抵免：未计。")
+    return lines

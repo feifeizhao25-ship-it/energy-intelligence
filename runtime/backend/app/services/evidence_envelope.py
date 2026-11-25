@@ -97,6 +97,7 @@ def source_from_dict(src: Dict[str, Any]) -> Dict[str, Any]:
         "locator": src.get("locator"),
         "license": src.get("license_note") or src.get("license"),
         "type": src.get("type"),
+        "origin": src.get("origin"),
         "freshness_status": src.get("freshness_status", "unknown"),
     }
 
@@ -172,6 +173,13 @@ NUMERIC_AGREEMENT_TOLERANCE = 0.01
 _OFFICIAL_TYPES = {"official", "policy_original", "government", "regulator", "standard"}
 _OFFICIAL_MARKERS = ("国务院", "发改委", "发展改革委", "能源局", "生态环境部", "统计局", "工信部", "财政部", "人民政府", "电网")
 _OFFICIAL_DOMAINS = (".gov.cn", ".gov", "gov.cn/")
+
+
+def _is_user_provided(src: Dict[str, Any]) -> bool:
+    """Only sources the user registered are labelled as user input. A third-party URL stays a policy source."""
+    origin = str(src.get("origin") or "").lower()
+    kind = str(src.get("type") or "").lower()
+    return origin in {"user_provided", "user", "user_input"} or kind in {"user_provided", "user_input"}
 
 
 def is_official_source(src: Dict[str, Any]) -> bool:
@@ -308,17 +316,39 @@ def build_envelope(
         "calculation_trace": list(calculation_trace or []),
         "limitations": list(limitations or []),
     }
+    user_provided = bool(sources) and all(_is_user_provided(src) for src in sources)
+    if user_provided:
+        claim_type = "user_input"
     verification = compute_verification(sources, claim_type=claim_type, values=numeric_values, lang=lang)
+    if user_provided:
+        verification = {
+            **verification,
+            "status": "user_provided",
+            "label": "Provided by the user" if en else "用户提供",
+            "reason": "Entered by the user. Not an independently verified policy or tariff source." if en else "由用户填写，不是经独立核验的政策或电价文件。",
+            "claim_type": "user_input",
+            "usable_as_conclusion": False,
+        }
     envelope["verification"] = verification
-    envelope["sources"] = [
-        {**src, "verification_label": ("Official original" if en else "官方原文") if is_official_source(src) else ("Repost / third party" if en else "转载/第三方")}
-        for src in envelope["sources"]
-    ]
+    def _label(src: Dict[str, Any]) -> str:
+        if _is_user_provided(src):
+            return "Provided by the user" if en else "用户提供"
+        if is_official_source(src):
+            return "Official original" if en else "官方原文"
+        return "Repost / third party" if en else "转载/第三方"
+    envelope["sources"] = [{**src, "verification_label": _label(src)} for src in envelope["sources"]]
     if not verification["usable_as_conclusion"]:
-        envelope["limitations"].append(
-            f"Verification status: {verification['label']} ({verification['reason']}); not to be used as a basis for conclusions" if en
-            else f"核验状态：{verification['label']}（{verification['reason']}），不得作为结论依据"
-        )
+        if user_provided:
+            envelope["limitations"].append(
+                "These figures were provided by the user. They are not a policy source and are not an investment conclusion."
+                if en else
+                "这些数字由用户提供，不是政策来源，也不能当作投资结论。"
+            )
+        else:
+            envelope["limitations"].append(
+                f"Verification status: {verification['label']} ({verification['reason']}); not to be used as a basis for conclusions" if en
+                else f"核验状态：{verification['label']}（{verification['reason']}），不得作为结论依据"
+            )
     if skill_version:
         envelope["skill_version"] = skill_version
     return envelope

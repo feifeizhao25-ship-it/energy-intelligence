@@ -153,7 +153,7 @@ def build_report(data: Dict[str, Any], report_type: str, template, metrics: Dict
     if fin.get("model_type") == "storage_arbitrage":
         assumptions[1][0] = "Annual discharged energy (year 1)"
         assumptions[3][0] = "Price spread, peak minus off-peak"
-        assumptions.append(["Model type", "Storage arbitrage: revenue is discharged energy times the price spread"])
+        assumptions.append(["Model type", "Storage arbitrage: net revenue is discharged energy times the peak price, minus charged energy times the off-peak price. Charged energy is discharged energy divided by round-trip efficiency. Income tax and battery replacement are not included."])
         names = {"roundtrip_efficiency": "Round-trip efficiency", "annual_degradation_rate": "Annual degradation",
                  "annual_opex_rate": "Annual operating cost rate", "discount_rate": "Discount rate", "project_life": "Project life"}
         missing = [names[k] for k in (fin.get("defaulted_assumptions") or []) if k in names]
@@ -210,7 +210,7 @@ def build_report(data: Dict[str, Any], report_type: str, template, metrics: Dict
         S += [("h", 1, "Methods and Assumptions"),
               ("table", ["Parameter", "Value"], assumptions, "Model assumptions"),
               ("bullets", ["NPV = sum over t of CF_t / (1 + r)^t.", "IRR: the rate r where NPV(r) = 0; reported only if it is unique.",
-                           "LCOE = present value of lifetime costs / lifetime energy produced.", "Payback = first year in which cumulative cash flow turns positive."])]
+                           "LCOE = present value of lifetime costs / present value of lifetime generation.", "Payback = first year in which cumulative cash flow turns positive. Blank when it does not happen within the project life."])]
     elif rt == "investment":
         S += [("h", 1, "Executive Summary"),
               ("p", f"{name} is a {_num(cap, 1)} MW {_type_label(data.get('project_type', '')).lower()} project in {_location(data)}. "

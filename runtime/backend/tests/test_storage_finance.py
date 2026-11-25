@@ -22,7 +22,7 @@ async def test_storage_finance_is_auditable(client, auth_headers):
     response = await client.post("/api/v1/finance/storage", json=PAYLOAD, headers=auth_headers)
     assert response.status_code == 200
     result = response.json()
-    assert result["assumption_version"] == "storage-arbitrage-v1.0"
+    assert result["assumption_version"] == "storage-arbitrage-v1.1"
     assert result["assumptions"]["source"] == "user_input"
     assert len(result["cashflows"]) == 10
     assert result["total_capex"] == 112_000_000

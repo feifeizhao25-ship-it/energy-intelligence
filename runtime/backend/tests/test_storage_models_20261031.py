@@ -38,9 +38,10 @@ async def test_storage_saved_assumptions_say_what_was_not_entered(client, auth_h
     assert a["assumption_provenance"]["roundtrip_efficiency"] == "user_input"
     assert a["assumption_provenance"]["annual_degradation_rate"] == "engine_default_not_sourced"
     assert set(a["defaulted_assumptions"]) == {"annual_degradation_rate", "annual_opex_rate", "discount_rate"}
-    # revenue in the report maths equals discharged energy x spread, i.e. what the model computed
-    assert a["annual_generation_mwh"] * a["electricity_price"] * 1000 == pytest.approx(
-        STORAGE["capacity_mwh"] * STORAGE["cycles_per_year"] * STORAGE["roundtrip_efficiency"] * 80, rel=1e-6)
+    discharged = STORAGE["capacity_mwh"] * STORAGE["cycles_per_year"] * STORAGE["roundtrip_efficiency"]
+    charged = discharged / STORAGE["roundtrip_efficiency"]
+    assert a["annual_net_revenue"] == pytest.approx(
+        discharged * STORAGE["peak_price_per_mwh"] - charged * STORAGE["offpeak_price_per_mwh"], rel=1e-6)
 
 
 @pytest.mark.asyncio

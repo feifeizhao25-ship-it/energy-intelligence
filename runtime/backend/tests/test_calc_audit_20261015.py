@@ -25,8 +25,8 @@ def test_lcoe_year1_is_undegraded():
 
 def test_finance_callers_pass_project_life_and_degradation():
     from app.api.v1 import finance
-    from app.services import finance_service
-    for mod in (finance, finance_service):
+    from app.utils import financial_utils
+    for mod in (finance, financial_utils):
         calls = re.findall(r"calc_lcoe\((.*?)\)", inspect.getsource(mod), re.S)
         assert calls, mod
         for args in calls:

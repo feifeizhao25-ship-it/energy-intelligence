@@ -507,8 +507,11 @@ def _demo_data() -> Dict[str, Any]:
 # ═══════════════════════════════════════════════════════════════
 
 def calc_financial_metrics(fin: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    计算 NPV / IRR / Payback / LCOE 等核心财务指标
+    """NPV / IRR / payback / LCOE.
+
+    A saved finance-engine result is reused for the headline numbers so the report matches
+    /api/v1/finance. A price what-if drops that snapshot and recalculates. LCOE discounts
+    both cost and generation. Payback is null when the project does not recover its cost.
     """
     inv = fin.get("initial_investment", 360_000_000)
     years = fin.get("project_life_years", 25)
@@ -519,50 +522,79 @@ def calc_financial_metrics(fin: Dict[str, Any]) -> Dict[str, Any]:
     opex = fin.get("opex_annual", 7_200_000)
     opex_esc = fin.get("opex_escalation_rate", 0.025)
 
-    # 年度现金流
-    cashflows: List[float] = [-inv]
-    cumulative = -inv
-    payback_year = None
+    engine = fin.get("finance_engine") if isinstance(fin.get("finance_engine"), dict) else None
+    replay = (engine or {}).get("replay") if isinstance(engine, dict) else None
+    replay_price = replay.get("electricity_price_per_kwh") if isinstance(replay, dict) else None
+    price_matches = replay_price is None or tariff is None or abs(float(tariff) - float(replay_price)) < 1e-8
+    use_engine = bool(engine and engine.get("irr_unit") == "percent" and engine.get("source") == "finance_engine" and price_matches)
 
-    for y in range(1, years + 1):
-        revenue = gen_mwh * 1000 * tariff * ((1 + esc) ** (y - 1))
-        cost = opex * ((1 + opex_esc) ** (y - 1))
-        net = revenue - cost
-        cashflows.append(net)
+    saved = fin.get("yearly_cashflows")
+    if use_engine and isinstance(saved, list) and saved:
+        cashflows = [float(item) for item in saved]
+        payback_year = engine.get("payback_years")
+    else:
+        cashflows = [-inv]
+        cumulative = -inv
+        payback_year = None
+        for y in range(1, years + 1):
+            revenue = gen_mwh * 1000 * tariff * ((1 + esc) ** (y - 1))
+            cost = opex * ((1 + opex_esc) ** (y - 1))
+            net = revenue - cost
+            cashflows.append(net)
+            cumulative += net
+            if payback_year is None and cumulative >= 0:
+                payback_year = y
 
-        cumulative += net
-        if payback_year is None and cumulative >= 0:
-            payback_year = y
+    if use_engine:
+        irr_percent = engine.get("irr")
+        irr = None if irr_percent is None else float(irr_percent) / 100.0
+        npv = engine.get("npv")
+        lcoe = engine.get("lcoe")
+    else:
+        npv = sum(cf / ((1 + dr) ** i) for i, cf in enumerate(cashflows))
+        irr = _calc_irr(cashflows)
+        from app.utils.financial_utils import calc_lcoe
+        lcoe = calc_lcoe(
+            inv, opex, gen_mwh * 1000,
+            discount_rate=dr, project_life=years,
+            degradation_rate=float(fin.get("degradation_rate", 0.005) or 0),
+        )
 
-    # NPV
-    npv = sum(cf / ((1 + dr) ** i) for i, cf in enumerate(cashflows))
-
-    # IRR (Newton-Raphson)
-    irr = _calc_irr(cashflows)
-
-    # LCOE (元/kWh)
-    total_gen_kwh = sum(gen_mwh * 1000 * ((1 + 0.005) ** (y - 1)) for y in range(1, years + 1))
-    total_cost_pv = inv + sum(
-        opex * ((1 + opex_esc) ** (y - 1)) / ((1 + dr) ** y) for y in range(1, years + 1)
-    )
-    lcoe = total_cost_pv / total_gen_kwh if total_gen_kwh > 0 else 0
-
-    # ROI
     total_net = sum(cashflows[1:])
     roi = total_net / inv if inv > 0 else 0
+    if fin.get("model_type") == "storage_arbitrage" and fin.get("annual_net_revenue") is not None:
+        revenue_year1 = float(fin["annual_net_revenue"])
+    else:
+        revenue_year1 = gen_mwh * 1000 * tariff
 
     return {
         "npv": npv,
         "irr": irr,
-        "payback_years": payback_year or years,
+        "payback_years": payback_year,
         "lcoe": lcoe,
         "roi": roi,
         "initial_investment": inv,
-        "annual_revenue_year1": gen_mwh * 1000 * tariff,
+        "annual_revenue_year1": revenue_year1,
         "annual_opex_year1": opex,
         "project_life": years,
         "cashflows": cashflows,
+        "metrics_source": "finance_engine" if use_engine else "report_formula",
     }
+
+
+def fmt_payback(value, unit: str = "年") -> str:
+    """寿命期内收不回时不拿项目寿命或 99 冒充回收期。"""
+    if isinstance(value, (int, float)) and value == value:
+        return f"{float(value):.1f} {unit}"
+    return "寿命期内无法回收" if unit == "年" else "Not recovered within the project life"
+
+
+def _payback_shorter_than(value, years: float) -> bool:
+    return isinstance(value, (int, float)) and value == value and float(value) < years
+
+
+def _irr_above(value, threshold: float) -> bool:
+    return isinstance(value, (int, float)) and value == value and float(value) > threshold
 
 
 def _calc_irr(cashflows: List[float], max_iter: int = 200, tol: float = 1e-12) -> float:
@@ -1255,9 +1287,9 @@ def _add_feasibility_content(doc, data: Dict, metrics: Dict):
             ["净现值 (NPV)", fmt_money(metrics["npv"]),
              "相对 0 为正" if metrics["npv"] > 0 else "相对 0 为负"],
             ["内部收益率 (IRR)", irr_display,
-             "高于对照折现率 8%" if metrics["irr"] > 0.08 else "不高于对照折现率 8%"],
-            ["投资回收期", f"{metrics['payback_years']:.1f} 年",
-             "短于 10 年" if metrics["payback_years"] < 10 else "不少于 10 年"],
+             "高于对照折现率 8%" if _irr_above(metrics["irr"], 0.08) else "不高于对照折现率 8%"],
+            ["投资回收期", fmt_payback(metrics["payback_years"]),
+             "短于 10 年" if _payback_shorter_than(metrics["payback_years"], 10) else "不少于 10 年"],
             ["LCOE 度电成本", f"{metrics['lcoe']:.4f} 元/kWh",
              "高于 0.35 元/kWh" if metrics["lcoe"] > 0.35 else "不高于 0.35 元/kWh"],
             ["投资回报率 (ROI)", fmt_pct(metrics["roi"]), "按输入假设"],
@@ -1288,7 +1320,7 @@ def _add_feasibility_content(doc, data: Dict, metrics: Dict):
     _add_heading(doc, "第六章  方法与假设", level=1)
     _add_body(doc,
         f"按所列假设测算，项目净现值为 {fmt_money(metrics['npv'])}，"
-        f"内部收益率为 {irr_display}，静态回收期为 {metrics['payback_years']:.1f} 年。"
+        f"内部收益率为 {irr_display}，静态回收期为 {fmt_payback(metrics['payback_years'])}。"
         "8% 只作为读数对照，不是结论门槛。"
     )
     _add_body(doc,
@@ -1310,7 +1342,7 @@ def _add_investment_content(doc, data: Dict, metrics: Dict):
         f"项目装机容量 {cap:.0f} MW，总投资 {fmt_money(metrics['initial_investment'])}。"
         f"按本章所列假设，IRR 为 {fmt_pct(metrics['irr'])}，"
         f"NPV 为 {fmt_money(metrics['npv'])}，"
-        f"静态回收期 {metrics['payback_years']:.1f} 年。"
+        f"静态回收期 {fmt_payback(metrics['payback_years'])}。"
         "以上为测算值，随电价、造价与发电量假设变化。"
     )
 
@@ -1334,7 +1366,7 @@ def _add_investment_content(doc, data: Dict, metrics: Dict):
         [
             ["NPV", fmt_money(metrics["npv"]), "> 0"],
             ["IRR", fmt_pct(metrics["irr"]), "≥ 8%"],
-            ["回收期", f"{metrics['payback_years']:.1f} 年", "≤ 10 年"],
+            ["回收期", fmt_payback(metrics["payback_years"]), "≤ 10 年"],
             ["LCOE", f"{metrics['lcoe']:.4f} 元/kWh", "≤ 0.35 元/kWh"],
             ["ROI", fmt_pct(metrics["roi"]), "≥ 50%"],
         ],
@@ -1377,7 +1409,7 @@ def _add_investment_content(doc, data: Dict, metrics: Dict):
     _add_heading(doc, "第六章  测算结果", level=1)
     _add_body(doc,
         f"按本报告输入与假设：IRR 为 {fmt_pct(metrics['irr'])}，"
-        f"对照常用折现基准 8% {'高于' if metrics['irr'] > 0.08 else '低于'}该基准；"
+        f"对照常用折现基准 8% {'高于' if _irr_above(metrics['irr'], 0.08) else '低于'}该基准；"
         f"NPV {'为正' if metrics['npv'] > 0 else '为负'}（{fmt_money(metrics['npv'])}）。"
         "对照基准只用于读数，不是投资结论。"
     )
@@ -1898,8 +1930,8 @@ def _build_pdf_content(story, data, metrics, report_type, style_h1, style_h2, st
         story.append(make_table(
             ["指标", "数值", "评价"],
             [["NPV", fmt_money(metrics["npv"]), "达标" if metrics["npv"] > 0 else "超出基准"],
-             ["IRR", fmt_pct(metrics["irr"]), "达标" if metrics["irr"] > 0.08 else "需关注"],
-             ["回收期", f"{metrics['payback_years']:.1f} 年", "达标" if metrics["payback_years"] < 10 else "需关注"],
+             ["IRR", fmt_pct(metrics["irr"]), "达标" if _irr_above(metrics["irr"], 0.08) else "需关注"],
+             ["回收期", fmt_payback(metrics["payback_years"]), "达标" if _payback_shorter_than(metrics["payback_years"], 10) else "需关注"],
              ["LCOE", f"{metrics['lcoe']:.4f} 元/kWh", "达标" if metrics["lcoe"] < 0.35 else "超出基准"]],
             [5, 5, 5], caption="核心财务指标评价"))
         story.append(Spacer(1, 10))
@@ -1922,7 +1954,7 @@ def _build_pdf_content(story, data, metrics, report_type, style_h1, style_h2, st
         story.append(Paragraph("第六章  方法与假设", style_h1))
         story.append(Paragraph(
             f"IRR {fmt_pct(metrics['irr'])}，NPV {fmt_money(metrics['npv'])}，"
-            f"静态回收期 {metrics['payback_years']:.1f} 年。对照基准只用于读数，改变假设后须重算。",
+            f"静态回收期 {fmt_payback(metrics['payback_years'])}。对照基准只用于读数，改变假设后须重算。",
             style_body))
 
     elif report_type == "investment":
@@ -1941,7 +1973,7 @@ def _build_pdf_content(story, data, metrics, report_type, style_h1, style_h2, st
             ["核心指标", "数值", "基准"],
             [["NPV", fmt_money(metrics["npv"]), "> 0"],
              ["IRR", fmt_pct(metrics["irr"]), "≥ 8%"],
-             ["回收期", f"{metrics['payback_years']:.1f} 年", "≤ 10 年"],
+             ["回收期", fmt_payback(metrics["payback_years"]), "≤ 10 年"],
              ["LCOE", f"{metrics['lcoe']:.4f}", "≤ 0.35"]],
             [5, 5, 5], caption="财务模型核心指标与行业基准"))
 
@@ -2292,7 +2324,7 @@ def _storage_assumption_rows(fin: dict) -> list:
         return []
     names = {"roundtrip_efficiency": "往返效率", "annual_degradation_rate": "年衰减率",
              "annual_opex_rate": "年运维费率", "discount_rate": "折现率", "project_life": "项目年限"}
-    rows = [["模型类型", "储能价差套利：收入 = 放电量 × 峰谷价差"]]
+    rows = [["模型类型", "储能套利：净收入 = 放电量 × 峰时电价 − 充电量 × 谷时电价；充电量 = 放电量 / 往返效率。所得税和电池更换未计。"]]
     missing = [names[k] for k in (fin.get("defaulted_assumptions") or []) if k in names]
     if missing:
         rows.append(["用户未填写（系统默认值，未核实来源）", "、".join(missing)])
@@ -2472,16 +2504,30 @@ def _build_report_evidence(title: str, data: Dict[str, Any], en: bool = False) -
     if REQUIRED_FINANCIAL_INPUTS <= set(financial):
         metrics = calc_financial_metrics(financial)
         inputs = {key: financial.get(key) for key in sorted(REQUIRED_FINANCIAL_INPUTS)}
-        trace = [
-            {"formula": "NPV = Σ CF_t / (1 + r)^t", "inputs": inputs,
-             "result": round(metrics["npv"], 2)},
-            {"formula": "IRR: NPV(r) = 0 (solved with Newton-Raphson)" if en else "IRR: NPV(r) = 0（Newton-Raphson 求解）", "inputs": inputs,
-             "result": round(metrics["irr"], 6)},
-            {"formula": "LCOE = present value of lifetime cost / total generation" if en else "LCOE = 全生命周期成本现值 / 总发电量", "inputs": inputs,
-             "result": round(metrics["lcoe"], 6)},
-            {"formula": "Simple payback = first year cumulative cash flow turns positive" if en else "静态回收期 = 累计现金流转正年份", "inputs": inputs,
-             "result": metrics["payback_years"]},
-        ]
+        engine = financial.get("finance_engine") if isinstance(financial.get("finance_engine"), dict) else None
+        if engine and engine.get("source") == "finance_engine":
+            trace = [
+                {"formula": "NPV discounts unlevered after-tax cash flows at the stated discount rate. Same function as /api/v1/finance." if en else "净现值按全投资税后现金流和折现率折现，与测算接口同一套函数。",
+                 "inputs": inputs, "result": engine.get("npv")},
+                {"formula": "Unlevered after-tax IRR in percent. Same value as the finance API field irr." if en else "全投资税后内部收益率（百分数），与测算接口的 irr 相同。",
+                 "inputs": inputs, "result": engine.get("irr")},
+                {"formula": "LCOE = present value of cost / present value of generation." if en else "LCOE = 成本现值 / 发电量现值（分子和分母都折现）。",
+                 "inputs": inputs, "result": engine.get("lcoe")},
+                {"formula": "Equity payback in years. Null means the cost is not recovered within the project life." if en else "资本金回收期（年）。寿命期内无法回收时为空。",
+                 "inputs": inputs, "result": engine.get("payback_years")},
+            ]
+        else:
+            irr_value = metrics["irr"]
+            trace = [
+                {"formula": "NPV = Σ CF_t / (1 + r)^t", "inputs": inputs,
+                 "result": None if metrics["npv"] is None else round(metrics["npv"], 2)},
+                {"formula": "IRR: the unique rate where NPV is zero, as a decimal." if en else "IRR：使净现值为 0 的唯一折现率（小数）。", "inputs": inputs,
+                 "result": None if irr_value is None else round(irr_value, 6)},
+                {"formula": "LCOE = present value of cost / present value of generation." if en else "LCOE = 成本现值 / 发电量现值（分子和分母都折现）。", "inputs": inputs,
+                 "result": None if metrics["lcoe"] is None else round(metrics["lcoe"], 6)},
+                {"formula": "Payback is the first year cumulative cash flow turns positive. Null means it does not." if en else "回收期为累计现金流转正的年份。寿命期内无法回收时为空。", "inputs": inputs,
+                 "result": metrics["payback_years"]},
+            ]
 
     return build_envelope(
         f"Report job accepted: {title}" if en else f"报告生成任务已受理：{title}",
