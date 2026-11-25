@@ -47,7 +47,7 @@ export function HomeAside() {
                 const body = await response.json().catch(() => null);
                 if (cancelled) return;
                 if (!response.ok || !body) {
-                    setPolicy({ phase: 'error', note: body?.note || '政策库未连接', todayCount: null, items: [] });
+                    setPolicy({ phase: 'error', note: body?.note || '政策列表暂时打不开。登录后可以再查已审核政策。', todayCount: null, items: [] });
                     return;
                 }
                 const rows = Array.isArray(body.data) ? body.data as Record<string, unknown>[] : [];
@@ -62,7 +62,7 @@ export function HomeAside() {
                 });
             })
             .catch(() => {
-                if (!cancelled) setPolicy({ phase: 'error', note: '政策库未连接', todayCount: null, items: [] });
+                if (!cancelled) setPolicy({ phase: 'error', note: '政策列表暂时打不开。登录后可以再查已审核政策。', todayCount: null, items: [] });
             });
         return () => { cancelled = true; };
     }, []);
@@ -94,6 +94,7 @@ export function HomeAside() {
                     ))}
                 </ul>
                 <Link href="/policies" className="inline-block text-xs underline-offset-2 hover:underline">打开政策检索</Link>
+                {policy.phase === 'error' ? <Link href="/login" className="ml-3 inline-block text-xs underline-offset-2 hover:underline">登录后查看</Link> : null}
             </section>
 
             <section className="ei-panel space-y-2" data-testid="data-freshness">
