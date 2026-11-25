@@ -67,7 +67,8 @@ async def test_solar_api_gives_sane_result_for_cny_per_kwh(client, auth_headers)
     assert out["irr"] is not None and 3 < out["irr"] < 40, out["irr"]
     assert out["npv"] > -5_000_000, "NPV must not be the -22.8 million of the unit bug"
     assert out["input_notes"] and "kWh" in out["input_notes"][0]
-    assert any("ITC" in n for n in out["input_notes"]), "US ITC must not be silently applied to a CNY project"
+    assert not any("ITC" in n or "投资税收抵免" in n for n in out["input_notes"])
+    assert out["basis"]["itc_rate"] == 0.0, "a CNY project must not apply the US ITC"
     # Retest N10: a domestic (cn) account gets the notes in Chinese, not an English sentence
     assert any("\u4e00" <= ch <= "\u9fff" for ch in out["input_notes"][0]), out["input_notes"]
     assert "plausible" not in " ".join(out["input_notes"]) and "not applied" not in " ".join(out["input_notes"])

@@ -72,7 +72,7 @@ export default function SolarCalculatorPage() {
                     <li>回收可能：结合初始投入、运维费和逐年衰减计算。</li>
                     <li>核对依据：结果列出资料覆盖期、获取日期与假设。</li>
                 </ul>
-                <p className="mt-5 border-t border-slate-200 pt-4 text-xs leading-6 text-slate-500">暂不模拟贷款、税费、自定义倾角与朝向、设备更换与储能。需要更细的工程方案时，请补充现场勘察和专业设计。</p>
+                <p className="mt-5 border-t border-slate-200 pt-4 text-xs leading-6 text-slate-500">本页只预览发电量，不计贷款、所得税和折旧。项目财务接口另算全投资税前、全投资税后和资本金三套收益率，折现率、税率和折旧方法写在返回的假设里。两套数字不要混着看。自定义倾角、朝向、设备更换和储能不在本页预览里。</p>
             </aside>
         </div>
         {result && submitted && <section aria-label="光伏初步估算结果" className="space-y-5 rounded-2xl border border-emerald-200 bg-white p-5 sm:p-7">

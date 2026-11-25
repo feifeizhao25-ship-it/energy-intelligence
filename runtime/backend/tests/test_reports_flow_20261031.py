@@ -76,7 +76,7 @@ async def test_saved_model_with_sources_generates_english_pdf_and_docx(client, a
 @pytest.mark.asyncio
 async def test_solar_model_with_no_unique_irr_saves_instead_of_500(client, auth_headers):
     pid = await _project(client, auth_headers)
-    bad = {**SOLAR, "capex_per_w": 6.0, "electricity_price": 20}  # never pays back: IRR undefined
+    bad = {**SOLAR, "capex_per_w": 6.0, "electricity_price": 1, "electricity_price_unit": "per_mwh", "opex_per_kw_yr": 500}
     r = await client.post(f"/api/v1/finance/models/{pid}", headers=auth_headers, json=bad)
     assert r.status_code == 200, r.text
     assert r.json()["irr"] is None
