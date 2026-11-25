@@ -127,25 +127,28 @@ async def get_usage(
     now = datetime.now(timezone.utc)
     usage = dict(user.usage_quota or {})
     limits = PLAN_QUOTAS.get(user.plan, PLAN_QUOTAS["free"])
+    en = (user.market or "cn") == "global"
+    # 国内额度按北京时间零点换日。国际版仍用 UTC，避免把中国时区写进国际账号。
+    from zoneinfo import ZoneInfo
+    clock = now if en else now.astimezone(ZoneInfo("Asia/Shanghai"))
 
     def usage_item(category: str, used: int, limit: int, period: str):
         ratio = 0 if limit == -1 else used / max(limit, 1)
         level = "unlimited" if limit == -1 else "blocked" if ratio >= 1 else "critical" if ratio >= 0.95 else "warning" if ratio >= 0.8 else "normal"
         return {"category": category, "used": used, "limit": limit, "remaining": -1 if limit == -1 else max(limit - used, 0), "usage_ratio": round(ratio, 4), "warning_level": level, "period": period}
 
-    day_key = f"daily_{now.strftime('%Y-%m-%d')}"
-    month_key = f"monthly_{now.strftime('%Y-%m')}"
+    day_key = f"daily_{clock.strftime('%Y-%m-%d')}"
+    month_key = f"monthly_{clock.strftime('%Y-%m')}"
     from app.models.database import Project
     project_count = int(await db.scalar(select(func.count()).select_from(Project).where(Project.user_id == user_id)) or 0)
-    en = (user.market or "cn") == "global"
     tier = {}
     try:
         from app.services.entitlements_registry import load_registry
         tier = (load_registry().get("tiers") or {}).get(user.plan) or {}
     except Exception:
         tier = {}
-    tomorrow = (now + timedelta(days=1)).strftime("%Y-%m-%d")
-    next_month = (now.replace(day=1) + timedelta(days=32)).replace(day=1).strftime("%Y-%m-%d")
+    tomorrow = (clock + timedelta(days=1)).strftime("%Y-%m-%d")
+    next_month = (clock.replace(day=1) + timedelta(days=32)).replace(day=1).strftime("%Y-%m-%d")
     return {
         "plan": user.plan,
         "plan_name": (tier.get("name_en") if en else tier.get("name")) or user.plan,
@@ -155,7 +158,7 @@ async def get_usage(
             usage_item("report_exports", int(dict(usage.get("report_exports", {})).get(month_key, 0) or 0), limits["report_exports_per_month"], "month"),
             usage_item("projects", project_count, limits.get("max_projects", -1), "total"),
         ],
-        "resets": {"day": tomorrow, "month": next_month, "timezone": "UTC"},
+        "resets": {"day": tomorrow, "month": next_month, "timezone": "UTC" if en else "Asia/Shanghai"},
     }
 
 
