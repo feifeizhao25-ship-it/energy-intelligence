@@ -514,10 +514,8 @@ async def export_stored_answer(
     if not record or user is None or record["user_id"] != str(user_id):
         raise HTTPException(status_code=404, detail=missing)
     if record.get("blocked"):
-        raise HTTPException(
-            status_code=403,
-            detail="A refusal cannot be exported." if market == "global" else "拒答内容不能导出。",
-        )
+        detail = "拒答内容不能导出。" if market != "global" else "A refusal cannot be exported."
+        raise HTTPException(status_code=403, detail=detail)
     offer = _export_offer(user)
     if not offer.get(body.format):
         market = record["market"]
