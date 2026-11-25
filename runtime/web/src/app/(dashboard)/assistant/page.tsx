@@ -51,12 +51,12 @@ const knowledgeCards = [
     {
         title: '双面组件',
         color: 'purple',
-        desc: '利用背面接收地面反射光进行发电的光伏组件。在沙漠等高反射率场景下，发电增益可达 10%-25%。',
+        desc: '利用背面接收地面反射光进行发电的光伏组件。增益幅度取决于反射率和安装方式，这里不写没有出处的百分比。',
     },
     {
         title: '跟踪支架',
         color: 'orange',
-        desc: '通过实时调整组件角度以追踪太阳位置，增加直射辐射接收量。可提升 15%-20% 发电量。',
+        desc: '通过调整组件角度追踪太阳位置，增加直射辐射接收量。提升幅度需按项目测算，这里不写没有出处的百分比。',
     },
 ];
 
@@ -227,8 +227,8 @@ export default function AssistantPage() {
                             </div>
                         </div>
                         <div className="flex gap-2">
-                            <button type="button" className="rounded-lg border border-border-dark px-3 py-2 text-xs" onClick={() => fetch('/api/feedback', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'thumbs_down', text: '回答无用' }) })}>回答无用</button>
-                            <button type="button" className="rounded-lg border border-border-dark px-3 py-2 text-xs" onClick={() => fetch('/api/feedback', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'low_rating', rating: 1, text: '低分' }) })}>低分</button>
+                            <button type="button" className="rounded-lg border border-border-dark px-3 py-2 text-xs" onClick={() => fetch('/api/feedback', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'helpful', text: '有帮助' }) })}>有帮助</button>
+                            <button type="button" className="rounded-lg border border-border-dark px-3 py-2 text-xs" onClick={() => fetch('/api/feedback', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'not_helpful', text: '没帮助' }) })}>没帮助</button>
                         </div>
                     </div>
                 </div>
