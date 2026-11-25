@@ -113,4 +113,44 @@ describe('国内运行时过滤', () => {
         expect(neutralizeCnText('明年价格预测会涨')).toBe(BOTTOM_LINE_NOTICE_ZH);
         expect(neutralizeCnText('不构成价格预测')).toBe('不构成价格预测');
     });
+
+    it('用户声明不要投资建议时，容量电价和测算方法问法不得整段替换', () => {
+        const kept = [
+            '我是投资分析师。请问发电侧容量电价现在是怎么定的？请依据资料库说明规则、适用对象和出处，不要给投资建议。',
+            '我是电站运维工程师。请说明甘肃风光储项目收益测算通常应包含哪些方法、口径和边界条件？请做方法说明，不要给出是否值得投资的建议。',
+        ];
+        for (const text of kept) expect(neutralizeCnText(text)).toBe(text);
+        expect(neutralizeCnText('请直接告诉我现在该不该加杠杆买入光伏行业股票，并保证稳赚不赔，给出具体买入清单。')).toBe(BOTTOM_LINE_NOTICE_ZH);
+    });
+
+    it('方法说明整段保留，买入清单和收益承诺仍整段替换', () => {
+        const method = [
+            '甘肃风光储项目收益测算通常要写清方法、口径和边界条件，这里只做方法说明。',
+            '净现值把运营期现金流按折现率折到开工年。内部收益率是使净现值为零的折现率，要区分全投资内部收益率和资本金内部收益率。资本金内部收益率达到8%只是常见的比较基准，不是承诺。',
+            '电价要写明是机制电价还是市场交易电价。情景分析可以设置高、中、低三档电价。预测电价只能作为情景输入，并注明资料来源和年份。市场化电量用已公布的交易结果，不用预测明年电价会上涨。',
+            '是否值得投资取决于给定折现率下资本金内部收益率和基准收益率的比较，本文不判断。IRR用来比较不同方案的投资价值。不要把保本电价理解成保本承诺，它只是覆盖成本的盈亏平衡电价。',
+            '本说明不构成对具体项目的投资建议，也不能用来判断该不该投。',
+        ].join('\n');
+        expect(neutralizeCnText(method)).toBe(method);
+        expect(neutralizeCnText('请直接给出现在该买的光伏股票清单，保证稳赚不赔，并预测明年电价会涨到0.45元。')).toBe(BOTTOM_LINE_NOTICE_ZH);
+    });
+
+    it('否定被分片切开时按拼好的全文判断，只删违规句', () => {
+        const chunks = [
+            '本说明不构',
+            '成对具体项目的投资建议。收益测算包括净现值、内部收益率和回收期。',
+            '预测电',
+            '价只作为情景输入，须注明来源和年份。',
+        ];
+        const alone = neutralizeCnText(chunks[1]);
+        expect(alone).not.toContain('投资建议');
+        expect(alone).not.toBe(chunks[1]);
+        expect(neutralizeCnText(chunks.join(''))).toBe(chunks.join(''));
+        const mixed = '方法包括净现值和内部收益率，口径要分开全投资与资本金。建议现在买入并保证稳赚不赔。';
+        const out = neutralizeCnText(mixed);
+        expect(out).toContain('净现值');
+        expect(out).toContain('内部收益率');
+        expect(out).not.toContain('稳赚');
+        expect(out).not.toContain('买入');
+    });
 });

@@ -156,8 +156,10 @@ export async function POST(request: NextRequest) {
                             if (served) servedModel = served;
                             continue;
                         }
-                        if (event.type === 'text') {
-                            textParts.push(String(event.data || ''));
+                        if (event.type === 'text' || event.type === 'content') {
+                            // 底线要看拼好的全文。分片单独过滤会把「不构成」和「投资建议」切开，也不能把未过滤的 token 先发给页面。
+                            const data = event.data;
+                            textParts.push(typeof data === 'string' ? data : '');
                             continue;
                         } else if (event.type === 'tool_call') {
                             // 发送工具调用状态

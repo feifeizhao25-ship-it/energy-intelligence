@@ -7,7 +7,7 @@ from fastapi import APIRouter, Header, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
-from app.services.bottom_line import enforce_bottom_line, find_violations
+from app.services.bottom_line import blocked_input_text, enforce_bottom_line
 from app.services.domestic_router import complete_domestic, complete_domestic_with_tools
 from app.services.embeddings_cn import embed_texts
 from app.services.feedback_samples import KINDS, record_sample
@@ -74,9 +74,11 @@ async def domestic_chat(body: DomesticChatIn, x_internal_token: str | None = Hea
         for item in body.messages
         if isinstance(item, dict) and str(item.get("role") or "user").lower() in _CHECKED_ROLES
     )
-    if find_violations(incoming, market="cn"):
+    blocked = blocked_input_text(incoming, market="cn")
+    if blocked:
+        # 输入层：对话里只要有买入、承诺或预测，整段换成标准说明，不再调用模型。
         return {
-            "content": enforce_bottom_line(incoming, market="cn"),
+            "content": blocked,
             "provider": "bottom_line",
             "model": "blocked",
         }

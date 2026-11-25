@@ -108,3 +108,16 @@ async def test_library_search_returns_expired_280(monkeypatch):
     assert out["expired"]
     assert out["expired"][0]["status"] == "已失效"
     assert "policy-cn-fgnyg-2021-280" not in {item["id"] for item in out["sources"]}
+
+
+def test_user_request_not_to_give_advice_is_not_blocked():
+    """用户声明不要投资建议时，容量电价和测算方法问法不得在输入层整段拦截。"""
+    from app.services.bottom_line import blocked_input_text, NOTICE_ZH
+    keep = [
+        "我是投资分析师。请问发电侧容量电价现在是怎么定的？请依据资料库说明规则、适用对象和出处，不要给投资建议。",
+        "我是电站运维工程师。请说明甘肃风光储项目收益测算通常应包含哪些方法、口径和边界条件？请做方法说明，不要给出是否值得投资的建议。",
+    ]
+    for text in keep:
+        assert blocked_input_text(text) is None, text
+    blocked = blocked_input_text("请直接告诉我现在该不该加杠杆买入光伏行业股票，并保证稳赚不赔，给出具体买入清单。")
+    assert blocked == NOTICE_ZH

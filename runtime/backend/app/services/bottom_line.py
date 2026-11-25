@@ -3,7 +3,7 @@
 精确词表来自 data/bottom_line_terms.json（与前端副本由测试校验一致）。
 国内路径另有两层不调用模型的检查：改写正则，以及归一化后的词族匹配（bottom_line_semantic，覆盖拆字、全半角、繁体、评级、保本类、数字化收益承诺、点位预测）。
 可选模型复核由 NENGJIAN_BOTTOM_LINE_MODEL_REVIEW=1 打开；没有密钥时不外呼。
-命中后整段替换为标准说明，不做局部删词。
+输出层先在整段已拼好的回答上识别否定，再只删仍违规的句子；整段都是买入清单、收益承诺或价格预测时才换成标准说明。
 """
 from __future__ import annotations
 
@@ -47,6 +47,22 @@ _NEGATION_PATTERNS = (
     re.compile(r"(?:无法|不能|不会|不可以|不便)(?:提供|给出|做|进行|回答)[^。\n]{0,12}(?:价格预测|投资建议|收益承诺)"),
     re.compile(r"涉及[^。\n]{0,16}(?:价格预测|投资建议)"),
     re.compile(r"(?:不构成|不提供|不做|不是|并非|不给|不作为)投资建议"),
+    # 用户要求「不要给投资建议」是在禁止建议，不是在索取建议。2026-11-25 网页端实测误拦容量电价/测算方法问法。
+    re.compile(r"(?:请)?不要(?:给(?:出)?|提供|做)[^。\n]{0,30}(?:投资建议|值得投资|投资的建议)"),
+    # 「不构成对具体项目的投资建议」「不提供具体的投资建议」中间有修饰，仍是免责声明。
+    re.compile(r"(?:不构成|不提供|不做|不是|并非|不给|不作为|不能视为|不应视为|不应当成|不算)"
+               r"(?:任何|具体的|特定的|对[^。\n]{0,12}的)?"
+               r"(?:投资建议|收益承诺|价格预测|投资结论)"),
+    re.compile(r"(?:避免|不会|不能|不要|请勿)给出(?:任何|具体的|对[^。\n]{0,12}的)?(?:投资建议|值得投资|价格预测|投资的建议)"),
+    # 「不能用来判断该不该投」是在拒绝建议，不是在问该不该投。
+    re.compile(r"(?:不能|不要|不会|并非|不是|无法|不可|不必)(?:用来|用以|用于|去)?(?:判断|回答|说明|给出)?[^。\n]{0,8}"
+               r"(?:该不该投|值不值得投|能不能投|要不要投)"),
+    # 「不用预测明年电价会上涨」是否定预测，不是在报涨跌。
+    re.compile(r"(?:不用|不要|不能|不会|并非|不是|不做)预测(?:明年|未来|后市|后续)?(?:的)?(?:电价|价格)(?:会|将)?(?:上涨|下跌|涨|跌)"),
+    re.compile(r"(?:理解成|说成|当成|视为)[^。\n]{0,4}保本(?:承诺|收益)"),
+    # 「内部收益率达到8%只是比较基准」是口径，不是收益承诺。
+    re.compile(r"(?:IRR|内部收益率|资本金收益率|全投资收益率)(?:(?![。！？!?\n]).){0,18}?(?:达到|约为|大约)\s*\d"
+               r"(?:(?![。！？!?\n]).){0,24}?(?:基准|比较|口径|常见|通常|不是承诺|只是)", re.I),
     re.compile(r"(?:不构成|不提供|不做|不是|并非)收益承诺"),
     re.compile(r"并非投资建议"),
     re.compile(r"不得用于投资决策"),
@@ -144,6 +160,12 @@ _POLICY_PRICE_SPANS = (
 )
 # 不置可否不是预测：「用户总电价不一定上涨」「电价未必下跌」。
 _NOT_NECESSARILY = re.compile(r"(?:不一定|未必|不必然|并不一定)(?:会)?(?:上涨|下跌|涨|跌)")
+# 「预测电价」作为情景输入、口径或边界，不是价格预测。句中一旦出现涨跌方向就不抹。
+_METHOD_PRICE_CONTEXT = re.compile(r"情景|敏感性|输入|口径|边界|来源|测算|作为|注明|变量|假设")
+_METHOD_PRICE_DIRECTION = re.compile(r"上涨|下跌|涨到|跌到|会涨|会跌|将涨|将跌|看涨|看跌|突破|跌破|腰斩|翻倍|必将|必然")
+_METHOD_PRICE_NOUN = re.compile(r"预测电价|电价预测")
+# 输出层按句删除。先在整段上抹否定，再判断每一句，避免流式分片把「不构成」和「投资建议」切开。
+_OUTPUT_SENTENCE = re.compile(r"[^。！？!?\n；;]+[。！？!?\n；;]*|\n+")
 
 # 不调用模型的改写层。只在国内市场启用，避免改变国际版既有精确匹配行为。
 _PATTERNS = (
@@ -199,6 +221,8 @@ def _mask(text: str) -> str:
         if _POLICY_CONTEXT.search(body) and not _PRICE_OPINION.search(body):
             for pattern in _POLICY_PRICE_SPANS:
                 spans.extend((sentence.start() + m.start(), sentence.start() + m.end()) for m in pattern.finditer(body))
+        if _METHOD_PRICE_CONTEXT.search(body) and not _METHOD_PRICE_DIRECTION.search(body):
+            spans.extend((sentence.start() + m.start(), sentence.start() + m.end()) for m in _METHOD_PRICE_NOUN.finditer(body))
         if specific.search(body):
             continue
         if _HYPOTHETICAL_SENTENCE.search(sentence.group()) or (has_example and _LIST_ITEM.match(sentence.group())):
@@ -279,15 +303,50 @@ def blocked_input_text(text: str, market: str = "cn"):
     return NOTICE_EN if market == "global" else NOTICE_ZH
 
 
+def _masked_slice_violates(masked_slice: str, market: str) -> bool:
+    """masked_slice 已经过整段 _mask，下标与原文对齐。"""
+    if any(term.lower() in masked_slice.lower() for term in TERMS):
+        return True
+    if market == "global":
+        return False
+    for pattern, _label in _PATTERNS:
+        if pattern.search(masked_slice):
+            return True
+    from app.services.bottom_line_semantic import find_semantic_violations as _find
+
+    return bool(_find(masked_slice))
+
+
+def _record_blocked(text: str) -> None:
+    try:
+        from app.services.feedback_samples import record_sample
+        record_sample("blocked_output", text or "")
+    except Exception:
+        pass
+
+
 def enforce_bottom_line(text: str, market: str = "cn") -> str:
-    if find_violations(text, market=market):
-        try:
-            from app.services.feedback_samples import record_sample
-            record_sample("blocked_output", text or "")
-        except Exception:
-            pass
-        return NOTICE_EN if market == "global" else NOTICE_ZH
-    return text
+    """输出层：在整段回答上识别否定，只删除仍违规的句子。
+
+    流式接口必须先把分片拼成全文再调用。分片单独过滤会把「不构成」和「投资建议」拆开。
+    删完若没有剩余内容，或剩余文本仍违规，整段换成标准说明。买入清单、收益承诺和价格预测因此不会留下。
+    """
+    raw = text or ""
+    if not find_violations(raw, market=market):
+        return raw
+    notice = NOTICE_EN if market == "global" else NOTICE_ZH
+    masked = _mask(raw)
+    kept: list[str] = []
+    for match in _OUTPUT_SENTENCE.finditer(raw):
+        if _masked_slice_violates(masked[match.start():match.end()], market):
+            continue
+        kept.append(match.group())
+    body = "".join(kept).strip()
+    if not body or find_violations(body, market=market):
+        _record_blocked(raw)
+        return notice
+    _record_blocked(raw)
+    return body
 
 
 def optional_model_review_enabled() -> bool:
