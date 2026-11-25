@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
         });
     } catch {
         if (process.env.NENGJIAN_DEMO_DATA !== '1') {
-            return NextResponse.json({ success: false, sample: false, data: [], note: '政策库未连接' }, { status: 503 });
+            return NextResponse.json({ success: false, sample: false, data: [], note: '政策列表暂时打不开。登录后可以再查已审核政策。' }, { status: 503 });
         }
         const matched = DEMO_POLICIES.filter((row) => !q || `${row.title}${row.doc_number}${row.region}`.includes(q));
         const data = asOf ? effectiveOn(matched, asOf) : matched;
@@ -59,7 +59,7 @@ export async function GET(req: NextRequest) {
             data,
             note: asOf
                 ? `示例。按 ${asOf} 回看下列已收录文号，不是数据库快照。`
-                : '示例。政策库未连接，这里只列出已收录文号，不是数据库快照。',
+                : '示例。登录后查看已审核政策。这里只列出已收录文号，不是数据库快照。',
         });
     }
 }
