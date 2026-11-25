@@ -203,7 +203,7 @@ const IncentivesPage: React.FC = () => {
               <ul className="space-y-3">
                 {[
                   'That page describes a 30% base rate for projects that meet prevailing wage and apprenticeship requirements, and a 6% base rate when they do not.',
-                  'The same page describes bonus amounts that can stack. Those sentences are the page text, not a resolution of Notice 2025-42 or the 2026-06-06 vacatur report.',
+                  'Status: under review. The library record for IRS Notice 2025-42 is awaiting re-verification. This page does not treat the notice, or the 2026-06-06 vacatur report, as settled.',
                   'The calculator on the left uses the 30% figure from that page only so the arithmetic is visible. It does not decide eligibility.',
                 ].map((line) => (
                   <li
