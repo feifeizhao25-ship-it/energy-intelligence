@@ -7,7 +7,7 @@
 2. 按词族匹配，覆盖评级、保本保息、数字化的收益承诺、暗示性黑话、
    带数字的价格点位预测、变相提问等。
 免责声明（「不构成投资建议」「不提供价格预测」等）先由 bottom_line._mask 抹掉，不会误伤。
-命中后由 bottom_line.find_violations 一并返回，整段替换为标准说明。
+命中后由 bottom_line.find_violations 一并返回；输出层只删除仍违规的句子，整段都违规时才换成标准说明。
 """
 from __future__ import annotations
 

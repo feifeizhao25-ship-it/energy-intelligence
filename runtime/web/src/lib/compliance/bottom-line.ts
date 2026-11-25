@@ -38,6 +38,17 @@ const NEGATION_SOURCES: Array<[string, string]> = [
     ['(?:不构成|不提供|不做|不是|并非|不给|不作为)投资建议', ''],
     // 用户要求「不要给投资建议」是在禁止建议，不是在索取建议。2026-11-25 实测误拦容量电价/测算方法问法。
     ['(?:请)?不要(?:给(?:出)?|提供|做)[^。\\n]{0,30}(?:投资建议|值得投资|投资的建议)', ''],
+    // 「不构成对具体项目的投资建议」「不提供具体的投资建议」中间有修饰，仍是免责声明。
+    ['(?:不构成|不提供|不做|不是|并非|不给|不作为|不能视为|不应视为|不应当成|不算)(?:任何|具体的|特定的|对[^。\\n]{0,12}的)?(?:投资建议|收益承诺|价格预测|投资结论)', ''],
+    ['(?:避免|不会|不能|不要|请勿)给出(?:任何|具体的|对[^。\\n]{0,12}的)?(?:投资建议|值得投资|价格预测|投资的建议)', ''],
+    // 「不能用来判断该不该投」是在拒绝建议，不是在问该不该投。
+    ['(?:不能|不要|不会|并非|不是|无法|不可|不必)(?:用来|用以|用于|去)?(?:判断|回答|说明|给出)?[^。\\n]{0,8}(?:该不该投|值不值得投|能不能投|要不要投)', ''],
+    // 「不用预测明年电价会上涨」是否定预测，不是在报涨跌。
+    ['(?:不用|不要|不能|不会|并非|不是|不做)预测(?:明年|未来|后市|后续)?(?:的)?(?:电价|价格)(?:会|将)?(?:上涨|下跌|涨|跌)', ''],
+    ['(?:理解成|说成|当成|视为)[^。\\n]{0,4}保本(?:承诺|收益)', ''],
+    ['(?:是否|能否|值不值得)\\s*(?:值得\\s*)?(?:投资|配置|布局)', ''],
+    ['保本(?:电价|点|价格|价|线)', ''],
+    ['(?:用来|用于|可以|能够|能)(?:比较|衡量|评估|判断|反映)[^。\\n]{0,14}?投资价值', ''],
     ['(?:不构成|不提供|不做|不是|并非)收益承诺', ''],
     ['并非投资建议', ''],
     ['不得用于投资决策', ''],
@@ -90,15 +101,22 @@ const PRICE_OPINION = /我|建议|推荐|锁定|抓紧|尽快|明年|后年|未�
 const POLICY_PRICE_SPANS = [/预计.{0,16}?(?:电价|价格)/g, /(?:电价|价格).{0,8}?(?:将|会)(?:上涨|下跌|涨|跌)/g];
 const NOT_NECESSARILY = /(?:不一定|未必|不必然|并不一定)(?:会)?(?:上涨|下跌|涨|跌)/g;
 const SENTENCE = /[^。！？!?\n；;]+/g;
+const METHOD_PRICE_CONTEXT = /情景|敏感性|输入|口径|边界|来源|测算|作为|注明|变量|假设/;
+const METHOD_PRICE_DIRECTION = /上涨|下跌|涨到|跌到|会涨|会跌|将涨|将跌|看涨|看跌|突破|跌破|腰斩|翻倍|必将|必然/;
+const METHOD_PRICE_NOUN = /预测电价|电价预测/g;
+const OUTPUT_SENTENCE = /[^。！？!?\n；;]+[。！？!?\n；;]*|\n+/g;
 
 function policyPriceSpans(raw: string): Array<[number, number]> {
     const spans: Array<[number, number]> = [];
+    SENTENCE.lastIndex = 0;
     for (const sentence of raw.matchAll(SENTENCE)) {
         const body = sentence[0];
         const base = sentence.index ?? 0;
         const patterns = [NOT_NECESSARILY];
         if (POLICY_CONTEXT.test(body) && !PRICE_OPINION.test(body)) patterns.push(...POLICY_PRICE_SPANS);
+        if (METHOD_PRICE_CONTEXT.test(body) && !METHOD_PRICE_DIRECTION.test(body)) patterns.push(METHOD_PRICE_NOUN);
         for (const pattern of patterns) {
+            pattern.lastIndex = 0;
             for (const match of body.matchAll(pattern)) {
                 const start = base + (match.index ?? 0);
                 spans.push([start, start + match[0].length]);
@@ -161,10 +179,24 @@ export function findParaphraseViolations(text: string): string[] {
     return found;
 }
 
-/** 国内文本：精确词或改写都命中时整段换成标准说明。精确词先抹掉免责声明。 */
+function sliceViolates(masked: string): boolean {
+    return findRuntimeExact(masked).length > 0 || findParaphraseViolations(masked).length > 0;
+}
+
+/** 国内文本：在整段上识别否定，只删仍违规的句子。分片要先拼好再调用。删完没有剩余或剩余仍违规时，整段换成标准说明。 */
 export function neutralizeCnText(text: string): string {
-    if (findRuntimeExact(text).length || findParaphraseViolations(text).length) {
-        return BOTTOM_LINE_NOTICE_ZH;
+    const raw = text || '';
+    if (!raw) return raw;
+    const masked = maskNegations(raw);
+    if (!sliceViolates(masked)) return raw;
+    const kept: string[] = [];
+    OUTPUT_SENTENCE.lastIndex = 0;
+    for (const match of raw.matchAll(OUTPUT_SENTENCE)) {
+        const start = match.index ?? 0;
+        if (sliceViolates(masked.slice(start, start + match[0].length))) continue;
+        kept.push(match[0]);
     }
-    return text;
+    const body = kept.join('').trim();
+    if (!body || sliceViolates(maskNegations(body))) return BOTTOM_LINE_NOTICE_ZH;
+    return body;
 }

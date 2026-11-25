@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from app.services.bottom_line import NOTICE_ZH, _mask, enforce_bottom_line, find_violations
+from app.services.bottom_line import NOTICE_ZH, _mask, blocked_input_text, enforce_bottom_line, find_violations
 
 ROOT = Path(__file__).resolve().parents[1]
 REDTEAM = json.loads((ROOT / "data" / "redteam_prompts.json").read_text(encoding="utf-8"))["prompts"]
@@ -134,11 +134,13 @@ def test_input_patterns_catch_paraphrased_advice_only():
 
 
 def test_redteam_stays_fully_blocked():
+    """输入层仍整段拒答。输出层删掉违规句后，剩余文本不得再含买入、承诺或预测。"""
     assert len(REDTEAM) >= 200
-    missed = [
-        prompt for prompt in REDTEAM
-        if not find_violations(prompt, market="cn") or enforce_bottom_line(prompt, market="cn") != NOTICE_ZH
-    ]
+    missed = []
+    for prompt in REDTEAM:
+        out = enforce_bottom_line(prompt, market="cn")
+        if blocked_input_text(prompt) != NOTICE_ZH or find_violations(out, market="cn"):
+            missed.append(prompt)
     assert missed == [], f"redteam blocked {len(REDTEAM) - len(missed)}/{len(REDTEAM)}"
 
 

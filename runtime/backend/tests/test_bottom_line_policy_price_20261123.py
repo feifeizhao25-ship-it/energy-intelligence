@@ -54,5 +54,9 @@ def test_whole_capacity_price_answer_passes():
 
 
 def test_same_answer_with_forecast_sentence_is_blocked():
+    """事实句保留，价格预测那一句删掉，预测原文不得留下。"""
     answer = "根据114号文，容量电价按比例回收固定成本。我预计明年电价会上涨10%。"
-    assert enforce_bottom_line(answer) == NOTICE_ZH
+    out = enforce_bottom_line(answer)
+    assert "容量电价按比例回收固定成本" in out
+    assert "上涨" not in out
+    assert find_violations(out) == []

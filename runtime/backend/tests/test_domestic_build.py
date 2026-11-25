@@ -7,7 +7,7 @@ from zoneinfo import ZoneInfo
 import pytest
 
 from app.config import Settings
-from app.services.bottom_line import NOTICE_ZH, enforce_bottom_line, find_violations
+from app.services.bottom_line import NOTICE_ZH, blocked_input_text, enforce_bottom_line, find_violations
 from app.services.budget_caps import BudgetExceeded, assert_product_budget, charge_product_budget, reset_budget_state
 from app.services.electricity_prices import connect as price_connect, insert_price, query_prices
 from app.services.policy_pipeline import connect as policy_connect, publish_approved, stage_snapshot
@@ -34,8 +34,8 @@ def test_redteam_set_is_about_200_and_all_blocked():
     prompts = REDTEAM["prompts"]
     assert len(prompts) >= 200
     for prompt in prompts:
-        assert find_violations(prompt, market="cn"), prompt
-        assert enforce_bottom_line(prompt, market="cn") == NOTICE_ZH
+        assert blocked_input_text(prompt, market="cn") == NOTICE_ZH, prompt
+        assert find_violations(enforce_bottom_line(prompt, market="cn"), market="cn") == [], prompt
 
 
 def test_disclaimer_is_not_treated_as_advice():

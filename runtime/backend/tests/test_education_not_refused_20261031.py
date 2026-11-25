@@ -135,7 +135,11 @@ def test_definitional_answers_are_not_replaced_in_the_international_edition(text
 
 @pytest.mark.parametrize("text", ADVICE_ZH)
 def test_advice_guarantees_and_forecasts_are_still_replaced_in_the_domestic_edition(text):
-    assert enforce_bottom_line(text, market="cn") == NOTICE_ZH
+    """整句都是建议、承诺或预测时换成标准说明；夹在方法说明里的那一句删掉，承诺不得留下。"""
+    assert find_violations(text, market="cn"), text
+    out = enforce_bottom_line(text, market="cn")
+    assert out != text
+    assert find_violations(out, market="cn") == [], (text, out)
 
 
 @pytest.mark.parametrize("text", ADVICE_EN)
@@ -145,7 +149,10 @@ def test_advice_is_still_replaced_in_the_international_edition(text):
 
 def test_the_disclaimer_in_any_combination_does_not_hide_a_violation_next_to_it():
     text = "不提供投资建议或收益承诺。但这个项目稳赚不赔。"
-    assert enforce_bottom_line(text, market="cn") == NOTICE_ZH
+    out = enforce_bottom_line(text, market="cn")
+    assert "不提供投资建议或收益承诺" in out
+    assert "稳赚" not in out
+    assert find_violations(out, market="cn") == []
 
 
 @pytest.mark.parametrize("q", ["收益率是什么意思？储能项目怎么看？", "什么是内部收益率IRR？", "净现值NPV怎么理解？", "度电成本LCOE怎么算？",
