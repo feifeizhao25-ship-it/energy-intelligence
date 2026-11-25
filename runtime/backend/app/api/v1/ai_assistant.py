@@ -28,6 +28,7 @@ from app.services.answer_structure import STYLES, structure_answer, style_instru
 from app.services import grounding
 from app.services.bottom_line import NOTICE_EN, NOTICE_ZH, blocked_input_text, enforce_bottom_line, find_violations
 from app.services.budget_caps import BudgetExceeded, assert_product_budget, charge_product_budget
+from app.errors.catalog import public_message
 from app.models.user import User
 import io
 import json
@@ -409,7 +410,7 @@ async def chat(
     try:
         assert_product_budget(user_id, market)
     except BudgetExceeded as error:
-        raise HTTPException(status_code=429, detail={"error": "PRODUCT_BUDGET_EXCEEDED", "message": str(error)}) from error
+        raise HTTPException(status_code=429, detail={"error": "PRODUCT_BUDGET_EXCEEDED", "message": public_message("E_QUOTA", market)}) from error
     hits = _retrieve(message, market)
     if not hits and grounding.is_policy_question(message):
         refusal = _no_source_payload(market, style, message, getattr(user, "country", None))
@@ -586,7 +587,7 @@ async def chat_json(
                 **stored,
             }
     except BudgetExceeded as error:
-        raise HTTPException(status_code=429, detail={"error": "PRODUCT_BUDGET_EXCEEDED", "message": str(error)}) from error
+        raise HTTPException(status_code=429, detail={"error": "PRODUCT_BUDGET_EXCEEDED", "message": public_message("E_QUOTA", market)}) from error
     except RuntimeError as error:
         raise HTTPException(status_code=503, detail=_ai_unavailable(market)) from error
     await consume_ai_quota(user, db)
@@ -634,7 +635,7 @@ async def analyze(
         prompt = _grounded_prompt(SYSTEM_PROMPT if market == "global" else CN_SYSTEM_PROMPT, hits, market, query=query)
         result = await ai_assistant.chat_openai_with_metadata(query, prompt, market=market)
     except BudgetExceeded as error:
-        raise HTTPException(status_code=429, detail={"error": "PRODUCT_BUDGET_EXCEEDED", "message": str(error)}) from error
+        raise HTTPException(status_code=429, detail={"error": "PRODUCT_BUDGET_EXCEEDED", "message": public_message("E_QUOTA", market)}) from error
     except RuntimeError as error:
         raise HTTPException(status_code=503, detail=_ai_unavailable(market)) from error
     await consume_ai_quota(user, db)
@@ -836,7 +837,7 @@ async def ask(
         prompt = _grounded_prompt(SYSTEM_PROMPT if market == "global" else CN_SYSTEM_PROMPT, hits, market, body.style, query=body.query)
         result = await ai_assistant.chat_openai_with_metadata(body.query, prompt, market=market)
     except BudgetExceeded as error:
-        raise HTTPException(status_code=429, detail={"error": "PRODUCT_BUDGET_EXCEEDED", "message": str(error)}) from error
+        raise HTTPException(status_code=429, detail={"error": "PRODUCT_BUDGET_EXCEEDED", "message": public_message("E_QUOTA", market)}) from error
     except RuntimeError as error:
         raise HTTPException(status_code=503, detail=_ai_unavailable(market)) from error
     _charge_cn(user_id, market)

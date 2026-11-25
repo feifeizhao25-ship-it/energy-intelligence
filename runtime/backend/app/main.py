@@ -70,45 +70,67 @@ app.add_middleware(
 from starlette.exceptions import HTTPException as StarletteHTTPException  # noqa: E402
 
 
+_FRAMEWORK_AUTH = {"Not authenticated", "Not authenticated."}
+
+
+def _public_http_detail(detail, market: str, status_code: int):
+    from app.errors.catalog import load_catalog, public_message
+    from app.services.market_localization import localize_error_detail
+
+    if isinstance(detail, str):
+        text = detail.strip()
+        if text in _FRAMEWORK_AUTH:
+            return public_message("E_AUTH", market)
+        if text in load_catalog():
+            return public_message(text, market)
+    if market == "global":
+        return localize_error_detail(detail, status_code)
+    return detail
+
+
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    """R18 红线：参数校验错误必须带用户可读 message。"""
-    safe_errors = []
-    for err in exc.errors():
-        err = dict(err)
-        ctx = err.get("ctx")
-        if ctx:
-            err["ctx"] = {k: str(v) for k, v in ctx.items()}
-        safe_errors.append(err)
+    """参数错误只返回对照表里的句子，不把校验器的英文原文交给用户。"""
     from app.core.market import request_market
-    message = "请求参数无效"
-    if request_market(request) == "global":
-        from app.services.market_localization import localize_error_text
-        message = localize_error_text(message, 422)
+    from app.errors.catalog import public_message
+
+    market = request_market(request)
+    message = public_message("E1001", market)
+    safe_errors = [{"loc": err.get("loc"), "code": "E1001"} for err in exc.errors()]
     return JSONResponse(
         status_code=422,
         content={
             "code": 422,
             "message": message,
-            "error": {"details": safe_errors},
+            "error": {"code": "E1001", "details": safe_errors},
         },
     )
 
 
 @app.exception_handler(StarletteHTTPException)
 async def http_exception_handler_by_market(request: Request, exc: StarletteHTTPException):
-    """International callers (X-App-Market: global) never get Chinese error text: billing, AI and other routes raise
-    Chinese ``detail`` strings, which are answered with the English counterpart (or a generic English line)."""
+    """国内版与国际版的用户文案都从错误码对照表取；国际版再把其余中文详情译成英文。"""
     from fastapi.exception_handlers import http_exception_handler
     from app.core.market import request_market
-    if request_market(request) == "global":
-        from app.services.market_localization import localize_error_detail
-        exc = StarletteHTTPException(
-            status_code=exc.status_code,
-            detail=localize_error_detail(exc.detail, exc.status_code),
-            headers=getattr(exc, "headers", None),
-        )
+
+    market = request_market(request)
+    exc = StarletteHTTPException(
+        status_code=exc.status_code,
+        detail=_public_http_detail(exc.detail, market, exc.status_code),
+        headers=getattr(exc, "headers", None),
+    )
     return await http_exception_handler(request, exc)
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    """未接住的异常只返回对照表里的服务失败句，不把内部英文回给用户。"""
+    from app.core.market import request_market
+    from app.errors.catalog import public_message
+
+    logger.exception("未处理的接口异常")
+    market = request_market(request)
+    return JSONResponse(status_code=500, content={"code": "E_SERVICE", "detail": public_message("E_SERVICE", market)})
 
 
 async def _probe_database() -> str:

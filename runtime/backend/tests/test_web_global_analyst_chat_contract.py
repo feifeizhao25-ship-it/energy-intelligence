@@ -57,7 +57,14 @@ def test_no_web_global_caller_posts_json_to_the_streaming_chat_route():
 async def test_streaming_chat_rejects_an_anonymous_json_body(client):
     response = await client.post("/api/v1/ai/chat", json={"conversation_id": "conv-1", "message": "hello"})
     assert response.status_code == 401
-    assert response.json()["detail"] == "Not authenticated"
+    assert response.json()["detail"] == "请先登录后再继续。"
+    global_response = await client.post(
+        "/api/v1/ai/chat",
+        headers={"X-App-Market": "global"},
+        json={"conversation_id": "conv-1", "message": "hello"},
+    )
+    assert global_response.status_code == 401
+    assert global_response.json()["detail"] == "Please sign in to continue."
 
 
 @pytest.mark.asyncio
