@@ -126,7 +126,10 @@ async def get_usage(
         raise HTTPException(status_code=404, detail="用户不存在")
     now = datetime.now(timezone.utc)
     usage = dict(user.usage_quota or {})
-    limits = PLAN_QUOTAS.get(user.plan, PLAN_QUOTAS["free"])
+    from app.services.current_entitlement import current_entitlement, name_for_market
+
+    entitlement = current_entitlement(user)
+    limits = entitlement["quotas"]
 
     def usage_item(category: str, used: int, limit: int, period: str):
         ratio = 0 if limit == -1 else used / max(limit, 1)
@@ -141,14 +144,15 @@ async def get_usage(
     tier = {}
     try:
         from app.services.entitlements_registry import load_registry
-        tier = (load_registry().get("tiers") or {}).get(user.plan) or {}
+        tier = (load_registry().get("tiers") or {}).get(entitlement["plan_id"]) or {}
     except Exception:
         tier = {}
     tomorrow = (now + timedelta(days=1)).strftime("%Y-%m-%d")
     next_month = (now.replace(day=1) + timedelta(days=32)).replace(day=1).strftime("%Y-%m-%d")
     return {
-        "plan": user.plan,
-        "plan_name": (tier.get("name_en") if en else tier.get("name")) or user.plan,
+        "plan": entitlement["plan_id"],
+        "plan_name": name_for_market(entitlement, user.market),
+        "expires_at": entitlement["expires_at"],
         "plan_features": list(tier.get("features_en" if en else "features_zh") or []),
         "items": [
             usage_item("ai_queries", int(dict(usage.get("ai_calls", {})).get(day_key, 0) or 0), limits["ai_queries_per_day"], "day"),
@@ -374,26 +378,29 @@ async def get_subscription(
     if not user:
         raise HTTPException(status_code=404, detail="用户不存在")
 
-    if (user.market or "cn") != "cn" and user.stripe_customer_id:
+    from app.services.current_entitlement import current_entitlement, name_for_market
+
+    entitlement = current_entitlement(user)
+    market = user.market or "cn"
+    payload = {
+        "plan": entitlement["plan_id"],
+        "plan_name": name_for_market(entitlement, market),
+        "expires_at": entitlement["expires_at"],
+        "status": "active",
+        "current_period_end": entitlement["expires_at"],
+        "customer_id": None if market == "cn" else user.stripe_customer_id,
+    }
+    if market != "cn" and user.stripe_customer_id:
         try:
             subs = stripe.Subscription.list(customer=user.stripe_customer_id, limit=1)
             if subs.data:
                 sub = subs.data[0]
-                return {
-                    "plan": user.plan,
-                    "status": sub.status,
-                    "current_period_end": sub.current_period_end,
-                    "customer_id": user.stripe_customer_id,
-                }
+                payload["status"] = sub.status
+                payload["current_period_end"] = sub.current_period_end
+                payload["customer_id"] = user.stripe_customer_id
         except Exception:
             pass
-
-    return {
-        "plan": user.plan or "free",
-        "status": "active",
-        "current_period_end": user.subscription_expires_at.isoformat() if user.subscription_expires_at else None,
-        "customer_id": None if (user.market or "cn") == "cn" else user.stripe_customer_id,
-    }
+    return payload
 
 
 @router.get("/invoices")

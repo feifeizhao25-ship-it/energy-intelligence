@@ -93,7 +93,7 @@ async def test_plans_global_uses_real_stripe_price_only(client, monkeypatch):
 async def test_plans_domestic_still_cny(client):
     plans = (await client.get("/api/v1/billing/plans")).json()["data"]["plans"]
     pro = next(p for p in plans if p["id"] == "pro")
-    assert pro["currency"] == "CNY" and pro["price_cents"] == 198000 and pro["name"] == "专业版"
+    assert pro["currency"] == "CNY" and pro["price_cents"] == 198000 and pro["name"] == "标准·数据库订阅"
 
 
 @pytest.mark.asyncio

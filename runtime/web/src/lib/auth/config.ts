@@ -1,3 +1,5 @@
+import registry from '@/lib/entitlements/entitlements.json';
+
 export { authOptions } from './auth-options';
 
 type PlanLimit = {
@@ -9,11 +11,35 @@ type PlanLimit = {
   diagnoses: number;
 };
 
+type RegistryTier = {
+  name: string;
+  quotas: {
+    ai_queries_per_day: number;
+    resource_queries_per_day: number;
+    calculations_per_day: number;
+    diagnoses_per_day?: number;
+  };
+  knowledge: { paper_search_per_day: number };
+};
+
+function fromRegistry(id: string): PlanLimit {
+  const tier = (registry.tiers as Record<string, RegistryTier>)[id];
+  return {
+    name: tier.name,
+    aiCalls: tier.quotas.ai_queries_per_day,
+    resourceQueries: tier.quotas.resource_queries_per_day,
+    calculations: tier.quotas.calculations_per_day,
+    paperSearches: tier.knowledge.paper_search_per_day,
+    diagnoses: tier.quotas.diagnoses_per_day ?? 0,
+  };
+}
+
+/** 会员状态接口用的名称和额度。只从权益注册表派生，不再手写第二套。 */
 export const PLANS: Record<string, PlanLimit> = {
-  FREE: { name: '免费版', aiCalls: 5, resourceQueries: 3, calculations: 3, paperSearches: 3, diagnoses: 0 },
-  PRO: { name: '专业版', aiCalls: 100, resourceQueries: -1, calculations: -1, paperSearches: -1, diagnoses: 3 },
-  MAINTENANCE: { name: '运维版（已停售）', aiCalls: 100, resourceQueries: -1, calculations: 10, paperSearches: 10, diagnoses: -1 },
-  FULL: { name: '专家版', aiCalls: 300, resourceQueries: -1, calculations: -1, paperSearches: -1, diagnoses: -1 },
-  TEAM: { name: '团队版', aiCalls: 1500, resourceQueries: -1, calculations: -1, paperSearches: -1, diagnoses: -1 },
-  ENTERPRISE: { name: '企业版', aiCalls: -1, resourceQueries: -1, calculations: -1, paperSearches: -1, diagnoses: -1 },
+  FREE: fromRegistry('free'),
+  PRO: fromRegistry('pro'),
+  MAINTENANCE: fromRegistry('maintenance'),
+  FULL: fromRegistry('full'),
+  TEAM: fromRegistry('team'),
+  ENTERPRISE: fromRegistry('enterprise'),
 };
