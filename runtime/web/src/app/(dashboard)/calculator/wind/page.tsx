@@ -21,10 +21,10 @@ export default function WindCalculatorPage() {
     const [errorMessage, setErrorMessage] = useState('');
 
     const [formData, setFormData] = useState({
-        lat: 39.9042,
-        lng: 116.4074,
+        lat: Number.NaN,
+        lng: Number.NaN,
         name: '',
-        province: '北京',
+        province: '',
         turbineType: 'medium_wind',
         capacity: 3.0, // MW
         count: 1,
@@ -40,6 +40,10 @@ export default function WindCalculatorPage() {
     const handleCalculate = async () => {
         if (isCalculating) return;
         setErrorMessage('');
+        if (!Number.isFinite(formData.lat) || !Number.isFinite(formData.lng)) {
+            setErrorMessage('请先在地图上选择项目位置。本页不预填北京，选定前风资源视为未核验。');
+            return;
+        }
         if (!Number.isFinite(formData.capacity) || formData.capacity <= 0 || !Number.isFinite(formData.hubHeight) || formData.hubHeight <= 0) {
             setErrorMessage('请填写大于零的有效参数。');
             return;
@@ -104,14 +108,16 @@ export default function WindCalculatorPage() {
                                 <h2 className="text-xl font-bold text-white mb-6">位置与省份选择</h2>
                                 <div className="mb-4">
                                     <LocationPicker
-                                        value={{ lat: formData.lat.toString(), lng: formData.lng.toString(), province: formData.province, name: formData.name }}
+                                        value={{ lat: Number.isFinite(formData.lat) ? String(formData.lat) : '', lng: Number.isFinite(formData.lng) ? String(formData.lng) : '', province: formData.province, name: formData.name }}
                                         onChange={v => setFormData((current) => applyWindPick(current, v))}
                                     />
                                 </div>
                                 <p data-testid="wind-location-summary" className="text-sm leading-6 text-slate-300">
-                                    当前位置：{formData.name ? `${formData.name}，` : ''}纬度 {Number(formData.lat).toFixed(4)}，经度 {Number(formData.lng).toFixed(4)}；省份：{formData.province || '未选择'}
+                                    {Number.isFinite(formData.lat) && Number.isFinite(formData.lng)
+                                        ? `当前位置：${formData.name ? `${formData.name}，` : ''}纬度 ${Number(formData.lat).toFixed(4)}，经度 ${Number(formData.lng).toFixed(4)}；省份：${formData.province || '未选择'}`
+                                        : '尚未选择位置。不会自动代入北京。选定前风资源视为未核验。'}
                                 </p>
-                                <p className="mt-1 text-xs leading-5 text-slate-500">位置用于读取历史风速；省份用于下一步的上网电价参考，可在下一步修改。</p>
+                                <p className="mt-1 text-xs leading-5 text-slate-500">位置用于读取历史风速；省份用于下一步的上网电价参考，可在下一步修改。请核对实际位置，本页不预填北京。</p>
                             </div>
                         </motion.div>
                     )}
