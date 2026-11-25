@@ -51,10 +51,10 @@ def render_answer_file(record: Dict[str, Any], kind: str) -> bytes:
     body = "\n\n".join(line for line in lines if line)
     if kind == "docx":
         return _docx(title, body)
-    return _pdf(title, body, lang)
+    return _pdf(title, body, lang, watermark=bool(record.get("watermark")))
 
 
-def _pdf(title: str, body: str, lang: str) -> bytes:
+def _pdf(title: str, body: str, lang: str, watermark: bool = False) -> bytes:
     from reportlab.lib.pagesizes import A4
     from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
     from reportlab.lib.units import mm
@@ -80,8 +80,16 @@ def _pdf(title: str, body: str, lang: str) -> bytes:
 
     def footer(canvas, document):
         canvas.saveState()
+        if watermark:
+            canvas.saveState()
+            canvas.setFillColorRGB(0.65, 0.65, 0.65)
+            canvas.setFont("Helvetica", 28)
+            canvas.translate(A4[0] / 2, A4[1] / 2)
+            canvas.rotate(32)
+            canvas.drawCentredString(0, 0, "EVALUATION COPY")
+            canvas.restoreState()
         canvas.setFont("Helvetica", 8)
-        label = f"Page {document.page}" if lang == "en" else f"Page {document.page}"
+        label = f"Page {document.page}"
         canvas.drawCentredString(A4[0] / 2, 10 * mm, label)
         canvas.restoreState()
 
