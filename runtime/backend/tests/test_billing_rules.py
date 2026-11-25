@@ -43,3 +43,15 @@ def test_renewal_and_downgrade_accept_naive_database_expiry():
 def test_full_refund_is_formatted_in_cents():
     result = refund_quote(paid_amount_cny='1980', period_start=NOW, period_end=NOW+timedelta(days=365), now=NOW)
     assert result['refund_cny'] == '1980.00'
+
+
+def test_global_renewal_quote_has_no_renminbi_or_chinese():
+    import json
+    import re
+    quote = renewal_quote(current_plan="enterprise", current_expires_at=NOW + timedelta(days=40), now=NOW, yearly_price_cny="33000", market="global")
+    text = json.dumps(quote, ensure_ascii=False)
+    assert "cny" not in text.lower() and "¥" not in text
+    assert not re.search(r"[\u4e00-\u9fff]", text)
+    assert quote["status"] == "price_unavailable"
+    assert quote["currency"] == "USD"
+    assert quote["new_expires_at"].startswith("2027-")
