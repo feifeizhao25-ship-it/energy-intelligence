@@ -49,6 +49,8 @@ describe('dashboard data requires the caller session', () => {
     expect(page).toContain("fetch('/api/dashboard'");
     expect(page).toContain('只包含当前登录用户自己的项目');
     expect(rendered).toContain('工作台暂时无法加载');
+    expect(rendered).toContain('请先登录');
+    expect(rendered).toContain('href="/login"');
     expect(rendered).not.toMatch(/陈欣|chen_xin/);
   });
 });

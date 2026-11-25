@@ -139,12 +139,17 @@ function PersonalizationNote({ p }: { p: Personalization }) {
 
 function DashboardContent() {
     const [data, setData] = useState<PersonalDashboard | null>(null);
-    const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+    const [status, setStatus] = useState<'loading' | 'ready' | 'error' | 'signed-out'>('loading');
 
     const load = useCallback(async () => {
         setStatus('loading');
         try {
             const res = await fetch('/api/dashboard', { cache: 'no-store' });
+            if (res.status === 401) {
+                setData(null);
+                setStatus('signed-out');
+                return;
+            }
             const body = await res.json();
             if (!res.ok || !body?.data) throw new Error('dashboard');
             setData(body.data as PersonalDashboard);
@@ -210,7 +215,13 @@ function DashboardContent() {
             )}
         >
             <div className="ei-module-stack">
-                {status === 'error' || !data ? (
+                {status === 'signed-out' ? (
+                    <div className="ei-error flex flex-col items-center p-8 text-center">
+                        <div className="font-bold text-[var(--ink)] mb-1">请先登录</div>
+                        <p className="text-xs text-[var(--text-muted)] mb-5">登录后才能看到你自己的工作台。未登录不是登录失效。</p>
+                        <Link href="/login" className="flex items-center gap-2 px-4 py-2 bg-green-800 text-white text-sm font-bold rounded-xl">去登录</Link>
+                    </div>
+                ) : status === 'error' || !data ? (
                     <div className="ei-error flex flex-col items-center p-8 text-center">
                         <div className="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center mb-4">
                             <CloudOff className="w-7 h-7 text-[var(--text-muted)]" />
