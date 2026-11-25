@@ -23,6 +23,9 @@ async def get_me(
     user = result.scalar_one_or_none()
     if user is None:
         return success(data={"id": user_id, "market": "cn"})
+    from app.services.current_entitlement import current_entitlement, name_for_market
+
+    entitlement = current_entitlement(user)
     return success(data={
         "id": user.id,
         "name": user.name,
@@ -30,7 +33,14 @@ async def get_me(
         "email": user.email,
         "role": user.role,
         "market": user.market or "cn",
-        "subscription_plan": user.plan,
+        "subscription_plan": entitlement["plan_id"],
+        "plan_name": name_for_market(entitlement, user.market),
+        "expires_at": entitlement["expires_at"],
+        "quotas": {
+            "ai_queries_per_day": entitlement["quotas"].get("ai_queries_per_day"),
+            "report_exports_per_month": entitlement["quotas"].get("report_exports_per_month"),
+            "max_projects": entitlement["quotas"].get("max_projects"),
+        },
     })
 
 
@@ -45,27 +55,27 @@ async def get_settings(
     })
 
 
-_PLAN_META = {
-    "free": {"name": "免费版", "price_cents": 0},
-    "pro": {"name": "专业版", "price_cents": 198000},
-    "full": {"name": "专家版", "price_cents": 580000},
-    "team": {"name": "团队版", "price_cents": 1680000},
-    "enterprise": {"name": "企业版", "price_cents": 3300000},
-}
+# 对外仍是这五档。名称和年费分只读权益注册表，不再另写一套叫法。
+_PUBLIC_PLAN_IDS = ("free", "pro", "full", "team", "enterprise")
 
 
 def _build_plans():
-    """从 ENTITLEMENTS 单一事实源生成计划列表（列表值拷贝，避免外部改矩阵）。"""
+    """计划列表的名称、年费和额度都从权益注册表来。"""
+    from app.services.entitlements_registry import load_registry
+
+    tiers = load_registry()["tiers"]
     plans = []
-    for plan_id, meta in _PLAN_META.items():
+    for plan_id in _PUBLIC_PLAN_IDS:
+        tier = tiers[plan_id]
         entitlements = {
             key: list(value) if isinstance(value, list) else value
             for key, value in ENTITLEMENTS[plan_id].items()
         }
+        yearly = int((tier.get("price") or {}).get("yearly_cny") or 0)
         plans.append({
             "id": plan_id,
-            "name": meta["name"],
-            "price_cents": meta["price_cents"],
+            "name": tier.get("name") or plan_id,
+            "price_cents": yearly * 100,
             "currency": "CNY",
             "report_exports_per_month": entitlements["report_exports_per_month"],
             "ai_queries_per_day": entitlements["ai_queries_per_day"],

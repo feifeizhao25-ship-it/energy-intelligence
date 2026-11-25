@@ -20,7 +20,7 @@ import { PRICE_UNAVAILABLE, internationalPriceLabel } from '../lib/billing/inter
 
 // ── Types ──────────────────────────────────────────────
 
-interface PlanTier {
+export interface PlanTier {
   id: string;
   name: string;
   tagline: string;
@@ -29,66 +29,11 @@ interface PlanTier {
   cta: string;
 }
 
-// ── Plan Data ──────────────────────────────────────────
-
-const TIERS: PlanTier[] = [
-  {
-    id: 'free',
-    name: 'Free',
-    tagline: 'Get started with essential tools',
-    features: [
-      '5 AI interactions per day',
-      '3 resource queries and calculations per day',
-      '1 active project',
-      '3 watermarked PDF exports per month',
-      '7-day data retention',
-    ],
-    cta: 'Current Plan',
-  },
-  {
-    id: 'pro',
-    name: 'Pro',
-    tagline: 'For independent analysts and consultants',
-    features: [
-      'Unlimited projects',
-      '100 assessments / month',
-      '15,000 AI queries / month',
-      'Monte Carlo simulation',
-      'ERCOT & CAISO LMP data',
-      'Email support',
-    ],
-    highlight: true,
-    cta: 'Upgrade to Pro',
-  },
-  {
-    id: 'team',
-    name: 'Team',
-    tagline: 'For teams that collaborate',
-    features: [
-      'Everything in Pro',
-      'Collaboration & sharing',
-      'Role-based access (min 3 seats)',
-      'Shared project workspace',
-      'Advanced analytics dashboard',
-      'Priority support',
-    ],
-    cta: 'Upgrade to Team',
-  },
-  {
-    id: 'enterprise',
-    name: 'Enterprise',
-    tagline: 'For organizations at scale',
-    features: [
-      'Everything in Team',
-      'REST API access',
-      'SSO / SAML',
-      '99.9% SLA guarantee',
-      'Dedicated account manager',
-      'Custom integrations',
-    ],
-    cta: 'Contact Sales',
-  },
-];
+export interface PlanLimits {
+  projects: string;
+  calculations: string;
+  ai: string;
+}
 
 // ── Credit Card Form Placeholder ──
 
@@ -161,12 +106,25 @@ const StripeCardForm: React.FC = () => (
 
 // ── Main Page ──────────────────────────────────────────
 
-const BillingPage: React.FC<{ prices?: Record<string, string> }> = ({ prices }) => {
+const BillingPage: React.FC<{ prices?: Record<string, string>; tiers: PlanTier[]; freeLimits: PlanLimits }> = ({ prices, tiers, freeLimits }) => {
   const [autoRenew, setAutoRenew] = useState(true);
+  const [signedInPlan, setSignedInPlan] = useState('');
   const priceFor = (id: string) => prices?.[id] || internationalPriceLabel({ planId: id });
-
-  // Current plan mock
   const currentPlan = 'free';
+
+  React.useEffect(() => {
+    const token = localStorage.getItem('auth_token');
+    if (!token) return;
+    const base = process.env.NEXT_PUBLIC_API_URL || '';
+    fetch(`${base}/api/v1/billing/usage`, {
+      headers: { Authorization: `Bearer ${token}`, 'X-App-Market': 'global' },
+    })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((body) => {
+        if (body?.plan_name) setSignedInPlan(String(body.plan_name));
+      })
+      .catch(() => undefined);
+  }, []);
 
   return (
     <GlobalShell title="Billing" breadcrumb={['EnergyIQ', 'Billing']}>
@@ -186,10 +144,12 @@ const BillingPage: React.FC<{ prices?: Record<string, string> }> = ({ prices }) 
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-[14px] font-semibold text-[var(--text-primary)]">Current Plan</span>
-                <Badge color="brand">Free</Badge>
+                <Badge color="brand">{signedInPlan || 'Evaluation'}</Badge>
               </div>
               <p className="text-[13px] text-[var(--text-secondary)]">
-                You are on the Free plan. Upgrade to unlock more features.
+                {signedInPlan
+                  ? `You are on the ${signedInPlan} plan.`
+                  : 'Sign in to see your own usage. The figures below are the Evaluation plan limits.'}
               </p>
             </div>
             <div className="flex items-center gap-3">
@@ -203,7 +163,7 @@ const BillingPage: React.FC<{ prices?: Record<string, string> }> = ({ prices }) 
             <div>
               <div className="flex items-baseline justify-between mb-1">
                 <span className="text-[12px] text-[var(--text-secondary)]">Projects</span>
-                <span className="text-[13px] font-mono text-[var(--text-primary)]">0 / 1</span>
+                <span className="text-[13px] font-mono text-[var(--text-primary)]">{freeLimits.projects}</span>
               </div>
               <div className="h-1.5 rounded-full bg-[var(--bg-secondary)] overflow-hidden">
                 <div className="h-full rounded-full bg-[var(--color-brand-500)]" style={{ width: '0%' }} />
@@ -212,7 +172,7 @@ const BillingPage: React.FC<{ prices?: Record<string, string> }> = ({ prices }) 
             <div>
               <div className="flex items-baseline justify-between mb-1">
                 <span className="text-[12px] text-[var(--text-secondary)]">Calculations today</span>
-                <span className="text-[13px] font-mono text-[var(--text-primary)]">0 / 3</span>
+                <span className="text-[13px] font-mono text-[var(--text-primary)]">{freeLimits.calculations}</span>
               </div>
               <div className="h-1.5 rounded-full bg-[var(--bg-secondary)] overflow-hidden">
                 <div className="h-full rounded-full bg-[var(--color-warning)]" style={{ width: '0%' }} />
@@ -221,7 +181,7 @@ const BillingPage: React.FC<{ prices?: Record<string, string> }> = ({ prices }) 
             <div>
               <div className="flex items-baseline justify-between mb-1">
                 <span className="text-[12px] text-[var(--text-secondary)]">AI interactions today</span>
-                <span className="text-[13px] font-mono text-[var(--text-primary)]">0 / 5</span>
+                <span className="text-[13px] font-mono text-[var(--text-primary)]">{freeLimits.ai}</span>
               </div>
               <div className="h-1.5 rounded-full bg-[var(--bg-secondary)] overflow-hidden">
                 <div className="h-full rounded-full bg-[var(--color-success)]" style={{ width: '0%' }} />
@@ -232,7 +192,7 @@ const BillingPage: React.FC<{ prices?: Record<string, string> }> = ({ prices }) 
 
         {/* ── Pricing Tiers ── */}
         <div className="grid grid-cols-4 gap-4">
-          {TIERS.map((tier) => {
+          {tiers.map((tier) => {
             const price = priceFor(tier.id);
             const isCurrent = tier.id === currentPlan;
 
