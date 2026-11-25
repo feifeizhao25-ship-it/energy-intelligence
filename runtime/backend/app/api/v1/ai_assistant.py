@@ -463,13 +463,14 @@ def _remember_answer(user, market: str, message: str, sources: list, metadata: d
         "sources": list(sources or []),
         "synthetic": synthetic,
         "stand_in": metadata.get("stand_in"),
+        "blocked": bool(metadata.get("blocked")),
         "watermark": answer_export_offer(user)["watermark"],
     }
     if len(_ANSWER_EXPORTS) > 200:
         _ANSWER_EXPORTS.pop(next(iter(_ANSWER_EXPORTS)))
     return {
         "answer_id": answer_id,
-        "downloads": _export_offer(user),
+        "downloads": {} if metadata.get("blocked") else _export_offer(user),
         "synthetic": synthetic,
     }
 
@@ -512,6 +513,11 @@ async def export_stored_answer(
     )
     if not record or user is None or record["user_id"] != str(user_id):
         raise HTTPException(status_code=404, detail=missing)
+    if record.get("blocked"):
+        raise HTTPException(
+            status_code=403,
+            detail="A refusal cannot be exported." if market == "global" else "拒答内容不能导出。",
+        )
     offer = _export_offer(user)
     if not offer.get(body.format):
         market = record["market"]
