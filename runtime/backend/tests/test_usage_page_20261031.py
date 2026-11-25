@@ -28,7 +28,7 @@ async def test_usage_page_data_for_a_domestic_free_user(client, db_session):
     assert cats["ai_queries"]["limit"] == 5 and cats["ai_queries"]["period"] == "day"
     assert cats["projects"]["used"] == 0 and cats["projects"]["limit"] == 1 and cats["projects"]["period"] == "total"
     assert d["plan_name"] == "免费" and any("AI" in f for f in d["plan_features"])
-    assert d["resets"]["timezone"] == "UTC" and re.fullmatch(r"\d{4}-\d{2}-\d{2}", d["resets"]["day"])
+    assert d["resets"]["timezone"] == "Asia/Shanghai" and re.fullmatch(r"\d{4}-\d{2}-\d{2}", d["resets"]["day"])
     assert d["resets"]["month"].endswith("-01")
 
 
@@ -46,6 +46,7 @@ async def test_usage_page_is_english_for_the_international_edition(client, db_se
     gh = await _free_user(db_session, "global")
     d = (await client.get("/api/v1/billing/usage", headers=gh)).json()
     assert d["plan_name"] == "Evaluation"
+    assert d["resets"]["timezone"] == "UTC"
     assert d["plan_features"] and not any(re.search(r"[\u4e00-\u9fff]", f) for f in d["plan_features"])
     assert not re.search(r"[\u4e00-\u9fff]", d["plan_name"])
 
