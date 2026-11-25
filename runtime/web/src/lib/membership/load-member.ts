@@ -43,7 +43,7 @@ export async function loadMember(url: string, signal?: AbortSignal): Promise<Mem
             if (signal?.aborted) throw new DOMException('Cancelled', 'AbortError');
             throw new Error(timedOut ? '会员信息读取超时，请重试' : '网络连接失败，请检查网络后重试');
         }
-        if (response.status === 401) throw new Error('登录已失效，请重新登录后重试');
+        if (response.status === 401) throw new Error('请先登录');
         if (!response.ok) throw new Error('会员信息暂时无法读取，请重试');
         let body;
         try { body = await response.json(); } catch {

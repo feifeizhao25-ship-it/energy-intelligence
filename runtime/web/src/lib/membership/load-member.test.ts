@@ -5,7 +5,7 @@ afterEach(()=>{global.fetch=originalFetch;jest.useRealTimers();});
 test('returns actual valid membership',async()=>{global.fetch=jest.fn().mockResolvedValue(Response.json({success:true,data:member}));expect(await loadMember('/test')).toEqual(member);});
 test.each([
  [503,'<html>upstream failure</html>','暂时无法读取'],
- [401,'{}','登录已失效'],
+ [401,'{}','请先登录'],
  [200,'<html>bad gateway</html>','响应格式异常'],
  [200,'{"success":true}','不完整'],
  [200,JSON.stringify({success:false,data:member}),'不完整'],
