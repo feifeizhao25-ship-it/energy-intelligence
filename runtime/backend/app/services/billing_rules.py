@@ -61,15 +61,28 @@ def localize_rule(rule: str, market: str) -> str:
 
 
 def renewal_quote(*, current_plan: str, current_expires_at, now: datetime, yearly_price_cny, market: str = "cn") -> dict:
-    """续费测算: 返回应付年付价与新到期日 (不扣款)。"""
+    """续费测算: 返回应付年付价与新到期日 (不扣款)。国际版不返回人民币字段。"""
     if current_plan not in TIER_ORDER or current_plan == "free":
-        raise ValueError("免费版无需续费")
+        raise ValueError("The free plan does not renew." if market == "global" else "免费版无需续费")
     now = _utc(now)
     current_expires_at = _utc(current_expires_at) if current_expires_at else None
     base = current_expires_at if (current_expires_at and current_expires_at > now) else now
-    return {"plan": current_plan, "billing_period": "yearly", "amount_cny": str(_money(yearly_price_cny)),
-            "new_expires_at": _add_year(base).isoformat(),
-            "rule": localize_rule("未到期从现到期日顺延1年, 已过期从付款日起算1年", market)}
+    result = {
+        "plan": current_plan,
+        "billing_period": "yearly",
+        "new_expires_at": _add_year(base).isoformat(),
+        "rule": localize_rule("未到期从现到期日顺延1年, 已过期从付款日起算1年", market),
+    }
+    if market == "global":
+        # 国际档位的美元价格尚未由主人核定，也不读取人民币价目。不编造金额。
+        result.update({
+            "currency": "USD",
+            "status": "price_unavailable",
+            "message": "Pricing is not published yet. Checkout stays disabled until a US dollar price is configured.",
+        })
+        return result
+    result["amount_cny"] = str(_money(yearly_price_cny))
+    return result
 
 def schedule_downgrade(*, current_plan: str, target_plan: str, current_expires_at, now: datetime, market: str = "cn") -> dict:
     """降级登记: 返回待生效信息 (不立即改档, 不退差价)。"""

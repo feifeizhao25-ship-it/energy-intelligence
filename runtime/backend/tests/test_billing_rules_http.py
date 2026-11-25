@@ -89,6 +89,21 @@ async def test_billing_rule_routes_require_login(client, path, body):
 
 
 @pytest.mark.asyncio
+async def test_global_renewal_quote_omits_renminbi(client, auth_headers, db_session):
+    import json
+    import re
+    user = (await db_session.execute(select(User))).scalar_one()
+    user.subscription_plan = 'enterprise'
+    user.subscription_expires_at = datetime.now(timezone.utc) + timedelta(days=40)
+    await db_session.commit()
+    response = await client.post('/api/v1/billing/renewal/quote', headers={**auth_headers, 'X-App-Market': 'global'})
+    assert response.status_code == 200, response.text
+    text = json.dumps(response.json(), ensure_ascii=False)
+    assert 'cny' not in text.lower() and not re.search(r'[\u4e00-\u9fff]', text)
+    assert response.json()['status'] == 'price_unavailable'
+
+
+@pytest.mark.asyncio
 async def test_free_account_cannot_request_paid_renewal(client, auth_headers, db_session):
     user = (await db_session.execute(select(User))).scalar_one()
     user.subscription_plan = 'free'

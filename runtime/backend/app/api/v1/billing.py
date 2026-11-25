@@ -54,9 +54,10 @@ async def post_renewal_quote(request: Request, user_id: str = Depends(get_curren
     try:
         # Effective entitlement becomes free after expiry; renewal uses the purchased tier.
         purchased_plan = user.subscription_plan or "free"
-        price = alipay_service.price_for(purchased_plan, "yearly")
         from app.core.market import request_market
-        return renewal_quote(current_plan=purchased_plan, current_expires_at=user.subscription_expires_at, now=datetime.now(timezone.utc), yearly_price_cny=price, market=request_market(request))
+        market = request_market(request)
+        price = None if market == "global" else alipay_service.price_for(purchased_plan, "yearly")
+        return renewal_quote(current_plan=purchased_plan, current_expires_at=user.subscription_expires_at, now=datetime.now(timezone.utc), yearly_price_cny=price, market=market)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
