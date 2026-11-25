@@ -45,7 +45,7 @@ export default function CalculatorHomePage() {
     },
     {
       id: 'storage',
-      title: '能源存储系统',
+      title: '储能系统',
       description: '按省级分时电价（可自行修改）估算峰谷套利收益与度电储能成本。',
       icon: <Battery className="w-8 h-8 text-emerald-400" />,
       color: 'from-emerald-500/20 to-emerald-400/5',

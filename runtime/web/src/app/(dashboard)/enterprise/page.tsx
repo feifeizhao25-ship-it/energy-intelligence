@@ -72,7 +72,7 @@ export default function EnterpriseCenterPage() {
                     {/* Navigation Sidebar */}
                     <aside className="w-full lg:w-64 space-y-2">
                         {[
-                            { id: 'accounts', label: '成员账号管', icon: Users },
+                            { id: 'accounts', label: '成员账号管理', icon: Users },
                             { id: 'whitelabel', label: '品牌定制未开通', icon: Palette },
                             { id: 'templates', label: '报告模板库', icon: Layout },
                             { id: 'security', label: '安全与审计', icon: ShieldCheck },
