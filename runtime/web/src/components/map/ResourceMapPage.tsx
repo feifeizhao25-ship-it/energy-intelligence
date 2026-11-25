@@ -99,7 +99,7 @@ export default function ResourceMapPage() {
                                         : "bg-slate-950 border border-white/10 text-slate-200 hover:text-white"
                                 )}
                             >
-                                {l === 'solar' ? '光伏 GHI' : '风电 100M'}
+                                {l === 'solar' ? '光伏辐照' : '风电资源'}
                             </button>
                         ))}
                     </div>
