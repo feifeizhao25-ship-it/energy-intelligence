@@ -18,7 +18,7 @@ from typing import Any, Awaitable, Callable, Dict, Optional
 try:
     from app.services.resource_service import _classify_wind
     from app.services.wind_grade_gbt18710 import assess as _gbt18710_assess
-    from app.utils.wind_calculations import capacity_factor_estimate
+    from app.utils.wind_calculations import IEC_61400_1_2019, capacity_factor_estimate, iec_wind_class, weibull_power_density
 except ImportError:  # 注册表从其他工作目录加载本文件时，补后端路径
     import sys
     from pathlib import Path
@@ -28,7 +28,7 @@ except ImportError:  # 注册表从其他工作目录加载本文件时，补后
         sys.path.insert(0, str(_BACKEND_DIR))
     from app.services.resource_service import _classify_wind
     from app.services.wind_grade_gbt18710 import assess as _gbt18710_assess
-    from app.utils.wind_calculations import capacity_factor_estimate
+    from app.utils.wind_calculations import IEC_61400_1_2019, capacity_factor_estimate, iec_wind_class, weibull_power_density
 
 NASA_POWER_URL = "https://power.larc.nasa.gov/api/temporal/climatology/point"
 
@@ -77,7 +77,7 @@ def assess_wind_resource(mean_speed: float, capacity_mw: float = 1.0, grading: s
 
     - grading="gbt18710"（国内版）：GB/T 18710-2002 附录 B 不允许用年平均风速直接立方；按瑞利分布（k=2）
       求 v³ 期望（≈1.91×v̄³），分级按表 4 的 50 m 七级，resource_class 仍是 I/II/III/IV，分数封顶 100
-    - grading="legacy"（国际版沿用）：WPD = 0.5 × ρ × v³（ρ = 1.225 kg/m³），分级复用 _classify_wind（I≥400, II≥300, III≥200, IV<200 W/m²）
+    - grading="legacy"（国际版）：P = ½ρc³Γ(1+3/k)，c = v̄/Γ(1+1/k)，k=2。等级按 IEC 61400-1:2019 的年平均风速，不使用国标风功率密度等级。
     - 产能系数复用 capacity_factor_estimate，区间取风速 ±5% 的估算值
     """
     gb = None
@@ -85,13 +85,17 @@ def assess_wind_resource(mean_speed: float, capacity_mw: float = 1.0, grading: s
         gb = _gbt18710_assess([mean_speed], height_m=50.0, rho=AIR_DENSITY)
         wpd, resource_class, score = gb["wind_power_density"], gb["resource_class"], gb["score"]
     else:
-        wpd = 0.5 * AIR_DENSITY * mean_speed ** 3
-        resource_class, score = _classify_wind(wpd)
+        wpd = weibull_power_density(mean_speed, k=2.0, rho=AIR_DENSITY)
+        resource_class = iec_wind_class(mean_speed)
+        score = min(100.0, wpd / 10.0)
     cf_mid = capacity_factor_estimate(mean_speed)
     cf_low = capacity_factor_estimate(mean_speed * 0.95)
     cf_high = capacity_factor_estimate(mean_speed * 1.05)
     hours_mid = cf_mid * HOURS_PER_YEAR
-    extra = {k: gb[k] for k in ("gb_grade", "gb_grade_label", "grading_standard", "wpd_method")} if gb else {}
+    extra = {k: gb[k] for k in ("gb_grade", "gb_grade_label", "grading_standard", "wpd_method")} if gb else {
+        "grading_standard": IEC_61400_1_2019,
+        "wpd_method": "P = 0.5 * rho * c^3 * Gamma(1+3/k), c = mean / Gamma(1+1/k), k=2, rho=1.225",
+    }
     return {
         **extra,
         "mean_speed_ms": round(mean_speed, 2),

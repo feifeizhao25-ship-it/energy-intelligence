@@ -226,24 +226,24 @@ async def fetch_wind_resource(req: WindResourceRequest) -> WindResourceResponse:
         mean_speed = sum(valid) / len(valid)
 
         k = 2.0
-        c_weibull = mean_speed / 0.886
-        rho = 1.225
-        monthly_cubed = [v ** 3 for v in monthly_speed_ms]
-        mean_cubed = sum(monthly_cubed) / 12 if monthly_cubed else mean_speed ** 3
-        wpd = 0.5 * rho * mean_cubed
-
-        resource_class, score = _classify_wind(wpd)
+        from app.utils.wind_calculations import IEC_61400_1_2019, iec_wind_class, weibull_power_density
+        import math
+        c_weibull = mean_speed / math.gamma(1 + 1 / k)
+        wpd = weibull_power_density(mean_speed, k=k)
+        resource_class = iec_wind_class(mean_speed)
 
         return WindResourceResponse(
             lat=req.lat, lng=req.lng,
             mean_speed=round(mean_speed, 2),
             weibull_k=round(k, 2), weibull_c=round(c_weibull, 2),
             wind_power_density=round(wpd, 1),
-            turbulence_intensity=0.11,
-            resource_class=resource_class, score=round(score, 1),
+            turbulence_intensity=None,
+            resource_class=resource_class, score=round(min(100.0, wpd / 10.0), 1),
             monthly_speed=[round(v, 1) for v in monthly_speed_ms],
+            grading_standard=IEC_61400_1_2019,
+            wpd_method="P = 0.5 * rho * c^3 * Gamma(1+3/k), c = mean / Gamma(1+1/k), k=2, rho=1.225",
             verification_status="unverified",
-            verification_note="Not verified against a measured mast or a manufacturer power curve. Figures are a resource screen, not a revenue forecast.",
+            verification_note="Not verified against a measured mast or a manufacturer power curve. Figures are a resource screen, not a revenue forecast. Turbulence intensity is omitted because this response has no measurement.",
         )
     except Exception as exc:
         raise RuntimeError("Open-Meteo wind resource data is currently unavailable") from exc

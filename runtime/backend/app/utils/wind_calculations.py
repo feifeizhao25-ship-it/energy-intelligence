@@ -88,6 +88,35 @@ def turbulence_intensity(terrain: str = "complex") -> float:
     return values.get(terrain, 0.14)
 
 
+IEC_61400_1_2019 = (
+    "IEC 61400-1:2019 wind turbine class by annual average wind speed "
+    "(I at least 10 m/s, II at least 8.5 m/s, III at least 7.5 m/s, otherwise class S)"
+)
+
+
+def weibull_power_density(mean_speed: float, k: float = 2.0, rho: float = 1.225) -> float:
+    """Mean wind power density for a Weibull wind-speed distribution, W/m².
+
+    P = ½ ρ c³ Γ(1+3/k), with c = v̄ / Γ(1+1/k). Using v̄³ alone drops the distribution factor
+    (about 1.91 for a Rayleigh distribution, k=2) and understates the density.
+    """
+    if mean_speed <= 0 or k <= 0:
+        return 0.0
+    scale = mean_speed / math.gamma(1 + 1 / k)
+    return 0.5 * rho * scale ** 3 * math.gamma(1 + 3 / k)
+
+
+def iec_wind_class(mean_speed: float) -> str:
+    """IEC 61400-1:2019 class from the annual average wind speed. Not a power-density grade."""
+    if mean_speed >= 10:
+        return "I"
+    if mean_speed >= 8.5:
+        return "II"
+    if mean_speed >= 7.5:
+        return "III"
+    return "S"
+
+
 def capacity_factor_estimate(mean_speed: float, rated_power_mw: float = 12) -> float:
     """
     Estimate capacity factor based on mean wind speed.
