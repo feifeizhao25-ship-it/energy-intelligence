@@ -256,6 +256,10 @@ jobs:
       - name: Language isolation
         run: python3 scripts/verify_language_isolation.py
 
+      # 接口错误对照表：国内句不得含完整英文句，国际句不得含中文
+      - name: API response language
+        run: python3 scripts/verify_api_response_language.py
+
       # 国内版 Flutter 全中文只在这里跑一次（translation-check 与 mobile-quality 不再重复）
       - name: Chinese-only Flutter UI (android-cn / ios-cn)
         run: python3 scripts/verify_zh_ui_dart.py --app android-cn --app ios-cn --allow scripts/zh_ui_allow.json
