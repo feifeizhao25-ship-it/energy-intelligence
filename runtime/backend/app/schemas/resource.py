@@ -45,7 +45,7 @@ class WindResourceResponse(BaseModel):
     weibull_k: float
     weibull_c: float
     wind_power_density: float  # W/m²
-    turbulence_intensity: float
+    turbulence_intensity: Optional[float] = None
     resource_class: str
     score: float
     monthly_speed: List[float]

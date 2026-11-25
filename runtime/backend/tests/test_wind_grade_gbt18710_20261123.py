@@ -17,6 +17,15 @@ def _skill():
     return m
 
 
+def test_reviewed_weibull_case_is_about_472_not_252():
+    # 审阅：mean 7.39、k=2、c=8.34 时旧式 ½ρ·v̄³ 约 252，威布尔公式约 472。
+    c = 8.34
+    hand = 0.5 * 1.225 * c ** 3 * math.gamma(1 + 1.5)
+    assert hand == pytest.approx(472, abs=2)
+    from app.utils.wind_calculations import weibull_power_density
+    assert weibull_power_density(7.39, k=2) == pytest.approx(hand, rel=0.02)
+
+
 def test_cube_factor_is_6_over_pi():
     assert cube_factor() == pytest.approx(6 / math.pi, rel=1e-9)
 
@@ -64,4 +73,8 @@ async def test_ra002_cn_uses_gb_global_unchanged():
     cn = await m.WindResourceSkill().execute({"latitude": 41, "longitude": 114, "market": "cn", "mean_speed_ms": 6.5})
     assert cn["wind_power_density"] == pytest.approx(321.3, abs=0.2) and cn["gb_grade"] == 3 and cn["score"] <= 100
     gl = await m.WindResourceSkill().execute({"latitude": 41, "longitude": 114, "market": "global", "mean_speed_ms": 6.5})
-    assert gl["wind_power_density"] == pytest.approx(0.5 * 1.225 * 6.5 ** 3, abs=0.2) and "gb_grade" not in gl
+    scale = 6.5 / math.gamma(1.5)
+    expected = 0.5 * 1.225 * scale ** 3 * math.gamma(2.5)
+    assert gl["wind_power_density"] == pytest.approx(expected, abs=0.2)
+    assert "gb_grade" not in gl
+    assert str(gl["grading_standard"]).startswith("IEC 61400-1:2019")
