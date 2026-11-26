@@ -233,3 +233,19 @@ try:  # 故事板为演示渲染端点，独立防护
     app.include_router(storyboard_router.router, tags=["storyboard"])
 except Exception as exc:  # pragma: no cover
     logger.warning("storyboard 路由未挂载: %s", exc)
+
+
+def _openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+    from fastapi.openapi.utils import get_openapi
+
+    from app.openapi_language import strip_cjk_descriptions
+
+    schema = get_openapi(title=app.title, version=app.version, routes=app.routes)
+    strip_cjk_descriptions(schema)
+    app.openapi_schema = schema
+    return schema
+
+
+app.openapi = _openapi

@@ -340,7 +340,7 @@ def _font_path() -> Optional[str]:
 
 def render_pdf(model: Dict[str, Any]) -> bytes:
     from reportlab.lib import colors
-    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.pagesizes import letter
     from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
     from reportlab.lib.units import cm, mm
     from reportlab.graphics.charts.barcharts import VerticalBarChart
@@ -390,7 +390,7 @@ def render_pdf(model: Dict[str, Any]) -> bytes:
         elif kind == "table":
             _, header, rows, caption = b
             n[0] += 1
-            cw = (A4[0] - 4 * cm) / len(header)
+            cw = (letter[0] - 4 * cm) / len(header)
             data = [[Paragraph(esc(h), st["cellh"]) for h in header]] + [[Paragraph(esc(c), st["cell"]) for c in r] for r in rows]
             t = Table(data, colWidths=[cw] * len(header), repeatRows=1)
             t.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, 0), primary), ("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#CCCCCC")),
@@ -414,12 +414,12 @@ def render_pdf(model: Dict[str, Any]) -> bytes:
         canvas.saveState()
         canvas.setFont(font, 8)
         canvas.setFillColor(colors.HexColor("#888888"))
-        canvas.drawString(20 * mm, A4[1] - 14 * mm, model["title"][:90])
-        canvas.drawCentredString(A4[0] / 2, 11 * mm, f"Page {doc.page}")
+        canvas.drawString(20 * mm, letter[1] - 14 * mm, model["title"][:90])
+        canvas.drawCentredString(letter[0] / 2, 11 * mm, f"Page {doc.page}")
         canvas.restoreState()
 
     buf = io.BytesIO()
-    doc = sup.ReportDocTemplate(buf, pagesize=A4, leftMargin=2 * cm, rightMargin=2 * cm, topMargin=2.2 * cm, bottomMargin=2 * cm, title=model["title"])
+    doc = sup.ReportDocTemplate(buf, pagesize=letter, leftMargin=2 * cm, rightMargin=2 * cm, topMargin=2.2 * cm, bottomMargin=2 * cm, title=model["title"])
     doc.multiBuild(story, onFirstPage=on_page, onLaterPages=on_page)
     return buf.getvalue()
 

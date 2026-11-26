@@ -172,7 +172,7 @@ class LCOERequest(BaseModel):
     discount_rate: float = Field(default=0.06, ge=0, lt=1)
     lifetime: int = Field(default=25, ge=1, le=100)
     degradation: float = Field(default=0.005, ge=0, lt=1)
-    currency: str = Field(default="CNY", pattern="^[A-Z]{3}$")
+    currency: Optional[str] = Field(default=None, pattern="^[A-Z]{3}$")
 
 
 class StorageFinanceResponse(BaseModel):
