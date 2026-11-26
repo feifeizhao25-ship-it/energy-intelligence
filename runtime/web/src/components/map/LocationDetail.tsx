@@ -70,7 +70,7 @@ export default function LocationDetail({ location, onClose }: LocationDetailProp
             <div className="p-4 border-b border-gray-700 flex justify-between items-start sticky top-0 bg-gray-800/95 z-10">
                 <div>
                     <h2 className="text-lg font-bold flex items-center gap-2">
-                        📍 {location.name}
+                         {location.name}
                     </h2>
                     <p className="text-xs text-gray-400 mt-1">
                         {location.lat.toFixed(3)}°N, {location.lng.toFixed(3)}°E | 海拔 待定

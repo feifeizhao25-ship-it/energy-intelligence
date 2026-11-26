@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { formatCnDate } from '@/lib/format/cn-date';
 import {
     Key,
     Plus,
@@ -255,7 +256,7 @@ export default function DeveloperPage() {
                                                 <div className="flex items-center gap-6 text-sm text-slate-500">
                                                     <div className="flex items-center gap-1">
                                                         <Clock className="w-4 h-4" />
-                                                        创建于 {new Date(key.createdAt).toLocaleDateString()}
+                                                        创建于 {formatCnDate(key.createdAt)}
                                                     </div>
                                                     <div className="flex items-center gap-1">
                                                         <Activity className="w-4 h-4" />

@@ -53,7 +53,7 @@ export async function generateWorkPermit(input: WorkPermitInput): Promise<WorkPe
         aiRes = JSON.parse(jsonStr);
     } catch (e) {
         aiRes = {
-            header: { id: "ERR-001", type, group: "运维班", issuedAt: new Date().toLocaleDateString() },
+            header: { id: "ERR-001", type, group: "运维班", issuedAt: new Intl.DateTimeFormat('zh-CN', { timeZone: 'Asia/Shanghai', year: 'numeric', month: 'long', day: 'numeric' }).format(new Date()) },
             content: { tasks: [], location, timeframe: planDate },
             safety: { riskPoints: [], tools: { electrical: [], mechanical: [], safety: [] } },
             steps: [],

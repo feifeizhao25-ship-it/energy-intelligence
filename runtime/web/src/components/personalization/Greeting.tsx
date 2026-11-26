@@ -43,7 +43,7 @@ export function PersonalizedGreeting() {
         <h1 className="text-2xl font-bold text-slate-800 tracking-tight">{greeting}</h1>
       </div>
       <p className="text-slate-500 font-medium">
-        今天也是充满希望的一天，来看看你的电站表现吧 ⚡️
+        今天也是充满希望的一天，来看看你的电站表现吧 
       </p>
     </div>
   );

@@ -16,7 +16,7 @@ export default function FriendlyError({
     return (
         <div data-testid="error-state" className="ei-error mx-auto flex min-h-[40vh] max-w-lg flex-col items-center justify-center p-4 text-center">
             <div className="w-24 h-24 bg-red-50 rounded-full flex items-center justify-center mb-6">
-                <span className="text-4xl">😵</span>
+                <span className="text-4xl"></span>
             </div>
 
             <h2 className="text-2xl font-bold text-slate-900 mb-2">{title}</h2>

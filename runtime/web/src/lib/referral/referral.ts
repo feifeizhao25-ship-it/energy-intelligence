@@ -124,7 +124,7 @@ export const SHARE_PLATFORMS = [
     {
         id: 'wechat',
         name: '微信',
-        icon: '💬',
+        icon: '',
         available: true,
     },
     {
@@ -136,19 +136,19 @@ export const SHARE_PLATFORMS = [
     {
         id: 'weibo',
         name: '微博',
-        icon: '📮',
+        icon: '',
         available: true,
     },
     {
         id: 'qq',
         name: 'QQ',
-        icon: '🐧',
+        icon: '',
         available: true,
     },
     {
         id: 'copy',
         name: '复制链接',
-        icon: '🔗',
+        icon: '',
         available: true,
     },
 ];

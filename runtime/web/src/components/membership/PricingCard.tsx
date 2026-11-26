@@ -105,5 +105,5 @@ export default function PricingCard({ plan, billingPeriod, onSelect }: PricingCa
 function getFeaturesByPlan(plan: Plan): { included: string[]; excluded: string[] } {
     const key = { FREE: 'free', PRO: 'pro', MAINTENANCE: 'maintenance', FULL: 'full', TEAM: 'team', ENTERPRISE: 'enterprise' }[plan];
     const tier = (registry.tiers as Record<string, { features_zh?: string[] }>)[key];
-    return { included: (tier?.features_zh ?? []).map((line) => line.startsWith('✅') ? line : `✅ ${line}`), excluded: [] };
+    return { included: tier?.features_zh ?? [], excluded: [] };
 }

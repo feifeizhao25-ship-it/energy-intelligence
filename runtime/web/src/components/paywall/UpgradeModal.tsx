@@ -148,7 +148,7 @@ export default function UpgradeModal({
                                 </div>
 
                                 <div className="flex items-center gap-2 mb-4">
-                                    <span className="text-2xl">💎</span>
+                                    <span className="text-2xl"></span>
                                     <div>
                                         <h3 className="font-bold text-slate-900">专业</h3>
                                         <p className="text-xs text-slate-500">标准档已实现功能，3 个席位</p>

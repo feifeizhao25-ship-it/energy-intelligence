@@ -12,7 +12,7 @@ export function generateResourceReport(data: ReportData, type: 'basic' | 'standa
     // In a real app, this would generate a PDF buffer using pdfkit or react-pdf.
     // Here we construct a Markdown report string.
 
-    const date = new Date().toLocaleDateString();
+    const date = new Intl.DateTimeFormat('zh-CN', { timeZone: 'Asia/Shanghai', year: 'numeric', month: 'long', day: 'numeric' }).format(new Date());
 
     return `
 # 新能源资源评估报告

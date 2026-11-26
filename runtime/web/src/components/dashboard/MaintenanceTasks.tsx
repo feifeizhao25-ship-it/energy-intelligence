@@ -26,7 +26,7 @@ export default function MaintenanceTasks({ weekOf, tasks }: MaintenanceTasksProp
         switch (priority) {
             case 'CRITICAL':
                 return {
-                    icon: '🔴',
+                    icon: '',
                     color: 'text-red-600 dark:text-red-400',
                     bgColor: 'bg-red-50 dark:bg-red-900/20',
                     borderColor: 'border-red-200 dark:border-red-800',
@@ -34,7 +34,7 @@ export default function MaintenanceTasks({ weekOf, tasks }: MaintenanceTasksProp
                 };
             case 'HIGH':
                 return {
-                    icon: '🟠',
+                    icon: '',
                     color: 'text-orange-600 dark:text-orange-400',
                     bgColor: 'bg-orange-50 dark:bg-orange-900/20',
                     borderColor: 'border-orange-200 dark:border-orange-800',
@@ -42,7 +42,7 @@ export default function MaintenanceTasks({ weekOf, tasks }: MaintenanceTasksProp
                 };
             case 'MEDIUM':
                 return {
-                    icon: '🟡',
+                    icon: '',
                     color: 'text-yellow-600 dark:text-yellow-400',
                     bgColor: 'bg-yellow-50 dark:bg-yellow-900/20',
                     borderColor: 'border-yellow-200 dark:border-yellow-800',
@@ -50,7 +50,7 @@ export default function MaintenanceTasks({ weekOf, tasks }: MaintenanceTasksProp
                 };
             default:
                 return {
-                    icon: '🟢',
+                    icon: '',
                     color: 'text-green-600 dark:text-green-400',
                     bgColor: 'bg-green-50 dark:bg-green-900/20',
                     borderColor: 'border-green-200 dark:border-green-800',
@@ -96,7 +96,7 @@ export default function MaintenanceTasks({ weekOf, tasks }: MaintenanceTasksProp
             <div className="p-6">
                 {tasks.length === 0 ? (
                     <div className="text-center py-12">
-                        <div className="text-6xl mb-4">🎉</div>
+                        <div className="text-6xl mb-4"></div>
                         <div className="text-lg font-medium text-gray-900 dark:text-white">
                             本周无需运维
                         </div>

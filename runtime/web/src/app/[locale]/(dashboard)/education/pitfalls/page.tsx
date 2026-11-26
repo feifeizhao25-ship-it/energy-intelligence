@@ -5,7 +5,7 @@ import { AlertTriangle, Shield, CheckCircle } from 'lucide-react';
 const pitfalls = [
   {
     category: '报价陷阱',
-    icon: '💰',
+    icon: '',
     items: [
       {
         name: '低价诱惑',
@@ -29,7 +29,7 @@ const pitfalls = [
   },
   {
     category: '合同陷阱',
-    icon: '📄',
+    icon: '',
     items: [
       {
         name: '租赁伪装',
@@ -53,7 +53,7 @@ const pitfalls = [
   },
   {
     category: '设备陷阱',
-    icon: '🔧',
+    icon: '',
     items: [
       {
         name: '翻新组件',
@@ -83,7 +83,7 @@ export default function PitfallsPage() {
       <div className="max-w-4xl mx-auto px-4">
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            ⚠️ 光伏安装避坑指南
+             光伏安装避坑指南
           </h1>
           <p className="text-gray-600">
             了解常见陷阱，保护自己的权益
@@ -131,7 +131,7 @@ export default function PitfallsPage() {
                           key={flag}
                           className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs"
                         >
-                          🚩 {flag}
+                           {flag}
                         </span>
                       ))}
                     </div>

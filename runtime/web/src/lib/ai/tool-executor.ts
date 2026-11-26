@@ -925,11 +925,11 @@ function generateInspectionPlan(input: Record<string, unknown>) {
 
 
     const safetyReminders = [
-        '⚠️ 断电操作，确认无电压',
-        '⚠️ 穿戴绝缘手套、安全帽',
-        '⚠️ 高空作业系好安全带',
-        '⚠️ 雷雨天气禁止作业',
-        '⚠️ 两人以上配合作业'
+        ' 断电操作，确认无电压',
+        ' 穿戴绝缘手套、安全帽',
+        ' 高空作业系好安全带',
+        ' 雷雨天气禁止作业',
+        ' 两人以上配合作业'
     ];
 
     return {
@@ -937,11 +937,11 @@ function generateInspectionPlan(input: Record<string, unknown>) {
         capacity,
         checklist: checklists[inspectionType],
         safetyReminders: projectType === 'wind' ? [
-            '⚠️ 登塔作业必须佩戴双钩安全带',
-            '⚠️ 严格执行"一人监护、一人操作"',
-            '⚠️ 风速超过12m/s严禁登塔',
-            '⚠️ 作业前必须锁定叶轮（插销）',
-            '⚠️ 携带气体检测仪（塔底可能有废气）'
+            ' 登塔作业必须佩戴双钩安全带',
+            ' 严格执行"一人监护、一人操作"',
+            ' 风速超过12m/s严禁登塔',
+            ' 作业前必须锁定叶轮（插销）',
+            ' 携带气体检测仪（塔底可能有废气）'
         ] : safetyReminders,
         estimatedDuration: {
             daily: '15-30分钟',

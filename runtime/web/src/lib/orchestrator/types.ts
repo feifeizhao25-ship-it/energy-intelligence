@@ -27,16 +27,16 @@ export const STAGE_META: Record<LifecycleStage, {
     color: string;
     order: number;
 }> = {
-    ONBOARDING: { name: '新手入门', nameEn: 'Onboarding', icon: '🚀', color: 'blue', order: 0 },
-    SITE_SELECTION: { name: '选址评估', nameEn: 'Site Selection', icon: '📍', color: 'green', order: 1 },
-    ECONOMIC_EVALUATION: { name: '收益测算', nameEn: 'Economic Evaluation', icon: '💰', color: 'amber', order: 2 },
-    DESIGN_OPTIMIZATION: { name: '方案优化', nameEn: 'Design Optimization', icon: '⚙️', color: 'purple', order: 3 },
-    DECISION_REPORTING: { name: '决策报告', nameEn: 'Decision Report', icon: '📊', color: 'indigo', order: 4 },
-    CONSTRUCTION_PREP: { name: '开工准备', nameEn: 'Construction Prep', icon: '🏗️', color: 'orange', order: 5 },
-    OPERATION_MONITORING: { name: '运行监控', nameEn: 'Operation Monitoring', icon: '📈', color: 'teal', order: 6 },
-    ABNORMAL_DIAGNOSIS: { name: '异常诊断', nameEn: 'Diagnosis', icon: '🔍', color: 'red', order: 7 },
-    MAINTENANCE_OPTIMIZATION: { name: '维护优化', nameEn: 'Maintenance', icon: '🔧', color: 'slate', order: 8 },
-    KNOWLEDGE_RESEARCH: { name: '知识研究', nameEn: 'Research', icon: '📚', color: 'cyan', order: 9 },
+    ONBOARDING: { name: '新手入门', nameEn: 'Onboarding', icon: '', color: 'blue', order: 0 },
+    SITE_SELECTION: { name: '选址评估', nameEn: 'Site Selection', icon: '', color: 'green', order: 1 },
+    ECONOMIC_EVALUATION: { name: '收益测算', nameEn: 'Economic Evaluation', icon: '', color: 'amber', order: 2 },
+    DESIGN_OPTIMIZATION: { name: '方案优化', nameEn: 'Design Optimization', icon: '', color: 'purple', order: 3 },
+    DECISION_REPORTING: { name: '决策报告', nameEn: 'Decision Report', icon: '', color: 'indigo', order: 4 },
+    CONSTRUCTION_PREP: { name: '开工准备', nameEn: 'Construction Prep', icon: '', color: 'orange', order: 5 },
+    OPERATION_MONITORING: { name: '运行监控', nameEn: 'Operation Monitoring', icon: '', color: 'teal', order: 6 },
+    ABNORMAL_DIAGNOSIS: { name: '异常诊断', nameEn: 'Diagnosis', icon: '', color: 'red', order: 7 },
+    MAINTENANCE_OPTIMIZATION: { name: '维护优化', nameEn: 'Maintenance', icon: '', color: 'slate', order: 8 },
+    KNOWLEDGE_RESEARCH: { name: '知识研究', nameEn: 'Research', icon: '', color: 'cyan', order: 9 },
 };
 
 /**

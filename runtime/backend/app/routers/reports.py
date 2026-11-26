@@ -250,7 +250,7 @@ class TemplateInfo(BaseModel):
     description_en: str
     sections_zh: List[str]
     sections_en: List[str]
-    icon: str = "📄"
+    icon: str = ""
 
     @property
     def name(self) -> str:
@@ -284,7 +284,7 @@ TEMPLATES: Dict[str, TemplateInfo] = {
             "Project Overview", "Resource Assessment", "Technical Design",
             "Financial Analysis", "Risk Assessment", "Methods and Assumptions",
         ],
-        icon="📊",
+        icon="",
     ),
     "investment": TemplateInfo(
         id="investment",
@@ -300,7 +300,7 @@ TEMPLATES: Dict[str, TemplateInfo] = {
             "Executive Summary", "Market Analysis", "Financial Model",
             "Sensitivity Analysis", "Emissions Accounting", "Calculation Result",
         ],
-        icon="💰",
+        icon="",
     ),
     "compliance": TemplateInfo(
         id="compliance",
@@ -316,7 +316,7 @@ TEMPLATES: Dict[str, TemplateInfo] = {
             "Regulatory Checklist", "Permit Status", "Environmental Impact Assessment",
             "Land Use Analysis", "Grid Interconnection Plan",
         ],
-        icon="✅",
+        icon="",
     ),
     "esg": TemplateInfo(
         id="esg",
@@ -332,7 +332,7 @@ TEMPLATES: Dict[str, TemplateInfo] = {
             "Carbon Emissions & Reduction", "Social Impact", "Corporate Governance",
             "SDG Alignment", "Continuous Improvement",
         ],
-        icon="🌱",
+        icon="",
     ),
 }
 

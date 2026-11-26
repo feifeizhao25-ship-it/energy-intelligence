@@ -12,7 +12,7 @@ export const ACTION_TEMPLATES = {
 
     setLocation: (): ActionCard => ({
         id: 'set_location',
-        title: '📍 设置项目位置',
+        title: ' 设置项目位置',
         description: '选择项目地址，获取精准资源数据',
         priority: 1,
         category: 'RESOURCE',
@@ -28,7 +28,7 @@ export const ACTION_TEMPLATES = {
 
     getSolarResource: (): ActionCard => ({
         id: 'get_solar_resource',
-        title: '☀️ 获取太阳能资源评估',
+        title: ' 获取太阳能资源评估',
         description: '基于 NASA 卫星数据，分析年辐照量和最佳倾角',
         priority: 1,
         category: 'RESOURCE',
@@ -45,7 +45,7 @@ export const ACTION_TEMPLATES = {
 
     getWindResource: (): ActionCard => ({
         id: 'get_wind_resource',
-        title: '💨 获取风能资源评估',
+        title: ' 获取风能资源评估',
         description: '分析不同高度风速和风功率密度',
         priority: 1,
         category: 'RESOURCE',
@@ -63,7 +63,7 @@ export const ACTION_TEMPLATES = {
 
     calculateSolar: (): ActionCard => ({
         id: 'calculate_solar',
-        title: '💰 光伏收益测算',
+        title: ' 光伏收益测算',
         description: '计算 25 年投资回报、IRR 和现金流',
         priority: 1,
         category: 'CALCULATION',
@@ -79,7 +79,7 @@ export const ACTION_TEMPLATES = {
 
     calculateWind: (): ActionCard => ({
         id: 'calculate_wind',
-        title: '💰 风电收益测算',
+        title: ' 风电收益测算',
         description: '计算风电项目投资回报',
         priority: 1,
         category: 'CALCULATION',
@@ -95,7 +95,7 @@ export const ACTION_TEMPLATES = {
 
     calculateStorage: (): ActionCard => ({
         id: 'calculate_storage',
-        title: '🔋 储能收益测算',
+        title: ' 储能收益测算',
         description: '计算峰谷价差收益',
         priority: 2,
         category: 'CALCULATION',
@@ -111,7 +111,7 @@ export const ACTION_TEMPLATES = {
 
     unlockFullAnalysis: (): ActionCard => ({
         id: 'unlock_full_analysis',
-        title: '🔓 查看完整分析',
+        title: ' 查看完整分析',
         description: '解锁 IRR、敏感性分析和 25 年现金流',
         priority: 1,
         category: 'CALCULATION',
@@ -129,7 +129,7 @@ export const ACTION_TEMPLATES = {
 
     compareSites: (): ActionCard => ({
         id: 'compare_sites',
-        title: '⚖️ 站址比选',
+        title: ' 站址比选',
         description: '对比多个位置的收益差异，选出最优方案',
         priority: 2,
         category: 'CALCULATION',
@@ -147,7 +147,7 @@ export const ACTION_TEMPLATES = {
 
     generateReport: (): ActionCard => ({
         id: 'generate_report',
-        title: '📊 生成决策报告',
+        title: ' 生成决策报告',
         description: '导出专业 PDF 报告，向领导/投资人汇报',
         priority: 2,
         category: 'REPORT',
@@ -165,7 +165,7 @@ export const ACTION_TEMPLATES = {
 
     startRecording: (): ActionCard => ({
         id: 'start_recording',
-        title: '📝 开始记录发电数据',
+        title: ' 开始记录发电数据',
         description: '每日记录发电量，追踪电站表现',
         priority: 1,
         category: 'DIAGNOSIS',
@@ -181,7 +181,7 @@ export const ACTION_TEMPLATES = {
 
     analyzePerformance: (): ActionCard => ({
         id: 'analyze_performance',
-        title: '📈 性能比(PR)分析',
+        title: ' 性能比(PR)分析',
         description: 'AI 深度分析发电效率，找出损失原因',
         priority: 2,
         category: 'DIAGNOSIS',
@@ -197,7 +197,7 @@ export const ACTION_TEMPLATES = {
 
     optimizeCleaning: (): ActionCard => ({
         id: 'optimize_cleaning',
-        title: '🧹 清洗决策优化',
+        title: ' 清洗决策优化',
         description: 'AI 推荐最佳清洗时机，平衡成本与收益',
         priority: 3,
         category: 'DIAGNOSIS',
@@ -215,7 +215,7 @@ export const ACTION_TEMPLATES = {
 
     searchPapers: (): ActionCard => ({
         id: 'search_papers',
-        title: '📚 搜索学术论文',
+        title: ' 搜索学术论文',
         description: '查找新能源领域最新研究成果',
         priority: 3,
         category: 'RESEARCH',
@@ -233,7 +233,7 @@ export const ACTION_TEMPLATES = {
 
     askCommunity: (): ActionCard => ({
         id: 'ask_community',
-        title: '💬 向社区提问',
+        title: ' 向社区提问',
         description: '获取专业人士的建议和经验分享',
         priority: 3,
         category: 'COMMUNITY',

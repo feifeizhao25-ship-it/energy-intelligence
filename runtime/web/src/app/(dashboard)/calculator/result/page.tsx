@@ -210,7 +210,7 @@ function CalculatorResultPage() {
                                         <div className="text-slate-500 text-[10px] uppercase font-bold">年减排二氧化碳</div>
                                     </div>
                                     <div className="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 text-center">
-                                        <div className="text-2xl mb-1">🌳</div>
+                                        <div className="text-2xl mb-1"></div>
                                         <div className="text-emerald-500 font-bold text-lg">{Math.round(co2AvoidedTonnesForProvince(data.energy.year1, data.metadata?.province) / 0.022).toLocaleString('zh-CN')} 棵</div>
                                         <div className="text-slate-500 text-[10px] uppercase font-bold">等效植树（按每棵树每年吸收约 22 千克二氧化碳）</div>
                                     </div>

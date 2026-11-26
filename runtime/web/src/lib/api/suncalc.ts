@@ -68,7 +68,10 @@ export function getYearSunPath(lat: number, lng: number) {
                 path.push({ hour: h, ...pos });
             }
         }
-        return { date: date.toLocaleDateString(), path };
+        return {
+            date: new Intl.DateTimeFormat('zh-CN', { timeZone: 'Asia/Shanghai', year: 'numeric', month: 'long', day: 'numeric' }).format(date),
+            path,
+        };
     });
 
     return paths;

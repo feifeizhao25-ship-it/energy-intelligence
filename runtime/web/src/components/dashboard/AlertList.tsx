@@ -25,7 +25,7 @@ export default function AlertList({ alerts }: AlertListProps) {
         switch (severity) {
             case 'CRITICAL':
                 return {
-                    icon: '🔴',
+                    icon: '',
                     bgColor: 'bg-red-50 dark:bg-red-900/20',
                     borderColor: 'border-red-200 dark:border-red-800',
                     textColor: 'text-red-700 dark:text-red-300',
@@ -33,7 +33,7 @@ export default function AlertList({ alerts }: AlertListProps) {
                 };
             case 'HIGH':
                 return {
-                    icon: '🟠',
+                    icon: '',
                     bgColor: 'bg-orange-50 dark:bg-orange-900/20',
                     borderColor: 'border-orange-200 dark:border-orange-800',
                     textColor: 'text-orange-700 dark:text-orange-300',
@@ -41,7 +41,7 @@ export default function AlertList({ alerts }: AlertListProps) {
                 };
             case 'MEDIUM':
                 return {
-                    icon: '🟡',
+                    icon: '',
                     bgColor: 'bg-yellow-50 dark:bg-yellow-900/20',
                     borderColor: 'border-yellow-200 dark:border-yellow-800',
                     textColor: 'text-yellow-700 dark:text-yellow-300',
@@ -49,7 +49,7 @@ export default function AlertList({ alerts }: AlertListProps) {
                 };
             default:
                 return {
-                    icon: '🔵',
+                    icon: '',
                     bgColor: 'bg-blue-50 dark:bg-blue-900/20',
                     borderColor: 'border-blue-200 dark:border-blue-800',
                     textColor: 'text-blue-700 dark:text-blue-300',
@@ -96,7 +96,7 @@ export default function AlertList({ alerts }: AlertListProps) {
             <div className="p-6">
                 {alerts.length === 0 ? (
                     <div className="text-center py-12">
-                        <div className="text-6xl mb-4">✅</div>
+                        <div className="text-6xl mb-4"></div>
                         <div className="text-lg font-medium text-gray-900 dark:text-white">一切正常</div>
                         <div className="text-sm text-gray-600 dark:text-gray-400 mt-2">
                             当前没有异常告警
