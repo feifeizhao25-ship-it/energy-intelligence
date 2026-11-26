@@ -3,7 +3,7 @@
  * EnergyIQ — Reports Page
  *
  * - Report list fed by GET /api/v1/reports; honest empty state when the
- *   service is not connected or nothing has been generated yet.
+ *   the request failed, or nothing has been generated yet.
  * - Generation entry posts to /api/v1/reports/generate; failures are
  *   surfaced as an inline error, never as a fabricated report.
  *
@@ -16,6 +16,7 @@ import { Badge, Button, Card, SegmentedControl } from '@energy-intelligence/ui-w
 import GlobalShell from '../components/GlobalShell';
 import EmptyState from '../components/EmptyState';
 import useApiList from '../hooks/useApiList';
+import { serviceNotice } from '../lib/service-notice';
 import { API_BASE, fetchJson } from '../lib/config';
 import { trackEvent } from '../lib/analytics';
 
@@ -32,7 +33,8 @@ const FORMATS = [
 ];
 
 const ReportsPage: React.FC = () => {
-  const { state, rows, reload } = useApiList('/api/v1/reports');
+  const { state, failure, rows, reload } = useApiList('/api/v1/reports');
+  const listNotice = serviceNotice(failure ?? 'offline', 'reports');
   const [type, setType] = useState('feasibility');
   const [format, setFormat] = useState('pdf');
   const [submitting, setSubmitting] = useState(false);
@@ -119,14 +121,14 @@ const ReportsPage: React.FC = () => {
           <Card padding="lg">
             <div className="py-10 text-center" role="status">
               <p className="text-[13px] text-[var(--text-primary)]">Loading the report list from the report service.</p>
-              <p className="mt-1 text-[12px] text-[var(--text-secondary)]">Wait a few seconds. If the list does not appear, the next card explains that the service is not connected and offers Retry.</p>
+              <p className="mt-1 text-[12px] text-[var(--text-secondary)]">Wait a few seconds. If the list does not appear, the next card says whether to sign in, whether the address was not found, or whether the network failed.</p>
             </div>
           </Card>
         ) : state === 'unavailable' ? (
           <EmptyState
             icon={<FileText size={22} />}
-            title="Report service is not available"
-            description="The reports backend is not connected. When it is configured, every report you generate will be listed here with its status and download link."
+            title={listNotice.title}
+            description={listNotice.description}
             actionLabel="Retry"
             onAction={reload}
           />

@@ -94,9 +94,11 @@ const MiniLinePlaceholder: React.FC<{ label: string; value: string; trend: strin
 
 const DashboardPage: React.FC = () => {
   const [activeISO, setActiveISO] = useState<string>('ERCOT');
+  const [todayLabel, setTodayLabel] = useState('');
 
   useEffect(() => {
     trackLandingViewed();
+    setTodayLabel(new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }));
   }, []);
   const market = MARKET_DATA[activeISO];
 
@@ -123,7 +125,7 @@ const DashboardPage: React.FC = () => {
               <h1 className="text-[22px] sm:text-[24px] font-bold text-[var(--text-primary)]">Portfolio Overview</h1>
             </div>
             <p className="text-[13px] text-[var(--text-secondary)] mt-0.5">
-              No sample portfolio is shown. {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+              No sample portfolio is shown.{todayLabel ? ` ${todayLabel}` : ''}
             </p>
           </div>
         </header>
