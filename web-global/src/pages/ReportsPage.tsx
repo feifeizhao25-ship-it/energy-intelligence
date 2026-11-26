@@ -34,7 +34,7 @@ const FORMATS = [
 
 const ReportsPage: React.FC = () => {
   const { state, failure, rows, reload } = useApiList('/api/v1/reports');
-  const notice = serviceNotice(failure ?? 'offline', 'reports');
+  const listNotice = serviceNotice(failure ?? 'offline', 'reports');
   const [type, setType] = useState('feasibility');
   const [format, setFormat] = useState('pdf');
   const [submitting, setSubmitting] = useState(false);
@@ -127,8 +127,8 @@ const ReportsPage: React.FC = () => {
         ) : state === 'unavailable' ? (
           <EmptyState
             icon={<FileText size={22} />}
-            title={notice.title}
-            description={notice.description}
+            title={listNotice.title}
+            description={listNotice.description}
             actionLabel="Retry"
             onAction={reload}
           />
