@@ -11,7 +11,7 @@ export interface User {
   name: string;
   email: string;
   phone?: string;
-  role: UserRole;
+  role?: UserRole;
   company?: string;
   country?: string;
   timezone: string;

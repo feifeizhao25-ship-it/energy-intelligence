@@ -54,7 +54,9 @@ function normalizeUser(apiUser: Record<string, unknown>): User {
     name: String(apiUser.name ?? ''),
     email: String(apiUser.email ?? ''),
     phone: apiUser.phone ? String(apiUser.phone) : undefined,
-    role: (apiUser.role as User['role']) || 'developer',
+    role: (['developer', 'analyst', 'admin', 'viewer'].includes(String(apiUser.role))
+      ? apiUser.role
+      : undefined) as User['role'],
     company: apiUser.company ? String(apiUser.company) : undefined,
     country: apiUser.country ? String(apiUser.country) : undefined,
     timezone: String(apiUser.timezone ?? 'UTC'),

@@ -105,6 +105,17 @@ async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
     await db.refresh(user)
     # 注册来源题：只对国内新账号、开关打开时记一次枚举代码；失败不影响注册
     await record_signup_source(db, user_id, body.signup_source, body.market)
+    from app.services.personal_workbench import ROLES, TECHS
+
+    chosen_role = body.role if body.role in ROLES else None
+    chosen_tech = [item for item in (body.tech_focus or []) if item in TECHS]
+    if chosen_role or chosen_tech:
+        prefs = {}
+        if chosen_role:
+            prefs["role"] = chosen_role
+        if chosen_tech:
+            prefs["tech_focus"] = chosen_tech
+        user.usage_quota = {"home_personalization": prefs}
 
     access_token = create_access_token(subject=user_id)
     refresh_token = create_refresh_token(subject=user_id)
