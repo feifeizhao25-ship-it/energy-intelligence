@@ -24,6 +24,10 @@ class SolarResourceResponse(BaseModel):
     score: float  # 0-100
     data_source: str
     monthly_ghi: List[float]
+    beam_horizontal: Optional[float] = None
+    irradiance_model: Optional[str] = None
+    dni_note: Optional[str] = None
+    dni_months_estimated: Optional[int] = None
     # 国内版按 GB/T 31155-2014 分级时给出（A 最丰富 / B 很丰富 / C 丰富 / D 一般）；国际版为空
     gb_grade: Optional[str] = None
     gb_grade_label: Optional[str] = None
