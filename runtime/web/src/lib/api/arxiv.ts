@@ -37,7 +37,7 @@ export const searchArxiv = withCache(async (
 
     // 构建查询参数
     const params = new URLSearchParams({
-      search_query: `all:${query}`,
+      search_query: `all:${query} ANDNOT (cat:astro-ph.* OR cat:hep-ex OR cat:hep-lat OR cat:hep-ph OR cat:hep-th)`,
       start: '0',
       max_results: limit.toString(),
       sortBy: 'submittedDate',
@@ -97,6 +97,7 @@ export function parseArxivXML(xmlText: string): Paper[] {
         // 提取分类
         const categoryMatches = entry.matchAll(/<category.*?term="(.*?)".*?\/>/g);
         const categories = Array.from(categoryMatches, m => m[1]);
+        if (categories.some((item) => /^(astro-ph|hep-)/.test(item))) continue;
 
         if (idMatch && titleMatch) {
           const paperId = extractArxivId(idMatch[1]);
