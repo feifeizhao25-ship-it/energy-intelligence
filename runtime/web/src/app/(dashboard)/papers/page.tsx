@@ -25,6 +25,23 @@ import {
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { LiteratureWorkbench } from '@/components/papers/LiteratureWorkbench';
+import katex from 'katex';
+import 'katex/dist/katex.min.css';
+
+function AbstractText({ text }: { text: string }) {
+    const parts = String(text || '').split(/(\$[^$\n]+\$)/g);
+    return (
+        <p className="text-slate-500 text-sm mb-6 leading-relaxed">
+            {parts.map((part, index) => {
+                if (part.startsWith('$') && part.endsWith('$') && part.length > 2) {
+                    const html = katex.renderToString(part.slice(1, -1), { throwOnError: false });
+                    return <span key={index} dangerouslySetInnerHTML={{ __html: html }} />;
+                }
+                return <span key={index}>{part}</span>;
+            })}
+        </p>
+    );
+}
 
 const searchFilters = [
     { id: 'all', name: '全部' },
@@ -269,9 +286,7 @@ export default function PapersPage() {
                                     </div>
 
                                     {/* Abstract */}
-                                    <p className="text-slate-500 text-sm line-clamp-2 mb-6 leading-relaxed">
-                                        {paper.abstract}
-                                    </p>
+                                    <AbstractText text={paper.abstract} />
                                     {paper.abstract && !/[\u4e00-\u9fff]/.test(paper.abstract) ? <p className="-mt-4 mb-4 text-xs text-slate-400">摘要为原文语言，暂无中文译文。</p> : null}
                                     {paper.licenceNote ? <p className="mb-4 text-sm text-slate-500">署名：{paper.licenceNote}</p> : null}
 

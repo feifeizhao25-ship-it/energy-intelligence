@@ -1,5 +1,6 @@
 '''Research API — paper search, trend data, technology insights.'''
 from datetime import datetime, timezone
+import re
 from typing import Optional
 import httpx
 from fastapi import APIRouter, Depends, Query, Request
@@ -8,13 +9,32 @@ from app.services.overseas_gate import overseas_live_allowed
 
 router = APIRouter(prefix='/research')
 
+# Solar-physics queries were matching astrophysics. Keep energy-relevant categories
+# and drop astro-ph / hep, which are not this product's literature.
+_OUTSIDE_ENERGY = re.compile(r"^(astro-ph|hep-)")
+_CATEGORY = re.compile(r'<category\b[^>]*\bterm="([^"]+)"')
+
+
+def energy_search_query(q: str) -> str:
+    term = " ".join(q.split())
+    return (
+        f"all:{term} ANDNOT (cat:astro-ph.* OR cat:hep-ex OR cat:hep-lat OR cat:hep-ph OR cat:hep-th)"
+    )
+
+
+def in_energy_domain(categories: list[str]) -> bool:
+    if not categories:
+        return True
+    return not any(_OUTSIDE_ENERGY.match(item) for item in categories)
+
+
 async def search_arxiv(q: str, max_results: int = 10) -> list:
     if not overseas_live_allowed():
         return []
     try:
         url = 'https://export.arxiv.org/api/query'
         params = {
-            'search_query': f'all:{q}',
+            'search_query': energy_search_query(q),
             'start': 0,
             'max_results': max_results,
             'sortBy': 'relevance',
@@ -31,7 +51,10 @@ async def search_arxiv(q: str, max_results: int = 10) -> list:
                 title = entry.split('<title>')[1].split('</title>')[0].strip().replace('\n', ' ')
                 authors_raw = entry.split('<author>')[1:4] if '<author>' in entry else []
                 authors = ', '.join([a.split('<name>')[1].split('</name>')[0] if '<name>' in a else '' for a in authors_raw])
-                abstract = entry.split('<summary>')[1].split('</summary>')[0].strip()[:300] if '<summary>' in entry else ''
+                abstract = entry.split('<summary>')[1].split('</summary>')[0].strip() if '<summary>' in entry else ''
+                categories = _CATEGORY.findall(entry)
+                if not in_energy_domain(categories):
+                    continue
                 published = entry.split('<published>')[1].split('</published>')[0][:4] if '<published>' in entry else '2024'
                 papers.append({
                     'id': entry.split('<id>')[1].split('</id>')[0].split('/')[-1] if '<id>' in entry else '',
@@ -40,6 +63,8 @@ async def search_arxiv(q: str, max_results: int = 10) -> list:
                     'year': int(published[:4]),
                     'citations': 0,
                     'abstract': abstract,
+                    'latex': abstract if ('$' in abstract or '\\' in abstract) else None,
+                    'categories': categories,
                     'doi': None,
                     'url': entry.split('<id>')[1].split('</id>')[0] if '<id>' in entry else '',
                     'journal': 'arXiv preprint',
