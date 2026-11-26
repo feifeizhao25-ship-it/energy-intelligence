@@ -411,6 +411,12 @@ async def chat(
     except BudgetExceeded as error:
         raise HTTPException(status_code=429, detail={"error": "PRODUCT_BUDGET_EXCEEDED", "message": str(error)}) from error
     hits = _retrieve(message, market)
+    defined = grounding.definition_reply(message, market) if not hits else None
+    if defined:
+        async def defined_stream():
+            yield f"data: {json.dumps({'content': defined, 'grounding': {'status': 'definition', 'source_count': 0}}, ensure_ascii=False)}\n\n"
+            yield "data: [DONE]\n\n"
+        return StreamingResponse(defined_stream(), media_type="text/event-stream", headers={"X-Accel-Buffering": "no"})
     if not hits and grounding.is_policy_question(message):
         refusal = _no_source_payload(market, style, message, getattr(user, "country", None))
 
@@ -562,6 +568,18 @@ async def chat_json(
             return {"message": blocked, "ai_metadata": {"blocked": "bottom_line"}, "evidence": evidence, "sources": [], **stored}
         assert_product_budget(user_id, market)
         hits = _retrieve(body.message, market)
+        defined = grounding.definition_reply(body.message, market) if not hits else None
+        if defined:
+            evidence = _evidence_for(defined, [], market)
+            stored = _remember_answer(user, market, defined, [], {"stand_in": "glossary", "model_called": False})
+            return {
+                "message": defined,
+                "ai_metadata": {"stand_in": "glossary", "model_called": False},
+                "evidence": evidence,
+                "sources": [],
+                "grounding": _grounding([], "definition"),
+                **stored,
+            }
         if not hits and grounding.is_policy_question(body.message):
             payload = _no_source_payload(market, body.style, body.message, getattr(user, "country", None))
             stored = _remember_answer(user, market, payload["message"], [], {"stand_in": "no_source", "model_called": False})
@@ -627,6 +645,10 @@ async def analyze(
             return {"analysis": blocked, "ai_metadata": {"blocked": "bottom_line"}, "evidence": _evidence_for("", [], market)}
         assert_product_budget(user_id, market)
         hits = _retrieve(query, market)
+        defined = grounding.definition_reply(query, market) if not hits else None
+        if defined:
+            return {"analysis": defined, "ai_metadata": {"stand_in": "glossary", "model_called": False},
+                    "evidence": _evidence_for(defined, [], market), "grounding": _grounding([], "definition")}
         if not hits and grounding.is_policy_question(query):
             reply = _lead_with_reverification(grounding.no_source_reply(market, query, getattr(user, "country", None)), query, market, has_other=False)
             return {"analysis": reply, "ai_metadata": {"grounding": "no_source", "model_called": False},
@@ -806,6 +828,11 @@ async def ask(
     market = "global" if (body.market == "global" or (request.headers.get("x-app-market") or request.headers.get("x-market") or "").strip().lower() in ("global", "intl", "international", "en")) else "cn"
     blocked = blocked_model_text(body.query, market)
     hits = [] if blocked else _retrieve(body.query, market)
+    defined = grounding.definition_reply(body.query, market) if not blocked and not hits else None
+    if defined:
+        return {"answer": defined, "sources": [], "model": None,
+                "ai_metadata": {"stand_in": "glossary", "model_called": False},
+                "grounding": _grounding([], "definition")}
     if not blocked and not hits and grounding.is_policy_question(body.query):
         payload = _no_source_payload(market, body.style, body.query)
         return {"answer": payload["message"], "sources": [], "model": None, "structured": payload["structured"],
