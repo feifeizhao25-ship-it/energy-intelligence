@@ -55,7 +55,65 @@ _DEADLINE_WORDS = re.compile(
 )
 
 
+_DEFINITION = re.compile(
+    r"(什么是|是什么|何谓|如何定义|定义是什么|what is|what are|\bdefine\b|definition of|how is .{0,48} defined)",
+    re.I,
+)
+_TECHNICAL = re.compile(
+    r"(?<![A-Za-z])(lcoe|ghi|dni|dhi|capacity factor|irradiance|inverter|soiling|degradation)(?![A-Za-z])|"
+    r"度电成本|平准化度电成本|水平面总辐射|法向直接|散射辐射|容量系数|逆变器|灰损",
+    re.I,
+)
+_DEFINITION_TEXT = {
+    "lcoe": {
+        "zh": "度电成本（LCOE）是把项目寿命期内的成本现值，除以同期发电量的现值。这是术语解释，不是电价，也不是政策原文。",
+        "en": "Levelized cost of energy (LCOE) is the present value of lifetime costs divided by the present value of lifetime electricity output. This is a definition, not a tariff and not a statute.",
+    },
+    "ghi": {
+        "zh": "水平面总辐射（GHI）是水平面上接收到的太阳总辐射，包含直射和散射。这是术语解释，不是某地的实测值。",
+        "en": "Global horizontal irradiance (GHI) is the total solar radiation received on a horizontal surface, direct plus diffuse. This is a definition, not a measured value for a site.",
+    },
+    "dni": {
+        "zh": "法向直接辐射（DNI）是与太阳光束垂直的平面上的直接辐射，不含散射。这是术语解释，不是某地的实测值。",
+        "en": "Direct normal irradiance (DNI) is the solar beam on a surface kept normal to the sun, excluding diffuse light. This is a definition, not a measured value for a site.",
+    },
+    "dhi": {
+        "zh": "散射辐射（DHI）是水平面上接收到的散射部分，不含直射。这是术语解释，不是某地的实测值。",
+        "en": "Diffuse horizontal irradiance (DHI) is the diffuse part of sunlight on a horizontal surface, excluding the direct beam. This is a definition, not a measured value for a site.",
+    },
+    "capacity": {
+        "zh": "容量系数是一段时间内的实际发电量，除以装机容量在同一时段满发所能发出的电量。这是术语解释，不是某个项目的运行结果。",
+        "en": "Capacity factor is actual generation over a period divided by the generation the plant would produce if it ran at full capacity the whole time. This is a definition, not a plant's operating result.",
+    },
+}
+
+
+def is_definition_question(query: str) -> bool:
+    """A technical definition is not a policy question, even if the sentence also says 电价 or policy."""
+    return bool(_DEFINITION.search(query or "") and _TECHNICAL.search(query or ""))
+
+
+def definition_reply(query: str, market: str) -> Optional[str]:
+    if not is_definition_question(query):
+        return None
+    lang = "en" if market == "global" else "zh"
+    text = query or ""
+    if re.search(r"lcoe|度电成本|平准化", text, re.I):
+        key = "lcoe"
+    elif re.search(r"\bdni\b|法向直接", text, re.I):
+        key = "dni"
+    elif re.search(r"\bdhi\b|散射", text, re.I):
+        key = "dhi"
+    elif re.search(r"capacity factor|容量系数", text, re.I):
+        key = "capacity"
+    else:
+        key = "ghi"
+    return _DEFINITION_TEXT[key][lang]
+
+
 def is_policy_question(query: str) -> bool:
+    if is_definition_question(query):
+        return False
     return bool(_POLICY_EN.search(query or "") or _POLICY_ZH.search(query or ""))
 
 

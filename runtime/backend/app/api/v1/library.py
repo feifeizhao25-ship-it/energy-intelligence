@@ -56,11 +56,33 @@ async def entries(tz: Optional[str] = Query(None), user_id: str = Depends(get_cu
     user, usage, _, zone, _ = await _ctx(db, user_id, tz)
     edition, today = store.edition_of(user.market), _today(zone)
     items = store.annotated(edition, today)
+    hidden = store.annotated(edition, today, include_hidden=True)
+    withheld_pending = sum(
+        1 for entry in hidden
+        if entry["display"].get("state") == "pending" and not entry["display"].get("visible")
+    )
     marks = service.visit_badges(usage, items)
     for e in items:
         if e["id"] in marks:
             e["badge"] = marks[e["id"]]
-    return _ok({"entries": items, "edition": edition, "lang": store.LANG[edition], "generated_for": today.isoformat(), "preview_pending": store.show_pending()})
+    notice = None
+    if not items and withheld_pending:
+        notice = (
+            f"The international library has {withheld_pending} items awaiting review. "
+            "They are not shown, so the visible count is 0. This is not an empty library."
+            if edition == "global" else
+            f"资料库有 {withheld_pending} 条待审核，列表里不显示，所以可见条数是 0。这不是库是空的。"
+        )
+    return _ok({
+        "entries": items,
+        "count": len(items),
+        "withheld_pending": withheld_pending,
+        "notice": notice,
+        "edition": edition,
+        "lang": store.LANG[edition],
+        "generated_for": today.isoformat(),
+        "preview_pending": store.show_pending(),
+    })
 
 
 @router.get("/entries/{entry_id}")
