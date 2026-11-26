@@ -45,6 +45,9 @@ export default function PersonalizationSettings() {
             <div>
                 <h2 className="flex items-center gap-2 font-black text-slate-900"><SlidersHorizontal className="w-4 h-4" />工作台个性化</h2>
                 <p className="mt-1 text-xs text-slate-500">工作台会按你的角色调整模块顺序，按所在省份显示电价与已审核政策。免费版同样适用；也可以关闭个性化，回到通用版。</p>
+                {!prefs.role && !prefs.interest && state !== 'loading' ? (
+                    <p role="status" className="mt-2 text-sm text-amber-800">还没有选择角色和关注领域。不选也可以用，工作台不会替你假定一个角色。</p>
+                ) : null}
             </div>
             <label className="space-y-2 text-xs font-bold text-slate-500">
                 <span>昵称</span>

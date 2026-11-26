@@ -130,12 +130,21 @@ def _profile(user: User, prefs: Dict, facts: List[pw.ProjectFacts], tz) -> pw.Pr
     )
 
 
-def _public_prefs(prefs: Dict) -> Dict:
+def _public_prefs(prefs: Dict, lang: str = "zh") -> Dict:
     return {
         "enabled": prefs.get("enabled", True), "role": prefs.get("role", ""),
         "tech_focus": prefs.get("tech_focus", []), "goal": prefs.get("goal", ""),
         "region": prefs.get("region", ""), "timezone": prefs.get("timezone", ""),
+        "guidance": _empty_preference_guidance(prefs, lang),
     }
+
+
+def _empty_preference_guidance(prefs: Dict, lang: str) -> Optional[str]:
+    if str(prefs.get("role") or "").strip() or prefs.get("tech_focus"):
+        return None
+    if lang == "zh":
+        return "还没有选择角色和关注领域。这里不会替你假定一个。"
+    return "No role or technology focus has been chosen. None is assumed."
 
 
 def _library_card(user: User, usage: Dict, profile, facts, today: date) -> Optional[Dict]:
@@ -162,7 +171,7 @@ async def get_workbench(
     lang = _lang(user)
     if prefs.get("enabled", True) is False:
         return {"code": 0, "message": "success", "data": {
-            "personalized": False, "lang": lang, "preferences": _public_prefs(prefs),
+            "personalized": False, "lang": lang, "preferences": _public_prefs(prefs, lang),
             "cards": [], "disclaimer": pw.DISCLAIMER[lang],
             "note": "个性化已关闭，可在设置里重新打开。" if lang == "zh" else "Personalisation is off; turn it on in settings.",
         }}
@@ -197,7 +206,7 @@ async def get_workbench(
     user.usage_quota = usage
     await db.commit()
     data.update({
-        "personalized": True, "lang": lang, "preferences": _public_prefs(prefs),
+        "personalized": True, "lang": lang, "preferences": _public_prefs(prefs, lang),
         "note": ("这些建议根据你的角色、项目进度、时间和已看过的内容生成；可以随时关闭。" if lang == "zh"
                  else "These suggestions come from your role, project progress, the time and what you have already seen; you can turn them off any time."),
     })
@@ -207,7 +216,7 @@ async def get_workbench(
 @router.get("/workbench/preferences")
 async def get_preferences(user_id: str = Depends(get_current_user_id), db: AsyncSession = Depends(get_db)):
     user = await db.scalar(select(User).where(User.id == user_id))
-    return {"code": 0, "message": "success", "data": _public_prefs(dict((user.usage_quota or {}).get(KEY) or {}))}
+    return {"code": 0, "message": "success", "data": _public_prefs(dict((user.usage_quota or {}).get(KEY) or {}), _lang(user))}
 
 
 @router.put("/workbench/preferences")
@@ -217,4 +226,4 @@ async def put_preferences(body: PreferencesBody, user_id: str = Depends(get_curr
     usage[KEY] = _clean_prefs(body, dict(usage.get(KEY) or {}))
     user.usage_quota = usage
     await db.commit()
-    return {"code": 0, "message": "success", "data": _public_prefs(usage[KEY])}
+    return {"code": 0, "message": "success", "data": _public_prefs(usage[KEY], _lang(user))}

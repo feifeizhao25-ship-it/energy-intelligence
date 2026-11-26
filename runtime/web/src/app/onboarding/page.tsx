@@ -398,6 +398,7 @@ export default function OnboardingPage() {
                         >
                             我是老用户，跳过引导
                         </button>
+                        <p className="mt-3 text-sm text-slate-500">跳过不会写入角色或关注领域，工作台也不会替你选一个。</p>
                     </div>
                 )}
             </div>

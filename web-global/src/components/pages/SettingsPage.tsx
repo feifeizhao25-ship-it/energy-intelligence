@@ -64,6 +64,8 @@ const NOTIFICATION_OPTIONS: Array<{
 
 const SettingsPage: React.FC = () => {
   const [prefs, setPrefs] = useState<Preferences>(DEFAULTS);
+  const [role, setRole] = useState('');
+  const [focus, setFocus] = useState('');
   const [savedAt, setSavedAt] = useState<string | null>(null);
 
   // Load persisted preferences after mount (static export: no server state).
@@ -71,11 +73,13 @@ const SettingsPage: React.FC = () => {
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
       if (raw) {
-        const parsed = JSON.parse(raw) as Partial<Preferences>;
+        const parsed = JSON.parse(raw) as Partial<Preferences> & { role?: string; focus?: string };
         setPrefs({
           language: parsed.language ?? DEFAULTS.language,
           notifications: { ...DEFAULTS.notifications, ...parsed.notifications },
         });
+        setRole(typeof parsed.role === 'string' ? parsed.role : '');
+        setFocus(typeof parsed.focus === 'string' ? parsed.focus : '');
       }
     } catch {
       // Corrupted storage — fall back to defaults.
@@ -83,7 +87,7 @@ const SettingsPage: React.FC = () => {
   }, []);
 
   const save = () => {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...prefs, role, focus }));
     setSavedAt(new Date().toLocaleTimeString('en-US'));
   };
 
@@ -124,6 +128,36 @@ const SettingsPage: React.FC = () => {
               The international edition is available in English only. Additional languages are on
               the roadmap.
             </p>
+          </div>
+        </Card>
+
+        <Card title="Role and focus" padding="lg">
+          <div className="space-y-3">
+            {!role && !focus ? (
+              <p role="status" className="text-[13px] text-[var(--text-secondary)]">
+                No role or technology focus has been chosen. None is assumed.
+              </p>
+            ) : null}
+            <label className="block text-[12px] font-medium text-[var(--text-secondary)]" htmlFor="settings-role">
+              Role
+              <select id="settings-role" value={role} onChange={(event) => setRole(event.target.value)} className="mt-1 h-9 w-full max-w-[280px] rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--bg-primary)] px-3 text-[14px]">
+                <option value="">Choose later</option>
+                <option value="investor">Investor</option>
+                <option value="operations">Operations</option>
+                <option value="developer">Developer</option>
+                <option value="analyst">Analyst</option>
+              </select>
+            </label>
+            <label className="block text-[12px] font-medium text-[var(--text-secondary)]" htmlFor="settings-focus">
+              Technology focus
+              <select id="settings-focus" value={focus} onChange={(event) => setFocus(event.target.value)} className="mt-1 h-9 w-full max-w-[280px] rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--bg-primary)] px-3 text-[14px]">
+                <option value="">Choose later</option>
+                <option value="solar_pv">Solar PV</option>
+                <option value="wind">Wind</option>
+                <option value="storage">Storage</option>
+                <option value="hybrid">Hybrid</option>
+              </select>
+            </label>
           </div>
         </Card>
 
