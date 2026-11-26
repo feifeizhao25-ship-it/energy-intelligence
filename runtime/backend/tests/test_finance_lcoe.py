@@ -29,6 +29,16 @@ async def test_lcoe_matches_the_shared_formula(client, auth_headers):
     assert body["data"]["unit"] == "CNY/kWh"
 
 
+async def test_global_lcoe_defaults_to_usd_when_currency_is_omitted(client, auth_headers):
+    response = await client.post(
+        "/api/v1/finance/lcoe",
+        json=INPUTS,
+        headers={**auth_headers, "X-App-Market": "global"},
+    )
+    assert response.status_code == 200, response.text
+    assert response.json()["data"]["unit"] == "USD/kWh"
+
+
 async def test_lcoe_rejects_non_positive_generation(client, auth_headers):
     response = await client.post(
         "/api/v1/finance/lcoe",
