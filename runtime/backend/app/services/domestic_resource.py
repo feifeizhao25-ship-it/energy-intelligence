@@ -132,12 +132,13 @@ def solar_response_fields(lat: float, lng: float) -> dict:
     row = lookup(lat, lng)
     annual = row["ghi_annual"]
     monthly = row["monthly_ghi"]
-    dni = [round(v * 0.55, 1) for v in monthly]
-    dhi = [round(v * 0.45, 1) for v in monthly]
+    from app.services.erbs import split_year
     from app.services.solar_grade_gb31155 import grade as gb31155_grade
 
+    split = split_year(monthly, lat)
     g = gb31155_grade(annual)
     klass, score = g["resource_class"], g["score"]
+    dni = split["dni_estimate"]
     return {
         "lat": lat,
         "lng": lng,
@@ -145,8 +146,12 @@ def solar_response_fields(lat: float, lng: float) -> dict:
         "gb_grade_label": g["gb_grade_label"],
         "grading_standard": g["grading_standard"],
         "ghi": round(annual, 1),
-        "dni": round(sum(dni), 1),
-        "dhi": round(sum(dhi), 1),
+        "dni": round(dni, 1) if dni is not None else 0.0,
+        "dhi": round(split["dhi"], 1),
+        "beam_horizontal": round(split["beam_horizontal"], 1),
+        "irradiance_model": split["model"],
+        "dni_note": split["note"],
+        "dni_months_estimated": split["dni_months_estimated"],
         "peak_sun_hours": round(annual / 365, 2),
         "optimal_tilt": round(abs(lat) * 0.76 + 3.1, 1),
         "avg_temperature": round(row["avg_temp"], 1),
@@ -160,10 +165,17 @@ def solar_response_fields(lat: float, lng: float) -> dict:
 def nasa_shaped(lat: float, lng: float) -> dict:
     row = lookup(lat, lng)
     annual = row["ghi_annual"]
+    from app.services.erbs import split_year
+
+    split = split_year(row["monthly_ghi"], lat)
+    dni = split["dni_estimate"]
     return {
         "ghi_annual": round(annual, 1),
-        "dni_annual": round(annual * 0.55, 1),
-        "dhi_annual": round(annual * 0.45, 1),
+        "dni_annual": round(dni, 1) if dni is not None else 0.0,
+        "dhi_annual": round(split["dhi"], 1),
+        "beam_horizontal": round(split["beam_horizontal"], 1),
+        "irradiance_model": split["model"],
+        "dni_note": split["note"],
         "temp_avg": round(row["avg_temp"], 1),
         "data_source": row["data_source"],
         "data_period": "domestic-seed",
