@@ -179,7 +179,7 @@ export default function AssistantPage() {
     };
 
     return (
-        <div className="flex h-[calc(100dvh-4rem-env(safe-area-inset-bottom))] overflow-hidden bg-background-dark text-white">
+        <div className="ei-assistant-frame flex min-h-0 overflow-hidden bg-background-dark text-white">
             {/* Left Sidebar: History & Attachments */}
             <aside aria-label="最近对话" className="w-80 bg-surface-dark border-r border-border-dark flex-col shrink-0 overflow-hidden hidden md:flex">
                 {/* Upload Area */}

@@ -771,6 +771,19 @@ details.map-side-tools > summary.map-side-tools-summary::-webkit-details-marker 
   .ei-topbar { top: 0; }
 }
 
+/* 助手页在顶栏、移动页眉和底栏留白之内，避免顶栏压住对话。 */
+.ei-assistant-frame {
+  height: calc(100dvh - 3.5rem - env(safe-area-inset-top) - 3.25rem - 1rem - 6rem - env(safe-area-inset-bottom));
+  max-height: calc(100dvh - 3.5rem - env(safe-area-inset-top) - 3.25rem - 1rem - 6rem - env(safe-area-inset-bottom));
+}
+
+@media (min-width: 1024px) {
+  .ei-assistant-frame {
+    height: calc(100dvh - 3.25rem - 4rem);
+    max-height: calc(100dvh - 3.25rem - 4rem);
+  }
+}
+
 .ei-tile {
   display: flex;
   align-items: flex-start;
