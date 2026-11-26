@@ -14,10 +14,16 @@ export const API_BASE = (
   ''
 ).replace(/\/$/, '');
 
+export class HttpStatusError extends Error {
+  constructor(readonly status: number) {
+    super(`HTTP ${status}`);
+  }
+}
+
 /** GET a JSON resource; throws on any non-2xx response. */
 export async function fetchJson(url: string, init?: RequestInit): Promise<unknown> {
   const res = await fetch(url, init);
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  if (!res.ok) throw new HttpStatusError(res.status);
   return res.json();
 }
 

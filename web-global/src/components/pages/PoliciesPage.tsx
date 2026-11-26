@@ -14,6 +14,7 @@ import { Badge, Card } from '@energy-intelligence/ui-web';
 import GlobalShell from '../GlobalShell';
 import EmptyState from '../EmptyState';
 import useApiList from '../../hooks/useApiList';
+import { serviceNotice } from '../../lib/service-notice';
 
 function levelBadge(value: unknown): { label: string; color: 'brand' | 'info' | 'neutral' } {
   const text = String(value ?? '').toLowerCase();
@@ -23,7 +24,8 @@ function levelBadge(value: unknown): { label: string; color: 'brand' | 'info' | 
 }
 
 const PoliciesPage: React.FC = () => {
-  const { state, rows, reload } = useApiList('/api/v1/policies');
+  const { state, failure, rows, reload } = useApiList('/api/v1/policies');
+  const notice = serviceNotice(failure ?? 'offline', 'policies');
 
   return (
     <GlobalShell title="Policies" breadcrumb={['EnergyIQ', 'Policies']}>
@@ -45,8 +47,8 @@ const PoliciesPage: React.FC = () => {
         ) : state === 'unavailable' ? (
           <EmptyState
             icon={<Scale size={22} />}
-            title="Policy feed is not available"
-            description="The policies service is not connected. When it is configured, IRA guidance, IRS notices and state regulatory dockets will be tracked here."
+            title={notice.title}
+            description={notice.description}
             actionLabel="Retry"
             onAction={reload}
           />

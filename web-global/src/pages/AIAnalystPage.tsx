@@ -80,7 +80,7 @@ const AnswerSources: React.FC<{ reply: AnalystReply }> = ({ reply }) => {
     <div className="mt-3 space-y-2 border-t border-[var(--border-default)] pt-2" data-testid="answer-sources">
       {reply.standIn && (
         <p className="text-[12px] text-[var(--color-warning)]">
-          Model provider is not connected. This text is the library record or the no-source reply, not a signed model answer.
+          No model provider is configured. This text is the library record or the no-source reply, not a signed model answer.
         </p>
       )}
       {reply.synthetic && (

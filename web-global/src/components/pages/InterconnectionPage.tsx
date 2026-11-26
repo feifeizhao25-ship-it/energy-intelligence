@@ -15,7 +15,8 @@ import { PlugZap } from 'lucide-react';
 import { Badge, Card } from '@energy-intelligence/ui-web';
 import GlobalShell from '../GlobalShell';
 import EmptyState from '../EmptyState';
-import { API_BASE, extractList, fetchJson } from '../../lib/config';
+import { API_BASE, HttpStatusError, extractList, fetchJson } from '../../lib/config';
+import { failureFromStatus, serviceNotice } from '../../lib/service-notice';
 
 const STAGES = [
   {
@@ -54,7 +55,9 @@ type QueueState = 'loading' | 'ready' | 'unavailable';
 
 const InterconnectionPage: React.FC = () => {
   const [state, setState] = useState<QueueState>('loading');
+  const [failure, setFailure] = useState<'unauthorized' | 'missing' | 'offline' | null>(null);
   const [rows, setRows] = useState<Record<string, unknown>[]>([]);
+  const notice = serviceNotice(failure ?? 'offline', 'interconnection queue');
 
   const load = useCallback(async () => {
     setState('loading');
@@ -62,10 +65,12 @@ const InterconnectionPage: React.FC = () => {
       const payload = await fetchJson(`${API_BASE}/api/v1/interconnection/queue`);
       const list = extractList(payload);
       if (!list) throw new Error('unrecognized payload');
+      setFailure(null);
       setRows(list);
       setState('ready');
-    } catch {
+    } catch (error) {
       setRows([]);
+      setFailure(error instanceof HttpStatusError ? failureFromStatus(error.status) : 'offline');
       setState('unavailable');
     }
   }, []);
@@ -127,8 +132,8 @@ const InterconnectionPage: React.FC = () => {
             </div>
           ) : state === 'unavailable' ? (
             <EmptyState
-              title="Queue data is not available"
-              description="The interconnection queue service is not connected. Once your projects are linked to an ISO/RTO queue feed, their positions, study phases and upgrade cost allocations will appear here."
+              title={notice.title}
+              description={notice.description}
               actionLabel="Retry"
               onAction={() => void load()}
             />

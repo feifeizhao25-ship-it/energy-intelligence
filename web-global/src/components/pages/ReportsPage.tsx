@@ -3,7 +3,7 @@
  * EnergyIQ — Reports Page
  *
  * - Report list fed by GET /api/v1/reports; honest empty state when the
- *   service is not connected or nothing has been generated yet.
+ *   the request failed, or nothing has been generated yet.
  * - Generation entry posts to /api/v1/reports/generate; failures are
  *   surfaced as an inline error, never as a fabricated report.
  *
@@ -16,6 +16,7 @@ import { Badge, Button, Card, SegmentedControl } from '@energy-intelligence/ui-w
 import GlobalShell from '../GlobalShell';
 import EmptyState from '../EmptyState';
 import useApiList from '../../hooks/useApiList';
+import { serviceNotice } from '../../lib/service-notice';
 import { API_BASE, fetchJson } from '../../lib/config';
 
 const REPORT_TYPES = [
@@ -31,7 +32,8 @@ const FORMATS = [
 ];
 
 const ReportsPage: React.FC = () => {
-  const { state, rows, reload } = useApiList('/api/v1/reports');
+  const { state, failure, rows, reload } = useApiList('/api/v1/reports');
+  const notice = serviceNotice(failure ?? 'offline', 'reports');
   const [type, setType] = useState('feasibility');
   const [format, setFormat] = useState('pdf');
   const [submitting, setSubmitting] = useState(false);
@@ -122,8 +124,8 @@ const ReportsPage: React.FC = () => {
         ) : state === 'unavailable' ? (
           <EmptyState
             icon={<FileText size={22} />}
-            title="Report service is not available"
-            description="The reports backend is not connected. When it is configured, every report you generate will be listed here with its status and download link."
+            title={notice.title}
+            description={notice.description}
             actionLabel="Retry"
             onAction={reload}
           />

@@ -10,7 +10,7 @@
  * All copy in English. Uses CSS Variables for theming.
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { Button, Card, Badge, KPIRibbon, SegmentedControl, Progress } from '@energy-intelligence/ui-web';
 import { cn } from '@energy-intelligence/ui-web';
@@ -93,7 +93,12 @@ const MiniLinePlaceholder: React.FC<{ label: string; value: string; trend: strin
 
 const DashboardPage: React.FC = () => {
   const [activeISO, setActiveISO] = useState<string>('ERCOT');
+  const [todayLabel, setTodayLabel] = useState('');
   const market = MARKET_DATA[activeISO];
+
+  useEffect(() => {
+    setTodayLabel(new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }));
+  }, []);
 
   const projectRows = useMemo(() => RECENT_PROJECTS, []);
 
@@ -118,7 +123,7 @@ const DashboardPage: React.FC = () => {
               <h1 className="text-[24px] font-bold text-[var(--text-primary)]">Portfolio Overview</h1>
             </div>
             <p className="text-[13px] text-[var(--text-secondary)] mt-0.5">
-              No sample portfolio is shown. {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+              No sample portfolio is shown.{todayLabel ? ` ${todayLabel}` : ''}
             </p>
           </div>
         </header>

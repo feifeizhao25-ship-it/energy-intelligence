@@ -14,6 +14,7 @@ import { Badge, Card } from '@energy-intelligence/ui-web';
 import GlobalShell from '../GlobalShell';
 import EmptyState from '../EmptyState';
 import useApiList from '../../hooks/useApiList';
+import { serviceNotice } from '../../lib/service-notice';
 
 function severityBadge(value: unknown): {
   label: string;
@@ -27,7 +28,8 @@ function severityBadge(value: unknown): {
 }
 
 const AlertsPage: React.FC = () => {
-  const { state, rows, reload } = useApiList('/api/v1/alerts');
+  const { state, failure, rows, reload } = useApiList('/api/v1/alerts');
+  const notice = serviceNotice(failure ?? 'offline', 'alerts');
 
   return (
     <GlobalShell title="Alerts" breadcrumb={['EnergyIQ', 'Alerts']}>
@@ -48,8 +50,8 @@ const AlertsPage: React.FC = () => {
         ) : state === 'unavailable' ? (
           <EmptyState
             icon={<Bell size={22} />}
-            title="Alerts are not available"
-            description="The alerts service is not connected. When it is configured, portfolio events, price spikes and regulatory notices will show up here."
+            title={notice.title}
+            description={notice.description}
             actionLabel="Retry"
             onAction={reload}
           />
