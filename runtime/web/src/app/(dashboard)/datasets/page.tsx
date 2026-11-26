@@ -78,6 +78,7 @@ export default function DatasetsPage() {
             <h3 className="font-medium">未启用</h3>
             <ul className="space-y-1 text-sm text-slate-600">
                 {disabledReasons(attributions).map((item) => {
+                    if (/密钥|商户号/.test(item.name)) return null;
                     const chinese = (item.name.match(/[\u4e00-\u9fff]+/g) || []).join('');
                     return <li key={item.id}>{chinese || '未启用来源'}：{item.reason}</li>;
                 })}

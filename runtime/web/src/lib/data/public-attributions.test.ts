@@ -11,4 +11,6 @@ it('启用来源带署名，付费墙和科研限定来源保持关闭', () => {
   expect(disabled.find((item) => item.name.includes('PVOD'))?.reason).toMatch(/科学/);
   expect(disabled.find((item) => item.name.includes('气象'))?.reason).toMatch(/授权/);
   expect(enabled.find((item) => item.name.includes('知网'))).toBeUndefined();
+  expect(disabled.some((item) => /密钥|商户号/.test(item.name))).toBe(false);
+  expect(catalog.sources.some((item) => item.name.includes('商户号'))).toBe(true);
 });
