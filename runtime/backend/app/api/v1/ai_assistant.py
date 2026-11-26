@@ -476,14 +476,26 @@ def _remember_answer(user, market: str, message: str, sources: list, metadata: d
 
 def _library_stand_in(message: str, hits: list, market: str, style: Optional[str]):
     """Used only when no model provider is configured. The text is the library record, not a model answer."""
+    english = market == "global"
     if not hits:
-        answer = "No data available in the source library." if market == "global" else "本库尚未收录相关资料。"
+        answer = "No data available in the source library." if english else "本库尚未收录相关资料。"
     else:
-        rows = []
+        lead = (
+            "No model is configured. The text below is a retrieved excerpt, not a model answer."
+            if english else
+            "当前没有接入模型。下面是检索到的条款节选，不是模型生成的回答。"
+        )
+        rows = [lead]
         for index, hit in enumerate(hits, 1):
             md = hit.metadata or {}
-            typed = " ".join(date_lines(md, "en" if market == "global" else "zh"))
-            rows.append(f"[S{index}] {hit.title}" + (f"\n{typed}" if typed else ""))
+            typed = " ".join(date_lines(md, "en" if english else "zh"))
+            excerpt = excerpt_of(getattr(hit, "content", None) or md.get("content") or md.get("text"))
+            block = f"[S{index}] {hit.title}"
+            if typed:
+                block += f"\n{typed}"
+            if excerpt:
+                block += f"\n{excerpt}"
+            rows.append(block)
         answer = "\n".join(rows)
     shown, expired = _finish_answer(answer, hits, market, query=message)
     evidence = _evidence_for(shown, hits, market)
