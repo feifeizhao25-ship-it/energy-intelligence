@@ -21,27 +21,27 @@ export default function EnterpriseCenterPage() {
     const accounts: { name: string; email: string; role: string; status: string }[] = [];
 
     return (
-        <div className="min-h-screen bg-[#FBFDFF] pb-24">
+        <div className="min-h-screen min-w-0 overflow-x-hidden bg-[#FBFDFF] pb-24">
             {/* Enterprise Header */}
-            <div className="bg-slate-900 pt-32 pb-20 px-8 md:px-12 relative overflow-hidden">
+            <div className="bg-slate-900 pt-16 pb-12 px-4 sm:pt-32 sm:pb-20 sm:px-8 md:px-12 relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-20 opacity-10">
                     <Building2 className="w-80 h-80 text-white" />
                 </div>
                 <div className="max-w-7xl mx-auto relative z-10 space-y-8">
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-8">
                         <div className="space-y-4">
-                            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/20 text-blue-400 text-[10px] font-black uppercase tracking-widest border border-blue-500/30">
+                            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/20 text-blue-400 text-[10px] font-black normal-case tracking-normal sm:uppercase sm:tracking-widest border border-blue-500/30">
                                 <ShieldCheck className="w-3 h-3" />
                                 企业管理
                             </div>
-                            <h1 className="text-4xl md:text-6xl font-black text-white tracking-tighter leading-none">
+                            <h1 className="text-3xl sm:text-4xl md:text-6xl font-black text-white tracking-tighter leading-none break-words">
                                 企业 <span className="text-blue-500">管理中心</span>
                             </h1>
                             <p className="text-slate-400 font-bold text-lg max-w-2xl">
                                 上限档含 10 个席位，更多席位按合同增加。本页不提供白标报告或单点登录。
                             </p>
                         </div>
-                        <button type="button" disabled className="bg-white/70 text-slate-500 px-8 py-4 rounded-2xl font-black text-xs tracking-widest shadow-xl flex items-center gap-2 cursor-not-allowed">
+                        <button type="button" disabled className="bg-white/70 text-slate-500 px-4 sm:px-8 py-4 rounded-2xl font-black text-xs tracking-normal sm:tracking-widest shadow-xl flex items-center gap-2 cursor-not-allowed">
                             <Plus className="w-4 h-4" />
                             添加成员尚未开放
                         </button>
@@ -56,7 +56,7 @@ export default function EnterpriseCenterPage() {
                             { label: '品牌定制', value: '未提供', icon: Palette },
                         ].map((s, i) => (
                             <div key={i} className="bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-3xl">
-                                <span className="text-slate-500 text-[10px] font-black uppercase tracking-widest block mb-2">{s.label}</span>
+                                <span className="text-slate-500 text-[10px] font-black normal-case tracking-normal sm:uppercase sm:tracking-widest block mb-2">{s.label}</span>
                                 <div className="text-2xl font-black text-white flex items-center justify-between">
                                     {s.value}
                                     <s.icon className="w-4 h-4 text-blue-500" />
@@ -67,7 +67,7 @@ export default function EnterpriseCenterPage() {
                 </div>
             </div>
 
-            <main className="max-w-7xl mx-auto py-16 px-8 md:px-12">
+            <main className="max-w-7xl mx-auto min-w-0 py-10 px-4 sm:py-16 sm:px-8 md:px-12">
                 <div className="flex flex-col lg:flex-row gap-12">
                     {/* Navigation Sidebar */}
                     <aside className="w-full lg:w-64 space-y-2">
@@ -83,7 +83,7 @@ export default function EnterpriseCenterPage() {
                                 key={m.id}
                                 onClick={() => setActiveTab(m.id)}
                                 className={cn(
-                                    "w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all",
+                                    "w-full min-w-0 flex items-center gap-4 px-4 sm:px-6 py-4 rounded-2xl font-black text-xs normal-case tracking-normal sm:uppercase sm:tracking-widest transition-all",
                                     activeTab === m.id
                                         ? "bg-slate-900 text-white shadow-xl"
                                         : "text-slate-400 hover:bg-slate-100 hover:text-slate-900"
@@ -96,7 +96,7 @@ export default function EnterpriseCenterPage() {
                     </aside>
 
                     {/* Content Area */}
-                    <div className="flex-1 space-y-8">
+                    <div className="min-w-0 flex-1 space-y-8">
                         {activeTab === 'accounts' && (
                             <div className="space-y-6">
                                 <div className="flex justify-between items-center px-4">
@@ -105,20 +105,20 @@ export default function EnterpriseCenterPage() {
                                         席位上限 10，成员名单未连接
                                     </div>
                                 </div>
-                                <div className="max-w-full overflow-x-auto rounded-[40px] border border-slate-100 bg-white shadow-sm">
-                                    <table className="w-full min-w-[36rem] text-left">
+                                <div className="max-w-full min-w-0 overflow-x-auto rounded-[40px] border border-slate-100 bg-white shadow-sm">
+                                    <table className="w-full text-left sm:min-w-[36rem]">
                                         <thead>
                                             <tr className="bg-slate-50 border-b border-slate-100">
-                                                <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">成员信息</th>
-                                                <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">权限角色</th>
-                                                <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">状态</th>
-                                                <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">操作</th>
+                                                <th className="px-3 sm:px-8 py-4 sm:py-6 text-[10px] font-black text-slate-400 normal-case tracking-normal sm:uppercase sm:tracking-widest">成员信息</th>
+                                                <th className="px-3 sm:px-8 py-4 sm:py-6 text-[10px] font-black text-slate-400 normal-case tracking-normal sm:uppercase sm:tracking-widest">权限角色</th>
+                                                <th className="px-3 sm:px-8 py-4 sm:py-6 text-[10px] font-black text-slate-400 normal-case tracking-normal sm:uppercase sm:tracking-widest">状态</th>
+                                                <th className="px-3 sm:px-8 py-4 sm:py-6 text-[10px] font-black text-slate-400 normal-case tracking-normal sm:uppercase sm:tracking-widest">操作</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-50">
                                             {accounts.length === 0 && (
                                                 <tr>
-                                                    <td colSpan={4} className="px-8 py-10 text-sm text-slate-500">还没有企业成员。这里不展示示例姓名。</td>
+                                                    <td colSpan={4} className="px-3 sm:px-8 py-10 text-sm text-slate-500">还没有企业成员。这里不展示示例姓名。</td>
                                                 </tr>
                                             )}
                                             {accounts.map((acc, i) => (
