@@ -36,10 +36,10 @@ interface Message {
 }
 
 const quickPrompts = [
-    { icon: '☀️', text: '分析我的光伏项目收益', category: '收益分析' },
-    { icon: '🔋', text: '储能系统容量配置建议', category: '系统设计' },
-    { icon: '🌍', text: '最新新能源政策解读', category: '政策咨询' },
-    { icon: '📊', text: '对比不同组件的性价比', category: '设备选型' },
+    { icon: '', text: '分析我的光伏项目收益', category: '收益分析' },
+    { icon: '', text: '储能系统容量配置建议', category: '系统设计' },
+    { icon: '', text: '最新新能源政策解读', category: '政策咨询' },
+    { icon: '', text: '对比不同组件的性价比', category: '设备选型' },
 ];
 
 const knowledgeCards = [
@@ -66,7 +66,7 @@ export default function AssistantPage() {
         {
             id: '1',
             role: 'assistant',
-            content: '您好！我是新能源智库 AI 专家 🌱\n\n我可以帮您：\n• 光伏/风电/储能项目收益测算\n• 技术方案对比与优化建议\n• 政策解读与补贴咨询\n• 设备选型与性价比分析\n\n请告诉我您的需求，或选择下方快捷问题开始对话。',
+            content: '您好！我是新能源智库 AI 专家。\n\n我可以帮您：\n• 光伏/风电/储能项目收益测算\n• 技术方案对比与优化建议\n• 政策解读与补贴咨询\n• 设备选型与性价比分析\n\n请告诉我您的需求，或选择下方快捷问题开始对话。',
             timestamp: new Date(),
         }
     ]);
@@ -244,7 +244,7 @@ export default function AssistantPage() {
                                         onClick={() => handleSend(prompt.text)}
                                         className="p-4 rounded-2xl bg-surface-dark border border-border-dark hover:border-primary/50 text-left transition-all group"
                                     >
-                                        <div className="text-2xl mb-2">{prompt.icon}</div>
+                                        {prompt.icon ? <div className="text-2xl mb-2">{prompt.icon}</div> : null}
                                         <p className="text-sm font-medium text-white group-hover:text-primary transition-colors">{prompt.text}</p>
                                         <p className="text-xs text-text-secondary mt-1">{prompt.category}</p>
                                     </button>

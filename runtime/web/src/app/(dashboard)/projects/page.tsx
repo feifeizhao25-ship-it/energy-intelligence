@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { formatCnDate } from '@/lib/format/cn-date';
 import {
   Calculator,
   Plus,
@@ -189,7 +190,7 @@ export default function ProjectsPage() {
                         <MapPin className="w-3 h-3" /> {project.parameters?.address || '未知位置'}
                       </span>
                       <span className="flex items-center gap-1">
-                        <Calendar className="w-3 h-3" /> {project.createdAt ? new Date(project.createdAt).toLocaleDateString() : '--'}
+                        <Calendar className="w-3 h-3" /> {project.createdAt ? formatCnDate(project.createdAt) : '--'}
                       </span>
                     </div>
                   </div>

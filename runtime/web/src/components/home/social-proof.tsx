@@ -96,10 +96,10 @@ export function SocialProofBar({ className }: { className?: string }) {
  */
 export function TrustBadges({ className }: { className?: string }) {
     const badges = [
-        { icon: '🔒', text: '数据加密' },
-        { icon: '📊', text: 'NASA数据' },
-        { icon: '⚡', text: '实时计算' },
-        { icon: '🏆', text: '专业可靠' },
+        { icon: '', text: '数据加密' },
+        { icon: '', text: 'NASA数据' },
+        { icon: '', text: '实时计算' },
+        { icon: '', text: '专业可靠' },
     ];
 
     return (

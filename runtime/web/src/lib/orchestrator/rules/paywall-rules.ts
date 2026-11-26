@@ -22,7 +22,7 @@ export const paywallRules: Rule[] = [
             }],
             actions: [{
                 id: 'upgrade_daily_limit',
-                title: '💎 今日额度已用完',
+                title: ' 今日额度已用完',
                 description: '升级 PRO 版，无限测算、完整报告',
                 priority: 1,
                 category: 'SETTINGS',

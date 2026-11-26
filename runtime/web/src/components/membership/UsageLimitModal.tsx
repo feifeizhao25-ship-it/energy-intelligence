@@ -94,19 +94,19 @@ export default function UsageLimitModal({
                         </h4>
                         <ul className="space-y-2 text-sm text-gray-300">
                             <li className="flex items-center gap-2">
-                                <span className="text-green-500">✓</span>
+                                <span className="text-green-500"></span>
                                 更高的{featureName}使用限额
                             </li>
                             <li className="flex items-center gap-2">
-                                <span className="text-green-500">✓</span>
+                                <span className="text-green-500"></span>
                                 解锁更多高级功能
                             </li>
                             <li className="flex items-center gap-2">
-                                <span className="text-green-500">✓</span>
+                                <span className="text-green-500"></span>
                                 优先技术支持
                             </li>
                             <li className="flex items-center gap-2">
-                                <span className="text-green-500">✓</span>
+                                <span className="text-green-500"></span>
                                 永久保存历史数据
                             </li>
                         </ul>

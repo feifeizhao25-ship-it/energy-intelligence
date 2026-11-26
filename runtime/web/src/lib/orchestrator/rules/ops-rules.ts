@@ -27,7 +27,7 @@ export const opsRules: Rule[] = [
         then: (ctx) => ({
             actions: [{
                 id: 'view_weekly_trend',
-                title: '📊 查看本周发电趋势',
+                title: ' 查看本周发电趋势',
                 description: `已记录 ${ctx.signals.recordCount} 天，累计发电 ${ctx.signals.totalGeneration.toFixed(0)} kWh`,
                 priority: 2,
                 category: 'DIAGNOSIS',
@@ -52,7 +52,7 @@ export const opsRules: Rule[] = [
         then: (ctx) => ({
             actions: [{
                 id: 'pr_warning',
-                title: '⚠️ 性能比偏低',
+                title: ' 性能比偏低',
                 description: `PR = ${((ctx.signals.lastPR || 0) * 100).toFixed(1)}%，低于行业基准(80%)`,
                 priority: 2,
                 category: 'DIAGNOSIS',
@@ -78,7 +78,7 @@ export const opsRules: Rule[] = [
         then: (ctx) => ({
             actions: [{
                 id: 'pr_critical',
-                title: '🚨 紧急：性能比严重偏低',
+                title: ' 紧急：性能比严重偏低',
                 description: `PR = ${((ctx.signals.lastPR || 0) * 100).toFixed(1)}%，需要立即诊断`,
                 priority: 1,
                 category: 'DIAGNOSIS',
@@ -122,7 +122,7 @@ export const opsRules: Rule[] = [
         then: () => ({
             actions: [{
                 id: 'enable_push',
-                title: '🔔 开启发电推送',
+                title: ' 开启发电推送',
                 description: '每天收到发电预报和收益报告',
                 priority: 3,
                 category: 'SETTINGS',

@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -20,38 +20,77 @@ router = APIRouter(prefix="/operations")
 
 
 class CleaningCalculationRequest(BaseModel):
-    cleaning_cost_usd: float = Field(..., gt=0)
-    daily_revenue_usd: float = Field(..., gt=0)
+    """Domestic callers send CNY fields. The old USD names are still accepted and are not converted."""
+    cleaning_cost_cny: Optional[float] = Field(None, gt=0)
+    daily_revenue_cny: Optional[float] = Field(None, gt=0)
+    cleaning_cost_usd: Optional[float] = Field(None, gt=0)
+    daily_revenue_usd: Optional[float] = Field(None, gt=0)
     soiling_rate_fraction_per_day: float = Field(..., gt=0, le=0.10)
+
+    @model_validator(mode="after")
+    def require_cost_and_revenue(self):
+        if self.cost() is None or self.revenue() is None:
+            raise ValueError("cleaning cost and daily revenue are required")
+        return self
+
+    def cost(self) -> Optional[float]:
+        if self.cleaning_cost_cny is not None:
+            return self.cleaning_cost_cny
+        return self.cleaning_cost_usd
+
+    def revenue(self) -> Optional[float]:
+        if self.daily_revenue_cny is not None:
+            return self.daily_revenue_cny
+        return self.daily_revenue_usd
+
+    def sent_legacy_usd(self) -> bool:
+        return self.cleaning_cost_usd is not None or self.daily_revenue_usd is not None
+
+
+def _cleaning_money(body: CleaningCalculationRequest, market: str) -> dict:
+    """Name the amount in CNY on the domestic API. Legacy keys are echoed, never converted."""
+    cost, revenue = body.cost(), body.revenue()
+    if market == "global":
+        named = {"cleaning_cost_usd": cost, "daily_revenue_usd": revenue, "currency": "USD"}
+    else:
+        named = {"cleaning_cost_cny": cost, "daily_revenue_cny": revenue, "currency": "CNY"}
+        if body.sent_legacy_usd():
+            named["cleaning_cost_usd"] = body.cleaning_cost_usd
+            named["daily_revenue_usd"] = body.daily_revenue_usd
+            named["legacy_usd_keys"] = "旧字段已接受，未做汇率换算，金额就是请求里的数字"
+    named["soiling_rate_fraction_per_day"] = body.soiling_rate_fraction_per_day
+    return named
 
 
 @router.post("/cleaning/calculate")
 async def calculate_cleaning_schedule(
     body: CleaningCalculationRequest,
+    request: Request,
     user_id: str = Depends(get_current_user_id),
 ):
     """Auditable economic interval based only on explicit user assumptions."""
+    from app.core.market import request_market
+
+    market = request_market(request)
+    cost, revenue = body.cost(), body.revenue()
     optimal_interval = calc_optimal_cleaning_interval(
-        body.cleaning_cost_usd,
-        body.daily_revenue_usd,
+        cost,
+        revenue,
         body.soiling_rate_fraction_per_day * 100,
     )
     annual_cleanings = max(1, round(365 / optimal_interval))
-    daily_loss = body.daily_revenue_usd * body.soiling_rate_fraction_per_day
+    daily_loss = revenue * body.soiling_rate_fraction_per_day
     loss_per_cycle = daily_loss * optimal_interval * (optimal_interval + 1) / 2
-    annual_cleaning_cost = annual_cleanings * body.cleaning_cost_usd
+    annual_cleaning_cost = annual_cleanings * cost
     annual_soiling_loss = annual_cleanings * loss_per_cycle
-    theoretical_interval = math.sqrt(
-        2 * body.cleaning_cost_usd
-        / (body.daily_revenue_usd * body.soiling_rate_fraction_per_day)
-    )
+    theoretical_interval = math.sqrt(2 * cost / (revenue * body.soiling_rate_fraction_per_day))
     scenarios = []
     for interval in sorted({7, 14, 30, optimal_interval}):
         cleanings = max(1, round(365 / interval))
         soiling_loss = cleanings * daily_loss * interval * (interval + 1) / 2
         scenarios.append({
             "days": interval,
-            "total": round(cleanings * body.cleaning_cost_usd + soiling_loss, 2),
+            "total": round(cleanings * cost + soiling_loss, 2),
         })
     return {
         "optimal_interval_days": optimal_interval,
@@ -63,10 +102,7 @@ async def calculate_cleaning_schedule(
         "scenarios": scenarios,
         "model_version": "cleaning-economic-interval-v1.0",
         "formula": "N* = sqrt(2C / (R_daily * s_fraction))",
-        "assumptions": {
-            "source": "user_input",
-            **body.model_dump(),
-        },
+        "assumptions": {"source": "user_input", **_cleaning_money(body, market)},
     }
 
 
@@ -222,9 +258,11 @@ async def mark_alert_read(
 @router.get("/cleaning/{project_id}")
 async def get_cleaning_schedule(
     project_id: str,
-    cleaning_cost_usd: float = Query(2500.0, description="Cost per cleaning event (USD)"),
+    request: Request,
+    cleaning_cost_cny: Optional[float] = Query(None, gt=0, description="Cost per cleaning event in CNY"),
+    cleaning_cost_usd: Optional[float] = Query(None, gt=0, description="Legacy cost field, accepted without exchange"),
     soiling_loss_rate: float = Query(0.002, description="Daily generation loss from soiling (fraction)"),
-    revenue_per_mwh: float = Query(55.0, description="PPA or market price (USD/MWh)"),
+    revenue_per_mwh: float = Query(55.0, description="Price per MWh in the same currency as the cleaning cost"),
     annual_gen_mwh: float = Query(60000.0, description="Annual generation (MWh)"),
     user_id: str = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db),
@@ -240,20 +278,29 @@ async def get_cleaning_schedule(
     if not result.scalar_one_or_none():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="项目不存在")
 
+    from app.core.market import request_market
+
+    market = request_market(request)
+    if cleaning_cost_cny is not None:
+        cleaning_cost = cleaning_cost_cny
+    elif cleaning_cost_usd is not None:
+        cleaning_cost = cleaning_cost_usd
+    else:
+        cleaning_cost = 2500.0
     daily_gen_mwh = annual_gen_mwh / 365.0
     daily_revenue = daily_gen_mwh * revenue_per_mwh
-    daily_loss_usd = daily_revenue * soiling_loss_rate
+    daily_loss = daily_revenue * soiling_loss_rate
 
-    # N* = sqrt(2C / daily_loss_usd)
-    if daily_loss_usd <= 0:
+    if daily_loss <= 0:
         optimal_interval = 90
     else:
-        optimal_interval = round(math.sqrt(2 * cleaning_cost_usd / daily_loss_usd))
+        optimal_interval = round(math.sqrt(2 * cleaning_cost / daily_loss))
 
     annual_cleanings = max(1, round(365 / optimal_interval))
-    cleaning_cost_annual = annual_cleanings * cleaning_cost_usd
-    revenue_protected = daily_loss_usd * optimal_interval * annual_cleanings
+    cleaning_cost_annual = annual_cleanings * cleaning_cost
+    revenue_protected = daily_loss * optimal_interval * annual_cleanings
     net_benefit = revenue_protected - cleaning_cost_annual
+    cost_name = "cleaning_cost_usd" if market == "global" else "cleaning_cost_cny"
 
     return {
         "optimal_interval_days": optimal_interval,
@@ -263,10 +310,12 @@ async def get_cleaning_schedule(
         "net_benefit": round(net_benefit, 2),
         "formula_used": "N* = sqrt(2C / (Rs * soiling_rate))",
         "inputs": {
-            "cleaning_cost_usd": cleaning_cost_usd,
+            cost_name: cleaning_cost,
+            "currency": "USD" if market == "global" else "CNY",
             "soiling_loss_rate_per_day": soiling_loss_rate,
             "revenue_per_mwh": revenue_per_mwh,
             "annual_gen_mwh": annual_gen_mwh,
+            **({"cleaning_cost_usd": cleaning_cost_usd} if market != "global" and cleaning_cost_usd is not None else {}),
         },
     }
 

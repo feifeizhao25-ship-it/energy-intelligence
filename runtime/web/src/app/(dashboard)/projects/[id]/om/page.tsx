@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState, use } from 'react';
 import Link from 'next/link';
+import { formatCnDate } from '@/lib/format/cn-date';
 import {
     ArrowLeft,
     Activity,
@@ -413,7 +414,7 @@ export default function OperationsMaintenancePage(props: OmPageProps) {
                                                     </span>
                                                     <span className="text-xs text-slate-400 flex items-center gap-1">
                                                         <Calendar className="w-3 h-3" />
-                                                        {new Date(task.scheduledDate).toLocaleDateString()}
+                                                        {formatCnDate(task.scheduledDate)}
                                                     </span>
                                                 </div>
                                             </div>
@@ -610,7 +611,7 @@ export default function OperationsMaintenancePage(props: OmPageProps) {
                                             <div className="text-[10px] font-bold text-slate-400 uppercase mb-1">计划时间</div>
                                             <div className="text-sm font-bold text-slate-900 flex items-center gap-1">
                                                 <Calendar className="w-3 h-3" />
-                                                {new Date(task.scheduledDate).toLocaleDateString()}
+                                                {formatCnDate(task.scheduledDate)}
                                             </div>
                                         </div>
                                         <div>

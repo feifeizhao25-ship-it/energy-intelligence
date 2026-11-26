@@ -82,7 +82,7 @@ export const economicsRules: Rule[] = [
         then: (ctx) => ({
             actions: [{
                 id: 'long_payback_warning',
-                title: '⚠️ 回本周期较长',
+                title: ' 回本周期较长',
                 description: `预计 ${ctx.signals.paybackYears?.toFixed(1)} 年回本，建议优化方案`,
                 priority: 2,
                 category: 'CALCULATION',

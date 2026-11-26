@@ -24,7 +24,7 @@ export default async function AuthErrorPage(
 
     return (
         <main className="flex min-h-screen flex-col items-center justify-center bg-slate-50 p-6 text-center text-slate-900">
-            <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-amber-50 text-4xl">🔐</div>
+            <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-amber-50 text-4xl"></div>
             <h1 className="mb-2 text-2xl font-extrabold">暂时无法完成登录</h1>
             <p className="mb-8 max-w-md leading-7 text-slate-500">{message}</p>
             <div className="flex gap-4">

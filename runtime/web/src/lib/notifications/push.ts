@@ -39,10 +39,10 @@ export function generateMorningReport(
     weather: WeatherForecast
 ): DailyReport {
     const weatherEmoji = {
-        sunny: '☀️',
-        cloudy: '⛅',
-        rainy: '🌧️',
-        snowy: '❄️',
+        sunny: '',
+        cloudy: '',
+        rainy: '',
+        snowy: '',
     }[weather.condition];
 
     const weatherText = {
@@ -77,7 +77,7 @@ export function generateEveningReport(
         || !Number.isFinite(station.todayRevenue))) {
         return {
             type: 'evening',
-            title: '📊 今日发电报告',
+            title: ' 今日发电报告',
             content: '暂无完整有效的电站数据，暂不生成发电量、收益和环比汇总。',
             summary: {},
             actions: [{ label: '核对电站数据', url: '/my/stations' }],
@@ -96,13 +96,13 @@ export function generateEveningReport(
     } else if (hasYesterday) {
         const trend = ((totalGeneration - yesterdayGeneration) / yesterdayGeneration) * 100;
         comparisonText = trend >= 0
-            ? `📈 比昨日高 ${trend.toFixed(1)}%`
-            : `📉 比昨日低 ${Math.abs(trend).toFixed(1)}%`;
+            ? ` 比昨日高 ${trend.toFixed(1)}%`
+            : ` 比昨日低 ${Math.abs(trend).toFixed(1)}%`;
     }
 
     return {
         type: 'evening',
-        title: '📊 今日发电报告',
+        title: ' 今日发电报告',
         content: `今日发电 ${totalGeneration.toFixed(1)} kWh，收益 ¥${totalRevenue.toFixed(0)}。${comparisonText}`,
         summary: {
             generation: totalGeneration,
@@ -122,7 +122,7 @@ export function generateAlertReport(
 ): DailyReport {
     const alertConfig = {
         low_generation: {
-            title: '⚠️ 发电量异常',
+            title: ' 发电量异常',
             content: `${station.name} 今日记录发电量 ${station.todayGeneration} kWh。请核对告警来源、同期基线和采集完整性，尚不能确定异常幅度或原因。`,
             actions: [
                 { label: '查看电站', url: `/my/stations/${station.id}` },
@@ -130,7 +130,7 @@ export function generateAlertReport(
             ],
         },
         cleaning: {
-            title: '🧹 建议清洗',
+            title: ' 建议清洗',
             content: `${station.name} 记录效率 ${station.efficiency}%。请先核对指标定义和现场巡检记录，再决定是否需要清洗。`,
             actions: [
                 { label: '查看详情', url: `/my/stations/${station.id}` },
@@ -138,7 +138,7 @@ export function generateAlertReport(
             ],
         },
         fault: {
-            title: '🚨 设备告警',
+            title: ' 设备告警',
             content: `${station.name} 收到设备告警核查请求。请以原始设备事件和运维确认结果为准，当前报告未验证具体故障。`,
             actions: [
                 { label: '查看详情', url: `/my/stations/${station.id}` },
@@ -146,7 +146,7 @@ export function generateAlertReport(
             ],
         },
         efficiency: {
-            title: '📉 效率下降',
+            title: ' 效率下降',
             content: `${station.name} 收到效率核查请求。缺少已验证的历史基线，暂不能判断下降幅度和故障原因。`,
             actions: [
                 { label: 'AI诊断', url: '/maintenance/ai-diagnosis' },

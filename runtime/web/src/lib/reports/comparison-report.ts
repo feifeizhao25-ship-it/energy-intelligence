@@ -87,7 +87,7 @@ export async function generateComparisonReport(data: {
                 // Improvements & Risks
                 explanation.improvementSuggestions.length > 0 ? new Paragraph({
                     children: [
-                        new TextRun({ text: '💡 收益提升建议：', bold: true, size: 22 }),
+                        new TextRun({ text: ' 收益提升建议：', bold: true, size: 22 }),
                         new TextRun({ text: explanation.improvementSuggestions.join('；'), size: 22 })
                     ],
                     spacing: { before: 200 }
@@ -95,7 +95,7 @@ export async function generateComparisonReport(data: {
 
                 explanation.keyRisks.length > 0 ? new Paragraph({
                     children: [
-                        new TextRun({ text: '⚠️ 关键风险提示：', bold: true, size: 22, color: 'DC2626' }),
+                        new TextRun({ text: ' 关键风险提示：', bold: true, size: 22, color: 'DC2626' }),
                         new TextRun({ text: explanation.keyRisks.join('；'), size: 22 })
                     ],
                     spacing: { before: 100 }

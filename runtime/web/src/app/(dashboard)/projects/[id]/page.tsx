@@ -2,6 +2,7 @@
 
 import { useEffect, useState, use } from 'react';
 import Link from 'next/link';
+import { formatCnDate } from '@/lib/format/cn-date';
 import {
     ArrowLeft,
     MapPin,
@@ -80,7 +81,7 @@ export default function ProjectDetailPage(props: ProjectDetailProps) {
                         status: p.parameters?.status || 'planning',
                         capacity: p.capacity,
                         location: p.parameters?.address || '未知位置',
-                        createdAt: new Date(p.createdAt).toLocaleDateString(),
+                        createdAt: formatCnDate(p.createdAt),
                         dailyGen: p.stations?.length ? dailyEnergy : (latestAnalysis ? Number(latestAnalysis.generationActual) : null),
                         totalGen: p.stations?.length ? totalEnergy : null,
                         health: latestAnalysis ? Number(latestAnalysis.healthScore) : null
